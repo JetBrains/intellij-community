@@ -48,7 +48,7 @@ object TableModificationUtils {
   }
 
   private fun getCellPotentialWidth(cellText: String): Int {
-    var width = cellText.length
+    var width = TableCharacterWidthUtils.calculateDisplayWidth(cellText)
     if (!cellText.startsWith(' ')) {
       width += 1
     }
@@ -84,7 +84,7 @@ object TableModificationUtils {
     }
     return cells.all {
       val selfWidth = getCellPotentialWidth(it.text)
-      it.hasCorrectPadding() && selfWidth == it.textRange.length && selfWidth == width
+      it.hasCorrectPadding() && selfWidth == TableCharacterWidthUtils.calculateDisplayWidth(it.text) && selfWidth == width
     }
   }
 
@@ -142,12 +142,14 @@ object TableModificationUtils {
   }
 
   fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: CellAlignment): String {
-    check(wholeCellWidth >= cellContent.length)
+    val contentDisplayWidth = TableCharacterWidthUtils.calculateDisplayWidth(cellContent)
+    check(wholeCellWidth >= contentDisplayWidth)
+    val paddingNeeded = wholeCellWidth - contentDisplayWidth
     return when (alignment) {
-      CellAlignment.RIGHT -> "${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}$cellContent "
+      CellAlignment.RIGHT -> "${" ".repeat((paddingNeeded - 1).coerceAtLeast(0))}$cellContent "
       CellAlignment.CENTER -> {
-        val leftPadding = (wholeCellWidth - cellContent.length) / 2
-        val rightPadding = wholeCellWidth - cellContent.length - leftPadding
+        val leftPadding = paddingNeeded / 2
+        val rightPadding = paddingNeeded - leftPadding
         buildString {
           repeat(leftPadding) {
             append(' ')
@@ -159,7 +161,7 @@ object TableModificationUtils {
         }
       }
       // MarkdownTableSeparatorRow.CellAlignment.LEFT
-      else -> " $cellContent${" ".repeat((wholeCellWidth - cellContent.length - 1).coerceAtLeast(0))}"
+      else -> " $cellContent${" ".repeat((paddingNeeded - 1).coerceAtLeast(0))}"
     }
   }
 
@@ -184,7 +186,7 @@ object TableModificationUtils {
     val cellRange = textRange
     val cellText = documentText.substring(cellRange.startOffset, cellRange.endOffset)
     val actualContent = cellText.trim(' ')
-    val replacement = buildRealignedCellContent(actualContent, cellText.length, alignment)
+    val replacement = buildRealignedCellContent(actualContent, TableCharacterWidthUtils.calculateDisplayWidth(cellText), alignment)
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 

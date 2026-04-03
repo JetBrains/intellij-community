@@ -64,8 +64,10 @@ object TableFormattingUtils {
   ): Int {
     val trimToMaxContent = trimToMaxContent && !cells.all { it.text.isBlank() }
     val contentCellsWidth = when {
-      trimToMaxContent -> cellsContentsWithCarets.asSequence().map { it.trimmedContentWithoutCarets }.maxOfOrNull { it.length + 2 }
-      else -> cells.maxOfOrNull { it.textRange.length }
+      trimToMaxContent -> cellsContentsWithCarets.asSequence().map { it.trimmedContentWithoutCarets }.maxOfOrNull {
+        TableCharacterWidthUtils.calculateDisplayWidth(it) + 2
+      }
+      else -> cells.maxOfOrNull { TableCharacterWidthUtils.calculateDisplayWidth(it.text) }
     }
     checkNotNull(contentCellsWidth)
     return max(contentCellsWidth, separatorCellRange?.length ?: 1)
@@ -93,12 +95,12 @@ object TableFormattingUtils {
   ) {
     val expectedContent = TableModificationUtils.buildRealignedCellContent(
       state.trimmedContentWithCarets,
-      maxCellWidth + state.caretsInside.size,
+      maxCellWidth,
       alignment
     )
     val range = cell.textRange
     val cellContent = document.charsSequence.substring(range.startOffset, range.endOffset)
-    if (preventExpand && cellContent.length < maxCellWidth) {
+    if (preventExpand && TableCharacterWidthUtils.calculateDisplayWidth(cellContent) < maxCellWidth) {
       return
     }
     val expectedContentWithoutCarets = expectedContent.replace(TableProps.CARET_REPLACE_CHAR.toString(), "")

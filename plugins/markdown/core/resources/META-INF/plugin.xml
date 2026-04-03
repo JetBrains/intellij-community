@@ -180,6 +180,7 @@
 
     <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
+    <textEditorCustomizer implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridCustomizer"/>
 
     <fileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 
