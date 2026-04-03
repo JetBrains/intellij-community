@@ -67,10 +67,11 @@ public final class PyAbstractClassInspection extends PyInspection {
               ContainerUtil.exists(pyClass.getMethods(), method -> PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext));
             if (hasAbstractMethod || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
               registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()),
-                              ProblemHighlightType.WARNING);
+                              effectiveHighlightType(ProblemHighlightType.WARNING));
             }
             else if (isAbstract(pyClass)) {
-              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()));
+              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()),
+                              effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }

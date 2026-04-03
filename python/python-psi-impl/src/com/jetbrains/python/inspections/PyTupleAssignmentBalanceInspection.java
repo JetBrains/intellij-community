@@ -47,7 +47,11 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, PyInspectionVisitor.getContext(session));
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    if (context.getTypeEngine() != null) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    return new Visitor(holder, context);
   }
 
   private static class Visitor extends PyInspectionVisitor {
