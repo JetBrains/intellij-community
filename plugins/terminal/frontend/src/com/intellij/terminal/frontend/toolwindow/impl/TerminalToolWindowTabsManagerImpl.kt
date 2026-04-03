@@ -27,7 +27,6 @@ import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -49,7 +48,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -118,8 +116,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab.view
   }
 
-  override fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab {
-    val tab = doCreateTab(view)
+  override fun attachTab(view: TerminalView, contentManager: ContentManager?, closeOnProcessTermination: Boolean): TerminalToolWindowTab {
+    val tab = doCreateTab(view, closeOnProcessTermination)
     addToTabsList(tab)
     addTabToToolWindow(tab, contentManager, true)
     return tab
@@ -149,7 +147,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private fun createTab(builder: TerminalToolWindowTabBuilderImpl): TerminalToolWindowTab {
     val terminal = createTerminalViewAndStartSession(builder)
-    val tab = doCreateTab(terminal)
+    val tab = doCreateTab(terminal, builder.closeOnProcessTermination)
     addToTabsList(tab)
     if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
@@ -158,7 +156,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
-  private fun doCreateTab(terminal: TerminalView): TerminalToolWindowTab {
+  private fun doCreateTab(terminal: TerminalView, closeOnProcessTermination: Boolean): TerminalToolWindowTab {
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
     val content = ContentFactory.getInstance().createContent(panel, null, false)
@@ -178,13 +176,12 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    // Close the tab if the terminal session was terminated.
-    tabScope.launch {
-      terminal.sessionState.collect { state ->
-        if (state == TerminalViewSessionState.Terminated) {
-          // Execute in the manager scope, because closing of the tab may dispose the content and cancel the current coroutine.
-          coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            if (TerminalOptionsProvider.instance.closeSessionOnLogout) {
+    if (closeOnProcessTermination) {
+      tabScope.launch {
+        terminal.sessionState.collect { state ->
+          if (state == TerminalViewSessionState.Terminated) {
+            // Execute in the manager scope, because closing of the tab may dispose the content and cancel the current coroutine.
+            coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               val tab = findTabByContent(content) ?: return@launch
               closeTab(tab)
             }
@@ -208,7 +205,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    return TerminalToolWindowTabImpl(terminal, content)
+    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination)
   }
 
   private fun addTabToToolWindow(
@@ -469,6 +466,8 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
     var contentManager: ContentManager? = null
       private set
+    var closeOnProcessTermination: Boolean = TerminalOptionsProvider.instance.closeSessionOnLogout
+      private set
     var shouldAddToToolWindow: Boolean = true
       private set
     var startupFusInfo: TerminalStartupFusInfo? = null
@@ -523,6 +522,11 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun contentManager(manager: ContentManager?): TerminalToolWindowTabBuilder {
       contentManager = manager
+      return this
+    }
+
+    override fun closeOnProcessTermination(shouldClose: Boolean): TerminalToolWindowTabBuilder {
+      closeOnProcessTermination = shouldClose
       return this
     }
 

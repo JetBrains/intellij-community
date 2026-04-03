@@ -37,12 +37,14 @@ internal class TerminalViewFileEditor(
     val coroutineScope = terminalProjectScope(project).childScope("TerminalViewFileEditor")
     Disposer.register(this) { coroutineScope.cancel() }
 
-    coroutineScope.launch {
-      terminalView.sessionState.collect { state ->
-        if (state == TerminalViewSessionState.Terminated) {
-          // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
-          terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            project.serviceAsync<FileEditorManager>().closeFile(file)
+    if (file.closeOnProcessTermination) {
+      coroutineScope.launch {
+        terminalView.sessionState.collect { state ->
+          if (state == TerminalViewSessionState.Terminated) {
+            // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
+            terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              project.serviceAsync<FileEditorManager>().closeFile(file)
+            }
           }
         }
       }
