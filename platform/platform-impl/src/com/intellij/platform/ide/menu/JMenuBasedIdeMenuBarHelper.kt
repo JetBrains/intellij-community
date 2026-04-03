@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.job
 import java.awt.AWTEvent
+import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -122,7 +123,8 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     }
 
     val window = SwingUtilities.getWindowAncestor(visibleComponent) ?: return false
-    if (SwingUtilities.getWindowAncestor(e.component) != window && e.component != window) return false
+    val eventWindow = e.component as? Window ?: SwingUtilities.getWindowAncestor(e.component)
+    if (eventWindow != window) return false
     if (MenuSelectionManager.defaultManager().selectedPath.isNotEmpty()) return false
     if (ScreenReader.isActive() && AppUIUtil.isInFullScreen(window)) return false
 
