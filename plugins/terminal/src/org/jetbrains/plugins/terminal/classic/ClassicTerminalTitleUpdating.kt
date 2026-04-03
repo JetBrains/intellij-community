@@ -12,9 +12,12 @@ import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 
@@ -25,10 +28,10 @@ internal fun updateTabNameOnTitleChange(
   scope: CoroutineScope,
 ) {
   scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    title.stateFlow { it.buildSettingsAwareTitle() }
+    classicTerminalTitleStateFlow(title)
       .debounce(TITLE_UPDATE_DELAY)
       .collect {
-        content.displayName = it.text
+        content.displayName = it.croppedText
       }
   }
 }
@@ -41,11 +44,18 @@ internal fun updateFileNameOnTitleChange(
   scope: CoroutineScope,
 ) {
   scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    title.stateFlow { it.buildSettingsAwareTitle() }
+    classicTerminalTitleStateFlow(title)
       .debounce(TITLE_UPDATE_DELAY)
       .collect {
-        file.rename(null, it.text)
+        file.rename(null, it.croppedText)
         FileEditorManager.getInstance(project).updateFilePresentation(file)
       }
   }
+}
+
+private fun classicTerminalTitleStateFlow(title: TerminalTitle): Flow<TerminalTitleUtils.TitleData> {
+  return title.stateFlow(
+    buildCroppedTitle = { it.buildSettingsAwareTitle() },
+    buildFullTitle = { it.buildSettingsAwareFullTitle() }
+  )
 }
