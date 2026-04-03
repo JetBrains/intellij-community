@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -60,17 +62,21 @@ import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -85,6 +91,8 @@ import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.ComparableTimeMark
+import kotlin.time.TimeSource
 
 internal abstract class TreeBasedFrontendProjectViewPane(
   private val project: Project,
@@ -96,7 +104,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val contentPanel = ContentPanel(scrollPane)
-  private val treeExpander = ProjectViewTreeExpander(tree)
+  private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
 
   private val optionSupport = ActionSupport()
   
@@ -149,6 +158,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     EditSourceOnDoubleClickHandler.install(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     autoscrollToSourceHandler.install(tree)
+    tree.launchOnShow("expand requests") {
+      expandRequests.consumeAsFlow().collectLatest { expandRequest ->
+        expand(expandRequest)
+      }
+    }
   }
 
   private fun sendRequest(request: ProjectViewPaneRequest) {
@@ -168,13 +182,14 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
       is ProjectViewChildrenLoaded -> {
-        if (event.parentId == SUPER_ROOT_ID) {
+        val parent = getNodeById(event.parentId) ?: return
+        if (parent.id == SUPER_ROOT_ID) {
           updateRoot(event.children)
         }
         else {
-          val parent = getNodeById(event.parentId) ?: return
           updateChildren(parent, event.children)
         }
+        parent.isChildrenLoaded = true
       }
       is ProjectViewNodeAdded -> {
         val parent = getNodeById(event.parentId) ?: return
@@ -325,6 +340,130 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     }
   }
 
+  private suspend fun expand(expandRequest: ExpandRequest) {
+    try {
+      LOG.debug { "Executing the expand request $expandRequest" }
+      tree.suspendExpandCollapseAccessibilityAnnouncements()
+      coroutineScope {
+        for (path in expandRequest.paths) {
+          launch {
+            expand(path)
+          }
+        }
+      }
+      for (path in expandRequest.paths) {
+        tree.fireAccessibleTreeExpanded(path)
+      }
+      LOG.debug { "Executed the expand request $expandRequest" }
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error("An error has occurred while executing the expand request $expandRequest", e)
+    }
+    finally {
+      tree.resumeExpandCollapseAccessibilityAnnouncements()
+    }
+  }
+
+  private suspend fun expand(path: TreePath) {
+    lateinit var started: ComparableTimeMark
+    LOG.debug {
+      started = TimeSource.Monotonic.markNow()
+      "Expanding $path and its descendants"
+    }
+    if (!tree.isVisible(path)) {
+      LOG.trace { "Not expanding $path because it's not visible, assuming the user has canceled expanding" }
+      return
+    }
+    // First, fast-path bulk expand everything already loaded to avoid excessive flickering and/or freezes.
+    val allNonLeafDescendants = allNonLeafDescendants(path)
+    LOG.trace { "Expanding ${allNonLeafDescendants.size} already-loaded non-leaf descendants of $path" }
+    tree.expandPaths(allNonLeafDescendants)
+    LOG.trace { "Expanded ${allNonLeafDescendants.size} already-loaded non-leaf descendants of $path" }
+    // Now load all missing children and expand them.
+    expandNotLoaded(path)
+    LOG.debug {
+      "Expanded $path and its descendants, took ${started.elapsedNow()}"
+    }
+  }
+
+  private fun allNonLeafDescendants(path: TreePath): List<TreePath> {
+    val result = mutableListOf<TreePath>()
+    collectAllNonLeafDescendants(path, result)
+    return result
+  }
+
+  private fun collectAllNonLeafDescendants(
+    path: TreePath,
+    result: MutableList<TreePath>,
+  ) {
+    val node = path.lastPathComponent
+    if (treeModel.isLeaf(node)) return
+    result += path
+    val childCount = treeModel.getChildCount(node)
+    for (i in 0 until childCount) {
+      val childNode = treeModel.getChild(node, i)
+      val childPath = path.pathByAddingChild(childNode)
+      collectAllNonLeafDescendants(childPath, result)
+    }
+  }
+
+  private suspend fun expandNotLoaded(path: TreePath) {
+    // Even with tracing enabled, we don't want to spam messages about the nodes that were already expanded at the fast-path bulk stage.
+    val doTraceLogging = LOG.isTraceEnabled && !tree.isExpanded(path) && !treeModel.isLeaf(path.lastPathComponent)
+    if (doTraceLogging) {
+      LOG.trace { "Expanding not yet loaded descendants of $path" }
+    }
+    val node = path.lastPathComponent as? Node
+    if (node == null) {
+      if (doTraceLogging) {
+        LOG.trace {
+          "Not expanding ${path.lastPathComponent} because it itself is not loaded yet" +
+          " (recursive expand for cached nodes not supported)"
+        }
+      }
+      return
+    }
+    if (treeModel.isLeaf(node)) {
+      if (doTraceLogging) {
+        LOG.trace { "Not expanding $node because it's a leaf" }
+      }
+      return
+    }
+    if (!tree.isVisible(path)) {
+      if (doTraceLogging) {
+        LOG.trace { "Won't expand $node because it's no longer visible (the user has collapsed an ancestor)" }
+      }
+      return
+    }
+    if (doTraceLogging) {
+      LOG.trace { "Expanding $path" }
+    }
+    tree.expandPath(path) // could be already expanded during the first pass, but it'll be a quick no-op then
+    if (doTraceLogging) { // to avoid spamming confusing trace messages in the already-loaded case
+      LOG.trace { "Loading the children of $path" }
+    }
+    val children = awaitNodeChildren(node) {
+      val isVisible = tree.isVisible(path) // wait while the node is visible, otherwise cancel because the user has collapsed an ancestor
+      if (doTraceLogging && !isVisible) {
+        LOG.trace { "Cancelling expanding of $node because it's no longer visible (the user has collapsed an ancestor)" }
+      }
+      isVisible
+    }
+    if (children == null) {
+      if (doTraceLogging) {
+        LOG.trace { "Did not load the children of $node (the reason should be in the messages above)" }
+      }
+      return
+    }
+    if (doTraceLogging) { // to avoid spamming confusing trace messages in the already-loaded case
+      LOG.trace { "Loaded the children of $path" }
+    }
+    for (child in children) {
+      expandNotLoaded(path.pathByAddingChild(child))
+    }
+  }
+
   private suspend fun awaitNodePath(nodeId: Long): TreePath {
     var epoch = 0L
     while (true) {
@@ -336,6 +475,22 @@ internal abstract class TreeBasedFrontendProjectViewPane(
         return CachingTreePath(node.path)
       }
     }
+  }
+
+  private suspend fun awaitNodeChildren(node: Node, condition: () -> Boolean): List<Node>? {
+    if (!condition()) return null
+    if (!node.isChildrenLoaded) { // request in the case it wasn't requested before
+      sendRequest(ProjectViewPaneLoadChildrenRequest(node.id))
+    }
+    var epoch = 0L
+    while (condition()) {
+      if (node.isChildrenLoaded) {
+        // The cast to Node should be safe now, as isChildrenLoaded implies no cached children.
+        return node.children().asSequence().map { it as Node }.toList()
+      }
+      epoch = updateEpoch.first { it > epoch }
+    }
+    return null
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
@@ -402,11 +557,10 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 private class Node(
   model: ProjectViewNodeModel,
 ) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
-  var projectViewNode: ProjectViewNodeModel
+  val projectViewNode: ProjectViewNodeModel
     get() = userObject as ProjectViewNodeModel
-    set(value) {
-      userObject = value
-    }
+  
+  var isChildrenLoaded: Boolean = false
   
   val id: Long
     get() = projectViewNode.id
@@ -423,7 +577,7 @@ private class Node(
   override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
 
-private class ProjectViewTreeExpander(tree: Tree) : DefaultTreeExpander(tree) {
+private class ProjectViewTreeExpander(tree: Tree, private val expandRequests: SendChannel<ExpandRequest>) : DefaultTreeExpander(tree) {
   override fun isExpandAllVisible(): Boolean {
     return Registry.`is`("ide.project.view.expand.all.action.visible") && !Registry.`is`("ide.project.view.replace.expand.all.with.expand.recursively")
   }
@@ -432,10 +586,17 @@ private class ProjectViewTreeExpander(tree: Tree) : DefaultTreeExpander(tree) {
     return super.isExpandAllEnabled() && !Registry.`is`("ide.project.view.replace.expand.all.with.expand.recursively")
   }
 
+  override fun expandSelected(tree: JTree) {
+    val result = expandRequests.trySend(ExpandRequest(tree.selectionPaths.toList()))
+    check(!result.isFailure)
+  }
+
   override fun collapseAll(tree: JTree, strict: Boolean, keepSelectionLevel: Int) {
     super.collapseAll(tree, false, keepSelectionLevel)
   }
 }
+
+private data class ExpandRequest(val paths: List<TreePath>)
 
 private class MyAutoscrollToSourceHandler(private val project: Project) : AutoScrollToSourceHandler() {
   override fun isAutoScrollMode(): Boolean {
