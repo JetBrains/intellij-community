@@ -190,9 +190,9 @@ class ProcessExecutor(
   }
 
   @Throws(ExecTimeoutException::class)
-  fun start(printEnvVariables: Boolean = ConfigurationStorage.logEnvVariables()) {
+  fun start(printEnvVariables: Boolean = ConfigurationStorage.logEnvVariables()): Int {
     @Suppress("SSBasedInspection")
-    runBlocking(Dispatchers.IO) {
+    return runBlocking(Dispatchers.IO) {
       startCancellable(printEnvVariables)
     }
   }
@@ -201,7 +201,7 @@ class ProcessExecutor(
    * Creates new process and wait for it's completion
    */
   @Throws(ExecTimeoutException::class)
-  suspend fun startCancellable(printEnvVariables: Boolean = ConfigurationStorage.logEnvVariables()) {
+  suspend fun startCancellable(printEnvVariables: Boolean = ConfigurationStorage.logEnvVariables()): Int {
     require(args.isNotEmpty()) { "Arguments must be not empty to start external process `$presentableName`" }
 
     val processBuilder = ProcessBuilder()
@@ -327,5 +327,7 @@ class ProcessExecutor(
     if (analyzeProcessExit) {
       analyzeProcessExit(process)
     }
+
+    return process.exitValue()
   }
 }
