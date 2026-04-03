@@ -12,13 +12,17 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyOverridesInspection : PyInspection() {
-
   override fun buildVisitor(
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor =
-    Visitor(holder, PyInspectionVisitor.getContext(session))
+  ): PsiElementVisitor {
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.typeEngine != null) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
+  }
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 

@@ -59,6 +59,9 @@ sealed class TypeEvalContext(
   }?.let { module ->
     createTypeResolver(module)
   }
+
+  @ApiStatus.Experimental
+  val usesExternalTypeEngine: Boolean = typeEngine != null
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCaching()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCaching()
   protected val contextTypeCache: ConcurrentMap<Pair<PyExpression?, Any?>, PyType> = getConcurrentMapForCaching()

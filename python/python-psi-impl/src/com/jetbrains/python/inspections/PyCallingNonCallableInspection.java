@@ -41,7 +41,10 @@ public final class PyCallingNonCallableInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, PyInspectionVisitor.getContext(session));
+    var context = PyInspectionVisitor.getContext(session);
+    var visitor = new Visitor(holder, PyInspectionVisitor.getContext(session));
+    visitor.downgradeHighlightForTypeEngine = context.getTypeEngine() != null;
+    return visitor;
   }
 
   public static class Visitor extends PyInspectionVisitor {
