@@ -2,12 +2,14 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import java.io.IOException
 
@@ -179,6 +182,32 @@ internal fun PsiElement.isDependencyArgument(): Boolean {
 
     return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
 }
+
+/**
+ * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)
+ * For older versions returns all configurations, even those that could not be used in the `dependencies { }` block.
+ */
+internal fun getConfigurationsForDependencies(psiFile: PsiFile): List<String> {
+    val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return emptyList()
+    val extensionsData = GradleExtensionsSettings.getInstance(psiFile.project).getExtensionsFor(module) ?: return emptyList()
+    val configurations = extensionsData.configurations.values
+    return configurations
+        .filter { it.canBeUsedInDependenciesBlock() }
+        .filter { isValidNameInKotlin(it.name) }
+        .map { it.name }
+}
+
+/**
+ * @return true if a configuration can declare dependencies and it's Gradle 8.2+.
+ * For older versions, returns true for each configuration.
+ */
+private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependenciesBlock(): Boolean =
+    this.canDeclareDependencies != false
+
+/** @return true if starts from a letter and contains only letters, digits and underscores after it */
+private fun isValidNameInKotlin(string: String): Boolean =
+    string.matches(Regex("^[a-zA-Z_][a-zA-Z0-9_]*$"))
+
 
 private val PsiElement.surroundingArgumentsSize
     get(): Int =

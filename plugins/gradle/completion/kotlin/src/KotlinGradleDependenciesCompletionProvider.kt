@@ -35,13 +35,11 @@ import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
@@ -54,7 +52,6 @@ import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUT
 import com.intellij.util.ProcessingContext
 import icons.GradleIcons
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -161,31 +158,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     }
     result.addAllElements(lookup)
   }
-
-  /**
-   * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)
-   * For older versions returns all configurations, even those that could not be used in the `dependencies { }` block.
-   */
-  private fun getConfigurationsForDependencies(psiFile: PsiFile): List<String> {
-    val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return emptyList()
-    val extensionsData = GradleExtensionsSettings.getInstance(psiFile.project).getExtensionsFor(module) ?: return emptyList()
-    val configurations = extensionsData.configurations.values
-    return configurations
-      .filter { it.canBeUsedInDependenciesBlock() }
-      .filter { isValidNameInKotlin(it.name) }
-      .map { it.name }
-  }
-
-  /**
-   * @return true if a configuration can declare dependencies and it's Gradle 8.2+.
-   * For older versions, returns true for each configuration.
-   */
-  private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependenciesBlock(): Boolean =
-    this.canDeclareDependencies != false
-
-  /** @return true if starts from a letter and contains only letters, digits and underscores after it */
-  private fun isValidNameInKotlin(string: String): Boolean =
-    string.matches(Regex("^[a-zA-Z_][a-zA-Z0-9_]*$"))
 
   private fun suggestDependencyCompletions(
     result: CompletionResultSet,
