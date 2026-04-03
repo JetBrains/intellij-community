@@ -30,6 +30,7 @@ import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl;
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand;
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl;
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -70,12 +71,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
-    if (enableShellIntegration()) {
+    if (updatedOptions.getProcessType() == TerminalProcessType.SHELL && enableShellIntegration()) {
       updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
                                                                             isGenOneTerminalEnabled(),
                                                                             isGenTwoTerminalEnabled());
     }
-    updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
+    if (updatedOptions.getProcessType() == TerminalProcessType.SHELL) {
+      updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
+    }
     return applyTerminalCustomizers(updatedOptions);
   }
 
