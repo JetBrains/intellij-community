@@ -1221,6 +1221,9 @@
 
     <group id="ProjectViewToolbar">
       <separator/>
+      <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.ide.projectView.actions.SelectFileAction">
+        <synonym key="action.SelectOpenedFileInProjectView.text"/>
+      </action>
       <reference ref="ExpandRecursively"/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>

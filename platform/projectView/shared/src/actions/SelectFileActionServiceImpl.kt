@@ -7,21 +7,18 @@ import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.SelectInContextImpl
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.actions.SelectFileActionService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
-import com.intellij.ide.projectView.impl.SelectInProjectViewImpl
 import com.intellij.ide.projectView.impl.isProjectViewSplit
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -30,7 +27,7 @@ import com.intellij.ui.ComponentUtil
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
 private const val SELECT_OPENED_FILE = "SelectOpenedFileInProjectView"
 
-internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class SelectFileActionServiceImpl : SelectFileActionService {
   override fun actionPerformed(event: AnActionEvent) {
     when (getActionId(event)) {
       SELECT_CONTEXT_FILE -> getSelector(event)?.run { target.selectIn(context, true) }
@@ -102,8 +99,6 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 
   private fun getSelector(event: AnActionEvent): Selector? {
@@ -163,4 +158,4 @@ private class SplitView(private val impl: SelectInSplitProjectViewImpl): View {
   }
 }
 
-private val LOG = logger<SelectFileAction>()
+private val LOG = logger<SelectFileActionServiceImpl>()

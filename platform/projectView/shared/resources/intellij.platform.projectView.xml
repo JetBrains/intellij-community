@@ -26,12 +26,12 @@
                  description="Enables the new experimental split Project View tool window" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
+    <projectService
+      serviceInterface="com.intellij.ide.projectView.actions.SelectFileActionService"
+      serviceImplementation="com.intellij.platform.projectView.actions.SelectFileActionServiceImpl"
+    />
   </extensions>
   <actions>
-    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.platform.projectView.actions.SelectFileAction">
-      <synonym key="action.SelectOpenedFileInProjectView.text"/>
-      <add-to-group group-id="ProjectViewToolbar" anchor="before" relative-to-action="ExpandRecursively"/>
-    </action>
     <group id="ProjectView.ToolWindow.SecondaryActions">
       <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
         <action id="ProjectView.OpenInPreviewTab"
