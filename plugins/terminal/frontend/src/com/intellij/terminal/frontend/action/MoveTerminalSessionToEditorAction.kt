@@ -44,7 +44,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
     val manager = TerminalToolWindowTabsManager.getInstance(project)
     manager.detachTab(terminalTab)
 
-    val file = TerminalViewVirtualFile(terminalTab.view)
+    val file = TerminalViewVirtualFile(terminalTab.view, terminalTab.closeOnProcessTermination)
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     try {
       FileEditorManager.getInstance(project).openFile(file, true)

@@ -54,9 +54,14 @@ interface TerminalToolWindowTabsManager {
    * @param contentManager the tool window content manager to add the tab to.
    * Worth specifying when the terminal tool window is split to open the tab in the specific area.
    * If it is `null`, the tab will be opened in the top-left split area (or in the main area if there are no splits).
+   * @param closeOnProcessTermination whether to close the tool window tab if the underlying process terminates on its own.
    */
   @RequiresEdt
-  fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab
+  fun attachTab(
+    view: TerminalView,
+    contentManager: ContentManager?,
+    closeOnProcessTermination: Boolean,
+  ): TerminalToolWindowTab
 
   @Deprecated("Use TerminalTabsManagerListener.TOPIC instead")
   fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener)
