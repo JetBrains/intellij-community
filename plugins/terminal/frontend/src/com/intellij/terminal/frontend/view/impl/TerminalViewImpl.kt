@@ -316,6 +316,9 @@ class TerminalViewImpl(
 
     controller.addTerminationCallback(coroutineScope.asDisposable()) {
       mutableSessionState.value = TerminalViewSessionState.Terminated
+      // Hide the cursor on process termination
+      val currentState = sessionModel.terminalState.value
+      sessionModel.updateTerminalState(currentState.copy(isCursorVisible = false))
     }
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
