@@ -376,39 +376,45 @@ internal abstract class TreeBasedFrontendProjectViewPane(
       return
     }
     // First, fast-path bulk expand everything already loaded to avoid excessive flickering and/or freezes.
-    val allNonLeafDescendants = allNonLeafDescendants(path)
+    val allNonLeafDescendants = allExpandableDescendants(path)
     LOG.trace { "Expanding ${allNonLeafDescendants.size} already-loaded non-leaf descendants of $path" }
     tree.expandPaths(allNonLeafDescendants)
     LOG.trace { "Expanded ${allNonLeafDescendants.size} already-loaded non-leaf descendants of $path" }
     // Now load all missing children and expand them.
-    expandNotLoaded(path)
+    expandNotLoaded(path, 0)
     LOG.debug {
       "Expanded $path and its descendants, took ${started.elapsedNow()}"
     }
   }
 
-  private fun allNonLeafDescendants(path: TreePath): List<TreePath> {
+  private fun allExpandableDescendants(path: TreePath): List<TreePath> {
     val result = mutableListOf<TreePath>()
-    collectAllNonLeafDescendants(path, result)
+    collectAllExpandableDescendants(path, result, 0)
     return result
   }
 
-  private fun collectAllNonLeafDescendants(
+  private fun collectAllExpandableDescendants(
     path: TreePath,
     result: MutableList<TreePath>,
+    depth: Int,
   ) {
     val node = path.lastPathComponent
     if (treeModel.isLeaf(node)) return
+    // For depth == 0 it means that the user explicitly requested to expand this.
+    if (depth > 0 && (node as? Node)?.projectViewNode?.isIncludedInExpandAll() == false) {
+      LOG.trace { "Won't expand $node because isIncludedInExpandAll == false" }
+      return
+    }
     result += path
     val childCount = treeModel.getChildCount(node)
     for (i in 0 until childCount) {
       val childNode = treeModel.getChild(node, i)
       val childPath = path.pathByAddingChild(childNode)
-      collectAllNonLeafDescendants(childPath, result)
+      collectAllExpandableDescendants(childPath, result, depth + 1)
     }
   }
 
-  private suspend fun expandNotLoaded(path: TreePath) {
+  private suspend fun expandNotLoaded(path: TreePath, depth: Int) {
     // Even with tracing enabled, we don't want to spam messages about the nodes that were already expanded at the fast-path bulk stage.
     val doTraceLogging = LOG.isTraceEnabled && !tree.isExpanded(path) && !treeModel.isLeaf(path.lastPathComponent)
     if (doTraceLogging) {
@@ -427,6 +433,13 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     if (treeModel.isLeaf(node)) {
       if (doTraceLogging) {
         LOG.trace { "Not expanding $node because it's a leaf" }
+      }
+      return
+    }
+    // For depth == 0 it means that the user explicitly requested to expand this.
+    if (depth > 0 && !node.projectViewNode.isIncludedInExpandAll()) {
+      if (doTraceLogging) {
+        LOG.trace { "Won't expand $node because isIncludedInExpandAll == false" }
       }
       return
     }
@@ -460,7 +473,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
       LOG.trace { "Loaded the children of $path" }
     }
     for (child in children) {
-      expandNotLoaded(path.pathByAddingChild(child))
+      expandNotLoaded(path.pathByAddingChild(child), depth + 1)
     }
   }
 

@@ -16,23 +16,28 @@ data class ProjectViewNodeModel(
     presentation: TreeNodePresentationImpl,
     canNavigate: Boolean,
     canNavigateToSource: Boolean,
+    isIncludedInExpandAll: Boolean,
   ) : this(
     id,
     presentation,
-    flags(canNavigate, canNavigateToSource),
+    flags(canNavigate, canNavigateToSource, isIncludedInExpandAll),
   )
 
   fun canNavigate(): Boolean = (flags and FLAG_CAN_NAVIGATE) != 0
 
   fun canNavigateToSource(): Boolean = (flags and FLAG_CAN_NAVIGATE_TO_SOURCE) != 0
+  
+  fun isIncludedInExpandAll(): Boolean = (flags and FLAG_INCLUDED_IN_EXPAND_ALL) != 0
 }
 
 private const val FLAG_CAN_NAVIGATE = (1 shl 0)
 private const val FLAG_CAN_NAVIGATE_TO_SOURCE = (1 shl 1)
+private const val FLAG_INCLUDED_IN_EXPAND_ALL = (1 shl 2)
 
-private fun flags(canNavigate: Boolean, canNavigateToSource: Boolean): Int =
+private fun flags(canNavigate: Boolean, canNavigateToSource: Boolean, isIncludedInExpandAll: Boolean): Int =
   (if (canNavigate) FLAG_CAN_NAVIGATE else 0) or
-  (if (canNavigateToSource) FLAG_CAN_NAVIGATE_TO_SOURCE else 0)
+  (if (canNavigateToSource) FLAG_CAN_NAVIGATE_TO_SOURCE else 0) or 
+  (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0)
 
 @ApiStatus.Internal
 const val SUPER_ROOT_ID: Long = 0L

@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
@@ -394,9 +395,12 @@ private class AbstractProjectViewPaneStateManager(
 
   private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
     val presentation = getNodePresentation(node)
-    val canNavigate = readAction { canNavigate(node) }
-    val canNavigateToSource = readAction { canNavigateToSource(node) }
-    return ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource)
+    return readAction {
+      val canNavigate = canNavigate(node)
+      val canNavigateToSource = canNavigateToSource(node)
+      val isIncludedInExpandAll = isIncludedInExpandAll(node)
+      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll)
+    }
   }
 
   private fun getNodePresentation(node: Any): TreeNodePresentationImpl {
@@ -418,6 +422,8 @@ private class AbstractProjectViewPaneStateManager(
 
   @RequiresReadLock
   private fun canNavigateToSource(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigateToSource() == true
+  
+  private fun isIncludedInExpandAll(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
 
   private suspend fun navigate(id: Long, requestFocus: Boolean) {
     val node = nodeById[id] ?: return
