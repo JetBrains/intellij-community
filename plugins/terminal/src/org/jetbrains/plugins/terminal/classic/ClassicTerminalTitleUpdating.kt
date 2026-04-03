@@ -6,6 +6,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.ui.content.Content
@@ -32,6 +33,7 @@ internal fun updateTabNameOnTitleChange(
       .debounce(TITLE_UPDATE_DELAY)
       .collect {
         content.displayName = it.croppedText
+        content.description = StringUtil.escapeXmlEntities(it.fullText)
       }
   }
 }
