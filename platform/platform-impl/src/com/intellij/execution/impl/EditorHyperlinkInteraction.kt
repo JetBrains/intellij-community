@@ -2,6 +2,8 @@
 package com.intellij.execution.impl
 
 
+import com.intellij.execution.impl.EditorHyperlinkUsageCollector.HyperlinkFollowedPlace
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -22,9 +24,10 @@ import java.awt.event.KeyEvent
 internal class EditorHyperlinkInteraction(
   private val editor: EditorEx,
   private val effectSupplier: EditorHyperlinkEffectSupplier,
+  parentDisposable: Disposable,
 ) {
 
-  private val hintManager: InvisibleHyperlinkHintManager = InvisibleHyperlinkHintManager(editor)
+  private val hintManager: InvisibleHyperlinkHintManager = InvisibleHyperlinkHintManager(editor, parentDisposable)
   private var followedLinkWrapper: ChangedAttrsLinkWrapper? = null
   private var hoveredLinkWrapper: ChangedAttrsLinkWrapper? = null
 
@@ -59,6 +62,9 @@ internal class EditorHyperlinkInteraction(
     else {
       action()
       onLinkFollowed(link)
+      if (effectSupplier.isInvisibleLink(link)) {
+        EditorHyperlinkUsageCollector.logInvisibleHyperlinkFollowed(HyperlinkFollowedPlace.EDITOR_LINK_CTRL_CLICKED)
+      }
     }
   }
 
