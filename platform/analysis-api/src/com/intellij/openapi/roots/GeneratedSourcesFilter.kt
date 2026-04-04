@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.Callable
 
 
 abstract class GeneratedSourcesFilter {
@@ -26,7 +27,11 @@ abstract class GeneratedSourcesFilter {
      */
     @JvmStatic
     fun isGeneratedSourceByAnyFilter(file: VirtualFile, project: Project): Boolean {
-      return ReadAction.compute<Boolean, RuntimeException> { findFirstMatchingFilter(file, project) != null }
+      return ReadAction.nonBlocking(Callable {
+        findFirstMatchingFilter(file, project) != null
+      })
+        .expireWith(project)
+        .executeSynchronously()
     }
 
     /**
