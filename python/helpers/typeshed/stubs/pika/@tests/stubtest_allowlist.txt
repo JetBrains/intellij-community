@@ -3,5 +3,4 @@
 pika.spec.Queue.DeclareOk.__init__
 
 # Arguments have a sentinel default, which is not reflected in the stubs.
-pika.ConnectionParameters.__init__
 pika.connection.ConnectionParameters.__init__

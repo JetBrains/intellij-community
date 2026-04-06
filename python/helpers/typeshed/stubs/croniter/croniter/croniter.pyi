@@ -287,7 +287,7 @@ def croniter_range(
     _croniter: type[croniter] | None = None,
     second_at_beginning: bool = False,
     expand_from_start_time: bool = False,
-) -> Generator[_R2_co, None, None]: ...
+) -> Generator[_R2_co]: ...
 @overload
 def croniter_range(
     start: float,
@@ -299,7 +299,7 @@ def croniter_range(
     _croniter: type[croniter] | None = None,
     second_at_beginning: bool = False,
     expand_from_start_time: bool = False,
-) -> Generator[float, None, None]: ...
+) -> Generator[float]: ...
 @overload
 def croniter_range(
     start: datetime.datetime,
@@ -311,7 +311,7 @@ def croniter_range(
     _croniter: type[croniter] | None = None,
     second_at_beginning: bool = False,
     expand_from_start_time: bool = False,
-) -> Generator[datetime.datetime, None, None]: ...
+) -> Generator[datetime.datetime]: ...
 
 class HashExpander:
     cron: croniter

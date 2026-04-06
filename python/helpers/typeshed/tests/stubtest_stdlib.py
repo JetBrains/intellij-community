@@ -28,6 +28,7 @@ def run_stubtest(typeshed_dir: Path) -> int:
         "mypy.stubtest",
         "--check-typeshed",
         "--show-traceback",
+        "--strict-type-check-only",
         "--custom-typeshed-dir",
         str(typeshed_dir),
         *allowlist_stubtest_arguments("stdlib"),

@@ -8,14 +8,11 @@ serial.serialjava  # No Java Communications API implementation found
 # ======================
 # These are positional only argument in the stub because they inherit from io.RawIOBase
 # but at runtime they are normal arguments that don't have consistent names.
-serial.Serial.write
-serial.SerialBase.readinto
 serial.serialutil.SerialBase.readinto
 serial.rfc2217.Serial.write
 serial.rs485.RS485.write
 serial.urlhandler.protocol_cp2110.Serial.write
 serial.urlhandler.protocol_loop.Serial.write
-serial.urlhandler.protocol_rfc2217.Serial.write
 serial.urlhandler.protocol_socket.Serial.write
 serial.urlhandler.protocol_spy.Serial.write
 
@@ -33,22 +30,6 @@ serial.tools.miniterm.unichr
 serial.urlhandler.protocol_hwgrep.basestring
 
 # Deprecated aliases
-serial.SerialBase.applySettingsDict
-serial.SerialBase.flushInput
-serial.SerialBase.flushOutput
-serial.SerialBase.getCD
-serial.SerialBase.getCTS
-serial.SerialBase.getDSR
-serial.SerialBase.getRI
-serial.SerialBase.getSettingsDict
-serial.SerialBase.inWaiting
-serial.SerialBase.interCharTimeout
-serial.SerialBase.isOpen
-serial.SerialBase.sendBreak
-serial.SerialBase.setDTR
-serial.SerialBase.setPort
-serial.SerialBase.setRTS
-serial.SerialBase.writeTimeout
 serial.serialutil.SerialBase.applySettingsDict
 serial.serialutil.SerialBase.flushInput
 serial.serialutil.SerialBase.flushOutput

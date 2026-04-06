@@ -5,12 +5,6 @@ jks.jks.PrivateKeyEntry.pkey_pkcs8
 jks.jks.SecretKeyEntry.algorithm
 jks.jks.SecretKeyEntry.key
 jks.jks.SecretKeyEntry.key_size
-jks.PrivateKeyEntry.algorithm_oid
-jks.PrivateKeyEntry.pkey
-jks.PrivateKeyEntry.pkey_pkcs8
-jks.SecretKeyEntry.algorithm
-jks.SecretKeyEntry.key
-jks.SecretKeyEntry.key_size
 
 # Implicit imports, not re-exported
 jks.DSA_OID

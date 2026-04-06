@@ -24,10 +24,6 @@ pyexpat.XMLParserType.GetReparseDeferralEnabled
 pyexpat.XMLParserType.SetReparseDeferralEnabled
 xml.etree.ElementTree.XMLParser.flush
 xml.etree.ElementTree.XMLPullParser.flush
-xml.etree.cElementTree.XMLParser.flush
-xml.etree.cElementTree.XMLPullParser.flush
-xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
-xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
 xml.sax.expatreader.ExpatParser.flush
 zipfile.ZipInfo.__slots__
 
@@ -68,8 +64,6 @@ email._header_value_parser.make_parenthesis_pairs
 html.parser.HTMLParser.__init__ # parameter `scripting`
 pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
 pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
-xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
-xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
 
 
 # =============================================================

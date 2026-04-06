@@ -1,9 +1,11 @@
-from _typeshed import Incomplete
-from typing import TypeVar
+from _typeshed import Incomplete, SupportsWrite
+from collections.abc import Iterable
+from typing_extensions import Never
 
 from pygments.formatter import Formatter
+from pygments.token import _TokenType
 
-_T = TypeVar("_T", str, bytes)
+__all__ = ["ImageFormatter", "GifImageFormatter", "JpgImageFormatter", "BmpImageFormatter"]
 
 class PilNotAvailable(ImportError): ...
 class FontNotFound(Exception): ...
@@ -20,11 +22,7 @@ class FontManager:
     def get_font(self, bold, oblique): ...
     def get_style(self, style): ...
 
-class ImageFormatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
-    unicodeoutput: bool
+class ImageFormatter(Formatter[bytes]):
     default_image_format: str
     encoding: str
     styles: Incomplete
@@ -47,23 +45,14 @@ class ImageFormatter(Formatter[_T]):
     hl_lines: Incomplete
     hl_color: Incomplete
     drawables: Incomplete
-    def get_style_defs(self, arg: str = "") -> None: ...
-    def format(self, tokensource, outfile) -> None: ...
+    def get_style_defs(self, arg: str = "") -> Never: ...
+    def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[bytes]) -> None: ...
 
-class GifImageFormatter(ImageFormatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
+class GifImageFormatter(ImageFormatter):
     default_image_format: str
 
-class JpgImageFormatter(ImageFormatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
+class JpgImageFormatter(ImageFormatter):
     default_image_format: str
 
-class BmpImageFormatter(ImageFormatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
+class BmpImageFormatter(ImageFormatter):
     default_image_format: str

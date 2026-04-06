@@ -52,22 +52,6 @@ gevent.pywsgi.Environ.iteritems
 # it's not necessary for public API
 gevent.hub.Waiter.switch_args
 
-# these may be gevent extensions or methods for backwards compatibility
-# for now we're fine with pretending it's not there
-gevent.socket.SocketType.__enter__
-gevent.socket.SocketType.__exit__
-gevent.socket.SocketType.accept
-gevent.socket.SocketType.closed
-gevent.socket.SocketType.dup
-gevent.socket.SocketType.get_inheritable
-gevent.socket.SocketType.makefile
-gevent.socket.SocketType.sendfile
-gevent.socket.SocketType.set_inheritable
-
-# Pretends to re-export a type marked @disjoint_base in the stubs, but runtime
-# defines __slots__
-gevent.socket.SocketType$
-
 # zope.interface related attributes we can ignore
 gevent.[\w\.]+\.__implemented__
 gevent.[\w\.]+\.__providedBy__
@@ -83,22 +67,6 @@ gevent.ssl.errno
 gevent.ssl.os
 gevent.ssl.warnings
 gevent\.subprocess\._[A-Za-z0-9]\w*
-
-# gevent implements its own Popen which doesn't completely match the original
-# API, for now we ignore this discrepancy
-gevent.subprocess.Popen.rawlink
-gevent.subprocess.Popen.__del__
-
-# Error: is not present at runtime
-# =============================
-# Due to the way gevent copies globals from other modules, there's a few symbols
-# that may not end up in the module, that would otherwise end up there with a
-# `from x import *`. None of these seem critical, so we ignore them. For socket
-# we ignore all constants that start with at least one segment of all uppercase
-# letters before the underscore
-gevent\.socket\.[A-Z0-9]+(_\w+)?
-gevent.ssl.PROTOCOL_SSLv2
-gevent.ssl.PROTOCOL_SSLv3
 
 # Error: differs from runtime type
 # ======================
@@ -140,9 +108,6 @@ gevent._abstract_linkable.AbstractLinkable.rawlink
 gevent._abstract_linkable.AbstractLinkable.unlink
 
 # removed undocumented arguments for internal use
-gevent.Greenlet.link
-gevent.Greenlet.link_exception
-gevent.Greenlet.link_value
 gevent.greenlet.Greenlet.link
 gevent.greenlet.Greenlet.link_exception
 gevent.greenlet.Greenlet.link_value
@@ -158,36 +123,7 @@ gevent.pywsgi.WSGIHandler.__init__
 # we're fine with holding the geven implemenation to the same restrictions
 # additionally there's some functions with additional optional arguments, that
 # we are fine with ignoring for now as well
-gevent.socket.SocketType.bind
-gevent.socket.SocketType.connect
-gevent.socket.SocketType.connect_ex
-gevent.socket.SocketType.send
-gevent.socket.SocketType.sendall
-gevent.socket.SocketType.setblocking
-gevent.socket.SocketType.settimeout
-gevent.socket.SocketType.shutdown
 gevent.socket.cancel_wait
-gevent.socket.gethostbyaddr
-gevent.socket.gethostbyname
-gevent.socket.gethostbyname_ex
-gevent.socket.getnameinfo
-gevent.socket.socket.closed
-gevent.socket.wait_readwrite
-gevent.socket.wait_write
-gevent.socket.socket.__slots__
-
-# we have punted on ssl, the gevent version of these functions have an additional
-# argument for timeouts/blocking and there are some with different default values
-# for nbytes/length, for now we ignore that fact
-gevent.ssl.SSLSocket.__init__
-gevent.ssl.SSLSocket.do_handshake
-gevent.ssl.SSLSocket.read
-gevent.ssl.SSLSocket.send
-gevent.ssl.get_server_certificate
-
-# we have punted on subprocess, the gevent version has slightly different arguments
-# for now we ignore that fact, most of the ways to call Popen should be compatible
-gevent.subprocess.Popen.__init__
 
 # gevent overwrites with a named parameter for fd, but we're fine with only
 # supporting the API of the superclass

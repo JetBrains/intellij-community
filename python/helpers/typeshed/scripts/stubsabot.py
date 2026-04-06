@@ -844,24 +844,20 @@ def get_update_pr_body(update: Update, metadata: Mapping[str, Any]) -> str:
     stubtest_settings: dict[str, Any] = metadata.get("tool", {}).get("stubtest", {})
     stubtest_will_run = not stubtest_settings.get("skip", False)
     if stubtest_will_run:
-        body += textwrap.dedent(
-            """
+        body += textwrap.dedent("""
 
             If stubtest fails for this PR:
             - Leave this PR open (as a reminder, and to prevent stubsabot from opening another PR)
             - Fix stubtest failures in another PR, then close this PR
 
             Note that you will need to close and re-open the PR in order to trigger CI
-            """
-        )
+            """)
     else:
-        body += textwrap.dedent(
-            f"""
+        body += textwrap.dedent(f"""
 
             :warning: Review this PR manually, as stubtest is skipped in CI for {update.distribution}!
             Also check whether stubtest can be reenabled. :warning:
-            """
-        )
+            """)
     return body
 
 

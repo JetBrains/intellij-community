@@ -8,12 +8,6 @@
 # =========
 
 # The "loop" argument exists at runtime, but raises TypeError if you try to provide any value for it
-asyncio.BoundedSemaphore.__init__
-asyncio.Condition.__init__
-asyncio.Event.__init__
-asyncio.Lock.__init__
-asyncio.Queue.__init__
-asyncio.Semaphore.__init__
 asyncio.locks.BoundedSemaphore.__init__
 asyncio.locks.Condition.__init__
 asyncio.locks.Event.__init__
@@ -24,6 +18,9 @@ asyncio.queues.Queue.__init__
 _random.Random.__init__  # Issues with __new__/__init__ correspondence
 
 bdb.Breakpoint.clearBreakpoints  # Exists at runtime, but missing from stubs
+
+# Only exists for an error message.
+typing_extensions.NewType.__mro_entries__
 
 
 # ============
@@ -59,6 +56,7 @@ tempfile.SpooledTemporaryFile.writable
 tkinter.Tk.split  # Exists at runtime, but missing from stubs
 typing._SpecialForm.__mro_entries__  # Exists at runtime, but missing from stubs
 
+typing_extensions.LiteralString
 # Will always raise. Not included to avoid type checkers inferring that
 # Sentinel instances are callable.
 typing_extensions.Sentinel.__call__
@@ -72,7 +70,6 @@ enum.Enum._generate_next_value_
 importlib.abc.Finder.find_module
 urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
 xml.etree.ElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
-xml.etree.cElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
 
 
 # =======
@@ -112,6 +109,14 @@ tkinter.tix.ScrolledWindow
 tkinter.tix.Shell
 tkinter.tix.TclVersion
 tkinter.tix.TkVersion
+
+# Details of runtime definition don't need to be in stubs
+typing_extensions\.ParamSpec.*
+typing_extensions\.TypeVar.*
+
+# These are typing._SpecialGenericAlias at runtime, which is not a real type, but it
+# behaves like one in most cases
+typing(_extensions)?\.(Async)?ContextManager
 
 
 # =======
@@ -222,7 +227,6 @@ cgi.FieldStorage.skip_lines
 ctypes._endian.DEFAULT_MODE  # Incorrectly star import.
 ctypes._endian.RTLD_GLOBAL  # Incorrectly star import.
 ctypes._endian.RTLD_LOCAL  # Incorrectly star import.
-multiprocessing.dummy.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
 
 # These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
 # But have more precise (accurate) signatures in the stub
@@ -252,5 +256,3 @@ typing\.Annotated  # Super-special typing primitive
 # These methods have no default implementation for Python < 3.13.
 _pickle.Pickler.persistent_id
 _pickle.Unpickler.persistent_load
-pickle.Pickler.persistent_id
-pickle.Unpickler.persistent_load

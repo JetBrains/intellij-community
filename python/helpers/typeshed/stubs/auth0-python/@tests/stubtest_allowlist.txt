@@ -5,6 +5,3 @@ auth0\.test.*
 # The way these stubs are currently implemented is that we pretend all classes have async methods
 # Even though in reality, users need to call `auth0.asyncify.asyncify` to generate async subclasses
 auth0\..*_async
-
-# Inconsistently implemented, ommitted
-auth0\.management\.Auth0\..*

@@ -1,14 +1,15 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsWrite
+from collections.abc import Iterable
 from typing import TypeVar
 
 from pygments.formatter import Formatter
+from pygments.token import _TokenType
 
 _T = TypeVar("_T", str, bytes)
 
+__all__ = ["SvgFormatter"]
+
 class SvgFormatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
     nowrap: Incomplete
     fontfamily: Incomplete
     fontsize: Incomplete
@@ -20,4 +21,4 @@ class SvgFormatter(Formatter[_T]):
     linenostart: Incomplete
     linenostep: Incomplete
     linenowidth: Incomplete
-    def format_unencoded(self, tokensource, outfile) -> None: ...
+    def format_unencoded(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[str]) -> None: ...

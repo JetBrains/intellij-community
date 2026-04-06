@@ -61,7 +61,7 @@ jobs:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
       - name: Run pyright on typeshed
-        uses: jakebailey/pyright-action@v2
+        uses: jakebailey/pyright-action@v3
         with:
           version: PATH
           python-platform: ${{ matrix.python-platform }}

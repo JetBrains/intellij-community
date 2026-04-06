@@ -6,13 +6,6 @@ authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.description
 authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.name
 authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.description
 authlib.jose.drafts._jwe_enc_cryptography.C20PEncAlgorithm.name
-authlib.jose.rfc7518.AESAlgorithm.description
-authlib.jose.rfc7518.AESAlgorithm.name
-authlib.jose.rfc7518.ECDHESAlgorithm.description
-authlib.jose.rfc7518.ECDHESAlgorithm.name
-authlib.jose.rfc7518.CBCHS2EncAlgorithm.CEK_SIZE
-authlib.jose.rfc7518.CBCHS2EncAlgorithm.description
-authlib.jose.rfc7518.CBCHS2EncAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.AESAlgorithm.description
 authlib.jose.rfc7518.jwe_algs.AESAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.AESGCMAlgorithm.description
@@ -37,20 +30,6 @@ authlib.jose.rfc7518.jws_algs.RSAPSSAlgorithm.description
 authlib.jose.rfc7518.jws_algs.RSAPSSAlgorithm.name
 
 # Methods whose *args and **kwargs arguments are added dynamically due to the @hooked decorator:
-authlib.oauth2.rfc6749.AuthorizationCodeGrant.create_token_response
-authlib.oauth2.rfc6749.AuthorizationCodeGrant.validate_token_request
-authlib.oauth2.rfc6749.AuthorizationEndpointMixin.validate_consent_request
-authlib.oauth2.rfc6749.ClientCredentialsGrant.create_token_response
-authlib.oauth2.rfc6749.ImplicitGrant.validate_authorization_request
-authlib.oauth2.rfc6749.RefreshTokenGrant.create_token_response
-authlib.oauth2.rfc6749.ResourceOwnerPasswordCredentialsGrant.create_token_response
-authlib.oauth2.rfc6749.grants.AuthorizationCodeGrant.create_token_response
-authlib.oauth2.rfc6749.grants.AuthorizationCodeGrant.validate_token_request
-authlib.oauth2.rfc6749.grants.AuthorizationEndpointMixin.validate_consent_request
-authlib.oauth2.rfc6749.grants.ClientCredentialsGrant.create_token_response
-authlib.oauth2.rfc6749.grants.ImplicitGrant.validate_authorization_request
-authlib.oauth2.rfc6749.grants.RefreshTokenGrant.create_token_response
-authlib.oauth2.rfc6749.grants.ResourceOwnerPasswordCredentialsGrant.create_token_response
 authlib.oauth2.rfc6749.grants.authorization_code.AuthorizationCodeGrant.create_token_response
 authlib.oauth2.rfc6749.grants.authorization_code.AuthorizationCodeGrant.validate_token_request
 authlib.oauth2.rfc6749.grants.base.AuthorizationEndpointMixin.validate_consent_request
@@ -58,10 +37,7 @@ authlib.oauth2.rfc6749.grants.client_credentials.ClientCredentialsGrant.create_t
 authlib.oauth2.rfc6749.grants.implicit.ImplicitGrant.validate_authorization_request
 authlib.oauth2.rfc6749.grants.refresh_token.RefreshTokenGrant.create_token_response
 authlib.oauth2.rfc6749.grants.resource_owner_password_credentials.ResourceOwnerPasswordCredentialsGrant.create_token_response
-authlib.oauth2.rfc8628.DeviceCodeGrant.create_token_response
 authlib.oauth2.rfc8628.device_code.DeviceCodeGrant.create_token_response
-authlib.oidc.core.OpenIDImplicitGrant.validate_consent_request
-authlib.oidc.core.grants.OpenIDImplicitGrant.validate_consent_request
 authlib.oidc.core.grants.implicit.OpenIDImplicitGrant.validate_consent_request
 
 # Exclude integrations dirs

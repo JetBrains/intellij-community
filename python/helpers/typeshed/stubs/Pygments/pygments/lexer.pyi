@@ -1,24 +1,41 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Iterator, Sequence
-from re import RegexFlag
-from typing import ClassVar
+from re import Pattern, RegexFlag
+from typing import ClassVar, Final
 
 from pygments.token import _TokenType
 from pygments.util import Future
 
+__all__ = [
+    "Lexer",
+    "RegexLexer",
+    "ExtendedRegexLexer",
+    "DelegatingLexer",
+    "LexerContext",
+    "include",
+    "inherit",
+    "bygroups",
+    "using",
+    "this",
+    "default",
+    "words",
+    "line_re",
+]
+
+line_re: Final[Pattern[str]]
+
 class LexerMeta(type):
     def __new__(cls, name, bases, d): ...
-    def analyse_text(self, text: str) -> float: ...  # actually defined in class Lexer
-    # ClassVars of Lexer, but same situation as with StyleMeta and Style
-    name: str
-    aliases: Sequence[str]  # not intended mutable
-    filenames: Sequence[str]
-    alias_filenames: Sequence[str]
-    mimetypes: Sequence[str]
-    priority: float
-    url: str | None
 
 class Lexer(metaclass=LexerMeta):
+    name: ClassVar[str]  # Set to None, but always overridden with a non-None value in subclasses.
+    aliases: ClassVar[Sequence[str]]  # not intended to be mutable
+    filenames: ClassVar[Sequence[str]]
+    alias_filenames: ClassVar[Sequence[str]]
+    mimetypes: ClassVar[Sequence[str]]
+    priority: ClassVar[float]
+    url: ClassVar[str]  # Set to None, but always overridden with a non-None value in subclasses.
+    version_added: ClassVar[str]  # Set to None, but always overridden with a non-None value in subclasses.
     options: Incomplete
     stripnl: Incomplete
     stripall: Incomplete
@@ -28,6 +45,8 @@ class Lexer(metaclass=LexerMeta):
     filters: Incomplete
     def __init__(self, **options) -> None: ...
     def add_filter(self, filter_, **options) -> None: ...
+    @staticmethod  # @staticmethod added by special handling in metaclass
+    def analyse_text(text: str) -> float: ...
     def get_tokens(self, text: str, unfiltered: bool = False) -> Iterator[tuple[_TokenType, str]]: ...
     def get_tokens_unprocessed(self, text: str) -> Iterator[tuple[int, _TokenType, str]]: ...
 

@@ -1,14 +1,15 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsWrite
+from collections.abc import Iterable
 from typing import TypeVar
 
 from pygments.formatter import Formatter
+from pygments.token import _TokenType
 
 _T = TypeVar("_T", str, bytes)
 
+__all__ = ["HtmlFormatter"]
+
 class HtmlFormatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
     title: Incomplete
     nowrap: Incomplete
     noclasses: Incomplete
@@ -39,4 +40,4 @@ class HtmlFormatter(Formatter[_T]):
     def get_linenos_style_defs(self): ...
     def get_css_prefix(self, arg): ...
     def wrap(self, source): ...
-    def format_unencoded(self, tokensource, outfile) -> None: ...
+    def format_unencoded(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[str]) -> None: ...

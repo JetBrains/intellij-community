@@ -9,6 +9,7 @@
         // test cases use a custom pyrightconfig file
         "**/@tests/test_cases",
         "stdlib/__main__.pyi",
+        "stdlib/_operator.pyi",
         "stdlib/_tkinter.pyi",
         "stdlib/distutils/cmd.pyi",
         "stdlib/distutils/command",
@@ -16,6 +17,7 @@
         "stdlib/encodings/__init__.pyi",
         "stdlib/lib2to3/fixes/*.pyi",
         "stdlib/numbers.pyi",
+        "stdlib/operator.pyi",
         "stdlib/tkinter/__init__.pyi",
         "stdlib/tkinter/dialog.pyi",
         "stdlib/tkinter/filedialog.pyi",

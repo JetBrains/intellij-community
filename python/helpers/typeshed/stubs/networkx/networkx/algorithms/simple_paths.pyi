@@ -23,7 +23,7 @@ def shortest_simple_paths(
     source: _Node,
     target: _Node,
     weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = None,
-) -> Generator[list[_Node], None, None]: ...
+) -> Generator[list[_Node]]: ...
 
 class PathBuffer:
     paths: Incomplete

@@ -1,6 +1,6 @@
 version = "25.2.*"
 upstream_repository = "https://github.com/carltongibson/django-filter/"
-requires = ["django-stubs"]
+dependencies = ["django-stubs"]
 
 [tool.stubtest]
 mypy_plugins = ["mypy_django_plugin.main"]

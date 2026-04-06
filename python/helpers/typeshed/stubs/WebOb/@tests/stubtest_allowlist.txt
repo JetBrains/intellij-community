@@ -95,7 +95,6 @@ webob.response.ResponseBodyFile.close
 # Error: is inconsistent
 # ======================
 # set_cookie has a deprecated argument `expires` which has been removed upstream
-webob.Response.set_cookie
 webob.response.Response.set_cookie
 
 # These are here due to the slightly more strict nature of the type annotation

@@ -1,5 +1,5 @@
-from collections.abc import Iterator, Mapping, Set as AbstractSet
-from typing import TypedDict, type_check_only
+from collections.abc import Iterator, Mapping, Sequence, Set as AbstractSet
+from typing import ClassVar, TypedDict, type_check_only
 
 from pygments.token import _TokenType
 
@@ -26,19 +26,15 @@ class StyleMeta(type):
     def list_styles(cls) -> list[tuple[_TokenType, _StyleDict]]: ...
     def __iter__(cls) -> Iterator[tuple[_TokenType, _StyleDict]]: ...
     def __len__(cls) -> int: ...
-    # These are a bit tricky.
-    # Technically should be ClassVar in class Style.
-    # But then we can't use StyleMeta to denote a style class.
-    # We need that because Type[Style] is not iterable, for example.
-    background_color: str
-    highlight_color: str
-    line_number_color: str
-    line_number_background_color: str
-    line_number_special_color: str
-    line_number_special_background_color: str
-    styles: Mapping[_TokenType, str]  # not intended to be mutable
-    name: str
-    aliases: list[str]
-    web_style_gallery_exclude: bool
 
-class Style(metaclass=StyleMeta): ...
+class Style(metaclass=StyleMeta):
+    background_color: ClassVar[str]
+    highlight_color: ClassVar[str]
+    line_number_color: ClassVar[str]
+    line_number_background_color: ClassVar[str]
+    line_number_special_color: ClassVar[str]
+    line_number_special_background_color: ClassVar[str]
+    styles: ClassVar[Mapping[_TokenType, str]]  # not intended to be mutable
+    name: ClassVar[str]
+    aliases: ClassVar[Sequence[str]]  # not intended to be mutable
+    web_style_gallery_exclude: ClassVar[bool]

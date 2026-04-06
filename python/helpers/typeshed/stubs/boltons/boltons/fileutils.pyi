@@ -51,7 +51,7 @@ def iter_find_files(
     ignored: str | Iterable[str] | None = None,
     include_dirs: bool = False,
     max_depth: int | None = None,
-) -> Generator[str, None, None]: ...
+) -> Generator[str]: ...
 @overload
 def copy_tree(
     src: _StrPathT, dst: _StrPathT, symlinks: bool = False, ignore: Callable[[_StrPathT, list[str]], Iterable[str]] | None = None

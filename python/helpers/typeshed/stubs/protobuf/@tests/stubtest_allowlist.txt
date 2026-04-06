@@ -26,9 +26,6 @@ google.protobuf.descriptor.ServiceDescriptor.__new__
 # It's a hack - just allow it.
 google.protobuf.internal.containers.BaseContainer.__hash__
 
-# Metaclass differs:
-google.protobuf.descriptor.OneofDescriptor
-
 # Runtime does not have __iter__ (yet...): hack in spirit of https://github.com/python/typeshed/issues/7813
 google.protobuf.internal.well_known_types.ListValue.__iter__
 

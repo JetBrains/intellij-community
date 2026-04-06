@@ -16,7 +16,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node], None, None]: ...
+) -> Generator[tuple[_Node, _Node]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -25,7 +25,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, dict[str, Incomplete]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, dict[str, Incomplete]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -34,7 +34,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, dict[str, Incomplete]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, dict[str, Incomplete]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -43,7 +43,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default: _U | None = None,
-) -> Generator[tuple[_Node, _Node, dict[str, _U]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, dict[str, _U]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -52,7 +52,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default: _U | None = None,
-) -> Generator[tuple[_Node, _Node, dict[str, _U]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, dict[str, _U]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -61,7 +61,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, int], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -70,7 +70,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, int], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -79,7 +79,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, int, dict[str, Incomplete]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int, dict[str, Incomplete]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -88,7 +88,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default=None,
-) -> Generator[tuple[_Node, _Node, int, dict[str, Incomplete]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int, dict[str, Incomplete]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -97,7 +97,7 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default: _U | None = None,
-) -> Generator[tuple[_Node, _Node, int, dict[str, _U]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int, dict[str, _U]]]: ...
 @overload
 def edge_boundary(
     G: Graph[_Node],
@@ -106,6 +106,6 @@ def edge_boundary(
     data=False,
     keys: bool = False,
     default: _U | None = None,
-) -> Generator[tuple[_Node, _Node, int, dict[str, _U]], None, None]: ...
+) -> Generator[tuple[_Node, _Node, int, dict[str, _U]]]: ...
 @_dispatchable
 def node_boundary(G: Graph[_Node], nbunch1: Iterable[Incomplete], nbunch2: Iterable[Incomplete] | None = None) -> set[_Node]: ...

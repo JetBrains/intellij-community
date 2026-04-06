@@ -186,14 +186,12 @@ def main() -> None:
         print("pre-commit", _SUCCESS)
     else:
         print("pre-commit", _FAILED)
-        print(
-            """\
+        print("""\
   Check the output of pre-commit for more details.
   This could mean that there's a lint failure on your code,
   but could also just mean that one of the pre-commit tools
   applied some autofixes. If the latter, you may want to check
-  that the autofixes did sensible things."""
-        )
+  that the autofixes did sensible things.""")
     print("Check structure:", _SUCCESS if check_structure_result.returncode == 0 else _FAILED)
     if pyright_skipped:
         print("Pyright:", _SKIPPED)

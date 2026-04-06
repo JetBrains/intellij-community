@@ -8,4 +8,4 @@ it is no longer included with `types-setuptools`.
 [tool.stubtest]
 # darwin is equivalent to linux for OS-specific methods
 ci_platforms = ["linux", "win32"]
-stubtest_requirements = ["tomli"]
+stubtest_dependencies = ["tomli"]

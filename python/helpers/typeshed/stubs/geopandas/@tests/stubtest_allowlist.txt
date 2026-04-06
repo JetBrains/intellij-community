@@ -14,6 +14,11 @@ geopandas\.(geodataframe\.)?GeoDataFrame\.plot
 geopandas\.io\._geoarrow
 geopandas\._exports
 
+# stub parameter differs from runtime parameter "self"
+geopandas.geodataframe.GeoDataFrame.explore
+geopandas.geoseries.GeoSeries.explore
+geopandas.geoseries.GeoSeries.plot
+
 # Inconsistent (TODO)
 geopandas\.(geoseries\.)?GeoSeries\.apply
 geopandas\.(geoseries\.)?GeoSeries\.fillna

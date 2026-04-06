@@ -15,11 +15,11 @@ class SSHSocket(socket.socket):
     user: str | None
     proc: subprocess.Popen[bytes] | None
     def __init__(self, host: str) -> None: ...
-    def connect(self, **kwargs) -> None: ...  # type:ignore[override]
-    def sendall(self, data) -> None: ...  # type:ignore[override]
-    def send(self, data): ...  # type:ignore[override]
-    def recv(self, n): ...  # type:ignore[override]
-    def makefile(self, mode): ...  # type:ignore[override]
+    def connect(self, **kwargs) -> None: ...  # type: ignore[override]
+    def sendall(self, data) -> None: ...  # type: ignore[override]
+    def send(self, data): ...  # type: ignore[override]
+    def recv(self, n): ...  # type: ignore[override]
+    def makefile(self, mode): ...  # type: ignore[override]
     def close(self) -> None: ...
 
 class SSHConnection(urllib3.connection.HTTPConnection):

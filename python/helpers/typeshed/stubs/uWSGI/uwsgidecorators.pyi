@@ -1,11 +1,12 @@
 from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeVarTuple, Unpack
 
 from uwsgi import _RPCCallable
 
 _T = TypeVar("_T")
 _T2 = TypeVar("_T2")
+_Ts = TypeVarTuple("_Ts")
 _SR = TypeVar("_SR", bound=Literal[0, -1, -2] | None)
 _SignalCallbackT = TypeVar("_SignalCallbackT", bound=Callable[[int], Any])
 _RPCCallableT = TypeVar("_RPCCallableT", bound=_RPCCallable)
@@ -166,13 +167,10 @@ class lock(Generic[_P, _T]):
     def __init__(self, f: Callable[_P, _T]) -> None: ...
     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _T: ...
 
-# FIXME: Technically this only allows positional arguments, but there is not really
-#        an adequate way yet to express this, once bound on ParamSpec does something
-#        we could probably enforce this
-class thread(Generic[_P, _T]):
-    f: Callable[_P, _T]
-    def __init__(self, f: Callable[_P, _T]) -> None: ...
-    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> Callable[_P, _T]: ...
+class thread(Generic[Unpack[_Ts], _T]):
+    f: Callable[[Unpack[_Ts]], _T]
+    def __init__(self, f: Callable[[Unpack[_Ts]], _T]) -> None: ...
+    def __call__(self, *args: Unpack[_Ts]) -> Callable[[Unpack[_Ts]], _T]: ...
 
 class harakiri:
     s: int

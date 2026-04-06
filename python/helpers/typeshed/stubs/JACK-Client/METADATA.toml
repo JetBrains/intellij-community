@@ -1,7 +1,7 @@
 version = "0.5.*"
 upstream_repository = "https://github.com/spatialaudio/jackclient-python"
 # Requires a version of numpy with a `py.typed` file
-requires = ["numpy>=1.20", "types-cffi"]
+dependencies = ["numpy>=1.20", "types-cffi"]
 
 [tool.stubtest]
 # darwin and win32 are equivalent

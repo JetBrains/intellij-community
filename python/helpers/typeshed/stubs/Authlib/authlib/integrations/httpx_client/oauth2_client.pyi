@@ -16,12 +16,12 @@ _Request: TypeAlias = Incomplete  # actual type is httpx.Request
 # Inherits from httpx.Auth
 class OAuth2Auth(TokenAuth):
     requires_request_body: bool
-    def auth_flow(self, request: _Request) -> Generator[_Request, _Response, None]: ...
+    def auth_flow(self, request: _Request) -> Generator[_Request, _Response]: ...
 
 # Inherits from httpx.Auth
 class OAuth2ClientAuth(ClientAuth):
     requires_request_body: bool
-    def auth_flow(self, request: _Request) -> Generator[_Request, _Response, None]: ...
+    def auth_flow(self, request: _Request) -> Generator[_Request, _Response]: ...
 
 # Inherits from httpx.AsyncClient
 class AsyncOAuth2Client(_OAuth2Client):

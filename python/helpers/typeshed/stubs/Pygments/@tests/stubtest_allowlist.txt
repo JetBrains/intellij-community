@@ -2,8 +2,22 @@
 pygments.lexer.LexerMeta.__new__
 pygments.style.StyleMeta.__new__
 
-# Defined in lexer classes, intended to be used as static method, but doesn't use @staticmethod
-pygments.lexer.LexerMeta.analyse_text
-
 # Inheriting from tuple is weird
 pygments.token._TokenType.__init__
+
+# Cannot import in stubtest (SystemExit: 2)
+pygments.__main__
+
+# Class attributes that are set to None in the base class, but are
+# always overridden with a non-None value in subclasses.
+pygments.lexer.Lexer.name
+pygments.lexer.Lexer.url
+pygments.lexer.Lexer.version_added
+
+# Class attributes that are set to None in the base class, but are
+# always overridden with a non-None value in subclasses.
+pygments.formatter.Formatter.name
+
+# Individual lexers and styles submodules are not stubbed at this time.
+pygments\.lexers\.(?!get_|find_|load_|guess_).*
+pygments\.styles\.(?!get_).*

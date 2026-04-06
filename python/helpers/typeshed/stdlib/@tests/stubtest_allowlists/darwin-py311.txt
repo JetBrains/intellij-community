@@ -39,8 +39,6 @@ email._header_value_parser.make_parenthesis_pairs
 html.parser.HTMLParser.__init__ # parameter `scripting`
 pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
 pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
-xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
-xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
 
 
 # ============

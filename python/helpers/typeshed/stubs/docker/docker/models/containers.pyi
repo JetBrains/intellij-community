@@ -345,7 +345,7 @@ class ContainerCollection(Collection[Container]):
         working_dir: str | None = None,
     ) -> Container: ...
     @override
-    def create(  # type:ignore[override]
+    def create(  # type: ignore[override]
         self,
         image: str | Image,
         command: str | list[str] | None = None,

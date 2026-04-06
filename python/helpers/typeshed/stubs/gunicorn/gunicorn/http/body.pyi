@@ -7,7 +7,7 @@ from gunicorn.http.unreader import Unreader
 
 class ChunkedReader:
     req: Request
-    parser: Generator[bytes, None, None] | None
+    parser: Generator[bytes] | None
     buf: io.BytesIO
 
     def __init__(self, req: Request, unreader: Unreader) -> None: ...

@@ -1,7 +1,7 @@
 version = "~=2.33.0"
 upstream_repository = "https://github.com/psf/requests"
 # requires a version of urllib3 with a py.typed file
-requires = ["urllib3>=2"]
+dependencies = ["urllib3>=2"]
 extra_description = """\
     Note: `types-requests` has required `urllib3>=2` since v2.31.0.7. \
     If you need to install `types-requests` into an environment \

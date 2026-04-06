@@ -5,7 +5,7 @@ from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
 
 @_dispatchable
-def flow_matrix_row(G: Graph[_Node], weight=None, dtype=..., solver: str = "lu") -> Generator[Incomplete, None, None]: ...
+def flow_matrix_row(G: Graph[_Node], weight=None, dtype=..., solver: str = "lu") -> Generator[Incomplete]: ...
 
 class InverseLaplacian:
     dtype: Incomplete

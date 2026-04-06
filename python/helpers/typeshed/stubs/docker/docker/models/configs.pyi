@@ -8,6 +8,6 @@ class Config(Model):
 
 class ConfigCollection(Collection[Config]):
     model: type[Config]
-    def create(self, **kwargs) -> Config: ...  # type:ignore[override]
+    def create(self, **kwargs) -> Config: ...  # type: ignore[override]
     def get(self, config_id: str) -> Config: ...
     def list(self, **kwargs) -> list[Config]: ...

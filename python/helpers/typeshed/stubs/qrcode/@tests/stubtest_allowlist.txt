@@ -8,7 +8,6 @@ qrcode\.tests\..*
 qrcode._types
 
 # Parameter "data" has unhelpful default value, which creates a QR code with string "None".
-qrcode\.make
 qrcode\.main\.make
 
 # Implementation has marked these methods as abstract without the class

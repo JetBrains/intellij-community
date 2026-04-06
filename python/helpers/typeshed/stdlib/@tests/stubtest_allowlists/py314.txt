@@ -3,7 +3,6 @@
 # =========================
 
 # Union and UnionType are aliases in 3.14 but type checkers need some changes
-typing_extensions.Union
 typing.Union
 types.UnionType.__class_getitem__
 types.UnionType.__mro_entries__
@@ -13,20 +12,17 @@ types.UnionType.__qualname__
 # Assigning `__new__` causes `func` not to get recognized.
 functools.partialmethod.__new__
 
-# decorator approximated by classmethod
+# Decorator approximated by classmethod
 concurrent.interpreters._crossinterp.classonly.*
+# Method using this decorator
+concurrent.interpreters._crossinterp.UnboundItem.singleton
 
 # object() sentinels at runtime represented by NewTypes in the stubs
 concurrent.interpreters._crossinterp.UNBOUND_ERROR
 concurrent.interpreters._crossinterp.UNBOUND_REMOVE
-concurrent.interpreters._queues.UNBOUND_ERROR
-concurrent.interpreters._queues.UNBOUND_REMOVE
-
-importlib.util.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
 
 # Condition functions are exported in __init__
 threading.Condition.locked
-multiprocessing.dummy.Condition.locked
 
 # Starting with Python 3.14.1, these methods accept None for some of their
 # parameters, but would raise a TypeError with Python 3.14.0.
@@ -53,6 +49,7 @@ types.SimpleNamespace.__delattr__
 # >= 3.11
 # =======
 
+# Only exists for an error message.
 typing.NewType.__mro_entries__
 
 
@@ -133,7 +130,6 @@ importlib.metadata.DeprecatedNonAbstract.__new__
 
 # Deprecated argument is supported at runtime by renaming it through a decorator.
 importlib.resources._common.files
-importlib.resources.files
 
 sys._monitoring  # Doesn't really exist. See comments in the stub.
 sys.last_exc  # not always defined
@@ -148,8 +144,6 @@ typing.TypeVarTuple.__mro_entries__
 # These exist at runtime because the protocol uses PEP-695 syntax in CPython
 typing.SupportsAbs.__type_params__
 typing.SupportsRound.__type_params__
-typing_extensions.SupportsAbs.__type_params__
-typing_extensions.SupportsRound.__type_params__
 
 
 # =============================================================

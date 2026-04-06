@@ -4,7 +4,6 @@
 
 # Please keep sorted alphabetically
 
-importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
 importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
 tkinter.simpledialog.[A-Z_]+
@@ -39,20 +38,6 @@ idlelib
 # Module members that exist at runtime, but are deliberately missing from stubs
 # =============================================================================
 
-_collections_abc.AsyncIterable.__class_getitem__
-_collections_abc.Awaitable.__class_getitem__
-_collections_abc.Container.__class_getitem__
-_collections_abc.Iterable.__class_getitem__
-_collections_abc.MappingView.__class_getitem__
-
-_collections_abc.Mapping.__reversed__  # set to None at runtime for a better error message
-
-# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
-_collections_abc.Set.__rand__
-_collections_abc.Set.__ror__
-_collections_abc.Set.__rsub__
-_collections_abc.Set.__rxor__
-
 # Undocumented implementation details of a deprecated class
 _frozen_importlib_external.WindowsRegistryFinder.DEBUG_BUILD
 _frozen_importlib_external.WindowsRegistryFinder.REGISTRY_KEY
@@ -79,14 +64,6 @@ email.contentmanager.set_text_content
 
 ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented #6154
 hmac.HMAC.blocksize  # use block_size instead
-
-# Undocumented implementation details of a deprecated class
-importlib._bootstrap_external.WindowsRegistryFinder.DEBUG_BUILD
-importlib._bootstrap_external.WindowsRegistryFinder.REGISTRY_KEY
-importlib._bootstrap_external.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
-importlib.machinery.WindowsRegistryFinder.DEBUG_BUILD
-importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY
-importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
 
 # Undocumented implementation details
 profile.Profile.dispatch
@@ -135,7 +112,6 @@ tkinter.Place.slaves
 
 turtle.ScrolledCanvas.adjustScrolls  # Undocumented implementation detail
 turtle.ScrolledCanvas.onResize  # Undocumented implementation detail
-typing_extensions.NewType.__mro_entries__  # just exists for an error message
 uuid.bytes_  # Attributes that are intended to be private
 uuid.int_  # Attributes that are intended to be private
 wave.Wave_read.initfp  # Undocumented implementation detail
@@ -180,50 +156,10 @@ sys.tracebacklimit  # Must be set first
 # Other allowlist entries that cannot or should not be fixed
 # ==========================================================
 
-# async at runtime, deliberately not in the stub, see #7491
-_collections_abc.AsyncGenerator.asend  # pos-only differences also
-_collections_abc.AsyncGenerator.__anext__
-_collections_abc.AsyncGenerator.aclose
-_collections_abc.AsyncGenerator.athrow  # pos-only differences also
-_collections_abc.AsyncIterator.__anext__
-
-# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
-_collections_abc.Coroutine.send
-_collections_abc.Coroutine.throw
-_collections_abc.Generator.send
-_collections_abc.Generator.throw
-
-# These are not positional-only at runtime, but we treat them as positional-only to match dict.
-_collections_abc.MutableMapping.pop
-_collections_abc.MutableMapping.setdefault
-
 # Pretend typing.ByteString is a Union, to better match its documented semantics.
 # As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
 # because it's not an ABC that makes any sense and was deprecated in 3.12
-_collections_abc\.ByteString
 typing\.ByteString
-
-_collections_abc.Callable  # Typing-related weirdness
-
-# While the implementation in _collections_abc.py uses positional-or-keyword args,
-# this is unsafe as canonical types list/dict/set etc. only support positional args.
-# See: https://github.com/python/typeshed/issues/14071
-# See: https://github.com/python/cpython/issues/135312
-_collections_abc.Mapping.get
-_collections_abc.MutableSequence.append
-_collections_abc.MutableSequence.extend
-_collections_abc.MutableSequence.insert
-_collections_abc.MutableSequence.pop
-_collections_abc.MutableSequence.remove
-_collections_abc.MutableSet.add
-_collections_abc.MutableSet.discard
-_collections_abc.MutableSet.remove
-_collections_abc.Sequence.count
-_collections_abc.Sequence.index
-_collections_abc.Set.isdisjoint
-_collections_abc.Set._from_iterable
-_collections_abc.ItemsView._from_iterable
-_collections_abc.KeysView._from_iterable
 
 _ctypes.CFuncPtr  # stubtest erroneously thinks it can't be subclassed
 
@@ -237,7 +173,6 @@ _frozen_importlib_external.FileLoader.load_module
 _markupbase.ParserBase.parse_comment
 _markupbase.ParserBase.parse_marked_section
 
-_pydecimal.*  # See comments in file
 _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
 argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
 
@@ -250,17 +185,12 @@ _?ast.expr.__init__
 _?ast.pattern.__init__
 _?ast.stmt.__init__
 
-_ast.ImportFrom.level  # None on the class, but never None on instances
-
 argparse.Namespace.__setattr__  # should allow setting any attribute
 
 ast.ImportFrom.level  # None on the class, but never None on instances
 ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796
 
 # Condition functions are exported in __init__
-asyncio.Condition.acquire
-asyncio.Condition.locked
-asyncio.Condition.release
 asyncio.locks.Condition.acquire
 asyncio.locks.Condition.locked
 asyncio.locks.Condition.release
@@ -285,7 +215,6 @@ codecs.StreamRecoder.\w+
 
 collections.UserList.index  # ignoring pos-or-keyword parameter
 collections.UserList.sort  # Runtime has *args but will error if any are supplied
-collections.abc.*  # Types are re-exported from _collections_abc, so errors should be fixed there
 configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attributes when custom converters are used
 configparser.SectionProxy.getboolean  # SectionProxy get functions are set in __init__
 configparser.SectionProxy.getfloat  # SectionProxy get functions are set in __init__
@@ -338,7 +267,6 @@ email.parser
 email.quoprimime
 email.utils
 
-email.policy.EmailPolicy.message_factory  # "type" at runtime, but protocol in stubs
 enum.auto.__or__  # enum.auto is magic, see comments
 enum.auto.__and__  # enum.auto is magic, see comments
 enum.auto.__xor__  # enum.auto is magic, see comments
@@ -355,13 +283,8 @@ imaplib.IMAP4_SSL.ssl  # Depends on the existence and flags of SSL
 importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
 
 # runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
-importlib._bootstrap_external.ExtensionFileLoader.get_filename
-importlib._bootstrap_external.FileLoader.get_filename
-importlib._bootstrap_external.FileLoader.get_resource_reader
-importlib._bootstrap_external.FileLoader.load_module
 importlib.abc.FileLoader.get_filename
 importlib.abc.FileLoader.load_module
-importlib.machinery.ExtensionFileLoader.get_filename
 
 importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
 
@@ -375,20 +298,6 @@ logging.LogRecord.__setattr__  # doesn't exist, but makes things easy if we pret
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
 mmap.mmap.__iter__
 mmap.mmap.__contains__
-
-multiprocessing.dummy.Condition.acquire  # Condition functions are exported in __init__
-multiprocessing.dummy.Condition.release  # Condition functions are exported in __init__
-
-# At runtime, these are functions from multiprocessing.context._default_context.
-# Typeshed makes them classes instead, which matches CPython documentation.
-# This has been heavily discussed, see #4266 for the primary issue about it.
-multiprocessing.JoinableQueue
-multiprocessing.Queue
-multiprocessing.SimpleQueue
-
-# A factory function that returns 'most efficient lock'.
-# Marking it as a function will make it impossible for users to use the Lock type as an annotation.
-multiprocessing.dummy.RLock
 
 # These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
 # But have more precise (accurate) signatures in the stub
@@ -437,15 +346,12 @@ os._wrap_close.writelines  # Methods that come from __getattr__() at runtime
 os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
 
 _pickle.Pickler.reducer_override  # Can be added by subclasses
-pickle.Pickler.reducer_override  # Can be added by subclasses
 pickle._Pickler\..*  # Best effort typing for undocumented internals
 pickle._Unpickler\..*  # Best effort typing for undocumented internals
 
-shutil.rmtree  # function with attributes, which we approximate with a callable protocol
 socketserver.BaseServer.get_request  # Not implemented, but expected to exist on subclasses.
 ssl.PROTOCOL_SSLv2  # Depends on the existence and flags of SSL
 ssl.PROTOCOL_SSLv3  # Depends on the existence and flags of SSL
-sys.implementation  # Actually SimpleNamespace but then you wouldn't have convenient attributes
 tarfile.TarFile.errors  # errors is initialized for some reason as None even though it really only accepts str
 tempfile._TemporaryFileWrapper.[\w_]+  # Dynamically specified by __getattr__, and thus don't exist on the class
 threading.Condition.acquire  # Condition functions are exported in __init__
@@ -503,8 +409,6 @@ typing\.Protocol
 typing(_extensions)?\._TypedDict
 typing(_extensions)?\.Any.*
 typing(_extensions)?\.TypedDict
-typing_extensions\.ParamSpec.*
-typing_extensions\.TypeVar.*
 
 # Special primitives
 typing(_extensions)?\.AbstractSet
@@ -523,17 +427,14 @@ typing(_extensions)?\.Iterator
 typing(_extensions)?\.KeysView
 typing(_extensions)?\.Mapping
 typing(_extensions)?\.MappingView
-typing(_extensions)?\.Match
 typing(_extensions)?\.MutableMapping
 typing(_extensions)?\.MutableSequence
 typing(_extensions)?\.MutableSet
 typing(_extensions)?\.NamedTuple
-typing(_extensions)?\.Pattern
 typing(_extensions)?\.Reversible
 typing(_extensions)?\.Sequence
 typing(_extensions)?\.Sized
 typing(_extensions)?\.ValuesView
-typing_extensions\.LiteralString
 
 # Typing-related weirdness
 typing._SpecialForm.__call__
@@ -549,10 +450,6 @@ typing(_extensions)?\.TextIO\.encoding
 typing(_extensions)?\.TextIO\.errors
 typing(_extensions)?\.TextIO\.line_buffering
 typing(_extensions)?\.TextIO\.newlines
-
-# These are typing._SpecialGenericAlias at runtime, which is not a real type, but it
-# behaves like one in most cases
-typing(_extensions)?\.(Async)?ContextManager
 
 # Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
@@ -580,7 +477,6 @@ unittest.runner._WritelnDecorator.flush  # Methods that come from __getattr__() 
 unittest.runner._WritelnDecorator.write  # Methods that come from __getattr__() at runtime
 urllib.response.addbase.write  # Methods that come from __getattr__() at runtime
 urllib.response.addbase.writelines  # Methods that come from __getattr__() at runtime
-unittest.mock.patch  # function with attributes, which we approximate with a callable class
 
 _?weakref\.CallableProxyType\.__getattr__  # Should have all attributes of proxy
 _?weakref\.(ref|ReferenceType)\.__init__  # C implementation has incorrect signature
@@ -599,14 +495,11 @@ xml.parsers  # __all__-related weirdness (see #6523)
 xml.sax  # __all__-related weirdness (see #6523)
 xml.dom.minidom.StringTypes  # Unnecessary re-export
 xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
-xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
 
 # Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
 xml.etree.ElementTree.Element.__iter__
-xml.etree.cElementTree.Element.__iter__
 
 # These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
 posixpath.join
 ntpath.join
-os.path.join

@@ -59,7 +59,7 @@ def optimize_graph_edit_distance(
     edge_del_cost: Callable[..., Incomplete] | None = None,
     edge_ins_cost: Callable[..., Incomplete] | None = None,
     upper_bound: float | None = None,
-) -> Generator[Incomplete, None, None]: ...
+) -> Generator[Incomplete]: ...
 @_dispatchable
 def optimize_edit_paths(
     G1: Graph[_Node],

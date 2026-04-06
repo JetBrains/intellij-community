@@ -3,7 +3,6 @@
 # These are methods and attributes that really should have been
 # prefixed with a `_`, since they should only really be used
 # internally
-fanstatic.Library.init_library_nr
 fanstatic.core.Asset.init_dependency_nr
 fanstatic.core.Library.init_library_nr
 
@@ -22,9 +21,6 @@ fanstatic.compiler.mtime
 # should really be abstract and instead defines some attributes as
 # None, even though all subclasses populate them, so these have been
 # made abstract to make defining correct subclasses more easy
-fanstatic.Group.depends
-fanstatic.Group.resources
-fanstatic.Group.supports
 fanstatic.core.Asset.depends
 fanstatic.core.Asset.resources
 fanstatic.core.Asset.supports
@@ -38,11 +34,6 @@ fanstatic.core.Group.supports
 # The API for Compiler has very much the same problem, so these are
 # some more attributes/methods that have been made abstract for the
 # purposes of type checking
-fanstatic.Compiler.name
-fanstatic.Compiler.source_extension
-fanstatic.Minifier.name
-fanstatic.Minifier.source_extension
-fanstatic.Minifier.target_extension
 fanstatic.compiler.CommandlineBase.command
 fanstatic.compiler.Compiler.name
 fanstatic.compiler.Compiler.source_extension
@@ -55,7 +46,6 @@ fanstatic.registry.Registry.ENTRY_POINT
 # This is only inconsistent because the library authors set this
 # attribute to `None` on the class, so they could assign a docstring
 # to it. `__init__` will always populate this attribute with a `str`
-fanstatic.Library.path
 fanstatic.core.Library.path
 
 # Error: variable differs from runtime type

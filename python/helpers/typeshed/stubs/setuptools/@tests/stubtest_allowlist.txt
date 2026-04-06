@@ -1,5 +1,4 @@
 # Is a functools.partial, so stubtest says "is not a function"
-setuptools.modified.newer_pairwise_group
 setuptools._distutils._modified.newer_pairwise_group
 
 # Runtime initializes to None, but this really should never be None when used

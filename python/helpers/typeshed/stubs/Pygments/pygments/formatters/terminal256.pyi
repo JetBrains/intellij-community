@@ -1,9 +1,13 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsWrite
+from collections.abc import Iterable
 from typing import TypeVar
 
 from pygments.formatter import Formatter
+from pygments.token import _TokenType
 
 _T = TypeVar("_T", str, bytes)
+
+__all__ = ["Terminal256Formatter", "TerminalTrueColorFormatter"]
 
 class EscapeSequence:
     fg: Incomplete
@@ -18,9 +22,6 @@ class EscapeSequence:
     def reset_string(self): ...
 
 class Terminal256Formatter(Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
     xterm_colors: Incomplete
     best_match: Incomplete
     style_string: Incomplete
@@ -28,10 +29,8 @@ class Terminal256Formatter(Formatter[_T]):
     useunderline: Incomplete
     useitalic: Incomplete
     linenos: Incomplete
-    def format(self, tokensource, outfile): ...
-    def format_unencoded(self, tokensource, outfile) -> None: ...
 
-class TerminalTrueColorFormatter(Terminal256Formatter[_T]):
-    name: str
-    aliases: Incomplete
-    filenames: Incomplete
+    def format(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[_T]) -> None: ...
+    def format_unencoded(self, tokensource: Iterable[tuple[_TokenType, str]], outfile: SupportsWrite[str]) -> None: ...
+
+class TerminalTrueColorFormatter(Terminal256Formatter[_T]): ...
