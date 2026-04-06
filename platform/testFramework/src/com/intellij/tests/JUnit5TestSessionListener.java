@@ -66,12 +66,10 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
   }
 
   private static class FirstAndLastInSuiteTestExecutionListener implements TestExecutionListener {
-    private static final String BOOTSTRAP_TESTS_SUITE_NAME = "com.intellij.tests.BootstrapTests";  // reuse existing mutes on TeamCity
     private static final String VINTAGE_UNIQUE_ID = UniqueId.forEngine("junit-vintage").toString();
 
     private final List<Throwable> caughtExceptions;
     private long suiteStarted = 0;
-    private boolean myReportAsBootstrapTestsSuite;
 
     private FirstAndLastInSuiteTestExecutionListener(List<Throwable> caughtExceptions) {
       this.caughtExceptions = caughtExceptions;
@@ -79,8 +77,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
 
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
-      myReportAsBootstrapTestsSuite = ContainerUtil.exists(testPlan.getRoots(), root -> root.getUniqueId().equals(VINTAGE_UNIQUE_ID) && !testPlan.getChildren(root).isEmpty());  // reuse existing mutes on TeamCity
-
       // same as _FirstInSuiteTest
       final String _FirstInSuiteTestPrefix = "_FirstInSuiteTest.";
       String testProcessName = System.getProperty("intellij.build.test.process.name", "");
@@ -205,7 +201,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
       catch (Throwable e) {
         caughtExceptions.add(e);
 
-        if (myReportAsBootstrapTestsSuite) System.out.printf("##teamcity[testSuiteStarted name='%s']%n", BOOTSTRAP_TESTS_SUITE_NAME);
         String escapedTestName = teamcityStdEscaper2(testName);
         System.out.printf("##teamcity[testStarted name='%s' captureStandardOutput='true']%n", escapedTestName);
 
@@ -215,7 +210,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
 
         long duration = System.nanoTime() - started;
         System.out.printf("##teamcity[testFinished name='%s' duration='%d']%n", escapedTestName, duration / 1_000_000);
-        if (myReportAsBootstrapTestsSuite) System.out.printf("##teamcity[testSuiteFinished name='%s']%n", BOOTSTRAP_TESTS_SUITE_NAME);
       }
     }
 

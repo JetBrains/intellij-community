@@ -18,7 +18,6 @@ import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
-import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.reporting.ReportEntry;
@@ -34,8 +33,9 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 import org.junit.vintage.engine.VintageTestEngine;
-import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
@@ -148,8 +148,7 @@ public final class JUnit5TeamCityRunner {
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      boolean reportAsBootstrapTestsSuite = args[0].equals("__classpathroot__");  // mask JUnit 3/4 suite names to preserve test identity on TeamCity
-      listener = isUnderTeamCity() ? new TCExecutionListener(reportAsBootstrapTestsSuite) : new ConsoleTestExecutionListener();
+      listener = isUnderTeamCity() ? new TCExecutionListener() : new ConsoleTestExecutionListener();
 
       if (LIST_CLASSES != null) {
         saveListOfTestClasses(testPlan);  // save only
@@ -468,10 +467,6 @@ public final class JUnit5TeamCityRunner {
     private static final String CLASS_CONFIGURATION = "Class Configuration";
     private final PrintStream myPrintStream;
 
-    private static final String BOOTSTRAP_TESTS_SUITE_NAME = "com.intellij.tests.BootstrapTests";
-    private static final String VINTAGE_UNIQUE_ID = UniqueId.forEngine(VintageTestDescriptor.ENGINE_ID).toString();
-    private boolean myReportAsBootstrapTestsSuite;
-
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
@@ -495,8 +490,7 @@ public final class JUnit5TeamCityRunner {
       }
     }
 
-    private TCExecutionListener(boolean reportAsBootstrapTestsSuite) {
-      myReportAsBootstrapTestsSuite = reportAsBootstrapTestsSuite;
+    private TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }
@@ -539,14 +533,7 @@ public final class JUnit5TeamCityRunner {
       }
       else if (hasNonTrivialParent(testIdentifier)) {
         myFinishCount = 0;
-        if (!myReportAsBootstrapTestsSuite) {
-          myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
-        }
-      }
-      else {  // root
-        if (myReportAsBootstrapTestsSuite && testIdentifier.getUniqueId().equals(VINTAGE_UNIQUE_ID)) {  // mask JUnit 3/4 suite names
-          myPrintStream.println(new TestSuiteStarted(BOOTSTRAP_TESTS_SUITE_NAME));
-        }
+        if (shouldReportAsTestSuite(testIdentifier)) myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
       }
     }
 
@@ -589,10 +576,13 @@ public final class JUnit5TeamCityRunner {
         myFinishCount++;
       }
       else if (hasNonTrivialParent(testIdentifier)) {
+        final boolean shouldReportAsTestSuite = shouldReportAsTestSuite(testIdentifier);
         if (status == TestExecutionResult.Status.FAILED) {
+          if (!shouldReportAsTestSuite) myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
           myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
           testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
           myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
+          if (!shouldReportAsTestSuite) myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
         }
         if (status != TestExecutionResult.Status.SUCCESSFUL) {
           final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
@@ -606,9 +596,7 @@ public final class JUnit5TeamCityRunner {
             myFinishCount = 0;
           }
         }
-        if (!myReportAsBootstrapTestsSuite) {
-          myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
-        }
+        if (shouldReportAsTestSuite) myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
         if (status == TestExecutionResult.Status.ABORTED) myCurrentTestStart = 1;  // mark ignored classes as #smthExecuted
       }
       else {
@@ -624,15 +612,26 @@ public final class JUnit5TeamCityRunner {
           myPrintStream.println(new TestFinished(testName, 0));
           myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
         }
-        if (myReportAsBootstrapTestsSuite && testIdentifier.getUniqueId().equals(VINTAGE_UNIQUE_ID)) {  // mask JUnit 3/4 suite names
-          myPrintStream.println(new TestSuiteFinished(BOOTSTRAP_TESTS_SUITE_NAME));
-          myReportAsBootstrapTestsSuite = false;  // don't mask JUnit 5 suite names
-        }
       }
     }
 
     private static boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
       return testIdentifier.getParentId().isPresent();
+    }
+
+    private static boolean shouldReportAsTestSuite(TestIdentifier testIdentifier) {
+      if (!(testIdentifier.getSource().orElse(null) instanceof ClassSource classSource)) return false;
+      Class<?> aClass = classSource.getJavaClass();
+
+      // JUnit 3
+      if (TestSuite.class.isAssignableFrom(aClass)) return true;
+
+      // JUnit 4
+      RunWith runWith = aClass.getAnnotation(RunWith.class);
+      if (runWith != null && Suite.class.isAssignableFrom(runWith.value())) return true;
+
+      // JUnit 5
+      return Arrays.stream(aClass.getAnnotations()).anyMatch(a -> "org.junit.platform.suite.api.Suite".equals(a.annotationType().getName()));
     }
 
     protected long getDuration() {
@@ -789,9 +788,6 @@ public final class JUnit5TeamCityRunner {
     }
 
     private String getTestNameForMetadata(TestIdentifier testIdentifier) {
-      if (myReportAsBootstrapTestsSuite) {
-        return BOOTSTRAP_TESTS_SUITE_NAME + ": " + getName(testIdentifier);
-      }
       boolean parentIsMethodSource = myTestPlan.getParent(testIdentifier)
         .flatMap(TestIdentifier::getSource)
         .filter(source -> source instanceof MethodSource)
