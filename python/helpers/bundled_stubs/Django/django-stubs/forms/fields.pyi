@@ -18,7 +18,7 @@ from typing_extensions import Self, override
 
 # Problem: attribute `widget` is always of type `Widget` after field instantiation.
 # However, on class level it can be set to `Type[Widget]` too.
-# If we annotate it as `Union[Widget, Type[Widget]]`, every code that uses field
+# If we annotate it as `Widget | Type[Widget]`, every code that uses field
 # instances will not typecheck.
 # If we annotate it as `Widget`, any widget subclasses that do e.g.
 # `widget = Select` will not typecheck.

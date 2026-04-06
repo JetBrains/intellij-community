@@ -1,8 +1,9 @@
 from collections.abc import Iterator, Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
+from django.db.models.query import _SupportsContains
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 _T = TypeVar("_T")
 
@@ -19,7 +20,7 @@ class ConnectionProxy(Generic[_T]):
 
 class ConnectionDoesNotExist(Exception): ...
 
-class BaseConnectionHandler(Generic[_T]):
+class BaseConnectionHandler(_SupportsContains[str], Generic[_T]):
     settings_name: str | None
     exception_class: type[Exception]
     thread_critical: bool

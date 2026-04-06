@@ -1,13 +1,14 @@
 from collections.abc import Iterator, Mapping, Sequence, Sized
-from typing import Any, ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic
 
 from django.db.models.fields import _ErrorMessagesDict
+from django.db.models.query import _SupportsContains
 from django.forms.forms import BaseForm, Form
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList, RenderableFormMixin, _DataT, _FilesT
 from django.forms.widgets import Media, MediaDefiningClass, Widget
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 TOTAL_FORM_COUNT: str
 INITIAL_FORM_COUNT: str
@@ -26,7 +27,7 @@ class ManagementForm(Form):
     @override
     def clean(self) -> dict[str, int | None]: ...
 
-class BaseFormSet(Sized, RenderableFormMixin, Generic[_F]):
+class BaseFormSet(_SupportsContains[_F], Sized, RenderableFormMixin, Generic[_F]):
     form: type[_F]
     extra: int
     can_order: bool

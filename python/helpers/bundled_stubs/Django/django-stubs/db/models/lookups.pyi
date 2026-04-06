@@ -10,7 +10,7 @@ from django.utils.datastructures import OrderedSet
 from django.utils.functional import cached_property
 from typing_extensions import override
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", default=Any)
 
 class Lookup(Expression, Generic[_T]):
     lookup_name: str | None

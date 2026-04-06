@@ -66,12 +66,12 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
 
     .. code:: python
 
-        from typing import Generic, Union
+        from typing import Generic
 
         class Model(object):
             ...
 
-        _SetType = Union[int, float]  # You can assign ints and floats
+        _SetType = int | float  # You can assign ints and floats
         _GetType = int  # access type is always `int`
 
         class IntField(object):
@@ -95,12 +95,12 @@ class Field(RegisterLookupMixin, Generic[_ST, _GT]):
 
         example = Example()
         reveal_type(example.count)
-        # Revealed type is "builtins.int"
+        # Revealed type is "int"
 
         example.count = 1.5  # ok
         example.count = 'a'
         # Incompatible types in assignment
-        # (expression has type "str", variable has type "Union[int, float]")
+        # (expression has type "str", variable has type "int | float")
 
     Notice, that this is not magic. This is how descriptors work with ``mypy``.
 
