@@ -21,9 +21,13 @@ import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
@@ -376,7 +380,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     }
 
     private fun verifyCompletion(gradleVersion: GradleVersion) {
-        verifyCompletion(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT)
+        verifyCompletion(gradleVersion, KOTLIN_JVM_PROJECT)
     }
 
     private fun String.unescape(): String = this
@@ -396,5 +400,15 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             implementation<colon>platform,
             implementation<colon>enforcedPlatform
         """
+
+        val KOTLIN_JVM_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-jvm-project") { gradleVersion ->
+            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                setProjectName("kotlin-jvm-project")
+            }
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                withKotlinJvmPlugin()
+            }
+            withFile("gradle/libs.versions.toml", "")
+        }
     }
 }

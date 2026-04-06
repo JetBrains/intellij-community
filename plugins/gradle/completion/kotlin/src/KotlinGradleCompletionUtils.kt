@@ -9,8 +9,8 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -82,19 +82,17 @@ private fun PsiElement.isOnTheTopLevelOfScriptBlockSimple(blockName: String): Bo
 }
 
 private fun PsiElement.isOnTheTopLevelOfScriptBlockDash(blockName: String): Boolean {
-    val pattern = psiElement().withSuperParent(
-        2, psiElement<KtBinaryExpression>() // spring-boot-starter-mail
-        .withParent(scriptBlockElementPattern(blockName))
-    )
+    val pattern = psiElement()
+        .withSuperParent(2, psiElement<KtBinaryExpression>()) // spring-boot-starter-mail
+        .withSuperParent(3, scriptBlockElementPattern(blockName))
 
     return pattern.accepts(this)
 }
 
 private fun PsiElement.isOnTheTopLevelOfScriptBlockDot(blockName: String): Boolean {
-    val pattern = psiElement().withSuperParent(
-        2, psiElement<KtDotQualifiedExpression>() // org.springframework.boot
-        .withParent(scriptBlockElementPattern(blockName))
-    )
+    val pattern = psiElement()
+        .withSuperParent(2, psiElement<KtDotQualifiedExpression>()) // org.springframework.boot
+        .withSuperParent(3, scriptBlockElementPattern(blockName))
 
     return pattern.accepts(this)
 }
@@ -183,13 +181,37 @@ internal fun PsiElement.isDependencyArgument(): Boolean {
     return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
 }
 
+
+internal fun PsiElement.isDependencyArgumentWithoutQuotes(): Boolean {
+    val refExpr = this.asSafely<LeafPsiElement>()
+        ?.parent.asSafely<KtNameReferenceExpression>() ?: return false
+
+    val valueArgument = if (refExpr.parent is KtDotQualifiedExpression) {
+        // implementation(libs.input.<caret>)
+        refExpr.parent.parent.asSafely<KtValueArgument>() ?: return false
+    } else {
+        // implementation(lib<caret>)
+        refExpr.parent.asSafely<KtValueArgument>() ?: return false
+    }
+    return valueArgument.isDependencyArgument()
+}
+
+internal fun KtValueArgument.isDependencyArgument(): Boolean {
+    val callExpression = this
+        .parent.asSafely<KtValueArgumentList>()
+        ?.parent.asSafely<KtCallExpression>() ?: return false
+    val callName = callExpression.calleeExpression?.text
+    return getConfigurationsForDependencies(this)
+        .contains(callName)
+}
+
 /**
  * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)
  * For older versions returns all configurations, even those that could not be used in the `dependencies { }` block.
  */
-internal fun getConfigurationsForDependencies(psiFile: PsiFile): List<String> {
-    val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return emptyList()
-    val extensionsData = GradleExtensionsSettings.getInstance(psiFile.project).getExtensionsFor(module) ?: return emptyList()
+internal fun getConfigurationsForDependencies(psiElement: PsiElement): List<String> {
+    val module = ModuleUtilCore.findModuleForPsiElement(psiElement) ?: return emptyList()
+    val extensionsData = GradleExtensionsSettings.getInstance(psiElement.project).getExtensionsFor(module) ?: return emptyList()
     val configurations = extensionsData.configurations.values
     return configurations
         .filter { it.canBeUsedInDependenciesBlock() }

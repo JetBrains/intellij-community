@@ -27,11 +27,16 @@ internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider
                 doAddCompletions(result, input, element, defaultSectionsFilter = setOf(VersionCatalogSection.PLUGINS))
 
             insideScriptBlockPattern(DEPENDENCIES).accepts(element) -> {
-                // dependencies { <caret> }
-                val defaultSections = setOf(VersionCatalogSection.LIBRARIES, VersionCatalogSection.BUNDLES)
-                doAddCompletions(result, input, element, defaultSectionsFilter = defaultSections)
-            }
+                when {
+                    element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> return
 
+                    // dependencies { implementation(<caret>) }
+                    element.isDependencyArgumentWithoutQuotes() -> {
+                        val defaultSections = setOf(VersionCatalogSection.LIBRARIES, VersionCatalogSection.BUNDLES)
+                        doAddCompletions(result, input, element, defaultSectionsFilter = defaultSections)
+                    }
+                }
+            }
             else ->
                 doAddCompletions(result, input, element)
         }
