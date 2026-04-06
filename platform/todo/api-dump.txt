@@ -53,9 +53,6 @@ a:com.intellij.ide.todo.TodoPanel
 - selectItem(com.intellij.psi.search.TodoItem):V
 - p:setDisplayName(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-f:com.intellij.ide.todo.TodoRemoteTreeHelper
-- sf:INSTANCE:com.intellij.ide.todo.TodoRemoteTreeHelper
-- sf:getNeighbourTreeNode(javax.swing.tree.DefaultMutableTreeNode,Z):javax.swing.tree.DefaultMutableTreeNode
 a:com.intellij.ide.todo.TodoTreeBuilder
 - com.intellij.openapi.Disposable
 - sf:NODE_DESCRIPTOR_COMPARATOR:java.util.Comparator
@@ -71,12 +68,14 @@ a:com.intellij.ide.todo.TodoTreeBuilder
 - getFiles(com.intellij.psi.PsiDirectory):java.util.Iterator
 - getFiles(com.intellij.psi.PsiDirectory,Z):java.util.Iterator
 - getFilesUnderDirectory(com.intellij.psi.PsiDirectory):java.util.Iterator
+- getFirstLeafForElement(java.lang.Object):com.intellij.ide.todo.nodes.LeafTodoItemNode
 - getFirstPointerForElement(java.lang.Object):com.intellij.ide.todo.nodes.TodoItemNode
 - getHighlighter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):com.intellij.openapi.editor.highlighter.EditorHighlighter
+- getLastLeafForElement(java.lang.Object):com.intellij.ide.todo.nodes.LeafTodoItemNode
 - getLastPointerForElement(java.lang.Object):com.intellij.ide.todo.nodes.TodoItemNode
 - pf:getModel():com.intellij.ui.tree.StructureTreeModel
-- getNextPointer(com.intellij.ide.todo.nodes.TodoItemNode):com.intellij.ide.todo.nodes.TodoItemNode
-- getPreviousPointer(com.intellij.ide.todo.nodes.TodoItemNode):com.intellij.ide.todo.nodes.TodoItemNode
+- getNextLeaf(com.intellij.ide.todo.nodes.LeafTodoItemNode):com.intellij.ide.todo.nodes.LeafTodoItemNode
+- getPreviousLeaf(com.intellij.ide.todo.nodes.LeafTodoItemNode):com.intellij.ide.todo.nodes.LeafTodoItemNode
 - pf:getProject():com.intellij.openapi.project.Project
 - p:getSearchHelper():com.intellij.psi.search.PsiTodoSearchHelper
 - pf:getTree():javax.swing.JTree
@@ -111,6 +110,10 @@ a:com.intellij.ide.todo.nodes.BaseToDoNode
 - contains(java.lang.Object):Z
 - a:getFileCount(java.lang.Object):I
 - a:getTodoItemCount(java.lang.Object):I
+com.intellij.ide.todo.nodes.LeafTodoItemNode
+- a:createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- a:getNavigationOffset():I
+- a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 f:com.intellij.ide.todo.nodes.ModuleToDoNode
 - com.intellij.ide.todo.nodes.BaseToDoNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module,com.intellij.ide.todo.TodoTreeBuilder):V
@@ -158,15 +161,19 @@ f:com.intellij.ide.todo.nodes.TodoFileNode
 f:com.intellij.ide.todo.nodes.TodoItemNode
 - com.intellij.ide.todo.nodes.BaseToDoNode
 - com.intellij.ide.todo.HighlightedRegionProvider
+- com.intellij.ide.todo.nodes.LeafTodoItemNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.todo.SmartTodoItemPointer,com.intellij.ide.todo.TodoTreeBuilder):V
 - canRepresent(java.lang.Object):Z
 - contains(java.lang.Object):Z
+- createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - getAdditionalLines():java.util.List
 - getChildren():java.util.Collection
 - getFileCount(com.intellij.ide.todo.SmartTodoItemPointer):I
 - getHighlightedRegions():java.util.List
+- getNavigationOffset():I
 - getTestPresentation():java.lang.String
 - getTodoItemCount(com.intellij.ide.todo.SmartTodoItemPointer):I
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - getWeight():I
 - update(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.todo.nodes.TodoTreeHelper

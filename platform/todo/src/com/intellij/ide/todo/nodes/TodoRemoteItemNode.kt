@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
 import com.intellij.ui.HighlightedRegion
 import com.intellij.usageView.UsageTreeColors
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +20,7 @@ class TodoRemoteItemNode(
   project: Project,
   value: Value,
   builder: TodoTreeBuilder
-) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder), HighlightedRegionProvider {
+) : BaseToDoNode<TodoRemoteItemNode.Value>(project, value, builder), LeafTodoItemNode, HighlightedRegionProvider {
 
   data class Value(
     val file: VirtualFile,
@@ -70,5 +71,20 @@ class TodoRemoteItemNode(
   override fun navigate(requestFocus: Boolean) {
     val v = value ?: return
     OpenFileDescriptor(project, v.file, v.navigationOffset).navigate(requestFocus)
+  }
+
+  override fun getVirtualFile(): VirtualFile {
+    val v = value
+    return v.file
+  }
+
+  override fun getNavigationOffset(): Int {
+    val v = value
+    return v.navigationOffset
+  }
+
+  override fun createNavigatable(project: Project): Navigatable {
+    val v = value
+    return OpenFileDescriptor(project, v.file, v.navigationOffset)
   }
 }

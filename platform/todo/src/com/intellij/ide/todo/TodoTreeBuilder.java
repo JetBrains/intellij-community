@@ -3,6 +3,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
@@ -38,6 +39,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -440,9 +442,9 @@ public abstract class TodoTreeBuilder implements Disposable {
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
-  public TodoItemNode getFirstPointerForElement(@Nullable Object element) {
-    if (element instanceof TodoItemNode) {
-      return (TodoItemNode)element;
+  public @Nullable LeafTodoItemNode getFirstLeafForElement(@Nullable Object element) {
+    if (element instanceof LeafTodoItemNode) {
+      return (LeafTodoItemNode)element;
     }
     else if (!(element instanceof AbstractTreeNode)) {
       return null;
@@ -453,22 +455,30 @@ public abstract class TodoTreeBuilder implements Disposable {
         return null;
       }
       Object firstChild = children[0];
-      if (firstChild instanceof TodoItemNode) {
-        return (TodoItemNode)firstChild;
+      if (firstChild instanceof LeafTodoItemNode) {
+        return (LeafTodoItemNode)firstChild;
       }
       else {
-        return getFirstPointerForElement(firstChild);
+        return getFirstLeafForElement(firstChild);
       }
     }
+  }
+
+  @Deprecated
+  public @Nullable TodoItemNode getFirstPointerForElement(@Nullable Object element) {
+    return ObjectUtils.tryCast(getFirstLeafForElement(element), TodoItemNode.class);
   }
 
   /**
    * @return last {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
-  public TodoItemNode getLastPointerForElement(Object element) {
-    if (element instanceof TodoItemNode) {
-      return (TodoItemNode)element;
+  public @Nullable LeafTodoItemNode getLastLeafForElement(@Nullable Object element) {
+    if (element instanceof LeafTodoItemNode) {
+      return (LeafTodoItemNode)element;
+    }
+    else if (!(element instanceof AbstractTreeNode)) {
+      return null;
     }
     else {
       Object[] children = getTodoTreeStructure().getChildElements(element);
@@ -476,13 +486,18 @@ public abstract class TodoTreeBuilder implements Disposable {
         return null;
       }
       Object firstChild = children[children.length - 1];
-      if (firstChild instanceof TodoItemNode) {
-        return (TodoItemNode)firstChild;
+      if (firstChild instanceof LeafTodoItemNode) {
+        return (LeafTodoItemNode)firstChild;
       }
       else {
-        return getLastPointerForElement(firstChild);
+        return getLastLeafForElement(firstChild);
       }
     }
+  }
+
+  @Deprecated
+  public @Nullable TodoItemNode getLastPointerForElement(Object element) {
+    return ObjectUtils.tryCast(getLastLeafForElement(element), TodoItemNode.class);
   }
 
   public final @NotNull Promise<?> updateTree() {
@@ -590,16 +605,16 @@ public abstract class TodoTreeBuilder implements Disposable {
    * @return next {@code TodoItem} for the passed {@code pointer}. Returns {@code null}
    * if the {@code pointer} is the last t.o.d.o item in the tree.
    */
-  public TodoItemNode getNextPointer(TodoItemNode pointer) {
-    Object sibling = getNextSibling(pointer);
+  public @Nullable LeafTodoItemNode getNextLeaf(LeafTodoItemNode leaf) {
+    Object sibling = getNextSibling(leaf);
     if (sibling == null) {
       return null;
     }
-    if (sibling instanceof TodoItemNode) {
-      return (TodoItemNode)sibling;
+    if (sibling instanceof LeafTodoItemNode) {
+      return (LeafTodoItemNode)sibling;
     }
     else {
-      return getFirstPointerForElement(sibling);
+      return getFirstLeafForElement(sibling);
     }
   }
 
@@ -636,16 +651,16 @@ public abstract class TodoTreeBuilder implements Disposable {
    * @return next {@code SmartTodoItemPointer} for the passed {@code pointer}. Returns {@code null}
    * if the {@code pointer} is the last t.o.d.o item in the tree.
    */
-  public TodoItemNode getPreviousPointer(TodoItemNode pointer) {
-    Object sibling = getPreviousSibling(pointer);
+  public @Nullable LeafTodoItemNode getPreviousLeaf(LeafTodoItemNode leaf) {
+    Object sibling = getPreviousSibling(leaf);
     if (sibling == null) {
       return null;
     }
-    if (sibling instanceof TodoItemNode) {
-      return (TodoItemNode)sibling;
+    if (sibling instanceof LeafTodoItemNode) {
+      return (LeafTodoItemNode)sibling;
     }
     else {
-      return getLastPointerForElement(sibling);
+      return getLastLeafForElement(sibling);
     }
   }
 

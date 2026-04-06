@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.SmartTodoItemPointer;
 import com.intellij.ide.todo.TodoTreeBuilder;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,6 +17,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
@@ -31,7 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements HighlightedRegionProvider {
+public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements LeafTodoItemNode, HighlightedRegionProvider {
   private static final Logger LOG = Logger.getInstance(TodoItem.class);
 
   public TodoItemNode(Project project,
@@ -165,6 +168,25 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
       ));
       myAdditionalLines.add(new AdditionalTodoLine(document.getText(new TextRange(lineStartNonWs, lineEnd)), highlights));
     }
+  }
+
+  @Override
+  public @NotNull VirtualFile getVirtualFile() {
+    SmartTodoItemPointer value = getValue();
+    assert value != null;
+    return value.getTodoItem().getFile().getVirtualFile();
+  }
+
+  @Override
+  public int getNavigationOffset() {
+    SmartTodoItemPointer value = getValue();
+    assert value != null;
+    return value.getRangeMarker().getStartOffset();
+  }
+
+  @Override
+  public @NotNull Navigatable createNavigatable(@NotNull Project project) {
+    return PsiNavigationSupport.getInstance().createNavigatable(project, getVirtualFile(), getNavigationOffset());
   }
 
   private static void collectHighlights(@NotNull List<? super HighlightedRegion> highlights, @NotNull EditorHighlighter highlighter,

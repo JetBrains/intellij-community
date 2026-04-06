@@ -162,7 +162,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     for (String string : strings) {
       assertNotNull(current);
       assertEquals(string, current.getTestPresentation());
-      current = all.getNextPointer(current);
+      current = (TodoItemNode)all.getNextLeaf(current);
     }
 
     assertNull(current);
@@ -172,7 +172,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       String string = strings[i];
       assertNotNull(current);
       assertEquals(string, current.getTestPresentation());
-      current = all.getPreviousPointer(current);
+      current = (TodoItemNode)all.getPreviousLeaf(current);
     }
     assertNull(current);
   }
