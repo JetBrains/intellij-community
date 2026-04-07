@@ -73,25 +73,40 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   val venvViewModel: VenvViewModel<P> = VenvViewModel(fileSystem, propertyGraph, projectPathFlows)
 
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
-  private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter<P>>?> = MutableStateFlow(null)
-  val detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter<P>>?> = _detectedInterpreters
+  private val detectedInterpretersUnfiltered: MutableStateFlow<List<DetectedSelectableInterpreter<P>>?> = MutableStateFlow(null)
+  lateinit var detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter<P>>?>
   val manuallyAddedInterpreters: MutableStateFlow<List<ManuallyAddedSelectableInterpreter<P>>> = MutableStateFlow(emptyList())
   private var installable: List<InstallableSelectableInterpreter<P>> = emptyList()
   lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
   lateinit var baseInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
 
+  @TestOnly
+  @ApiStatus.Internal
+  fun addKnown(known: PythonSelectableInterpreter<P>) {
+    knownInterpreters.value?.let { existing ->
+      knownInterpreters.value = existing + known
+    }
+  }
 
   @TestOnly
   @ApiStatus.Internal
   fun addDetected(detected: DetectedSelectableInterpreter<P>) {
-    _detectedInterpreters.value?.let { existing ->
-      _detectedInterpreters.value = existing + detected
+    detectedInterpretersUnfiltered.value?.let { existing ->
+      detectedInterpretersUnfiltered.value = existing + detected
     }
   }
 
   // If the project is provided, sdks associated with it will be kept in the list of interpreters. If not, then they will be filtered out.
   open fun initialize(scope: CoroutineScope) {
     listOf(condaViewModel, uvViewModel, pipenvViewModel, poetryViewModel, hatchViewModel, venvViewModel).forEach { it.initialize(scope) }
+
+    this.detectedInterpreters = combine(
+      knownInterpreters,
+      detectedInterpretersUnfiltered,
+    ) { known, unfiltered ->
+      val existingSdkPaths = known?.map { it.homePath }?.toSet() ?: return@combine null
+      unfiltered?.filterNot { it.homePath in existingSdkPaths }
+    }.stateIn(scope, SharingStarted.Eagerly, null)
 
     merge(
       projectPathFlows.projectPathWithDefault,
@@ -109,7 +124,8 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)
       knownInterpreters.value = existingSelectableInterpreters
-      _detectedInterpreters.value = fileSystem.getDetectedSelectableInterpreters(projectPathPrefix, existingSelectableInterpreters)
+      val detectedSelectableInterpreters = withContext(Dispatchers.IO) { fileSystem.detectSelectableVenv(projectPathPrefix) }
+      detectedInterpretersUnfiltered.value = detectedSelectableInterpreters
     }
 
     this.allInterpreters = combine(
@@ -124,7 +140,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
 
     this.baseInterpreters = combine( // base pythons are always system only
-      detectedInterpreters.map { it?.sysPythonsOnly() },
+      detectedInterpretersUnfiltered.map { it?.sysPythonsOnly() },
       manuallyAddedInterpreters.sysPythonsOnly()
     ) { detected, manual ->
       val base = detected ?: return@combine null
@@ -160,7 +176,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   @RequiresEdt
   internal fun addInstalledInterpreter(homePath: P, pythonInfo: PythonInfo): DetectedSelectableInterpreter<P> {
     val installedInterpreter = DetectedSelectableInterpreter(homePath, pythonInfo, true)
-    _detectedInterpreters.value = (_detectedInterpreters.value ?: emptyList()) + installedInterpreter
+    detectedInterpretersUnfiltered.value = (detectedInterpretersUnfiltered.value ?: emptyList()) + installedInterpreter
     return installedInterpreter
   }
 }
