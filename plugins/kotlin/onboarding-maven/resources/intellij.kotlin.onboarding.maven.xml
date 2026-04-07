@@ -1,0 +1,29 @@
+<idea-plugin package="org.jetbrains.kotlin.onboarding.maven">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.onboarding"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.MavenFeedbackBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionSurveyStore"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionSurvey"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionListener"
+              topic="com.intellij.task.ProjectTaskListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.MavenFeedbackBundle">
+    <group id="MavenBuildProcessSatisfaction" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction"
+              class="org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>
