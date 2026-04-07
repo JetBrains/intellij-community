@@ -125,6 +125,9 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
 
       if (matcher.matches()) {
         String language = matcher.group(2);
+        if (language == null) {
+          return;
+        }
         String languageLowerCase = language.toLowerCase();
 
         if (SPHINX_PYTHON_ALIASES.contains(languageLowerCase)) {
