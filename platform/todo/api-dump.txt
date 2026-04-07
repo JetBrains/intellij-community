@@ -59,6 +59,7 @@ a:com.intellij.ide.todo.TodoTreeBuilder
 - pf:myDirtyFileSet:java.util.Set
 - pf:myFile2Highlighter:java.util.Map
 - pf:myProject:com.intellij.openapi.project.Project
+- pf:remoteTodosCache:java.util.Map
 - <init>(javax.swing.JTree,com.intellij.openapi.project.Project):V
 - pf:clearCache():V
 - p:collectFiles(java.util.function.Consumer):V

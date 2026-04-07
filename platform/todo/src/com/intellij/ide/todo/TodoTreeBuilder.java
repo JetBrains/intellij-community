@@ -7,6 +7,7 @@ import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -93,6 +94,8 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
+
+  protected final Map<VirtualFile, List<TodoResult>> remoteTodosCache = new ConcurrentHashMap<>();
 
   private final @NotNull JTree myTree;
   /**
@@ -436,6 +439,11 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
+  }
+
+  @ApiStatus.Internal
+  public void cacheRemoteTodos(@NotNull VirtualFile file, @NotNull List<TodoResult> todos) {
+    remoteTodosCache.put(file, todos);
   }
 
   /**
