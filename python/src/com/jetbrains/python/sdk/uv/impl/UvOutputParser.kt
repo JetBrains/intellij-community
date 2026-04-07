@@ -22,7 +22,15 @@ object UvOutputParser {
       val parts = line.trim().split(WHITESPACE_REGEX).drop(1)
       if (parts.isEmpty()) continue
       val packageName = parts[0].substringBefore('[')
-      val version = parts.getOrElse(1) { "" }.removePrefix("v")
+      // Extras in brackets may contain spaces (e.g., "package[extra1, extra2] v1.0"),
+      // which causes them to span multiple whitespace-separated parts.
+      // Find the correct version index by skipping over bracketed extras.
+      val versionIndex = if (parts[0].contains('[') && !parts[0].contains(']')) {
+        val closingIndex = parts.indexOfFirst { it.contains(']') }
+        if (closingIndex >= 0) closingIndex + 1 else 1
+      }
+      else 1
+      val version = parts.getOrElse(versionIndex) { "" }.removePrefix("v")
       val group = GROUP_REGEX.find(line)?.groupValues?.get(1)?.let { PyDependencyGroupName(it) }
       packageList.add(PythonPackage(packageName, version, false, group))
     }
