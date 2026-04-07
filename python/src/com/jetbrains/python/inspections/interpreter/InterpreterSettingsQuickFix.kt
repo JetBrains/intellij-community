@@ -134,11 +134,7 @@ internal fun createInterpreterCacheLoader(): suspend (Module) -> InspectionRunne
     getSuitableSdkFix(module, moduleCreateInfo)?.let { add(it) }
     moduleCreateInfo?.let { add(ConfigureInterpreterFix()) }
   }
-  val shouldCache = when (moduleCreateInfo) {
-    is ModuleCreateInfo.SameAs -> false
-    is ModuleCreateInfo.CreateSdkInfoWrapper, null -> true
-  }
-  InspectionRunnerResult(fixes, shouldCache)
+  InspectionRunnerResult(fixes, shouldCache = true)
 }
 
 private suspend fun getSuitableSdkFix(
