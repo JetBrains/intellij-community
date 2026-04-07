@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
@@ -39,8 +38,8 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
     val metricEvents = result.includeStats.toMetricEvents().toMutableSet()
 
     metricEvents += ANALYZING_QUALITY_EVENT.metric(
-      FILES_ANALYZED.with(StatisticsUtil.roundToPowerOfTwo(result.filesAnalyzed)),
-      FILES_FAILED.with(StatisticsUtil.roundToPowerOfTwo(result.filesFailed)),
+      FILES_ANALYZED.with(result.filesAnalyzed),
+      FILES_FAILED.with(result.filesFailed),
       TIMEOUT_HAPPENED.with(result.timeoutHappened)
     )
 
@@ -411,8 +410,8 @@ private val WITH_DOUBLE_ASTERISK = EventFields.Boolean("with_double_asterisk", "
 private val WITH_CACHE = EventFields.Boolean("with_cache", "is `cache:` directive present")
 private val WITH_REF = EventFields.Boolean("with_ref", "is `ref:` key-value present")
 
-private val FILES_ANALYZED = EventFields.Int("files_analyzed", "Number of GitLab CI files successfully analyzed")
-private val FILES_FAILED = EventFields.Int("files_failed", "Number of GitLab CI files that failed to analyze")
+private val FILES_ANALYZED = EventFields.RoundedInt("files_analyzed", "Number of GitLab CI files successfully analyzed")
+private val FILES_FAILED = EventFields.RoundedInt("files_failed", "Number of GitLab CI files that failed to analyze")
 private val TIMEOUT_HAPPENED = EventFields.Boolean("timeout_happened", "Whether the analyzing timed out before completion")
 
 private val GROUP = EventLogGroup(
