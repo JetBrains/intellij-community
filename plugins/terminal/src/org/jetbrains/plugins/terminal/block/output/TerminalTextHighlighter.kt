@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getEffectiveContrastRatio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -55,7 +56,9 @@ class TextStyleAdapter(
       val options = TerminalOptionsProvider.instance
       if (options.enforceMinContrastRatio) options.minContrastRatio else TerminalContrastRatio.MIN_VALUE
     }
-    return style.toTextAttributes(colorPalette, requiredContrast)
+
+    val effectiveContrast = style.getEffectiveContrastRatio(requiredContrast)
+    return style.toTextAttributes(colorPalette, effectiveContrast)
   }
 
   override fun equals(other: Any?): Boolean {

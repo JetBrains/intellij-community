@@ -286,14 +286,13 @@ object TerminalUiUtils {
     }
     else fg
 
-    val contrast = style.getEffectiveContrastRatio(requiredContrast)
-    return if (contrast == TerminalContrastRatio.MIN_VALUE) {
-      return dimmedFg
+    return if (requiredContrast == TerminalContrastRatio.MIN_VALUE) {
+      dimmedFg
     }
-    else ensureContrastRatio(bg, dimmedFg, contrast.value)
+    else ensureContrastRatio(bg, dimmedFg, requiredContrast.value)
   }
 
-  private fun TextStyle.getEffectiveContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
+  internal fun TextStyle.getEffectiveContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
     val effectiveFg = if (hasOption(TextStyle.Option.INVERSE)) background else foreground
     val effectiveBg = if (hasOption(TextStyle.Option.INVERSE)) foreground else background
     return when {
