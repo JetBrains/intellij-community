@@ -41,11 +41,12 @@ internal class PooledFreezeAction : DumbAwareAction("Freeze pooled threads") {
     if (dialog("Set Freeze Duration", ui).showAndGet()) {
       val freezeScope = e.coroutineScope.childScope("FreezeScope")
 
-      logger<UIFreezeAction>().info("Freeze pooled thread")
       val dispatcher = when {
         ioDispatcher -> Dispatchers.IO
         else -> Dispatchers.Default
       }
+      logger<UIFreezeAction>().info("Freeze pooled thread for $seconds seconds on $dispatcher")
+
       repeat(10000) { // arbitrary big number bigger than any thread pool
         freezeScope.launch(dispatcher) {
           repeat(seconds * 10) {
