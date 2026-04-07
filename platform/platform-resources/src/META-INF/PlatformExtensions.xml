@@ -1803,6 +1803,17 @@
 
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl"/>
+    <registryKey key="performance.watcher.maxDumpDuration.ms" defaultValue="40000"
+                 description="Maximum duration of performance watcher dumps in ms"/>
+    <registryKey key="performance.watcher.unresponsive.interval.ms" defaultValue="5000"
+                 description="Log UI freezes longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.enable.smoke.and.mirrors.compensation" defaultValue="true"
+                 description="Enable UI freezes reporting for long-running background tasks that may impale UI interactions without a visible impact on UI rendering"/>
+
+    <registryKey key="performance.watcher.pooled.enabled" defaultValue="true"
+                 description="Write thread dumps if none pooled threads are available."/>
+    <registryKey key="performance.watcher.pooled.unresponsive.interval.ms" defaultValue="5000"
+                 description="Log if none pooled threads are available for longer than the specified time interval in ms"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.WriteLockMeasurer"
                         serviceImplementation="com.intellij.diagnostic.WriteLockMeasurerImpl"/>
@@ -1860,6 +1871,14 @@
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
+    <registryKey key="freeze.reporter.enabled" defaultValue="true"
+                 description="Report UI freezes to JetBrains"/>
+    <registryKey key="freeze.reporter.maxDumpDuration.ms" defaultValue="40000"
+                 description="Maximum duration of the 'report.txt' performance snapshot in ms"/>
+    <registryKey key="freeze.reporter.profiling" defaultValue="true"
+                 description="Start CPU profiling when the IDE is frozen"/>
+    <registryKey key="freeze.reporter.profiling.all.threads" defaultValue="true"
+                 description="Capture all threads including sleeping and blocked (wall-clock mode)"/>
 
     <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
     <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupTrigger"/>
