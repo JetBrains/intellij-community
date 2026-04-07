@@ -6,7 +6,7 @@ password: VxBFMd9YCKjq6PBFG54FIY3V
 
 PostgreSQL
 
-cherry-picked from cafebabe3690498eecb45dfedba4
+<GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">cherry-picked</GRAMMAR_ERROR> from cafebabe3690498eecb45dfedba4
 
 -Xlint
 
