@@ -132,6 +132,7 @@ internal object ClassLookupElementFactory {
             hasReceiver = false,
             inputValueArgumentsAreRequired = constructorSymbols.size > 1 || valueParameters?.isNotEmpty() == true,
             inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
+            isConstructorCall = true,
         )
         return LookupElementBuilder.create(lookupObject, name.asString())
             .withInsertHandler(FunctionInsertionHandler)

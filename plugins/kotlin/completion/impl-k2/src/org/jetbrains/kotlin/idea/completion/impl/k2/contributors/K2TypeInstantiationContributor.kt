@@ -185,19 +185,19 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             return
         }
 
-        // If we have an alias in scope, then we do not need to import anything, just use the alias name.
-        val importStrategy = if (aliasName == null) {
-            // Note: we explicitly do this for the original symbol rather than the kotlinAlias because
-            // the constructor symbols will belong to Java anyways.
-            context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
-        } else ImportStrategy.DoNothing
-
         val kotlinAliasSymbolOrSelf = symbol.mapJavaToKotlinAliasOrSelf()
         val substitutionResult = substituteTypeArgumentsToMatchExpectedSupertype(
             inheritorSymbol = kotlinAliasSymbolOrSelf,
             expectedSuperTypeParameterMapping = expectedTypeParamMap,
             expectedSuperType = expectedType,
         )
+
+        val importStrategy = if (aliasName == null) {
+            context.importStrategyDetector.detectImportStrategyForClassifierSymbol(kotlinAliasSymbolOrSelf)
+        } else {
+            // If we have an alias in scope, then we do not need to import anything, just use the alias name.
+            ImportStrategy.DoNothing
+        }
 
         // Note: These if statements are not necessarily mutually exclusive, e.g., for open classes.
         if (isObject) {

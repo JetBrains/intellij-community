@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import kotlinx.serialization.Serializable
@@ -334,6 +335,7 @@ internal data class FunctionCallLookupObject(
     val inputValueArgumentsAreRequired: Boolean = false,
     val inputTypeArgumentsAreRequired: Boolean = false,
     val inputTrailingLambdaIsRequired: Boolean = false,
+    val isConstructorCall: Boolean = false,
 ) : KotlinCallableLookupObject() {
 
     companion object {
@@ -466,6 +468,15 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 importStrategy.fqName.withRootPrefixIfNeeded().render()
             )
             context.commitDocument()
+
+            if (lookupObject.isConstructorCall) {
+                // Due to KTIJ-38198, constructor calls involving aliases are not shortened correctly.
+                // However, classifiers are shortened correctly. So we first insert the classifier name, shorten it
+                // and then add the arguments after.
+                // This should be removed after KTIJ-38198 is fixed.
+                shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
+                PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+            }
 
             addArguments(context, element, lookupObject)
             context.commitDocument()
