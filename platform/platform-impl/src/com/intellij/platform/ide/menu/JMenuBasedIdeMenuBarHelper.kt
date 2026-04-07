@@ -21,6 +21,7 @@ import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.WindowEvent
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleState
 import javax.swing.MenuElement
@@ -161,6 +162,12 @@ internal object WinAltKeyProcessor : IdeEventQueue.NonLockedEventDispatcher {
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (!isEnabled()) {
+      return false
+    }
+
+    if (e is WindowEvent && e.id == WindowEvent.WINDOW_DEACTIVATED) {
+      altPressed = false
+      altPressedOnly = false
       return false
     }
 
