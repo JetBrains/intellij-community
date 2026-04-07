@@ -309,6 +309,10 @@ object TestKotlinArtifacts {
     @JvmStatic
     val kotlinJvmDebuggerTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
     @JvmStatic
+    val debuggerJvmAdvancedKotlinTestData: Path by lazy {
+        getKotlinDepsByLabel("//plugins/debugger/jvm-advanced/jvm.advanced.kotlin/intellij.debugger.jvm.advanced.kotlin.tests:testData")
+    }
+    @JvmStatic
     val kotlinIdeaTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/idea/tests:testData") }
 
     @Suppress("NO_REFLECTION_IN_CLASS_PATH")

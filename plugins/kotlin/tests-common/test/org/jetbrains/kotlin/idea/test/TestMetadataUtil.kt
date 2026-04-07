@@ -5,12 +5,21 @@ import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getAnnotationValue
 import org.jetbrains.kotlin.test.TestMetadata
 import java.io.File
 import kotlin.io.path.Path
 
 object TestMetadataUtil {
+    private val kotlinJvmDebuggerTestDataRoot = Path("jvm-debugger", "test", "testData")
+    private val debuggerJvmAdvancedKotlinTestDataRoot = Path(
+        "..", "..", "..",
+        "plugins", "debugger", "jvm-advanced", "jvm.advanced.kotlin", "intellij.debugger.jvm.advanced.kotlin.tests", "testData"
+    )
+    private val supportedBazelTestDataRoots = listOf(
+        kotlinJvmDebuggerTestDataRoot to { TestKotlinArtifacts.kotlinJvmDebuggerTestData },
+        debuggerJvmAdvancedKotlinTestDataRoot to { TestKotlinArtifacts.debuggerJvmAdvancedKotlinTestData },
+    )
+
     @JvmStatic
     fun getTestData(testClass: Class<*>): File? {
         val testMetadataAnnotationValue = getTestMetadata(testClass) ?: return null
@@ -66,13 +75,14 @@ object TestMetadataUtil {
      * - Requires the presence of a [TestRoot] annotation on [testClass] (or its hierarchy via [getAnnotationValue]).
      *   The [TestRoot.value] is treated as a base directory. The provided [pathToResolve] is resolved against this
      *   base and then normalized.
-     * - Currently supports only test data paths that are under the "jvm-debugger/test/testData" subtree.
-     *   For such paths, the method computes the relative path under that subtree and returns a File resolved against
-     *   [TestKotlinArtifacts.kotlinJvmDebuggerTestData].
+     * - Currently supports only Kotlin debugger test data rooted under:
+     *   - "jvm-debugger/test/testData"
+     *   - "../../../plugins/debugger/jvm-advanced/jvm.advanced.kotlin/intellij.debugger.jvm.advanced.kotlin.tests/testData"
+     *   For supported roots, the method computes the relative path under that subtree and returns a File resolved against
+     *   the matching artifact from [TestKotlinArtifacts].
      *
      * Note:
-     * - This limitation is temporary: jvm-debugger tests are the first test module being migrated to Bazel, so only
-     *   this subtree is wired up for now. A general solution without this restriction will be introduced later.
+     * - This limitation is temporary: only explicitly wired Kotlin debugger test-data roots are supported for now.
      *
      * Exceptions:
      * - Throws [IllegalStateException] if [TestRoot] is not found on [testClass].
@@ -89,20 +99,20 @@ object TestMetadataUtil {
             throw IllegalStateException("@TestRoot annotation was not found on " + testClass.name)
         }
         val normalizedPathToResolve = Path(testRoot.value).resolve(pathToResolve).normalize()
-        // Temporary limitation: only jvm-debugger/test/testData is supported during the initial Bazel migration.
-        // TODO: Generalize to support other test modules once they are migrated to Bazel-provided test data.
-        val jvmDebuggerTestData = Path("jvm-debugger", "test", "testData")
-        if (normalizedPathToResolve.startsWith(jvmDebuggerTestData)) {
-            val pathToResolveRelativeTestData = jvmDebuggerTestData.relativize(normalizedPathToResolve);
-            return TestKotlinArtifacts.kotlinJvmDebuggerTestData.resolve(pathToResolveRelativeTestData.toString()).toFile()
-        } else {
-            val resolvedFrom = "TestRoot='${testRoot.value}' + path='${pathToResolve}' => '$normalizedPathToResolve'"
-            val supportedRoot = jvmDebuggerTestData.toString()
-            throw IllegalStateException(
-                "Running tests via Bazel is not yet supported for ${testClass.name}.\n" +
-                "Resolved test data path: $resolvedFrom\n" +
-                "Only paths under '$supportedRoot' are currently supported."
-            )
+        // Temporary limitation: only explicitly wired Kotlin debugger test-data roots are supported.
+        // TODO: Generalize to support Bazel-provided test data without a hardcoded root allowlist.
+        val supportedRoot = supportedBazelTestDataRoots.firstOrNull { (root, _) -> normalizedPathToResolve.startsWith(root) }
+        if (supportedRoot != null) {
+            val (root, artifactProvider) = supportedRoot
+            val pathToResolveRelativeTestData = root.relativize(normalizedPathToResolve)
+            return File(artifactProvider().resolve(pathToResolveRelativeTestData).toString())
         }
+        val resolvedFrom = "TestRoot='${testRoot.value}' + path='${pathToResolve}' => '$normalizedPathToResolve'"
+        val supportedRoots = supportedBazelTestDataRoots.joinToString { (root, _) -> "'$root'" }
+        throw IllegalStateException(
+            "Running tests via Bazel is not yet supported for ${testClass.name}.\n" +
+            "Resolved test data path: $resolvedFrom\n" +
+            "Only paths under $supportedRoots are currently supported."
+        )
     }
 }
