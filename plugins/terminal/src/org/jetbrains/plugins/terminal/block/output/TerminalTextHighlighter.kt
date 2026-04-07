@@ -45,7 +45,7 @@ object EmptyTextAttributesProvider : TextAttributesProvider {
 @ApiStatus.Internal
 class TextStyleAdapter(
   val style: TextStyle,
-  private val colorPalette: TerminalColorPalette,
+  val colorPalette: TerminalColorPalette,
   private val ignoreContrastAdjustment: Boolean = true,
 ) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes {

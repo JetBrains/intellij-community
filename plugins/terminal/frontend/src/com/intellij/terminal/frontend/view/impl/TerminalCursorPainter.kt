@@ -31,7 +31,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -235,19 +239,21 @@ internal class TerminalCursorPainter private constructor(
     }
 
     final override fun installCursorHighlighter(offset: TerminalOffset): RangeHighlighter {
-      val cursorAttributes = getCursorTextAttributes(offset)
-      val foregroundColor = cursorAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
-      val backgroundColor = cursorAttributes.backgroundColor ?: editor.colorsScheme.defaultBackground
+      val textHighlighting = outputModel.getHighlightingAt(offset)
+      val textAttributes = getTextAttributes(textHighlighting)
+      val textForegroundColor = textAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
+      val textBackgroundColor = textAttributes.backgroundColor ?: editor.colorsScheme.defaultBackground
 
-      val effectiveForeground = if (inverseForeground) backgroundColor else foregroundColor
-      val attributes = TextAttributes(effectiveForeground, null, null, null, Font.PLAIN)
+      val effectiveTextForeground = if (inverseForeground) textBackgroundColor else textForegroundColor
+      val effectiveAttributes = TextAttributes(effectiveTextForeground, null, null, null, Font.PLAIN)
+      val cursorColor = getCursorColor(textHighlighting)
 
       // offset == textLength is allowed (it means that the cursor is at the end, a very common case)
       val relativeOffset = offset.toRelative(outputModel)
       val startOffset = relativeOffset.coerceIn(0..editor.document.textLength)
       val endOffset = (relativeOffset + 1).coerceIn(0..editor.document.textLength)
       val highlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST,
-                                                               attributes, HighlighterTargetArea.EXACT_RANGE)
+                                                               effectiveAttributes, HighlighterTargetArea.EXACT_RANGE)
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
         val point = editor.offsetToPoint2D(offset)
@@ -257,7 +263,7 @@ internal class TerminalCursorPainter private constructor(
         val cursorHeight = editor.lineHeight
         val rect = Rectangle2D.Double(point.x, point.y, cursorWidth.toDouble(), cursorHeight.toDouble())
         g as Graphics2D
-        paintCursor(g, rect, foregroundColor)
+        paintCursor(g, rect, cursorColor)
 
         for (listener in listeners) {
           listener.cursorPainted()
@@ -267,10 +273,29 @@ internal class TerminalCursorPainter private constructor(
       return highlighter
     }
 
-    private fun getCursorTextAttributes(offset: TerminalOffset): TextAttributes {
-      val highlighting = outputModel.getHighlightingAt(offset)
-      return highlighting?.textAttributesProvider?.getTextAttributes()
-             ?: TextAttributes.ERASE_MARKER // If there are no specific highlighting, use the default
+    private fun getTextAttributes(highlighting: HighlightingInfo?): TextAttributes {
+      if (highlighting == null) {
+        // Use default text attributes if there is no specific highlighting
+        return TextAttributes.ERASE_MARKER
+      }
+      return highlighting.textAttributesProvider.getTextAttributes()
+    }
+
+    /**
+     * Calculates the color of the cursor taking into account the [highlighting] of the text under the cursor.
+     * We use the foreground color of the text as the cursor color but have to manually adjust the contrast.
+     * Because default contrast adjustment in [org.jetbrains.plugins.terminal.block.output.TextAttributesProvider.getTextAttributes]
+     * doesn't adjust the contrast if both text foreground and background colors are defined as absolute RGB values.
+     * But for cursor, we need to enforce contrast in this case.
+     */
+    private fun getCursorColor(highlighting: HighlightingInfo?): Color {
+      val textStyleAdapter = highlighting?.textAttributesProvider as? TextStyleAdapter
+                             ?: return editor.colorsScheme.defaultForeground
+      // Enforce default contrast, but take into account user-defined value if it is higher.
+      val userDefinedContrast = TerminalOptionsProvider.instance.minContrastRatio
+      val defaultContrast = TerminalContrastRatio.DEFAULT_VALUE
+      val effectiveContrast = if (userDefinedContrast.value > defaultContrast.value) userDefinedContrast else defaultContrast
+      return textStyleAdapter.style.toTextAttributes(textStyleAdapter.colorPalette, effectiveContrast).foregroundColor
     }
   }
 
