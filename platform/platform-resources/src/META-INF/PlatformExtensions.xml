@@ -1812,8 +1812,12 @@
 
     <registryKey key="performance.watcher.pooled.enabled" defaultValue="true"
                  description="Write thread dumps if none pooled threads are available."/>
-    <registryKey key="performance.watcher.pooled.unresponsive.interval.ms" defaultValue="5000"
+    <registryKey key="performance.watcher.pooled.unresponsive.interval.ms" defaultValue="15000"
                  description="Log if none pooled threads are available for longer than the specified time interval in ms"/>
+    <registryKey key="performance.watcher.pooled.progressive.interval" defaultValue="true"
+                 description="Increase unresponsive interval after each recorded dump"/>
+    <registryKey key="performance.watcher.pooled.maximum.dumps" defaultValue="10"
+                 description="Stop recording thread dumps after specified amount. Use '-1' to keep writing the thread dumps."/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.WriteLockMeasurer"
                         serviceImplementation="com.intellij.diagnostic.WriteLockMeasurerImpl"/>

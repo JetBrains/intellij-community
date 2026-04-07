@@ -562,6 +562,7 @@ private class CoroutineDispatcherWatcher(
 ) {
   @Volatile
   private var lastSampleNs = System.nanoTime()
+  private var reportedDumpsCount = 0
 
   fun watchDispatcher() {
     startPooledThreadSampling()
@@ -593,15 +594,30 @@ private class CoroutineDispatcherWatcher(
         while (true) {
           delay(pooledSamplingInterval.milliseconds)
 
-          val unresponsiveIntervalMs = getUnresponsiveIntervalMs()
+          val useProgressiveInterval = Registry.`is`("performance.watcher.pooled.progressive.interval", true)
+          val baseUnresponsiveIntervalMs = getUnresponsiveIntervalMs()
+          val unresponsiveIntervalMs = when {
+            !useProgressiveInterval -> baseUnresponsiveIntervalMs
+            reportedDumpsCount < 3 -> baseUnresponsiveIntervalMs
+            else -> baseUnresponsiveIntervalMs * reportedDumpsCount.coerceAtMost(40)
+          }
+
           if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSampleNs) <= unresponsiveIntervalMs ||
               TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
             continue
           }
 
-          val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
-          LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
+          val maxDumps = Registry.intValue("performance.watcher.pooled.maximum.dumps", 10)
+          if (reportedDumpsCount < maxDumps || maxDumps == -1) {
+            val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
+            LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
+          }
+          else {
+            LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms.")
+          }
+
           lastReportedNs = System.nanoTime()
+          reportedDumpsCount++
         }
       }
       finally {
