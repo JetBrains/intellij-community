@@ -46,7 +46,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cpp" extensions="c;cc;cpp;h;hpp" description="C/C++" name="C++"
+    <filetype binary="false" default_extension="cpp" extensions="" description="C/C++" name="C++"
               icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
