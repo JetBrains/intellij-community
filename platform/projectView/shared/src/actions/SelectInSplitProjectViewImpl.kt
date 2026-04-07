@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.actions
 
+import com.intellij.ide.SelectInContext
+import com.intellij.ide.SelectInTarget
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,7 +14,11 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.project.projectId
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.SelectInContextDescriptor
+import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.CoroutineName
@@ -26,6 +33,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
@@ -57,14 +66,19 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
 
   fun selectOpenedFile(editorChoice: EditorChoice) {
     LOG.debug { "Scheduling selection, editor choice = $editorChoice" }
-    check(tasks.trySend(SelectTask(editorChoice)).isSuccess)
+    check(tasks.trySend(SelectOpenedFileTask(project, editorChoice)).isSuccess)
+  }
+
+  fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean) {
+    LOG.debug { "Scheduling selection, target = ${target.minorViewId}, context = $context, requestFocus = $requestFocus" }
+    check(tasks.trySend(SelectInTask(context, target, requestFocus)).isSuccess)
   }
 
   private suspend fun performTasks() {
     tasks.consumeAsFlow().collectLatest { task ->
       try {
         LOG.debug { "Executing the selection task $task" }
-        selectImpl(task)
+        task.select()
       }
       catch (e: Exception) {
         rethrowControlFlowException(e)
@@ -72,12 +86,30 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
       }
     }
   }
+}
 
-  private suspend fun selectImpl(task: SelectTask) {
+private sealed class SelectTask {
+  protected abstract val project: Project
+  abstract suspend fun select()
+
+  protected suspend fun selectNodePath(nodePath: ProjectViewNodePath) {
+    // The nodes should be already loaded at this moment.
+    // But due to the world being completely async, they might take a few instants to actually arrive to the tree.
+    // Or it might not even arrive at all, for example, if it was removed at a very unlucky moment.
+    withTimeoutOrNull(5.seconds) {
+      LOG.debug { "Selecting the node $nodePath" }
+      ProjectViewToolWindowService.getInstance(project).selectNode(nodePath)
+      LOG.debug { "Selected the node $nodePath" }
+    }
+  }
+}
+
+private data class SelectOpenedFileTask(override val project: Project, val editorChoice: EditorChoice) : SelectTask() {
+  override suspend fun select() {
     val paneId = ProjectViewToolWindowService.getInstance(project).currentPaneId ?: return
     val rpc = ProjectViewRpc.getInstance()
     withContext(Dispatchers.EDT) { // "thanks" to a ton of legacy API (like FileEditor.isValid), we need both EDT and read action here
-      val fileEditors = task.fileEditors()
+      val fileEditors = fileEditors()
       for (fileEditor in fileEditors) {
         // TODO generic FileEditor support, not just text editors
         if (fileEditor !is TextEditor || !fileEditor.isValid) {
@@ -90,26 +122,19 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
           continue
         }
         val nodePath = withTimeoutOrNull(15.seconds) {
-          LOG.debug { "Looking for the node to select (on the backend)" }
-          rpc.findNodeForOpenedFile(project.projectId(), paneId, task.editorChoice)
+          LOG.debug { "Looking for the node to select (on the backend) for $fileEditor" }
+          rpc.findNodeForOpenedFile(project.projectId(), paneId, editorChoice)
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {
-          // The nodes should be already loaded at this moment.
-          // But due to the world being completely async, they might take a few instants to actually arrive to the tree.
-          // Or it might not even arrive at all, for example, if it was removed at a very unlucky moment.
-          withTimeoutOrNull(5.seconds) {
-            LOG.debug { "Selecting the node $nodePath" }
-            ProjectViewToolWindowService.getInstance(project).selectNode(nodePath)
-            LOG.debug { "Selected the node $nodePath" }
-          }
+          selectNodePath(nodePath)
           break
         }
       }
     }
   }
 
-  private fun SelectTask.fileEditors(): Collection<FileEditor> {
+  private fun fileEditors(): Collection<FileEditor> {
     return when (editorChoice) {
       EditorChoice.ALL_SELECTED -> allFileEditors()
       EditorChoice.LAST_FOCUSED_ONLY -> selectedFileEditor()
@@ -129,6 +154,60 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
   }
 }
 
-private data class SelectTask(val editorChoice: EditorChoice)
+private data class SelectInTask(
+  private val context: SelectInContext,
+  private val target: SelectInTarget,
+  private val requestFocus: Boolean,
+) : SelectTask() {
+  override val project: Project = context.project
+
+  override suspend fun select() {
+    if (target !is SplitProjectViewSelectInTarget) {
+      LOG.error("Target is not supported: $target")
+      return
+    }
+    val rpc = ProjectViewRpc.getInstance()
+    val nodePath = withTimeoutOrNull(15.seconds) {
+      LOG.debug { "Looking for the node to select (on the backend) for $context" }
+      rpc.findNodeForSelectIn(project.projectId(), SelectInRequest(
+        targetId = target.minorViewId,
+        contextDescriptor = serialize(context),
+        requestFocus = requestFocus,
+        context = context,
+      ))
+    }
+    LOG.debug { "Found the node to select: $nodePath" }
+    if (nodePath != null) {
+      selectNodePath(nodePath)
+    }
+  }
+
+  private fun serialize(context: SelectInContext): SelectInContextDescriptor {
+    return SelectInContextDescriptor(context.virtualFile.rpcId())
+  }
+}
+
+@ApiStatus.Internal
+class SplitProjectViewSelectInTarget(
+  private val minorViewId: @NonNls String,
+  private val presentableName: @Nls String,
+  private val weight: Float,
+) : SelectInTarget {
+  override fun canSelect(context: SelectInContext): Boolean = true // TODO maybe implement somehow someday
+
+  override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
+    LOG.debug("Select in $minorViewId: $context, requestFocus=$requestFocus")
+    SelectInSplitProjectViewImpl.getInstance(context.project).selectIn(context, this, requestFocus)
+  }
+
+  override fun getToolWindowId(): @NonNls String = ToolWindowId.PROJECT_VIEW
+
+  override fun getMinorViewId(): @NonNls String = minorViewId
+
+  override fun getWeight(): Float = weight
+
+  // This is actually a part of the SelectInTarget API (sic!).
+  override fun toString(): @Nls String = presentableName
+}
 
 private val LOG = logger<SelectInSplitProjectViewImpl>()

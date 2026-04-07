@@ -2,9 +2,13 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.CustomDataContextSerializer
+import com.intellij.ide.SelectInContext
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -28,6 +32,30 @@ data class ProjectViewPaneDescriptor(
   val presentableName: @NonNls String,
   val order: Int,
   val isDefault: Boolean,
+  val selectInTargetDescriptors: List<SelectInTargetDescriptor>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class SelectInTargetDescriptor(
+  val id: @NonNls String,
+  val presentableName: @NlsSafe String,
+  val weight: Float,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class SelectInRequest(
+  val targetId: @NonNls String,
+  val contextDescriptor: SelectInContextDescriptor,
+  val requestFocus: Boolean,
+  @Transient val context: SelectInContext? = null,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class SelectInContextDescriptor(
+  val fileId: VirtualFileId,
 )
 
 @ApiStatus.Internal

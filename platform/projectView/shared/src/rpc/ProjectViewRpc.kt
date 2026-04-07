@@ -8,6 +8,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
+import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -26,7 +27,9 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun getPaneStateFlow(projectId: ProjectId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
 
   suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath?
-  
+
+  suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequest): ProjectViewNodePath?
+
   companion object {
     suspend fun getInstance(): ProjectViewRpc = RemoteApiProviderService.resolve(remoteApiDescriptor<ProjectViewRpc>())
   }

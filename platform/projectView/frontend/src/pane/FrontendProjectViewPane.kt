@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.pane
 
+import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
@@ -35,6 +36,8 @@ interface FrontendProjectViewPane {
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
 
   var isCurrent: Boolean
+  
+  val selectInTargets: Collection<SelectInTarget>
 
   @RequiresEdt
   fun applyStateChange(event: ProjectViewPaneStateEvent)

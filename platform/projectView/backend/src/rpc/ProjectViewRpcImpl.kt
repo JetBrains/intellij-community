@@ -10,6 +10,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
+import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
@@ -50,5 +51,12 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
 
   override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
     return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice)
+  }
+
+  override suspend fun findNodeForSelectIn(
+    projectId: ProjectId,
+    selectInRequest: SelectInRequest,
+  ): ProjectViewNodePath? {
+    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForSelectIn(selectInRequest)
   }
 }

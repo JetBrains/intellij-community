@@ -11,6 +11,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.SelectInRequest
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -80,5 +81,15 @@ internal class BackendProjectViewPaneService(
     val panes = panes.load() ?: return null
     val pane = panes[paneId] ?: return null
     return pane.findNodeForEditor(editorChoice)
+  }
+
+  suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+    val panes = panes.load() ?: return null
+    val pane = panes.values.firstOrNull { pane ->
+      pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
+        selectInTargetDescriptor.id == selectInRequest.targetId
+      }
+    } ?: return null
+    return pane.findNodeForSelectIn(selectInRequest)
   }
 }

@@ -18,6 +18,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
@@ -73,6 +75,9 @@ internal class ProjectViewToolWindowServiceImpl(
   private val persistentState = ProjectViewToolWindowServiceState()
   private val currentPaneMutableFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
   val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = currentPaneMutableFlow.asStateFlow()
+  private val _panes = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
+  val panes: Map<ProjectViewPaneId, FrontendProjectViewPane>
+    get() = _panes
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       if (event.operation == ContentManagerEvent.ContentOperation.add) {
@@ -120,12 +125,16 @@ internal class ProjectViewToolWindowServiceImpl(
                 val pane = withContext(Dispatchers.UI) {
                   provider.createPane(project, descriptor)
                 }
+                _panes[descriptor.id] = pane
                 LOG.debug { "Created pane ${descriptor.id}" }
                 managePane(toolWindow, pane)
               }
               catch (e: Throwable) {
                 rethrowControlFlowException(e)
                 LOG.error("Failed to initialize pane ${descriptor.id}", e)
+              }
+              finally {
+                _panes.remove(descriptor.id)
               }
             }
           }
@@ -277,15 +286,38 @@ internal class ProjectViewToolWindowServiceImpl(
 
   override suspend fun selectNode(nodePath: ProjectViewNodePath) {
     val currentPane = currentPaneMutableFlow.value
-    if (currentPane == null) {
-      LOG.debug { "Not selecting $nodePath because there's no current pane" }
+    val pane: FrontendProjectViewPane? = if (currentPane?.id == nodePath.paneId) {
+      currentPane
+    }
+    else {
+      LOG.debug { "To select $nodePath, need to change the pane from ${currentPane?.id} to ${nodePath.paneId}" }
+      withContext(Dispatchers.UI) {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+        if (toolWindow == null) {
+          LOG.error("The Project View tool window is not found")
+          return@withContext null
+        }
+        val contentManager = toolWindow.contentManager
+        val content = contentManager.contents.firstOrNull { content ->
+          content.getUserData(PANE_KEY)?.id == nodePath.paneId
+        }
+        if (content == null) {
+          return@withContext null
+        }
+        contentManager.setSelectedContent(content)
+        content.getUserData(PANE_KEY)
+      }
+    }
+    if (pane == null) {
+      LOG.error("The pane ${nodePath.paneId} is not found")
       return
     }
-    if (currentPane.id != nodePath.paneId) {
-      LOG.debug { "Not selecting $nodePath because the current pane is ${currentPane.id}" }
-      return // TODO make it possible to change the pane if needed 
+    if (pane !is TreeBasedFrontendProjectViewPane) {
+      LOG.info("Impossible to select in $pane, because it's not a tree-based pane")
+      return
     }
-    (currentPane as? TreeBasedFrontendProjectViewPane)?.selectNode(nodePath)
+    LOG.debug { "Selecting $nodePath" }
+    pane.selectNode(nodePath)
   }
 
   override fun getState(): Element = Element("projectView").also { element ->

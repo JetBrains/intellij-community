@@ -5,7 +5,6 @@ package com.intellij.ide.impl;
 import com.intellij.ide.CompositeSelectInTarget;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.SelectInProjectViewImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -13,21 +12,26 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
+import java.util.Comparator;
+
+import static com.intellij.ide.impl.ProjectViewSelectInTargetProviderKt.getProjectViewSelectInTargets;
 
 
 public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, DumbAware {
   @Override
   public @NotNull @Unmodifiable Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
-    return ProjectView.getInstance(context.getProject()).getSelectInTargets();
+    var result = new ArrayList<>(getProjectViewSelectInTargets(context.getProject()));
+    // The provider puts the current one first, for the purpose of selectInAnyTarget,
+    // but to list all the targets we need a consistent order without that hack.
+    result.sort(Comparator.comparing(SelectInTarget::getWeight));
+    return result;
   }
 
   @Override
   public boolean canSelect(SelectInContext context) {
-    ProjectView projectView = ProjectView.getInstance(context.getProject());
-    Collection<SelectInTarget> targets = projectView.getSelectInTargets();
+    Collection<SelectInTarget> targets = getProjectViewSelectInTargets(context.getProject());
     for (SelectInTarget projectViewTarget : targets) {
       if (projectViewTarget.canSelect(context)) return true;
     }
@@ -36,17 +40,7 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
 
   @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    ProjectView projectView = ProjectView.getInstance(context.getProject());
-    Collection<SelectInTarget> targets = projectView.getSelectInTargets();
-    Collection<SelectInTarget> targetsToCheck = new LinkedHashSet<>();
-    String currentId = projectView.getCurrentViewId();
-    for (SelectInTarget projectViewTarget : targets) {
-      if (Objects.equals(currentId, projectViewTarget.getMinorViewId())) {
-        targetsToCheck.add(projectViewTarget);
-        break;
-      }
-    }
-    targetsToCheck.addAll(targets);
+    Collection<SelectInTarget> targetsToCheck = getProjectViewSelectInTargets(context.getProject());
     context.getProject().getService(SelectInProjectViewImpl.class).selectInAnyTarget(context, targetsToCheck, requestFocus);
   }
 

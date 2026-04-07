@@ -302,6 +302,9 @@
     <extensionPoint qualifiedName="com.intellij.projectView.externalLibraries.workspaceModelNodesProvider"
                     interface="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNodesProvider"
                     dynamic="true"/>
+    <extensionPoint name="selectInTargetProvider"
+                    interface="com.intellij.ide.impl.ProjectViewSelectInTargetProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.workspaceModel.optionalExclusionContributor" dynamic="true"
                     interface="com.intellij.workspaceModel.ide.OptionalExclusionContributor"/>
     <extensionPoint qualifiedName="com.intellij.analyzeStacktraceRunContentProvider" interface="com.intellij.unscramble.StacktraceTabContentProvider" dynamic="true"/>
@@ -1074,6 +1077,7 @@
     <searchEverywhereClassifier implementation="com.intellij.ide.actions.DefaultSearchEverywhereClassifier"/>
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
+    <selectInTargetProvider implementation="com.intellij.ide.impl.LegacyProjectViewSelectInTargetProvider"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>

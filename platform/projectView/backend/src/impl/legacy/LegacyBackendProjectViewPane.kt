@@ -3,6 +3,8 @@
 
 package com.intellij.platform.projectView.backend.impl.legacy
 
+import com.intellij.ide.FileSelectInContext
+import com.intellij.ide.SelectInContext
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
@@ -11,10 +13,12 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -59,6 +63,9 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
+import com.intellij.platform.projectView.pane.SelectInContextDescriptor
+import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SelectInTargetDescriptor
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewNodePath
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -120,11 +127,30 @@ private class LegacyBackendProjectViewPaneService(
   private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<BackendProjectViewPane> {
     val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
+    val selectInTarget = stateManager.selectInTarget
+    val selectInTargetDescriptors = listOf(SelectInTargetDescriptor(
+      id = legacyPane.id, // For the PV it's the same as selectInTarget.minorViewId, but that one is declared nullable.
+      presentableName = selectInTarget.toString(),
+      weight = selectInTarget.weight
+    ))
     if (subIds.isEmpty()) {
-      return listOf(LegacyBackendProjectViewPane(project, stateManager, null))
+      return listOf(LegacyBackendProjectViewPane(
+        project = project,
+        legacyPaneManager = stateManager,
+        subId = null,
+        selectInTargetDescriptors = selectInTargetDescriptors
+      ))
     }
     else {
-      return subIds.map { subId -> LegacyBackendProjectViewPane(project, stateManager, subId) }
+      return subIds.map { subId ->
+        LegacyBackendProjectViewPane(
+          project = project,
+          legacyPaneManager = stateManager,
+          subId = subId,
+          // Scope panes share the common select in target, so we only return it once.
+          selectInTargetDescriptors = if (subId == subIds.first()) selectInTargetDescriptors else emptyList(),
+        )
+      }
     }
   }
 }
@@ -133,6 +159,7 @@ private class LegacyBackendProjectViewPane(
   private val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
+  selectInTargetDescriptors: List<SelectInTargetDescriptor>,
 ) : BackendProjectViewPane {
   private val managerRequestChannel = legacyPaneManager.getRequestChannel()
 
@@ -141,6 +168,7 @@ private class LegacyBackendProjectViewPane(
     presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
     order = legacyPaneManager.legacyPane.weight,
     isDefault = legacyPaneManager.legacyPane.isDefaultPane(project),
+    selectInTargetDescriptors = selectInTargetDescriptors,
   )
 
   private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.UNLIMITED)
@@ -173,8 +201,35 @@ private class LegacyBackendProjectViewPane(
   }
 
   override suspend fun findNodeForEditor(editorChoice: EditorChoice): ProjectViewNodePath? {
-    return withContext(Dispatchers.UI) {
+    return selectAndGetPath {
       val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+      if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
+        LOG.debug { "Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        impl.selectOpenedFileUsingLastFocusedEditor()
+      }
+      else {
+        LOG.debug { "Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        impl.selectOpenedFile()
+      }
+    }
+  }
+
+  override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+    val target = legacyPaneManager.selectInTarget
+    val context = selectInRequest.context ?: restoreSerializedContext(selectInRequest.contextDescriptor) ?: return null
+    if (!readAction { target.canSelect(context) }) return null
+    return selectAndGetPath {
+      target.selectIn(context, selectInRequest.requestFocus)
+    }
+  }
+
+  private fun restoreSerializedContext(contextDescriptor: SelectInContextDescriptor): SelectInContext? {
+    val file = contextDescriptor.fileId.virtualFile() ?: return null
+    return FileSelectInContext(project, file)
+  }
+
+  private suspend fun selectAndGetPath(select: () -> Unit): ProjectViewNodePath? {
+    return withContext(Dispatchers.EDT) {
       val tree = legacyPaneManager.legacyPane.tree
       tree.selectionPath = null
       // suspendCancellableCoroutine makes listener deregistration incredibly tricky, so let's put it outside it
@@ -192,14 +247,7 @@ private class LegacyBackendProjectViewPane(
               continuation.resume(selectionPath)
             }
           }
-          if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
-            LOG.debug { "Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
-            impl.selectOpenedFileUsingLastFocusedEditor()
-          }
-          else {
-            LOG.debug { "Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
-            impl.selectOpenedFile()
-          }
+          select()
           continuation.invokeOnCancellation { captureSelection.store(null) }
         }
       }
@@ -241,7 +289,9 @@ private class AbstractProjectViewPaneStateManager(
     set(value) {
       subIdFlow.value = value
     }
-  
+
+  val selectInTarget = legacyPane.createSelectInTarget()
+
   private val activePanes = MutableStateFlow<Set<ProjectViewPaneId>>(emptySet())
 
   private val subIdFlow = MutableStateFlow<String?>(null)

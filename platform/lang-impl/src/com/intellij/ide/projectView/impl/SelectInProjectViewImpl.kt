@@ -349,8 +349,10 @@ open class SelectInProjectViewImpl(
     }
     val currentFilter = pane.getCurrentFilter()
     val allFilters = pane.filters.toMutableList()
-    allFilters.remove(currentFilter)
-    allFilters.add(0, currentFilter) // Start with the current filter and then fall back to others.
+    if (currentFilter != null) { // might be null if the pane isn't initialized yet, then we'll just pick the first one
+      allFilters.remove(currentFilter)
+      allFilters.add(0, currentFilter) // Start with the current filter and then fall back to others.
+    }
     for (filter in allFilters) {
       if (readAction { filter.accept(file) }) {
         if (LOG.isDebugEnabled()) {

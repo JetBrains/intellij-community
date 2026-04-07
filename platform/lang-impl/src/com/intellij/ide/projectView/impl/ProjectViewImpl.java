@@ -576,7 +576,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   };
 
-  private String currentViewId;
+  private volatile String currentViewId;
   private String currentViewSubId;
   // - options
 
@@ -1502,6 +1502,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  @CalledInAny
   public String getCurrentViewId() {
     return currentViewId;
   }

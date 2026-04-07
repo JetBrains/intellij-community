@@ -19,7 +19,6 @@
                 <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.20-0.1/rpc-compiler-plugin-2.3.20-0.1.jar</arg>
               </args>
             </arrayArg>
-            <arrayArg name="pluginOptions" />
           </arrayArguments>
         </compilerArguments>
       </configuration>
@@ -32,6 +31,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.platform.projectView.backend" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

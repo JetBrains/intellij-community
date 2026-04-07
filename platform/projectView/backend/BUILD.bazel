@@ -9,6 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
+    "//platform/platform-impl/rpc",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -43,6 +44,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":backend",
+    "//platform/platform-impl/rpc:rpc_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/projectView/shared:projectView_test_lib",
     "//fleet/rpc:rpc_test_lib",

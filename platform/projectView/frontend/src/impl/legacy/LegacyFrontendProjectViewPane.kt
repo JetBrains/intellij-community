@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.impl.legacy
 
+import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
@@ -22,4 +24,12 @@ internal class LegacyFrontendProjectViewPane(project: Project, descriptor: Proje
   override val displayName: @NonNls String = descriptor.presentableName
 
   override val order: Int = descriptor.order
+
+  override val selectInTargets: Collection<SelectInTarget> = descriptor.selectInTargetDescriptors.map {
+    SplitProjectViewSelectInTarget(
+      minorViewId = it.id,
+      presentableName = it.presentableName,
+      weight = it.weight
+    )
+  }
 }

@@ -11,6 +11,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.SelectInRequest
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -36,6 +37,8 @@ interface BackendProjectViewPane {
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
 
   suspend fun findNodeForEditor(editorChoice: EditorChoice): ProjectViewNodePath?
+
+  suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
 }
 
 @get:ApiStatus.Internal

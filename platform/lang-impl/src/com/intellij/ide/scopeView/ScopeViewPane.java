@@ -35,6 +35,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripePainter;
@@ -370,7 +371,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       return false;
     }
     tree.expandPath(path); // request to expand found path
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, true);
     TreeUtil.selectPath(tree, path); // select and scroll to center
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, false);
     return true;
   }
 
