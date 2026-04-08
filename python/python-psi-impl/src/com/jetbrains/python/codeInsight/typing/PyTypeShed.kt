@@ -275,8 +275,7 @@ object PyTypeShed {
    * [packageName] should match the name of the package on PyPI.
    */
   fun getStubRootForPackage(packageName: String): VirtualFile? {
-    val stubsRoot = thirdPartyStubRoot ?: return null
-    return stubsRoot.findChild(packageName)
+    return thirdPartyStubRoot?.findChild(packageName)
   }
 
   private fun isPartialThirdPartyStubPackage(project: Project, distributionRoot: VirtualFile): Boolean {

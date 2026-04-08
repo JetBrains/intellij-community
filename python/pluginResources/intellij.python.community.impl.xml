@@ -64,6 +64,10 @@
               fieldName="INSTANCE"
               language="Requirements"
               fileNamesCaseInsensitive="requirements.txt"/>
+    <fileType name="PyTyped"
+              implementationClass="com.jetbrains.python.codeInsight.typing.PyTypedFileType"
+              fieldName="INSTANCE"
+              fileNamesCaseInsensitive="py.typed"/>
     <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
     <lang.parserDefinition
       language="Requirements"
