@@ -463,6 +463,11 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   @ApiStatus.Internal
+  public @NotNull List<TodoResult> getCachedRemoteTodos(@NotNull VirtualFile file) {
+    return remoteTodosCache.getOrDefault(file, Collections.emptyList());
+  }
+
+  @ApiStatus.Internal
   public void cacheRemoteTodos(@NotNull VirtualFile file, @NotNull List<TodoResult> todos) {
     remoteTodosCache.put(file, todos);
   }
