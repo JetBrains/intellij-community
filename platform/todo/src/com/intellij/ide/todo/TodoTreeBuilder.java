@@ -7,6 +7,7 @@ import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.todo.rpc.TodoHelperKt;
 import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -357,6 +358,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     //if (!(file instanceof LightVirtualFile) && file.getParent() != null) {
     if (!(file instanceof LightVirtualFile)) {
       myDirtyFileSet.add(file);
+      clearRemoteTodosCache(file);
     }
   }
 
@@ -392,6 +394,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
+    remoteTodosCache.clear();
   }
 
   protected final boolean hasDirtyFiles() {
@@ -423,13 +426,31 @@ public abstract class TodoTreeBuilder implements Disposable {
           myFileTree.removeFile(file);
           myFile2Highlighter.remove(file);
         }
+        clearRemoteTodosCache(file);
       }
       else { // file is valid and contains T.O.D.O items
-        myFileTree.removeFile(file);
-        myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-        EditorHighlighter highlighter = myFile2Highlighter.get(file);
-        if (highlighter != null) { // update highlighter text
-          highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
+        if (shouldUseSplitTodo()) {
+          List<TodoResult> todoItems = TodoHelperKt.findAllTodos(myProject, file, treeStructure.getTodoFilter());
+          if (todoItems.isEmpty()) {
+            if (myFileTree.contains(file)) {
+              myFileTree.removeFile(file);
+              myFile2Highlighter.remove(file);
+            }
+            clearRemoteTodosCache(file);
+          }
+          else {
+            cacheRemoteTodos(file, todoItems);
+            myFileTree.removeFile(file);
+            myFileTree.add(file);
+          }
+        }
+        else {
+          myFileTree.removeFile(file);
+          myFileTree.add(file); // file can be moved. remove/add calls move it to another place
+          EditorHighlighter highlighter = myFile2Highlighter.get(file);
+          if (highlighter != null) { // update highlighter text
+            highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
+          }
         }
       }
     }
@@ -444,6 +465,11 @@ public abstract class TodoTreeBuilder implements Disposable {
   @ApiStatus.Internal
   public void cacheRemoteTodos(@NotNull VirtualFile file, @NotNull List<TodoResult> todos) {
     remoteTodosCache.put(file, todos);
+  }
+
+  @ApiStatus.Internal
+  public void clearRemoteTodosCache(@NotNull VirtualFile file) {
+    remoteTodosCache.remove(file);
   }
 
   /**
