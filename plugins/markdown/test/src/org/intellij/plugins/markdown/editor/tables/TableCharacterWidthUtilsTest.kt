@@ -63,6 +63,15 @@ class TableCharacterWidthUtilsTest {
   }
 
   @Test
+  fun `test CJK symbols and punctuation width calculation`() {
+    assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\u3000")) // Ideographic space
+    assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\u3001")) // 、
+    assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\u3002")) // 。
+    assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\u300C")) // 「
+    assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\u300D")) // 」
+  }
+
+  @Test
   fun `test full-width ASCII variants width calculation`() {
     assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\uFF21")) // Fullwidth A
     assertEquals(2, TableCharacterWidthUtils.calculateDisplayWidth("\uFF11")) // Fullwidth 1

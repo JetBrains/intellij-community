@@ -73,6 +73,9 @@ internal object TableCharacterWidthUtils {
       // CJK Compatibility Ideographs Supplement
       codePoint in 0x2F800..0x2FA1F -> true
 
+      // CJK Symbols and Punctuation (ideographic space, 、。「」〈〉 etc.)
+      codePoint in 0x3000..0x303F -> true
+
       // Hiragana
       codePoint in 0x3040..0x309F -> true
 
@@ -85,14 +88,11 @@ internal object TableCharacterWidthUtils {
       // Hangul Syllables
       codePoint in 0xAC00..0xD7AF -> true
 
-      // Hangul Jamo
-      codePoint in 0x1100..0x11FF -> true
+      // Hangul Jamo (only leading consonants are Wide per Unicode EAW)
+      codePoint in 0x1100..0x115F -> true
 
       // Hangul Jamo Extended-A
       codePoint in 0xA960..0xA97F -> true
-
-      // Hangul Jamo Extended-B
-      codePoint in 0xD7B0..0xD7FF -> true
 
       // Fullwidth ASCII variants (FF01-FF60) and Fullwidth brackets (FF5F-FF60)
       codePoint in 0xFF01..0xFF60 -> true
