@@ -69,7 +69,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
     assertFileHyperlink("file:/C:\\bad*name\\file.txt", 0, 26, "C:\\bad*name\\file.txt", -1, -1);
     assertFileHyperlink("file:/D:\\dir>output\\result.dat", 0, 30, "D:\\dir>output\\result.dat", -1, -1);
     assertFileHyperlink("file:///C:\\pipe|name\\data.bin:5", 0, 31, "C:\\pipe|name\\data.bin", 5, -1);
-    assertFileHyperlink("file:///home/test[1].txt", 0, 24, "/home/test[1].txt", -1, -1);
+    assertFileHyperlink("file:///home/test$1.txt", 0, 23, "/home/test$1.txt", -1, -1);
   }
 
   @SuppressWarnings("NonAsciiCharacters")
@@ -133,6 +133,13 @@ public class UrlFilterTest extends BasePlatformTestCase {
                        new FileLinkInfo(3, 59, "/Users/kmp-app-march/shared/build.gradle.kts", 9, 13),
                        new LinkInfo(193, 215)
                      ));
+  }
+
+  public void testFileUrlsWithBrackets() {
+    assertFileHyperlink("file:/path/to/file[test].txt", 0, 18, "/path/to/file", -1, -1);
+    assertFileHyperlink("file:/path/to/[file].txt", 0, 14, "/path/to/", -1, -1);
+    assertFileHyperlink("file:C:/Users/test:2:5]/file.txt", 0, 22, "C:/Users/test", 2, 5);
+    assertFileHyperlink("PS P:\\> echo [file:///P:/SomeLongFilePath]", 14, 41, "P:/SomeLongFilePath", -1, -1);
   }
 
   private Filter.Result applyFilter(@NotNull String line) {
