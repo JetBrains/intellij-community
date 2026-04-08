@@ -9,11 +9,14 @@ import com.intellij.notebooks.visualization.ui.EditorCellInput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import org.jetbrains.annotations.Nls
@@ -22,8 +25,12 @@ import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.BorderFactory
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
 
 class EditorCellDragAssistant(
   private val editor: EditorImpl,
@@ -39,7 +46,8 @@ class EditorCellDragAssistant(
   private var dragStartPoint: Point? = null
 
   private var currentlyHighlightedCell: CellDropTarget = CellDropTarget.NoCell
-  private var dragPreview: CellDragCellPreviewWindow? = null
+  private var dragPreview: JLabel? = null
+  private var dragPane: JLayeredPane? = null
 
   private var wasFolded: Boolean = false
   private var inputFoldedState: Boolean = false
@@ -64,29 +72,27 @@ class EditorCellDragAssistant(
   }
 
   private fun attachKeyEventDispatcher() {
-    if (keyEventDispatcher == null) {
-      keyEventDispatcher = KeyEventDispatcher { keyEvent ->
-        if (isDragging) {
-          when (keyEvent.id) {
-            KeyEvent.KEY_PRESSED -> {
-              handleKeyPressedDuringDrag(keyEvent)
-              return@KeyEventDispatcher false
-            }
-          }
-        }
-        false
-      }
+    if (keyEventDispatcher != null) return
 
-      KeyboardFocusManager.getCurrentKeyboardFocusManager()
-        .addKeyEventDispatcher(keyEventDispatcher)
+    keyEventDispatcher = KeyEventDispatcher { keyEvent ->
+      if (isDragging) {
+        when (keyEvent.id) {
+          KeyEvent.KEY_PRESSED -> return@KeyEventDispatcher handleKeyPressedDuringDrag(keyEvent)
+        }
+      }
+      false
     }
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyEventDispatcher)
   }
 
-  private fun handleKeyPressedDuringDrag(keyEvent: KeyEvent) {
-    when (keyEvent.keyCode) {
-      KeyEvent.VK_ESCAPE,
-      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT,
-        -> cancelDrag()
+  private fun handleKeyPressedDuringDrag(keyEvent: KeyEvent): Boolean {
+    return when (keyEvent.keyCode) {
+      KeyEvent.VK_ESCAPE -> {
+        cancelDrag()
+        true
+      }
+      else -> false
     }
   }
 
@@ -108,13 +114,27 @@ class EditorCellDragAssistant(
     if (!isDragging) return
 
     if (dragPreview == null) {
-      dragPreview = CellDragCellPreviewWindow(getPlaceholderText(), editor)
-      dragPreview?.isVisible = true
-      WindowManager.getInstance().setAlphaModeRatio(dragPreview, 0.2f)
+      val dragPane = findLayeredPane(e) ?: return
+      this.dragPane = dragPane
+      val dragPreview = JLabel(getPlaceholderText()).apply {
+        isOpaque = true
+        font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
+        foreground = editor.colorsScheme.defaultForeground
+        background = editor.colorsScheme.defaultBackground
+        border = BorderFactory.createCompoundBorder(
+          BorderFactory.createLineBorder(JBColor.LIGHT_GRAY, BORDER_WIDTH, true),
+          JBUI.Borders.empty(PADDING)
+        )
+      }
+      this.dragPreview = dragPreview
+      dragPane.add(dragPreview, JLayeredPane.POPUP_LAYER as Any)
+      dragPreview.size = dragPreview.preferredSize
+
       foldDraggedCellIfNeeded()
     }
 
-    dragPreview?.followCursor(e.locationOnScreen)
+    val xy = SwingUtilities.convertPoint(e.component, e.point, dragPane)
+    dragPreview!!.location = Point(xy.x + CURSOR_OFFSET, xy.y + CURSOR_OFFSET)
     val currentLocation = e.locationOnScreen
     updateDragVisuals(currentLocation)
 
@@ -146,7 +166,7 @@ class EditorCellDragAssistant(
 
     scrollingJob = NotebookVisualizationCoroutine.Utils.launchEdt {
       while (isDragging) {
-        delay(10)
+        delay(10.milliseconds)
         editor.scrollingModel.scrollVertically((editor.scrollingModel.verticalScrollOffset + delta * speed).toInt())
       }
     }.apply { cancelOnDispose(this@EditorCellDragAssistant) }
@@ -275,8 +295,12 @@ class EditorCellDragAssistant(
   }
 
   private fun deleteDragPreview() {
-    dragPreview?.dispose()
-    dragPreview = null
+    if (dragPreview != null) {
+      dragPane?.remove(dragPreview)
+      dragPane?.repaint()
+      dragPane = null
+      dragPreview = null
+    }
   }
 
   override fun dispose() {
@@ -294,8 +318,16 @@ class EditorCellDragAssistant(
     return StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", MAX_PREVIEW_TEXT_LENGTH, 0)
   }
 
+  private fun findLayeredPane(e: MouseEvent): JLayeredPane? {
+    if (e.component !is JComponent) return null
+    return (e.component as JComponent).rootPane?.layeredPane
+  }
+
   companion object {
     private const val MINIMAL_DRAG_DISTANCE = 8
     private const val MAX_PREVIEW_TEXT_LENGTH = 20
+    private val PADDING = JBUIScale.scale(8)
+    private val BORDER_WIDTH = JBUIScale.scale(1)
+    private val CURSOR_OFFSET = JBUIScale.scale(5)
   }
 }

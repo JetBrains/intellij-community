@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
@@ -41,7 +40,7 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
       }
     }
     else {
-      return withContext(Dispatchers.EDT) {
+      return withContext(Dispatchers.UI) {
         handleValidationError(project, chatFile, validationError)
       }
     }

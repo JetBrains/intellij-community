@@ -2,11 +2,12 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.SearchToolset
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
@@ -21,9 +22,10 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
 import kotlin.io.path.Path
 
-class SearchToolsetTest : McpToolsetTestBase() {
+class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private val json = Json { ignoreUnknownKeys = true }
 
   private val searchFile by sourceRootFixture.virtualFileFixture(
@@ -464,6 +466,41 @@ class SearchToolsetTest : McpToolsetTestBase() {
       assertThat(filePaths).anyMatch { it.contains(symbolFileInSubdir2.name) }
       assertThat(filePaths).noneMatch { it.contains(symbolFileInSubdir1.name) }
     }
+  }
+
+  @Test
+  fun search_symbol_description_suggests_include_external_retry() = runBlocking(Dispatchers.Default) {
+    withConnection { client ->
+      val tool = client.listTools().tools.first { it.name == SearchToolset::search_symbol.name }
+      assertThat(tool.description).contains("include_external=true")
+    }
+  }
+
+  private suspend fun attachSdkSource(symbolName: String, sourceCode: String): VirtualFile {
+    val root = Files.createTempDirectory("mcp-sdk-$symbolName")
+    val sourcePath = root.resolve("sdk/$symbolName.java")
+    Files.createDirectories(sourcePath.parent)
+    Files.writeString(sourcePath, sourceCode)
+    val rootFile = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root)
+                   ?: error("Cannot find sdk root $root")
+    val sourceFile = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByNioFile(sourcePath)
+                     ?: error("Cannot find source file $sourcePath")
+    val sdkTable = ProjectJdkTable.getInstance(project)
+    val sdk = sdkTable.createSdk("mcp-sdk-$symbolName-${System.nanoTime()}", sdkTable.defaultSdkType)
+    edtWriteAction {
+      sdk.sdkModificator.apply {
+        homePath = root.toString()
+        versionString = "test"
+        addRoot(rootFile, com.intellij.openapi.roots.OrderRootType.CLASSES)
+        addRoot(rootFile, com.intellij.openapi.roots.OrderRootType.SOURCES)
+        commitChanges()
+      }
+      sdkTable.addJdk(sdk, project)
+      ModuleRootModificationUtil.setModuleSdk(moduleFixture.get(), sdk)
+    }
+    awaitExternalChangesAndIndexing(project)
+    DumbService.getInstance(project).waitForSmartMode()
+    return sourceFile
   }
 
   @Test

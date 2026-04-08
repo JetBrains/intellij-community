@@ -265,6 +265,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   public void initializeFormData(MavenGeneralSettings data, Project project) {
+    if (myProject == null  && project != null) {
+      setupFileChooser(project);
+    }
     myProject = project;
 
     setAnchor(mavenHomeComponent.getLabel());
@@ -318,21 +321,23 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   public JComponent createComponent() {
     // all listeners will be removed when dialog is closed
-    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"));
-    mavenHomeComponent.getComponent().addBrowseFolderListener(null, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     mavenHomeField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         updateMavenVersionLabel();
       }
     });
-
-    settingsFileComponent.getComponent().addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withTitle(MavenProjectBundle.message("maven.select.maven.settings.file")));
-    localRepositoryComponent.getComponent().addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(MavenProjectBundle.message("maven.select.local.repository")));
     return panel;
+  }
+
+  private void setupFileChooser(@NotNull Project project) {
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"));
+    mavenHomeComponent.getComponent().addBrowseFolderListener(project, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+    settingsFileComponent.getComponent().addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.maven.settings.file")));
+    localRepositoryComponent.getComponent().addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.local.repository")));
   }
 
   @Override

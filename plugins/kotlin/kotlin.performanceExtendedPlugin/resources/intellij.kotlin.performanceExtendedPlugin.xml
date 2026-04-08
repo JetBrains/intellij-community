@@ -1,7 +1,10 @@
 <idea-plugin package="com.intellij.performance.performancePlugin">
   <dependencies>
-    <module name="intellij.performanceTesting.vcs"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.performanceTesting.vcs"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.jetbrains">

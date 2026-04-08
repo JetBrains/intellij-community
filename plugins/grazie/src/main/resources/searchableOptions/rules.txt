@@ -169,19 +169,15 @@ At 7 clock (o'clock)
 Auxiliary verb + ambiguous past tense
 Auxiliary verb + found/saw
 Auxiliary+main verb form compatibility
-Avoid all passive constructions
 Avoid colloquialism
 Avoid condescending language
 Avoid double negation
 Avoid emoticons and emoji
 Avoid exclamations
 Avoid expressive punctuation
-Avoid first-person plural pronouns
-Avoid first-person singular pronouns
 Avoid gender-specific nouns
 Avoid male pronouns in gender-neutral contexts
 Avoid prepositional chains that use “of”
-Avoid second-person pronouns
 Avoid shortened word forms
 Avoid subject ellipsis
 Avoid tautology
@@ -1115,7 +1111,6 @@ Usage of German quotes („“)
 Use 'to' before the base form of a verb
 Use an adverb or a compound adjective, not an adjective
 Use consistent verb forms in connected phrases
-Use curly apostrophes
 Use dashes instead of hyphens between phrases
 Use en dashes for ranges
 Use neutral honorifics

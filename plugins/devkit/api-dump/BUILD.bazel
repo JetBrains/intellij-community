@@ -21,6 +21,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/util",
+    "//platform/util/multiplatform",
     "//platform/workspace/storage",
     "//platform/projectModel-impl",
   ]
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
     "//platform/workspace/storage:storage_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
   ]

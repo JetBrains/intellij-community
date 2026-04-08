@@ -68,27 +68,27 @@ for the specific order.
 Two options:
 
 1. **👍 Most popular way**. Tweak default values of `overrideAgpVersion` in `DevTweaksImpl`
-```kotlin
-// ...
-class DevModeTweaksImpl : DevModeTweaks {
-    override var overrideGradleVersion = GradleVersionTestsProperty.Value.ForAlphaAgp.version
-        get() = field.checkNotOverriddenOnTeamcity()
-// ...
-
-```
-
+    ```kotlin
+    // ...
+    class DevModeTweaksImpl : DevModeTweaks {
+        override var overrideGradleVersion = GradleVersionTestsProperty.Value.ForAlphaAgp.version
+            get() = field.checkNotOverriddenOnTeamcity()
+    }
+    // ...
+    
+    ```
 
 2. Locally for one test: use `dev`-block in `doTest { ... }`, it provides properties like `overrideAgpVersion`:
-```kotlin
-@Test
-fun testFoo() {
-  doTest {
-    dev { 
-      overrideAgpVersion = AndroidGradlePluginVersionTestsProperty.Value.Alpha.version
+    ```kotlin
+    @Test
+    fun testFoo() {
+      doTest {
+        dev { 
+          overrideAgpVersion = AndroidGradlePluginVersionTestsProperty.Value.Alpha.version
+        }
+      }
     }
-  }
-}
-```
+    ```
 
 ### Which test tweaks/test options exist?
 

@@ -6,6 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
+import com.intellij.ide.hierarchy.ReferenceAwareNodeDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
@@ -36,13 +38,15 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
+public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable, ReferenceAwareNodeDescriptor {
   private int myUsageCount = 1;
   private final List<PsiReference> myReferences = new ArrayList<>();
   private final boolean myNavigateToReference;
@@ -59,7 +63,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return PsiMethod or PsiClass or JspFile
    */
-  public PsiMember getEnclosingElement() {
+  @Override
+  public @Nullable PsiMember getEnclosingElement() {
     PsiElement element = getPsiElement();
     if (element instanceof PsiClass aClass && aClass.isRecord()) {
       return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
@@ -101,42 +106,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
     installIcon(enclosingElement, changes);
 
-    myHighlightedText = new CompositeAppearance();
-    TextAttributes mainTextAttributes = null;
-    if (myColor != null) {
-      mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
-    }
-    if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent) {
-      if (FileTypeUtils.isInServerPageFile(enclosingElement)) {
-        PsiFile file = enclosingElement.getContainingFile();
-        String text = file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp");
-        myHighlightedText.getEnding().addText(text, mainTextAttributes);
-      }
-      else {
-        PsiClass containingClass = enclosingElement.getContainingClass();
-        String className = containingClass == null ? null : ClassPresentationUtil.getNameForClass(containingClass, false);
-        String methodName =
-          enclosingElement instanceof PsiMethod method
-          ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                       PsiFormatUtilBase.SHOW_TYPE)
-          : enclosingElement.getName();
-
-        String fullMethodName = className == null ? methodName :
-                                containingClass.getContainingClass() == null ?
-                                className +"."+methodName :
-                                // in case of complex nested classes prefer "foo() in Inner in Outer" instead of confusing "Inner in Outer.foo()"
-                                JavaPsiBundle.message("class.context.display", methodName, className);
-
-        myHighlightedText.getEnding().addText(fullMethodName, mainTextAttributes);
-      }
-    }
-    else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
-      PsiFile file = PsiUtilCore.getTemplateLanguageFile(enclosingElement);
-      myHighlightedText.getEnding().addText(file.getName(), mainTextAttributes);
-    }
-    else {
-      myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass((PsiClass)enclosingElement, false), mainTextAttributes);
-    }
+    myHighlightedText = getEnclosingElementAppearance(enclosingElement, myColor);
     if (myUsageCount > 1) {
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), getUsageCountPrefixAttributes());
     }
@@ -153,12 +123,67 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     return changes;
   }
 
+  private static @NotNull CompositeAppearance getEnclosingElementAppearance(@NotNull PsiMember enclosingElement, @Nullable Color color) {
+    CompositeAppearance appearance = new CompositeAppearance();
+    TextAttributes mainTextAttributes = null;
+    if (color != null) {
+      mainTextAttributes = new TextAttributes(color, null, null, null, Font.PLAIN);
+    }
+    if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent) {
+      if (FileTypeUtils.isInServerPageFile(enclosingElement)) {
+        PsiFile file = enclosingElement.getContainingFile();
+        String text = file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp");
+        appearance.getEnding().addText(text, mainTextAttributes);
+      }
+      else {
+        PsiClass containingClass = enclosingElement.getContainingClass();
+        String className = containingClass == null ? null : ClassPresentationUtil.getNameForClass(containingClass, false);
+        String methodName =
+          enclosingElement instanceof PsiMethod method
+          ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                       PsiFormatUtilBase.SHOW_TYPE)
+          : enclosingElement.getName();
+
+        String fullMethodName = className == null ? methodName :
+                                containingClass.getContainingClass() == null ?
+                                className +"."+methodName :
+                                // in case of complex nested classes prefer "foo() in Inner in Outer" instead of confusing "Inner in Outer.foo()"
+                                JavaPsiBundle.message("class.context.display", methodName, className);
+
+        appearance.getEnding().addText(fullMethodName, mainTextAttributes);
+      }
+    }
+    else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
+      PsiFile file = PsiUtilCore.getTemplateLanguageFile(enclosingElement);
+      appearance.getEnding().addText(file.getName(), mainTextAttributes);
+    }
+    else {
+      appearance.getEnding().addText(ClassPresentationUtil.getNameForClass((PsiClass)enclosingElement, false), mainTextAttributes);
+    }
+    return appearance;
+  }
+
+  @Override
+  public @Nullable @NlsSafe String getPresentation() {
+    PsiMember enclosingElement = getEnclosingElement();
+    if (enclosingElement == null) return null;
+    return getEnclosingElementAppearance(enclosingElement, null).getText();
+  }
+
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
   }
 
   public boolean hasReference(PsiReference reference) {
     return myReferences.contains(reference);
+  }
+
+  /**
+   * @return all the references that are associated with the current element during the "Call Hierarchy" request.
+   */
+  @Override
+  public @NotNull List<PsiReference> getReferences() {
+    return myReferences;
   }
 
   @Override

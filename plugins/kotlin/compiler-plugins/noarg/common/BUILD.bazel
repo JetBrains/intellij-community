@@ -16,6 +16,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/core-impl",
     "//java/java-psi-impl:psi-impl",
+    "//java/java-psi-api:psi",
   ]
 )
 
@@ -31,6 +32,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.noarg.common` end

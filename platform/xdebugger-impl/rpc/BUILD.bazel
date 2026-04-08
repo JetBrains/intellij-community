@@ -28,6 +28,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/execution",
     "//platform/util/concurrency",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -51,6 +52,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.rpc` end

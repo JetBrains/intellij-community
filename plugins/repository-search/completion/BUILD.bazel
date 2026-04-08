@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/util",
+    "//platform/util/base/multiplatform",
     "//platform/extensions",
     "//platform/eel",
   ]
@@ -31,6 +32,7 @@ jvm_library(
     ":completion",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/eel:eel_test_lib",
   ]

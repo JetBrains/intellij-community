@@ -26,6 +26,7 @@ jvm_library(
     "//platform/platform-frontend:frontend",
     "@lib//:kotlin-stdlib",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
     "//platform/core-api:core",
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop",
@@ -41,6 +42,7 @@ jvm_library(
     "//platform/statistics",
     "//python/python-process-output/common",
     "//libraries/kotlin/reflect",
+    "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -55,6 +57,7 @@ jvm_library(
     ":frontend",
     "//platform/platform-frontend:frontend_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-api:core_test_lib",
     "//libraries/skiko:skiko_test_lib",
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
@@ -101,6 +104,7 @@ jvm_library(
     "//libraries/kotlin/reflect:reflect_test_lib",
     "//python/python-test-env/junit5",
     "//python/python-test-env/junit5:junit5_test_lib",
+    "//python/common:common_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

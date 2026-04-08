@@ -19,9 +19,11 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaDocumentedElement;
 import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> i
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    element = getIfWhiteSpace(element, context);
     FixDocCommentAction.generateComment(element, context.project(), updater);
   }
 
@@ -45,6 +48,7 @@ public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> i
 
   @Override
   protected boolean isElementApplicable(@NotNull PsiElement element, @NotNull ActionContext context) {
+    element = getIfWhiteSpace(element, context);
     if (element instanceof PsiIdentifier ||
         element instanceof PsiJavaCodeReferenceElement ||
         element instanceof PsiJavaModuleReferenceElement) {
@@ -52,24 +56,39 @@ public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> i
       if (targetElement instanceof PsiVariable && PsiTreeUtil.isAncestor(((PsiVariable)targetElement).getInitializer(), element, false)) {
         return false;
       }
-      if ( targetElement instanceof PsiClass aClass && PsiUtil.isLocalClass(aClass)) {
+      if (targetElement instanceof PsiClass aClass && PsiUtil.isLocalClass(aClass)) {
         return false;
       }
       if (targetElement instanceof PsiJavaDocumentedElement documentedElement &&
           !(targetElement instanceof PsiTypeParameter) &&
-          !(targetElement instanceof PsiAnonymousClass)) {
+          !(targetElement instanceof PsiAnonymousClass) &&
+          !(targetElement instanceof PsiPackageStatement)) {
         return documentedElement.getDocComment() == null;
       }
 
-      if (targetElement instanceof PsiPackageStatement) {
+      if (targetElement instanceof PsiPackageStatement packageStatement) {
+        if (packageStatement.getDocComment() != null) return false;
         PsiFile file = targetElement.getContainingFile();
-        return PackageUtil.isPackageInfoFile(file) && JavaDocumentationProvider.getPackageInfoComment(file) == null;
+        return JavaDocumentationProvider.getPackageInfoComment(file) == null;
       }
       else if (PackageUtil.isPackageInfoFile(targetElement)) {
         return JavaDocumentationProvider.getPackageInfoComment(targetElement) == null;
       }
     }
     return false;
+  }
+
+  private static @Nullable PsiElement getIfWhiteSpace(PsiElement element, @NotNull ActionContext context) {
+    if (element instanceof PsiWhiteSpace && element.getTextRange().getStartOffset() == context.offset()) {
+      element = element.getPrevSibling();
+      if(element instanceof PsiPackageStatement packageStatement) {
+        element = packageStatement.getPackageReference();
+      }
+      else if (element instanceof PsiNameIdentifierOwner nameIdentifierOwner) {
+        element = nameIdentifierOwner.getNameIdentifier();
+      }
+    }
+    return element;
   }
 
   @Override

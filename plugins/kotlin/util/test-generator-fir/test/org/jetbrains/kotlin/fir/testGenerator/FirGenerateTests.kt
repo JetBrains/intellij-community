@@ -58,6 +58,8 @@ import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCop
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.editor.AbstractK2EnterHandlerTest
+import org.jetbrains.kotlin.idea.fir.editor.commenter.AbstractK2KotlinCommenterTest
+import org.jetbrains.kotlin.idea.fir.editor.editor.backspaceHandler.AbstractK2BackspaceHandlerTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesMultiModuleFirTest
@@ -71,6 +73,8 @@ import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
 import org.jetbrains.kotlin.idea.fir.formatter.AbstractK2FormatterTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportAliasTest53
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
@@ -231,6 +235,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
 
+        testClass<AbstractK2AddImportTest> {
+            model("addImport", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2AddImportAliasTest53> {
+            model("addImportAlias", pattern = KT_WITHOUT_DOTS)
+        }
+
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
@@ -291,11 +303,20 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/java", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
         testClass<AbstractK2EnterHandlerTest> {
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+        }
+
+        testClass<AbstractK2BackspaceHandlerTest> {
+            model("editor/backspaceHandler")
+        }
+
+        testClass<AbstractK2KotlinCommenterTest> {
+            model("editor/commenter", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2FormatterTest> {

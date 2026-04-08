@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.kernel" scope="TEST" />
@@ -57,6 +58,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.vcs.impl.frontend" />
 </module>

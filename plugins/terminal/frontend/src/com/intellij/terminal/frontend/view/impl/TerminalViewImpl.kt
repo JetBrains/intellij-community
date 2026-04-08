@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
@@ -115,6 +116,7 @@ class TerminalViewImpl(
   settings: JBTerminalSystemSettingsProviderBase,
   startupFusInfo: TerminalStartupFusInfo?,
   override val coroutineScope: CoroutineScope,
+  sourceNavigationProjectPath: String? = null,
 ) : TerminalView {
   private val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
@@ -195,6 +197,7 @@ class TerminalViewImpl(
       settings,
       coroutineScope.childScope("TerminalAlternateBufferEditor")
     )
+    TerminalSourceNavigationInfo.setProjectPath(alternateBufferEditor, sourceNavigationProjectPath)
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
@@ -232,6 +235,7 @@ class TerminalViewImpl(
     )
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
+    TerminalSourceNavigationInfo.setProjectPath(outputEditor, sourceNavigationProjectPath)
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
     val outputModel = MutableTerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
@@ -318,6 +322,9 @@ class TerminalViewImpl(
 
     controller.addTerminationCallback(coroutineScope.asDisposable()) {
       mutableSessionState.value = TerminalViewSessionState.Terminated
+      // Hide the cursor on process termination
+      val currentState = sessionModel.terminalState.value
+      sessionModel.updateTerminalState(currentState.copy(isCursorVisible = false))
     }
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)

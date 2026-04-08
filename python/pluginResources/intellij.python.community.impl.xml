@@ -1,33 +1,37 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.spellchecker"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.syntax"/>
-    <module name="intellij.python.community"/>
-    <module name="intellij.python.common"/>
-    <module name="intellij.python.community.core.impl"/>
-    <module name="intellij.python.community.helpersLocator"/>
-    <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.community.execService.python"/>
-    <module name="intellij.python.community.interpreters"/>
-    <module name="intellij.python.community.impl.poetry.common"/>
-    <module name="intellij.python.community.impl.uv.common"/>
-    <module name="intellij.python.community.impl.pipenv"/>
-    <module name="intellij.python.community.impl.conda"/>
-    <module name="intellij.python.hatch"/>
-    <module name="intellij.python.pydev"/>
-    <module name="intellij.python.sdk.ui"/>
-    <module name="intellij.python.externalIndex"/>
     <module name="intellij.regexp"/>
     <module name="intellij.libraries.kotlinx.io"/>
-    <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.community.impl.installer"/>
-    <module name="intellij.python.venv"/>
-    <module name="intellij.python.community.services.systemPython"/>
-    <module name="intellij.python.sdkConfigurator.common"/>
-    <module name="intellij.python.processOutput.common"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.common"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.core.impl"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.community.impl.conda"/>
+    <module name="intellij.python.community.impl.installer"/>
+    <module name="intellij.python.community.impl.pipenv"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.uv.common"/>
+    <module name="intellij.python.community.interpreters"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.externalIndex"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.pydev"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.python.syntax"/>
+    <module name="intellij.python.venv"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.toml.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -122,6 +126,8 @@
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
+
+    <postStartupActivity implementation="com.jetbrains.python.sdk.PostStartupAvailableSdkNotifier"/>
   </extensions>
 
 
@@ -132,6 +138,8 @@
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationFileOpenedListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.jetbrains.python.sdk.AvailableSdkNotifier"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
 
   <applicationListeners>
@@ -148,6 +156,7 @@
                  description="Enable pyi stubs for Django (django-stubs package)"
                  key="django.enable.pyi.stubs"/>
     <iconMapper mappingFile="PythonIconMappings.json"/>
+    <minimapStructureMarkerPolicy implementation="com.jetbrains.python.PyMinimapStructureMarkerPolicy"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
@@ -873,6 +882,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
+    <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>

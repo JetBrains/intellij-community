@@ -23,6 +23,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -47,6 +48,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
@@ -97,6 +99,7 @@ import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.CancellationException
@@ -181,6 +184,9 @@ open class EditorsSplitters internal constructor(
         // not requestFocusInWindow because if a floating or windowed tool window is deactivated (or, ESC pressed to focus editor),
         // then we should focus our window
         it.requestFocus()
+        if (StartupUiUtil.isWaylandToolkit()) {
+          ComponentUtil.getWindow(it)?.toFront()
+        }
         return true
       }
       return false

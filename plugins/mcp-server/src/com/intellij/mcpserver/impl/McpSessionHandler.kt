@@ -559,7 +559,7 @@ private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
       is McpToolCallResultContent.Text -> TextContent(content.text)
     }
   }
-  val structuredContent = if (structuredToolOutputEnabled) structuredContent else null
+  val structuredContent = if (structuredToolOutputEnabled && !isError) structuredContent else null
   val callToolResult = CallToolResult(content = contents, structuredContent = structuredContent, isError = isError)
   return callToolResult
 }
@@ -574,7 +574,7 @@ private fun McpTool.toSdkTool(): Tool {
   }
   else null
   val tool = Tool(name = descriptor.name,
-                  title = null,
+                  title = descriptor.title,
                   description = descriptor.description,
                   inputSchema = ToolSchema(
                     properties = descriptor.inputSchema.propertiesSchema,

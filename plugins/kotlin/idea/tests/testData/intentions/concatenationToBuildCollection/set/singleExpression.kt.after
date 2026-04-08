@@ -1,0 +1,7 @@
+fun create(): Set<Int> = setOf(1, 2)
+
+fun main() {
+    val a = buildSet {
+        addAll(create())
+    }
+}

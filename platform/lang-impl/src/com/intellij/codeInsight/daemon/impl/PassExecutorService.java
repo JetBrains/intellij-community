@@ -50,6 +50,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -610,7 +611,7 @@ public final class PassExecutorService implements Disposable {
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
                        + (pass == null ? "" : pass + " ")
-                       + StringUtil.join(info, Functions.TO_STRING(), " ")
+                       + StringUtil.join(info, Functions.TO_STRING(), "")
                        + "; progress=" + progressIndicator
                        + docText;
       LOG.debug(message);
@@ -618,9 +619,11 @@ public final class PassExecutorService implements Disposable {
   }
 
   // return true if terminated
+  @RequiresBackgroundThread
   boolean waitFor(long millis) {
     return waitFor(millis, mySubmittedPasses.get());
   }
+  @RequiresBackgroundThread
   private static boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
     long deadline = System.currentTimeMillis() + millis;
     try {

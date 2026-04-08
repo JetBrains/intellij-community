@@ -19,6 +19,7 @@ import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayPr
 import com.intellij.notebooks.visualization.ui.notebookViewUpdater
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.ThreadingAssertions
 import java.awt.Point
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -45,7 +45,9 @@ class NotebookCellInlayManager private constructor(
   val notebook: EditorNotebook,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
 
-  private val notebookCellLines = NotebookCellLines.get(editor)
+  private val notebookCellLines by lazy {
+    NotebookCellLines.get(editor)
+  }
 
   val initialized: AtomicBoolean = AtomicBoolean(false)
 
@@ -83,6 +85,7 @@ class NotebookCellInlayManager private constructor(
   fun updateAllOutputs() {
     update {
       notebook.cells.forEach {
+        it.view?.ensureOutputsInitialized()
         it.updateOutputs()
       }
     }
@@ -115,21 +118,13 @@ class NotebookCellInlayManager private constructor(
   private fun updateCells(cells: List<EditorCell>, force: Boolean = false) {
     update(force) { ctx ->
       cells.forEach {
+        // foldings updated inside
         it.update(ctx)
       }
-      updateCellsFolding(cells)
     }
   }
 
-  private fun addViewportChangeListener() {
-    editor.scrollPane.viewport.addChangeListener {
-      notebook.cells.forEach {
-        it.updateIfInVisibleRect()
-      }
-    }
-  }
-
-  fun initialize() {
+  suspend fun initialize() {
     editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
     val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
@@ -139,9 +134,6 @@ class NotebookCellInlayManager private constructor(
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateAll()
     })
-
-    addViewportChangeListener()
-
 
     setupFoldingListener()
     setupSelectionUI()
@@ -306,27 +298,23 @@ class NotebookCellInlayManager private constructor(
     startOffset >= region.startOffset && endOffset <= region.endOffset
   }
 
-  private fun handleRefreshedDocument() {
-    ThreadingAssertions.softAssertReadAccess()
+  private suspend fun handleRefreshedDocument() {
     notebook.clear()
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
+    val intervals = readAction { notebookCellLines.intervals }
 
-    update(keepScrollingPosition = false) {
-      notebookCellLines.intervals.forEach { interval ->
-        notebook.addCell(pointerFactory.create(interval))
+    // consider migration
+    performOnEdtThread {
+      update(keepScrollingPosition = false) {
+        intervals.forEach { interval ->
+          notebook.addCell(pointerFactory.create(interval))
+        }
+
+        //Forcefully synchronize components and inlays height
+        editor.contentComponent.components
+          .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
+          .forEach { it.doLayout() }
       }
-    }
-    //Forcefully synchronize components and inlays height
-    update(keepScrollingPosition = false) {
-      editor.contentComponent.components
-        .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
-        .forEach { it.doLayout() }
-    }
-  }
-
-  private fun updateCellsFolding(editorCells: List<EditorCell>) = update { updateContext ->
-    editorCells.forEach { cell ->
-      cell.view?.updateCellFolding(updateContext)
     }
   }
 

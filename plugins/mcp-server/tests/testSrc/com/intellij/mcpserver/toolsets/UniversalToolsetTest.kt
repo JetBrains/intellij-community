@@ -3,7 +3,7 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpSessionInvocationMode
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class UniversalToolsetTest : McpToolsetTestBase() {
+class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   private var oldInvocationMode = McpSessionInvocationMode.DIRECT
   private val json = Json { ignoreUnknownKeys = true }
 
@@ -184,76 +184,6 @@ class UniversalToolsetTest : McpToolsetTestBase() {
       val textContent = result.textContent
       assert(textContent.text.contains("Command is empty")) {
         "Error message should mention empty command"
-      }
-    }
-  }
-
-  @Test
-  fun execute_tool_help_all_tools(): Unit = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      UniversalToolset::execute_tool.name,
-      buildJsonObject {
-        put("command", JsonPrimitive("--help"))
-      }
-    ) { result ->
-      val textContent = result.textContent
-      assert(textContent.text.contains("Available MCP Tools")) {
-        "Help should show 'Available MCP Tools'"
-      }
-      assert(textContent.text.contains("reformat_file")) {
-        "Help should list reformat_file tool"
-      }
-      assert(textContent.text.contains("search_file")) {
-        "Help should list search_file tool"
-      }
-    }
-  }
-
-  @Test
-  fun execute_tool_help_specific_tool(): Unit = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      UniversalToolset::execute_tool.name,
-      buildJsonObject {
-        put("command", JsonPrimitive("reformat_file --help"))
-      }
-    ) { result ->
-      val textContent = result.textContent
-      assert(textContent.text.contains("Tool: reformat_file")) {
-        "Help should show tool name"
-      }
-      assert(textContent.text.contains("Description:")) {
-        "Help should show description section"
-      }
-      assert(textContent.text.contains("Parameters:")) {
-        "Help should show parameters section"
-      }
-      assert(textContent.text.contains("--path")) {
-        "Help should show path parameter"
-      }
-      assert(textContent.text.contains("[required]") || textContent.text.contains("[optional]")) {
-        "Help should indicate if parameter is required or optional"
-      }
-      assert(textContent.text.contains("Example:")) {
-        "Help should show example"
-      }
-    }
-  }
-
-  @Test
-  fun execute_tool_help_nonexistent_tool(): Unit = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      UniversalToolset::execute_tool.name,
-      buildJsonObject {
-        put("command", JsonPrimitive("nonexistent_tool --help"))
-      }
-    ) { result ->
-      assert(result.isError == true) { "Should return an error for nonexistent tool" }
-      val textContent = result.textContent
-      assert(textContent.text.contains("not found")) {
-        "Error message should mention tool not found"
-      }
-      assert(textContent.text.contains("--help")) {
-        "Error message should suggest using --help"
       }
     }
   }

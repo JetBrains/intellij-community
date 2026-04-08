@@ -70,6 +70,7 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
                                    @NotNull Formatter format,
                                    @NotNull ModelIndex<GridColumn> column,
                                    @NotNull ModelIndex<GridRow> row,
+                                   @Nullable Object value,
                                    @Nullable ReservedCellValue nullValue,
                                    @Nullable EventObject initiator,
                                    @Nullable TextCompletionProvider provider,
@@ -83,7 +84,7 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
     myGrid = grid;
     myValueParser = valueParser;
 
-    myTextField = new GridCellEditorTextField(project, grid, row, column, multiline, initiator, provider, true, valueFormatter);
+    myTextField = new GridCellEditorTextField(project, grid, row, column, value, multiline, initiator, provider, true, valueFormatter);
     myTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -195,10 +196,11 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
                                             EventObject initiator,
                                             @NotNull ModelIndex<GridRow> row,
                                             @NotNull ModelIndex<GridColumn> columnModelIndex,
+                                            @Nullable Object value,
                                             @Nullable TextCompletionProvider provider,
                                             @NotNull ValueParser valueParser,
                                             @NotNull ValueFormatter valueFormatter) {
-      super(project, grid, format, columnModelIndex, row, nullValue, initiator, provider, valueParser, valueFormatter, false);
+      super(project, grid, format, columnModelIndex, row, value, nullValue, initiator, provider, valueParser, valueFormatter, false);
     }
 
     @Override
@@ -276,12 +278,13 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
                             EventObject initiator,
                             @NotNull ModelIndex<GridRow> row,
                             @NotNull ModelIndex<GridColumn> columnModelIndex,
+                            @Nullable Object value,
                             @NotNull Class<V> clazz,
                             @Nullable TextCompletionProvider provider,
                             @NotNull ValueParser valueParser,
                             @NotNull ValueFormatter valueFormatter,
                             @NotNull GridCellEditorFactory factory) {
-      super(project, grid, format, nullValue, initiator, row, columnModelIndex, provider, valueParser, valueFormatter);
+      super(project, grid, format, nullValue, initiator, row, columnModelIndex, value, provider, valueParser, valueFormatter);
       myClazz = clazz;
       myFactory = factory;
 
@@ -395,7 +398,7 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
     @Override
     protected void beforeStopEditing(@NotNull V internalValue) {
       Object object = convertInternalValue(internalValue);
-      getTextField().setText(myFactory.getValueFormatter(getGrid(), myRow, myColumn, object), getGrid(), myRow, myColumn);
+      getTextField().setText(myFactory.getValueFormatter(getGrid(), myRow, myColumn, object), getGrid(), myRow, myColumn, object);
     }
 
     @Override

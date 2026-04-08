@@ -6,18 +6,23 @@ import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
 import javax.swing.Icon
@@ -85,8 +90,15 @@ internal class CodexAgentSessionProviderDescriptor(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
-  override val supportsPlanMode: Boolean
-    get() = true
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
+    override val supportedContexts: Set<AgentThreadRenameContext>
+      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+
+    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
+      serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, normalizedName)
+      return true
+    }
+  }
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
@@ -106,17 +118,12 @@ internal class CodexAgentSessionProviderDescriptor(
     return AgentSessionTerminalLaunchSpec(command = command)
   }
 
-  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(
-      command = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG),
-    )
-  }
-
-  override fun buildLaunchSpecWithInitialPrompt(
+  override fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
-    prompt: String,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
-    return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", prompt))
+    val message = initialMessagePlan.message ?: return baseLaunchSpec
+    return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", message))
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
@@ -124,6 +131,31 @@ internal class CodexAgentSessionProviderDescriptor(
       request = request,
       startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.POST_START_ONLY,
     )
+  }
+
+  override fun buildPostStartDispatchSteps(initialMessagePlan: AgentInitialMessagePlan): List<AgentInitialMessageDispatchStep> {
+    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
+      return super.buildPostStartDispatchSteps(initialMessagePlan)
+    }
+
+    val message = initialMessagePlan.message ?: return emptyList()
+    return buildList {
+      add(
+        AgentInitialMessageDispatchStep(
+          text = AGENT_PROMPT_PLAN_MODE_COMMAND,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+          completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+        )
+      )
+      if (message.isNotEmpty()) {
+        add(
+          AgentInitialMessageDispatchStep(
+            text = message,
+            timeoutPolicy = initialMessagePlan.timeoutPolicy,
+          )
+        )
+      }
+    }
   }
 
   override fun resolvePendingSessionMetadata(
@@ -143,14 +175,6 @@ internal class CodexAgentSessionProviderDescriptor(
     return AgentPendingSessionMetadata(
       createdAtMs = System.currentTimeMillis(),
       launchMode = if ("--full-auto" in launchSpec.command) "yolo" else "standard",
-    )
-  }
-
-  @Suppress("UNUSED_PARAMETER")
-  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    return AgentSessionLaunchSpec(
-      sessionId = null,
-      launchSpec = buildNewSessionLaunchSpec(mode),
     )
   }
 

@@ -5,6 +5,9 @@
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"
                     dynamic="true"/>
+    <extensionPoint name="inspectionProblemAddedListener"
+                    interface="com.intellij.codeInspection.ui.InspectionProblemAddedListener"
+                    dynamic="true"/>
 
     <extensionPoint name="fileRankerMlService" interface="com.intellij.psi.search.FileRankerMlService" dynamic="true"/>
 

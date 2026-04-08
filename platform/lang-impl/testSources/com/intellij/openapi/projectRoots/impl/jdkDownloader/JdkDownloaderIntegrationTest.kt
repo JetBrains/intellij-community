@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.system.CpuArch
 import org.junit.Assert
@@ -19,7 +20,7 @@ class JdkDownloaderIntegrationTest : BasePlatformTestCase() {
         Assert.assertTrue(data.all { it.sharedIndexAliases.isNotEmpty() })
 
         //IDEA-253533
-        buildJdkDownloaderModel(data)
+        buildJdkDownloaderModel(data, localEel)
       }
       if (result.isSuccess) return
       lastError = result.exceptionOrNull()!!

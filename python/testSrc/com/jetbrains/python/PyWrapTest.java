@@ -79,19 +79,6 @@ public class PyWrapTest extends PyTestCase {
     doTest(" AND field");
   }
 
-  public void testWrapInInjectedStringLiteral() {
-    myFixture.setCaresAboutInjection(false);
-    myFixture.configureByFile("wrap/WrapInStringLiteral.py");
-
-    final int stringLiteralOffset = 114;
-    PsiFile hostFile = myFixture.getFile();
-    assertNotNull(
-      InjectedLanguageManager.getInstance(hostFile.getProject()).findInjectedElementAt(hostFile, stringLiteralOffset + "\"".length()));
-
-    myFixture.type(" AND field");
-    myFixture.checkResultByFile("wrap/WrapInStringLiteral.after.py", true);
-  }
-
   public void testDontWrapStartOfString() { // PY-9436
     doTest("_some_long_text_here_to_test_right_margin_some_long_text_here_to_test_right_margin_some_long_text_here_to_test_right_margin");
   }

@@ -71,7 +71,7 @@ final class TypedQuoteImpl {
       return false;
     }
     int offset = editor.getCaretModel().getOffset();
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     CharSequence chars = document.getCharsSequence();
     int length = document.getTextLength();
     if (isTypingEscapeQuote(editor, quoteHandler, offset)) {

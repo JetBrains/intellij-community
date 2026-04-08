@@ -3,6 +3,8 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
@@ -32,7 +34,7 @@ fun PythonPackageManager.waitInitBlocking() {
 @ApiStatus.Internal
 fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
-    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement()) {
       reloadPackages().orLogException(thisLogger())
     }
   }

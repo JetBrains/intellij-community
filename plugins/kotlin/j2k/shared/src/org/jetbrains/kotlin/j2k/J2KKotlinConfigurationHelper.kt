@@ -10,17 +10,23 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiJavaFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import java.util.concurrent.atomic.AtomicReference
 
-internal object J2KKotlinConfigurationHelper {
+@ApiStatus.Internal
+object J2KKotlinConfigurationHelper {
     fun checkKotlinIsConfigured(module: Module): Boolean {
         return module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
     }
@@ -32,7 +38,7 @@ internal object J2KKotlinConfigurationHelper {
         convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
     ) {
         val title = KotlinNJ2KBundle.message("converter.kotlin.not.configured.title")
-        if (Messages.showOkCancelDialog(
+        if (isUnitTestMode() || Messages.showOkCancelDialog(
                 project,
                 KotlinNJ2KBundle.message("converter.kotlin.not.configured.message"),
                 title,
@@ -92,7 +98,7 @@ internal object J2KKotlinConfigurationHelper {
     ) {
         val configurationService = KotlinProjectConfigurationService.getInstance(module.project)
         val coroutineScope = configurationService.coroutineScope
-        coroutineScope.launchTracked(Dispatchers.Default) {
+        val job = coroutineScope.launchTracked(Dispatchers.Default) {
             val autoConfigured = configurationService.autoConfigure(module)
 
             withContext(Dispatchers.EDT) {
@@ -107,5 +113,9 @@ internal object J2KKotlinConfigurationHelper {
                 }
             }
         }
+        jobReference?.set(job)
     }
+
+    @VisibleForTesting
+    var jobReference: AtomicReference<Job>? = null
 }

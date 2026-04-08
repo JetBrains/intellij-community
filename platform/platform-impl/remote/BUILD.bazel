@@ -17,9 +17,11 @@ jvm_library(
     "//platform/lang-core",
     "//platform/execution",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/util/concurrency",
     "//libraries/guava",
     "//platform/core-ui",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -39,9 +41,11 @@ jvm_library(
     "//platform/lang-core:lang-core_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//libraries/guava:guava_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.remote` end

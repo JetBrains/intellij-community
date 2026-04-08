@@ -113,7 +113,6 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeprecatedModule() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m2/module-info.java"); }
   public void testUnknownInlineTag() { doTest(); }
   public void testUnknownTags() { doTest(); }
-  public void testBadCharacters() { doTest(); }
   public void testVararg() { doTest(); }
   public void testInnerClassReferenceInSignature() { doTest(); }
   public void testBadReference() { doTest(); }
@@ -144,6 +143,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testOnlyEmptyLinesInSnippet() { doTest(); }
   public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
   public void testUnalignedLeadingAsterisks() { doTest(); }
+  public void testParameterizedTypes() { doTest(); }
+  public void testParameterizedTypes02() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

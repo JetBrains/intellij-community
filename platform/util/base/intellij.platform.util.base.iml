@@ -29,6 +29,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" />
-    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
   </component>
 </module>

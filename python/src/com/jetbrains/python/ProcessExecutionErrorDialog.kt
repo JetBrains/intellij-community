@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.impl.ModalContextProjectLocator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -81,7 +82,8 @@ fun showProcessExecutionErrorDialog(
   val processId = execError.loggedProcessId
 
   if (project != null && processId != null) {
-    val hasOpenedModals = LaterInvocator.getCurrentModalEntities().isNotEmpty()
+    // Filter out progress-related modal entities (ProgressWindow, JobProviderWithOwnerContext)
+    val hasOpenedModals = LaterInvocator.getCurrentModalEntities().any { it !is ModalContextProjectLocator }
     attemptOpenErrorInProcessOutputToolWindow(project, execError, processId, hasOpenedModals)
   }
   else {

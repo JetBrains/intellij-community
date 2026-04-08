@@ -168,7 +168,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Thread and sub-agent open routing must follow mode policy defined in `spec/agent-dedicated-frame.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Dedicated-frame project switching controls and window-order policy must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
@@ -186,11 +186,21 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
+- Provider rename actions may target only concrete top-level threads. Successful provider-backed rename must trigger scoped refresh for the thread path, without optimistic in-memory title mutation.
+  [@test] ../sessions/testSrc/AgentSessionRenameServiceTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+
+- Codex explicit thread names must take precedence over fallback title fields (`title`, `summary`, `preview`) when deriving visible thread titles from app-server payloads.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+
+- Codex `thread/name/updated` notifications must invalidate refresh state like other direct thread-status updates, but must not synthesize new-thread rebind candidates.
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
 - Codex thread discovery and backend selection must always use app-server source; override values (including `rollout` and unknown values) must be ignored.
   [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
 
 - Branch mismatch between thread origin and current worktree branch must show warning confirmation before opening chat.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Batch archive must archive all targets whose providers support archive, while unsupported targets are skipped without blocking successful targets.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
@@ -226,6 +236,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 - Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
+- Thread-row rename context menu is available only for a single selected top-level thread whose provider supports rename.
 - Single-click on normal rows selects only; open happens on Enter or double-click.
 - On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
 - Expand/collapse remains available through disclosure controls and keyboard tree actions.

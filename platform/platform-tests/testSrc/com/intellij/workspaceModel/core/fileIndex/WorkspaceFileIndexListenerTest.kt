@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.vfs.VirtualFile
@@ -234,6 +235,27 @@ class WorkspaceFileIndexListenerTest {
     }
 
     assertEquals(0, listener.eventCount.get()) // no event fired because everything was deduplicated
+  }
+
+  @Test
+  fun `no duplicated filesets after dirty files update`() = runBlocking {
+    val listener = MyWorkspaceFileIndexListener()
+    projectModel.project.messageBus.connect().subscribe(WorkspaceFileIndexListener.TOPIC, listener)
+
+    val model = WorkspaceModel.getInstance(projectModel.project)
+
+    val root = projectModel.baseProjectDir.newVirtualDirectory("dirtyRoot")
+    model.update("Add IndexingTestEntity") {
+      it.addEntity(IndexingTestEntity(listOf(root.toVirtualFileUrl(model.getVirtualFileUrlManager())), emptyList(), NonPersistentEntitySource))
+    }
+
+    listener.clear()
+
+    writeAction {
+      root.rename(null, "dirtyRootRenamed")
+    }
+
+    assertEquals(0, listener.eventCount.get())
   }
 
   private class MyWorkspaceFileIndexListener : WorkspaceFileIndexListener {

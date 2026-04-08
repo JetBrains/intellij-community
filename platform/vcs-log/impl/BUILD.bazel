@@ -31,6 +31,8 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/analysis-impl",
     "//platform/vcs-impl",
     "//libraries/guava",
@@ -58,6 +60,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/bookmarks",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -85,6 +88,8 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//libraries/guava:guava_test_lib",
@@ -119,6 +124,7 @@ jvm_library(
     "//libraries/mockito:mockito_test_lib",
     "//platform/bookmarks:bookmarks_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl` end
@@ -178,6 +184,7 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/analysis-impl",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/vcs-impl",
@@ -231,6 +238,8 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/util/storages",
     "//platform/util/storages:storages_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//libraries/mockito",
@@ -246,6 +255,7 @@ jvm_library(
     ":vcs-log-impl-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl.tests` end

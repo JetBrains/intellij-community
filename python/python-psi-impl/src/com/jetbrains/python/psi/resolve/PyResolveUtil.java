@@ -230,6 +230,11 @@ public final class PyResolveUtil {
     // from six import with_metaclass as w_m
     // w_m(...)
 
+    // For star imports, returns all candidate QNames without checking the originating module:
+    // from six import *
+    // from other_module import *
+    // with_metaclass(...)  ->  [six.with_metaclass, other_module.with_metaclass]
+
     final PyExpression qualifier = expression.getQualifier();
     if (qualifier instanceof PyReferenceExpression) {
       final String name = expression.getName();

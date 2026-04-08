@@ -55,9 +55,14 @@ class AnalyzeStacktraceUtil private constructor() {
 
     @JvmStatic
     fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String) {
+      printStacktrace(consoleView, unscrambledTrace, ConsoleViewContentType.ERROR_OUTPUT)
+    }
+
+    @JvmStatic
+    fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String, consoleViewContentType: ConsoleViewContentType) {
       ThreadingAssertions.assertEventDispatchThread()
       consoleView.clear()
-      consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT)
+      consoleView.print(unscrambledTrace + "\n", consoleViewContentType)
       consoleView.scrollTo(0)
     }
 
@@ -95,14 +100,6 @@ class AnalyzeStacktraceUtil private constructor() {
             return true
           }
         }
-
-      for (action in consoleView.createConsoleActions()) {
-        toolbarActions.add(action)
-      }
-      val console = consoleView as ConsoleViewImpl
-      ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.editor!!)
-      console.editor!!.getSettings().setCaretRowShown(true)
-      toolbarActions.add(ActionManager.getInstance().getAction("AnalyzeStacktraceToolbar"))
 
       if (withExecutor) {
         val executor = DefaultRunExecutor.getRunExecutorInstance()
@@ -153,7 +150,7 @@ class AnalyzeStacktraceUtil private constructor() {
     fun createConsoleComponent(consoleView: ConsoleView?, toolbarActions: DefaultActionGroup?): JComponent?
   }
 
-  private class MyConsolePanel(consoleView: ExecutionConsole, toolbarActions: ActionGroup) : JPanel(BorderLayout()), NoStackTraceFoldingPanel {
+  private class MyConsolePanel(consoleView: ConsoleView, toolbarActions: DefaultActionGroup) : JPanel(BorderLayout()), NoStackTraceFoldingPanel {
     init {
       val toolbarPanel = JPanel(BorderLayout())
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false)
@@ -161,6 +158,15 @@ class AnalyzeStacktraceUtil private constructor() {
       toolbarPanel.add(toolbar.getComponent())
       add(toolbarPanel, BorderLayout.WEST)
       add(consoleView.getComponent(), BorderLayout.CENTER)
+
+      for (action in consoleView.createConsoleActions()) {
+        toolbarActions.add(action)
+      }
+
+      val console = consoleView as ConsoleViewImpl
+      ConsoleViewUtil.enableReplaceActionForConsoleViewEditor(console.editor!!)
+      console.editor!!.getSettings().setCaretRowShown(true)
+      toolbarActions.add(ActionManager.getInstance().getAction("AnalyzeStacktraceToolbar"))
     }
   }
 

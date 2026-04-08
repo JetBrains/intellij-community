@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog.uiBlocks
 
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.ui.layout.selected
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
@@ -38,45 +39,21 @@ class CheckBoxGroupBlock(
   private var otherTextField: JBTextField? = null
 
   override fun addToPanel(panel: Panel) {
-    val allCheckBoxes: ArrayList<JBCheckBox> = arrayListOf()
+    val allCheckBoxes = mutableListOf<JBCheckBox>()
 
     panel.apply {
       buttonsGroup(indent = false) {
         row {
-          label(myGroupLabel).apply {
-            bold()
-            if (requireAnswer) {
-              val errorMessage = if (myIncludeOtherTextField) {
-                CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty.with.other")
-              }
-              else {
-                CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")
-              }
-
-              errorOnApply(errorMessage) {
-                val isAllCheckboxEmpty = allCheckBoxes.all {
-                  !it.isSelected
-                }
-                if (myIncludeOtherTextField) {
-                  return@errorOnApply isAllCheckboxEmpty &&
-                                      (otherCheckBox?.isSelected == false ||
-                                       (otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == true))
-                }
-                else {
-                  return@errorOnApply isAllCheckboxEmpty
-                }
-              }
-            }
-          }
+          label(myGroupLabel)
+            .bold()
         }.bottomGap(BottomGap.NONE)
         myItemsData.forEachIndexed { i, itemData ->
           row {
-            checkBox(itemData.label).bindSelected(
+            allCheckBoxes += checkBox(itemData.label).bindSelected(
               { myItemsData[i].property },
               { myItemsData[i].property = it }
-            ).applyToComponent {
-              allCheckBoxes.add(this)
-            }
+            ).addChooseOptionValidation(allCheckBoxes)
+              .component
           }.apply {
             if (i == myItemsData.size - 1 && !myIncludeOtherTextField) {
               this.bottomGap(BottomGap.MEDIUM)
@@ -86,19 +63,27 @@ class CheckBoxGroupBlock(
 
         if (myIncludeOtherTextField) {
           row {
-            cell(JBCheckBox())
+            otherCheckBox = checkBox("")
               .gap(RightGap.SMALL)
+              .addChooseOptionValidation(allCheckBoxes)
               .applyToComponent {
-                isOpaque = false
-                otherCheckBox = this
+                addChangeListener(object : ChangeListener {
+                  override fun stateChanged(e: ChangeEvent?) {
+                    val sourceState = e?.source ?: return
+                    if (sourceState is JBCheckBox && sourceState.selected()) {
+                      otherTextField?.requestFocusInWindow()
+                    }
+                  }
+                })
               }
-            textField()
-              .bindText(::myOtherProperty.toMutableProperty())
+              .component
+
+            otherTextField = textField()
+              .bindText(::myOtherProperty)
               .align(Align.FILL)
               .enabledIf(otherCheckBox!!.selected)
               .applyToComponent {
                 emptyText.text = myOtherTextfieldPlaceholderText
-                otherTextField = this
 
                 addFocusListener(object : FocusListener {
                   override fun focusGained(e: FocusEvent?) {
@@ -119,17 +104,7 @@ class CheckBoxGroupBlock(
                     requestFocusInWindow()
                   }
                 })
-              }
-            otherCheckBox?.apply {
-              addChangeListener(object : ChangeListener {
-                override fun stateChanged(e: ChangeEvent?) {
-                  val sourceState = e?.source ?: return
-                  if (sourceState is JBCheckBox && sourceState.selected()) {
-                    otherTextField?.requestFocusInWindow()
-                  }
-                }
-              })
-            }
+              }.component
           }.bottomGap(BottomGap.MEDIUM)
         }
       }
@@ -173,6 +148,42 @@ class CheckBoxGroupBlock(
 
   fun requireAnswer(): CheckBoxGroupBlock {
     requireAnswer = true
+    return this
+  }
+
+  private fun <T : JBCheckBox> Cell<T>.addChooseOptionValidation(allCheckBoxes: List<JBCheckBox>): Cell<T> {
+    if (requireAnswer) {
+      val errorMessage = if (myIncludeOtherTextField) {
+        CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty.with.other")
+      }
+      else {
+        CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")
+      }
+
+      errorOnApply(errorMessage) {
+        val isAllCheckboxEmpty = allCheckBoxes.all {
+          !it.isSelected
+        }
+        if (myIncludeOtherTextField) {
+          return@errorOnApply isAllCheckboxEmpty &&
+                              (otherCheckBox?.isSelected == false ||
+                               (otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == true))
+        }
+        else {
+          return@errorOnApply isAllCheckboxEmpty
+        }
+      }
+    }
+
+    component.addActionListener {
+      val checkBoxes = (allCheckBoxes + otherCheckBox - component).filterNotNull()
+      for (checkBox in checkBoxes) {
+        ComponentValidator.getInstance(checkBox).ifPresent {
+          it.revalidate()
+        }
+      }
+    }
+
     return this
   }
 }

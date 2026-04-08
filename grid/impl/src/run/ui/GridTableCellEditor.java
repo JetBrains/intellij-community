@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +40,8 @@ import java.util.EventObject;
 public class GridTableCellEditor extends AbstractTableCellEditor {
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";
   public static final Key<EventObject> EDITING_STARTER_CLIENT_PROPERTY_KEY = Key.create("EventThatCausedEditingToStart");
+  public static final Key<Object> CURRENT_VALUE_CLIENT_PROPERTY_KEY = Key.create("CurrentValue");
+  public static final Key<Boolean> SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY = Key.create("SuppressMoveFocus");
 
   private final DataGrid myGrid;
   private final ModelIndex<GridRow> myRowIdx;
@@ -47,6 +49,7 @@ public class GridTableCellEditor extends AbstractTableCellEditor {
   private final GridCellEditorFactory myEditorFactory;
 
   private GridCellEditor myEditor = null;
+  private boolean myShouldMoveFocus = true;
 
   public GridTableCellEditor(DataGrid grid,
                              ModelIndex<GridRow> rowIdx,
@@ -59,7 +62,7 @@ public class GridTableCellEditor extends AbstractTableCellEditor {
   }
 
   public boolean shouldMoveFocus() {
-    return myEditor == null || myEditor.shouldMoveFocus();
+    return myShouldMoveFocus && (myEditor == null || myEditor.shouldMoveFocus());
   }
 
   @TestOnly
@@ -72,8 +75,14 @@ public class GridTableCellEditor extends AbstractTableCellEditor {
     if (myEditorFactory == null) return null;
 
     if (myEditor == null) {
-      EventObject e = ComponentUtil.getClientProperty(table, EDITING_STARTER_CLIENT_PROPERTY_KEY);
-      myEditor = myEditorFactory.createEditor(myGrid, myRowIdx, myColumnIdx, value, e);
+      EventObject e = ClientProperty.get(table, EDITING_STARTER_CLIENT_PROPERTY_KEY);
+      Object currentValue = ClientProperty.get(table, CURRENT_VALUE_CLIENT_PROPERTY_KEY);
+      Boolean suppressMoveFocus = ClientProperty.get(table, SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY);
+      myShouldMoveFocus = suppressMoveFocus == null || !suppressMoveFocus;
+      myEditor = myEditorFactory.createEditor(myGrid, myRowIdx, myColumnIdx, currentValue == null ? value : currentValue, e);
+      if (currentValue != null && !Comparing.equal(currentValue, value)) {
+        myGrid.fireValueEdited(currentValue);
+      }
       myEditor.setEditingListener(object -> {
         myGrid.fireValueEdited(object);
         Rectangle r = calculateSelectedRect(table);
@@ -103,6 +112,10 @@ public class GridTableCellEditor extends AbstractTableCellEditor {
 
   public @Nullable String getCellEditorText() {
     return myEditor != null ? myEditor.getText() : null;
+  }
+
+  public boolean isEditingCell(@NotNull ModelIndex<GridRow> rowIdx, @NotNull ModelIndex<GridColumn> columnIdx) {
+    return myRowIdx.equals(rowIdx) && myColumnIdx.equals(columnIdx);
   }
 
   @Override

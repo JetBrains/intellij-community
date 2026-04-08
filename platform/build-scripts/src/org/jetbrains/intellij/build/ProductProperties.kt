@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
 import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
@@ -194,6 +195,11 @@ abstract class ProductProperties {
   var contentModulesToScramble: List<String> = emptyList()
 
   /**
+   * The list of classes to check for scrambling.
+   */
+  var requiredScrambledClasses: List<String> = emptyList()
+
+  /**
    * Path to an alternative scramble script which will should be used for a product.
    */
   var alternativeScrambleStubPath: Path? = null
@@ -294,6 +300,23 @@ abstract class ProductProperties {
   var additionalDirectoriesWithLicenses: List<Path> = emptyList()
 
   /**
+   * Launcher commands customizer
+   */
+  var launcherCommandsCustomizer: ((List<CustomCommandLaunchData>, BuildContext) -> List<CustomCommandLaunchData>)? = null
+
+  /**
+   * Custom frontend module filter
+   */
+  var frontendModuleFilter: (suspend (BuildContext) -> FrontendModuleFilter)? = null
+
+  /**
+   * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.
+   * Libraries listed here have their native files extracted to `lib/<folderName>/` rather than embedded in JARs.
+   * Use the same string for key and value when no renaming is needed.
+   */
+  var presignedNativeLibs: Map<String, String> = emptyMap()
+
+  /**
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
@@ -360,6 +383,11 @@ abstract class ProductProperties {
    * Override this method to copy additional files to distributions of all operating systems.
    */
   open suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
+
+  /**
+   * Override this method to copy additional OS- and arch-specific files.
+   */
+  open suspend fun copyAdditionalOsSpecificFiles(runDir: Path, os: OsFamily, arch: JvmArchitecture, context: BuildContext) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.

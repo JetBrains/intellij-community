@@ -22,6 +22,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/project/shared:project",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/project/shared:project_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildView.backend` end

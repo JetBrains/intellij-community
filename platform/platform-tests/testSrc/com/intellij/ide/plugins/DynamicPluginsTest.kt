@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
@@ -638,6 +639,7 @@ class DynamicPluginsTest {
       content {
         module("intellij.bar.foo") {
           packagePrefix = "com.intellij.bar.foo"
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
           dependencies { plugin(foo.id!!) }
         }
       }
@@ -686,6 +688,7 @@ class DynamicPluginsTest {
       content {
         module("intellij.bar.foo") {
           packagePrefix = "com.intellij.bar.foo"
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
           dependencies { plugin(foo.id!!) }
           extensions("""<multiHostInjector implementation="com.intellij.bar.foo.InjectorImpl"/>""")
         }
@@ -1269,6 +1272,7 @@ class DynamicPluginsTest {
           dependencies {
             plugin("ai")
           }
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
         }
       }
     }

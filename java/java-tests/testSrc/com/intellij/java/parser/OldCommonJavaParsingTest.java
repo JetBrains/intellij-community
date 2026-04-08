@@ -3,7 +3,7 @@ package com.intellij.java.parser;
 
 // used only to check the old parser
 // new features are not supported
-@Deprecated
+@Deprecated(forRemoval = true)
 public class OldCommonJavaParsingTest extends AbstractBasicCommonJavaParsingTest {
   public OldCommonJavaParsingTest() {
     super(new OldJavaParsingTestConfigurator("java.FILE"));

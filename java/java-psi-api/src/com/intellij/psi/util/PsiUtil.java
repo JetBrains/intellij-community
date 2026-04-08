@@ -1284,6 +1284,7 @@ public final class PsiUtil extends PsiUtilCore {
    * @return true if the feature is available in the PsiFile, the supplied element belongs to
    */
   public static boolean isAvailable(@NotNull JavaFeature feature, @NotNull PsiElement element) {
+    if (JavaFeature.isAssumed(feature)) return true;
     if (!feature.isSufficient(getLanguageLevel(element))) return false;
     if (!feature.canBeCustomized()) return true;
     PsiFile file = element.getContainingFile();

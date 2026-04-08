@@ -9,6 +9,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.evaluate
@@ -69,24 +71,16 @@ class ConvertArgumentToSetInspection : KotlinApplicableInspectionBase<KtExpressi
             /* descriptionTemplate = */ KotlinBundle.message("can.convert.argument.to.set"),
             /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             /* onTheFly = */ onTheFly,
-            /* ...fixes = */ ConvertArgumentToSetFix(),
+            /* ...fixes = */ ConvertArgumentToSetFix(context.map { it.createSmartPointer() }),
         )
     }
 
-    private class ConvertArgumentToSetFix : KotlinModCommandQuickFix<KtExpression>() {
+    private class ConvertArgumentToSetFix(val args: List<SmartPsiElementPointer<KtExpression>>) : KotlinModCommandQuickFix<KtExpression>() {
         override fun getFamilyName(): String = KotlinBundle.message("convert.argument.to.set.fix.text")
 
         override fun applyFix(project: Project, element: KtExpression, updater: ModPsiUpdater) {
-            val arguments = analyze(element) {
-                when (element) {
-                    is KtCallExpression -> getConvertibleArguments(element)
-                    is KtBinaryExpression -> getConvertibleArguments(element)
-                    else -> null
-                }
-            } ?: return
-
-            for (arg in arguments) {
-                arg.replace(KtPsiFactory(project).createExpressionByPattern("$0.toSet()", arg))
+            for (arg in args.mapNotNull { it.element }) {
+                updater.getWritable(arg).replace(KtPsiFactory(project).createExpressionByPattern("$0.toSet()", arg))
             }
         }
     }

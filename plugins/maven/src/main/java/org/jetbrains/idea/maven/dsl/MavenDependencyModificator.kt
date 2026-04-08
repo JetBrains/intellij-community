@@ -9,11 +9,9 @@ import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -34,6 +32,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import java.util.concurrent.Callable
 
 val mavenTopLevelElementsOrder = listOf(
   "modelVersion",
@@ -387,16 +386,14 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
   override fun declaredDependencies(module: Module): List<DeclaredDependency> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return runBlockingCancellable {
-      declaredDependencies(project.file) ?: emptyList()
-    }
+    return declaredDependencies(project.file)
   }
 
   //for faster testing
   @RequiresBackgroundThread(generateAssertion = false)
-  suspend fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
-    val dependencies = readAction {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@readAction emptyList()
+  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency> {
+    val dependencies =  ReadAction.nonBlocking(Callable {
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@Callable emptyList()
       val dependencies = model.dependencies.dependencies.map { mavenDomDependency ->
         DeclaredDependencyData(
           groupId = mavenDomDependency.groupId.stringValue,
@@ -408,7 +405,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       }
       retrieveDependencyVersions(myProject, model, dependencies.filter { it.version == null })
       dependencies
-    }
+    }).executeSynchronously()
 
     return dependencies.map { data ->
       DeclaredDependency(

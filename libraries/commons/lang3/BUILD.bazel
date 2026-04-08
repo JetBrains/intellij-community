@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":lang3_resources"],
-  exports = ["@lib//:commons-lang3"],
-  runtime_deps = ["@lib//:commons-lang3"]
+  exports = ["@lib//:libraries-commons-lang3-commons-lang3"],
+  runtime_deps = ["@lib//:libraries-commons-lang3-commons-lang3"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:commons-lang3"],
+  exports = ["@lib//:libraries-commons-lang3-commons-lang3"],
   runtime_deps = [":lang3"]
 )
 ### auto-generated section `build intellij.libraries.commons.lang3` end

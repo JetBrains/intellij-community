@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
@@ -152,6 +154,26 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  fun `test large column reformat uses bulk update mode`() {
+    configureFromFileText("some.md", createLargeSingleColumnTable())
+    val table = TableUtils.findTable(file, 0)!!
+    var bulkUpdateSeen = false
+    editor.document.addDocumentListener(object : DocumentListener {
+      override fun beforeDocumentChange(event: DocumentEvent) {
+        bulkUpdateSeen = bulkUpdateSeen || event.document.isInBulkUpdate
+      }
+    }, testRootDisposable)
+
+    runWriteActionAndWait {
+      table.reformatColumnOnChange(editor.document, editor.caretModel.allCarets, 0, trimToMaxContent = true)
+      commitDocument(editor.document)
+    }
+
+    assertTrue(bulkUpdateSeen)
+    assertFalse(editor.document.isInBulkUpdate)
+    checkResultByText(createLargeSingleColumnTableAfterReformat())
+  }
+
   private fun doTest(before: String, after: String, trimToMaxContent: Boolean = false) {
     configureFromFileText("some.md", before)
     val table = TableUtils.findTable(file, 0)!!
@@ -162,5 +184,39 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
       }
     }
     checkResultByText(after)
+  }
+
+  private fun createLargeSingleColumnTable(): String {
+    return buildList {
+      add("|header|")
+      add("|---|")
+      repeat(101) { index ->
+        add(
+          if (index == 100) {
+            "|value <caret>$index|"
+          }
+          else {
+            "|value $index|"
+          }
+        )
+      }
+    }.joinToString("\n")
+  }
+
+  private fun createLargeSingleColumnTableAfterReformat(): String {
+    return buildList {
+      add("| header    |")
+      add("|-----------|")
+      repeat(101) { index ->
+        add(
+          if (index == 100) {
+            "| value <caret>$index |"
+          }
+          else {
+            "| ${"value $index".padEnd(10)}|"
+          }
+        )
+      }
+    }.joinToString("\n")
   }
 }

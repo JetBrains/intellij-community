@@ -220,10 +220,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * @return {@code false} if the line breakpoint type should forbid {@code setLine} event processing, {@code true} otherwise
+   * Determines whether creating a default breakpoint of this type is allowed.
+   * Disabling default breakpoint creation makes it possible to handle the case
+   * when no breakpoint variants are available differently and to avoid creating
+   * potentially unwanted full-line breakpoints.
    */
   @ApiStatus.Internal
-  public boolean lineShouldBeChanged(@NotNull XLineBreakpoint<P> breakpoint, int newLine, @NotNull Project project) {
+  @ApiStatus.Experimental
+  public boolean isCreationOfDefaultBreakpointAllowed() {
     return true;
   }
 

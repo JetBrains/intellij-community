@@ -61,10 +61,10 @@ kotlin {
       exclude(group = "commons-io", module = "commons-io")
       exclude(group = "org.apache.commons", module = "commons-lang3")
     }
-    implementation(jps.commons.io.commons.io645698317.get())
     implementation(jps.org.apache.commons.commons.lang3579297339.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.commons.io.commons.io645698317.get())
   }
   sourceSets.commonTest.dependencies {
     implementation(project(":fleet.test.runtime"))

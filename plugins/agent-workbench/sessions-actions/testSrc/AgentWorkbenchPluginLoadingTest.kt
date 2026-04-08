@@ -21,5 +21,9 @@ class AgentWorkbenchPluginLoadingTest {
 
     assertThat(ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME))
       .isNotNull
+    assertThat(ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.EditorTab.PREVIOUS_PROPOSED_PLAN))
+      .isNotNull
+    assertThat(ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Sessions.EditorTab.NEXT_PROPOSED_PLAN))
+      .isNotNull
   }
 }

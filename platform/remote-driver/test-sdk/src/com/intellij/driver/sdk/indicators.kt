@@ -8,7 +8,7 @@ import kotlin.collections.emptyList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-fun Driver.getProgressIndicators(project: Project): List<StatusBar.TaskInfoPair> {
+fun Driver.getProgressIndicators(project: Project): List<Pair<TaskInfo?, ProgressModel?>> {
   return withContext {
     val ideFrame = service<WindowManager>().getIdeFrame(project)
     val statusBar = ideFrame?.getStatusBar() ?: return@withContext emptyList()
@@ -21,7 +21,7 @@ private fun Driver.logProgressIndicators(project: Project) {
     val ideFrame = service<WindowManager>().getIdeFrame(project)
     val statusBar = ideFrame?.getStatusBar() ?: return@withContext
     logger<Driver>().info("Running indicators were detected:\n" +
-                          "${statusBar.getBackgroundProcessModels().map { it.getFirst()?.getTitle() ?: "Task with no title" }}")
+                          "${statusBar.getBackgroundProcessModels().map { it.first?.getTitle() ?: "Task with no title" }}")
   }
 }
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.mcp
 
+import com.intellij.devkit.scaffolding.createIjModuleWithoutUi
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.resolveInProject
@@ -30,6 +32,50 @@ import java.util.EnumSet
 import kotlin.time.Duration.Companion.milliseconds
 
 class DevKitMcpToolset : McpToolset {
+  @McpTool
+  @McpDescription(
+    """
+      |Creates a new IntelliJ module using the same scaffolding logic as the New IntelliJ Module action,
+      |but without showing any UI or progress indicators.
+      |For non-empty kinds, this also updates the enclosing plugin.xml when a single target plugin can be resolved.
+      |Allowed values for kindTemplateName: `empty`, `frontend`, `backend`, `shared`.
+      |Note: parentDirectoryPath must point to an existing directory inside the project.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun create_ij_module(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    parentDirectoryPath: String,
+    @McpDescription("Module name to create. For non-empty kinds the same name normalization as in the UI action is applied.")
+    moduleName: String,
+    @McpDescription("Module kind template name. Allowed values: `empty`, `frontend`, `backend`, `shared`.")
+    kindTemplateName: String,
+  ): CreateIjModuleResult {
+    val project = currentCoroutineContext().project
+    val resolvedParentDirectoryPath = project.resolveInProject(parentDirectoryPath)
+    val parentDirectory = VirtualFileManager.getInstance().findFileByNioPath(resolvedParentDirectoryPath)
+                          ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedParentDirectoryPath)
+                          ?: mcpFail("Directory not found: $parentDirectoryPath")
+    if (!parentDirectory.isDirectory) {
+      mcpFail("Not a directory: $parentDirectoryPath")
+    }
+
+    val createdModuleInfo = try {
+      createIjModuleWithoutUi(project, parentDirectory, moduleName, kindTemplateName)
+    }
+    catch (error: IllegalArgumentException) {
+      mcpFail(error.message ?: "Failed to create IntelliJ module")
+    }
+    catch (error: IllegalStateException) {
+      mcpFail(error.message ?: "Failed to create IntelliJ module")
+    }
+    return CreateIjModuleResult(
+      moduleName = createdModuleInfo.moduleName,
+      moduleRootPath = createdModuleInfo.moduleRootPath,
+      kindTemplateName = createdModuleInfo.kindTemplateName,
+      targetPluginXmlPath = createdModuleInfo.targetPluginXmlPath,
+    )
+  }
 
   @McpTool
   @McpDescription("""
@@ -162,5 +208,17 @@ class DevKitMcpToolset : McpToolset {
   data class ThreadingRequirements(
     val foundRequirements: List<ThreadingRequirementUsage>,
     val timedOut: Boolean,
+  )
+
+  @Serializable
+  data class CreateIjModuleResult(
+    @property:McpDescription("Created module name after the same kind-based normalization used by the UI action.")
+    val moduleName: String,
+    @property:McpDescription("Path to the created module root, relative to the project root when possible.")
+    val moduleRootPath: String,
+    @property:McpDescription("Normalized module kind template name.")
+    val kindTemplateName: String,
+    @property:McpDescription("Path to the plugin.xml selected for content-module registration, relative to the project root when available.")
+    val targetPluginXmlPath: String?,
   )
 }

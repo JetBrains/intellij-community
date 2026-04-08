@@ -776,7 +776,9 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
         InspectionToolWrapper<?,?> toolWrapper = state.getTool();
-        if (ReadAction.computeBlocking(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
+        if (ReadAction
+          .nonBlocking(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))
+          .executeSynchronously()) {
           addTool(toolWrapper,
                   profile.getErrorLevel(key, state.getScope(getProject()), getProject()),
                   isGroupedBySeverity,

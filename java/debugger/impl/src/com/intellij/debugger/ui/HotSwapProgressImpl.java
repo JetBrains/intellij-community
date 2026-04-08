@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,12 +28,15 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -44,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
+
 public final class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = Registry.is("debugger.hotswap.floating.toolbar")
                                                       ? NotificationGroupManager.getInstance().getNotificationGroup("HotSwap Messages")
@@ -52,7 +58,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   private final Int2ObjectMap<Map<DebuggerSession, List<String>>> myMessages = new Int2ObjectOpenHashMap<>();
   private final ProgressWindow myProgressWindow;
   private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
-  private final MergingUpdateQueue myUpdateQueue;
+  private final UpdateQueue<String> myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
   private final List<HotSwapProgressListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -68,7 +74,11 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
         HotSwapProgressImpl.this.cancel();
       }
     });
-    myUpdateQueue = new MergingUpdateQueue("HotSwapProgress update queue", 100, true, null, myProgressWindow);
+    CoroutineScope queueScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
+    // Cancel the scope when progress window is disposed to prevent leaks
+    Disposer.register(myProgressWindow, () -> CoroutineScopeKt.cancel(queueScope, null));
+    myUpdateQueue = DebouncedUpdates.<String>forScope(queueScope, "HotSwapProgress update queue", 100)
+      .runLatest(this::updateProgressText);
   }
 
   @Override
@@ -161,16 +171,15 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
 
   @Override
   public void setText(final @NlsContexts.ProgressText String text) {
-    myUpdateQueue.queue(new Update("Text") {
-      @Override
-      public void run() {
-        DebuggerInvocationUtil.invokeLater(getProject(), () -> {
-          if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-            myProgressWindow.setText(text);
-          }
-        }, myProgressWindow.getModalityState());
+    myUpdateQueue.queue(text);
+  }
+
+  private void updateProgressText(@NlsContexts.ProgressText String text) {
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
+        myProgressWindow.setText(text);
       }
-    });
+    }, myProgressWindow.getModalityState());
   }
 
   @Override

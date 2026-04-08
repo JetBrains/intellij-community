@@ -102,8 +102,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.toolWindow.InternalDecoratorImpl.Companion.componentWithEditorBackgroundAdded
 import com.intellij.toolWindow.InternalDecoratorImpl.Companion.componentWithEditorBackgroundRemoved
 import com.intellij.ui.AncestorListenerAdapter
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtil
@@ -441,7 +439,6 @@ open class ConsoleViewImpl protected constructor(
     ThreadingAssertions.assertEventDispatchThread()
     val editor = createConsoleEditor()
     registerConsoleEditorActions(editor)
-    editor.scrollPane.border = IdeBorderFactory.createBorder(SideBorder.LEFT)
     val mouseListener: MouseAdapter = object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent) {
         updateStickToEndState(editor, true)

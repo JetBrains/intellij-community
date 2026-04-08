@@ -1,13 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionEntryLaunchSpec
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewLaunchSpec
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
@@ -41,46 +37,6 @@ class AgentSessionCliTest {
   @Test
   fun resolveSessionIdFallsBackForMalformedIdentity() {
     assertThat(resolveAgentSessionId("invalid")).isEqualTo("invalid")
-  }
-
-  @Test
-  fun buildResumeLaunchSpecUsesProviderSpecificCommands() {
-    assertThat(buildAgentSessionResumeLaunchSpec(AgentSessionProvider.CODEX, "thread-1").command)
-      .isEqualTo(listOf("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1"))
-    assertThat(buildAgentSessionResumeLaunchSpec(AgentSessionProvider.CLAUDE, "session-1").command)
-      .isEqualTo(listOf("claude", "--resume", "session-1"))
-    assertThat(buildAgentSessionResumeLaunchSpec(AgentSessionProvider.CLAUDE, "session-1").envVariables)
-      .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
-  }
-
-  @Test
-  fun buildNewEntryLaunchSpecUsesProviderSpecificCommands() {
-    assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CODEX).command)
-      .isEqualTo(listOf("codex", "-c", "check_for_update_on_startup=false"))
-    assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CLAUDE).command)
-      .isEqualTo(listOf("claude", "--permission-mode", "default"))
-    assertThat(buildAgentSessionEntryLaunchSpec(AgentSessionProvider.CLAUDE).envVariables)
-      .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
-  }
-
-  @Test
-  fun buildNewClaudeCommands() {
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD).command)
-      .isEqualTo(listOf("claude", "--permission-mode", "default"))
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD).envVariables)
-      .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO).command)
-      .isEqualTo(listOf("claude", "--dangerously-skip-permissions"))
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO).envVariables)
-      .isEqualTo(mapOf("DISABLE_AUTOUPDATER" to "1"))
-  }
-
-  @Test
-  fun buildNewCodexCommands() {
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD).command)
-      .isEqualTo(listOf("codex", "-c", "check_for_update_on_startup=false"))
-    assertThat(buildAgentSessionNewLaunchSpec(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO).command)
-      .isEqualTo(listOf("codex", "-c", "check_for_update_on_startup=false", "--full-auto"))
   }
 
   @Test

@@ -1,6 +1,6 @@
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.RefactoringToolset
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -13,7 +13,7 @@ import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-class RefactoringToolsetTest : McpToolsetTestBase() {
+class RefactoringToolsetTest : GeneralMcpToolsetTestBase() {
   val mainJavaFileFixtureWithCode = sourceRootFixture.virtualFileFixture("MainWithCode.java", "public class MainWithCode { }")
   val mainJavaFileWithCode by mainJavaFileFixtureWithCode
 

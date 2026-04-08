@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.essential
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesKtor
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesMisc
@@ -262,6 +261,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.analysis")
     module("intellij.xml.emmet")
     module("intellij.xml.emmet.backend")
+    module("intellij.xml.emmet.frontend")
     embeddedModule("intellij.xml.ui.common")
     embeddedModule("intellij.xml.parser")
     embeddedModule("intellij.xml.syntax")

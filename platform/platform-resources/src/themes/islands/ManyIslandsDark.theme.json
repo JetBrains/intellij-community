@@ -196,29 +196,29 @@
     "core-bg-transparent-pressed": "transparent-white-40",
     "core-border-transparent": "transparent-white-30",
 
-    "container-dialog-bg": "layer-0-bg",
-    "container-dialog-bg-inline": "layer-0-bg-inline",
-    "container-dialog-border": "layer-0-border",
-    "container-popup-bg": "layer-1-bg",
-    "container-popup-bg-inline": "layer-1-bg",
-    "container-popup-border": "layer-1-border",
-    "container-popup-border-inline": "layer-1-border",
-    "container-editor-bg": "layer-0-bg",
-    "container-editor-bg-inline": "layer-0-bg-inline",
-    "container-editor-border": "layer-0-border",
-    "container-editor-border-inline": "layer-0-border-inline",
-    "container-editor-border-alt": "gray-40",
-    "container-tool-window-bg": "layer-0-bg",
-    "container-tool-window-bg-inline": "layer-0-bg-inline",
-    "container-tool-window-bg-alt": "gray-20",
-    "container-tool-window-border": "layer-0-border",
-    "container-tool-window-border-inline": "layer-0-border-inline",
-    "container-main-window-bg": "layer-1-bg",
-    "container-main-window-bg-alt": "gray-40",
-    "container-main-window-border": "layer-2-border",
+    "dialog-bg": "layer-0-bg",
+    "dialog-bg-inline": "layer-0-bg-inline",
+    "dialog-border": "layer-0-border",
+    "popup-bg": "layer-1-bg",
+    "popup-bg-inline": "layer-1-bg",
+    "popup-border": "layer-1-border",
+    "popup-border-inline": "layer-1-border",
+    "editor-bg": "layer-0-bg",
+    "editor-bg-inline": "layer-0-bg-inline",
+    "editor-border": "layer-0-border",
+    "editor-border-inline": "layer-0-border-inline",
+    "editor-border-alt": "gray-40",
+    "tool-window-bg": "layer-0-bg",
+    "tool-window-bg-inline": "layer-0-bg-inline",
+    "tool-window-bg-alt": "gray-20",
+    "tool-window-border": "layer-0-border",
+    "tool-window-border-inline": "layer-0-border-inline",
+    "main-window-bg": "layer-1-bg",
+    "main-window-bg-alt": "gray-40",
+    "main-window-border": "layer-2-border",
 
-    "control-bg": "container-dialog-bg",
-    "control-bg-disabled": "container-dialog-bg",
+    "control-bg": "dialog-bg",
+    "control-bg-disabled": "dialog-bg",
     "control-bg-raised": "gray-30",
     "control-border": "gray-50",
     "control-border-disabled": "gray-40",
@@ -362,13 +362,13 @@
   "ui": {
     "*": {
       "foreground": "text-default",
-      "background": "container-tool-window-bg",
-      "borderColor": "container-tool-window-border",
+      "background": "tool-window-bg",
+      "borderColor": "tool-window-border",
 
       "disabledText": "text-disabled",
       "disabledForeground": "text-disabled",
       "inactiveForeground": "text-disabled",
-      "disabledBackground": "container-dialog-bg",
+      "disabledBackground": "dialog-bg",
       "disabledBorderColor": "control-border-disabled",
 
       "selectionBackground": "selection-bg-active",
@@ -377,7 +377,7 @@
       "selectionInactiveForeground": "text-default",
       "selectionInactiveBackground": "selection-bg-inactive",
 
-      "inactiveBackground": "container-dialog-bg",
+      "inactiveBackground": "dialog-bg",
 
       "hoverBackground": "toolbar-bg-hovered",
 
@@ -390,7 +390,7 @@
 
       "focusColor": "control-brand-border",
 
-      "separatorColor": "container-popup-border",
+      "separatorColor": "popup-border",
       "separatorForeground": "text-secondary",
 
       "modifiedItemForeground": "text-link"
@@ -404,27 +404,27 @@
       "borderArcLength.compact": 10,
       "borderWidth": 6,
       "borderWidth.compact": 4,
-      "borderColor": "container-tool-window-bg",
+      "borderColor": "tool-window-bg",
       "inactiveAlpha": 0.56,
       "toolWindowAlpha": 0.2
     },
 
     "alt": {
-      "MainWindow.background": "container-main-window-bg-alt",
-      "MainToolbar.background": "container-main-window-bg-alt",
-      "ToolWindow.Stripe.background": "container-main-window-bg-alt",
-      "StatusBar.background": "container-main-window-bg-alt",
+      "MainWindow.background": "main-window-bg-alt",
+      "MainToolbar.background": "main-window-bg-alt",
+      "ToolWindow.Stripe.background": "main-window-bg-alt",
+      "StatusBar.background": "main-window-bg-alt",
 
-      "ToolWindow.Header.inactiveBackground": "container-tool-window-bg-alt",
-      "ToolWindow.background": "container-tool-window-bg-alt",
-      "Island.borderColor": "container-tool-window-bg-alt",
+      "ToolWindow.Header.inactiveBackground": "tool-window-bg-alt",
+      "ToolWindow.background": "tool-window-bg-alt",
+      "Island.borderColor": "tool-window-bg-alt",
 
-      "Borders.color": "container-editor-border-alt",
-      "Borders.ContrastBorderColor": "container-editor-border-alt",
-      "ToolWindow.Header.borderColor": "container-editor-border-alt"
+      "Borders.color": "editor-border-alt",
+      "Borders.ContrastBorderColor": "editor-border-alt",
+      "ToolWindow.Header.borderColor": "editor-border-alt"
     },
 
-    "MainWindow.background": "container-main-window-bg",
+    "MainWindow.background": "main-window-bg",
 
     "ActionButton": {
       "hoverBackground": "toolbar-bg-hovered",
@@ -435,7 +435,7 @@
       "hoverSeparatorColor": "toolbar-border"
     },
 
-    "AlertDialog.background": "container-popup-bg",
+    "AlertDialog.background": "popup-bg",
 
     "Badge": {
       "greenOutlineForeground": "text-success",
@@ -482,8 +482,8 @@
       "MnemonicCurrent.background": "control-brand-bg"
     },
 
-    "Borders.color": "container-dialog-border",
-    "Borders.ContrastBorderColor": "container-dialog-border",
+    "Borders.color": "dialog-border",
+    "Borders.ContrastBorderColor": "dialog-border",
 
     "Breakpoint.iconHoverAlpha": 0.35,
 
@@ -498,6 +498,7 @@
       "shadowColor": "transparent",
       "loadingForeground": "text-secondary",
       "minimumSize": "72,28",
+      "minimumSize.compact": "72,24",
       "default": {
         "foreground": "text-over-accent",
         "loadingForeground": "text-muted",
@@ -505,7 +506,7 @@
         "endBackground": "control-brand-bg",
         "startBorderColor": "control-brand-bg",
         "endBorderColor": "control-brand-bg",
-        "focusedBorderColor": "container-dialog-bg",
+        "focusedBorderColor": "dialog-bg",
         "shadowColor": "transparent"
       },
       "Split": {
@@ -534,10 +535,13 @@
         "background": "control-bg",
         "nonEditableBackground": "control-bg-raised"
       },
+      "arc.compact": "4,4,4,4",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder",
       "minimumSize": "49,28",
+      "minimumSize.compact": "49,24",
       "padding": "1,9,1,6",
-      "background": "container-popup-bg",
+      "padding.compact": "1,6,1,6",
+      "background": "popup-bg",
       "nonEditableBackground": "control-bg-raised",
       "disabledBackground": "control-bg-disabled"
     },
@@ -549,11 +553,11 @@
       },
       "Block": {
         "backgroundOpacity": 100,
-        "borderColor": "container-editor-border",
+        "borderColor": "editor-border",
         "EditorPane": {
-          "backgroundColor": "container-editor-bg",
+          "backgroundColor": "editor-bg",
           "backgroundOpacity": 20,
-          "borderColor": "container-editor-border"
+          "borderColor": "editor-border"
         }
       }
     },
@@ -587,7 +591,7 @@
         "exceptionForeground": "text-error",
         "typeForeground": "#6F737A"
       },
-      "EvaluateExpression.background": "container-tool-window-bg"
+      "EvaluateExpression.background": "tool-window-bg"
     },
 
     "FileColor": {
@@ -602,9 +606,10 @@
 
     "Component": {
       "arc": 8,
+      "arc.compact": 6,
       "arrowAreaWidth": "28",
       "borderColor": "control-border",
-      "focusedBorderColor": "container-dialog-bg",
+      "focusedBorderColor": "dialog-bg",
       "errorFocusColor": "control-error-border",
       "inactiveErrorFocusColor": "control-error-border-secondary",
       "warningFocusColor": "control-warning-border",
@@ -622,11 +627,11 @@
       "underlineHeight": 4,
       "unselectedAlpha": 0.75,
       "unselectedBlend": 0.7,
-      "background": "container-editor-bg",
+      "background": "editor-bg",
       "hoverBackground": "tab-bg-hovered",
       "hoverInactiveBackground": "tab-bg-hovered",
       "inactiveColoredFileBackground": "tab-file-color-mask-bg",
-      "underTabsBorderColor": "container-editor-border",
+      "underTabsBorderColor": "editor-border",
       "underlinedBorderColor": "tab-selected-border-active",
       "underlinedTabBackground": "tab-selected-bg-active",
       "inactiveUnderlinedTabBorderColor": "tab-selected-border-inactive",
@@ -634,22 +639,22 @@
 
       "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
-      "verticalTabInsets": "-4,8,-4,10",
+      "verticalTabInsets": "-6,8,-6,8",
       "verticalTabInsets.compact": "-2,10,-2,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
     "Editor": {
       "SearchField" : {
-        "background": "container-editor-bg-inline",
-        "borderColor": "container-editor-border-inline"
+        "background": "editor-bg-inline",
+        "borderColor": "editor-border-inline"
       },
       "Toolbar" : {
-        "borderColor" : "container-editor-border-inline"
+        "borderColor" : "editor-border-inline"
       },
       "ToolTip": {
-        "background": "container-popup-bg",
-        "border": "container-popup-border",
+        "background": "popup-bg",
+        "border": "popup-border",
         "errorBackground": "feedback-error-bg",
         "errorBorder": "feedback-error-border",
         "successBackground": "feedback-success-bg",
@@ -680,6 +685,7 @@
       "hoverBackground": "selection-bg-hovered",
       "hoverInactiveBackground": "selection-bg-hovered",
       "rowHeight": 24,
+      "rowHeight.compact": 22,
       "border": "4,0,4,0",
       "Button": {
         "separatorColor": "toolbar-border",
@@ -705,21 +711,21 @@
     },
 
     "Menu": {
-      "background": "container-popup-bg",
-      "separatorColor": "container-popup-border",
-      "borderColor": "container-popup-border"
+      "background": "popup-bg",
+      "separatorColor": "popup-border",
+      "borderColor": "popup-border"
     },
 
-    "MenuItem.background": "container-popup-bg",
+    "MenuItem.background": "popup-bg",
 
     "NewClass": {
-      "Panel.background": "container-popup-bg",
-      "SearchField.background": "container-popup-bg"
+      "Panel.background": "popup-bg",
+      "SearchField.background": "popup-bg"
     },
     
     "NavBar.borderWidth": 0,
 
-    "NewUiOnboarding.Dialog.background": "container-popup-bg",
+    "NewUiOnboarding.Dialog.background": "popup-bg",
 
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
@@ -791,19 +797,19 @@
     },
 
     "NotificationsToolwindow": {
-      "newNotification.background": "container-tool-window-bg-inline",
+      "newNotification.background": "tool-window-bg-inline",
       "newNotification.hoverBackground": "toolbar-bg-hovered",
-      "Notification.hoverBackground": "container-tool-window-bg-inline"
+      "Notification.hoverBackground": "tool-window-bg-inline"
     },
 
-    "OnePixelDivider.background": "container-dialog-border",
+    "OnePixelDivider.background": "dialog-border",
 
     "PasswordField": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"
     },
 
     "Plugins": {
-      "SectionHeader.background": "container-dialog-bg-inline",
+      "SectionHeader.background": "dialog-bg-inline",
       "hoverBackground": "selection-bg-hovered",
       "Button": {
         "installFillForeground": "text-over-accent",
@@ -822,26 +828,26 @@
     },
 
     "Popup": {
-      "background": "container-popup-bg",
+      "background": "popup-bg",
       "paintBorder": true,
-      "borderColor": "container-popup-border",
-      "inactiveBorderColor": "container-popup-border",
+      "borderColor": "popup-border",
+      "inactiveBorderColor": "popup-border",
       "Advertiser": {
         "foreground": "text-secondary",
-        "background": "container-popup-bg",
-        "borderColor": "container-popup-bg",
+        "background": "popup-bg",
+        "borderColor": "popup-bg",
         "fontSizeOffset": -1,
         "borderInsets": "8,12,8,12"
       },
       "Header": {
-        "activeBackground": "container-popup-bg",
-        "inactiveBackground": "container-popup-bg",
+        "activeBackground": "popup-bg",
+        "inactiveBackground": "popup-bg",
         "inactiveForeground": "text-secondary"
       },
-      "Toolbar.background": "container-popup-bg"
+      "Toolbar.background": "popup-bg"
     },
 
-    "PopupMenu.background": "container-popup-bg",
+    "PopupMenu.background": "popup-bg",
 
     "Review": {
       "Branch": {
@@ -857,14 +863,19 @@
       }
     },
 
-    "ComplexPopup.Header.background": "container-popup-bg",
+    "ComplexPopup": {
+      "Header.background": "popup-bg",
+      "Header.insets.compact": "10,20,8,15",
+      "TextField.inputInsets.compact": "4,2,4,2",
+      "innerBorderInsets.compact": "2,3,2,3"
+    },
 
     "CompletionPopup": {
       "foreground": "editor-text",
       "matchForeground": "popup-completion-match-text",
       "Advertiser": {
         "foreground": "text-secondary",
-        "background": "container-popup-bg",
+        "background": "popup-bg",
         "borderInsets": "6,12,6,12"
       }
     },
@@ -905,19 +916,19 @@
 
     "SearchEverywhere": {
       "Header.insets": "2,4,0,9",
-      "List.settingsBackground": "container-popup-bg",
+      "List.settingsBackground": "popup-bg",
       "Tab": {
         "selectedBackground": "tab-selected-bg-active",
         "selectedForeground": "text-over-accent"
       },
       "Advertiser": {
         "foreground": "text-secondary",
-        "background": "container-popup-bg",
+        "background": "popup-bg",
         "borderInsets": "8,12,8,12"
       }
     },
 
-    "Separator.separatorColor": "container-popup-border",
+    "Separator.separatorColor": "popup-border",
 
     "SearchField": {
       "errorForeground": "text-error",
@@ -947,7 +958,7 @@
     },
 
     "SpeedSearch": {
-      "background": "container-tool-window-bg",
+      "background": "tool-window-bg",
       "borderColor": "control-border",
       "errorForeground": "text-error"
     },
@@ -958,7 +969,7 @@
     },
 
     "StatusBar": {
-      "background": "container-main-window-bg",
+      "background": "main-window-bg",
       "borderColor": "transparent",
       "topBorderWidth": 0,
       "Widget": {
@@ -983,21 +994,21 @@
       "tabSelectionArc": 4,
       "tabContentMinWidth": 24,
       "hoverColor": "tab-bg-hovered",
-      "contentAreaColor": "container-dialog-border",
+      "contentAreaColor": "dialog-border",
       "focusColor": "tab-selected-bg-active"
     },
 
     "Table": {
-      "gridColor": "container-dialog-border",
-      "stripeColor": "container-dialog-bg-inline",
+      "gridColor": "dialog-border",
+      "stripeColor": "dialog-bg-inline",
       "hoverBackground": "selection-bg-hovered",
       "hoverInactiveBackground": "selection-bg-hovered",
-      "alternativeRowBackground": "container-dialog-bg-inline"
+      "alternativeRowBackground": "dialog-bg-inline"
     },
 
     "TableHeader": {
-      "bottomSeparatorColor": "container-dialog-border",
-      "separatorColor": "container-dialog-border"
+      "bottomSeparatorColor": "dialog-border",
+      "separatorColor": "dialog-border"
     },
 
     "Tag.background": "control-bg-raised",
@@ -1005,7 +1016,8 @@
     "TextField": {
       "background": "control-bg",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew",
-      "minimumSize": "49,28"
+      "minimumSize": "49,28",
+      "minimumSize.compact": "49,24"
     },
 
     "ToolBar.separatorColor": "toolbar-border",
@@ -1075,11 +1087,11 @@
     },
 
     "ToolWindow": {
-      "background": "container-tool-window-bg",
+      "background": "tool-window-bg",
       "borderColor": "transparent",
       "Header": {
-        "borderColor": "container-tool-window-border",
-        "inactiveBackground": "container-tool-window-bg",
+        "borderColor": "tool-window-border",
+        "inactiveBackground": "tool-window-bg",
         "font.size.offset": 0
       },
       "HeaderTab": {
@@ -1096,7 +1108,7 @@
         }
       },
       "Stripe": {
-        "background": "container-main-window-bg",
+        "background": "main-window-bg",
         "borderColor": "transparent",
         "separatorColor": "toolbar-border",
         "DragAndDrop": {
@@ -1125,12 +1137,12 @@
     },
 
     "MainToolbar": {
-      "background": "container-main-window-bg",
-      "inactiveBackground": "container-main-window-bg",
+      "background": "main-window-bg",
+      "inactiveBackground": "main-window-bg",
       "borderColor": "transparent",
       "separatorColor": "toolbar-border",
       "Icon": {
-        "background": "container-main-window-bg",
+        "background": "main-window-bg",
         "pressedBackground": "toolbar-bg-pressed",
         "insets": "6,5,4,5"
       },
@@ -1151,6 +1163,7 @@
       "expandedSelectedIcon": "/expui/general/chevronDown.svg",
       "forceFocusedSelectionForeground": false,
       "rowHeight": 24,
+      "rowHeight.compact": 22,
       "border": "4,12,4,12",
       "border.compact": "2,8,2,8",
       "hash": "tree-indent-guide-border",
@@ -1237,19 +1250,19 @@
     },
 
     "EditorPane": {
-      "splitBorder": "container-editor-border",
-      "inactiveBackground": "container-dialog-bg"
+      "splitBorder": "editor-border",
+      "inactiveBackground": "dialog-bg"
     },
 
     "WelcomeScreen": {
-      "Details.background": "container-dialog-bg",
-      "Banner.background": "container-dialog-bg-inline",
-      "SidePanel.background": "container-dialog-bg",
+      "Details.background": "dialog-bg",
+      "Banner.background": "dialog-bg-inline",
+      "SidePanel.background": "dialog-bg",
       "Projects.actions.background": "#2B2D30"
     },
 
     "TipOfTheDay": {
-      "Image.borderColor": "container-dialog-border"
+      "Image.borderColor": "dialog-border"
     },
 
     "Lesson": {
@@ -1575,14 +1588,14 @@
     "LicenseDialog": {
       "termsAndConditionsForeground": "text-secondary",
       "waitingLabelForeground": "text-secondary",
-      "separatorColor": "container-dialog-border",
+      "separatorColor": "dialog-border",
       "LicenseList": {
         "licenseDetailsForeground": "text-muted",
         "licenseIdForeground": "text-secondary",
-        "separatorColor": "container-dialog-border"
+        "separatorColor": "dialog-border"
       },
       "LicenseServer": {
-        "separatorColor": "container-dialog-border"
+        "separatorColor": "dialog-border"
       }
     },
 
@@ -1605,7 +1618,7 @@
     "MainWindow.Tab": {
       "foreground": "text-muted",
       "selectedForeground": "text-default",
-      "selectedBackground": "container-tool-window-bg",
+      "selectedBackground": "tool-window-bg",
       "hoverBackground": "tab-bg-hovered",
       "separatorColor": "toolbar-border",
       "background": "#131314"
@@ -1637,10 +1650,10 @@
       "UserMessage": {
         "background": "gray-40",
         "Snippet": {
-          "border": "container-editor-border",
+          "border": "editor-border",
           "MoreLines": {
             "foreground": "text-secondary",
-            "background": "container-tool-window-bg",
+            "background": "tool-window-bg",
             "hoverForeground": "text-default",
             "hoverBackground": "gray-30"
           }
@@ -1648,10 +1661,10 @@
       },
       "HelpBrowserMessage": {
         "Snippet": {
-          "border": "container-editor-border",
+          "border": "editor-border",
           "MoreLines": {
             "foreground": "text-secondary",
-            "background": "container-tool-window-bg",
+            "background": "tool-window-bg",
             "hoverForeground": "text-default",
             "hoverBackground": "gray-30"
           }
@@ -1660,7 +1673,7 @@
     },
 
     "ParameterInfo": {
-      "background": "container-popup-bg",
+      "background": "popup-bg",
       "currentOverloadBackground": "selection-bg-active",
       "borderColor": "feedback-border",
       "foreground": "text-default",

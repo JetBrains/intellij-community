@@ -67,6 +67,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.YIELD_STATEMENT;
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class StatementParser {
 
   private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(

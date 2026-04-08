@@ -109,6 +109,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/platform-util-netty:ide-util-netty",
+    "//platform/ide-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//xml/tests",
@@ -124,6 +125,8 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//libraries/markdown",
     "//libraries/markdown:markdown_test_lib",
     "//plugins/toml",
@@ -154,6 +157,7 @@ jvm_library(
   runtime_deps = [
     ":tests",
     "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.tests` end

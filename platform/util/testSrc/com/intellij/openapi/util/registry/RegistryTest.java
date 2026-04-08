@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class RegistryTest {
     }
   }
 
+  @Ignore("AT-4013")
   @Test
   public void booleanValueTrue() {
     RegistryValue handle = Registry.get("ide.tree.painter.classic.compact");

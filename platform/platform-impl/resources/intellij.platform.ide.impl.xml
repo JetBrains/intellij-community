@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.andel"/>
+    <module name="fleet.rhizomedb"/>
     <module name="fleet.util.core"/>
     <module name="intellij.libraries.aalto.xml"/>
     <module name="intellij.libraries.asm"/>
@@ -56,6 +57,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
@@ -92,11 +94,12 @@
     />
     <registryKey
       key="ide.windows.main.menu.focus.on.alt"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable Alt key to focus the main menu bar on Windows"
       restartRequired="true"
     />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.minimap.MinimapUsageCollector"/>
   </extensions>
 </idea-plugin>

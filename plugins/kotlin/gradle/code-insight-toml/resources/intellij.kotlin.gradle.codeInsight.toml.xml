@@ -7,16 +7,22 @@
     <module name="intellij.gradle.completion"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <gotoDeclarationHandler
-            implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogGotoDeclarationHandler"/>
+            implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleVersionCatalogGotoDeclarationHandler"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogReferencesSearcher"/>
     <lang.elementManipulator
             forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
             implementationClass="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinDotQualifiedExpressionManipulator"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleVersionCatalogPsiReferenceProviderContributor"/>
   </extensions>
 
 </idea-plugin>

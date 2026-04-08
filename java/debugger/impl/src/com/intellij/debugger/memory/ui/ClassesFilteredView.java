@@ -120,53 +120,23 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         myInstancesTracker.removeTrackerListener(instancesTrackerListener);
       }
     });
-    debugProcess.addDebugProcessListener(new DebugProcessListener() {
-      @Override
-      public void processAttached(@NotNull DebugProcess process) {
-        DebuggerManagerThreadImpl.assertIsManagerThread();
-        debugProcess.removeDebugProcessListener(this);
-        boolean activated = myIsTrackersActivated.get();
-        VirtualMachineProxyImpl proxy = VirtualMachineProxyImpl.getCurrent();
-        if (!proxy.canBeModified()) {
-          return;
+    if (debugProcess.isAttached()) {
+      debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        protected void action() {
+          initOnProcessAttach(debugSession, debugProcess, instancesTrackerListener);
         }
-        tracker.getTrackedClasses().forEach((className, type) -> {
-          List<ReferenceType> classes = proxy.classesByName(className);
-          if (classes.isEmpty()) {
-            trackWhenPrepared(className, debugSession, debugProcess, type);
-          }
-          else {
-            for (ReferenceType ref : classes) {
-              trackClass(debugSession, debugProcess, ref, type, activated);
-            }
-          }
-        });
-
-        tracker.addTrackerListener(instancesTrackerListener);
-      }
-
-      private void trackWhenPrepared(@NotNull String className,
-                                     @NotNull XDebugSession session,
-                                     @NotNull DebugProcessImpl process,
-                                     @NotNull TrackingType type) {
-        final ClassPrepareRequestor request = new ClassPrepareRequestor() {
-          @Override
-          public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-            process.getRequestsManager().deleteRequest(this);
-            trackClass(session, process, referenceType, type, myIsTrackersActivated.get());
-          }
-        };
-
-        final ClassPrepareRequest classPrepareRequest = process.getRequestsManager()
-          .createClassPrepareRequest(request, className);
-        if (classPrepareRequest != null) {
-          classPrepareRequest.enable();
+      });
+    }
+    else {
+      debugProcess.addDebugProcessListener(new DebugProcessListener() {
+        @Override
+        public void processAttached(@NotNull DebugProcess process) {
+          debugProcess.removeDebugProcessListener(this);
+          initOnProcessAttach(debugSession, debugProcess, instancesTrackerListener);
         }
-        else {
-          LOG.warn("Cannot create a 'class prepare' request. Class " + className + " not tracked.");
-        }
-      }
-    });
+      });
+    }
     additionalSessionListener = new XDebugSessionListener() {
       @Override
       public void sessionResumed() {
@@ -183,6 +153,52 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     table.addMouseMotionListener(new MyMouseMotionListener());
     table.addMouseListener(new MyOpenNewInstancesListener());
     new MyDoubleClickListener().installOn(table);
+  }
+
+  private void initOnProcessAttach(@NotNull XDebugSession debugSession,
+                                   @NotNull DebugProcessImpl debugProcess,
+                                   InstancesTrackerListener instancesTrackerListener) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    boolean activated = myIsTrackersActivated.get();
+    VirtualMachineProxyImpl proxy = VirtualMachineProxyImpl.getCurrent();
+    if (!proxy.canBeModified()) {
+      return;
+    }
+    myInstancesTracker.getTrackedClasses().forEach((className, type) -> {
+      List<ReferenceType> classes = proxy.classesByName(className);
+      if (classes.isEmpty()) {
+        trackWhenPrepared(className, debugSession, debugProcess, type);
+      }
+      else {
+        for (ReferenceType ref : classes) {
+          trackClass(debugSession, debugProcess, ref, type, activated);
+        }
+      }
+    });
+
+    myInstancesTracker.addTrackerListener(instancesTrackerListener);
+  }
+
+  private void trackWhenPrepared(@NotNull String className,
+                                 @NotNull XDebugSession session,
+                                 @NotNull DebugProcessImpl process,
+                                 @NotNull TrackingType type) {
+    final ClassPrepareRequestor request = new ClassPrepareRequestor() {
+      @Override
+      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+        process.getRequestsManager().deleteRequest(this);
+        trackClass(session, process, referenceType, type, myIsTrackersActivated.get());
+      }
+    };
+
+    final ClassPrepareRequest classPrepareRequest = process.getRequestsManager()
+      .createClassPrepareRequest(request, className);
+    if (classPrepareRequest != null) {
+      classPrepareRequest.enable();
+    }
+    else {
+      LOG.warn("Cannot create a 'class prepare' request. Class " + className + " not tracked.");
+    }
   }
 
   private void trackClass(@NotNull XDebugSession session,

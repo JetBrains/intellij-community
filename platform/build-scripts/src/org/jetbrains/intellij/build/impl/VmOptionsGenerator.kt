@@ -5,6 +5,7 @@ import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_S
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.intellij.build.ArtifactsServer
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.isLanguageServer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,7 +48,7 @@ fun generateVmOptions(context: BuildContext, extra: List<String> = emptyList()):
       if (url == null) it else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${url}"
     } + extra,
     platformPrefix = context.productProperties.platformPrefix,
-    headless = context.options.isLanguageServer,
+    headless = context.isLanguageServer,
   )
 
  internal fun generateVmOptions(

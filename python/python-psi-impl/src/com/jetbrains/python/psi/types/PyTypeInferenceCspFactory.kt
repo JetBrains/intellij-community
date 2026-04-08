@@ -124,9 +124,6 @@ object PyTypeInferenceCspFactory {
     val isNestedCsp = isNestedCsp(callSite, context)
     val solution = builder.getSolution(isNestedCsp)
 
-    if (solution.instantiations.isEmpty() && substitutions.typeVars.isEmpty() && substitutions.typeVarTuples.isEmpty() && substitutions.paramSpecs.isEmpty() && substitutions.qualifierType == null) {
-      return null
-    }
     if (solution.failed) {
       if (solution.complete) {
         // since this solution is complete, we can return it as-is below
@@ -139,6 +136,9 @@ object PyTypeInferenceCspFactory {
         // fallback to the old approach
         throw NotSupportedException()
       }
+    }
+    if (solution.instantiations.isEmpty() && substitutions.typeVars.isEmpty() && substitutions.typeVarTuples.isEmpty() && substitutions.paramSpecs.isEmpty() && substitutions.qualifierType == null) {
+      return null
     }
 
     return substitutions.addToCopy(solution.instantiations, null, null)
@@ -196,7 +196,7 @@ object PyTypeInferenceCspFactory {
         val intersectionOfConstraints = PyIntersectionType.intersection(paramTypeConstraints)
         val unionOfConstraints = PyUnionType.union(paramTypeConstraints)
         // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
-        // CV_1 & CV_2 & ... & CV_n  <:  TV  <:  CV_1 | CV_2 | ... | CV_n
+        // CV_1 & CV_2 & ... & CV_n <: TV <: CV_1 | CV_2 | ... | CV_n
         builder.addConstraint(typeParam, intersectionOfConstraints, Variance.CONTRAVARIANT, ConstraintPriority.HIGH)
         builder.addConstraint(typeParam, unionOfConstraints, Variance.COVARIANT, ConstraintPriority.HIGH)
       }

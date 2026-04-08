@@ -485,17 +485,17 @@ public class MutationsStorageImpl implements MutationsStorage {
                                           @Nullable MutationData oldValue,
                                           @NotNull ModelIndex<GridRow> row,
                                           @NotNull ModelIndex<GridColumn> column) {
-      return unwrap(value) instanceof UnparsedValue && !(unwrap(oldValue) instanceof UnparsedValue) ? 1 :
-             unwrap(oldValue) instanceof UnparsedValue && !(unwrap(value) instanceof UnparsedValue) ? -1 :
+      return isUnparsed(value) && !isUnparsed(oldValue) ? 1 :
+             isUnparsed(oldValue) && !isUnparsed(value) ? -1 :
              0;
     }
 
-    private static @Nullable Object unwrap(@Nullable CellMutation value) {
-      return value == null ? null : value.getValue();
+    private static boolean isUnparsed(@Nullable CellMutation value) {
+      return value != null && value.getValue() instanceof UnparsedValue;
     }
 
-    private static @Nullable Object unwrap(@Nullable MutationData value) {
-      return value == null ? null : value.getValue();
+    private static boolean isUnparsed(@Nullable MutationData value) {
+      return value != null && value.getValue() instanceof UnparsedValue;
     }
   }
 }

@@ -9,7 +9,7 @@ Guidelines for implementing IntelliJ actions (`AnAction`).
 
 ## Documentation
 
-- [Action System](../docs/IntelliJ-Platform/4_man/Action-System.md) - Architecture and usage of the action system
+- [Action System](../../../../docs/IntelliJ-Platform/4_man/Action-System.md) - Architecture and usage of the action system
 
 ## Best Practices
 

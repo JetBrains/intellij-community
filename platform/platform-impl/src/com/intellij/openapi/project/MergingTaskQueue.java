@@ -302,8 +302,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       ProgressIndicator indicator = new EmptyProgressIndicator() {
         // this indicator is returned from CoreProgressManager.getCurrentIndicators()
         // so let's save text for those who are interested in running indicators
-        @NlsSafe @Volatile private String text;
-        @NlsSafe @Volatile private String text2;
+        @NlsSafe volatile private String text;
+        @NlsSafe volatile private String text2;
 
         @Override
         public void setText(String text) {

@@ -67,7 +67,9 @@ internal sealed class EdtCoroutineDispatcher(
     return when (type.lockBehavior) {
       EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_FAIL_HARD -> {
         Runnable {
-          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, lockAccessViolationMessage)
+          ApplicationManagerEx.getApplicationEx().withLocksProhibited(lockAccessViolationMessage) {
+            runnable.run()
+          }
         }
       }
       EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING -> {

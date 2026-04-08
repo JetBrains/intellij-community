@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.descriptors.ConfigFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
@@ -99,6 +101,31 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
     if (buildConfiguration == null) return null;
     final ConfigFile configFile = buildConfiguration.getPluginXmlConfigFile();
     return configFile != null ? configFile.getXmlFile() : null;
+  }
+
+  @ApiStatus.Experimental
+  public static @Nullable XmlFile getContentModuleDescriptorXml(@Nullable Module module) {
+    if (module == null) return null;
+    for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (final SourceFolder folder : entry.getSourceFolders(JavaResourceRootType.RESOURCE)) {
+        final VirtualFile file = folder.getFile();
+        if (file == null) continue;
+
+        final String packagePrefix = folder.getPackagePrefix();
+        final String prefixPath = packagePrefix.isEmpty() ? "" :
+                                  packagePrefix.replace('.', '/') + '/';
+
+        final String relativePath = prefixPath + module.getName() + ".xml";
+        final VirtualFile moduleDescriptorXml = file.findFileByRelativePath(relativePath);
+        if (moduleDescriptorXml != null) {
+          final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(moduleDescriptorXml);
+          if (psiFile instanceof XmlFile) {
+            return (XmlFile)psiFile;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {

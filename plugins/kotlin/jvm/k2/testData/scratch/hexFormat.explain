@@ -1,0 +1,17 @@
+HexFormat(... → 00000def
+      upperCase = false,
+      bytes = BytesHexFormat(
+          bytesPerLine = 2147483647,
+          bytesPerGroup = 2147483647,
+          groupSeparator = "  ",
+          byteSeparator = "",
+          bytePrefix = "",
+          byteSuffix = ""
+      ),
+      number = NumberHexFormat(
+          prefix = "",
+          suffix = "",
+          removeLeadingZeros = false,
+          minLength = 1
+      )
+  )

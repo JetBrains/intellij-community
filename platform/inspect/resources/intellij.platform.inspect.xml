@@ -10,20 +10,22 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <appStarter id="inspect" implementation="com.intellij.codeInspection.InspectionMain"/>
+    <appStarter id="inspect" implementation="com.intellij.codeInspection.InspectionMain" bundle="messages.InspectionsBundle" key="inspection.help"/>
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider" />
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProvider" />
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProvider" />
-    <appStarter id="inspectopedia-generator" implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor"/>
+    <appStarter id="inspectopedia-generator" implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor" internal="true"/>
     <registryKey defaultValue="false" description="Use activity-based project configuration in inspect.sh script"
                  key="ide.inspect.activity.based.inspections.enabled"/>
   </extensions>

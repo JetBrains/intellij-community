@@ -22,6 +22,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/ide-core:ide-core_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.smartupdate` end

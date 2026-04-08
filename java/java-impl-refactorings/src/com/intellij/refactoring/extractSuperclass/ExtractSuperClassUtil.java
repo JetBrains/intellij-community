@@ -4,7 +4,6 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -39,6 +38,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -56,9 +56,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -164,9 +166,17 @@ public final class ExtractSuperClassUtil {
       final PsiCodeBlock body = constructor.getBody();
       assert body != null;
       body.add(statement);
-      //todo fix IDEA-387050
-      BinaryFileTypeDecompilers.getInstance()
-        .allowDecompilerSlowOperation(() -> constructor.getThrowsList().replace(baseConstructor.getThrowsList()));
+      PsiReferenceList throwsList = baseConstructor.getThrowsList();
+      if (throwsList instanceof ClsElementImpl) {
+        List<PsiJavaCodeReferenceElement> toList = new ArrayList<>();
+        for (PsiJavaCodeReferenceElement element : throwsList.getReferenceElements()) {
+          toList.add(factory.createReferenceFromText(element.getCanonicalText(), baseConstructor));
+        }
+        constructor.getThrowsList().replace(factory.createReferenceList(toList.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY)));
+      }
+      else {
+        constructor.getThrowsList().replace(throwsList);
+      }
     }
   }
 

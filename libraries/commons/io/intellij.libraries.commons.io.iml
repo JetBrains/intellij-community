@@ -7,6 +7,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="commons-io" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="commons-io" type="repository">
+        <properties maven-id="commons-io:commons-io:2.21.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar">
+              <sha256sum>7d643a2afea8b058b762aa6fb90e5b256f6c729739f8b3784c3370ddc609e88d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.21.0/commons-io-2.21.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -900,7 +900,7 @@ internal class LocalDiskJarCacheCleanupTest {
   ): LocalDiskJarCacheManager {
     return LocalDiskJarCacheManager(
       cacheDir = cacheDir,
-      productionClassOutDir = tempDir.resolve("classes/production"),
+      classesOutputDirectory = tempDir.resolve("classes"),
       maxAccessTimeAge = maxAccessTimeAge,
       metadataTouchInterval = metadataTouchInterval,
       cleanupInterval = cleanupInterval,

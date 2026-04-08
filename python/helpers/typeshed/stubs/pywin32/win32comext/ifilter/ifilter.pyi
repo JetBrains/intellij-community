@@ -1,8 +1,8 @@
 import _win32typing
 
-def BindIFilterFromStorage(*args): ...  # incomplete
-def BindIFilterFromStream(*args): ...  # incomplete
-def LoadIFilter(*args): ...  # incomplete
+def BindIFilterFromStorage(stg, /): ...
+def BindIFilterFromStream(stg, /): ...
+def LoadIFilter(path: str, /): ...
 
 CHUNK_EOC: int
 CHUNK_EOP: int

@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/recentFiles/frontend",
     "//platform/core-ui",
     "//platform/lang-api:lang",
@@ -30,6 +31,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/structure-view-impl/frontend",
     "//platform/util/coroutines",
+    "//platform/util:util-ui",
     "//platform/util/concurrency",
   ]
 )
@@ -45,6 +47,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/recentFiles/frontend:frontend_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/lang-api:lang_test_lib",
@@ -54,6 +57,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl_test_lib",
     "//platform/structure-view-impl/frontend:frontend_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
   ]
 )

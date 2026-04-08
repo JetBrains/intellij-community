@@ -37,7 +37,9 @@ abstract class J2kConverterExtension {
         module: Module,
         javaFiles: List<PsiJavaFile>,
         convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
-    ) = J2KKotlinConfigurationHelper.setUpAndConvert(project, module, javaFiles, convertFunction)
+    ) {
+        J2KKotlinConfigurationHelper.setUpAndConvert(project, module, javaFiles, convertFunction)
+    }
 
     abstract fun createWithProgressProcessor(
         progress: ProgressIndicator?,

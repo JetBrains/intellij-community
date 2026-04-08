@@ -9,6 +9,7 @@ from django.http.request import _ImmutableQueryDict
 from django.http.response import HttpResponseBase
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 if sys.version_info >= (3, 11):
     from wsgiref.types import StartResponse, WSGIEnvironment
@@ -18,17 +19,22 @@ else:
 class LimitedStream(IOBase):
     limit: int
     def __init__(self, stream: BytesIO, limit: int) -> None: ...
-    def read(self, size: int | None = ...) -> bytes: ...
-    def readline(self, size: int | None = ...) -> bytes: ...
+    @override
+    def read(self, size: int | None = -1, /) -> bytes: ...
+    @override
+    def readline(self, size: int | None = -1, /) -> bytes: ...
 
 class WSGIRequest(HttpRequest):
     environ: WSGIEnvironment
     def __init__(self, environ: WSGIEnvironment) -> None: ...
     @cached_property
+    @override
     def GET(self) -> _ImmutableQueryDict: ...  # type: ignore[override]
     @cached_property
+    @override
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
     @property
+    @override
     def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
 
 class WSGIHandler(base.BaseHandler):

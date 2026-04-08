@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
@@ -25,7 +25,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -116,7 +116,7 @@ class AgentSessionRefreshService internal constructor(
     }
   }
 
-  private suspend fun isSourceRefreshGateActive(): Boolean = withContext(Dispatchers.EDT) {
+  private suspend fun isSourceRefreshGateActive(): Boolean = withContext(Dispatchers.UI) {
     val stateSnapshot = stateStore.snapshot()
     val hasLoadedPaths = stateSnapshot.projects.any { project ->
       project.hasLoaded || project.worktrees.any { it.hasLoaded }

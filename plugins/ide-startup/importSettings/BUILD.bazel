@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
+    "//platform/ide-core",
     "//platform/core-impl",
     "//libraries/rd/core",
     "//libraries/rd/swing",
@@ -46,8 +47,10 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/lang-impl",
     "//platform/util/progress",
+    "//platform/util-ex",
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
+    "//platform/progress/shared:ide-progress",
     "//platform/pluginSystem/parser/impl",
   ]
 )
@@ -67,6 +70,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//libraries/rd/core:core_test_lib",
     "//libraries/rd/swing:swing_test_lib",
@@ -92,8 +96,10 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util/progress:progress_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/platform-impl/ui:ui_test_lib",
     "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/pluginSystem/parser/impl:impl_test_lib",
   ]
 )

@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;

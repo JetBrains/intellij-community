@@ -88,12 +88,11 @@ class McpToolFilterTest {
   @Test
   fun `MaskBased filter with complex pattern`() {
     // -* disallows all, +com.intellij.mcpserver.toolsets.general.* allows general tools,
-    // -*.get_file_text_by_path disallows get_file_text_by_path from any package
-    val filter = McpToolFilter.MaskBased("-*,+com.intellij.mcpserver.toolsets.general.*,-*.get_file_text_by_path")
+    // -*.read_file disallows read_file from any package
+    val filter = McpToolFilter.MaskBased("-*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file")
 
-    assertThat(filter.shouldInclude("com.intellij.mcpserver.toolsets.general.read_file")).isTrue()
+    assertThat(filter.shouldInclude("com.intellij.mcpserver.toolsets.general.read_file")).isFalse()
     assertThat(filter.shouldInclude("com.intellij.mcpserver.toolsets.general.write_file")).isTrue()
-    assertThat(filter.shouldInclude("com.intellij.mcpserver.toolsets.general.get_file_text_by_path")).isFalse()
     assertThat(filter.shouldInclude("com.intellij.mcpserver.toolsets.vcs.git_commit")).isFalse()
   }
 

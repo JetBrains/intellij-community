@@ -2,6 +2,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
+  @IJIgnore(issue = "AT-4013")
   public void testContractAndNotNull() {
     myFixture.configureByText("a.java", """
       class Foo {

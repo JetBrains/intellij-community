@@ -23,6 +23,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/core-ui",
   ]
 )
@@ -42,6 +43,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
   ]
 )

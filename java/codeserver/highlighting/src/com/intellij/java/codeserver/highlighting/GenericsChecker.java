@@ -771,7 +771,8 @@ final class GenericsChecker {
   }
 
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
-    PsiNewExpression newExpression = requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
+    PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class);
+    if (newExpression == null) return null;
     PsiElement parent = newExpression.getParent();
     PsiType expectedType = null;
     if (parent instanceof PsiVariable psiVariable && newExpression.equals(psiVariable.getInitializer())) {

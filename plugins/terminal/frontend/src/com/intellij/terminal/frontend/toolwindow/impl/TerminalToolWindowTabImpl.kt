@@ -7,4 +7,5 @@ import com.intellij.ui.content.Content
 internal data class TerminalToolWindowTabImpl(
   override val view: TerminalView,
   override val content: Content,
+  override val closeOnProcessTermination: Boolean,
 ) : TerminalToolWindowTab

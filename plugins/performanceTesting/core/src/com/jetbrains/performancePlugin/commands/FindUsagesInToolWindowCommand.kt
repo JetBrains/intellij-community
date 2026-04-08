@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.DataManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.wm.IdeFocusManager
+import com.jetbrains.performancePlugin.FindUsagesSpans
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,12 +24,11 @@ import kotlinx.coroutines.withContext
  */
 class FindUsagesInToolWindowCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val NAME: String = "findUsagesInToolWindow"
-    const val PREFIX: String = CMD_PREFIX + NAME
+    const val PREFIX: String = CMD_PREFIX + FindUsagesSpans.NAME_TW
 
-    const val SPAN_NAME: String = NAME
-    const val FIRST_USAGE_SPAN_NAME: String = "${NAME}_firstUsage"
-    const val TOOL_WINDOW_SPAN_NAME: String = "${NAME}_toolWindow"
+    const val SPAN_NAME: String = FindUsagesSpans.SPAN_NAME
+    const val FIRST_USAGE_SPAN_NAME: String = "${FindUsagesSpans.NAME_TW}_firstUsage"
+    const val TOOL_WINDOW_SPAN_NAME: String = "${FindUsagesSpans.NAME_TW}_toolWindow"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {

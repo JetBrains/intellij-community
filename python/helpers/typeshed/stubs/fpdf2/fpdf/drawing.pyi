@@ -59,7 +59,7 @@ class GraphicsStateDictRegistry(OrderedDict[Raw, Name]):
 
 def number_to_str(number: Number) -> str: ...
 def render_pdf_primitive(primitive: _Primitive) -> Raw: ...
-
+@type_check_only
 class _DeviceRGBBase(NamedTuple):
     r: Number
     g: Number
@@ -75,6 +75,7 @@ class DeviceRGB(_DeviceRGBBase):
     def colors255(self) -> tuple[Number, Number, Number]: ...
     def serialize(self) -> str: ...
 
+@type_check_only
 class _DeviceGrayBase(NamedTuple):
     g: Number
     a: Number | None
@@ -88,6 +89,7 @@ class DeviceGray(_DeviceGrayBase):
     def colors255(self) -> tuple[Number, Number, Number]: ...
     def serialize(self) -> str: ...
 
+@type_check_only
 class _DeviceCMYKBase(NamedTuple):
     c: Number
     m: Number

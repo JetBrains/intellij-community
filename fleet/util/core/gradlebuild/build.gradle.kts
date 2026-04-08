@@ -92,7 +92,7 @@ kotlin {
   sourceSets {
     wasmJsMain {
       dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+        implementation(libs.kotlin.wrappers.browser)
       }
     }
   }

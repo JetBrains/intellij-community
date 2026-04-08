@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.testFramework.TestActionEvent
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -142,6 +145,34 @@ class JavaToKotlinActionTest : KotlinLightCodeInsightFixtureTestCase(), Expected
             "Standalone action should be disabled for non-Java files",
             event.presentation.isEnabledAndVisible
         )
+    }
+
+    fun testActionHiddenForEmptyDirectory() {
+        myFixture.configureByText("Dummy.java", "class Dummy {}")
+
+        val emptyDir = WriteAction.computeAndWait<_, Exception> {
+            myFixture.file.virtualFile.parent.createChildDirectory(this, "emptyPkg")
+        }
+        try {
+            val standaloneAction = actionManager.getAction("ConvertJavaToKotlin")
+                ?: throw AssertionError("ConvertJavaToKotlin action should be registered")
+
+            val dataContext = SimpleDataContext.builder()
+                .add(CommonDataKeys.PROJECT, project)
+                .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayOf(emptyDir))
+                .add(DataKey.create<Module>("module"), myFixture.module)
+                .build()
+
+            val event = TestActionEvent.createTestEvent(dataContext)
+            standaloneAction.update(event)
+
+            assertFalse(
+                "Action should not be visible for an empty package directory",
+                event.presentation.isEnabledAndVisible
+            )
+        } finally {
+            WriteAction.runAndWait<Exception> { emptyDir.delete(this) }
+        }
     }
 
     private fun createActionEvent(): AnActionEvent {

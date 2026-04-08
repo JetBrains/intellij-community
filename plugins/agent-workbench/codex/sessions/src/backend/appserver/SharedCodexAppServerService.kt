@@ -1,11 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotification
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
+import com.intellij.agent.workbench.codex.common.CodexWebSocketAppServerClient
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.registerShutdownOnCancellation
 import com.intellij.openapi.components.Service
@@ -16,9 +15,8 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 @Service(Service.Level.APP)
 class SharedCodexAppServerService(serviceScope: CoroutineScope) {
-  private val client = CodexAppServerClient(
+  private val client = CodexWebSocketAppServerClient(
     coroutineScope = serviceScope,
-    notificationRouting = CodexAppServerNotificationRouting.PUBLIC_ONLY,
   )
 
   internal val notifications: Flow<CodexAppServerNotification>
@@ -37,22 +35,29 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.readThreadActivitySnapshot(threadId)
   }
 
+  @Suppress("unused")
   suspend fun createThread(cwd: String, yolo: Boolean): CodexThread {
-    val thread = if (yolo) {
-      client.createThread(cwd = cwd, approvalPolicy = "on-request", sandbox = "workspace-write")
-    }
-    else {
-      client.createThread(cwd = cwd)
-    }
-    client.persistThread(thread.id)
-    return thread
+    val session = createThreadInternal(cwd = cwd, yolo = yolo)
+    client.persistThread(session.thread.id)
+    return session.thread
   }
 
   suspend fun archiveThread(threadId: String) {
     client.archiveThread(threadId)
   }
 
+  suspend fun setThreadName(threadId: String, name: String) {
+    client.setThreadName(threadId, name)
+  }
+
   suspend fun unarchiveThread(threadId: String) {
     client.unarchiveThread(threadId)
+  }
+
+  private suspend fun createThreadInternal(cwd: String, yolo: Boolean) = if (yolo) {
+    client.createThreadSession(cwd = cwd, approvalPolicy = "on-request", sandbox = "workspace-write")
+  }
+  else {
+    client.createThreadSession(cwd = cwd)
   }
 }

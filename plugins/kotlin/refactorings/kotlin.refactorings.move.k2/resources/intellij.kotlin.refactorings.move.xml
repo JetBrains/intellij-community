@@ -1,7 +1,11 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.refactoring.move">
   <dependencies>
-    <module name="intellij.kotlin.searching"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.moveHandler

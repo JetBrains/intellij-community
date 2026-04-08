@@ -10,5 +10,5 @@ import org.jetbrains.annotations.ApiStatus
 interface PyTypeEngine {
   val name: String
   fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean
-  fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean): Ref<PyType?>?
+  fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>?
 }

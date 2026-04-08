@@ -37,6 +37,8 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/util:util-ui",
     "//platform/analysis-impl",
     "//platform/service-container",
     "//platform/indexing-api:indexing",
@@ -50,6 +52,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
     "//platform/platform-impl/bootstrap/kernel",
+    "//platform/progress/shared:ide-progress",
     "//platform/build-scripts/downloader",
   ]
 )
@@ -75,6 +78,8 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/service-container:service-container_test_lib",
     "//platform/indexing-api:indexing_test_lib",
@@ -87,6 +92,7 @@ jvm_library(
     "//platform/diagnostic:diagnostic_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/build-scripts/downloader:downloader_test_lib",
   ]
 )

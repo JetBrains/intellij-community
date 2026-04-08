@@ -5,4 +5,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class LcrSwitchInitParams : LcrInitParams()
+class LcrSwitchInitParams @ApiStatus.Internal constructor() : LcrInitParams()

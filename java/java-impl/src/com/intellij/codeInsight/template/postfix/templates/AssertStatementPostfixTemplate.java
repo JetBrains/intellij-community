@@ -29,4 +29,9 @@ public class AssertStatementPostfixTemplate extends JavaEditablePostfixTemplate 
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

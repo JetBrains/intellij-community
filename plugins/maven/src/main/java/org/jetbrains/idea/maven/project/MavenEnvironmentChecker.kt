@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.BuildEventsNls
@@ -15,26 +15,24 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.buildtool.quickfix.ChooseAnotherJdkQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.isMaven4
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 @ApiStatus.Internal
 class MavenEnvironmentChecker(val console: MavenSyncConsole, val project: Project) {
   suspend fun checkEnvironment(managedFiles: List<VirtualFile>): Boolean {
-    val mavenDistributions = managedFiles.map { MavenDistributionsCache.getInstance(project).getMavenDistribution(it.parent.path) }
+    val mavenVersions = managedFiles.map { MavenDistributionsCache.getInstance(project).getMavenVersion(it) }
       .toSet()
-    checkJdkVersions(mavenDistributions)?.let {
+    checkJdkVersions(mavenVersions)?.let {
       console.addBuildIssue(it, MessageEvent.Kind.ERROR)
       return false
     }
     return true
   }
 
-  private suspend fun checkJdkVersions(mavenDistributions: Set<MavenDistribution>): BuildIssue? {
+  private suspend fun checkJdkVersions(mavenVersions: Set<String?>): BuildIssue? {
     val jdk = MavenUtil.getJdkForImporter(project)
-    mavenDistributions.forEach {
+    mavenVersions.forEach {
       checkJdkCompatibility(it, jdk)?.let { return it }
     }
     return null
@@ -42,9 +40,9 @@ class MavenEnvironmentChecker(val console: MavenSyncConsole, val project: Projec
 
 
   companion object {
-    suspend fun checkJdkCompatibility(mavenDistribution: MavenDistribution, jdk: Sdk): BuildIssue? {
+    suspend fun checkJdkCompatibility(mavenVersion: String?, jdk: Sdk): BuildIssue? {
       if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_17)) return null
-      if (mavenDistribution.isMaven4()) return WrongJdkVersion("4", JavaSdkVersion.JDK_17)
+      if (mavenVersion?.startsWith("4.") == true) return WrongJdkVersion("4", JavaSdkVersion.JDK_17)
       if (!JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) return WrongJdkVersion("3", JavaSdkVersion.JDK_1_8)
       return null
     }

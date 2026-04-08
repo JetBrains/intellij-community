@@ -1,10 +1,13 @@
 <idea-plugin package="ru.adelf.idea.dotenv.docker">
   <dependencies>
-    <module name="intellij.clouds.docker.file"/>
     <module name="intellij.clouds.docker.file.backend"/>
-    <plugin id="ru.adelf.idea.dotenv"/>
     <plugin id="Docker"/>
     <module name="intellij.yaml.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="ru.adelf.idea.dotenv"/>
+    <module name="intellij.clouds.docker.file"/>
+    <module name="intellij.yaml"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
     <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>

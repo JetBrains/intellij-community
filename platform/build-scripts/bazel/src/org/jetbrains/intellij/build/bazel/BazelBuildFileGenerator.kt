@@ -941,10 +941,13 @@ internal class BazelBuildFileGenerator(
           option("url", dep.url)
           option("sha256", dep.sha256)
           // TODO: shouldn't be part of dependencies.txt ?
-          if (dep.name == "jbrsdk") {
+          if (dep.name == "jbrsdk" || dep.name.startsWith("jre")) {
             val filename = dep.url.substringAfterLast("/")
-            val filenameWithoutExtension = filename.removeSuffix(".tar.gz")
-            option("strip_prefix", filenameWithoutExtension)
+            val stripPrefix = when {
+              dep.name.startsWith("jre") && dep.legacyPath.startsWith("deps/signed-jre-mac") -> "signed"
+              else -> filename.removeSuffix(".tar.gz")
+            }
+            option("strip_prefix", stripPrefix)
           }
           val buildFileContentFromFile = (
             buildFiles.find { it.first == fullName } ?:

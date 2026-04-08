@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,7 +42,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
-  @ApiStatus.Experimental
+  @Experimental
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CodeInsightContext context, int offset) {
     this(project, file, context, -1, -1, offset, false);
   }

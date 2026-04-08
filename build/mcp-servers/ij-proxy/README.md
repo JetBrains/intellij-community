@@ -14,7 +14,7 @@ It forwards JSON-RPC messages between stdin/stdout and the upstream streamable H
 In the JetBrains monorepo, `dotnet/` is excluded from IDEA's scope and requires Rider. Neither IDE alone covers all files. When both are running, the proxy discovers both and routes transparently.
 
 - Auto-discover IDEs by scanning ports and matching `serverInfo.name` (e.g. `"JetBrains Rider MCP Server"`). No configuration needed.
-- Route file operations (`read_file`, `list_dir`, `get_file_problems`, etc.) to Rider for `dotnet/` paths; everything else goes to IDEA.
+- Route file operations (`read_file`, `list_dir`, `lint_files`, etc.) to Rider for `dotnet/` paths; everything else goes to IDEA.
 - Merge search results (`search_text`, `search_regex`, `search_file`, `search_symbol`) from both IDEs concurrently. Rider results are prefixed with `dotnet/` for monorepo-relative paths.
 - Adjust Rider's `project_path` to `dotnet/` and strip `dotnet/` prefixes from file path arguments before forwarding.
 - Single-IDE mode: when only one IDE is running, the proxy behaves as a standard single-upstream proxy.
@@ -55,6 +55,7 @@ Environment variables (optional):
 - `JETBRAINS_MCP_SCAN_TIMEOUT_S`: timeout for additional port probes after the default port fails (seconds). Default: `1`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
 - `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
+- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for long-running upstream calls such as `build_project` and `lint_files` (seconds). Default: `1200` (20 minutes). Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
@@ -84,9 +85,9 @@ Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping 
 
 ### Proxy tools
 
-- `read_file`: Matches Codex `read_file` (line-numbered output + indentation mode). Uses `get_file_text_by_path`.
+- `read_file`: Matches the JetBrains MCP `read_file` shape and modes (`slice`, `lines`, `line_columns`, `offsets`, `indentation`). When upstream already provides `read_file`, ij-proxy passes it through unchanged; otherwise it emulates the same schema and numbered output.
 - `list_dir`: Matches Codex `list_dir`. Uses `list_directory_tree`.
-- `apply_patch`: Matches Codex `apply_patch` and accepts unified git diff compatibility input (raw or wrapped in `*** Begin Patch` / `*** End Patch`). Uses `get_file_text_by_path` + `create_new_file` and `git rm`/`git mv` for delete/move.
+- `apply_patch`: Matches Codex `apply_patch` and accepts unified git diff compatibility input (raw or wrapped in `*** Begin Patch` / `*** End Patch`). Uses native `read_file` when available, falls back to legacy file reads for older upstream IDEs, and writes through `create_new_file` plus `git rm`/`git mv` for delete/move.
 - `apply_patch` unified hunk compatibility: coordinate-only headers like `@@ -1,3 +1,4 @@` are treated as metadata (not search hints). See `apply-patch-unified-hunk-header-spec.md`.
 - `rename`: Uses `rename_refactoring`.
 

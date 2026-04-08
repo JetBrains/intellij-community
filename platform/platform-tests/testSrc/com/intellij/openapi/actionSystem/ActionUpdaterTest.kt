@@ -5,6 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.NonTrivialActionGroup
+import com.intellij.ide.actions.PopupInMainMenuActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -86,6 +87,59 @@ class ActionUpdaterTest {
     val actions = expandActionGroup(group, presentations)
     assertEmpty(actions)
     assertFalse(presentations.getPresentation(group).isEnabled)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testPopupInMainMenuActionGroupShowsDisabledChildrenInContextMenu() {
+    val group = PopupInMainMenuActionGroup()
+    val child = newAction(ActionUpdateThread.BGT) {
+      it.presentation.isVisible = true
+      it.presentation.isEnabled = false
+    }
+    group.add(child)
+
+    val presentations = PresentationFactory()
+    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP)
+
+    assertOrderedEquals(actions, child)
+    assertTrue(presentations.getPresentation(group).isVisible)
+    assertFalse(presentations.getPresentation(group).isEnabled)
+    assertFalse(presentations.getPresentation(group).isPopupGroup)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testPopupInMainMenuActionGroupKeepsNonContextBehaviorOutsideMainMenu() {
+    val group = PopupInMainMenuActionGroup()
+    group.add(newAction(ActionUpdateThread.BGT) {
+      it.presentation.isVisible = true
+      it.presentation.isEnabled = false
+    })
+
+    val presentations = PresentationFactory()
+    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE)
+
+    assertEmpty(actions)
+    assertFalse(presentations.getPresentation(group).isVisible)
+    assertFalse(presentations.getPresentation(group).isPopupGroup)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testPopupInMainMenuActionGroupKeepsMainMenuBehavior() {
+    val group = PopupInMainMenuActionGroup()
+    group.add(newAction(ActionUpdateThread.BGT) {
+      it.presentation.isVisible = true
+      it.presentation.isEnabled = false
+    })
+
+    val presentations = PresentationFactory()
+    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_MENU, ActionUiKind.NONE)
+
+    assertEmpty(actions)
+    assertFalse(presentations.getPresentation(group).isVisible)
+    assertTrue(presentations.getPresentation(group).isPopupGroup)
   }
 
   @Test

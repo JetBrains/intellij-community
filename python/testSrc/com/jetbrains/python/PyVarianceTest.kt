@@ -203,4 +203,171 @@ internal class PyVarianceTest : PyTestCase() {
       class ClassA_2(A_Alias_1[<warning descr="A covariant type variable cannot be used in this invariant position">T_co</warning>]): ...
       """)
   }
+
+  fun `test Protocol declaration variance is inferred as covariant from protocol return type`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+      T = TypeVar("T")
+
+      class ReturnsValue(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def get(self) -> T: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred as covariant from protocol return type quoted return type`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+      T = TypeVar("T")
+
+      class ReturnsValue(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def get(self) -> "T": ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred as covariant from protocol return type 2`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+      T = TypeVar("T", covariant=True)
+
+      class ReturnsValue(Protocol[T]):
+          def get(self) -> T: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred for later type parameters`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T1 = TypeVar("T1")
+      T2= TypeVar("T2")
+
+      class P(Protocol[T1, <warning descr="This type variable is effectively contravariant in this protocol, so it cannot be invariant here">T2</warning>]):
+          def use_first(self, value: T1) -> T1: ...
+          def use_second(self, value: T2) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred for complex type`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T1 = TypeVar("T1", contravariant=True)
+
+      class P(Protocol[<warning descr="This type variable is effectively invariant in this protocol, so it cannot be contravariant here">T1</warning>]):
+          def foo(self, value: list[<warning descr="A contravariant type variable cannot be used in this invariant position">T1</warning>]) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred for quoted complex type`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T1 = TypeVar("T1", contravariant=True)
+
+      class P(Protocol[<warning descr="This type variable is effectively invariant in this protocol, so it cannot be contravariant here">T1</warning>]):
+        def foo(self, value: <warning descr="A contravariant type variable cannot be used in this invariant position">"list[T1]"</warning>) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred as contravariant from protocol parameter`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T = TypeVar("T")
+
+      class AcceptsValue(Protocol[<warning descr="This type variable is effectively contravariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def put(self, value: T) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance is inferred as contravariant from protocol parameter 2`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T = TypeVar("T", contravariant=True)
+
+      class AcceptsValue(Protocol[T]):
+          def put(self, value: T) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance ignores init-only members`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T = TypeVar("T")
+
+      class InitOnly(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def __init__(self, value: T) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance ignores init-only members 2`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T = TypeVar("T", covariant=True)
+
+      class InitOnly(Protocol[T]):
+          def __init__(self, value: T) -> None: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance ignores fixed tuple covariance`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      S = TypeVar("S")
+      T = TypeVar("T")
+
+      class PairProto(Protocol[S, T]):
+          def method1(self, a: S, b: T) -> tuple[S, T]: ...
+      """)
+  }
+
+  fun `test Protocol declaration variance tuple expression`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      S = TypeVar("S")
+      T = TypeVar("T")
+
+      class PairProto(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">S</warning>, <warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def method1(self) -> tuple[S, T]: ...
+      """)
+  }
+
+  fun `test Recursive protocol variance`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
+
+      T_co = TypeVar("T_co", covariant=True)
+      T_contra = TypeVar("T_contra", contravariant=True)
+
+      class RecursiveProto(Protocol[T_co, T_contra]):
+          def method1(self) -> "RecursiveProto[T_co, T_contra]": ...
+
+          @classmethod
+          def method2(cls, value: T_contra) -> None: ...
+      """)
+  }
+
+  fun `test No inspection issues on type arguments of self type`() {
+    doTestByText("""
+      class K[T]:
+          def m1(self: K[T], x: T) -> None: ...
+      """)
+  }
+
+  @TestFor(issues = ["PY-88677"])
+  fun `test Show error inside quoted type annotation`() {
+    doTestByText("""
+      from typing import TypeVar, Generic, Callable
+
+      T_co = TypeVar("T_co", covariant=True)
+
+      class C(Generic[T_co]):
+              def method1(self) -> <warning descr="A covariant type variable cannot be used in this contravariant position">"Callable[[T_co], None]"</warning>: ...
+      """)
+  }
 }

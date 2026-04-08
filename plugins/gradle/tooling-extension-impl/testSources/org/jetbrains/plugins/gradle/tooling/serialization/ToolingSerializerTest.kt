@@ -99,6 +99,7 @@ class ToolingSerializerTest {
       val result = DefaultGradleBuildScriptClasspathModel()
       result.gradleVersion = myRandom.nextObject(String::class.java)
       myRandom.objects(ClasspathEntryModel::class.java, myRandom.nextInt(1, 10))
+        .distinct()
         .forEach { result.add(it) }
       return@randomize result
     }

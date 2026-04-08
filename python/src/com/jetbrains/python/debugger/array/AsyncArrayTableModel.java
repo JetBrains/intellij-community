@@ -6,6 +6,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,15 +14,17 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.ArrayChunkBuilder;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PythonDebuggerScope;
 import com.jetbrains.python.debugger.containerview.DataViewStrategy;
 import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TableModelEvent;
@@ -40,13 +43,21 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private static final int CHUNK_ROW_SIZE = 30;
   public static final String EMPTY_CELL_VALUE = "";
 
+  private record LoadValuesRequest(@NotNull @ProgressTitle String updateMessage,
+                                    int fromRow,
+                                    int toRow,
+                                    int fromCol,
+                                    int toCol,
+                                    @NotNull Consumer<? super ArrayChunk> whenLoaded) {}
+
   private final int myRows;
   private final int myColumns;
   private final PyDataViewerCommunityPanel myDataProvider;
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Python async table queue", 100, true, null);
+  private final UpdateQueue<ListenableFuture<ArrayChunk>> myChunkQueue;
+  private final UpdateQueue<LoadValuesRequest> myLoadValuesQueue;
 
   private PyDebugValue myDebugValue;
   private final DataViewStrategy myStrategy;
@@ -75,6 +86,20 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     myDataProvider = provider;
     myDebugValue = debugValue;
     myStrategy = strategy;
+
+    CoroutineScope scope = PythonDebuggerScope.childScope(
+      provider.getDataViewerModel().getProject(),
+      "Python async table queues"
+    );
+    myChunkQueue = DebouncedUpdates.<ListenableFuture<ArrayChunk>>forScope(scope, "get chunk from debugger", 100)
+      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+      .runLatest(chunk -> processChunkRequest(chunk))
+      .cancelOnDispose(provider);
+
+    myLoadValuesQueue = DebouncedUpdates.<LoadValuesRequest>forScope(scope, "load values", 100)
+      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+      .runLatest(request -> processLoadValuesRequest(request))
+      .cancelOnDispose(provider);
   }
 
 
@@ -104,13 +129,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         }
       }
       else {
-        myQueue.queue(new Update("get chunk from debugger") {
-          @Override
-          public void run() {
-            chunk.addListener(() -> UIUtil.invokeLaterIfNeeded(() -> fireTableDataChanged()), myExecutorService);
-            myExecutorService.execute(((ListenableFutureTask<ArrayChunk>)chunk));
-          }
-        });
+        myChunkQueue.queue(chunk);
       }
       return EMPTY_CELL_VALUE;
     }
@@ -119,34 +138,37 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     }
   }
 
+  private void processChunkRequest(ListenableFuture<ArrayChunk> chunk) {
+    chunk.addListener(this::fireTableDataChanged, myExecutorService);
+    myExecutorService.execute(((ListenableFutureTask<ArrayChunk>)chunk));
+  }
+
   public void loadValues(@NotNull @ProgressTitle String updateMessage,
                          int fromRow,
                          int toRow,
                          int fromCol,
                          int toCol,
                          @NotNull Consumer<? super ArrayChunk> whenLoaded) {
+    myLoadValuesQueue.queue(new LoadValuesRequest(updateMessage, fromRow, toRow, fromCol, toCol, whenLoaded));
+  }
 
-    myQueue.queue(new Update(updateMessage) {
+  private void processLoadValuesRequest(@NotNull LoadValuesRequest request) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, request.updateMessage, false) {
       @Override
-      public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(null, updateMessage, false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
-            try {
-              ArrayChunk chunk = myDebugValue.getFrameAccessor()
-                .getArrayItems(myDebugValue, fromRow, fromCol, toRow - fromRow + 1, toCol - fromCol + 1,
-                               myDataProvider.getDataViewerModel().getFormat());
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        try {
+          ArrayChunk chunk = myDebugValue.getFrameAccessor()
+            .getArrayItems(myDebugValue, request.fromRow, request.fromCol, request.toRow - request.fromRow + 1,
+                          request.toCol - request.fromCol + 1, myDataProvider.getDataViewerModel().getFormat());
 
-              if (chunk != null) {
-                whenLoaded.accept(chunk);
-              }
-            }
-            catch (PyDebuggerException e) {
-              Logger.getInstance(this.getClass()).error(e);
-            }
+          if (chunk != null) {
+            request.whenLoaded.accept(chunk);
           }
-        });
+        }
+        catch (PyDebuggerException e) {
+          Logger.getInstance(this.getClass()).error(e);
+        }
       }
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tracing.ide
 
 import com.intellij.ide.util.PsiNavigationSupport
@@ -15,8 +15,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.writeText
 
 internal class TracingProjectTaskListener : ProjectTaskListener {
   companion object {
@@ -55,7 +53,7 @@ internal class TracingProjectTaskListener : ProjectTaskListener {
         val mergedText = mergeFiles(filesToMerge)
         val mergedFilePath = TracingService.createPath(TracingService.TraceKind.Merged)
         Files.createDirectories(mergedFilePath.parent)
-        mergedFilePath.writeText(mergedText)
+        Files.writeString(mergedFilePath, mergedText)
         showNotificationNotification(mergedFilePath.parent)
       }
       catch (e: IOException) {
@@ -73,7 +71,7 @@ internal class TracingProjectTaskListener : ProjectTaskListener {
     val notification = Notification("BuildTracing", TracingBundle.message("notification.content.tracing.file.was.created"), NotificationType.INFORMATION)
     notification.addAction(object : AnAction(TracingBundle.message("action.open.trace.directory.in.file.manager.text")) {
       override fun actionPerformed(e: AnActionEvent) {
-        PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(mergedFile.parent.toFile())
+        PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(mergedFile.parent)
       }
     })
     notification.notify(null)
@@ -84,7 +82,7 @@ internal class TracingProjectTaskListener : ProjectTaskListener {
     return buildString {
       appendLine("[\n")
       for (filePath in files) {
-        if (filePath.exists()) {
+        if (Files.exists(filePath)) {
           val entries = readEntries(filePath)
           for (entry in entries) {
             appendLine(entry)
@@ -95,5 +93,5 @@ internal class TracingProjectTaskListener : ProjectTaskListener {
     }
   }
 
-  private fun readEntries(trace: Path) = trace.toFile().bufferedReader().lineSequence().drop(1).toList().dropLast(1)
+  private fun readEntries(trace: Path) = Files.newBufferedReader(trace).lineSequence().drop(1).toList().dropLast(1)
 }

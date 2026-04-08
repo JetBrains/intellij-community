@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightVirtualFile
 
 internal class TerminalViewVirtualFile(
   val terminalView: TerminalView,
+  val closeOnProcessTermination: Boolean,
 ) : LightVirtualFile(terminalView.getTitleText()) {
   init {
     fileType = TerminalViewFileType

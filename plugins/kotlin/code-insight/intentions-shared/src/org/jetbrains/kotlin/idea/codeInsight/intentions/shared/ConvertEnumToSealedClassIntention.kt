@@ -172,7 +172,7 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
                     val nonWhiteSibling = semicolon.siblings(forward = true, withItself = false).firstOrNull { it !is PsiWhiteSpace }
                     body.deleteChildRange(semicolon, nonWhiteSibling?.prevSibling ?: semicolon)
                     if (nonWhiteSibling != null) {
-                        CodeStyleManager.getInstance(klass.project).reformat(nonWhiteSibling.firstChild ?: nonWhiteSibling)
+                        CodeStyleManager.getInstance(klass.project).reformat(nonWhiteSibling)
                     }
                 }
         }

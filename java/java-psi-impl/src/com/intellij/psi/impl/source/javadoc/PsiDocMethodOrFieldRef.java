@@ -10,6 +10,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -55,6 +56,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,9 +155,26 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         continue;
       }
 
-      if (!method.getName().equals(name) ||
-          methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(method.getSignature(substitutor), methodSignature)) {
+      if (!method.getName().equals(name)) {
         filteredMethods.add(method);
+      }
+      else if (methodSignature != null) {
+        // Since jdk 15, doc methods may be parameterized. If they are, the resolution must take into account the generic types
+        PsiType[] types = methodSignature.getParameterTypes();
+        boolean followStrictSignature = ContainerUtil.exists(types, type -> {
+          if (type instanceof PsiClassType) {
+            return ((PsiClassType)type).getParameterCount() > 0;
+          }
+          return false;
+        });
+
+        boolean equals = followStrictSignature
+                         ? MethodSignatureUtil.areSignaturesEqual(method.getSignature(substitutor), methodSignature)
+                         : MethodSignatureUtil.areSignaturesErasureEqual(method.getSignature(substitutor), methodSignature);
+
+        if (!equals) {
+          filteredMethods.add(method);
+        }
       }
 
       PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method)

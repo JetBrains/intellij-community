@@ -244,59 +244,77 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   @Override
   protected void initSerializers() {
     if (mySerializersLoaded) return;
-    //noinspection SynchronizeOnThis
+
     synchronized (this) {
       if (mySerializersLoaded) {
         return;
       }
 
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        instantiateElementTypesFromFields();
-        StubIndexEx.initExtensions();
-      });
-
-      registerSerializer(PsiFileStubImpl.TYPE);
-
-      final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
-
-      record TypeAndSerializer(
-        @NotNull IElementType type,
-        @NotNull ObjectStubSerializer<?, Stub> serializer
-      ) {}
-
-      StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
-      List<TypeAndSerializer> stubElementTypes = new ArrayList<>(IElementType.mapNotNull(type -> {
-        ObjectStubSerializer<?, @NotNull Stub> serializer = stubElementRegistryService.getStubSerializer(type);
-        if (serializer == null) {
-          return null;
-        }
-        return new TypeAndSerializer(type, serializer);
-      }));
-
-      stubElementTypes.sort(
-        comparing((TypeAndSerializer tas) -> tas.type.getLanguage().getID())
-          //TODO RC: not sure .debugName is enough for stable sorting. Maybe use .getClass() instead?
-          .thenComparing(tas -> tas.type.getDebugName())
-      );
-
-      for (TypeAndSerializer tas : stubElementTypes) {
-        ObjectStubSerializer<?, Stub> serializer = tas.serializer;
-        if (StubSerializerId.DEFAULT_EXTERNAL_ID.equals(serializer.getExternalId())) {
-          continue;
-        }
-
-        registerSerializer(serializer);
+      try {
+        doInitSerializedUnderLock();
+      }
+      catch (Throwable e) {
+        // serializers could be initialized only partially, let's clean the partial state
+        dropSerializerData();
+        throw e;
       }
 
-      final List<StubFieldAccessor> sortedLazySerializers = lazySerializers.stream()
-        //TODO RC: is .externalId enough for stable sorting? Seems like .myField is also important,
-        //         but it should also be dependent on .externalId...
-        .sorted(comparing(sfa -> sfa.externalId))
-        .toList();
-      for (StubFieldAccessor lazySerializer : sortedLazySerializers) {
-        registerSerializer(lazySerializer.externalId, lazySerializer);
-      }
       mySerializersLoaded = true;
+    }
+  }
+
+  private void doInitSerializedUnderLock() {
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      instantiateElementTypesFromFields();
+      StubIndexEx.initExtensions();
+    });
+
+    registerSerializer(PsiFileStubImpl.TYPE);
+
+    final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+
+    record TypeAndSerializer(
+      @NotNull IElementType type,
+      @NotNull ObjectStubSerializer<?, Stub> serializer
+    ) { }
+
+    StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
+
+    // preload state before accessing registered element types
+    // if we don't call it, some stub element types can be still not loaded and be missing in IElementType registry.
+    if (stubElementRegistryService instanceof StubElementRegistryServiceImpl) {
+      ((StubElementRegistryServiceImpl)stubElementRegistryService).ensureStateLoaded();
+    }
+    List<TypeAndSerializer> stubElementTypes = new ArrayList<>(IElementType.mapNotNull(type -> {
+      ObjectStubSerializer<?, @NotNull Stub> serializer = stubElementRegistryService.getStubSerializer(type);
+      if (serializer == null) {
+        return null;
+      }
+      return new TypeAndSerializer(type, serializer);
+    }));
+
+    stubElementTypes.sort(
+      comparing((TypeAndSerializer tas) -> tas.type.getLanguage().getID())
+        //TODO RC: not sure .debugName is enough for stable sorting. Maybe use .getClass() instead?
+        .thenComparing(tas -> tas.type.getDebugName())
+    );
+
+    for (TypeAndSerializer tas : stubElementTypes) {
+      ObjectStubSerializer<?, Stub> serializer = tas.serializer;
+      if (StubSerializerId.DEFAULT_EXTERNAL_ID.equals(serializer.getExternalId())) {
+        continue;
+      }
+
+      registerSerializer(serializer);
+    }
+
+    final List<StubFieldAccessor> sortedLazySerializers = lazySerializers.stream()
+      //TODO RC: is .externalId enough for stable sorting? Seems like .myField is also important,
+      //         but it should also be dependent on .externalId...
+      .sorted(comparing(sfa -> sfa.externalId))
+      .toList();
+    for (StubFieldAccessor lazySerializer : sortedLazySerializers) {
+      registerSerializer(lazySerializer.externalId, lazySerializer);
     }
   }
 

@@ -47,6 +47,10 @@ public final class ChangeTracker implements Disposable {
           registerUndo(event);
         }
       }
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        clearInvalidRanges(document);
+      }
     }, this);
   }
 
@@ -102,7 +106,9 @@ public final class ChangeTracker implements Disposable {
     if (ranges == null) {
       document.putUserData(UNDONE_RANGES, ranges = new ArrayList<>());
     }
-    ranges.removeIf(r -> !r.isValid());
+    if (!document.isInBulkUpdate()) {
+      clearInvalidRanges(document);
+    }
     ranges.add(createMarker(event));
   }
 
@@ -125,6 +131,13 @@ public final class ChangeTracker implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  private synchronized void clearInvalidRanges(Document document) {
+    var ranges = document.getUserData(UNDONE_RANGES);
+    if (ranges != null) {
+      ranges.removeIf(r -> !r.isValid());
+    }
   }
 
   private record RecentChange(long time, RangeMarker marker) {

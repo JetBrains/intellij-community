@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.EDT
@@ -107,25 +107,53 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAbsentModelVersion() = runBlocking {
+    assumeMaven3()
     fixture.saveText(projectPom,
                      """
                          <<error descr="'modelVersion' child tag should be defined">project</error> xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                            <artifactId>foo</artifactId>
                          </project>
                          """.trimIndent())
-    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection::class.java))
     checkHighlighting()
   }
 
   @Test
-  fun testAbsentModelVersionFor410XsdNoError() = runBlocking {
+  fun testAbsentModelVersionAndXmlnsInMaven4() = runBlocking {
+    assumeMaven4()
+    fixture.saveText(projectPom,
+                     """
+                         <<error descr="'modelVersion' child tag should be defined">project</error>>
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection::class.java))
+    checkHighlighting()
+  }
+
+  @Test
+  fun testAbsentModelVersion410InMaven4() = runBlocking {
+    assumeMaven4()
     fixture.saveText(projectPom,
                      """
                          <project xmlns="http://maven.apache.org/POM/4.1.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd">
                            <artifactId>foo</artifactId>
                          </project>
                          """.trimIndent())
-    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection::class.java))
+    checkHighlighting()
+  }
+
+  @Test
+  fun testAbsentModelVersion400InMaven4() = runBlocking {
+    assumeMaven4()
+    fixture.saveText(projectPom,
+                     """
+                         <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection::class.java))
     checkHighlighting()
   }
 

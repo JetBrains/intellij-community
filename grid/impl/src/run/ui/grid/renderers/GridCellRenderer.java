@@ -23,7 +23,7 @@ public abstract class GridCellRenderer implements Disposable {
     myGrid = grid;
   }
 
-  public abstract int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
+  public abstract int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value);
 
   public abstract @NotNull JComponent getComponent(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, @Nullable Object value);
 
@@ -36,15 +36,15 @@ public abstract class GridCellRenderer implements Disposable {
 
   public abstract void reinitSettings();
 
-  public static @NotNull GridCellRenderer getRenderer(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+  public static @NotNull GridCellRenderer getRenderer(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
     GridCellRendererFactories factories = GridCellRendererFactories.get(grid);
 
     GridCellRenderer bestRenderer = null;
     int bestSuitability = SUITABILITY_UNSUITABLE;
 
-    for (GridCellRendererFactory factory : factories.getFactoriesFor(row, column)) {
+    for (GridCellRendererFactory factory : factories.getFactoriesFor(row, column, value)) {
       GridCellRenderer renderer = factory.getOrCreateRenderer(row, column);
-      int suitability = renderer.getSuitability(row, column);
+      int suitability = renderer.getSuitability(row, column, value);
       if (suitability > bestSuitability) {
         bestRenderer = renderer;
         bestSuitability = suitability;

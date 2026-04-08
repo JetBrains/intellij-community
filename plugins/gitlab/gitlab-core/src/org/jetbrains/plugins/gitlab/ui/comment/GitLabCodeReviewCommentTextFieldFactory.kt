@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
@@ -73,6 +74,7 @@ object GitLabCodeReviewCommentTextFieldFactory {
     }
 
     val editorComponent = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor: Editor ->
+      editor.putUserData(GitLabViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
       cs.launch {
         vm.uploadFinishedSignal.collect { fileUploadResult ->
           WriteCommandAction.writeCommandAction(editor.project)

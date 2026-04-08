@@ -16,7 +16,7 @@ class DemoApplicationTests {
     Stream.of("")
       .map(l -> a.get(l.length()))
       .map(s -> new DemoApplicationTests()).findAny()
-      .map(d -> d.foo(this::<error descr="Reference to 'bar' is ambiguous, both 'bar(int)' and 'bar(long)' match">bar</error>));
+      .map(d -> d.foo<error descr="Ambiguous method call: both 'DemoApplicationTests.foo(Consumer<Object>)' and 'DemoApplicationTests.foo(Function<Object, Object>)' match">(this::bar)</error>);
   }
 
   <T> void foo(Consumer<T> c) {}

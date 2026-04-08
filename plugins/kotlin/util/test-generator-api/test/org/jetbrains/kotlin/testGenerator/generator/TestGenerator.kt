@@ -6,7 +6,6 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import junit.framework.ComparisonFailure
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
@@ -47,7 +46,7 @@ object TestGenerator {
             appendLine("package $packageName;")
             newLine()
 
-            appendImports(getImports(suite, group, platform))
+            appendImports(getImports(suite, platform))
             appendGeneratedComment()
             appendAnnotation(TAnnotation<SuppressWarnings>("all"))
             appendAnnotation(TAnnotation<TestRoot>(group.modulePath))
@@ -74,7 +73,7 @@ object TestGenerator {
     }
 }
 
-internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform): Collection<String> {
+internal fun getImports(suite: TSuite, platform: KMPTestPlatform): Collection<String> {
     val imports = mutableSetOf<String>()
 
     imports += TestDataPath::class.java.canonicalName
@@ -112,10 +111,6 @@ internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform)
     val selfPackageName = suite.generatedClassPackage
     if (superPackageName != selfPackageName) {
         imports += suite.abstractTestClass.kotlin.java.canonicalName
-    }
-
-    if (group.isCompilerTestData) {
-        imports += "static ${TestKotlinArtifacts::class.java.canonicalName}.${TestKotlinArtifacts::compilerTestData.name}"
     }
 
     return imports

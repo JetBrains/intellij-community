@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -27,14 +28,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor;
 import com.intellij.xdebugger.memory.utils.AbstractTableModelWithColumns;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,10 +88,11 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
   private boolean myOnlyTracked;
   private boolean myOnlyWithInstances;
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
-  private String myFilteringPattern = "";
-  private final MergingUpdateQueue myFilterTypingMergeQueue = new MergingUpdateQueue(
-    "Classes table typing merging queue", 500, true,
-    this, this, this, true).setRestartTimerOnAdd(true);
+  private final UpdateQueue<String> myFilterTypingMergeQueue =
+    DebouncedUpdates.<String>forComponent(this, "Classes table typing merging queue", 500)
+      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+      .restartTimerOnAdd(true)
+      .runLatest(this::updateMatcher);
 
   private volatile List<TypeInfo> myItems = Collections.unmodifiableList(new ArrayList<>());
   private boolean myIsShowCounts = true;
@@ -286,22 +289,18 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
   }
 
   void setFilterPattern(String pattern) {
-    if (!myFilteringPattern.equals(pattern)) {
-      myFilteringPattern = pattern;
-      myFilterTypingMergeQueue.queue(new Update(myMatcher, true) {
-        @Override
-        public void run() {
-          String newPattern = "*" + myFilteringPattern;
-          if (myMatcher.getPattern().equals(newPattern)) {
-            return;
-          }
-          myMatcher = NameUtil.buildMatcher(newPattern).build();
-          fireTableDataChanged();
-          if (getSelectedClass() == null && getRowCount() > 0) {
-            getSelectionModel().setSelectionInterval(0, 0);
-          }
-        }
-      });
+    myFilterTypingMergeQueue.queue(pattern);
+  }
+
+  private void updateMatcher(String pattern) {
+    String newPattern = "*" + pattern;
+    if (myMatcher.getPattern().equals(newPattern)) {
+      return;
+    }
+    myMatcher = NameUtil.buildMatcher(newPattern).build();
+    fireTableDataChanged();
+    if (getSelectedClass() == null && getRowCount() > 0) {
+      getSelectionModel().setSelectionInterval(0, 0);
     }
   }
 

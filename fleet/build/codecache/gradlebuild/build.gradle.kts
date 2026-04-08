@@ -56,9 +56,6 @@ kotlin {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-    implementation(jps.com.jetbrains.intellij.platform.util.zip.squashed55996306.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(jps.com.jetbrains.intellij.idea.idea.community.build.zip464377771.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
@@ -67,6 +64,11 @@ kotlin {
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.build.platform"))
     implementation(project(":fleet.build.fs"))
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.com.jetbrains.intellij.platform.util.zip.squashed55996306.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
   }
   // KOTLIN__MARKER_END
 }

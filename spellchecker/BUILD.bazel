@@ -32,6 +32,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -48,6 +49,7 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -68,6 +70,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/backend:backend_test_lib",
@@ -84,6 +87,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.spellchecker` end

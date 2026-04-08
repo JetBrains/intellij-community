@@ -68,6 +68,7 @@ data class IDERunContext(
   val launchName: String = "",
   val expectedKill: Boolean = false,
   val expectedExitCode: Int = 0,
+  val analyzeProcessExit: Boolean = true,
   val collectNativeThreads: Boolean = false,
   private val stdOut: ExecOutputRedirect? = null,
 ) {

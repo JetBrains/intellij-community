@@ -62,8 +62,8 @@ class A {
         long d = b + c;
     }
 
-    void intToLong() {
-        long a = (int) 1;
+    void intToLong(int intParam) {
+        long a = (int) intParam;
         int b = 2;
         long c = b;
         long d = b + c;

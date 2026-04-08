@@ -34,7 +34,7 @@ internal class PsiVfsInitProjectActivity : InitProjectActivity {
     get() = true
 
   private fun processFileTypesChanged(project: Project, clearViewProviders: Boolean = true) {
-    (PsiManagerEx.getInstanceEx(project).fileManagerEx).processFileTypesChanged(clearViewProviders) // todo
+    (PsiManagerEx.getInstanceEx(project).fileManagerEx).processFileTypesChanged(clearViewProviders)
   }
 
   override suspend fun run(project: Project) {

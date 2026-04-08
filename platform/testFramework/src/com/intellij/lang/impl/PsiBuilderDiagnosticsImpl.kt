@@ -12,9 +12,9 @@ class PsiBuilderDiagnosticsImpl(
   private val collectTraces: Boolean = false,
   ignoreMatching: Set<String> = emptySet()
 ) : SyntaxBuildingDiagnostics {
-  private val rollbacks: MutableMap<Int, AtomicInteger> = hashMapOf()
+  private val rollbacks: MutableMap<Int, AtomicInteger> = LinkedHashMap()
   private val passes: MutableList<Pair<Int, Int>> = mutableListOf()
-  private val traces: MutableMap<StackTraceElement, StatEntry> = hashMapOf()
+  private val traces: MutableMap<StackTraceElement, StatEntry> = LinkedHashMap()
   private val ignoreLines: Pattern = run {
     val knownClassesToIgnore = listOf(
       Thread::class,

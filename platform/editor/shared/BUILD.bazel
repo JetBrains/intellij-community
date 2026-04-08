@@ -21,6 +21,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl:ide-impl",
     "//platform/kernel/pasta",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -36,6 +37,7 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/kernel/pasta:pasta_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.editor` end

@@ -31,7 +31,7 @@ def number_format(
 _T = TypeVar("_T")
 
 # Mypy considers this invalid (overlapping signatures), but thanks to implementation
-# details it works as expected (all values from Union are `localize`d to str,
+# details it works as expected (all values from the union are `localize`d to str,
 # while type of others is preserved)
 @overload
 def localize(value: builtin_datetime | date | time | Decimal | float | str, use_l10n: bool | None = None) -> str: ...

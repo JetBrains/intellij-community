@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -952,6 +953,26 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   public void testIntersectionType() {
     checkHTMLOnly();
   }
+
+  // PY-85799
+  public void testPyiStubFallbackForTargetExpression() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByText("test.py", "");
+
+    VirtualFile virtualFile = myFixture.findFileInTempDir("pkg/mod.py");
+    assertNotNull(virtualFile);
+    PyFile modPy = as(PsiManager.getInstance(myFixture.getProject()).findFile(virtualFile), PyFile.class);
+    assertNotNull(modPy);
+
+    PyTargetExpression aliasTarget = modPy.findTopLevelAttribute("alias");
+    assertNotNull(aliasTarget);
+
+    String doc = myProvider.generateDoc(aliasTarget, aliasTarget);
+    assertNotNull(doc);
+    assertTrue("Should resolve to function documentation from .pyi", doc.contains("Key"));
+    assertTrue("Should have 'Assigned to' section", doc.contains("Assigned to"));
+  }
+
 
   @Override
   protected String getTestDataPath() {

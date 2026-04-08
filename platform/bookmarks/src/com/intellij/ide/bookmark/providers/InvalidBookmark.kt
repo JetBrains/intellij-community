@@ -4,18 +4,28 @@ package com.intellij.ide.bookmark.providers
 import com.intellij.ide.bookmark.Bookmark
 import java.util.Objects
 
-internal class InvalidBookmark(override val provider: LineBookmarkProvider, val url: String, val line: Int) : Bookmark {
+internal class InvalidBookmark(
+  override val provider: LineBookmarkProvider,
+  val url: String,
+  val line: Int,
+  val expectedText: String? = null
+) : Bookmark {
 
   override val attributes: Map<String, String>
-    get() = mapOf("url" to url, "line" to line.toString())
+    get() = buildMap {
+      put("url", url)
+      put("line", line.toString())
+      expectedText?.let { put("lineText", it) }
+    }
 
   override fun createNode(): UrlNode = UrlNode(provider.project, this)
 
-  override fun hashCode(): Int = Objects.hash(provider, url, line)
+  override fun hashCode(): Int = Objects.hash(provider, url, line, expectedText)
   override fun equals(other: Any?): Boolean = other === this || other is InvalidBookmark
                                               && other.provider == provider
                                               && other.url == url
                                               && other.line == line
+                                              && other.expectedText == expectedText
 
-  override fun toString(): String = "InvalidBookmark(line=$line,url=$url,provider=$provider)"
+  override fun toString(): String = "InvalidBookmark(line=$line,url=$url,expectedText=$expectedText,provider=$provider)"
 }

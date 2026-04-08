@@ -20,13 +20,13 @@ public final class ProjectMacrosUtil {
   private ProjectMacrosUtil() {
   }
 
-  public static boolean showMacrosConfigurationDialog(Project project, final Collection<String> undefinedMacros) {
+  public static boolean showMacrosConfigurationDialog(@NotNull Project project, final Collection<String> undefinedMacros) {
     final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
       throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros, ", "));
     }
-    return ShowSettingsUtil.getInstance().editConfigurable(project, new UndefinedMacrosConfigurable(text, undefinedMacros));
+    return ShowSettingsUtil.getInstance().editConfigurable(project, new UndefinedMacrosConfigurable(project, text, undefinedMacros));
   }
 
   public static boolean checkNonIgnoredMacros(final Project project, final Set<String> usedMacros){

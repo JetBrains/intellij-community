@@ -5,7 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
-import com.intellij.find.impl.FindManagerImpl
+import com.intellij.find.impl.FindManagerBase
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -359,7 +359,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         ?.let(::addOccurrence)
 
                     val handler: FindUsagesHandler? =
-                        (FindManager.getInstance(relevantFunction.project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(
+                        (FindManager.getInstance(relevantFunction.project) as FindManagerBase).findUsagesManager.getFindUsagesHandler(
                             target,
                             true
                         )

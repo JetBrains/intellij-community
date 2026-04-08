@@ -200,6 +200,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Disposer.register(disposable, () -> {
       myManualDisposable = null;
       deInitEditor();
+      // This is a part of the manual dispose process, but not the automatic one
+      // (when deInitEditor is called from removeNotify).
+      // This is intentional, as in the automatic mode the component lifecycle is not determined:
+      // it can be disposed and un-disposed ad infinitum.
+      // Moreover, the document can still be modified while it's not showing, and the listeners should continue to work.
+      // With the manual mode, however, it is expected that once the manual disposable is disposed, the whole thing is gone forever.
+      uninstallDocumentListener(true);
     });
     myManualDisposable = disposable;
   }

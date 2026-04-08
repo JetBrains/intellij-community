@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.toIoPath
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
@@ -22,8 +21,8 @@ import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
-import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.getOr
+import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountRoot
@@ -36,12 +35,15 @@ import com.intellij.platform.eel.provider.mountProvider
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.transformPath
+import com.intellij.platform.eel.provider.PrefetchDataElement
+import com.intellij.platform.eel.provider.buildPrefetchContext
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
@@ -201,15 +203,13 @@ private suspend fun toVfs(eelPath: EelPath, eelFileInfo: EelFileInfo, eelFsApi: 
   }
 }
 
-internal fun listWithAttributesUsingEel(
-  dir: VirtualFile,
+@ApiStatus.Internal
+@VisibleForTesting
+fun listWithAttributesUsingEel(
+  nioPath: Path,
   filter: Set<String>?,
 ): Map<String, FileAttributes> {
-  if (!dir.isDirectory()) {
-    return emptyMap()
-  }
   try {
-    val nioPath = Path.of(toIoPath(dir))
     val eelDescriptor = nioPath.getEelDescriptor()
     if (eelDescriptor === LocalEelDescriptor) {
       return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
@@ -230,8 +230,8 @@ internal fun listWithAttributesUsingEel(
 
     visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
       try {
-        //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = toVfs(eelPath, attributes, eelFsApi)
+        val childAttributes = toVfs(file, attributes, eelFsApi)
+        childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
       }
       catch (e: Exception) {
         LOG.debug(e)
@@ -254,6 +254,20 @@ internal fun listWithAttributesUsingEel(
     LOG.warn(e)
   }
   return emptyMap()
+}
+
+internal fun amendAttributes(file: Path, attributes: FileAttributes): FileAttributes {
+  return amendAttributes(attributes) { file }
+}
+
+private inline fun amendAttributes(attributes: FileAttributes, file: () -> Path): FileAttributes {
+  for (provider in LocalFileSystemTimestampEvaluator.EP_NAME.extensionList) {
+    val customTS = provider.getTimestamp(file())
+    if (customTS != null) {
+      return attributes.withLastModified(customTS)
+    }
+  }
+  return attributes
 }
 
 @Throws(IOException::class, SecurityException::class)
@@ -300,4 +314,57 @@ fun EelFileInfo.toVfs(isWritable: Boolean, isSymLink: Boolean): FileAttributes {
   }
 
   return FileAttributes(isDirectory, isSpecial, isSymLink, isHidden, length, lastModified, isWritable, caseSensitivity)
+}
+
+/**
+ * Prefetches remote directory trees for VFS refresh and runs [block] with the
+ * prefetch cache installed in the thread context. The cache propagates automatically
+ * to child threads via [IntelliJContextElement] (through context-propagating executors).
+ *
+ * If no remote roots are found among [roots], [block] is called directly without prefetch.
+ */
+@ApiStatus.Internal
+fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, block: () -> Unit) {
+  if (!Registry.`is`("vfs.eel.scanning.prefetch.enabled", true)) {
+    block()
+    return
+  }
+  val remoteRoots = roots.mapNotNull { root ->
+    try {
+      val nioPath = root.fileSystem.getNioPath(root) ?: return@mapNotNull null
+      val descriptor = nioPath.getEelDescriptor()
+      if (descriptor === LocalEelDescriptor) return@mapNotNull null
+      val eelPath = nioPath.asEelPath(descriptor)
+      // Skip FS root — prefetching entire remote filesystem is wasteful,
+      // VFS refresh from root only checks cached children anyway
+      if (eelPath.parent == null) return@mapNotNull null
+      // Skip paths with direct local mount — they bypass gRPC entirely
+      if (eelPath.descriptor.mountProvider()?.getMountRoot(eelPath) != null) return@mapNotNull null
+      descriptor to eelPath
+    }
+    catch (_: Exception) {
+      null
+    }
+  }
+  if (remoteRoots.isEmpty()) {
+    block()
+    return
+  }
+
+  val element = try {
+    val ctx = fsBlocking { buildPrefetchContext(remoteRoots) }
+    ctx[PrefetchDataElement]
+  }
+  catch (e: Exception) {
+    LOG.warn("Failed to prefetch remote roots for VFS refresh", e)
+    null
+  }
+  if (element != null) {
+    LOG.info("VFS refresh prefetch: ${element.size} directories cached for ${remoteRoots.size} remote roots")
+    val context = com.intellij.concurrency.currentThreadContext() + element
+    com.intellij.concurrency.installThreadContext(context, replace = true, block)
+  }
+  else {
+    block()
+  }
 }

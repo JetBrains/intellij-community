@@ -3,8 +3,10 @@ package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.writeText
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -18,11 +20,17 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @RegistryKey("ide.activity.tracking.enable.debug", "true")
 @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
 class GradleOpenProjectTest : GradleOpenProjectTestCase() {
+
+  private val Project.workspaceModelCache: WorkspaceModelCache
+    get() = requireNotNull(WorkspaceModelCache.getInstance(this)?.takeIf { it.enabled }) {
+      "Workspace model cache MUST be enabled in this test"
+    }
 
   @Test
   fun `test project open`(): Unit = runBlocking {
@@ -64,6 +72,25 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     openProject("project", numProjectSyncs = 0)
       .useProjectAsync {
         assertProjectState(it, projectInfo, linkedProjectInfo)
+      }
+  }
+
+  @Test
+  fun `test project re-open with invalidated workspace model cache`(): Unit = runBlocking {
+    val projectInfo = getComplexProjectInfo("project")
+    initProject(projectInfo)
+
+    WorkspaceModelCacheImpl.forceEnableCaching(asDisposable())
+    openProject("project")
+      .useProjectAsync(save = true) {
+        assertProjectState(it, projectInfo)
+        it.workspaceModelCache.invalidateCaches()
+      }
+
+    // WSM cache was invalidated -> fix must trigger 1 re-sync on re-open
+    openProject("project", numProjectSyncs = 1)
+      .useProjectAsync {
+        assertProjectState(it, projectInfo)
       }
   }
 
@@ -140,9 +167,9 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
         attachMavenProject(it, "linked_project")
         val existingModuleNames = it.modules.map { it.name }
-        Assertions.assertTrue(existingModuleNames.contains("maven_project"), "Maven linked project not found")
+        assertTrue(existingModuleNames.contains("maven_project"), "Maven linked project not found")
         val linkedProjects = existingModuleNames.filter { it.contains("linked_project") }
-        Assertions.assertTrue(linkedProjects.isEmpty(), "Unexpected Gradle linked projects found: $linkedProjects")
+        assertTrue(linkedProjects.isEmpty(), "Unexpected Gradle linked projects found: $linkedProjects")
 
         attachProject(it, "linked_project")
         assertProjectState(it, projectInfo, linkedProjectInfo)

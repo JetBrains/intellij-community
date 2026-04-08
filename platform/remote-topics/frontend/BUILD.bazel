@@ -22,6 +22,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/project/shared:project",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/project/shared:project_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.rpc.topics.frontend` end

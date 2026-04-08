@@ -39,6 +39,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/util",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/fe10/project-structure",
   ]
@@ -63,6 +64,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl_test_lib",
     "//platform/util:util_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/plugin/k1",

@@ -9,6 +9,7 @@ import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.findAndKillProcesses
 import com.intellij.ide.starter.process.getProcessesIdByProcessName
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
+import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.XmlBuilder
 import com.intellij.openapi.diagnostic.LogLevel
@@ -81,7 +82,7 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
   }
 
   private val localGradleRepoPath: Path
-    get() = testContext.paths.tempDir.resolve(".gradle")
+    get() = testContext.resolvedProjectHome.parent.resolve("localGradleRepoPath").resolve(".gradle")
 
   private val gradleXmlPath: Path
     get() = testContext.resolvedProjectHome.resolve(".idea").resolve("gradle.xml")
@@ -107,8 +108,11 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
   }
 
   fun useNewGradleLocalCache(): GradleBuildTool {
+    localGradleRepoPath.deleteRecursivelyQuietly()
     localGradleRepoPath.createDirectories()
-    testContext.applyVMOptionsPatch { addSystemProperty("gradle.user.home", localGradleRepoPath.toString()) }
+    testContext.applyVMOptionsPatch {
+      withEnv("GRADLE_USER_HOME", localGradleRepoPath.toString(), wslenvParameters = "/p")
+    }
     return this
   }
 

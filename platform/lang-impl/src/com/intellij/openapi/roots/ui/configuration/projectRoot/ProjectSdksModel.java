@@ -158,10 +158,7 @@ public class ProjectSdksModel implements SdkModel {
 
   public void reset(@Nullable Project project) {
     EelMachine eelMachine;
-    if (!Registry.is("java.home.finder.use.eel")) {
-      eelMachine = null;
-    }
-    else if (project != null && !project.isDefault()) {
+    if (project != null && !project.isDefault()) {
       eelMachine = EelProviderUtil.getEelMachine(project);
     }
     else {
@@ -173,7 +170,7 @@ public class ProjectSdksModel implements SdkModel {
     jdkTable.preconfigure();
     final Sdk[] projectSdks = jdkTable.getAllJdks();
     for (Sdk sdk : projectSdks) {
-      if (eelMachine != null && !sdkMatchesEel(eelMachine, sdk)) continue;
+      if (!sdkMatchesEel(eelMachine, sdk)) continue;
 
       try {
         Sdk editable = sdk.clone();

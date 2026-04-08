@@ -44,7 +44,7 @@ public abstract class GridTextCellEditorBase extends GridCellEditor.Adapter impl
     var settings = GridUtil.getSettings(myGrid);
     boolean autoPopup = settings == null || settings.isEnableImmediateCompletionInGridCells();
 
-    myTextField = new MyGridCellEditorTextField(initiator, provider, row, column, valueFormatter, autoPopup);
+    myTextField = new MyGridCellEditorTextField(initiator, provider, row, column, value, valueFormatter, autoPopup);
     Disposer.register(this, myTextField);
   }
 
@@ -72,9 +72,10 @@ public abstract class GridTextCellEditorBase extends GridCellEditor.Adapter impl
                               @Nullable TextCompletionProvider provider,
                               @NotNull ModelIndex<GridRow> row,
                               @NotNull ModelIndex<GridColumn> column,
+                              @Nullable Object value,
                               @NotNull GridCellEditorFactory.ValueFormatter valueFormatter,
                               boolean autoPopup) {
-      super(myGrid.getProject(), myGrid, row, column, true, initiator, provider, autoPopup, valueFormatter);
+      super(myGrid.getProject(), myGrid, row, column, value, true, initiator, provider, autoPopup, valueFormatter);
       getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(@NotNull DocumentEvent e) {

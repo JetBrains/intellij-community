@@ -47,7 +47,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
 
-    myServerCombo = new RemoteServerComboWithAutoDetect<>(type);
+    myServerCombo = new RemoteServerComboWithAutoDetect<>(type, project);
     Disposer.register(this, myServerCombo);
     myServerCombo.addChangeListener(e -> updateDeploymentSettingsEditor());
 

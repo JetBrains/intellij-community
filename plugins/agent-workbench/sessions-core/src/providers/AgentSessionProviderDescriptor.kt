@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.providers
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -12,6 +12,11 @@ import javax.swing.JComponent
 enum class AgentInitialMessageStartupPolicy {
   TRY_STARTUP_COMMAND,
   POST_START_ONLY,
+}
+
+enum class AgentInitialMessageMode {
+  STANDARD,
+  PLAN,
 }
 
 enum class AgentInitialMessageTimeoutPolicy {
@@ -24,8 +29,26 @@ enum class AgentInitialMessageDispatchCompletionPolicy {
   RETRY_ON_CODEX_PLAN_BUSY,
 }
 
+enum class AgentThreadRenameContext {
+  TREE_POPUP,
+  EDITOR_TAB,
+}
+
+sealed interface AgentThreadRenameHandler {
+  val supportedContexts: Set<AgentThreadRenameContext>
+
+  interface Backend : AgentThreadRenameHandler {
+    suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean
+  }
+
+  interface ChatDispatch : AgentThreadRenameHandler {
+    fun buildDispatchPlan(normalizedName: String): AgentInitialMessageDispatchPlan?
+  }
+}
+
 data class AgentInitialMessagePlan(
   @JvmField val message: String?,
+  @JvmField val mode: AgentInitialMessageMode = AgentInitialMessageMode.STANDARD,
   @JvmField val startupPolicy: AgentInitialMessageStartupPolicy = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
   @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
 ) {
@@ -116,8 +139,8 @@ interface AgentSessionProviderDescriptor {
   val supportsArchiveThread: Boolean
     get() = false
 
-  val supportsPlanMode: Boolean
-    get() = false
+  val threadRenameHandler: AgentThreadRenameHandler?
+    get() = null
 
   val supportsUnarchiveThread: Boolean
     get() = false
@@ -128,14 +151,30 @@ interface AgentSessionProviderDescriptor {
 
   fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
-  fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec
-
-  fun buildLaunchSpecWithInitialPrompt(
+  fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
-    prompt: String,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec? = null
 
-  suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
+  fun buildPostStartDispatchSteps(initialMessagePlan: AgentInitialMessagePlan): List<AgentInitialMessageDispatchStep> {
+    val message = initialMessagePlan.message ?: return emptyList()
+    if (initialMessagePlan.mode != AgentInitialMessageMode.PLAN) {
+      return listOf(
+        AgentInitialMessageDispatchStep(
+          text = message,
+          timeoutPolicy = initialMessagePlan.timeoutPolicy,
+        )
+      )
+    }
+
+    val planCommand = if (message.isEmpty()) AGENT_PROMPT_PLAN_MODE_COMMAND else "$AGENT_PROMPT_PLAN_MODE_COMMAND $message"
+    return listOf(
+      AgentInitialMessageDispatchStep(
+        text = planCommand,
+        timeoutPolicy = initialMessagePlan.timeoutPolicy,
+      )
+    )
+  }
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
 
@@ -159,9 +198,4 @@ interface AgentSessionProviderDescriptor {
 data class AgentSessionTerminalLaunchSpec(
   @JvmField val command: List<String>,
   @JvmField val envVariables: Map<String, String> = emptyMap(),
-)
-
-data class AgentSessionLaunchSpec(
-  @JvmField val sessionId: String?,
-  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
 )

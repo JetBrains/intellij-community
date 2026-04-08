@@ -5,6 +5,7 @@ import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.suggestSdkImpl
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -13,10 +14,9 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
 import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
 
@@ -105,26 +105,32 @@ private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo
  * Returns the configured SDK, or `null` if no SDK could be configured.
  */
 @ApiStatus.Internal
-suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = pythonSdkConfigurationMutex.withLock {
-  val moduleInfo = getModuleInfo() ?: return@withLock null
+suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? {
+  val module = this@autoConfigureSdkIfNeeded
 
-  when (moduleInfo) {
+  return when (val moduleInfo = module.getModuleInfo()) {
     is ModuleCreateInfo.CreateSdkInfoWrapper -> {
       when (moduleInfo.createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv -> {
-          moduleInfo.createSdkInfo.getSdkCreator(this).createSdk().onSuccess {sdk ->
-            pythonSdk = sdk
-            sdk.setAssociationToModule(this)
+        is CreateSdkInfo.ExistingEnv -> configureSdkIfNotPresent {
+          moduleInfo.createSdkInfo.getSdkCreator(module).createSdk().onSuccess { sdk ->
+            module.pythonSdk = sdk
+            sdk.setAssociationToModule(module)
+            PyProjectTomlCollector.sdkCreatedAutomatically(moduleInfo.toolId)
           }
         }
         is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
       }
     }
-    is ModuleCreateInfo.SameAs -> {
+    is ModuleCreateInfo.SameAs -> configureSdkIfNotPresent {
       moduleInfo.parentModule.findPythonSdk()?.let { parentSdk ->
-        pythonSdk = parentSdk
+        module.pythonSdk = parentSdk
         PyResult.success(parentSdk)
       }
     }
+    null -> null
   }
+}
+
+private suspend fun <T> Module.configureSdkIfNotPresent(action: suspend () -> T): T? = withSdkConfigurationLock(project) {
+  if (findPythonSdk() == null) action() else null
 }

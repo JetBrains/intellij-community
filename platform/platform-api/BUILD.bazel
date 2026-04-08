@@ -62,14 +62,7 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
-  exports = [
-    "//platform/util",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/util:util-ui",
-    "//platform/ide-core",
-    "//platform/welcome-screen",
-    "//platform/progress/shared:ide-progress",
-  ]
+  exports = ["//platform/util"]
 )
 
 jvm_library(
@@ -81,16 +74,6 @@ jvm_library(
   exports = [
     "//platform/util",
     "//platform/util:util_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
-    "//platform/ide-core",
-    "//platform/ide-core:ide-core_test_lib",
-    "//platform/welcome-screen",
-    "//platform/welcome-screen:welcome-screen_test_lib",
-    "//platform/progress/shared:ide-progress",
-    "//platform/progress/shared:ide-progress_test_lib",
   ],
   runtime_deps = [
     ":ide",

@@ -20,7 +20,7 @@ class CompilationCacheTest {
     @JvmStatic
     fun flushTracer() {
       runBlocking {
-        TraceManager.shutdown()
+        TraceManager.flush()
       }
     }
   }

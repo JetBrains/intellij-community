@@ -32,7 +32,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
+    <metaLanguageProvider implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage$Provider"/>
     <html.compatibleLanguage language="HTML"/>
 
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>

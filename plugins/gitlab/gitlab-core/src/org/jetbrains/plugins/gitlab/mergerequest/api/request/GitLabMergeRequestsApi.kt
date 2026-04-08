@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
+import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
@@ -197,6 +199,21 @@ suspend fun GitLabApi.Rest.mergeRequestRebase(
   val request = request(uri).PUT(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_REBASE_MERGE_REQUEST) {
     loadJsonValue<GitLabMergeRequestRebaseDTO>(request)
+  }
+}
+
+@SinceGitLab("14.0", note = "No exact version, but definitely exists in minimal")
+fun GitLabApi.Rest.getMergeRequestParticipantsUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("participants")
+
+@SinceGitLab("14.0", note = "No exact version, but definitely exists in minimal")
+suspend fun GitLabApi.Rest.getMergeRequestParticipants(uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
+  val request = request(uri).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_PARTICIPANTS) {
+    loadJsonList(request)
   }
 }
 

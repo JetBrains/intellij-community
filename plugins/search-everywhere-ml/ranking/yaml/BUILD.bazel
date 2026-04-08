@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/statistics",
     "//plugins/search-everywhere-ml/ranking/core",
   ]
 )
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
     "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
   ]
 )

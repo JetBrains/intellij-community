@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider
 import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.HelpID
@@ -23,10 +24,10 @@ abstract class AbstractKotlinInlinePropertyDialog(property: KtProperty,
         if (simpleLocal) {
             @Suppress("RemoveRedundantQualifierName")
             setDoNotAskOption(object : com.intellij.openapi.ui.DoNotAskOption {
-                override fun isToBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
+                override fun isToBeShown() = EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog
 
                 override fun setToBeShown(value: Boolean, exitCode: Int) {
-                    EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog = value
+                    EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog = value
                 }
 
                 override fun canBeHidden() = true

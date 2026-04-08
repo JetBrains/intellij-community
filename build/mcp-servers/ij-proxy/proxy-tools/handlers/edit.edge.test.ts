@@ -135,7 +135,8 @@ describe('edit handler (edge cases)', () => {
     }, projectPath, callUpstreamTool)
 
     strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
-    strictEqual(calls[1].args.text, `const marker = '${TRUNCATION_MARKER}'\nbeta\n`)
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, `const marker = '${TRUNCATION_MARKER}'\nbeta\n`)
   })
 
   it('property: replace_all=false updates exactly one occurrence', async () => {
@@ -162,7 +163,8 @@ describe('edit handler (edge cases)', () => {
         new_string: newToken
       }, projectPath, callUpstreamTool)
 
-      const updated = calls[1].args.text
+      const writeCall = calls.find((call) => call.name === 'create_new_file')
+      const updated = writeCall.args.text
       strictEqual(countOccurrences(updated, oldToken), 0)
       strictEqual(countOccurrences(updated, newToken), 1)
     }

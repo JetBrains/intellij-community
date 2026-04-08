@@ -2,7 +2,7 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.PerformanceWatcherImpl.MySamplingTask
+import com.intellij.diagnostic.PerformanceWatcherImpl.PerformanceWatcherSamplingTask
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.DebugAttachDetector
@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.UList
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.sanitizeFileName
@@ -438,7 +439,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       }
     }
 
-    private fun startFreezeReporting(): MySamplingTask {
+    private fun startFreezeReporting(): PerformanceWatcherSamplingTask {
       val freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
 
       val reportDir = logDir.resolve(freezeFolder)
@@ -447,13 +448,13 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       for (listener in EP_NAME.extensionList) {
         listener.uiFreezeStarted(reportDir, coroutineScope)
       }
-      val dumpTask = MySamplingTask(freezeFolder = freezeFolder, taskStart = taskStart)
+      val dumpTask = PerformanceWatcherSamplingTask(freezeFolder = freezeFolder, taskStart = taskStart)
       publisher?.uiFreezeStarted(reportDir)
 
       return dumpTask
     }
 
-    private fun stopFreezeReporting(task: MySamplingTask) {
+    private fun stopFreezeReporting(task: PerformanceWatcherSamplingTask) {
       val taskStop = System.nanoTime()
       coroutineScope.launch {
         task.stop()
@@ -477,10 +478,16 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  inner class MySamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long) :
+  inner class PerformanceWatcherSamplingTask(@JvmField val freezeFolder: String, private val taskStart: Long) :
     SamplingTask(dumpInterval = dumpInterval, maxDurationMs = maxDumpDuration, coroutineScope = coroutineScope) {
 
     private val dumpTasks: MutableList<Job> = ContainerUtil.createConcurrentList()
+    var threadInfos: UList<Array<ThreadInfo>> = UList()
+      private set
+
+    init {
+      job.start()
+    }
 
     override suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {
       // finish processing even after the freeze end
@@ -495,6 +502,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
 
     private suspend fun dumpedThreads(threadDump: ThreadDump) {
+      threadInfos = threadInfos.add(threadDump.threadInfos)
+
       val file = dumpThreads(pathPrefix = "$freezeFolder/", appendMillisecondsToFileName = false, rawDump = threadDump.rawDump) ?: return
       try {
         val durationInSeconds = TimeUnit.SECONDS.convert(System.nanoTime() - taskStart, TimeUnit.NANOSECONDS)
@@ -610,7 +619,7 @@ private class CoroutineDispatcherWatcher(
   }
 }
 
-private suspend fun postProcessReportFolder(durationMs: Long, task: MySamplingTask, dir: Path, logDir: Path): Path? {
+private suspend fun postProcessReportFolder(durationMs: Long, task: PerformanceWatcherSamplingTask, dir: Path, logDir: Path): Path? {
   if (Files.notExists(dir)) {
     return null
   }
@@ -644,7 +653,7 @@ private suspend fun postProcessReportFolder(durationMs: Long, task: MySamplingTa
   return reportDir
 }
 
-private fun getFreezePlaceSuffix(task: SamplingTask): String {
+private fun getFreezePlaceSuffix(task: PerformanceWatcherSamplingTask): String {
   var stacktraceCommonPart: List<StackTraceElement>? = null
   for (info in task.threadInfos.asIterable()) {
     val edt = info.firstOrNull(ThreadDumper::isEDT) ?: continue
@@ -878,6 +887,6 @@ internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceEl
 private sealed interface CheckerState {
   object CHECKING : CheckerState
   object FREEZE_DETECTED : CheckerState
-  class FREEZE_LOGGING(val dumpDask: PerformanceWatcherImpl.MySamplingTask) : CheckerState
+  class FREEZE_LOGGING(val dumpDask: PerformanceWatcherSamplingTask) : CheckerState
   object FINISHED : CheckerState
 }

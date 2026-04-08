@@ -57,7 +57,9 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   public static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = new Topic<>("severities changed", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   private final @NotNull MessageBus myMessageBus;
 
+  private final Object orderMapLock = new Object();
   private final AtomicReference<Object2IntMap<HighlightSeverity>> orderMap = new AtomicReference<>();
+  private volatile @NotNull StandardSeveritiesState myOrderMapStandardState = getStandardSeveritiesState();
   private JDOMExternalizableStringList myReadOrder;
 
   private static final Map<String, HighlightInfoType> CORE_STANDARD_SEVERITIES;
@@ -159,7 +161,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     if (renderColor != null) {
       myRendererColors.put(severity.getName(), renderColor);
     }
-    orderMap.set(null);
+    setOrderMap(null, getStandardSeveritiesState());
     HighlightDisplayLevel.registerSeverity(severity, getHighlightInfoTypeBySeverity(severity).getAttributesKey(), null);
     severitiesChanged();
   }
@@ -170,12 +172,13 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   private void standardSeveritiesChanged() {
-    List<String> orderNames = getOrderNames();
+    StandardSeveritiesState standardState = getStandardSeveritiesState();
+    List<String> orderNames = getOrderNames(orderMap.get());
     if (orderNames == null) {
-      orderMap.set(null);
+      setOrderMap(null, standardState);
     }
     else {
-      orderMap.set(fromList(mergeOrderWithDefault(orderNames, getDefaultOrder())));
+      setOrderMap(buildOrderMap(orderNames, standardState), standardState);
     }
     myReadOrder = null;
     severitiesChanged();
@@ -231,14 +234,15 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     myReadOrder = new JDOMExternalizableStringList();
     myReadOrder.readExternal(element);
     List<HighlightSeverity> read = new ArrayList<>(myReadOrder.size());
-    List<HighlightSeverity> knownSeverities = getDefaultOrder();
+    StandardSeveritiesState standardState = getStandardSeveritiesState();
+    List<HighlightSeverity> knownSeverities = getDefaultOrder(standardState);
     for (String name : myReadOrder) {
       HighlightSeverity severity = getSeverity(name);
       if (severity != null && knownSeverities.contains(severity)) {
         read.add(severity);
       }
     }
-    orderMap.set(ensureAllStandardIncluded(read, knownSeverities));
+    setOrderMap(ensureAllStandardIncluded(read, knownSeverities), standardState);
     severitiesChanged();
   }
 
@@ -351,9 +355,37 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   private @NotNull Object2IntMap<HighlightSeverity> getOrderMap() {
+    StandardSeveritiesState standardState = getStandardSeveritiesState();
     Object2IntMap<HighlightSeverity> map = orderMap.get();
-    if (map != null) return map;
-    return orderMap.updateAndGet(oldMap -> oldMap == null ? fromList(getDefaultOrder()) : oldMap);
+    if (map != null && myOrderMapStandardState == standardState) {
+      return map;
+    }
+
+    synchronized (orderMapLock) {
+      map = orderMap.get();
+      standardState = getStandardSeveritiesState();
+      if (map != null && myOrderMapStandardState == standardState) {
+        return map;
+      }
+
+      Object2IntMap<HighlightSeverity> updatedMap = buildOrderMap(getOrderNames(map), standardState);
+      orderMap.set(updatedMap);
+      myOrderMapStandardState = standardState;
+      return updatedMap;
+    }
+  }
+
+  private void setOrderMap(@Nullable Object2IntMap<HighlightSeverity> newOrderMap, @NotNull StandardSeveritiesState standardState) {
+    synchronized (orderMapLock) {
+      orderMap.set(newOrderMap);
+      myOrderMapStandardState = standardState;
+    }
+  }
+
+  private @NotNull Object2IntMap<HighlightSeverity> buildOrderMap(@Nullable List<String> orderNames,
+                                                                  @NotNull StandardSeveritiesState standardState) {
+    List<HighlightSeverity> defaultOrder = getDefaultOrder(standardState);
+    return fromList(orderNames == null ? defaultOrder : mergeOrderWithDefault(orderNames, defaultOrder));
   }
 
   private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<HighlightSeverity> orderList) {
@@ -374,8 +406,12 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   private @NotNull List<HighlightSeverity> getDefaultOrder() {
-    List<HighlightSeverity> order = new ArrayList<>(getStandardSeveritiesState().defaultOrder.size() + myMap.size());
-    order.addAll(getStandardSeveritiesState().defaultOrder);
+    return getDefaultOrder(getStandardSeveritiesState());
+  }
+
+  private @NotNull List<HighlightSeverity> getDefaultOrder(@NotNull StandardSeveritiesState standardState) {
+    List<HighlightSeverity> order = new ArrayList<>(standardState.defaultOrder.size() + myMap.size());
+    order.addAll(standardState.defaultOrder);
     List<HighlightSeverity> customOrder = new ArrayList<>(myMap.size());
     for (SeverityBasedTextAttributes attributes : myMap.values()) {
       customOrder.add(attributes.getSeverity());
@@ -387,7 +423,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   public void setOrder(@NotNull List<HighlightSeverity> orderList) {
-    orderMap.set(ensureAllStandardIncluded(orderList, getDefaultOrder()));
+    setOrderMap(ensureAllStandardIncluded(orderList, getDefaultOrder()), getStandardSeveritiesState());
     myReadOrder = null;
     severitiesChanged();
   }
@@ -467,8 +503,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return getStandardSeveritiesState().orderedTypes;
   }
 
-  private @Nullable List<String> getOrderNames() {
-    Object2IntMap<HighlightSeverity> currentOrder = orderMap.get();
+  private @Nullable List<String> getOrderNames(@Nullable Object2IntMap<HighlightSeverity> currentOrder) {
     if (currentOrder != null) {
       List<HighlightSeverity> severities = getSortedSeverities(currentOrder);
       List<String> names = new ArrayList<>(severities.size());

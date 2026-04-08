@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation
 
 import com.intellij.ide.DataManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface NavigationService {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(project: Project): NavigationService {
       return project.service<NavigationService>()
     }

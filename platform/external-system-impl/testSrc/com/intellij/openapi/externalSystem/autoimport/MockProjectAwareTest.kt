@@ -9,8 +9,6 @@ class MockProjectAwareTest : AutoReloadParallelTestCase() {
 
   fun `test wait for single mock reload function (parallel)`() {
     test {
-      enableAsyncExecution()
-
       waitForAllProjectActivities {
         forceReloadProject()
       }
@@ -20,8 +18,6 @@ class MockProjectAwareTest : AutoReloadParallelTestCase() {
 
   fun `test wait for mock reload function (parallel)`() {
     test {
-      enableAsyncExecution()
-
       val threadNum = maxOf(Runtime.getRuntime().availableProcessors(), 10)
       parallel {
         repeat(threadNum) {
@@ -38,8 +34,6 @@ class MockProjectAwareTest : AutoReloadParallelTestCase() {
 
   fun `test wait for indirect mock reload function (parallel)`() {
     test { settingsFile ->
-      enableAsyncExecution()
-
       waitForAllProjectActivities {
         settingsFile.modify(EXTERNAL)
       }

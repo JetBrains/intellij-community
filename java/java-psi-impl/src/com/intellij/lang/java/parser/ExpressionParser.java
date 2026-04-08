@@ -5,6 +5,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -16,6 +17,7 @@ import java.util.function.Function;
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class ExpressionParser {
   static final int FORBID_LAMBDA_MASK = 0x1;
   private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", true);

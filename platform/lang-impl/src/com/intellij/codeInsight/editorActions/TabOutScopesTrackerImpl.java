@@ -108,7 +108,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     private Tracker(@NotNull EditorImpl editor) {
       myEditor = editor;
       Disposable editorDisposable = editor.getDisposable();
-      myEditor.getUiDocument().addDocumentListener(this, editorDisposable);
+      myEditor.getElfDocument().addDocumentListener(this, editorDisposable);
     }
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
@@ -119,7 +119,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {
-      RangeMarker marker = myEditor.getUiDocument().createRangeMarker(offsetStart, offsetEnd);
+      RangeMarker marker = myEditor.getElfDocument().createRangeMarker(offsetStart, offsetEnd);
       marker.setGreedyToLeft(true);
       marker.setGreedyToRight(true);
       if (caretShift > 1) marker.putUserData(CARET_SHIFT, caretShift);

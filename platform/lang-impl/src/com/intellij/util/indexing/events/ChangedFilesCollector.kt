@@ -311,7 +311,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
     val deadline = System.nanoTime() + unit.toNanos(timeout)
     while (System.nanoTime() < deadline) {
       try {
-        vfsEventsExecutor.waitAllTasksExecuted(100, TimeUnit.MILLISECONDS)
+        vfsEventsExecutor.waitAllTasksExecuted(100, MILLISECONDS)
         return
       }
       catch (_: TimeoutCancellationException) {

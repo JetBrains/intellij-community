@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.statistics
 
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FilenameIndex
@@ -27,11 +24,7 @@ import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 internal val PYTHON_TOOL_MARKERS: Map<String, Set<String>> = mapOf(
   "bandit" to setOf(".bandit"),
@@ -68,7 +61,7 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 6)
+private val GROUP = EventLogGroup("python.toml.stats", 7)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
 private val CHECKBOX_VALUE = EventFields.Boolean("checked")
@@ -94,6 +87,8 @@ internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED =
   GROUP.registerVarargEvent("python.workspace.setup.notification.dismiss.clicked")
 internal val PYTHON_PYPROJECT_BASED_MODEL_CHANGED: VarargEventId =
   GROUP.registerVarargEvent("python.pyproject.based.model.changed", CHECKBOX_VALUE)
+internal val PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.preview.enable.clicked")
 
 internal val PYTHON_SDK_SETUP_AUTOMATICALLY: VarargEventId =
   GROUP.registerVarargEvent("python.sdk.setup.automatically", TOOL_ID_FIELD)
@@ -205,39 +200,25 @@ object PyProjectTomlCollector {
     PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED.log()
   }
 
+  fun previewEnableClicked() {
+    PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED.log()
+  }
+
   fun pyProjectBasedModelModeChanged(value: Boolean) {
     PYTHON_PYPROJECT_BASED_MODEL_CHANGED.log(
       CHECKBOX_VALUE.with(value)
     )
   }
 
-  // Workaround for PY-88025, the caching should be removed once the race condition has been fixed. This cache is necessary so that the
-  // racing coroutines that are trying to create SDKs for the same root don't trigger multiple FUS events.
-  private val cache: Cache<String, Unit> =
-    Caffeine.newBuilder()
-      .expireAfterWrite(10.seconds.toJavaDuration())
-      .build()
-
-
-  fun sdkCreatedAutomatically(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
+  fun sdkCreatedAutomatically(toolId: ToolId) {
     PYTHON_SDK_SETUP_AUTOMATICALLY.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
   }
 
-  fun sdkCreatedFromNotification(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
+  fun sdkCreatedFromNotification(toolId: ToolId) {
     PYTHON_SDK_SETUP_FROM_NOTIFICATION.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
-  }
-
-  private fun whenNotCached(sdkDir: Path?, callback: () -> Unit) {
-    if (sdkDir == null || cache.getIfPresent(sdkDir.pathString) != null) {
-      return
-    }
-
-    cache.put(sdkDir.pathString, Unit)
-
-    callback()
   }
 }

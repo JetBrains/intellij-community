@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -547,11 +548,24 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     reference.bindToElement(targetClass);
   }
 
+  /**
+   * @return ImportOptimizer that is ModCommand friendly (can be run from ModCommandAction) if available or null otherwise.
+   */
+  protected @Nullable ImportOptimizer getModCommandFriendlyImportOptimizer() {
+    return null;
+  }
+
   protected @NotNull AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
     return new AddImportAction(project, myReference, editor, classes) {
       @Override
       protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
         ImportClassFixBase.this.bindReference(ref, targetClass);
+      }
+
+      @Override
+      protected @Nullable ImportOptimizer getModCommandFriendlyImportOptimizer() {
+        ImportOptimizer importOptimizer = super.getModCommandFriendlyImportOptimizer();
+        return importOptimizer != null ? importOptimizer : ImportClassFixBase.this.getModCommandFriendlyImportOptimizer();
       }
     };
   }

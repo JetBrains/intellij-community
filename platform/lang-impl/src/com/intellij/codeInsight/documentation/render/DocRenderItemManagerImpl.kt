@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.messages.Topic
@@ -109,16 +110,18 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       items.addAll(newRenderItems)
       updated
     }
-    setupListeners(editor, items.isEmpty())
+    updateListeners(editor, items.isEmpty())
   }
 
-  override fun setupListeners(editor: Editor, disable: Boolean) {
+  private fun updateListeners(editor: Editor, disable: Boolean) {
     if (disable) {
-      editor.caretModel.removeCaretListener(MyCaretListener)
-    } else if (!areListenersAttached(editor)) {
-      editor.caretModel.addCaretListener(MyCaretListener)
+      DocRenderItemUpdaterListeners.disposeListeners(editor)
     }
-    super.setupListeners(editor, disable)
+    else {
+      val disposable = DocRenderItemUpdaterListeners.setupListeners(editor) ?: return
+      editor.caretModel.addCaretListener(MyCaretListener, disposable)
+      Disposer.register(disposable) { removeAllItems(editor) }
+    }
   }
 
   override fun resetToDefaultState(editor: Editor) {
@@ -178,6 +181,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
     val TOPIC: Topic<Listener> = Topic(
       Listener::class.java, Topic.BroadcastDirection.NONE, true)
     private val OWN_ITEMS = Key.create<MutableList<DocRenderItemImpl>>("doc.render.items")
+
     @JvmField
     val OWNS_HIGHLIGHTER: Key<Boolean> = Key.create("doc.render.highlighter")
     private fun keepScrollingPositionWhile(editor: Editor, task: BooleanSupplier) {
@@ -185,5 +189,11 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       keeper.savePosition()
       if (task.asBoolean) keeper.restorePosition(false)
     }
+  }
+}
+
+internal class DefaultDocRenderItemUpdateProvider : DocRenderItemUpdateProvider {
+  override fun getItems(editor: Editor): Collection<DocRenderItem> {
+    return DocRenderItemManager.getInstance().getItems(editor) ?: emptyList()
   }
 }

@@ -198,7 +198,7 @@ open class ProjectLibraryTableBridgeImpl(
     if (name == null) error("Creating unnamed project libraries is unsupported")
 
     if (getLibraryByName(name) != null) {
-      error("Project library named $name already exists")
+      error("Project library named `$name` already exists")
     }
 
     val modifiableModel = modifiableModel
@@ -207,7 +207,7 @@ open class ProjectLibraryTableBridgeImpl(
 
     val newLibrary = getLibraryByName(name)
     if (newLibrary == null) {
-      error("Library $name was not created")
+      error("Library `$name` was not created")
     }
 
     return newLibrary

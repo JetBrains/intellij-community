@@ -16,12 +16,9 @@ import junit.framework.TestSuite;
 import org.junit.platform.commons.logging.LogRecordListener;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.EngineDiscoveryRequest;
-import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
@@ -39,7 +36,6 @@ import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.runner.Description;
@@ -75,14 +71,14 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
- * Runs JUnit 3/4 tests using {@linkplain VintageTestEngine}/{@linkplain OrderedVintageTestEngine}, or JUnit 5 tests using {@linkplain JupiterTestEngine}.
+ * Runs JUnit 3/4 tests using {@linkplain VintageTestEngine}, or JUnit 5 tests using {@linkplain JupiterTestEngine}.
  *
  * Supported options:
  * - __class__ className[;...]
  * - __package__ packageName
  * - __classpathroot__
- *   if {@systemProperty intellij.build.test.engine.vintage} is set, {@code only} runs only JUnit 3/4 tests using {@linkplain OrderedVintageTestEngine}, {@code false} runs only JUnit 5 tests; otherwise, both are run
- *   if {@systemProperty intellij.build.test.reverse.order} is set, JUnit 3/4 tests are run in reverse order
+ *   if {@systemProperty intellij.build.test.engine.vintage} is set, {@code only} runs only JUnit 3/4 tests using {@linkplain VintageTestEngine}, {@code false} runs only JUnit 5 tests; otherwise, both are run
+ *   if {@systemProperty intellij.build.test.reverse.order} is set, tests are run in reverse order
  * - className
  * - className methodName
  * if {@systemProperty intellij.build.test.list.classes} is set, only test discovery is performed and the resulting list of test classes is saved to the file specified by this property
@@ -108,7 +104,6 @@ public final class JUnit5TeamCityRunner {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       List<? extends DiscoverySelector> selectors;
       List<Filter<?>> filters = new ArrayList<>(0);
-      Optional<OrderedVintageTestEngine> optionalOrderedVintageEngine = Optional.empty();
 
       if (args[0].equals("__class__")) {
         String[] classNames = args[1].split(";");
@@ -129,28 +124,17 @@ public final class JUnit5TeamCityRunner {
         if (classpathRoots == null) throw new RuntimeException("Failed to get classpath roots");
         selectors = DiscoverySelectors.selectClasspathRoots(classpathRoots);
         filters.add(new CommonTestClassesFilter());                                           // name check
-        filters.add(new BucketingPostDiscoveryFilter());                                      // bucketing
+        filters.add(new BucketingClassNameFilter());                                          // bucketing
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());    // IJIgnore and Ignore support in JUnit 3/4
         filters.add(new PerformancePostDiscoveryFilter());                                    // PerformanceUnitTest support
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());  // SkipInHeadlessEnvironment support in JUnit 3/4
         if (INCLUDE_TAGS != null) filters.add(TagFilter.includeTags(INCLUDE_TAGS.split(";")));        // JUnit 5 tag filter
 
         // filter engines
-        if ("false".equals(ENGINE_VINTAGE)) {  // JUnit 5 tests only
-          filters.add(EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID));
-        }
-        else {
-          // TODO: use vintage by default
-          optionalOrderedVintageEngine = Optional.of(new OrderedVintageTestEngine());
-          filters.add(EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID));  // mask VintageTestEngine to avoid running JUnit 3/4 tests twice
-
-          if ("only".equals(ENGINE_VINTAGE)) {  // JUnit 3/4 tests only
-            filters.add(EngineFilter.includeEngines(OrderedVintageTestEngine.ENGINE_ID));
-          }
-          else if (ENGINE_VINTAGE == null) {  // all tests
-          }
-          else throw new RuntimeException("Unsupported 'intellij.build.test.engine.vintage' value: " + ENGINE_VINTAGE);
-        }
+        if ("false".equals(ENGINE_VINTAGE)) filters.add(EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID));      // JUnit 5 tests only
+        else if ("only".equals(ENGINE_VINTAGE)) filters.add(EngineFilter.includeEngines(VintageTestDescriptor.ENGINE_ID));  // JUnit 3/4 tests only
+        else if (ENGINE_VINTAGE != null) throw new RuntimeException("Unsupported 'intellij.build.test.engine.vintage' value: " + ENGINE_VINTAGE);
+        // else all tests
       }
       else if (args.length == 1) {
         String className = args[0];
@@ -166,18 +150,21 @@ public final class JUnit5TeamCityRunner {
 
       LoggerFactory.addListener(new TCLogRecordListener());  // report warnings/errors as build problems on TeamCity, incl. test discovery
 
-      Launcher launcher = LauncherFactory.create(LauncherConfig.builder().addTestEngines(optionalOrderedVintageEngine.stream().toArray(TestEngine[]::new)).build());
+      Launcher launcher = LauncherFactory.create();
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .selectors(selectors)
         .filters(filters.toArray(Filter[]::new))
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      boolean reportAsBootstrapTestsSuite = "only".equals(ENGINE_VINTAGE);  // mask suite names to preserve test identity on TeamCity
+      boolean reportAsBootstrapTestsSuite = !"false".equals(ENGINE_VINTAGE) && args[0].equals("__classpathroot__");  // mask JUnit 3/4 suite names to preserve test identity on TeamCity
       listener = new TCExecutionListener(reportAsBootstrapTestsSuite);
 
       if (LIST_CLASSES != null) {
         saveListOfTestClasses(testPlan);  // save only
+      }
+      else if ("true".equals(REVERSE_ORDER)) {
+        executeInReverseOrder(launcher, testPlan, listener, filters);  // used by [IDEA Trunk / Tests / Linux x86_64 Reversed Order / Aggregator](https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Tests_AggregatorRevX64)
       }
       else {
         launcher.execute(testPlan, listener);
@@ -243,6 +230,20 @@ public final class JUnit5TeamCityRunner {
                   "getClassRoots", MethodType.methodType(List.class))
       .invokeExact();
     return new HashSet<>(testRoots);
+  }
+
+  private static void executeInReverseOrder(Launcher launcher, TestPlan testPlan, TestExecutionListener listener, List<Filter<?>> filters) {
+    List<? extends DiscoverySelector> selectors = testPlan.getRoots().stream().flatMap(root -> {  // keep engine order
+      List<TestIdentifier> children = new ArrayList<>(testPlan.getChildren(root));
+      Collections.reverse(children);
+      return children.stream().map(child -> DiscoverySelectors.selectUniqueId(child.getUniqueIdObject()));
+    }).toList();
+
+    LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+      .selectors(selectors)
+      .filters(filters.toArray(Filter[]::new))
+      .build();
+    launcher.execute(discoveryRequest, listener);
   }
 
   private static void saveListOfTestClasses(TestPlan testPlan) {
@@ -330,7 +331,8 @@ public final class JUnit5TeamCityRunner {
     private final PrintStream myPrintStream;
 
     private static final String BOOTSTRAP_TESTS_SUITE_NAME = "com.intellij.tests.BootstrapTests";
-    private final boolean myReportAsBootstrapTestsSuite;
+    private static final String VINTAGE_UNIQUE_ID = UniqueId.forEngine(VintageTestDescriptor.ENGINE_ID).toString();
+    private boolean myReportAsBootstrapTestsSuite;
 
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
@@ -381,16 +383,6 @@ public final class JUnit5TeamCityRunner {
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
       myTestPlan = testPlan;
-      if (myReportAsBootstrapTestsSuite) {
-        myPrintStream.println(new TestSuiteStarted(BOOTSTRAP_TESTS_SUITE_NAME));
-      }
-    }
-
-    @Override
-    public void testPlanExecutionFinished(TestPlan testPlan) {
-      if (myReportAsBootstrapTestsSuite) {
-        myPrintStream.println(new TestSuiteFinished(BOOTSTRAP_TESTS_SUITE_NAME));
-      }
     }
 
     @Override
@@ -409,6 +401,11 @@ public final class JUnit5TeamCityRunner {
         myFinishCount = 0;
         if (!myReportAsBootstrapTestsSuite) {
           myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
+        }
+      }
+      else {  // root
+        if (myReportAsBootstrapTestsSuite && testIdentifier.getUniqueId().equals(VINTAGE_UNIQUE_ID)) {  // mask JUnit 3/4 suite names
+          myPrintStream.println(new TestSuiteStarted(BOOTSTRAP_TESTS_SUITE_NAME));
         }
       }
     }
@@ -481,6 +478,10 @@ public final class JUnit5TeamCityRunner {
           testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
           myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
           myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+        }
+        if (myReportAsBootstrapTestsSuite && testIdentifier.getUniqueId().equals(VINTAGE_UNIQUE_ID)) {  // mask JUnit 3/4 suite names
+          myPrintStream.println(new TestSuiteFinished(BOOTSTRAP_TESTS_SUITE_NAME));
+          myReportAsBootstrapTestsSuite = false;  // don't mask JUnit 5 suite names
         }
       }
     }
@@ -764,52 +765,26 @@ public final class JUnit5TeamCityRunner {
     }
   }
 
-  public static class BucketingPostDiscoveryFilter implements PostDiscoveryFilter {
-    private static final MethodHandle isClassIncluded;
+  public static class BucketingClassNameFilter implements ClassNameFilter {
+    private static final MethodHandle matchesCurrentBucket;
 
     static {
       try {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        isClassIncluded = MethodHandles.publicLookup()
+        matchesCurrentBucket = MethodHandles.publicLookup()
           .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
-                      "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
-        boolean ignored = (boolean)isClassIncluded.invokeExact(Object.class);  // force load bucketing scheme
+                      "matchesCurrentBucket", MethodType.methodType(boolean.class, String.class));
+        boolean ignored = (boolean)matchesCurrentBucket.invokeExact(Object.class.getName());  // force load bucketing scheme
       }
       catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
 
-    private LastCheckResult myLastResult = null;
-
     @Override
-    public FilterResult apply(TestDescriptor descriptor) {
-      if (descriptor instanceof EngineDescriptor) {
-        return FilterResult.included(null);
-      }
-      TestSource source = descriptor.getSource().orElse(null);
-      if (source == null) {
-        return FilterResult.included("No source for descriptor");
-      }
-      if (source instanceof MethodSource methodSource) {
-        return isIncluded(methodSource.getJavaClass());
-      }
-      if (source instanceof ClassSource classSource) {
-        return isIncluded(classSource.getJavaClass());
-      }
-      return FilterResult.included("Unknown source type " + source.getClass());
-    }
-
-    private FilterResult isIncluded(Class<?> aClass) {
-      if (myLastResult == null || !myLastResult.className.equals(aClass.getName())) {
-        myLastResult = new LastCheckResult(aClass.getName(), isIncludedImpl(aClass));
-      }
-      return myLastResult.result;
-    }
-
-    private static FilterResult isIncludedImpl(Class<?> aClass) {
+    public FilterResult apply(String className) {
       try {
-        if ((boolean)isClassIncluded.invokeExact(aClass)) {
+        if ((boolean)matchesCurrentBucket.invokeExact(className)) {
           return FilterResult.included(null);
         }
         return FilterResult.excluded(null);
@@ -817,9 +792,6 @@ public final class JUnit5TeamCityRunner {
       catch (Throwable e) {
         return FilterResult.excluded(e.getMessage());
       }
-    }
-
-    record LastCheckResult(String className, FilterResult result) {
     }
   }
 
@@ -970,38 +942,4 @@ public final class JUnit5TeamCityRunner {
       return FilterResult.included("Unknown source type " + source.getClass());
     }
   }
-
-  public static final class OrderedVintageTestEngine implements TestEngine {
-    public static final String ENGINE_ID = "ordered-vintage";
-
-    @SuppressWarnings("FieldMayBeStatic") private final VintageTestEngine delegate = new VintageTestEngine();
-
-    @Override
-    public String getId() {
-      return ENGINE_ID;
-    }
-
-    @Override
-    public TestDescriptor discover(EngineDiscoveryRequest request, UniqueId uniqueId) {
-      TestDescriptor root = delegate.discover(request, uniqueId);
-      root.orderChildren(children -> {
-        Collections.sort(children, (a, b) -> {
-          assert a.getSource().isPresent() && a.getSource().get() instanceof ClassSource;
-          ClassSource aClass = (ClassSource)a.getSource().get();
-          assert b.getSource().isPresent() && b.getSource().get() instanceof ClassSource;
-          ClassSource bClass = (ClassSource)b.getSource().get();
-          return aClass.getJavaClass().getName().compareTo(bClass.getJavaClass().getName());
-        });
-        if ("true".equals(REVERSE_ORDER)) Collections.reverse(children);
-        return children;
-      });
-      return root;
-    }
-
-    @Override
-    public void execute(ExecutionRequest request) {
-      delegate.execute(request);
-    }
-  }
-
 }

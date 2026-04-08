@@ -19,7 +19,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApiBlocking
-import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 class EelFileWatcher : PluggableFileWatcher() {
@@ -164,6 +164,9 @@ class EelFileWatcher : PluggableFileWatcher() {
           val flow = eel.fs.watchChanges()
           eel.fs.addWatchRoots(WatchOptionsBuilder().changeTypes(watchedOptions).paths(data.getWatchedPaths()).build())
           scope.launch { flow.collect { notifyChange(it, data) } }
+        }
+        catch (e: CancellationException) {
+          throw e 
         }
         catch (e: Exception) {
           LOG.warn("Failed to start watching for ${data.descriptor}", e)

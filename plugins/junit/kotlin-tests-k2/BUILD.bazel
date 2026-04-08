@@ -33,6 +33,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
   ],
   runtime_deps = [
     ":kotlin-tests-k2",

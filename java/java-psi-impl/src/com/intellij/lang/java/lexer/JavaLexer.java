@@ -14,6 +14,7 @@ import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaEl
  *             See {@link com.intellij.java.syntax.JavaSyntaxDefinition#createLexer(LanguageLevel)}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public final class JavaLexer extends LexerAdapter {
   public JavaLexer(@NotNull LanguageLevel level) {
     super(new com.intellij.java.syntax.lexer.JavaLexer(level), getJavaElementTypeConverter());

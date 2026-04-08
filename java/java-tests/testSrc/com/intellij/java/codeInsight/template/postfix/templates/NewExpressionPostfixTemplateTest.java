@@ -106,4 +106,11 @@ public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNewNonExisting() {
     doTest();
   }
+
+  public static class ModNewExpressionPostfixTemplateTest extends NewExpressionPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

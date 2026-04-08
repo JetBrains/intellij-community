@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
+import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource

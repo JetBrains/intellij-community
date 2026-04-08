@@ -5,6 +5,7 @@ from _typeshed import Incomplete
 from django.http.request import HttpRequest
 from django.template.exceptions import TemplateSyntaxError
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 from .base import BaseEngine
 
@@ -12,7 +13,9 @@ class Jinja2(BaseEngine):
     env: Any
     context_processors: list[str]
     def __init__(self, params: dict[str, Any]) -> None: ...
+    @override
     def from_string(self, template_code: str) -> Template: ...
+    @override
     def get_template(self, template_name: str) -> Template: ...
     @cached_property
     def template_context_processors(self) -> list[Callable]: ...

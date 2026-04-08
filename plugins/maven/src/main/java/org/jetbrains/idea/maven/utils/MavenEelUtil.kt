@@ -15,16 +15,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
@@ -32,7 +29,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
@@ -443,7 +439,7 @@ object MavenEelUtil {
         else {
           if (trySetUpExistingJdk(project, notification)) return
           ApplicationManager.getApplication().invokeLater {
-            findOrDownloadNewJdk(project, sdk, notification, this)
+            findOrDownloadNewJdkOverEel(project, notification, this)
           }
         }
       }
@@ -458,63 +454,6 @@ object MavenEelUtil {
       notification.hideBalloon()
     }
     return true
-  }
-
-  private fun findOrDownloadNewJdk(
-    project: Project,
-    sdk: Sdk,
-    notification: Notification,
-    listener: NotificationListener,
-  ) {
-    if (Registry.`is`("java.home.finder.use.eel")) {
-      return findOrDownloadNewJdkOverEel(project, notification, listener)
-    }
-
-    val projectWslDistr = tryGetWslDistribution(project)
-
-    val jdkTask = object : Task.Backgroundable(null, MavenProjectBundle.message("wsl.jdk.searching"), false) {
-      override fun run(indicator: ProgressIndicator) {
-        val sdkPath = service<JdkFinder>().suggestHomePaths().filter {
-          sameDistributions(projectWslDistr, WslPath.getDistributionByWindowsUncPath(it))
-        }.firstOrNull()
-        if (sdkPath != null) {
-          WriteAction.runAndWait<RuntimeException> {
-            val jdkTable = ProjectJdkTable.getInstance(project)
-            val jdkName = SdkConfigurationUtil.createUniqueSdkName(
-              JavaSdk.getInstance(),
-              sdkPath,
-              jdkTable.allJdks.toList()
-            )
-            val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
-            jdkTable.addJdk(newJdk)
-            ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
-            notification.hideBalloon()
-          }
-          return
-        }
-        val installer = JdkInstaller.getInstance()
-        val jdkPredicate = when {
-          projectWslDistr != null -> JdkPredicate.forWSL()
-          else -> JdkPredicate.default()
-        }
-        val model = JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
-        if (model.isEmpty()) {
-          Notification(MAVEN_NOTIFICATION_GROUP,
-                       MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
-                       MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
-                       NotificationType.ERROR).setListener(listener).notify(project)
-
-        }
-        else {
-          this.title = MavenProjectBundle.message("wsl.jdk.downloading")
-          val homeDir = installer.defaultInstallDir(model[0], null, projectWslDistr)
-          val request = installer.prepareJdkInstallation(model[0], homeDir)
-          installer.installJdk(request, indicator, project)
-          notification.hideBalloon()
-        }
-      }
-    }
-    ProgressManager.getInstance().run(jdkTask)
   }
 
   @Service(Service.Level.PROJECT)

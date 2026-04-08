@@ -18,6 +18,7 @@ jvm_library(
     "//plugins/copyright",
     "//platform/core-api:core",
     "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/util",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
@@ -33,6 +34,7 @@ jvm_library(
     "//plugins/copyright:copyright_test_lib",
     "//platform/core-api:core_test_lib",
     "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/util:util_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

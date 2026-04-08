@@ -7,6 +7,7 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
 open class DefaultNotebookEditorAppearance(
@@ -49,6 +50,16 @@ open class DefaultNotebookEditorAppearance(
 
   override fun caretRowColor(): Color? {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CARET_ROW_COLOR)
+  }
+
+  override fun cellOutputForeground(): Color? {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_OUTPUT_COLOR)
+           ?: editor.colorsScheme.defaultForeground
+  }
+
+  override fun executionTimeForeground(): Color {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.EXECUTION_TIME_COLOR)
+           ?: UIUtil.getLabelInfoForeground()
   }
 
   override fun getCellLeftLineWidth(editor: Editor): Int =

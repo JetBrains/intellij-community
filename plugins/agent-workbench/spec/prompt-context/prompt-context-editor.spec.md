@@ -5,7 +5,7 @@ targets:
   - ../../prompt/src/context/AgentPromptEditorContextContributor.kt
   - ../../prompt/src/context/AgentPromptSelectedEditorFallbackContextContributor.kt
   - ../../prompt/src/context/AgentPromptEditorContextSupport.kt
-  - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
+  - ../../prompt/core/src/AgentPromptBuiltinContextRenderers.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
 ---
@@ -29,8 +29,8 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 
 ## Requirements
 - Contributor registration contract:
-  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase with order `0`,
-  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase with order `0`.
+  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase and is registered after the test-runner contributor and before the VCS contributor via extension ordering,
+  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase.
 
 - Editor invocation contributor must return no items when invocation has no editor in data context.
   [@test] ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
@@ -96,7 +96,7 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 - Missing editor, PSI file, symbol, or file path degrades to available subset of context items.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptEditorContextContributorTest'`
 
 ## Open Questions / Risks
 - No dedicated test currently asserts selected-editor fallback item content end-to-end.

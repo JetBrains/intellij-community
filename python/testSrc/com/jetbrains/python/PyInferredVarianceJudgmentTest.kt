@@ -2,14 +2,12 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypeParameter
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
-import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyInferredVarianceJudgmentTest : PyTestCase() {
@@ -25,7 +23,7 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
     val typeVar: PyElement = myFixture.findElementByText(expression, clazz)
 
     val context = TypeEvalContext.userInitiated(typeVar.project, typeVar.containingFile)
-    val actualVariance = getInferredVariance(typeVar, context)
+    val actualVariance = getDeclaredOrInferredVariance(typeVar, context)
     assertEquals(expectedVariance, actualVariance)
   }
 
@@ -218,6 +216,14 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun `test Generic class final attribute callable concatenate parameter`() {
+    doTest("T", Variance.CONTRAVARIANT, """
+      from typing import Callable, Concatenate, Final
+      class A[T, **P]:
+          attr: Final[Callable[Concatenate[T, P], None]]
+      """)
+  }
+
   fun `test Generic class final attribute callable return`() {
     doTest("T", Variance.COVARIANT, """
       from typing import Final, Callable
@@ -319,6 +325,14 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun `test Generic class method parameter nesting callable concatenate parameter`() {
+    doTest("T", Variance.COVARIANT, """
+      from typing import Callable, Concatenate
+      class A[T, **P]:
+          def method(self, arg: Callable[Concatenate[T, P], None]): ...
+      """)
+  }
+
   fun `test Generic class method parameter nesting callable return`() {
     doTest("T", Variance.CONTRAVARIANT, """
       from typing import Callable
@@ -332,6 +346,14 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
       from typing import Callable
       class A[T]:
           def method(self) -> Callable[[T], None]: pass # Contravariant in Covariant -> Contravariant
+      """)
+  }
+
+  fun `test Generic class method return nesting callable concatenate parameter`() {
+    doTest("T", Variance.CONTRAVARIANT, """
+      from typing import Callable, Concatenate
+      class A[T, **P]:
+          def f2(self, t: T) -> Callable[Concatenate[T, P], None]: ...
       """)
   }
 
@@ -745,26 +767,18 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
-                                "expected:<COVARIANT> but was:<BIVARIANT>"
-    ) {
-      doTest("T", Variance.COVARIANT, """
-        class A[T]:
-            def method(self) -> "T": pass
-        """)
-    }
+    doTest("T", Variance.COVARIANT, """
+      class A[T]:
+          def method(self) -> "T": pass
+      """)
   }
 
   fun `test Type in string literal with Callable`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
-                                "expected:<COVARIANT> but was:<BIVARIANT>"
-    ) {
-      doTest("T", Variance.COVARIANT, """
+    doTest("T", Variance.COVARIANT, """
       from typing import Callable
       class A[T]:
           def method(self, arg: "Callable[[T], None]"): pass
       """)
-    }
   }
 
   fun `test Recursive generic classes`() {

@@ -23,6 +23,8 @@ jvm_library(
     "//platform/util",
     "//grid/core-impl",
     "//grid/impl",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
   ]
 )
 
@@ -41,6 +43,8 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//grid/core-impl:core-impl_test_lib",
     "//grid/impl:impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grid.impl.ide` end

@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util/base/multiplatform",
     "@lib//:jna",
   ]
 )
@@ -28,6 +29,7 @@ jvm_library(
   runtime_deps = [
     ":wintools",
     "//platform/util:util_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "@lib//:junit5",
     "//libraries/hamcrest",
     "//libraries/hamcrest:hamcrest_test_lib",

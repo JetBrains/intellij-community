@@ -6,17 +6,24 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.IconUtil
 import java.io.File
 
-private val STRIKEOUT = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
-
 internal class UrlNode(project: Project, bookmark: InvalidBookmark) : BookmarkNode<InvalidBookmark>(project, bookmark) {
+
+  private val cachedVirtualFile: VirtualFile? by lazy {
+    VirtualFileManager.getInstance().findFileByUrl(value.url)
+  }
+
+  override fun getVirtualFile(): VirtualFile? = cachedVirtualFile
 
   override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
-    presentation.setIcon(wrapIcon(null))
+    presentation.setIcon(IconUtil.desaturate(wrapIcon(null)))
     val line = value.line + 1
     val url = value.url
     val index = when (val slash = '/') {
@@ -28,13 +35,13 @@ internal class UrlNode(project: Project, bookmark: InvalidBookmark) : BookmarkNo
     val description = bookmarkDescription
     if (description == null) {
       presentation.presentableText = name // configure speed search
-      presentation.addText(name, STRIKEOUT)
+      presentation.addText(name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
     }
     else {
       presentation.presentableText = "$description $name" // configure speed search
-      presentation.addText(description, STRIKEOUT)
+      presentation.addText(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       presentation.addText("  $name", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       if (line > 0) presentation.addText(" :$line", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       location?.let { presentation.addText("  ($it)", SimpleTextAttributes.GRAYED_ATTRIBUTES) }

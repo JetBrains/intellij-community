@@ -19,12 +19,14 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//java/compiler/openapi:java-compiler",
     "@lib//:opentelemetry",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "@lib//:opentelemetry-semconv",
     "//java/idea-ui:ui",
     "//platform/diagnostic/telemetry",
@@ -35,6 +37,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//java/openapi:java",
+    "//java/java-frontback-psi-api:frontback-psi",
   ]
 )
 
@@ -50,11 +53,13 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//java/compiler/openapi:java-compiler_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//java/idea-ui:ui_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//java/java-psi-api:psi_test_lib",
@@ -64,6 +69,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/refactoring:refactoring_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.performancePlugin` end

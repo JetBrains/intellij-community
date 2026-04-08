@@ -9,12 +9,17 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
+import org.jetbrains.kotlin.config.LanguageFeature.NameBasedDestructuring
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -32,18 +37,21 @@ internal fun chooseDestructuringNames(
     nameValidator: KotlinDeclarationNameValidator,
     callback: (SuggestedNames) -> Unit
 ) {
-    val destructuringNames = suggestDestructuringNames(expression, nameValidator) ?: return callback(emptyList())
+    if (editor == null) return callback(emptyList())
 
-    if (destructuringNames.size <= 1) return callback(emptyList())
+    val destructuringNames =
+        suggestDestructuringNames(expression, nameValidator)?.takeIf { it.size > 1 } ?: return callback(emptyList())
 
     if (isUnitTestMode()) return callback(destructuringNames)
-
-    if (editor == null) return callback(emptyList())
 
     val singleVariable = KotlinBundle.message("text.create.single.variable")
     val listOfVariants = listOf(
         singleVariable,
-        KotlinBundle.message("text.create.destructuring.declaration"),
+        if (expression.languageVersionSettings.supportsFeature(NameBasedDestructuring)) {
+            KotlinBundle.message("text.create.name.based.destructuring.declaration")
+        } else {
+            KotlinBundle.message("text.create.destructuring.declaration")
+        },
     )
 
     JBPopupFactory.getInstance()
@@ -85,6 +93,30 @@ fun suggestSingleVariableNames(
         analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             listOf(suggestExpressionNames(expression) { nameValidator.validate(it) }.toList())
         }
+    }
+}
+
+internal fun suggestNameBasedDestructuringPropertyNames(
+    expression: KtExpression,
+    entriesCount: Int,
+): NameBasedDestructuringForm? {
+    val settings = expression.languageVersionSettings
+    if (!settings.supportsFeature(NameBasedDestructuring)) return null
+
+    val useFullForm = !settings.supportsFeature(DeprecateNameMismatchInShortDestructuringWithParentheses)
+
+    return analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        val expressionType =
+            expression.expressionType?.lowerBoundIfFlexible() as? KaClassType ?: return@analyzeInModalWindow null
+        val positionalDestructuringType = isPositionalDestructuringType(expressionType)
+
+        // see #configureCommonLanguageFeatures:
+        // both `name-mismatch` and `complete` enables DeprecateNameMismatchInShortDestructuringWithParentheses
+        val names = extractDataClassParameters(expressionType)
+            ?.takeIf { entriesCount <= it.size }
+            ?.take(entriesCount)
+            ?.map { it.name.asString() } ?: return@analyzeInModalWindow null
+        NameBasedDestructuringForm(names, positionalDestructuringType, useFullForm)
     }
 }
 

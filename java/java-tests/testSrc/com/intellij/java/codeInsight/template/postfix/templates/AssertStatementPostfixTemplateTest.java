@@ -75,5 +75,12 @@ public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testIncompleteExpression() {
     doTest();
   }
+
+  public static class ModAssertStatementPostfixTemplateTest extends AssertStatementPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

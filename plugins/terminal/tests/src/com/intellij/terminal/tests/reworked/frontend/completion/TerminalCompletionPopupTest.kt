@@ -22,14 +22,12 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSugge
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.event.KeyEvent.VK_BACK_SPACE
-import java.awt.event.KeyEvent.VK_LEFT
-import java.awt.event.KeyEvent.VK_RIGHT
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
@@ -132,21 +130,21 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     val startResult = fixture.getLookupElements()
     assertSameElements(startResult.map { it.lookupString }, listOf("start", "status"))
 
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     val afterFirstLeftResult = fixture.getLookupElements()
     assertSameElements(afterFirstLeftResult.map { it.lookupString },
                        listOf("start", "status", "stop"))
 
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     val afterSecondLeftResult = fixture.getLookupElements()
     assertSameElements(afterSecondLeftResult.map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
-    fixture.pressKey(VK_RIGHT)
+    fixture.pressRight()
     val afterRightResult = fixture.getLookupElements()
     assertEquals(afterFirstLeftResult, afterRightResult)
 
-    fixture.pressKey(VK_RIGHT)
+    fixture.pressRight()
     val afterSecondRightResult = fixture.getLookupElements()
     assertEquals(startResult, afterSecondRightResult)
   }
@@ -158,10 +156,10 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
 
     val startResult = fixture.getLookupElements().map { it.lookupString }
     assertSameElements(startResult, listOf("start", "status", "stop"))
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
-    fixture.pressKey(VK_RIGHT)
+    fixture.pressRight()
     assertSameElements(fixture.getLookupElements().map { it.lookupString }, startResult)
   }
 
@@ -177,11 +175,11 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("start", "status"))
 
-    fixture.pressKey(VK_BACK_SPACE)
+    fixture.pressBackspace()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("start", "status", "stop"))
 
-    fixture.pressKey(VK_BACK_SPACE)
+    fixture.pressBackspace()
     fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
   }
 
@@ -200,19 +198,19 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     }
 
     // Popup should reopen with items for the "a" prefix
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     fixture.awaitLookupElementsSatisfy { items ->
       items.size == MAX_ITEMS_COUNT_AFTER_TRIM && !items.all { it.startsWith("ab") }
     }
 
     // Popup should reopen with items for the "ab" prefix
-    fixture.pressKey(VK_RIGHT)
+    fixture.pressRight()
     fixture.awaitLookupElementsSatisfy { items ->
       items.size == MAX_ITEMS_COUNT_AFTER_TRIM && items.all { it.startsWith("ab") }
     }
 
     // Popup should reopen with items for the "a" prefix
-    fixture.pressKey(VK_BACK_SPACE)
+    fixture.pressBackspace()
     fixture.awaitLookupElementsSatisfy { items ->
       items.size == MAX_ITEMS_COUNT_AFTER_TRIM && !items.all { it.startsWith("ab") }
     }
@@ -229,10 +227,10 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
-    fixture.pressKey(VK_BACK_SPACE)
+    fixture.pressBackspace()
     fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
-    fixture.pressKey(VK_BACK_SPACE)
+    fixture.pressBackspace()
     fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
@@ -242,10 +240,10 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
@@ -257,7 +255,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("roots", "files", "statuses"))
 
-    fixture.pressKey(VK_LEFT)
+    fixture.pressLeft()
     fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
@@ -413,6 +411,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       shellCommand = listOf("/bin/zsh", "--login", "-i"),
       workingDirectory = "fakeDir",
       envVariables = emptyMap(),
+      processType = TerminalProcessType.SHELL,
       pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))

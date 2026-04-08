@@ -44,6 +44,8 @@ jvm_library(
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],

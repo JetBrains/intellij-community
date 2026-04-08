@@ -6,7 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesUtil;
-import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.FindManagerBase;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -65,7 +65,7 @@ public final class TextOccurrencesUtil {
   }
 
   public static boolean isSearchTextOccurrencesEnabled(@NotNull PsiElement element) {
-    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
+    FindUsagesManager findUsagesManager = ((FindManagerBase)FindManager.getInstance(element.getProject())).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, true);
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, false, handler);
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -26,7 +26,7 @@ internal class ClaudeQuotaHintBanner(
   private val hintStateService: ClaudeQuotaHintStateService = service(),
 ) : JPanel(BorderLayout()) {
   @Suppress("RAW_SCOPE_CREATION")
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
 
   private var eligible: Boolean = false
   private var acknowledged: Boolean = false

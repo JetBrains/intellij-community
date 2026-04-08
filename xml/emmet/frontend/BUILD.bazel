@@ -1,0 +1,113 @@
+### auto-generated section `build intellij.xml.emmet.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "platform_core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "platform_util_provided",
+  lib = "//platform/util"
+)
+
+jvm_provided_library(
+  name = "platform_core_provided",
+  lib = "//platform/core-api:core"
+)
+
+jvm_provided_library(
+  name = "platform_remote-topics_rpc-topics_provided",
+  lib = "//platform/remote-topics/shared:rpc-topics"
+)
+
+jvm_provided_library(
+  name = "platform_ide-core_provided",
+  lib = "//platform/ide-core"
+)
+
+jvm_provided_library(
+  name = "platform_ide_provided",
+  lib = "//platform/platform-api:ide"
+)
+
+jvm_provided_library(
+  name = "platform_util-ui_provided",
+  lib = "//platform/util:util-ui"
+)
+
+jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.xml.emmet.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  deps = [
+    "//fleet/rpc",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlin-stdlib-provided",
+    "//xml/emmet",
+    "//platform/platform-frontend:frontend",
+    "@lib//:jetbrains-annotations-provided",
+    "//platform/util/coroutines",
+    ":platform_core-ui_provided",
+    ":platform_util_provided",
+    ":platform_core_provided",
+    ":platform_remote-topics_rpc-topics_provided",
+    ":platform_ide-core_provided",
+    ":platform_ide_provided",
+    ":platform_util-ui_provided",
+    ":platform_editor-ui_provided",
+  ]
+)
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.xml.emmet.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "@lib//:kotlin-stdlib-provided",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//xml/emmet:emmet_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
+    "@lib//:jetbrains-annotations-provided",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/ide-core",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
+### auto-generated section `build intellij.xml.emmet.frontend` end
+
+### auto-generated section `iml intellij.xml.emmet.frontend` start
+exports_files([
+  "intellij.xml.emmet.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.xml.emmet.frontend` end

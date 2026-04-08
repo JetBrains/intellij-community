@@ -1,0 +1,7 @@
+// FIX: Convert to sealed interface
+sealed interface Result {
+    var value: String
+        get() = "default"
+        set(v) { println(v) }
+}
+class Success : Result

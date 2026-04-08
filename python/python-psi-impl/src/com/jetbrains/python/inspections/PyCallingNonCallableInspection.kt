@@ -42,7 +42,10 @@ class PyCallingNonCallableInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    return Visitor(holder, PyInspectionVisitor.getContext(session))
+    val context = PyInspectionVisitor.getContext(session)
+    return Visitor(holder, context).also {
+      it.downgradeHighlightForTypeEngine = context.typeEngine != null
+    }
   }
 
   class Visitor(holder: ProblemsHolder?, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {

@@ -63,6 +63,7 @@ import com.intellij.ui.mac.createMacDelegate
 import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.CoroutineScope
@@ -112,6 +113,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
     @JvmName("isFileSystemPath")

@@ -17,5 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.grid.core.impl" />
     <orderEntry type="module" module-name="intellij.grid.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
   </component>
 </module>

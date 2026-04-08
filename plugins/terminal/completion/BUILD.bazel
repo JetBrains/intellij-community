@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:terminal-completion-terminal-completion-spec",
     "//platform/util",
+    "//platform/util/base",
   ],
   exports = ["@lib//:terminal-completion-terminal-completion-spec"]
 )
@@ -23,6 +24,7 @@ jvm_library(
   runtime_deps = [
     ":completion",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -58,6 +60,8 @@ jvm_library(
     "@lib//:terminal-completion-tests-terminal-completion-spec",
     "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

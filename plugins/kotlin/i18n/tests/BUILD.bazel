@@ -28,6 +28,8 @@ jvm_library(
     "@lib//:junit4",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",

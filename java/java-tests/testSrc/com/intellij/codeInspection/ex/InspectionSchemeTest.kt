@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -100,6 +101,58 @@ class InspectionSchemeTest {
 
       assertThat(profileManager.severityRegistrar.getSeverity("PRELOADED_DYNAMIC")).isNotNull()
       assertThat(notifications.get()).isZero()
+    }
+
+  @Test
+  fun projectSeverityRegistrarRepairsPreloadedSeverityOrderAfterSilentAppInit(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      val infoType = HighlightInfoType.HighlightInfoTypeImpl(
+        HighlightSeverity("PRELOADED_PROJECT_DYNAMIC", 401),
+        TextAttributesKey.createTextAttributesKey("PRELOADED_PROJECT_DYNAMIC_KEY"),
+      )
+      SeveritiesProvider.EP_NAME.point.registerExtension(object : SeveritiesProvider() {
+        override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> = listOf(infoType)
+      }, disposable)
+
+      fun initApplicationProfileManager(): ApplicationInspectionProfileManager {
+        return ApplicationInspectionProfileManager(
+          this@runBlocking,
+          SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath("")),
+        )
+      }
+
+      // Simulate project-level registrar initialization before provided severities are synced at app startup.
+      SeverityRegistrar.syncProvidedSeveritiesSilently(emptyMap())
+
+      var appProfileManagerInitialized = false
+      try {
+        val notifications = AtomicInteger()
+        project.messageBus.connect(this@runBlocking).subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, Runnable { notifications.incrementAndGet() })
+
+        val projectManager = ProjectInspectionProfileManager.getInstance(project)
+        assertThat(projectManager.severityRegistrar.getSeverity("PRELOADED_PROJECT_DYNAMIC")).isNull()
+        projectManager.severityRegistrar.allSeverities
+
+        val profileManager = initApplicationProfileManager()
+        appProfileManagerInitialized = true
+
+        assertThat(profileManager.severityRegistrar.getSeverity("PRELOADED_PROJECT_DYNAMIC")).isNotNull()
+        val severity = checkNotNull(projectManager.severityRegistrar.getSeverity("PRELOADED_PROJECT_DYNAMIC"))
+        assertThat(projectManager.severityRegistrar.compare(severity, HighlightSeverity.INFORMATION)).isGreaterThan(0)
+        assertThat(projectManager.severityRegistrar.getSeverityIdx(severity)).isGreaterThan(-1)
+        assertThat(notifications.get()).isZero()
+      }
+      catch (t: Throwable) {
+        if (!appProfileManagerInitialized) {
+          try {
+            initApplicationProfileManager()
+          }
+          catch (restoreFailure: Throwable) {
+            t.addSuppressed(restoreFailure)
+          }
+        }
+        throw t
+      }
     }
 
   @Test

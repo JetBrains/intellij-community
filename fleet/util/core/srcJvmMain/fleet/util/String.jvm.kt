@@ -19,25 +19,6 @@ fun String.lowercaseWithCurrentLocaleJvm(): String = lowercase(Locale.getDefault
 fun String.uppercaseWithCurrentLocaleJvm(): String = uppercase(Locale.getDefault())
 
 @Actual
-fun String.encodeUriComponentJvm(): String = URLEncoder.encode(this, StandardCharsets.UTF_8.name())
-    .replace("+", "%20")
-    .replace("%21", "!")
-    .replace("%27", "'")
-    .replace("%28", "(")
-    .replace("%29", ")")
-    .replace("%7E", "~")
-
-@Actual
-fun String.decodeUriComponentJvm(): String = this
-  .replace("%20", "+")
-  .replace("!", "%21")
-  .replace("'", "%27")
-  .replace("(", "%28")
-  .replace(")", "%29")
-  .replace("~", "%7E")
-  .let { URLDecoder.decode(it, StandardCharsets.UTF_8.name()) }
-
-@Actual
 fun String.isValidUriStringJvm(): Boolean = try {
   URI(this)
   true

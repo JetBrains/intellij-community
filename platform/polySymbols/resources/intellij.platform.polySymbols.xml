@@ -12,11 +12,13 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -89,7 +91,7 @@
     <projectService serviceInterface="com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory"
                     serviceImplementation="com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl"/>
 
-    <metaLanguage implementation="com.intellij.polySymbols.PolySymbolEnabledLanguage"/>
+    <metaLanguageProvider implementation="com.intellij.polySymbols.PolySymbolEnabledLanguage$Provider"/>
 
     <polySymbols.webTypes.filter
       name="match-prefix"

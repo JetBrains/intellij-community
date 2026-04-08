@@ -524,6 +524,7 @@ final class PsiUpdateImpl {
           Result result = varName == null
                           ? expression.calculateResult(context)
                           : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
+
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
             String fieldValue = result.toString();

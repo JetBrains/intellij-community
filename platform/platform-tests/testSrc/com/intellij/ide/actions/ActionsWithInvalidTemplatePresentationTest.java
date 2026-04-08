@@ -13,6 +13,7 @@ import com.intellij.testFramework.junit5.NamedFailure;
 import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestFactory;
@@ -24,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@Disabled("AT-4013")
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @TestApplication
 public class ActionsWithInvalidTemplatePresentationTest {

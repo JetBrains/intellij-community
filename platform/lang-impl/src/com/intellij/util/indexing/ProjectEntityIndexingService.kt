@@ -50,7 +50,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
 import com.intellij.workspaceModel.core.fileIndex.impl.getEntityPointer
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -112,15 +111,10 @@ class ProjectEntityIndexingService(
   }
 
   private fun computeScanningParametersFromWFIEvent(event: WorkspaceFileIndexChangedEvent): Deferred<ScanningParameters> {
-    return if (Registry.`is`("create.coroutines.for.wfi.events.processing")) {
-      scope.async {
-        readAction {
-          processWfiEvent(event)
-        }
+    return scope.async {
+      readAction {
+        processWfiEvent(event)
       }
-    }
-    else {
-      CompletableDeferred(processWfiEvent(event))
     }
   }
 

@@ -49,11 +49,11 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.git.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.branch.calcTooltip
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -235,7 +235,8 @@ internal class FilteringBranchesTree(
   place: @NonNls String,
   private val disposable: Disposable,
 ) : FilteringBranchesTreeBase(model, component) {
-  private var initialUpdateDone = false
+  private var isApplyingTreeState = false
+  private var restoreInitialTreeState = true
 
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
@@ -255,7 +256,7 @@ internal class FilteringBranchesTree(
       withContext(Dispatchers.EDT) {
         model.addListener(listener)
         try {
-          val currentlyEmpty = searchModel.root.childCount > 0
+          val currentlyEmpty = searchModel.root.childCount == 0
           if (!currentlyEmpty || model.root.children.isNotEmpty()) {
             updateTree()
           }
@@ -282,29 +283,39 @@ internal class FilteringBranchesTree(
   private fun setupTreeListeners() {
     component.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
+        if (!isApplyingTreeState) {
+          restoreInitialTreeState = false
+        }
         treeStateHolder.setStateProvider(treeStateProvider)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
+        if (!isApplyingTreeState) {
+          restoreInitialTreeState = false
+        }
         treeStateHolder.setStateProvider(treeStateProvider)
       }
     })
-    component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
+    component.addTreeSelectionListener {
+      if (!isApplyingTreeState) {
+        restoreInitialTreeState = false
+      }
+      treeStateHolder.setStateProvider(treeStateProvider)
+    }
   }
 
   private fun updateTree() {
-    runPreservingTreeState(!initialUpdateDone) {
+    runPreservingTreeState {
       searchModel.updateStructure()
     }
-    initialUpdateDone = true
   }
 
-  private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
+  private fun runPreservingTreeState(runnable: () -> Unit) {
     if (Registry.`is`("git.branches.panel.persist.tree.state")) {
-      val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
+      val treeState = if (restoreInitialTreeState) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
       runnable()
       if (treeState != null) {
-        treeState.applyTo(tree)
+        applyTreeState(treeState)
       }
       else {
         initDefaultTreeExpandState()
@@ -312,9 +323,20 @@ internal class FilteringBranchesTree(
     }
     else {
       runnable()
-      if (loadSaved) {
+      if (restoreInitialTreeState) {
         initDefaultTreeExpandState()
       }
+    }
+  }
+
+  private fun applyTreeState(treeState: TreeState) {
+    isApplyingTreeState = true
+    try {
+      tree.clearSelection()
+      treeState.applyTo(tree)
+    }
+    finally {
+      isApplyingTreeState = false
     }
   }
 
@@ -352,7 +374,7 @@ internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private var treeStateProvider: BranchesTreeStateProvider? = null
   private var _treeState: TreeState? = null
 
-  fun getInitialTreeState(): TreeState? = state
+  fun getInitialTreeState(): TreeState? = _treeState
 
   override fun getState(): TreeState? {
     return treeStateProvider?.getState() ?: _treeState

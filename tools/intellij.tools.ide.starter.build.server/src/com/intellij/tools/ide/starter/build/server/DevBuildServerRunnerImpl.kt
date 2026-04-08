@@ -65,19 +65,21 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
         computeWithSpan("building ide $ideInfo") {
           System.setProperty("intellij.build.console.exporter.enabled", false.toString())
           System.setProperty("intellij.build.export.opentelemetry.spans", true.toString())
-          buildProductInProcess(BuildRequest(
-            projectDir = ideaRootPath,
-            productionClassOutput = GlobalPaths.instance.compiledRootDirectory.resolve("classes/production"),
-            os = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs,
-            platformPrefix = ideInfo.platformPrefix,
-            baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
-            additionalModules = ideInfo.additionalModules,
-            scrambleTool = di.direct.instance<ScrambleToolProvider>().get() as ScrambleTool?,
-            keepHttpClient = false,
-            generateRuntimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde(),
-            tracer = TestTelemetryService.instance.getTracer(),
-            isBootClassPathCorrect = true,
-          ))
+          buildProductInProcess(
+            BuildRequest(
+              projectDir = ideaRootPath,
+              os = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs,
+              platformPrefix = ideInfo.platformPrefix,
+              baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
+              additionalModules = ideInfo.additionalModules,
+              scrambleTool = di.direct.instance<ScrambleToolProvider>().get() as ScrambleTool?,
+              keepHttpClient = false,
+              generateRuntimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde(),
+              tracer = TestTelemetryService.instance.getTracer(),
+              isBootClassPathCorrect = true,
+              classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
+            )
+          )
         }
       }
 

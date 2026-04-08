@@ -42,6 +42,8 @@ public interface JavaDocTokenType {
   IElementType DOC_DOUBLE_SHARP = new IJavaDocElementType("DOC_DOUBLE_SHARP");
   IElementType DOC_INLINE_CODE_FENCE = new IJavaDocElementType("DOC_INLINE_CODE_FENCE");
   IElementType DOC_COMMA = new IJavaDocElementType("DOC_COMMA");
+  IElementType DOC_LT = new IJavaDocElementType("DOC_LT");
+  IElementType DOC_GT = new IJavaDocElementType("DOC_GT");
 
   IElementType DOC_COMMENT_BAD_CHARACTER = new IJavaDocElementType("DOC_COMMENT_BAD_CHARACTER");
 

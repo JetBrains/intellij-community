@@ -2,10 +2,24 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.codeInsight.PyDataclassesKt;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.impl.stubs.PyCustomClassStub;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents dataclass-related properties directly available in a class definition, i.e. not considering its ancestor classes,
+ * decorator parameter defaults or any other "external" configuration sources.
+ * <p>
+ * Note that omitted properties should have {@code null} value, not the default. These are substituted with the corresponding defaults
+ * later during analysis after checking other possible sources.
+ * <p>
+ * To get a complete "merged" set of properties use {@link PyDataclassesKt#parseDataclassParameters(PyClass, TypeEvalContext)}.
+ *
+ * @see PyDataclassesKt#parseDataclassParameters(PyClass, TypeEvalContext)
+ */
 public interface PyDataclassStub extends PyCustomClassStub {
 
   /**
@@ -69,4 +83,14 @@ public interface PyDataclassStub extends PyCustomClassStub {
    * its default value if it is not specified or could not be evaluated.
    */
   @Nullable Boolean slotsValue();
+
+  /**
+   * Pydantic-specific flag propagated from model configuration.
+   * <p>
+   * For standard dataclasses, attrs, and generic dataclass_transform-based classes
+   * this value is always {@code null}. It is only set for classes recognized
+   * by {@link com.jetbrains.python.codeInsight.PyPydanticParametersProvider}
+   * as Pydantic models.
+   */
+  @Nullable Boolean populateByName();
 }

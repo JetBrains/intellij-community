@@ -1,10 +1,7 @@
 package com.intellij.python.pyproject.model.internal
 
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity

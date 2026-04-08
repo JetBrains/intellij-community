@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -67,6 +68,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             is KtConstructor<*> -> declaration.getContainingClassOrObject().fqName
             is KtNamedDeclaration -> declaration.fqName
             is PsiClass -> declaration.qualifiedName?.let(::FqName)
+            is PsiMethod if (declaration.isConstructor) -> declaration.containingClass?.qualifiedName?.let(::FqName)
             is PsiMember if declaration.name != null -> declaration.containingClass?.qualifiedName?.let { FqName("$it.${declaration.name}") }
             else -> null
         } ?: return

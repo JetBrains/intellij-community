@@ -535,6 +535,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   @Override
   public synchronized void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
+    if (LOG.isTraceEnabled()) {
+      LOG.debug("setUpdateByTimerEnabled(" + value + ")", new Error());
+    }
     stopProcess(value, "Update by timer change");
   }
 
@@ -737,10 +740,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     cancelAllUpdateProgresses(toRestart, reason);
     boolean restart = toRestart && !myDisposed;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Stopping process: toRestart:", toRestart, "; myDisposed:", myDisposed, "; reason: '", reason, "'");
+      Map<FileEditor, DaemonProgressIndicator> progresses = Map.copyOf(myUpdateProgress);
+      LOG.debug("Stopping process: toRestart:"+toRestart+(myDisposed? "; disposed" : "")+"; reason: '"+ reason +"'"+(progresses.isEmpty()?"":"; progresses:"+progresses), new Throwable());
     }
     if (restart) {
       scheduleIfNotRunning();
+    }
+    else {
+      myUpdateRunnableFuture.cancel(false);
     }
   }
 
@@ -796,9 +803,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Rescheduling highlighting: isDone: ", isDone);
+      LOG.debug("Rescheduling highlighting: isDone: ", isDone+"; delta="+Long.toHexString(getDelta()));
     }
-    if (incrementQueuedRequests()) {
+    if (incrementQueuedRequests() || isDone) {
       scheduleUpdateRunnable(autoReparseDelayNanos);
     }
   }
@@ -819,12 +826,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     else {
       oldFuture.cancel(false); // do not have too many requests sit in the EdtExecutorService queue
     }
-    myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
+    Runnable runnable = () -> {
+      myUpdateRunnableFuture =
+        EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
+    };
+    if (myListeners == null) {
+      runnable.run();
+    }
+    else {
+      myListeners.runAfterUpdateFileStatusQueue(runnable);
+    }
   }
 
   // return true if the progress really was canceled
   synchronized void cancelAllUpdateProgresses(boolean toRestart, @NotNull @NonNls String reason) {
-    if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
+    if (myDisposed || myProject.isDefault() || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
       return;
     }
     processIndicators(indicator -> {
@@ -1107,6 +1123,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     @Override
     public void run() {
+      ThreadingAssertions.assertEventDispatchThread();
+      LOG.trace("UpdateRunnable.run()");
+
       DaemonCodeAnalyzerImpl analyzer = myAnalyzer;
       if (analyzer == null) {
         return; // disposed
@@ -1243,7 +1262,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         String reason = "Couldn't create session for " + activeEditors
                         + (pce == null ? "" : "; PCE was thrown: " + pce)
                         + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+createdIndicators : "");
-        ApplicationManager.getApplication().invokeLater(() -> stopProcess(false, reason), __->myDisposed);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!isRunningOrPending()) {
+            stopProcess(true, reason);
+          }
+        }, __->myDisposed);
       }
     }
     return StringUtil.join(result, "; ");
@@ -1281,9 +1304,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Editor editor = textEditor == null ? null : textEditor.getEditor();
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
-          fileEditor, fileEditor.getClass(),
-          textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded()
+        PassExecutorService.log(null, null, "couldn't highlight " + virtualFile + " because getBackgroundHighlighter() returned null. fileEditor="+
+          fileEditor+"("+ fileEditor.getClass()+")"+ (textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded())
         );
       }
       return null;
@@ -1304,7 +1326,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
-                        : "queuePassesCreation: psiFile is null for "+virtualFile;
+                        : "queuePassesCreation: psiFile is null for "+virtualFile+"; context:"+context+"; cachedContext:"+cachedContext;
         if (PassExecutorService.LOG.isDebugEnabled()) {
           PassExecutorService.log(progress, null, reason);
         }
@@ -1364,7 +1386,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ||
               !fileEditor.isValid() ||
               !psiFile.isValid()) {
-            String reason = (myProject.isDisposed() ? "project isDisposed" : "")
+            Throwable cancelTrace = progress.getCancellationTrace();
+            String reason =
+              (progress.isCanceled() ? "indicator canceled during submitInBackground(): "+progress +"; "+(cancelTrace == null ? progress.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(cancelTrace)) : "")
+              + (myProject.isDisposed() ? "project isDisposed" : "")
               + (getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ? " hasUncommitted documents: " + Arrays.toString(getPsiDocumentManager().getUncommittedDocuments()) : "")
               + (fileEditor.isValid() ? "" : " file editor "+fileEditor+" is invalid")
               + (psiFile.isValid() ? "" : " psiFile "+psiFile+" is invalid")
@@ -1481,7 +1506,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       cancelIndicator(oldProgress, true, new Throwable(), "daemon restarted for existing indicator: " + fileEditor);
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + "); oldProgress=" + oldProgress);
+      PassExecutorService.log(progress, null, "createUpdateProgress(", fileEditor, "); oldProgress=" + oldProgress);
     }
     myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     return progress;

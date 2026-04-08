@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.theoryinpractice.testng.util.TestNGUtil.DATA_PROVIDER_ANNOTATION_FQN;
@@ -69,11 +70,11 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implemen
   @Override
   public Object @NotNull [] getVariants() {
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(getElement());
-    final PsiClass[] classes = TestNGUtil.getProviderClasses(getElement(), topLevelClass);
-    if (classes.length == 0) return EMPTY_ARRAY;
+    final List<PsiClass> classes = TestNGUtil.getProviderClasses(getElement(), topLevelClass);
+    if (classes.isEmpty()) return EMPTY_ARRAY;
     final Set<LookupElementBuilder> result = new LinkedHashSet<>();
 
-    final boolean needToBeStatic = classes[0] != topLevelClass;
+    final boolean needToBeStatic = !classes.contains(topLevelClass);
     final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
     for (PsiClass cls : classes) {
       final PsiMethod[] methods = cls.getAllMethods();
@@ -101,7 +102,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implemen
     @Override
     public ResolveResult @NotNull [] resolve(@NotNull DataProviderReference reference, boolean incompleteCode) {
       PsiLiteral element = reference.getElement();
-      final PsiClass[] classes = TestNGUtil.getProviderClasses(element, PsiUtil.getTopLevelClass(element));
+      final List<PsiClass> classes = TestNGUtil.getProviderClasses(element, PsiUtil.getTopLevelClass(element));
       final Set<PsiMethod> result = new HashSet<>();
 
       for (PsiClass cls : classes) {

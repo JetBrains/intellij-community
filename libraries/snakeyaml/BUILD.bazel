@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":snakeyaml_resources"],
-  exports = ["@lib//:snakeyaml"],
-  runtime_deps = ["@lib//:snakeyaml"]
+  exports = ["@lib//:libraries-snakeyaml-snakeyaml"],
+  runtime_deps = ["@lib//:libraries-snakeyaml-snakeyaml"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:snakeyaml"],
+  exports = ["@lib//:libraries-snakeyaml-snakeyaml"],
   runtime_deps = [":snakeyaml"]
 )
 ### auto-generated section `build intellij.libraries.snakeyaml` end

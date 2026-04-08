@@ -155,6 +155,7 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable Disposable myTestRootDisposable;
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
+  private @Nullable Description myTestDescription;
 
   private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
@@ -433,6 +434,14 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     return disposable;
   }
 
+  private @NotNull Description getTestDescription() {
+    Description testDescription = myTestDescription;
+    if (testDescription == null) {
+      myTestDescription = testDescription = Description.createTestDescription(getClass(), getName());
+    }
+    return testDescription;
+  }
+
   /**
    * @deprecated not JUnit4-friendly; to override the way tests are executed use {@link #runTestRunnable} instead
    */
@@ -473,7 +482,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
 
   protected final void invokeSetUp() throws Exception {
     long setupStart = System.nanoTime();
-    TestLoggerFactory.fixtureInitialization(false, ()->setUp());
+    TestLoggerFactory.fixtureInitialization(false, getTestDescription().getDisplayName(), ()->setUp());
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
     logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }
@@ -554,7 +563,6 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
-    Description testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted(getClass());
@@ -571,7 +579,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
         throw t;
       }
       finally {
-        TestLoggerFactory.onTestFinished(success, testDescription);
+        TestLoggerFactory.onTestFinished(success, getTestDescription());
       }
     };
   }

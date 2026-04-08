@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -10,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * keeping for backward compatibility
+ * Keeping for backward compatibility.
+ * <p>
+ * NOTE that it does NOT implement {@link com.intellij.psi.stubs.IStubElementType}
  */
 @ApiStatus.Obsolete
 public abstract class JavaStubElementType extends IJavaElementType {

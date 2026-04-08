@@ -37,13 +37,17 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />

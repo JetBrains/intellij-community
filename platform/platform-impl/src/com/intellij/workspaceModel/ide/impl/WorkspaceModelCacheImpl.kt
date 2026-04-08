@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
@@ -46,7 +45,7 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @OptIn(FlowPreview::class)
-@ApiStatus.Internal
+@Internal
 class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
   override val enabled: Boolean
     get() = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
@@ -55,8 +54,10 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
-  override val cacheFile by lazy { initCacheFile() }
+  override val cacheFile: Path by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
+
+  private val invalidateProjectCacheMarker = AtomicBoolean(false)
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
 
   private val urlRelativizer =
@@ -128,10 +129,10 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     val storage = prepareStorage(workspaceModel)
     val unloadedStorage = prepareUnloadedStorage(workspaceModel)
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
-      invalidateProjectCache()
+      invalidateCaches()
     }
 
-    if (!cachesInvalidated.get()) {
+    if (!invalidateProjectCacheMarker.get() && !invalidateCachesMarker.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
 
       // Make sure we don't save the cache that is broken
@@ -180,18 +181,18 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     WorkspaceModelFusLogger.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
     return cache
   }
+
   override fun loadUnloadedEntitiesCache(): MutableEntityStorage? {
-    return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
-                                             invalidateProjectCacheMarkerFile)
+    return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
   }
 
   override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
     virtualFileUrlManager = vfuManager
   }
 
-  private fun invalidateProjectCache() {
+  override fun invalidateCaches() {
     LOG.info("Invalidating project model cache by creating $invalidateProjectCacheMarkerFile")
-    invalidateCaches(cachesInvalidated, invalidateProjectCacheMarkerFile)
+    invalidateCaches(invalidateProjectCacheMarker, invalidateProjectCacheMarkerFile)
   }
 
   companion object {
@@ -204,12 +205,13 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     @TestOnly
     var testCacheFile: Path? = null
 
-    private val cachesInvalidated = AtomicBoolean(false)
+    private val invalidateCachesMarker = AtomicBoolean(false)
     internal val invalidateCachesMarkerFile: Path = projectsDataDir.resolve(".invalidate")
 
-    fun invalidateCaches() {
+    // Requires IDE restart
+    fun invalidateCachesForAllProjects() {
       LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
-      invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
+      invalidateCaches(invalidateCachesMarker, invalidateCachesMarkerFile)
     }
 
     @JvmStatic

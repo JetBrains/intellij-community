@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.Callable
 
 
 abstract class GeneratedSourcesFilter {
@@ -26,7 +27,11 @@ abstract class GeneratedSourcesFilter {
      */
     @JvmStatic
     fun isGeneratedSourceByAnyFilter(file: VirtualFile, project: Project): Boolean {
-      return runReadActionBlocking { findFirstMatchingFilter(file, project) != null }
+      return ReadAction.nonBlocking(Callable {
+        findFirstMatchingFilter(file, project) != null
+      })
+        .expireWith(project)
+        .executeSynchronously()
     }
 
     /**

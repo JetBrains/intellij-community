@@ -27,9 +27,10 @@ public class TestsDurationBucketingScheme implements BucketingScheme {
     String season = System.getProperty("idea.bucketing.season");
     Map<String, Integer> seasonData = TestsDurationBucketingUtils.loadSeasonData(season);
     if (seasonData == null) {
-      seasonData = TestsDurationBucketingUtils.loadSeasonData(System.getProperty("idea.bucketing.season.fallback"));
+      String fallbackSeason = System.getProperty("idea.bucketing.season.fallback");
+      seasonData = TestsDurationBucketingUtils.loadSeasonData(fallbackSeason);
       if (seasonData != null) {
-        System.out.println("Tests duration bucketing with season fallback: " + season);
+        System.out.println("Tests duration bucketing with season fallback: " + fallbackSeason);
       }
     }
     else {

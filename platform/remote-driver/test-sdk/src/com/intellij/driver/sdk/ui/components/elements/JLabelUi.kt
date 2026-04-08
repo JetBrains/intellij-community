@@ -34,6 +34,7 @@ open class TabLabelUi(data: ComponentData) : UiComponent(data) {
 @Remote("javax.swing.JLabel")
 interface JLabelRef {
   fun getText(): String?
+  fun getIcon(): Icon?
 }
 
 @Remote("com.intellij.ui.tabs.impl.TabLabel")

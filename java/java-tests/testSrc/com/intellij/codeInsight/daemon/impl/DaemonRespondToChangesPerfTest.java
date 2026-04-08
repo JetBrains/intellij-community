@@ -54,7 +54,8 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
 
   @PerformanceUnitTest
   public void testHugeAppendChainDoesNotCauseSOE_Stress() {
-    StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
+    StringBuilder text = new StringBuilder(2000*".append(2000)\n".length()+100);
+    text.append("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
     }
@@ -194,11 +195,11 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     }
 
     long ave = ArrayUtil.averageAmongMedians(interruptTimes, 3);
-    System.out.println("Average among the N/3 median times: " + ave + "ms");
+    LOG.info("Average among the N/3 median times: " + ave + "ms");
     assertTrue(ave < 300);
   }
 
-  static void dumpThreadsToConsole() {
+  private static void dumpThreadsToConsole() {
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
 
@@ -271,7 +272,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
       //DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     }
 
-    System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
+    LOG.debug("Interrupt times: " + Arrays.toString(interruptTimes));
 
     if (DEBUG) {
       for (String dump : dumps) {
@@ -283,7 +284,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
     long max = Arrays.stream(interruptTimes).max().getAsLong();
     long min = Arrays.stream(interruptTimes).min().getAsLong();
-    System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
+    LOG.info("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
     assertTrue(String.valueOf(mean), mean < 10);
   }
 

@@ -1,31 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.JavaModuleType
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiNamedElement
-import com.intellij.testFramework.JavaModuleTestCase
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
-import org.jetbrains.kotlin.idea.decompiler.navigation.NavigationChecker.Companion.checkAnnotatedCode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.addDependency
-import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
+import org.jetbrains.kotlin.idea.test.navigation.AbstractNavigationToSourceOrDecompiledTest
+import org.jetbrains.kotlin.idea.test.navigation.AbstractNavigationWithMultipleLibrariesTest
+import org.jetbrains.kotlin.idea.test.navigation.NavigationChecker
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
-import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -81,24 +70,6 @@ class NavigationWithMultipleRuntimesTest : AbstractNavigationToSourceOrDecompile
     }
 }
 
-abstract class AbstractNavigationToSourceOrDecompiledTest : AbstractNavigationWithMultipleLibrariesTest() {
-    fun doTest(withSources: Boolean, expectedFileName: String) {
-        val srcPath = getTestDataDirectory().resolve("src").absolutePath
-        val moduleA = module("moduleA", srcPath)
-        val moduleB = module("moduleB", srcPath)
-
-        moduleA.addDependency(createProjectLib("libA", withSources))
-        moduleB.addDependency(createProjectLib("libB", withSources))
-
-        // navigation code works by providing first matching declaration from indices
-        // that's we need to check references in both modules to guard against possibility of code breaking
-        // while tests pass by chance
-        checkReferencesInModule(moduleA, "libA", expectedFileName)
-        checkReferencesInModule(moduleB, "libB", expectedFileName)
-    }
-
-    abstract fun createProjectLib(libraryName: String, withSources: Boolean): Library
-}
 
 class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMultipleLibrariesTest() {
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleReferenceResolve/sameJarInDifferentLibraries")
@@ -118,37 +89,8 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
         moduleC.addDependency(projectLibrary("libC", jarRoot))
 
         val expectedFile = File(getTestDataDirectory(), "expected.sources")
-        checkAnnotatedCode(findSourceFile(moduleA), expectedFile)
-        checkAnnotatedCode(findSourceFile(moduleB), expectedFile)
-        checkAnnotatedCode(findSourceFile(moduleC), expectedFile)
+        NavigationChecker.checkAnnotatedCode(findSourceFile(moduleA), expectedFile)
+        NavigationChecker.checkAnnotatedCode(findSourceFile(moduleB), expectedFile)
+        NavigationChecker.checkAnnotatedCode(findSourceFile(moduleC), expectedFile)
     }
-}
-
-abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase() {
-    abstract fun getTestDataDirectory(): File
-
-    protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, JavaModuleType.getModuleType(), true)
-
-    protected fun checkReferencesInModule(module: Module, libraryName: String, expectedFileName: String) {
-        checkAnnotatedCode(findSourceFile(module), File(getTestDataDirectory(), expectedFileName)) {
-            checkLibraryName(it, libraryName)
-        }
-    }
-}
-
-private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) {
-    val navigationFile = referenceTarget.navigationElement.containingFile ?: return
-    val libraryName = when (val libraryInfo = navigationFile.moduleInfoOrNull) {
-        is LibraryInfo -> libraryInfo.library.name
-        is LibrarySourceInfo -> libraryInfo.library.name
-        else -> error("Couldn't get library name")
-    }
-
-    Assert.assertEquals("Referenced code from unrelated library: ${(referenceTarget as? PsiNamedElement)?.name ?: referenceTarget.text}", expectedName, libraryName)
-}
-
-private fun findSourceFile(module: Module): PsiFile {
-    val ioFile = File(module.getModuleDir()).listFiles().orEmpty().first()
-    val vFile = LocalFileSystem.getInstance().findFileByIoFile(ioFile)!!
-    return PsiManager.getInstance(module.project).findFile(vFile)!!
 }

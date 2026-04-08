@@ -6,11 +6,13 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NotNull;
 
 // todo deprecate
 // cannot be interface due to backward compatibility
 public abstract class InspectionProjectProfileManager implements InspectionProfileManager {
+  @RequiresBlockingContext
   public static InspectionProjectProfileManager getInstance(@NotNull Project project) {
     return project.getService(InspectionProjectProfileManager.class);
   }

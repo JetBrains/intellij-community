@@ -171,6 +171,8 @@ internal class RunningCodexTuiSession(
     }
   }
 
+  fun isAlive(): Boolean = process.isAlive
+
   override fun close() {
     if (!closed.compareAndSet(false, true)) {
       return

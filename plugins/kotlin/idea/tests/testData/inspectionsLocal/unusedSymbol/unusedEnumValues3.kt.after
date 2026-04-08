@@ -1,4 +1,5 @@
 enum class Main {
+    ;
 
     enum class Test {
         A;

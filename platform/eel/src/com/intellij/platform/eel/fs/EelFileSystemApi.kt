@@ -553,7 +553,7 @@ interface EelFileSystemApi {
   suspend fun openForReadingAndWriting(@GeneratedBuilder options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
 
   @CheckReturnValue
-  suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, DeleteError>
+  suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, DeleteError>
 
   sealed interface DeleteError : EelFsError {
     interface DoesNotExist : DeleteError, EelFsError.DoesNotExist

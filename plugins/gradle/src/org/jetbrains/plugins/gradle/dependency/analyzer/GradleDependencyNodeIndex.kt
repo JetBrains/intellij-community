@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.deleteIfExists
@@ -96,10 +96,8 @@ class GradleDependencyNodeIndex(
       val json = taskOutputPath.readBytes()
       return GradleDependencyNodeDeserializer.fromJson(json)
     }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (_: Exception) {
+    catch (exception: Exception) {
+      rethrowControlFlowException(exception)
       return emptyList()
     }
     finally {

@@ -59,4 +59,11 @@ public class ElseStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNotNull() {
     doTest();
   }
+
+  public static class ModElseStatementPostfixTemplateTest extends ElseStatementPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

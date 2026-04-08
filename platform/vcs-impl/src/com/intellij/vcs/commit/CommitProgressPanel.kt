@@ -75,6 +75,7 @@ import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
+import kotlin.time.Duration.Companion.milliseconds
 
 private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
   text = errorText
@@ -91,7 +92,8 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 @OptIn(FlowPreview::class)
-open class CommitProgressPanel(project: Project, parentDisposable: Disposable) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+@ApiStatus.Internal
+open class CommitProgressPanel(project: Project, parentDisposable: Disposable) : CommitProgressUi, Disposable {
   private val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("CommitProgressPanel", Dispatchers.EDT)
 
   init {
@@ -114,8 +116,8 @@ open class CommitProgressPanel(project: Project, parentDisposable: Disposable) :
 
   private var announceCommitErrorAlarm: SingleAlarm? = null
 
-  override var isEmptyMessage by stateFlag()
-  override var isEmptyChanges by stateFlag()
+  override var isEmptyMessage: Boolean by stateFlag()
+  override var isEmptyChanges: Boolean by stateFlag()
 
   private val dumbModeFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override var isDumbMode: Boolean by dumbModeFlow::value
@@ -123,7 +125,7 @@ open class CommitProgressPanel(project: Project, parentDisposable: Disposable) :
 
   init {
     scope.launch {
-      dumbModeFlow.debounce(300).collect { update() }
+      dumbModeFlow.debounce(300.milliseconds).collect { update() }
     }
   }
 
@@ -141,8 +143,17 @@ open class CommitProgressPanel(project: Project, parentDisposable: Disposable) :
     panel.add(failuresPanel)
     panel.border = border
 
-    commitMessage.addDocumentListener(this)
-    commitWorkflowUi.addInclusionListener(this, this)
+    val documentListener = object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent): Unit = clearError()
+    }
+    commitMessage.addDocumentListener(documentListener)
+    Disposer.register(this, Disposable {
+      commitMessage.removeDocumentListener(documentListener)
+    })
+
+    commitWorkflowUi.addInclusionListener(object : InclusionListener {
+      override fun inclusionChanged(): Unit = clearError()
+    }, this)
 
     setupProgressVisibilityDelay()
     setupProgressSpinnerTooltip()
@@ -152,7 +163,7 @@ open class CommitProgressPanel(project: Project, parentDisposable: Disposable) :
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun setupProgressVisibilityDelay() {
     progressFlow
-      .debounce(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS)
+      .debounce(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds)
       .onEach { indicator ->
         if (indicator?.isRunning == true && failuresPanel.isEmpty()) {
           indicator.component.isVisible = true
@@ -271,10 +282,6 @@ open class CommitProgressPanel(project: Project, parentDisposable: Disposable) :
     shouldWarnAboutDumbMode = false
     update()
   }
-
-  override fun documentChanged(event: DocumentEvent) = clearError()
-
-  override fun inclusionChanged() = clearError()
 
   protected fun update() {
     if (!isDumbMode) {

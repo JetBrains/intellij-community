@@ -13,7 +13,7 @@ import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import com.intellij.util.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
@@ -358,21 +358,6 @@ object TestKotlinArtifacts {
      */
     @JvmStatic
     val kotlinStdlibNative: Path by lazy { getNativeLib(library = "klib/common/stdlib") }
-
-    @JvmStatic
-    val compilerTestDataDir: Path by lazy {
-        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-compiler-testdata-for-ide.jar")
-        val targetDir = Path.of(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2")
-        runBlocking {
-            extractFile(artifact, targetDir, communityRoot)
-        }
-        return@lazy targetDir
-    }
-
-    @JvmStatic
-    fun compilerTestData(compilerTestDataPath: String): String {
-        return compilerTestDataDir.resolve(compilerTestDataPath).pathString
-    }
 
     @JvmStatic
     val jpsPluginTestDataDir: Path by lazy {

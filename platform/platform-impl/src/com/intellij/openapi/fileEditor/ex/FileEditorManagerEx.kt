@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.openapi.components.serviceAsync
@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.DockContainer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -177,7 +178,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   /**
    * For external plugins use the [openFile] overload with [FileEditorOpenRequest] parameter.
    */
-  @ApiStatus.Internal
+  @Internal
   abstract fun openFile(file: VirtualFile,
                         window: EditorWindow?,
                         options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
@@ -185,7 +186,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   /**
    * For external plugins use the [openFile] overload with [FileEditorOpenRequest] parameter.
    */
-  @ApiStatus.Internal
+  @Internal
   abstract suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
 
   abstract fun isChanged(editor: EditorComposite): Boolean
@@ -206,7 +207,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     performWhenLoaded(editor, runnable)
   }
 
-  @ApiStatus.Internal
+  @Internal
   open suspend fun waitForTextEditors() {
   }
 }

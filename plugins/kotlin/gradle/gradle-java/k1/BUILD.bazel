@@ -163,6 +163,8 @@ jvm_library(
     "//java/openapi:java_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
@@ -260,6 +262,7 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/backend/workspace",
     "//platform/backend/workspace:workspace_test_lib",
     "@lib//:assert_j",
@@ -283,6 +286,7 @@ jvm_library(
   runtime_deps = [
     ":kotlin-gradle-gradle-java-k1-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.k1.tests` end

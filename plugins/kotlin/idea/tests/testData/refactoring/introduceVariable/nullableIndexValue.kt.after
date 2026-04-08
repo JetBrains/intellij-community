@@ -1,0 +1,6 @@
+val timestamps = listOf<Long>().toMutableList()
+
+fun get(time: Long): Long? {
+    val firstOrNull = timestamps.withIndex().firstOrNull { it.value >= time }
+    return 0
+}

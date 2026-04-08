@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -22,6 +23,14 @@ public abstract class BuildProcessParametersProvider {
    * @return list of paths to additional jars to be included to the build process classpath
    */
   public @NotNull Iterable<String> getClassPath() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Override this method and returns paths to JARs to include them at the beginning of the build process classpath
+   */
+  @ApiStatus.Internal
+  public @NotNull Iterable<String> getPrependedClassPath() {
     return Collections.emptyList();
   }
 

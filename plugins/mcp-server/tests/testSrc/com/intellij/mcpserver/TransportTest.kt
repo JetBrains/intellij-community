@@ -34,6 +34,7 @@ import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
@@ -62,6 +63,22 @@ class TransportTest {
 
   @ParameterizedTest
   @MethodSource("getTransports")
+  fun list_tools_has_title(transport: TransportHolder) = transportTest(transport) { client ->
+    delay(500.milliseconds)
+    Disposer.newDisposable().use { disposable ->
+      application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
+        override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
+      }, disposable)
+      delay(500.milliseconds)
+
+      val tool = client.listTools().tools.single { it.name == "test_tool" }
+      assertEquals("Test title", tool.title)
+    }
+    delay(500.milliseconds)
+  }
+
+  @ParameterizedTest
+  @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
     delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
@@ -81,7 +98,7 @@ class TransportTest {
 
   val projectFromTool = CompletableDeferred<Project?>()
 
-  @com.intellij.mcpserver.annotations.McpTool
+  @com.intellij.mcpserver.annotations.McpTool(title = "Test title")
   @McpDescription("Test description")
   suspend fun test_tool() {
     projectFromTool.complete(currentCoroutineContext().projectOrNull)

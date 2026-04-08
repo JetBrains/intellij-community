@@ -24,6 +24,7 @@ import java.awt.IllegalComponentStateException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
+import java.lang.reflect.Type
 import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.ConcurrentHashMap
 import javax.management.AttributeNotFoundException
@@ -167,6 +168,11 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
     if (value is Ref) {
       if (Ref::class.java.isAssignableFrom(method.returnType)) return value
 
+      // kotlin.Pair can't be proxied (final class, no @Remote), so eagerly fetch .first/.second via remote calls
+      if (Pair::class.java.isAssignableFrom(method.returnType)) {
+        return resolvePair(value, method.genericReturnType, pluginId)
+      }
+
       return refBridge(method.returnType, value, pluginId)
     }
 
@@ -175,10 +181,15 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
 
       if (Collection::class.java.isAssignableFrom(method.returnType)) {
         val parameterizedType = method.genericReturnType as? ParameterizedType ?: return value.items
-        val componentType = parameterizedType.actualTypeArguments.firstOrNull() as? Class<*>
-                            ?: return value.items
+        // Handle both Class (e.g., List<Foo>) and ParameterizedType (e.g., List<Pair<A, B>>) component types
+        val componentTypeArg = parameterizedType.actualTypeArguments.firstOrNull() ?: return value.items
+        val componentClass = extractClass(componentTypeArg) ?: return value.items
 
-        return value.items.map { refBridge(componentType, it, pluginId) }
+        if (Pair::class.java.isAssignableFrom(componentClass)) {
+          return value.items.map { resolvePair(it, componentTypeArg, pluginId) }
+        }
+
+        return value.items.map { refBridge(componentClass, it, pluginId) }
       }
 
       if (method.returnType.isArray) {
@@ -194,6 +205,82 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, overrid
     }
 
     return value // let's hope we will be able to cast it
+  }
+
+  /**
+   * Extracts the raw [Class] from a [Type], handling both plain [Class] and [ParameterizedType]
+   * (e.g., `Pair<TaskInfo, ProgressModel>` → `Pair`).
+   */
+  private fun extractClass(type: Type): Class<*>? {
+    return when (type) {
+      is Class<*> -> type
+      is ParameterizedType -> type.rawType as? Class<*>
+      else -> null
+    }
+  }
+
+  /**
+   * Resolves a remote [kotlin.Pair] reference into a local [Pair] by making two remote calls
+   * to fetch [Pair.first] and [Pair.second], then bridging each component to the expected type.
+   *
+   * This is needed because [kotlin.Pair] is a final class without `@Remote` annotation,
+   * so it can't be proxied via [refBridge]. Instead, we eagerly fetch its components.
+   *
+   * @param ref remote reference pointing to a `kotlin.Pair` instance on the server
+   * @param genericType the full generic type (e.g., `Pair<TaskInfo?, ProgressModel?>`)
+   *   used to determine the expected types of [Pair.first] and [Pair.second]
+   */
+  private fun resolvePair(ref: Ref, genericType: Type?, pluginId: String?): Pair<Any?, Any?> {
+    val parameterizedType = genericType as? ParameterizedType
+
+    val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
+    val className = Pair::class.java.name
+
+    val firstType = parameterizedType?.actualTypeArguments?.getOrNull(0)
+    val first = bridgeResult(
+      makeCall(RefCall(sessionId, null, null, dispatcher, semantics, className, "getFirst", emptyArray(), ref)),
+      firstType, pluginId)
+
+    val secondType = parameterizedType?.actualTypeArguments?.getOrNull(1)
+    val second = bridgeResult(
+      makeCall(RefCall(sessionId, null, null, dispatcher, semantics, className, "getSecond", emptyArray(), ref)),
+      secondType, pluginId)
+
+    return Pair(first, second)
+  }
+
+  /**
+   * Converts a [RemoteCallResult] to the given [targetType].
+   * Similar to [convertResult] but accepts a [Type] instead of a [Method],
+   * used by [resolvePair] to bridge individual Pair components.
+   */
+  private fun bridgeResult(callResult: RemoteCallResult, targetType: Type?, pluginId: String?): Any? {
+    val value = callResult.value ?: return null
+    if (RemoteCall.isPassByValue(value)) return value
+
+    val targetClass = targetType?.let { extractClass(it) }
+
+    if (value is Ref) {
+      if (targetClass != null && Pair::class.java.isAssignableFrom(targetClass)) {
+        return resolvePair(value, targetType, pluginId)
+      }
+      if (targetClass != null) {
+        return refBridge(targetClass, value, pluginId)
+      }
+      return value
+    }
+
+    if (value is RefList && targetClass != null && Collection::class.java.isAssignableFrom(targetClass)) {
+      val parameterizedType = targetType as? ParameterizedType ?: return value.items
+      val componentTypeArg = parameterizedType.actualTypeArguments.firstOrNull() ?: return value.items
+      val componentClass = extractClass(componentTypeArg) ?: return value.items
+      if (Pair::class.java.isAssignableFrom(componentClass)) {
+        return value.items.map { resolvePair(it, componentTypeArg, pluginId) }
+      }
+      return value.items.map { refBridge(componentClass, it, pluginId) }
+    }
+
+    return value
   }
 
   private fun getPluginId(remote: Remote): String? {

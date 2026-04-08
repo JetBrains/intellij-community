@@ -31,6 +31,7 @@ jvm_library(
     "//platform/lang-impl/backend",
     "//platform/pluginManager/backend",
     "//platform/backend/workspace.impl",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -65,6 +66,7 @@ jvm_library(
     "//platform/lang-impl/backend:backend_test_lib",
     "//platform/pluginManager/backend:backend_test_lib",
     "//platform/backend/workspace.impl:workspace.impl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

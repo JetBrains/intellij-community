@@ -59,6 +59,7 @@ class TerminalSessionsManager {
       shellCommand = configuredOptions.shellCommand!!,
       workingDirectory = configuredOptions.workingDirectory!!,
       envVariables = configuredOptions.envVariables,
+      processType = configuredOptions.processType,
       pid = getLocalPid(ttyConnector),
     )
     val stateAwareSession = StateAwareTerminalSession(project, jediTermSession, ttyConnector.eelDescriptor, options, scope)

@@ -26,14 +26,14 @@ public final class SpringLoadedPositionManagerFactory extends PositionManagerFac
     Boolean force = process.getProcessHandler().getUserData(FORCE_SPRINGLOADED);
     if (force == Boolean.TRUE) return true;
 
-    if (ReadAction.compute(()->{
+    if (ReadAction.nonBlocking(() -> {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(process.getProject());
       if (facade.findPackage("com.springsource.loaded") != null ||
           facade.findPackage("org.springsource.loaded") != null) {
         return true;
       }
       return false;
-    })) {
+    }).inSmartMode(process.getProject()).executeSynchronously()) {
       return true;
     }
 

@@ -90,6 +90,9 @@ com.intellij.ide.plugins.PluginUtil
 - a:findPluginId(java.lang.Throwable):com.intellij.openapi.extensions.PluginId
 - a:findPluginName(com.intellij.openapi.extensions.PluginId):java.lang.String
 - s:getInstance():com.intellij.ide.plugins.PluginUtil
+a:com.intellij.ide.util.PsiNavigationSupport
+- openDirectoryInSystemFileManager(java.io.File):V
+- a:openDirectoryInSystemFileManager(java.nio.file.Path):V
 com.intellij.injected.editor.DocumentWindow
 - com.intellij.openapi.editor.Document
 - a:areRangesEqual(com.intellij.injected.editor.DocumentWindow):Z
@@ -196,6 +199,9 @@ com.intellij.lang.LighterLazyParseableNode
 - a:getCharTable():com.intellij.util.CharTable
 - a:getContainingFile():com.intellij.psi.PsiFile
 - a:getText():java.lang.CharSequence
+a:com.intellij.lang.MetaLanguage
+com.intellij.lang.MetaLanguageProvider
+- a:getLanguage():com.intellij.lang.MetaLanguage
 com.intellij.lang.ParserDefinition
 - a:createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
 - a:createFile(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiFile
@@ -536,6 +542,10 @@ com.intellij.openapi.command.undo.UndoConstants
 - sf:DONT_RECORD_UNDO:com.intellij.openapi.util.Key
 com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.BaseComponent
+com.intellij.openapi.components.ComponentManagerEx
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.ComponentManager
+- getServiceAsync(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.components.ExportableApplicationComponent
 - com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.ExportableComponent
@@ -783,6 +793,7 @@ f:com.intellij.openapi.progress.CoroutinesKt
 - sf:coroutineToIndicator(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runBlockingMaybeCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption

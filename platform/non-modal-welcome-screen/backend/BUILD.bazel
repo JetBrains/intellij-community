@@ -21,6 +21,7 @@ jvm_library(
     "//platform/kernel/rpc.backend",
     "//platform/project/shared:project",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
     "//platform/core-ui",
   ]
 )
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     "//platform/project/shared:project_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
   ]
 )

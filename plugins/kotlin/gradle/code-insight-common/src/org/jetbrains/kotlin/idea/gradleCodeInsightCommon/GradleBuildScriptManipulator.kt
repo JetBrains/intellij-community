@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
+import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
@@ -81,6 +82,12 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         scope: DependencyScope,
         libraryDescriptor: ExternalLibraryDescriptor
     )
+
+    fun addKotlinLibraryToModuleBuildScriptModCommand(
+        targetModule: Module?,
+        scope: DependencyScope,
+        libraryDescriptor: ExternalLibraryDescriptor
+    ): ModCommand = ModCommand.nop()
 
     fun getKotlinStdlibVersion(): String?
 

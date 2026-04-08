@@ -38,6 +38,7 @@ jvm_library(
     "//platform/refactoring",
     "//plugins/kotlin/base/psi",
     "//platform/usageView",
+    "//platform/lang-api:lang",
     "//plugins/kotlin/base/util",
     "//java/java-psi-api:psi",
     "//platform/core-api:core",
@@ -69,13 +70,18 @@ jvm_library(
     "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
     "//platform/util/text-matching",
+    "//platform/util:util-ui",
     "//plugins/kotlin/base/indices",
     "//libraries/fastutil",
     "//plugins/kotlin/j2k/shared",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//plugins/kotlin/kotlin.ide",
     "//platform/forms_rt:java-guiForms-rt",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/util/concurrency",
+    "//platform/statistics",
   ]
 )
 
@@ -96,6 +102,7 @@ jvm_library(
     "//platform/refactoring:refactoring_test_lib",
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//platform/usageView:usageView_test_lib",
+    "//platform/lang-api:lang_test_lib",
     "//plugins/kotlin/base/util:util_test_lib",
     "//java/java-psi-api:psi_test_lib",
     "//platform/core-api:core_test_lib",
@@ -123,13 +130,18 @@ jvm_library(
     "//libraries/guava:guava_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move_test_lib",
     "//platform/util/text-matching:text-matching_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//plugins/kotlin/j2k/shared:shared_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings` end

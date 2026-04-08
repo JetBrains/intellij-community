@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
 import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
+import com.intellij.openapi.vcs.merge.MergeDialogContext
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vcs.merge.MergeUIUtil
@@ -87,6 +89,7 @@ internal class IterativeMergeFlowDelegate(
   private val project: Project,
   private val iterativeDataHolder: MergeConflictIterativeDataHolder,
   private val table: MergeConflictsTreeTable,
+  private val tableComponent: JComponent,
   private val columnNames: List<String>,
   private val mergeDialogCustomizer: MergeDialogCustomizer,
   private val rootPane: JRootPane,
@@ -98,6 +101,7 @@ internal class IterativeMergeFlowDelegate(
   private val resolveAutomatically: () -> Unit,
   private val getGroupByDirectory: () -> Boolean,
   private val updateTable: () -> Unit,
+  private val getMergeDialogContext: () -> MergeDialogContext?,
 ) : MergeFlowDelegate {
 
   private lateinit var descriptionLabel: JLabel
@@ -160,12 +164,13 @@ internal class IterativeMergeFlowDelegate(
             icon = AllIcons.Diff.MagicResolve
           }.align(AlignX.LEFT).component
 
-        cell(createToolbar().component)
+        cell(createResolveActionsToolbar())
+        cell(createViewOptionsToolbar().component)
           .align(AlignX.RIGHT)
       }
 
       row {
-        scrollCell(JLayer(table, DisabledStateLayerUI(table)))
+        scrollCell(JLayer(tableComponent, DisabledStateLayerUI(table)))
           .align(Align.FILL)
       }.resizableRow()
     }.apply {
@@ -215,7 +220,24 @@ internal class IterativeMergeFlowDelegate(
     }.customize(UnscaledGapsY(top = 32))
   }
 
-  private fun createToolbar(): ActionToolbar {
+  private fun createResolveActionsToolbar(): JComponent {
+    val group = ActionManager.getInstance().getAction("Merge.Dialog.Iterative.ResolveActions") as? DefaultActionGroup
+                ?: return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, DefaultActionGroup(), true).apply {
+                  setTargetComponent(table)
+                }.component
+    val mergeDialogContext = getMergeDialogContext()
+                             ?: return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, DefaultActionGroup(), true).apply {
+                               setTargetComponent(table)
+                             }.component
+    val toolbar = ActionManager.getInstance()
+      .createActionToolbar("Merge.Dialog.Iterative", group, true)
+      .apply { setTargetComponent(table) }
+    return UiDataProvider.wrapComponent(toolbar.component) { sink ->
+      sink[MergeDialogContext.KEY] = mergeDialogContext
+    }
+  }
+
+  private fun createViewOptionsToolbar(): ActionToolbar {
     val viewOptionsGroup = DefaultActionGroup(IdeBundle.message("group.view.options"), true).apply {
       templatePresentation.icon = AllIcons.Actions.Show
       add(object : DumbAwareToggleAction(VcsBundle.messagePointer("multiple.file.merge.group.by.directory.checkbox"),
@@ -636,7 +658,7 @@ private data class IterativeMergeDialogState(
   val allFilesResolvedAndReviewed: Boolean,
 )
 
-private class DisabledStateLayerUI(private val table: MergeConflictsTreeTable) : LayerUI<MergeConflictsTreeTable>() {
+private class DisabledStateLayerUI(private val table: MergeConflictsTreeTable) : LayerUI<JComponent>() {
   override fun paint(g: Graphics, layer: JComponent) {
     super.paint(g, layer)
     if (!table.isEnabled) {

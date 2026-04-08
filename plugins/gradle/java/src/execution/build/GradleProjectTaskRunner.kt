@@ -10,6 +10,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -53,8 +54,6 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readLines
@@ -73,14 +72,22 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
   private val mutex = Mutex()
 
   override fun run(project: Project, context: ProjectTaskContext, vararg tasks: ProjectTask): Promise<Result> {
-    return project.gradleCoroutineScope.async {
+    return project.gradleCoroutineScope.async<Result> {
       mutex.withLock {
-        run(project, context, tasks.asList())
+        try {
+          run(project, context, tasks.asList())
+          SUCCESS
+        }
+        catch (exception: Exception) {
+          // Platform automatically converts only control flow exceptions
+          rethrowControlFlowException(exception)
+          FAILURE
+        }
       }
     }.asCompletableFuture().asPromise()
   }
 
-  private suspend fun run(project: Project, context: ProjectTaskContext, tasks: List<ProjectTask>): Result {
+  private suspend fun run(project: Project, context: ProjectTaskContext, tasks: List<ProjectTask>) {
     val taskOutputEelPath = if (context.isCollectionOfGeneratedFilesEnabled) createTaskOutputFile(project) else null
     val taskOutputPath = taskOutputEelPath?.asNioPath()
     try {
@@ -92,10 +99,8 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
 
       if (settings.rootPaths.isEmpty()) {
         LOG.warn("Nothing will be run for $tasks")
-        return SUCCESS
+        return
       }
-
-      val errors = AtomicInteger()
 
       coroutineScope {
         for (rootProjectPath in settings.rootPaths) {
@@ -111,30 +116,24 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
           }
 
           launch {
-            try {
-              TaskExecutionUtil.runTask(
-                TaskExecutionSpec.create()
-                  .withProject(project)
-                  .withSystemId(SYSTEM_ID)
-                  .withSettings(ExternalSystemTaskExecutionSettings().also {
-                    it.executionName = GradleBundle.message("gradle.execution.name.build.project.", Path(rootProjectPath).fileName)
-                    it.externalSystemIdString = SYSTEM_ID.id
-                    it.externalProjectPath = rootProjectPath
-                    it.taskNames = tasksToExecute
-                  })
-                  .withUserData(UserDataHolderBase().also {
-                    it.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager::class.java)
-                    it.putUserData(VERSION_SPECIFIC_SCRIPTS_KEY, settings.getVersionedInitScripts(rootProjectPath))
-                    it.putUserData(INIT_SCRIPT_KEY, settings.getInitScript(rootProjectPath))
-                    it.putUserData(INIT_SCRIPT_PREFIX_KEY, BUILD_INIT_SCRIPT_NAME)
-                  })
-                  .withActivateToolWindowOnFailure(!context.isAutoRun)
-              )
-            } catch (cancellationException: CancellationException) {
-              throw cancellationException
-            } catch (e: Exception) {
-              errors.incrementAndGet();
-            }
+            TaskExecutionUtil.runTask(
+              TaskExecutionSpec.create()
+                .withProject(project)
+                .withSystemId(SYSTEM_ID)
+                .withSettings(ExternalSystemTaskExecutionSettings().also {
+                  it.executionName = GradleBundle.message("gradle.execution.name.build.project.", Path(rootProjectPath).fileName)
+                  it.externalSystemIdString = SYSTEM_ID.id
+                  it.externalProjectPath = rootProjectPath
+                  it.taskNames = tasksToExecute
+                })
+                .withUserData(UserDataHolderBase().also {
+                  it.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager::class.java)
+                  it.putUserData(VERSION_SPECIFIC_SCRIPTS_KEY, settings.getVersionedInitScripts(rootProjectPath))
+                  it.putUserData(INIT_SCRIPT_KEY, settings.getInitScript(rootProjectPath))
+                  it.putUserData(INIT_SCRIPT_PREFIX_KEY, BUILD_INIT_SCRIPT_NAME)
+                })
+                .withActivateToolWindowOnFailure(!context.isAutoRun)
+            )
           }
         }
       }
@@ -151,7 +150,6 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
         CompilerUtil.refreshOutputRoots(affectedRoots)
       }
-      return if (errors.get() == 0) SUCCESS else FAILURE
     }
     finally {
       taskOutputPath?.deleteIfExists()

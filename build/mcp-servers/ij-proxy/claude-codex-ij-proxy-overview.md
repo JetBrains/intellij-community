@@ -14,9 +14,9 @@ Note: The proxy exposes search shims only when upstream does not provide the sam
 
 ## Comparison table
 
-- Tool naming: Claude Code uses TitleCase (`Read`/`Edit`/`Write`), Codex uses snake_case (`read_file`/`grep`/`find`), JetBrains MCP uses JB-style names (`get_file_text_by_path`), and ij-proxy uses snake_case.
-- Read: Claude Code `Read` supports absolute path + offset/limit; Codex uses `read_file` with indentation mode; JetBrains MCP uses `get_file_text_by_path`; ij-proxy exposes `read_file`.
-- Indentation: available in Codex; not available in native Claude Code or native JetBrains MCP; exposed by ij-proxy via `read_file`.
+- Tool naming: Claude Code uses TitleCase (`Read`/`Edit`/`Write`), Codex uses snake_case (`read_file`/`grep`/`find`), JetBrains MCP uses snake_case tool names such as `read_file`, and ij-proxy uses snake_case.
+- Read: Claude Code `Read` supports absolute path + offset/limit; Codex uses `read_file`; JetBrains MCP uses `read_file`; ij-proxy exposes `read_file` with the JetBrains MCP shape when it needs to shim older upstream IDEs.
+- Indentation: available in Codex and JetBrains MCP `read_file`; ij-proxy exposes the same mode when it needs to emulate upstream behavior.
 - Directory listing: Codex has `list_dir`; JetBrains MCP has `list_directory_tree`; Claude Code capture had none; ij-proxy exposes `list_dir`.
 - File discovery: Claude Code uses glob; JetBrains MCP uses `search_file`; Codex relies on directory listing; ij-proxy exposes `list_dir` and `search_file`.
 - Search output: Claude Code uses Grep; Codex uses grep/find; JetBrains MCP uses structured `search_*`; ij-proxy normalizes to `search_text`/`search_regex`/`search_file`/`search_symbol` when shims are active.
@@ -31,12 +31,12 @@ Note: The proxy exposes search shims only when upstream does not provide the sam
 - Upstream JetBrains MCP uses project-relative paths and structured search entries; the proxy returns plain text outputs.
 - The proxy exposes `search_*` shims only when upstream does not provide the same tools; otherwise it passes upstream search tools through unchanged.
 - Codex relies on apply_patch for edits; Claude Code uses string replacement, and the proxy follows Codex-style edit flows.
-- Indentation-aware reads are Codex-style and exposed via `read_file`.
+- Indentation-aware reads now follow the JetBrains MCP `read_file` schema and are exposed via `read_file`.
 
 ## References
 
 - Claude Code capture: `community/build/mcp-servers/ij-proxy/cc-tools.json`
-- JetBrains MCP server: `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/TextToolset.kt`,
+- JetBrains MCP server: `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt`,
   `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/FileToolset.kt`
 - JetBrains MCP proxy: `community/build/mcp-servers/ij-proxy/README.md`,
   `community/build/mcp-servers/ij-proxy/project-path.ts`,

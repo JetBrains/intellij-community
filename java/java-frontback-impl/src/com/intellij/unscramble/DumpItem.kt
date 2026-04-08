@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.util.Objects
 import javax.swing.Icon
-import kotlin.compareTo
 
 @ApiStatus.Internal
 interface DumpItem {
@@ -21,13 +20,6 @@ interface DumpItem {
   val stateDesc: @NlsSafe String
 
   val stackTrace: @NlsSafe String
-
-  /**
-   * Serialized [stackTrace] used when exporting the [DumpItem].
-   * Defaults to the same text that is shown in the UI.
-   */
-  val exportedStackTrace: String
-    get() = stackTrace
 
   val interestLevel: Int
 
@@ -64,6 +56,12 @@ interface DumpItem {
    * May be used in the UI to hide some items from the dump.
    */
   val canBeHidden: Boolean
+
+  /**
+   * Serialized representation used when exporting the [DumpItem].
+   * It may differ from [stackTrace] when export requires additional inline metadata.
+   */
+  fun serialize(): @NlsSafe String
 
   companion object {
     @JvmField
@@ -284,6 +282,18 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
 
   override val mergeableToken: MergeableToken get() = JavaMergeableToken()
 
+  override fun serialize(): @NlsSafe String {
+    val separatedText = splitFirstLineAndBody(stackTrace)
+    return serializeThreadDumpItem(
+      itemHeader = separatedText.firstLine,
+      stackTraceBody = separatedText.body,
+      id = treeId,
+      parentId = parentTreeId,
+      type = threadState.type,
+      additionalMetadata = threadState.metadata,
+    )
+  }
+
   private inner class JavaMergeableToken : MergeableToken {
     private val comparableStackTrace: String =
       stackTrace.substringAfter("\n").replace("<0x\\d+>\\s".toRegex(), "<merged>")
@@ -303,7 +313,6 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
-      if (this.item.parentTreeId != other.item.parentTreeId) return false
       return true
     }
 
@@ -317,8 +326,7 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
         threadState.extraState,
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
-        comparableStackTrace,
-        parentTreeId
+        comparableStackTrace
       )
     }
   }
@@ -345,7 +353,7 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
   override val interestLevel: Int
     get() = Int.MAX_VALUE // todo dependent on the number of children, for now kept on top
   override val icon: Icon
-    get() = IconsCache.getIconWithVirtualOverlay(AllIcons.Debugger.ThreadGroup)
+    get() = AllIcons.Debugger.ThreadGroup
   override val iconToolTip: @Nls String
     get() = JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.container")
   override val isDeadLocked: Boolean
@@ -355,11 +363,21 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
 
   override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 
+  override fun serialize(): @NlsSafe String =
+    serializeThreadDumpItem(
+      itemHeader = "\"$containerName\" tid=0x0 nid=NA container",
+      // add "Carrying virtual thread" so old ThreadDumpParser will parse it as thread group, not as a runnable thread.
+      stackTraceBody = "   Carrying virtual thread #0",
+      id = treeId,
+      parentId = parentTreeId,
+      type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+    )
+
   companion object {
     // see jdk.internal.vm.ThreadContainers.RootContainer.name
     const val ROOT = "<root>"
     const val THREADS_ROOT_CONTAINER = "Root Container"
-    const val JUC_PACKAGE = "java.util.concurrent"
+    const val JUC_PACKAGE = "java.util.concurrent."
 
     fun formatThreadContainerName(name: String) = when {
       name == ROOT -> THREADS_ROOT_CONTAINER
@@ -401,4 +419,6 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
     get() = null
 
   override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+  override fun serialize(): @NlsSafe String = details
 }

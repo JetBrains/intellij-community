@@ -57,6 +57,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//platform/statistics",
     "//java/openapi:java",
+    "//java/java-psi-api:psi",
     "//java/java-indexing-impl:indexing-impl",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
@@ -67,6 +68,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/code-style-impl:codeStyle-impl",
     "//java/manifest",
     "//platform/util-class-loader:util-classLoader",
@@ -75,6 +77,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//java/codeserver/core",
+    "//java/java-frontback-psi-api:frontback-psi",
   ]
 )
 
@@ -113,6 +116,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//java/java-indexing-impl:indexing-impl_test_lib",
     "//xml/xml-psi-api:psi_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
@@ -123,6 +127,7 @@ jvm_library(
     "//java/java-impl:impl_test_lib",
     "//xml/xml-psi-impl:psi-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//java/manifest:manifest_test_lib",
     "//platform/util-class-loader:util-classLoader_test_lib",
@@ -131,6 +136,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api:api_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
     "//java/codeserver/core:core_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.core` end

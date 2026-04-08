@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.cache.AsyncRecoveryResult
 import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.ide.actions.cache.ReopenProjectRecoveryAction
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -20,7 +21,7 @@ class WorkspaceModelRecoveryAction : ReopenProjectRecoveryAction() {
     get() = "reload-workspace-model"
 
   override suspend fun performAsync(recoveryScope: RecoveryScope): AsyncRecoveryResult {
-    WorkspaceModelCacheImpl.invalidateCaches()
+    WorkspaceModelCache.getInstance(recoveryScope.project)?.invalidateCaches()
 
     val projectPath = closeProject(recoveryScope)
 

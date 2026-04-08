@@ -733,6 +733,30 @@ public final class PyUtil {
     return statement != null ? statement.getExpression() : null;
   }
 
+  /**
+   * Returns the contextual PSI element if the given element is inside a {@link PyExpressionCodeFragment},
+   * created by {@link PyUtil#createExpressionFromFragment}, otherwise the element itself is returned.
+   */
+  public static @Nullable PsiElement getFragmentContext(@Nullable PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyExpressionCodeFragment.class) == null
+           ? element
+           : element.getContainingFile().getContext();
+  }
+
+  /**
+   * Returns the parent of the given element.
+   * Supports parent boundary transition if the given element is inside a {@link PyExpressionCodeFragment}
+   * created by {@link PyUtil#createExpressionFromFragment}.
+   */
+  public static @Nullable PsiElement getFragmentContextAwareParent(@Nullable PsiElement element) {
+    if (element == null) return null;
+    if (element.getParent() == null) return null;
+    if (element.getParent().getParent() instanceof PyExpressionCodeFragment) {
+      return element.getContainingFile().getContext();
+    }
+    return element.getParent();
+  }
+
   public static boolean isRoot(PsiFileSystemItem directory) {
     if (directory == null) return true;
     VirtualFile vFile = directory.getVirtualFile();

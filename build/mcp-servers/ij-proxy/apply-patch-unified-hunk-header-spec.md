@@ -80,6 +80,6 @@
 
 ## Validation Commands
 
-- `./tests.cmd -Dintellij.build.test.patterns=com.intellij.mcpserver.toolsets.general.PatchApplyEngineTest`
-- `./tests.cmd -Dintellij.build.test.patterns=com.intellij.mcpserver.toolsets.PatchToolsetTest -Dintellij.build.test.main.module=intellij.mcpserver.tests`
+- `./tests.cmd --module intellij.mcpserver.tests --test com.intellij.mcpserver.toolsets.general.PatchApplyEngineTest`
+- `./tests.cmd --module intellij.mcpserver.tests --test com.intellij.mcpserver.toolsets.PatchToolsetTest`
 - `cd community/build/mcp-servers/ij-proxy && bun run build && bun test`

@@ -16,6 +16,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
@@ -27,6 +28,7 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
   </dependencies>
@@ -415,6 +417,8 @@
             icon="AllIcons.Table.Pagination"/>
     <action id="Console.TableResult.EditMaximized.MoveToRight" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToRightAction" icon="AllIcons.Actions.MoveToRightTop"/>
     <action id="Console.TableResult.EditMaximized.MoveToBottom" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToBottomAction" icon="AllIcons.Actions.MoveToBottomRight"/>
+    <action id="Console.TableResult.EditMaximized.ArrayGrid.ToggleHideDeleted"
+            class="com.intellij.database.actions.ToggleHideDeletedInArrayAction"/>
     <group id="Console.TableResult.EditMaximized.Value.Group">
       <action id="Console.TableResult.EditMaximized.ToggleFormattedMode" class="com.intellij.database.actions.ToggleFormattedModeInEditMaximize" icon="AllIcons.Actions.PrettyPrint"/>
       <action id="Console.TableResult.EditMaximized.ToggleSoftWrap" class="com.intellij.database.actions.ToggleSoftWrapsInEditMaximize" icon="AllIcons.Actions.ToggleSoftWrap"/>
@@ -422,6 +426,8 @@
       <group popup="true" icon="AllIcons.General.GearPlain">
         <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
         <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+        <separator/>
+        <reference ref="Console.TableResult.EditMaximized.ArrayGrid.ToggleHideDeleted"/>
       </group>
       <reference ref="Console.TableResult.HideEditMaximized"/>
     </group>

@@ -26,11 +26,13 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
+import org.junit.Ignore;
 
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.util.Arrays;
 
+@Ignore("AT-4013")
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
 

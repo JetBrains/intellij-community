@@ -45,8 +45,8 @@ internal fun GraphScope.hasPluginSource(moduleId: Int): Boolean {
 /**
  * Check whether module is embedded in a specific product scope.
  *
- * Returns true only if the module has at least one source reachable from this product
- * (product/module-set or bundled plugin content) and every such source has EMBEDDED loading.
+ * Returns true only if the module has at least one non-plugin source reachable from this product
+ * (product/module-set) and every such source has EMBEDDED loading.
  */
 internal fun GraphScope.isEmbeddedInProduct(module: ContentModuleNode, productName: String): Boolean {
   val product = product(productName) ?: return false
@@ -55,30 +55,7 @@ internal fun GraphScope.isEmbeddedInProduct(module: ContentModuleNode, productNa
 
   module.contentProductionSources { source ->
     when (source.kind) {
-      ContentSourceKind.PLUGIN -> {
-        val sourcePlugin = source.plugin()
-        var bundledInProduct = false
-        product.bundles { bundledPlugin ->
-          if (bundledPlugin.id == sourcePlugin.id) {
-            bundledInProduct = true
-          }
-        }
-
-        if (!bundledInProduct) {
-          return@contentProductionSources
-        }
-
-        hasSourceInProduct = true
-        var loading: ModuleLoadingRuleValue? = null
-        sourcePlugin.containsContent { contentModule, mode ->
-          if (contentModule == module) {
-            loading = mode
-          }
-        }
-        if (loading != ModuleLoadingRuleValue.EMBEDDED) {
-          allEmbedded = false
-        }
-      }
+      ContentSourceKind.PLUGIN -> {}
       ContentSourceKind.PRODUCT -> {
         val sourceProduct = source.product()
         if (sourceProduct.id != product.id) return@contentProductionSources

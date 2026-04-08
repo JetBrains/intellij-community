@@ -389,7 +389,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
         getSegments().addSegment(segmentOffset, segmentOffset);
       }
-
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
       calcResults(false);
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
@@ -1033,7 +1032,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         offset = myTemplateRange.getEndOffset();
       }
     }
-
     if (!isInteractiveModeSupported() && getCurrentVariableNumber() > -1) {
       offset = -1; //do not move caret in multicaret mode if at least one tab had been made already
     }

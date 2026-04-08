@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.view
 
 import com.intellij.openapi.Disposable
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel.Companion.DATA_KEY
 
 /**
  * A read-only view of the contents of the terminal screen and history buffer.
@@ -27,8 +26,9 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel.Companion.DATA_KE
  * In remote development scenarios, when the frontend reconnects to the backend and the state is reset
  * to whatever state the backend model had at the moment when the frontend connected.
  *
- * The interface provides a read-only view, but the model itself is mutable and therefore should only be accessed on the mutating thread,
- * which is currently the EDT. Model listeners (see [addListener]) are synchronous and therefore the model can be safely accessed from listeners.
+ * The interface provides a read-only view, but the model itself is mutable and therefore should only be accessed on the EDT.
+ * Use `Dispatchers.UI` (not `Dispatchers.EDT`) for coroutine-based access, as no platform model (PSI/VFS/Document) locking is needed.
+ * Model listeners (see [addListener]) are synchronous and therefore the model can be safely accessed from listeners.
  * If background access is needed (for example, for some CPU-intensive processing), it's possible to take a snapshot using [takeSnapshot].
  *
  * In most environments, a running terminal session provides two models: one for the main buffer and one for the alternate buffer

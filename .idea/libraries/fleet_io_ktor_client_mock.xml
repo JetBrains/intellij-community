@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.client.mock" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-mock-jvm:3.3.2">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-mock-jvm:3.4.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2.jar">
-          <sha256sum>85304717327b3156ad1f9d5f081090d330147ffc185599b05235d01d45168f02</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.4.1/ktor-client-mock-jvm-3.4.1.jar">
+          <sha256sum>bca773ac50f2533ee066ee0cb5808a4e937431b433426ab5b0f4bccccb073d30</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.4.1/ktor-client-mock-jvm-3.4.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.4.1/ktor-client-mock-jvm-3.4.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.3.2/ktor-client-mock-jvm-3.3.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/3.4.1/ktor-client-mock-jvm-3.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

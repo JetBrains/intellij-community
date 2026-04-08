@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentUnavailableException
@@ -74,19 +73,19 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
    */
   open suspend fun isExpectedProcessExit(exitCode: Int): Boolean = exitCode == 0
 
-  final override suspend fun <T : IjentApi> createIjentSession(): IjentSession<T> =
+  override suspend fun createIjentSession(): IjentSession.Posix =
     try {
       val targetPlatform = getTargetPlatform()
       val connectionStrategy = getConnectionStrategy()
       val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
 
-      createIjentSession(IjentConnectionContext(
+      IjentSessionProvider.instanceAsync().connect(IjentConnectionContext(
         mediator = mediator,
         targetPlatform = targetPlatform,
         remoteBinaryPath = remotePathToBinary,
         connectionStrategy = connectionStrategy,
-      ))
+      )) as IjentSession.Posix
     }
     finally {
       close()

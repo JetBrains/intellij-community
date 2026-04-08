@@ -49,6 +49,10 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     setPaintFocusBorder(hasFocus);
     customizeCellRenderer(list, value, index, selected, hasFocus);
 
+    if (!selected) {
+      UIUtil.applyDeprecatedBackground(this);
+    }
+
     return this;
   }
 

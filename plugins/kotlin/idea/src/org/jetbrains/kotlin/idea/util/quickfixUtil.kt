@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -22,13 +24,19 @@ import org.jetbrains.kotlin.utils.ifEmpty
 @K1Deprecation
 inline fun <reified T : PsiElement> Diagnostic.createIntentionForFirstParentOfType(
     factory: (T) -> KotlinQuickFixAction<T>?
-) = psiElement.getNonStrictParentOfType<T>()?.let(factory)
+): KotlinQuickFixAction<T>? = psiElement.getNonStrictParentOfType<T>()?.let(factory)
+
+inline fun <reified T : PsiElement> Diagnostic.createIntentionForModCommand(
+    factory: (T) -> ModCommandAction?
+): IntentionAction? {
+    return psiElement.getNonStrictParentOfType<T>()?.let(factory).takeIf { it != ModCommand.nop() }?.asIntention()
+}
 
 
 @K1Deprecation
 fun createIntentionFactory(
     factory: (Diagnostic) -> IntentionAction?
-) = object : KotlinSingleIntentionActionFactory() {
+): KotlinSingleIntentionActionFactory = object : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic) = factory(diagnostic)
 }
 

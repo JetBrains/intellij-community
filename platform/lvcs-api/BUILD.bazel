@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util",
+    "//platform/util/multiplatform",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ]
@@ -23,6 +24,7 @@ jvm_library(
     ":lvcs",
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs` end

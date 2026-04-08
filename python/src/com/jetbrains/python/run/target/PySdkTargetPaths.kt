@@ -13,6 +13,7 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -20,7 +21,8 @@ import java.nio.file.Path
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
  */
-fun getTargetPathForPythonScriptExecution(project: Project,
+@ApiStatus.Internal
+internal fun getTargetPathForPythonScriptExecution(project: Project,
                                           sdk: Sdk?,
                                           pathMapper: PyRemotePathMapper?,
                                           localPath: Path): TargetEnvironmentFunction<String> {
@@ -50,7 +52,8 @@ private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: 
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
  */
-fun getTargetPathForPythonConsoleExecution(project: Project,
+@ApiStatus.Internal
+internal fun getTargetPathForPythonConsoleExecution(project: Project,
                                            sdk: Sdk?,
                                            pathMapper: PyRemotePathMapper?,
                                            localPath: Path): TargetEnvironmentFunction<String> {

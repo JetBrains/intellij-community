@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused", "ForEachParameterNotUsed")
-
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
@@ -8,15 +6,17 @@ import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsCha
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import kotlinx.coroutines.FlowPreview
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
 
 /**
- * We do not use this code now but it can be used for optimization so we keep it
+ * Tracks which cells are currently visible in the editor viewport
+ * and updates only those cells
  */
-@OptIn(FlowPreview::class)
+@ApiStatus.Experimental
 class NotebookVisibleCellsBatchUpdater(
   private val editor: EditorImpl,
 ) : Disposable.Default {
@@ -50,7 +50,6 @@ class NotebookVisibleCellsBatchUpdater(
 
   private fun getCellRectangle(cell: EditorCell): Rectangle? {
     val interval = cell.intervalOrNull ?: return null
-
 
     val firstLineWithOverlap = maxOf(interval.firstContentLine - 1, 0)
     val lastLineWithOverlap = minOf(interval.lastContentLine + 1, editor.document.lineCount)
@@ -91,6 +90,7 @@ class NotebookVisibleCellsBatchUpdater(
       visibleCells.add(cell)
     }
 
+    // no-op?
     if (visibleCells == prevVisibleCells) return
     val newInvisible = prevVisibleCells - visibleCells
     val newVisible = visibleCells - prevVisibleCells
@@ -101,6 +101,7 @@ class NotebookVisibleCellsBatchUpdater(
       //it.isInViewportRectangle.set(true)
     }
 
+    visibleCells.forEach { it.updateIfInVisibleRect() }
     prevVisibleCells = visibleCells
   }
 
@@ -108,9 +109,11 @@ class NotebookVisibleCellsBatchUpdater(
     private val INSTANCE_KEY = Key.create<NotebookVisibleCellsBatchUpdater>("EDITOR_CELL_FRAME_UPDATER_KEY")
 
     fun install(editor: EditorImpl) {
-      //val updater = NotebookVisibleCellsBatchUpdater(editor)
-      //editor.putUserData(INSTANCE_KEY, updater)
-      //Disposer.register(editor.disposable, updater)
+      val updater = NotebookVisibleCellsBatchUpdater(editor)
+      editor.putUserData(INSTANCE_KEY, updater)
+      Disposer.register(editor.disposable, updater)
     }
+
+    fun get(editor: EditorImpl): NotebookVisibleCellsBatchUpdater? = INSTANCE_KEY.get(editor)
   }
 }

@@ -655,7 +655,7 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    doLayout();
+    fullRepaint();
   }
 
   public void setListeners(@NotNull EventHandler eventHandler) {

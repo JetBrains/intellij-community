@@ -35,6 +35,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
     "//plugins/toml",
@@ -73,6 +75,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/eel-provider",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/ide-core",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     "//plugins/groovy:groovy-tests",
@@ -83,6 +86,7 @@ jvm_library(
   runtime_deps = [
     ":tests",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
   ]
 )

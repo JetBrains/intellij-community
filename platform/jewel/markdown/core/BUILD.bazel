@@ -130,6 +130,8 @@ jvm_library(
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     "//libraries/jsoup",
     "//libraries/jsoup:jsoup_test_lib",
+    "//platform/jewel/markdown/testing",
+    "//platform/jewel/markdown/testing:testing_test_lib",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
   runtime_deps = [":jewel-markdown-core-tests"],

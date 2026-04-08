@@ -1,7 +1,7 @@
-"scope:1@300" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
+
+"scope:1@300" virtual tid=0x0 nid=NA running ["type":"coroutine","id":300,"dispatcher":"Dispatchers.Default"]
     at example.Parent.one(Parent.kt:1)
 
-============ INTELLIJ META_DATA ============
-{
-    "version": 1
-}
+"Dumped Coroutines" tid=0x0 nid=NA coroutineRoot ["type":"coroutineRoot"]
+   Carrying virtual thread #0

@@ -2,13 +2,15 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.TestOnly
@@ -59,6 +61,7 @@ internal class AgentChatVirtualFile internal constructor(
   var threadId: String = ""
     private set
 
+  @NlsSafe
   var threadTitle: String = resolveThreadTitle("")
     private set
 
@@ -124,6 +127,7 @@ internal class AgentChatVirtualFile internal constructor(
 
   init {
     updateFromResolution(resolution)
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
 

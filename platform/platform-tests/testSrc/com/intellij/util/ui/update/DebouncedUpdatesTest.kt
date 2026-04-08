@@ -5,8 +5,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.LoggedErrorProcessor.Action.ALL
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.drainUncaughtExceptions
 import com.intellij.ui.ComponentUtil.forceMarkAsShowing
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
@@ -363,7 +365,15 @@ class DebouncedUpdatesTest {
     val processedValues = CopyOnWriteArrayList<Int>()
     val errorMessage = "Test exception for value 2"
 
-    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+    /**
+     * To ensure the queue does not die even in Unit tests
+     * the action on [Logger.error] must include [com.intellij.testFramework.LoggedErrorProcessor.Action.RETHROW].
+     * We use [ALL] (default for unit tests), which includes RETHROW.
+     *
+     * IMPORTANT: the exception would be re-thrown on background threads and treated as uncaught by the test framework,
+     * so we need to drain it later.
+     */
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError(/* action = */ ALL) {
       timeoutRunBlocking {
         val queue = DebouncedUpdates.forScope<Int>(scope, "test-exception-handling", 50.milliseconds)
           .runLatest { value ->
@@ -389,6 +399,14 @@ class DebouncedUpdatesTest {
 
     // Verify the exception was logged
     assertTrue(error.message?.contains(errorMessage) == true, "Expected error should have been logged")
+
+    // Drain the uncaught exception that LOG.error re-throws on background threads.
+    // The coroutine machinery wraps it, so check suppressed and cause chains for the original error.
+    val uncaught = drainUncaughtExceptions { e ->
+      val causeChain = generateSequence(e) { it.cause }
+      causeChain.contains(error)
+    }
+    assertEquals(1, uncaught.size, "Expected 1 uncaught exception from LOG.error re-throw")
 
     // Verify that values before and after the exception were processed
     assertEquals(listOf(1, 3), processedValues, "Should process values 1 and 3")

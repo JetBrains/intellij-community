@@ -163,11 +163,12 @@ open class HProfScenarioRunner(
   }
 
   /**
-   * Get the contents of the baseline file, with system-dependent line endings
+   * Get the contents of the baseline file, with system-independent line endings
+   * (The other side uses StringBuilder.appendLine, which appends "\n")
    */
   private fun getBaselineContents(path: Path): String {
     return String(Files.readAllBytes(path), StandardCharsets.UTF_8)
-      .replace(Regex("(\r\n|\n)"), System.lineSeparator())
+      .replace("\r\n", "\n")
   }
 
   /**

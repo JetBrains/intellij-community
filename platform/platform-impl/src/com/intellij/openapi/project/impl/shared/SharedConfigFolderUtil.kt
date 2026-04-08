@@ -9,15 +9,20 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
 import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
 import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.random.Random
@@ -30,6 +35,7 @@ interface ConfigFolderChangedListener {
 
 object SharedConfigFolderUtil {
   private val LOG = logger<SharedConfigFolderUtil>()
+  private val writeAccessLocks = ContainerUtil.createConcurrentWeakValueMap<Path, Lock>()
 
   fun installStreamProvider(application: Application, path: Path) {
     val storageManager = application.stateStore.storageManager
@@ -106,14 +112,33 @@ object SharedConfigFolderUtil {
   private fun <T> ioWithRetries(open: () -> T): T = ioWithRetries(open) { it }
 
   private fun <T> writeWithRetries(file: Path, vararg options: OpenOption, task: (FileChannel) -> T): T {
+    class WritingHandle(val channel: FileChannel, val fileLock: FileLock, val jvmLock: Lock)
+
     return ioWithRetries(
       {
-        val channel = FileChannel.open(file, *options)
-        channel.lock() to channel
+        /* if multiple threads from the same JVM process try acquiring FileLock on the same file, an exception will be thrown, so it's
+           necessary to have synchronization on JVM level as well */
+        val jvmLock = writeAccessLocks.getOrPut(file) { ReentrantLock() }
+        if (!jvmLock.tryLock(5, TimeUnit.SECONDS)) {
+          throw IOException("cannot acquire lock for $file")
+        }
+        try {
+          val channel = FileChannel.open(file, *options)
+          val fileLock = channel.lock()
+          WritingHandle(channel, fileLock, jvmLock)
+        }
+        catch (e: Exception) {
+          jvmLock.unlock()
+          throw e
+        }
       },
-      { (lock, channel) ->
-        channel.use {
-          lock.use { task(channel) }
+      { handle ->
+        try {
+          handle.channel.use { channel ->
+            handle.fileLock.use { task(channel) }
+          }
+        } finally {
+          handle.jvmLock.unlock()
         }
       }
     )

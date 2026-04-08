@@ -8,6 +8,7 @@ import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.isV2ModulePath
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
@@ -88,6 +89,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     if (input == null) {
       if (path == "intellij.profiler.clion") {
         return PluginDescriptorBuilder.builder().apply {
+          visibility = ModuleVisibilityValue.PUBLIC
           `package` = "com.intellij.profiler.clion"
         }
       }

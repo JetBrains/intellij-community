@@ -7,13 +7,12 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -157,7 +156,7 @@ suspend fun openChat(
   pendingFirstInputAtMs: Long? = null,
   pendingLaunchMode: String? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
-) {
+): VirtualFile {
   val manager = FileEditorManagerEx.getInstanceExAsync(project)
 
   val tabKey = AgentChatTabKey.fromIdentity(
@@ -174,6 +173,7 @@ suspend fun openChat(
   val snapshotInitialMessageDispatchSteps = if (startupOverrideForNewTab != null) emptyList() else initialMessageDispatchPlan.postStartDispatchSteps
   val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
   val snapshotInitialMessageSent = false
+  val hasExplicitInitialMessageDispatch = snapshotInitialMessageDispatchSteps.isNotEmpty() || snapshotInitialMessageToken != null
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -219,10 +219,7 @@ suspend fun openChat(
     else {
       false
     }
-    val initialMessageUpdated = if (
-      initialMessageDispatchPlan.postStartDispatchSteps.isNotEmpty() ||
-      initialMessageDispatchPlan.initialMessageToken != null
-    ) {
+    if (hasExplicitInitialMessageDispatch) {
       existing.updateInitialMessageMetadata(
         initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
         initialMessageDispatchStepIndex = 0,
@@ -230,20 +227,14 @@ suspend fun openChat(
         initialMessageSent = false,
       )
     }
-    else {
-      false
-    }
     tabsService.upsert(existing.toSnapshot())
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
       "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || pendingUpdated || initialMessageUpdated) {
+    if (titleUpdated || activityUpdated || pendingUpdated || hasExplicitInitialMessageDispatch) {
       manager.updateFilePresentation(existing)
-    }
-    if (initialMessageUpdated && !existing.initialMessageSent) {
-      flushPendingInitialMessageForOpenEditors(manager = manager, file = existing)
     }
   }
   else {
@@ -262,10 +253,10 @@ suspend fun openChat(
       file.putUserData(FileEditorProvider.KEY, provider)
     }
   }
-  manager.openFile(
-    file = file,
-    options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
-  )
+  manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
+  if (existing != null && hasExplicitInitialMessageDispatch && !file.initialMessageSent) {
+    flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
+  }
   LOG.debug {
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
   }
@@ -274,11 +265,8 @@ suspend fun openChat(
   if (pendingProvider != null && AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
     notifyAgentChatTerminalOutputForRefresh(provider = pendingProvider, projectPath = projectPath)
   }
-}
 
-@Suppress("unused")
-suspend fun collectOpenAgentChatProjectPaths(): Set<String> {
-  return collectOpenAgentChatProjectPaths(includePendingOnly = false)
+  return file
 }
 
 suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
@@ -747,13 +735,6 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
   return cleared
 }
 
-@Suppress("unused")
-fun clearOpenConcreteCodexNewThreadRebindAnchors(
-  tabsByProjectPath: Map<String, List<AgentChatConcreteTabSnapshot>>,
-): Int {
-  return clearOpenConcreteAgentChatNewThreadRebindAnchors(AgentSessionProvider.CODEX, tabsByProjectPath)
-}
-
 suspend fun updateOpenAgentChatTabPresentation(
   titleByPathAndThreadIdentity: Map<Pair<String, String>, String>,
   activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
@@ -820,17 +801,7 @@ suspend fun updateOpenAgentChatTabPresentation(
   return updatedTabs
 }
 
-@Suppress("unused")
-suspend fun updateOpenAgentChatTabTitles(
-  titleByPathAndThreadIdentity: Map<Pair<String, String>, String>,
-): Int {
-  return updateOpenAgentChatTabPresentation(
-    titleByPathAndThreadIdentity = titleByPathAndThreadIdentity,
-    activityByPathAndThreadIdentity = emptyMap(),
-  )
-}
-
-suspend fun collectSelectedChatThreadIdentity(): Pair<AgentSessionProvider, String>? = withContext(Dispatchers.EDT) {
+suspend fun collectSelectedChatThreadIdentity(): Pair<AgentSessionProvider, String>? = withContext(Dispatchers.UI) {
   collectOpenAgentChatTabsSnapshot().selectedChatThreadIdentity
 }
 

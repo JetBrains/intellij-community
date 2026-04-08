@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,17 +18,15 @@ class ExtensionDescriptor(
   @ApiStatus.Internal
   @Suppress("EnumEntryName")
   enum class Os {
-    mac, linux, windows, unix, freebsd;
+    windows, unix, mac, linux, freebsd;
 
-    fun isSuitableForOs(): Boolean {
-      return when (this) {
-        mac -> SystemInfoRt.isMac
-        linux -> SystemInfoRt.isLinux
-        windows -> SystemInfoRt.isWindows
-        unix -> SystemInfoRt.isUnix
-        freebsd -> SystemInfoRt.isFreeBSD
-        else -> throw IllegalArgumentException("Unknown OS '$this'")
-      }
+    @OptIn(LowLevelLocalMachineAccess::class)
+    fun isSuitableForOs(): Boolean = when (this) {
+      windows -> OS.CURRENT == OS.Windows
+      unix -> OS.CURRENT != OS.Windows
+      mac -> OS.CURRENT == OS.macOS
+      linux -> OS.CURRENT == OS.Linux
+      freebsd -> OS.CURRENT == OS.FreeBSD
     }
   }
 }

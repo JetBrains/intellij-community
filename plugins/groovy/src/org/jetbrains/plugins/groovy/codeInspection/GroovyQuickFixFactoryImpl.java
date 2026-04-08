@@ -144,7 +144,7 @@ public final class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public IntentionAction createOptimizeImportsFix(boolean onTheFly) {
-    return new GroovyOptimizeImportsFix(onTheFly);
+    return new GroovyOptimizeImportsFix(onTheFly).asIntention();
   }
 
   @Override

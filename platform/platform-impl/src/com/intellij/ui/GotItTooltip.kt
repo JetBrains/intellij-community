@@ -566,10 +566,14 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
   }
 
   private fun createBalloon(): Balloon {
+    // we uses sub disposable for the ballon otherwise we have the race condition with 'dispatcherDisposable'
+    val balloonDisposable = Disposer.newDisposable()
+    Disposer.register(this, balloonDisposable)
+
     val balloon = gotItBuilder
       .onButtonClick { GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.ButtonClick) }
       .onLinkClick { GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.LinkClick) }
-      .build(parentDisposable = this)
+      .build(parentDisposable = balloonDisposable)
 
     if (timeout > 0) {
       hideBalloonJob?.cancel()

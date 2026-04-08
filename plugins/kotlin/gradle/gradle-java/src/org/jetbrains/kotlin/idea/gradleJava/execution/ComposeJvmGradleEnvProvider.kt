@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameHelper
 import com.intellij.task.ExecuteRunConfigurationTask
-import org.jetbrains.kotlin.idea.gradleJava.run.isComposeJvm
+import org.jetbrains.kotlin.idea.gradleJava.run.isComposeGradlePluginConfigured
 import org.jetbrains.kotlin.idea.gradleJava.run.mainFunctionClassFqn
 import org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 internal class ComposeJvmGradleEnvProvider : GradleExecutionEnvironmentProvider {
     override fun isApplicable(task: ExecuteRunConfigurationTask?): Boolean {
         val gradleRunConfiguration = task?.runProfile as? GradleRunConfiguration ?: return false
-        return gradleRunConfiguration.isComposeJvm && !gradleRunConfiguration.mainFunctionClassFqn.isNullOrBlank()
+        return gradleRunConfiguration.isComposeGradlePluginConfigured && !gradleRunConfiguration.mainFunctionClassFqn.isNullOrBlank()
     }
 
     override fun createExecutionEnvironment(
@@ -26,7 +26,7 @@ internal class ComposeJvmGradleEnvProvider : GradleExecutionEnvironmentProvider 
     ): ExecutionEnvironment? {
         val gradleRunConfiguration = (task?.runProfile) as? GradleRunConfiguration ?: return null
         val mainClassFqn = gradleRunConfiguration.mainFunctionClassFqn
-        if (!gradleRunConfiguration.isComposeJvm ||
+        if (!gradleRunConfiguration.isComposeGradlePluginConfigured ||
             mainClassFqn.isNullOrBlank() ||
             project == null
         ) return null

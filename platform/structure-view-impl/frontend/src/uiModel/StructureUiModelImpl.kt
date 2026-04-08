@@ -98,12 +98,7 @@ internal class StructureUiModelImpl : StructureUiModel {
     myActions = model.actions.map { it.toImpl() }
 
     myEnabledActionNames.addAll(myActions.filter {
-      if (it is FilterTreeAction) {
-        it.isReverted != it.isEnabledByDefault
-      }
-      else {
-        it.isEnabledByDefault
-      }
+      it.isReverted != it.isEnabledByDefault
     }.map { it.name })
 
     model.nodes.toFlow().collect { nodesUpdate ->
@@ -168,9 +163,11 @@ internal class StructureUiModelImpl : StructureUiModel {
   }
 
   override fun setActionEnabled(action: StructureTreeAction, isEnabled: Boolean, isAutoClicked: Boolean) {
-    if (isEnabled == isActionEnabled(action)) return
+    val affectiveIsEnabled = isEnabled != action.isReverted
 
-    if (isEnabled) {
+    if (affectiveIsEnabled == isActionEnabled(action)) return
+
+    if (affectiveIsEnabled) {
       myEnabledActionNames.add(action.name)
     }
     else {
@@ -179,7 +176,7 @@ internal class StructureUiModelImpl : StructureUiModel {
 
     if (action is NodeProviderTreeAction) {
       // If enabling an incomplete node provider, mark as pending and request tree rebuild when nodes arrive
-      if (isEnabled && !action.nodesLoaded) {
+      if (affectiveIsEnabled && !action.nodesLoaded) {
         myUpdatePendingFlow.value = true
         rebuildTreeOnDeferredNodes = true
       }

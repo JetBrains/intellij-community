@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
@@ -8,11 +9,13 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
@@ -29,6 +32,9 @@
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.text.SeTextItemsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.topHit.SeBackendTopHitItemsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.runConfigurations.SeRunConfigurationsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.filesFuzzy.SeFuzzyFileSearchProviderFactory"/>
+
+    <gotoFileFuzzyMatcherFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.filesFuzzy.SmithWatermanMatcherFactory"/>
 
     <searchEverywhere.legacyItemPresentationProvider implementation="com.intellij.platform.searchEverywhere.backend.providers.CalculatorItemPresentationProvider"/>
   </extensions>

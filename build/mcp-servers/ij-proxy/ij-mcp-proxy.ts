@@ -16,11 +16,19 @@ import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createStreamTransport} from './stream-transport'
 import {UpstreamConnection} from './upstream'
 import {findReachablePorts} from './discovery'
-import {isMergeTool, resolveIdeForPath, resolveRoute, rewriteArgsForTarget, riderItemTransformer, RIDER_PROJECT_SUBPATH} from './routing'
 import type {ItemTransformer} from './routing'
+import {
+  isMergeTool,
+  resolveIdeForPath,
+  resolveRoute,
+  rewriteArgsForTarget,
+  RIDER_PROJECT_SUBPATH,
+  riderItemTransformer,
+  splitPathListArgsByIde
+} from './routing'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling} from './proxy-tools/tooling'
-import {extractItems, extractTextFromResult} from './proxy-tools/shared'
+import {extractItems, extractStructuredContent, extractTextFromResult} from './proxy-tools/shared'
 import type {SearchItem, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 
 // Proxy JetBrains MCP Streamable HTTP to stdio and inject the cwd as project_path.
@@ -40,6 +48,7 @@ const connectTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_CONNECT_TIMEOUT_S', 10)
 const scanTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_SCAN_TIMEOUT_S', 1)
 const queueLimit = parseEnvNonNegativeInt('JETBRAINS_MCP_QUEUE_LIMIT', 100)
 const toolCallTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S', 60)
+const buildTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_BUILD_TIMEOUT_S', 20 * 60)
 const queueWaitTimeoutMs = parseEnvSeconds(
   'JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S',
   toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0
@@ -123,6 +132,8 @@ type ProxyToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
 let proxyToolSpecs: ToolSpecLike[] = []
 let proxyToolNames: Set<string> = new Set()
+let ideaProxyToolNames: Set<string> = new Set()
+let riderProxyToolNames: Set<string> = new Set()
 let ideaProxyToolCall: ProxyToolCaller | null = null
 let riderProxyToolCall: ProxyToolCaller | null = null
 
@@ -141,13 +152,16 @@ function updateProxyTooling(): void {
       projectPath,
       callUpstreamTool: (name, args) => ideaUpstream!.callTool(name, args),
       searchCapabilities: ideaUpstream.searchCapabilities,
+      analysisCapabilities: ideaUpstream.analysisCapabilities,
       readCapabilities: ideaUpstream.readCapabilities,
       ideVersion: ideaUpstream.ideVersion
     })
     ideaSpecs = tooling.proxyToolSpecs
     ideaNames = tooling.proxyToolNames
+    ideaProxyToolNames = tooling.proxyToolNames
     ideaProxyToolCall = tooling.runProxyToolCall
   } else {
+    ideaProxyToolNames = new Set()
     ideaProxyToolCall = null
   }
 
@@ -159,13 +173,16 @@ function updateProxyTooling(): void {
       projectPath: riderProjectPath,
       callUpstreamTool: (name, args) => riderUpstream!.callTool(name, args),
       searchCapabilities: riderUpstream.searchCapabilities,
+      analysisCapabilities: riderUpstream.analysisCapabilities,
       readCapabilities: riderUpstream.readCapabilities,
       ideVersion: riderUpstream.ideVersion
     })
     riderSpecs = tooling.proxyToolSpecs
     riderNames = tooling.proxyToolNames
+    riderProxyToolNames = tooling.proxyToolNames
     riderProxyToolCall = tooling.runProxyToolCall
   } else {
+    riderProxyToolNames = new Set()
     riderProxyToolCall = null
   }
 
@@ -229,6 +246,7 @@ function createUpstreamForUrl(url: string): UpstreamConnection {
     projectPath,
     defaultProjectPathKey,
     toolCallTimeoutMs,
+    buildTimeoutMs,
     warn
   })
 
@@ -402,6 +420,9 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (isMergeTool(toolName)) {
         return await callMergedProxyTool(toolName, args)
       }
+      if (toolName === 'lint_files') {
+        return await callSplitMergedProxyTool(toolName, args)
+      }
       const ide = resolveIdeForPath(args, projectPath)
       const proxyCall = ide === 'rider' ? riderProxyToolCall : ideaProxyToolCall
       const rewrittenArgs = rewriteArgsForTarget(ide === 'rider' ? 'target-rider' : 'target-idea', args)
@@ -432,6 +453,9 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (route) {
       case 'merge':
         return await callMergedPassthroughTool(toolName, args)
+
+      case 'split-merge':
+        return await callSplitMergedPassthroughTool(toolName, args)
 
       case 'target-idea':
       case 'target-rider': {
@@ -489,12 +513,106 @@ async function callMergedProxyTool(toolName: string, args: ToolArgs): Promise<To
   return mergeSettledResults(results, 'proxy', [undefined, riderItemTransformer])
 }
 
+async function callSplitMergedProxyTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
+  switch (toolName) {
+    case 'lint_files': {
+      let splitArgs: {ideaArgs?: ToolArgs; riderArgs?: ToolArgs}
+      try {
+        splitArgs = splitPathListArgsByIde(args, projectPath)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        return makeToolError(message)
+      }
+
+      const calls: Promise<unknown>[] = []
+      const transformers: (ItemTransformer | undefined)[] = []
+      if (splitArgs.ideaArgs) {
+        calls.push(callLintFilesViaProxyOrNative('idea', splitArgs.ideaArgs))
+        transformers.push(undefined)
+      }
+      if (splitArgs.riderArgs) {
+        calls.push(callLintFilesViaProxyOrNative('rider', splitArgs.riderArgs))
+        transformers.push(riderItemTransformer)
+      }
+
+      const results = await Promise.allSettled(calls)
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          const message = result.reason instanceof Error ? result.reason.message : String(result.reason)
+          return makeToolError(message)
+        }
+      }
+      return mergeSettledResults(results, 'proxy', transformers)
+    }
+
+    default:
+      return makeToolError(`Tool '${toolName}' is not configured for split-merge proxy routing.`)
+  }
+}
+
 async function callMergedPassthroughTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
   const results = await Promise.allSettled([
     ideaUpstream!.callToolForClient(toolName, {...args}),
     riderUpstream!.callToolForClient(toolName, {...args})
   ])
   return mergeSettledResults(results, 'passthrough', [undefined, riderItemTransformer])
+}
+
+async function callSplitMergedPassthroughTool(toolName: string, args: ToolArgs): Promise<ToolOutput> {
+  switch (toolName) {
+    case 'lint_files': {
+      let splitArgs: {ideaArgs?: ToolArgs; riderArgs?: ToolArgs}
+      try {
+        splitArgs = splitPathListArgsByIde(args, projectPath)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        return makeToolError(message)
+      }
+
+      const calls: Promise<unknown>[] = []
+      const transformers: (ItemTransformer | undefined)[] = []
+      if (splitArgs.ideaArgs) {
+        calls.push(ideaUpstream!.callToolForClient(toolName, splitArgs.ideaArgs))
+        transformers.push(undefined)
+      }
+      if (splitArgs.riderArgs) {
+        calls.push(riderUpstream!.callToolForClient(toolName, splitArgs.riderArgs))
+        transformers.push(riderItemTransformer)
+      }
+
+      const results = await Promise.allSettled(calls)
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          const message = result.reason instanceof Error ? result.reason.message : String(result.reason)
+          return makeToolError(message)
+        }
+      }
+      return mergeSettledResults(results, 'passthrough', transformers)
+    }
+
+    default:
+      return makeToolError(`Tool '${toolName}' is not configured for split-merge routing.`)
+  }
+}
+
+async function callLintFilesViaProxyOrNative(side: 'idea' | 'rider', args: ToolArgs): Promise<unknown> {
+  if (side === 'idea') {
+    if (ideaProxyToolCall && ideaProxyToolNames.has('lint_files')) {
+      return await ideaProxyToolCall('lint_files', {...args})
+    }
+    if (ideaUpstream?.analysisCapabilities.hasLintFiles) {
+      return await ideaUpstream.callToolForClient('lint_files', {...args})
+    }
+  } else {
+    if (riderProxyToolCall && riderProxyToolNames.has('lint_files')) {
+      return await riderProxyToolCall('lint_files', {...args})
+    }
+    if (riderUpstream?.analysisCapabilities.hasLintFiles) {
+      return await riderUpstream.callToolForClient('lint_files', {...args})
+    }
+  }
+
+  throw new Error(`Tool 'lint_files' is not supported by the ${side === 'idea' ? 'IDEA' : 'Rider'} upstream.`)
 }
 
 function logSettledErrors(results: PromiseSettledResult<unknown>[]): void {
@@ -516,12 +634,27 @@ function settledErrorOutput(results: PromiseSettledResult<unknown>[]): ToolOutpu
 }
 
 function extractItemsFromResult(value: unknown, mode: 'proxy' | 'passthrough'): SearchItem[] {
+  const structured = extractStructuredContentFromResult(value, mode)
+  if (!structured) return []
+  return extractItems({structuredContent: structured})
+}
+
+function extractMoreFromResult(value: unknown, mode: 'proxy' | 'passthrough'): boolean {
+  const structured = extractStructuredContentFromResult(value, mode)
+  return isRecord(structured) && structured.more === true
+}
+
+function extractStructuredContentFromResult(value: unknown, mode: 'proxy' | 'passthrough'): unknown | null {
   if (mode === 'proxy') {
-    return extractItems(value)
+    return extractStructuredContent(value)
   }
   const text = extractTextFromResult(value)
-  if (!text) return []
-  return extractItems({content: [{type: 'text', text}]})
+  if (!text) return null
+  return extractStructuredContent({content: [{type: 'text', text}]})
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function mergeSettledResults(
@@ -532,19 +665,23 @@ function mergeSettledResults(
   logSettledErrors(results)
 
   const allItems: unknown[] = []
+  let more = false
+  let hasFulfilledResult = false
   for (let i = 0; i < results.length; i++) {
     const r = results[i]
     if (r.status !== 'fulfilled') continue
+    hasFulfilledResult = true
     const value = r.value
     if (value == null) continue
 
     const items = extractItemsFromResult(value, mode)
     const transformer = transformers[i]
     allItems.push(...(transformer ? transformer(items) : items))
+    more = more || extractMoreFromResult(value, mode)
   }
 
-  if (allItems.length > 0) {
-    return makeToolOutput(JSON.stringify({items: allItems}))
+  if (hasFulfilledResult) {
+    return makeToolOutput(JSON.stringify(more ? {items: allItems, more: true} : {items: allItems}))
   }
   return settledErrorOutput(results)
 }

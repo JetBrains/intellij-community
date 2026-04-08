@@ -222,7 +222,9 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
 
       @Override
       public void visitMarkdownReferenceLink(@NotNull PsiMarkdownReferenceLink referenceLink) {
-        visitMarkdownReference(referenceLink, context, holder, isOnTheFly);
+        if (!visitMarkdownReference(referenceLink, context, holder, isOnTheFly)) {
+          super.visitMarkdownReferenceLink(referenceLink);
+        }
       }
     });
   }
@@ -263,16 +265,18 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
     }
   }
 
-  private void visitMarkdownReference(PsiMarkdownReferenceLink referenceLink, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
+  /// @return `true` if issues were found
+  private boolean visitMarkdownReference(PsiMarkdownReferenceLink referenceLink, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     PsiElement linkElement = referenceLink.getLinkElement();
-    if (linkElement == null) return;
+    if (linkElement == null) return false;
     PsiReference reference = linkElement.getReference();
-    if (reference == null) return;
+    if (reference == null) return false;
     PsiElement element = reference.resolve();
 
     if (element == null && linkElement instanceof PsiDocReferenceHolder) {
       linkElement = linkElement.getFirstChild();
       reference = linkElement.getReference();
+      if (reference == null) return false;
       element = reference.resolve();
     }
 
@@ -280,7 +284,7 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
     String message = element == null && reference instanceof PsiPolyVariantReference ?
                      getResolveErrorMessage(((PsiPolyVariantReference)reference).multiResolve(false), context, linkText) :
                      getResolveErrorMessage(element, context, linkText);
-    if (message == null) return;
+    if (message == null) return false;
 
     List<LocalQuickFix> fixes = new ArrayList<>(2);
     fixes.add(new RemoveReferenceFix(linkText));
@@ -292,6 +296,7 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(
       linkElement, reference.getRangeInElement(), message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
+    return true;
   }
 
   private void visitRefInDocTag(PsiDocTag tag, JavadocManager manager, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {

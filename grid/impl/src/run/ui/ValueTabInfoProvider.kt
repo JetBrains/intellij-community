@@ -36,7 +36,8 @@ class ValueTabInfoProvider(private val grid: DataGrid) : TabInfoProvider(DataGri
   private fun chooseViewerFactory(): CellViewerFactory {
     val rowIdx = grid.selectionModel.leadSelectionRow
     val columnIdx = grid.selectionModel.leadSelectionColumn
-    val factory = viewerFactories.maxByOrNull { it.getSuitability(grid, rowIdx, columnIdx) }
+    val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(rowIdx, columnIdx)
+    val factory = viewerFactories.maxByOrNull { it.getSuitability(grid, rowIdx, columnIdx, value) }
     if (factory == null) {
       LOG.error("Cannot find cell viewer factory for $rowIdx $columnIdx")
     }

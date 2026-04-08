@@ -465,12 +465,3 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
     }
   allValidSdks
 }
-
-internal suspend fun <P : PathHolder> FileSystem<P>.getDetectedSelectableInterpreters(
-  projectPathPrefix: Path,
-  existingSelectableInterpreters: List<ExistingSelectableInterpreter<P>>,
-): List<DetectedSelectableInterpreter<P>> = withContext(Dispatchers.IO) {
-  val existingSdkPaths = existingSelectableInterpreters.map { it.homePath }.toSet()
-  val detected = detectSelectableVenv(projectPathPrefix).filterNot { it.homePath in existingSdkPaths }
-  detected
-}

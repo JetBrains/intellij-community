@@ -1,14 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,11 +46,11 @@ public final class DomPatterns {
     return new XmlElementPattern.Capture().with(new PatternCondition<>("tagWithDom") {
       @Override
       public boolean accepts(@NotNull XmlElement xmlElement, ProcessingContext context) {
-        DomManager manager = DomManager.getDomManager(xmlElement.getProject());
-        if (xmlElement instanceof XmlAttribute) {
-          return pattern.accepts(manager.getDomElement((XmlAttribute)xmlElement), context);
-        }
-        return xmlElement instanceof XmlTag && pattern.accepts(manager.getDomElement((XmlTag)xmlElement), context);
+        var manager = DomManager.getDomManager(xmlElement.getProject());
+        return (
+          xmlElement instanceof XmlAttribute attribute && pattern.accepts(manager.getDomElement(attribute), context) ||
+          xmlElement instanceof XmlTag tag && pattern.accepts(manager.getDomElement(tag), context)
+        );
       }
     });
   }
@@ -75,18 +73,5 @@ public final class DomPatterns {
 
   public static XmlNamedElementPattern.XmlAttributePattern attributeWithDom(String attributeName, ElementPattern<? extends DomElement> domPattern) {
     return XmlPatterns.xmlAttribute().withLocalName(attributeName).and(withDom(domPattern));
-  }
-
-  public static PsiElementPattern.Capture<PomTargetPsiElement> domTargetElement(ElementPattern<? extends DomElement> pattern) {
-    return PlatformPatterns.pomElement(withDomTarget(pattern));
-  }
-
-  public static ElementPattern<DomTarget> withDomTarget(ElementPattern<? extends DomElement> pattern) {
-    return new ObjectPattern.Capture<>(DomTarget.class).with(new PatternCondition<>("withDomTarget") {
-      @Override
-      public boolean accepts(@NotNull DomTarget target, ProcessingContext context) {
-        return pattern.accepts(target.getDomElement(), context);
-      }
-    });
   }
 }

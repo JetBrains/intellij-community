@@ -37,11 +37,13 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/lang-core",
     "//platform/platform-impl/concurrency",
+    "//platform/ide-core",
     "//platform/util/coroutines",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/lang-impl",
     "//platform/lang-api:lang",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//fleet/rhizomedb",
   ],
   exports = ["//platform/util"]
 )
@@ -79,11 +81,13 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/lang-core:lang-core_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

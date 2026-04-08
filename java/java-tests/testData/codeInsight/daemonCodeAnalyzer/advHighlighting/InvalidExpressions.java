@@ -43,10 +43,10 @@ public class a12 {
     a12 a[] = new a12[4];
     int[] ai = null;
 
-    <error descr="Variable expected">5</error> = 5;
-    <error descr="Variable expected">5</error>++;
-    ++<error descr="Variable expected">5</error>;
-    <error descr="Variable expected">5</error> += 5;
+    <error descr="Reference to variable expected on left-hand side of assignment">5</error> = 5;
+    <error descr="Reference to variable expected as target of unary operation">5</error>++;
+    ++<error descr="Reference to variable expected as target of unary operation">5</error>;
+    <error descr="Reference to variable expected on left-hand side of assignment">5</error> += 5;
 
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);

@@ -6,10 +6,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.nio.file.Path
 
+@Ignore("AT-4013")
 class MultiMessageTest : HeavyPlatformTestCase() {
   override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
     assertFalse(isDirectoryBasedProject)

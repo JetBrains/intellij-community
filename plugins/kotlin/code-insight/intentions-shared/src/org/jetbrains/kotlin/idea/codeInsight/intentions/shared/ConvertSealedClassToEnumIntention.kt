@@ -3,23 +3,28 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpect
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -43,83 +48,133 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
  *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertActualSealedClassToEnum]
  *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertExpectSealedClassToEnum]
  */
-internal class ConvertSealedClassToEnumIntention : PsiBasedModCommandAction<KtClass>(KtClass::class.java) {
+internal class ConvertSealedClassToEnumIntention : KotlinApplicableModCommandAction<KtClass, Unit>(KtClass::class) {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.to.enum.class")
 
     override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean =
         element is KtBlockExpression
 
-    override fun isElementApplicable(element: KtClass, context: ActionContext): Boolean {
-        val nameIdentifier = element.nameIdentifier ?: return false
-        val sealedKeyword = element.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) ?: return false
-        val range = TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset)
-        if (!range.containsOffset(context.offset)) return false
+    override fun isApplicableByPsi(element: KtClass): Boolean =
+        element.takeIf { it.nameIdentifier != null }
+            ?.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) != null
 
-        analyze(element) {
-            val symbol = element.symbol as? KaClassSymbol ?: return false
-            val superTypesNotAny = symbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.filter { superClassSymbol ->
-                superClassSymbol.classId != StandardClassIds.Any
-            }
-            return superTypesNotAny.isEmpty()
-        }
+    override fun getApplicableRanges(element: KtClass): List<TextRange> {
+        val nameIdentifier = element.nameIdentifier ?: return emptyList()
+        val sealedKeyword = element.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) ?: return emptyList()
+        val range = TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset).shiftLeft(element.startOffset)
+        return listOf(range)
     }
 
-    override fun perform(context: ActionContext, element: KtClass): ModCommand {
+    override fun KaSession.prepareContext(element: KtClass): Unit? {
+        val notEmptySuperTypes = analyze(element) {
+            val symbol = element.symbol as? KaClassSymbol ?: return null
+            val superTypesNotAny =
+                symbol.superTypes
+                    .mapNotNull { it.symbol as? KaClassSymbol }
+                    .filter { it.classId != StandardClassIds.Any }
+            superTypesNotAny.isNotEmpty()
+        }
+        if (notEmptySuperTypes) return null
+
         val klass = liftToExpect(element) as? KtClass ?: element
-        val subclasses = HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().asIterable().mapNotNull { it.unwrapped }
-        val subclassesByContainer: Map<KtClass?, List<PsiElement>> = subclasses.sortedBy { it.textOffset }.groupBy {
-            if (it !is KtObjectDeclaration) return@groupBy null
-            if (it.superTypeListEntries.size != 1) return@groupBy null
-            val containingClass = it.containingClassOrObject as? KtClass ?: return@groupBy null
-            if (containingClass != klass && liftToExpect(containingClass) != klass) return@groupBy null
-            containingClass
-        }
+        val subclassesByContainer =
+            // fast check: look up subclasses of the sealed class within the same file only
+            findSubclassesByContainer(klass, LocalSearchScope(element.containingFile))
 
-        val inconvertibleSubclasses: List<PsiElement> = subclassesByContainer[null] ?: emptyList()
+        val inconvertibleSubclasses = subclassesByContainer[null] ?: emptyList()
         if (inconvertibleSubclasses.isNotEmpty()) {
-            return errorCommand(
-                KotlinBundle.message("all.inheritors.must.be.nested.objects.of.the.class.itself.and.may.not.inherit.from.other.classes.or.interfaces"),
-                inconvertibleSubclasses,
-            )
+            // All inheritors must be nested objects of the class itself and may not inherit from other classes or interfaces.
+            return null
         }
-
-        @Suppress("UNCHECKED_CAST")
-        val nonSealedClasses = (subclassesByContainer.keys as Set<KtClass>).filter { !it.isSealed() }
+        val nonSealedClasses = (subclassesByContainer.keys as? Set<*>)
+            ?.mapNotNull { (it as? SmartPsiElementPointer<*>)?.element }
+            ?.filter { !klass.isSealed() } ?: emptyList()
         if (nonSealedClasses.isNotEmpty()) {
-            return errorCommand(
-                KotlinBundle.message("all.expected.and.actual.classes.must.be.sealed.classes"),
-                nonSealedClasses,
-            )
+            // All expected and actual classes must be sealed classes.
+            return null
         }
 
-        return ModCommand.psiUpdate(element) { e, updater ->
-            if (subclassesByContainer.isNotEmpty()) {
-                for ((currentClass, currentSubclasses) in subclassesByContainer) {
-                    val writableClass = updater.getWritable(currentClass) ?: continue
-                    val writableSubclasses = currentSubclasses.mapNotNull { updater.getWritable(it) }
-                    processClass(writableClass, writableSubclasses, e.project)
+        return Unit
+    }
+
+    override fun invoke(actionContext: ActionContext, element: KtClass, elementContext: Unit, updater: ModPsiUpdater) {
+        val originalFile = updater.getOriginalFile(element.containingFile)
+        // a real file ktClass instance is needed for the search
+        val klass = originalFile.findElementAt(actionContext.offset)?.parent as? KtClass ?: return
+        // prepareContext looks up for subclasses of the sealed class within the same file only
+        val subclassesByContainer =
+            findSubclassesByContainer(klass, klass.useScope)
+
+        val inconvertibleSubclasses = subclassesByContainer[null] ?: emptyList()
+        if (inconvertibleSubclasses.isNotEmpty()) {
+            updater.cancel(
+                errorText(
+                    KotlinBundle.message("all.inheritors.must.be.nested.objects.of.the.class.itself.and.may.not.inherit.from.other.classes.or.interfaces"),
+                    inconvertibleSubclasses.mapNotNull { it.element },
+                )
+            )
+            return
+        }
+
+        val project = element.project
+
+        val nonSealedClasses = (subclassesByContainer.keys as? Set<*>)
+            ?.mapNotNull { (it as? SmartPsiElementPointer<*>)?.element }
+            ?.filter { !klass.isSealed() } ?: emptyList()
+        if (nonSealedClasses.isNotEmpty()) {
+            updater.cancel(
+                errorText(
+                    KotlinBundle.message("all.expected.and.actual.classes.must.be.sealed.classes"),
+                    nonSealedClasses,
+                )
+            )
+            return
+        }
+
+        if (subclassesByContainer.isNotEmpty()) {
+            for ((currentClass, currentSubclasses) in subclassesByContainer) {
+                val writableClass = currentClass?.element?.let(updater::getWritable) ?: continue
+                val writableSubclasses = currentSubclasses.mapNotNull {
+                    it.element?.let(updater::getWritable)
                 }
-            } else {
-                val writableClass = updater.getWritable(klass) ?: return@psiUpdate
-                processClass(writableClass, emptyList(), e.project)
+                processClass(writableClass, writableSubclasses, project)
             }
+        } else {
+            val writableClass = updater.getWritable(klass) ?: return
+            processClass(writableClass, emptyList(), project)
         }
     }
 
-    private fun errorCommand(@Nls message: String, elements: List<PsiElement>): ModCommand {
+    private fun findSubclassesByContainer(
+        klass: KtClass,
+        searchScope: SearchScope
+    ): Map<SmartPsiElementPointer<KtClass>?, List<SmartPsiElementPointer<PsiElement>>> {
+        val subclasses =
+            HierarchySearchRequest(klass, searchScope, false)
+                .searchInheritors().asIterable().mapNotNull { it.unwrapped }
+        val subclassesByContainer =
+            subclasses.sortedBy { it.textOffset }.map(PsiElement::createSmartPointer).groupBy {
+                val ktObjectDeclaration = it.element as? KtObjectDeclaration ?: return@groupBy null
+                if (ktObjectDeclaration.superTypeListEntries.size != 1) return@groupBy null
+                val containingClass = ktObjectDeclaration.containingClassOrObject as? KtClass ?: return@groupBy null
+                if (containingClass != klass && liftToExpect(containingClass) != klass) return@groupBy null
+                containingClass.createSmartPointer()
+            }
+        return subclassesByContainer
+    }
+
+    @NlsSafe
+    private fun errorText(@Nls message: String, elements: List<PsiElement>): String {
         val elementDescriptions = elements.map {
             ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITHOUT_PARENT)
         }
 
-        @NlsSafe
-        val errorText = buildString {
+        return buildString {
             append(message)
             append(KotlinBundle.message("following.problems.are.found"))
             elementDescriptions.sorted().joinTo(this)
         }
-
-        return ModCommand.error(errorText)
     }
 
     private fun processClass(klass: KtClass, subclasses: List<PsiElement>, project: Project) {

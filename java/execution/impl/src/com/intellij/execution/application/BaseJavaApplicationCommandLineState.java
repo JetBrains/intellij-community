@@ -15,6 +15,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetProcessHandlers;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
@@ -87,6 +88,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
     }
     OSProcessHandler handler = createProcessHandler(remoteEnvironment, targetedCommandLineBuilder, targetedCommandLine, process);
+    TargetProcessHandlers.setTargetEnvironment(handler, remoteEnvironment);
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;

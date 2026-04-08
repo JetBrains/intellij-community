@@ -68,6 +68,7 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//libraries/kotlin/reflect",
@@ -82,6 +83,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/structure-view-impl:structureView-impl_test_lib",
     "//libraries/fastutil",
@@ -94,6 +97,7 @@ jvm_library(
   runtime_deps = [
     ":tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.json.tests` end

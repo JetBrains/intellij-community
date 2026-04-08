@@ -3,25 +3,33 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -58,6 +66,41 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
   }
 
   @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
+  @Override
+  public PostfixModExpander createModExpander() {
+    return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) ->
+      ModCommand.psiUpdate(actionContext.withSelection(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()))
+                             .withOffset(keyRange.getStartOffset()),
+                           document -> document.deleteString(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset()),
+                           updater -> {
+                             updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), actionContext.selection().getStartOffset());
+                             PsiDocumentManager.getInstance(actionContext.project()).commitDocument(updater.getDocument());
+                             PsiFile file = updater.getPsiFile();
+                             provider.preCheckModCommand(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+                             PsiElement context =
+                               CustomTemplateCallback.getContext(file, PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
+
+                             PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+                             assert expression != null;
+
+                             Project project = context.getProject();
+
+                             updater.getDocument().deleteString(expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset());
+
+                             TemplateManager manager = TemplateManager.getInstance(project);
+                             TemplateImpl template = (TemplateImpl)manager.createTemplate("", "");
+
+                             buildTemplate(template, expression, project);
+                             TemplateManagerImpl.updateTemplate(template, updater);
+                           });
+  }
+
+  @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
     PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     assert expression != null;
@@ -68,6 +111,14 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
 
     TemplateManager manager = TemplateManager.getInstance(project);
     Template template = manager.createTemplate("", "");
+    buildTemplate(template, expression, project);
+
+    manager.startTemplate(editor, template);
+  }
+
+  private static void buildTemplate(@NotNull Template template,
+                                    @NotNull PsiExpression expression,
+                                    @NotNull Project project) {
     template.setToReformat(true);
     template.addTextSegment("try (");
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
@@ -76,7 +127,8 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
     if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
         PsiUtil.isAvailable(JavaFeature.LVTI, expression)) {
       template.addVariable("type", new TextExpression(JavaKeywords.VAR), false);
-    } else {
+    }
+    else {
       PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
       template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);
     }
@@ -97,8 +149,6 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
       template.addVariable("name " + exception.getClassName(), variable, variable, false);
       template.addTextSegment(") {}");
     }
-
-    manager.startTemplate(editor, template);
   }
 
   private static @NotNull Collection<PsiClassType> getUnhandled(@NotNull PsiExpression expression) {

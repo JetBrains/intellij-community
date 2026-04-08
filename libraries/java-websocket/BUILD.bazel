@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":java-websocket_resources"],
-  exports = ["@lib//:java-_web_socket"],
-  runtime_deps = ["@lib//:java-_web_socket"]
+  exports = ["@lib//:libraries-java-websocket-_java-_web_socket"],
+  runtime_deps = ["@lib//:libraries-java-websocket-_java-_web_socket"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:java-_web_socket"],
+  exports = ["@lib//:libraries-java-websocket-_java-_web_socket"],
   runtime_deps = [":java-websocket"]
 )
 ### auto-generated section `build intellij.libraries.java.websocket` end

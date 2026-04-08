@@ -3,19 +3,19 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -91,6 +91,55 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
+  fun startupLaunchSpecOverrideFallsBackToRemoteResumeCommandAndPersistsIt() {
+    val remoteCommand = listOf(
+      "codex",
+      "-c",
+      "check_for_update_on_startup=false",
+      "--remote",
+      "ws://127.0.0.1:31337",
+      "resume",
+      "thread-1",
+    )
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = remoteCommand,
+      shellEnvVariables = mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"),
+      threadId = "thread-1",
+      threadTitle = "Thread One",
+      subAgentId = null,
+    )
+    file.setStartupLaunchSpecOverride(
+      AgentSessionTerminalLaunchSpec(
+        command = listOf("codex", "--", "-run this"),
+        envVariables = mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"),
+      )
+    )
+
+    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
+
+    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(fallbackLaunchSpec.command).containsExactlyElementsOf(remoteCommand)
+    assertThat(fallbackLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+
+    val snapshot = file.toSnapshot()
+    assertThat(snapshot.runtime.shellCommand).containsExactlyElementsOf(remoteCommand)
+
+    val store = AgentChatTabsStateService(null)
+    store.upsert(snapshot)
+    try {
+      val loaded = store.load(snapshot.tabKey)
+      assertThat(loaded?.runtime?.shellCommand).containsExactlyElementsOf(remoteCommand)
+    }
+    finally {
+      store.delete(snapshot.tabKey)
+    }
+  }
+
+  @Test
   fun registersAgentChatFileIconProvider() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.chat.xml")) {
       "Module descriptor intellij.agent.workbench.chat.xml is missing"
@@ -131,6 +180,20 @@ class AgentChatFileEditorProviderTest {
     assertThat(tabKey).isNotNull
     assertThat(tabKey?.value).isEqualTo(file.tabKey)
     assertThat(file.path).startsWith("$AGENT_CHAT_URL_SCHEMA_VERSION/")
+  }
+
+  @Test
+  fun forbidsTabSplitForChatFiles() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-42",
+      shellCommand = listOf("codex", "resume", "thread-42"),
+      threadId = "thread-42",
+      threadTitle = "Implement parser",
+      subAgentId = "alpha",
+    )
+
+    assertThat(file.getUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT)).isTrue()
   }
 
   @Test
@@ -478,17 +541,6 @@ private class ChatTestProviderBridge(
 
   override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
-  }
-
-  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(command = listOf("test"))
-  }
-
-  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    return AgentSessionLaunchSpec(
-      sessionId = null,
-      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
-    )
   }
 
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {

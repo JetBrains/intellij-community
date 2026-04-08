@@ -20,6 +20,7 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import kotlinx.coroutines.flow.Flow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -268,9 +269,18 @@ public abstract class XDebugProcess {
 
   /**
    * @return the message to show in the Variables View when the debugger isn't paused
+   * @see XDebugProcess#getCurrentStateMessageFlow
    */
   public @Nls String getCurrentStateMessage() {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
+  }
+
+  /**
+   * Override this method to push updates for {@link #getCurrentStateMessage()} to split debugger clients.
+   */
+  @ApiStatus.Internal
+  public @Nullable Flow<@Nls String> getCurrentStateMessageFlow() {
+    return null;
   }
 
   public @Nullable HyperlinkListener getCurrentStateHyperlinkListener() {

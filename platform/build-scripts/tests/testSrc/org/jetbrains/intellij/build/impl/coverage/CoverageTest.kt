@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jsoup.Jsoup
@@ -31,6 +32,7 @@ class CoverageTest {
     coveredClassesPatterns = coveredClass.packageName + ".*"
     testPatterns = CoverageTest::class.java.canonicalName
     mainModule = "intellij.platform.buildScripts.tests"
+    searchScope = JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized
   }
 
   private suspend fun context(): CompilationContext {

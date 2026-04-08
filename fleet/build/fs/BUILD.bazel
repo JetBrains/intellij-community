@@ -38,9 +38,9 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:fleet-github-luben-zstd-jni",
     "@lib//:fleet-tukaani-xz",
-    "@lib//:commons-compress",
-    "@lib//:commons-io",
-    "@lib//:commons-lang3",
+    "//libraries/commons/compress",
+    "//libraries/commons/io",
+    "//libraries/commons/lang3",
   ]
 )
 
@@ -58,9 +58,12 @@ jvm_library(
     "@lib//:fleet-tukaani-xz",
     "//fleet/test-runtime",
     "//fleet/test-runtime:test-runtime_test_lib",
-    "@lib//:commons-compress",
-    "@lib//:commons-io",
-    "@lib//:commons-lang3",
+    "//libraries/commons/compress",
+    "//libraries/commons/compress:compress_test_lib",
+    "//libraries/commons/io",
+    "//libraries/commons/io:io_test_lib",
+    "//libraries/commons/lang3",
+    "//libraries/commons/lang3:lang3_test_lib",
   ]
 )
 ### auto-generated section `build fleet.build.fs` end

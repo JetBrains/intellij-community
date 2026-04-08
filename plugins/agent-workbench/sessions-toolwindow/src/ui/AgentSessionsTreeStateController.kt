@@ -5,8 +5,8 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
@@ -17,7 +17,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeMod
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.ui.treeStructure.Tree
@@ -48,7 +48,7 @@ internal class AgentSessionsTreeStateController(
   private val selectNode: (SessionTreeId) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
 
   private var sessionsState: AgentSessionsState = AgentSessionsState()
   private var selectedChatTab: AgentChatTabSelection? = null

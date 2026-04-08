@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.minimap
 
+import com.intellij.ide.minimap.model.MinimapFileSupportPolicy
+import com.intellij.ide.minimap.model.MinimapSupportLevel
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -9,20 +11,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import javax.swing.JPanel
 
-@Service
-class MinimapService : Disposable {
-
-  companion object {
-    fun getInstance(): MinimapService = service<MinimapService>()
-    private val MINI_MAP_PANEL_KEY: Key<MinimapPanel> = Key.create("com.intellij.ide.minimap.panel")
-  }
-
+@Service(Service.Level.APP)
+class MinimapService(private val scope: CoroutineScope) : Disposable {
   private val settings = MinimapSettings.getInstance()
 
   private val onSettingsChange = { type: MinimapSettings.SettingsChangeType ->
@@ -35,34 +35,72 @@ class MinimapService : Disposable {
     MinimapSettings.getInstance().settingsChangeCallback += onSettingsChange
   }
 
-  fun updateAllEditors() {
-    EditorFactory.getInstance().allEditors.forEach { editor ->
-      getEditorImpl(editor)?.let {
-        removeMinimap(it)
-        if (settings.state.enabled) {
-          addMinimap(it)
-        }
-      }
-    }
-  }
-
   override fun dispose() {
     MinimapSettings.getInstance().settingsChangeCallback -= onSettingsChange
   }
 
-  private fun getEditorImpl(editor: Editor): EditorImpl? {
+  fun editorOpened(editor: Editor) {
+    val editorImpl = getMainEditorImpl(editor) ?: return
+    installVisibilityListener(editorImpl)
+    updateMinimap(editorImpl)
+  }
+
+
+  fun updateAllEditors() {
+    EditorFactory.getInstance().allEditors.forEach { editor ->
+      getMainEditorImpl(editor)?.let {
+        installVisibilityListener(it)
+        updateMinimap(it)
+      }
+    }
+  }
+
+  private fun getMainEditorImpl(editor: Editor): EditorImpl? {
     val editorImpl = editor as? EditorImpl ?: return null
     if (editorImpl.editorKind != EditorKind.MAIN_EDITOR) return null
-    val virtualFile = editorImpl.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-    if (settings.state.fileTypes.isNotEmpty() && !settings.state.fileTypes.contains(virtualFile.fileType.defaultExtension)) return null
     return editorImpl
   }
 
-  fun editorOpened(editor: Editor) {
-    if (!settings.state.enabled) {
-      return
+  private fun shouldHaveMinimap(editorImpl: EditorImpl): Boolean {
+    if (!settings.state.enabled) return false
+    if (!editorImpl.contentComponent.isShowing) return false
+
+    val project = editorImpl.project ?: return false
+    val document = editorImpl.document
+    val virtualFile = PsiDocumentManager.getInstance(project).getPsiFile(document)?.virtualFile
+                      ?: FileDocumentManager.getInstance().getFile(document)
+                      ?: return false
+
+    return MinimapFileSupportPolicy.forFileType(virtualFile.fileType) != MinimapSupportLevel.UNSUPPORTED
+  }
+
+  private fun updateMinimap(editorImpl: EditorImpl) {
+    val shouldHave = shouldHaveMinimap(editorImpl)
+    if (shouldHave) {
+      addMinimap(editorImpl)
     }
-    getEditorImpl(editor)?.let { addMinimap(it) }
+    else {
+      removeMinimap(editorImpl)
+    }
+  }
+
+  private fun installVisibilityListener(editorImpl: EditorImpl) {
+    if (editorImpl.getUserData(MINI_MAP_VISIBILITY_LISTENER_KEY) != null) return
+
+    val listener = HierarchyListener { event ->
+      if (event.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong() == 0L) return@HierarchyListener
+      if (editorImpl.isDisposed) return@HierarchyListener
+      // Avoid mutating the component hierarchy while it is being hidden/closed.
+      if (!editorImpl.contentComponent.isShowing) return@HierarchyListener
+      updateMinimap(editorImpl)
+    }
+
+    editorImpl.contentComponent.addHierarchyListener(listener)
+    editorImpl.putUserData(MINI_MAP_VISIBILITY_LISTENER_KEY, listener)
+    EditorUtil.disposeWithEditor(editorImpl, Disposable {
+      editorImpl.contentComponent.removeHierarchyListener(listener)
+      editorImpl.putUserData(MINI_MAP_VISIBILITY_LISTENER_KEY, null)
+    })
   }
 
   private fun getPanel(fileEditor: EditorImpl): JPanel? {
@@ -74,29 +112,47 @@ class MinimapService : Disposable {
 
     val where = if (settings.state.rightAligned) BorderLayout.LINE_END else BorderLayout.LINE_START
 
-    if ((panel.layout as? BorderLayout)?.getLayoutComponent(where) == null) {
-      val minimapPanel = MinimapPanel(textEditor.disposable, textEditor, panel)
-      panel.add(minimapPanel, where)
-      textEditor.putUserData(MINI_MAP_PANEL_KEY, minimapPanel)
-
-      Disposer.register(textEditor.disposable) {
-        textEditor.getUserData(MINI_MAP_PANEL_KEY)?.onClose()
-        textEditor.putUserData(MINI_MAP_PANEL_KEY, null)
-      }
-      panel.revalidate()
-      panel.repaint()
+    val borderLayout = panel.layout as? BorderLayout ?: return
+    val existingAtRequestedSide = borderLayout.getLayoutComponent(where) as? MinimapPanel
+    val existingAtOppositeSide = borderLayout.getLayoutComponent(oppositeSide(where)) as? MinimapPanel
+    val existingFromUserData = textEditor.getUserData(MINI_MAP_PANEL_KEY)
+    if (existingAtRequestedSide != null && existingAtOppositeSide == null && (existingFromUserData == null || existingFromUserData === existingAtRequestedSide)) {
+      textEditor.putUserData(MINI_MAP_PANEL_KEY, existingAtRequestedSide)
+      return
     }
+
+    cleanupMinimapPanels(textEditor, panel)
+
+    val minimapPanel = MinimapPanel(scope, textEditor, panel)
+
+    panel.add(minimapPanel, where)
+    textEditor.putUserData(MINI_MAP_PANEL_KEY, minimapPanel)
+
+    panel.revalidate()
+    panel.repaint()
   }
 
   private fun removeMinimap(editor: EditorImpl) {
-    val minimapPanel = editor.getUserData(MINI_MAP_PANEL_KEY) ?: return
-    minimapPanel.onClose()
-    editor.putUserData(MINI_MAP_PANEL_KEY, null)
+    val panel = getPanel(editor)
+    cleanupMinimapPanels(editor, panel)
+  }
 
-    minimapPanel.parent?.apply {
-      remove(minimapPanel)
-      revalidate()
-      repaint()
-    }
+  private fun cleanupMinimapPanels(editor: EditorImpl, panel: JPanel?) {
+    val panelsToClose = mutableSetOf<MinimapPanel>()
+    editor.getUserData(MINI_MAP_PANEL_KEY)?.let { panelsToClose.add(it) }
+    panel?.components?.filterIsInstance<MinimapPanel>()?.forEach { panelsToClose.add(it) }
+
+    editor.putUserData(MINI_MAP_PANEL_KEY, null)
+    panelsToClose.forEach { it.onClose() }
+  }
+
+  private fun oppositeSide(where: String): String {
+    return if (where == BorderLayout.LINE_END) BorderLayout.LINE_START else BorderLayout.LINE_END
+  }
+
+  companion object {
+    fun getInstance(): MinimapService = service<MinimapService>()
+    private val MINI_MAP_PANEL_KEY: Key<MinimapPanel> = Key.create("com.intellij.ide.minimap.panel")
+    private val MINI_MAP_VISIBILITY_LISTENER_KEY: Key<HierarchyListener> = Key.create("com.intellij.ide.minimap.visibility.listener")
   }
 }

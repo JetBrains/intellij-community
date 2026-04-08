@@ -1,5 +1,6 @@
 *.pyc
 .DS_Store
+.bazelrc-user.bazelrc
 .gradle
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml

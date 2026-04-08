@@ -110,6 +110,8 @@ com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - text():java.lang.String
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+*:com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
+- a:preview(com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.LookupEx
 - com.intellij.codeInsight.lookup.Lookup
 - *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
@@ -279,6 +281,7 @@ com.intellij.modcommand.ModPsiUpdater
 - withAdditionalUpdater(com.intellij.modcompletion.CommonCompletionItem$InsertionAwareUpdateHandler):com.intellij.modcompletion.CommonCompletionItem
 - withAdditionalUpdater(com.intellij.modcompletion.CommonCompletionItem$UpdateHandler):com.intellij.modcompletion.CommonCompletionItem
 - withAutoCompletionPolicy(com.intellij.codeInsight.lookup.AutoCompletionPolicy):com.intellij.modcompletion.CommonCompletionItem
+- withInsertCharacterSuppressed(java.util.function.Predicate):com.intellij.modcompletion.CommonCompletionItem
 - withObject(java.lang.Object):com.intellij.modcompletion.CommonCompletionItem
 - withPresentation(com.intellij.modcompletion.ModCompletionItemPresentation):com.intellij.modcompletion.CommonCompletionItem
 - withPresentation(com.intellij.openapi.util.text.MarkupText):com.intellij.modcompletion.CommonCompletionItem
@@ -368,6 +371,7 @@ com.intellij.modcommand.ModPsiUpdater
 - contextObject():java.lang.Object
 - mainLookupString():java.lang.String
 - perform(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext):com.intellij.modcommand.ModCommand
+- p:shouldAddCompletionChar(com.intellij.modcompletion.ModCompletionItem$InsertionContext):Z
 - a:update(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext,com.intellij.modcommand.ModPsiUpdater):V
 *:com.intellij.model.psi.PsiCompletableReference
 - com.intellij.model.psi.PsiSymbolReference

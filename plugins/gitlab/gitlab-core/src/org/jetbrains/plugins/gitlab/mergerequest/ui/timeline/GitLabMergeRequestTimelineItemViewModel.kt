@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionStateContainer
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModelImpl
@@ -96,10 +97,11 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     currentUser: GitLabUserDTO,
     mr: GitLabMergeRequest,
     discussion: GitLabMergeRequestDiscussion,
-    htmlConverter: GitLabMarkdownToHtmlConverter
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+    textCompletionViewModel: GitLabViewModelWithTextCompletion,
   ) : GitLabMergeRequestTimelineItemViewModel,
       GitLabMergeRequestTimelineDiscussionViewModel
-      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, projectData, currentUser, mr, discussion, htmlConverter) {
+      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, projectData, currentUser, mr, discussion, htmlConverter, textCompletionViewModel) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Discussion) return false
@@ -118,7 +120,8 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     mr: GitLabMergeRequest,
     projectData: GitLabProject,
     note: GitLabMergeRequestNote,
-    htmlConverter: GitLabMarkdownToHtmlConverter
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+    textCompletionViewModel: GitLabViewModelWithTextCompletion,
   ) : GitLabMergeRequestTimelineItemViewModel, GitLabNoteViewModel {
     private val cs = parentCs.childScope(this::class)
 
@@ -129,7 +132,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     override val serverUrl: URL = mr.serverPath.toURL()
 
     override val actionsVm: GitLabNoteAdminActionsViewModel? =
-      if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
+      if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note, textCompletionViewModel) else null
     override val reactionsVm: GitLabReactionsViewModel? = null
 
     override val body: StateFlow<String> = note.body

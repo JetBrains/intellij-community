@@ -1,7 +1,6 @@
 <html>
 <body>
-Reports redundant local variable types.
-<p>These types can be inferred from the context and thus replaced with <code>var</code>.</p>
+Reports local variable types that can be inferred from context and replaced with <code>var</code>.
 <p><b>Example:</b></p>
 <pre><code>
   void test(InputStream s) {
@@ -16,6 +15,7 @@ Reports redundant local variable types.
 </code></pre>
 <!-- tooltip end -->
 <p>
-
+Use the <b>Only report when variable initializer is "simple"</b> checkbox to only report variables with a new expression or literal
+initializer.
 </body>
 </html>

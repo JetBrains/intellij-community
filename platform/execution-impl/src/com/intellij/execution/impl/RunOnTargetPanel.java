@@ -137,9 +137,8 @@ public final class RunOnTargetPanel {
   }
 
   private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
-    myRunOnComboBox.initModel();
     List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
-    myRunOnComboBox.addTargets(ContainerUtil.filter(configs, configuration -> {
+    myRunOnComboBox.initModel(ContainerUtil.filter(configs, configuration -> {
       return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
     }));
     myRunOnComboBox.selectTarget(targetNameToChoose);

@@ -80,7 +80,6 @@ fun java.util.concurrent.Semaphore.acquireMaybeCancellable(permits: Int = 1) {
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun Lock.lockCancellable() {
-  LOG.assertTrue(isInCancellableContext())
   while (true) {
     ProgressManager.checkCanceled()
     try {

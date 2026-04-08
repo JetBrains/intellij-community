@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
   </dependencies>
   <!-- endregion -->
 
@@ -11,30 +12,6 @@
       interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor"
       dynamic="true"/>
     <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptLauncher"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptContextContributor"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptContextRenderer"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererBridge"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptPaletteExtension"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPaletteExtension"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptManualContextSource"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptManualContextSourceBridge"
-      dynamic="true"/>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.promptSuggestionAiBackend"
-      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionAiBackend"
-      dynamic="true"/>
-    <extensionPoint
       qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
       interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
       dynamic="true"/>
@@ -42,9 +19,5 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchFusCollector"/>
-    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSnippetContextRendererBridge"/>
-    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptFileContextRendererBridge"/>
-    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSymbolContextRendererBridge"/>
-    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPathsContextRendererBridge"/>
   </extensions>
 </idea-plugin>

@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/jackson3/jackson:libraries-jackson3",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/jackson3/databind",
     "//libraries/kotlinx/coroutines/core",
     "//platform/platform-impl/initial-config-import",
@@ -36,6 +37,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
   ]
 )
 
@@ -59,6 +62,7 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/jackson3/databind:databind_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
@@ -66,6 +70,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.updateChecker` end

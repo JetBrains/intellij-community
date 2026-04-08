@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IMPORT: test.a7
 import test.a1
 import test.a2

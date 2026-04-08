@@ -31,11 +31,13 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util/jdom",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/kernel/backend",
     "//platform/statistics",
     "//platform/platform-impl/rpc",
     "//platform/backend",
     "//platform/util/coroutines",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -63,11 +65,13 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/kernel/backend:backend_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/backend:backend_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.recentFiles.backend` end

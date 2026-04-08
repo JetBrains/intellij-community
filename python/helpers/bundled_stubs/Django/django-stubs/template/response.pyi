@@ -9,6 +9,7 @@ from django.http.request import HttpRequest
 from django.template.base import Template
 from django.template.context import RequestContext
 from django.test.client import Client
+from typing_extensions import override
 
 from .backends.base import _EngineTemplate
 
@@ -43,6 +44,7 @@ class SimpleTemplateResponse(HttpResponse):
     def render(self) -> SimpleTemplateResponse: ...
     @property
     def is_rendered(self) -> bool: ...
+    @override
     def __iter__(self) -> Iterator[Any]: ...
 
 class TemplateResponse(SimpleTemplateResponse):

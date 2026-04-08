@@ -1,11 +1,12 @@
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from datetime import date as real_date
 from typing import Any, NamedTuple
 
 from django.http.request import QueryDict
-from django.template.base import FilterExpression, Parser, Token
+from django.template.base import FilterExpression, Parser, PartialTemplate, Token
 from django.template.context import Context
 from django.utils.safestring import SafeString
+from typing_extensions import override
 
 from .base import Node, NodeList
 from .library import Library
@@ -95,6 +96,17 @@ class NowNode(Node):
     asvar: str | None
     def __init__(self, format_string: str, asvar: str | None = None) -> None: ...
 
+class PartialDefNode(Node):
+    partial_name: str
+    inline: bool
+    nodelist: NodeList
+    def __init__(self, partial_name: str, inline: bool, nodelist: NodeList) -> None: ...
+
+class PartialNode(Node):
+    partial_name: str
+    partial_mapping: Mapping[str, PartialTemplate]
+    def __init__(self, partial_name: str, partial_mapping: Mapping[str, PartialTemplate]) -> None: ...
+
 class ResetCycleNode(Node):
     node: CycleNode
     def __init__(self, node: CycleNode) -> None: ...
@@ -161,6 +173,7 @@ def do_for(parser: Parser, token: Token) -> ForNode: ...
 class TemplateLiteral(Literal):
     text: str
     def __init__(self, value: FilterExpression, text: str) -> None: ...
+    @override
     def display(self) -> str: ...
 
 class TemplateIfParser(IfParser):
@@ -178,6 +191,8 @@ def load_from_library(library: Library, label: str, names: list[str]) -> Library
 def load(parser: Parser, token: Token) -> LoadNode: ...
 def lorem(parser: Parser, token: Token) -> LoremNode: ...
 def now(parser: Parser, token: Token) -> NowNode: ...
+def partial_func(parser: Parser, token: Token) -> PartialNode: ...
+def partialdef_func(parser: Parser, token: Token) -> PartialDefNode: ...
 def querystring(context: Context, query_dict: QueryDict | None = None, **kwargs: Any) -> str: ...
 def regroup(parser: Parser, token: Token) -> RegroupNode: ...
 def resetcycle(parser: Parser, token: Token) -> ResetCycleNode: ...

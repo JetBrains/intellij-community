@@ -43,6 +43,13 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implemen
     return true;
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
   @Override
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
     MacroCallNode type = new MacroCallNode(new IterableComponentTypeMacro());
@@ -60,7 +67,8 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implemen
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
     template.addVariable("NAME", name, name, true);
 
-    String finalPart = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isGenerateFinalLocals() ? "final " : null;
+    boolean generateFinal = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isGenerateFinalLocals();
+    String finalPart = generateFinal ? "final " : null;
     if (finalPart != null) {
       template.addVariable("FINAL", new TextExpression(finalPart), false);
     }

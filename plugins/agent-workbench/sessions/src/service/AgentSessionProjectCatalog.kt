@@ -25,6 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -278,7 +279,7 @@ private fun collectRawProjectEntries(): List<ProjectEntry> {
       OpenProjectCandidate(
         project = project,
         normalizedPath = resolveOpenProjectPath(
-          managerProjectPath = manager.getProjectPath(project)?.invariantSeparatorsPathString,
+          managerProjectPath = manager.getProjectPath(project),
           projectBasePath = project.basePath,
         ),
       )
@@ -366,10 +367,10 @@ internal fun <T, P> resolveRecentPathCandidate(
 }
 
 internal fun resolveOpenProjectPath(
-  managerProjectPath: String?,
+  managerProjectPath: Path?,
   projectBasePath: String?,
 ): String? {
-  return managerProjectPath?.let(::normalizeAgentWorkbenchPath)
+  return managerProjectPath?.invariantSeparatorsPathString
          ?: projectBasePath?.let(::normalizeAgentWorkbenchPath)
 }
 

@@ -65,6 +65,9 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/fastutil",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-serialization",
   ]
 )
 
@@ -118,6 +121,9 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.ui` end

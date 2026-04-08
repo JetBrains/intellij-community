@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,11 +14,16 @@ import javax.swing.JComponent;
 
 public final class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String HELP_ID = "preferences.pathVariables";
+  private final @NotNull Project myProject;
   private PathMacroListEditor editor;
+
+  public PathMacroConfigurable(@NotNull Project project) {
+    myProject = project;
+  }
 
   @Override
   public JComponent createComponent() {
-    editor = new PathMacroListEditor();
+    editor = new PathMacroListEditor(myProject);
     return editor.getPanel();
   }
 

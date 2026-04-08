@@ -23,17 +23,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -92,7 +93,9 @@ public class TestCaseLoader {
     if (ourBucketingSchemeInitRecursionLock.get() == Boolean.TRUE) throw new IllegalStateException("recursion detected");
     ourBucketingSchemeInitRecursionLock.set(Boolean.TRUE);
     try {
-      scheme.initialize();
+      TeamCityLogger.block("Initializing bucketing scheme ...", () -> {
+        scheme.initialize();
+      });
     } finally {
       ourBucketingSchemeInitRecursionLock.remove();
     }
@@ -119,27 +122,20 @@ public class TestCaseLoader {
       return TestClassesFilter.ALL_CLASSES;
     }
 
-    List<URL> groupingFileUrls = Collections.emptyList();
-    if (!StringUtil.isEmpty(classFilterName)) {
-      try {
-        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
+    String testGroupRoots = System.getProperty("test.group.roots");
+    if (testGroupRoots == null) throw new RuntimeException("No test group roots specified");
 
-    List<URL> finalGroupingFileUrls = groupingFileUrls;
+    List<Path> groupingFiles = ContainerUtil.map(testGroupRoots.split(File.pathSeparator), Paths::get);
     TeamCityLogger.block("Loading test groups from ...", () -> {
-      System.out.println("Loading test groups from: " + finalGroupingFileUrls);
+      System.out.println("Loading test groups from: " + groupingFiles);
     });
     MultiMap<String, String> groups = MultiMap.createLinked();
-    for (URL fileUrl : groupingFileUrls) {
-      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream(), StandardCharsets.UTF_8)) {
+    for (Path file : groupingFiles) {
+      try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)) {
         GroupBasedTestClassFilter.readGroups(reader, groups);
       }
       catch (IOException e) {
-        throw new RuntimeException("Failed to load test groups from " + fileUrl, e);
+        throw new RuntimeException("Failed to load test groups from " + file, e);
       }
     }
     System.out.println("Using test groups: " + testGroupNames);
@@ -170,18 +166,12 @@ public class TestCaseLoader {
     return true;
   }
 
-  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName, boolean initializing) {
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass &&
         testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
-
-      // fair bucketing initialization or warmup caches from nastradamus (if it's not fully initialized)
-      if (initializing) return true;
-
-      if (matchesCurrentBucket(testCaseClass.getName())) {
-        return true;
-      }
+      return true;
     }
 
     return false;
@@ -193,6 +183,8 @@ public class TestCaseLoader {
    * @apiNote logic for bucketing tests into different bucket configurations.
    * @see TestCaseLoader#TEST_RUNNERS_COUNT
    * @see TestCaseLoader#TEST_RUNNER_INDEX
+   *
+   * called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.BucketingClassNameFilter`
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
     if (!shouldBucketTests()) return true;
@@ -256,14 +248,14 @@ public class TestCaseLoader {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
-  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator, boolean initialization) {
+  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       if (!isPotentiallyTestCase(className, moduleName)) {
         continue;
       }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        if (isClassTestCase(candidateClass, moduleName, initialization)) {
+        if (isClassTestCase(candidateClass, moduleName)) {
           myClassSet.add(candidateClass);
         }
       }
@@ -377,7 +369,7 @@ public class TestCaseLoader {
     return ourCommonTestClassesFilter.getValue().matches(className);
   }
 
-  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.BucketingPostDiscoveryFilter`
+  // called reflectively from `com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter`
   @SuppressWarnings("unused")
   public static boolean isClassIncluded(Class<?> aClass) {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
@@ -387,10 +379,6 @@ public class TestCaseLoader {
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
-    fillTestCases(rootPackage, classesRoots, false);
-  }
-
-  private void fillTestCases(String rootPackage, List<? extends Path> classesRoots, boolean warmUpPhase) {
     if (myGetClassesCalled) {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
@@ -411,7 +399,7 @@ public class TestCaseLoader {
       }
       int count = getClassesCount();
       ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(moduleName, classFinder.getClasses(), warmUpPhase);
+      loadTestCases(moduleName, classFinder.getClasses());
       count = getClassesCount() - count;
       if (count > 0) {
         System.out.println("Loaded " + count + " classes from class root " + classesRoot);
@@ -425,7 +413,7 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!warmUpPhase && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
+    if (getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println(

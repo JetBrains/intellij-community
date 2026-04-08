@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.framework.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
@@ -41,7 +42,7 @@ class ConfigureDialogWithModulesAndVersion(
 
     private val rootModuleVersion: String?
 
-    private val rootModule = getRootModule(project)
+    private val rootModule: Module? = runReadAction { getRootModule(project) }
 
     val kotlinVersion: String?
         get() = kotlinVersionChooser.kotlinVersion
@@ -62,7 +63,7 @@ class ConfigureDialogWithModulesAndVersion(
         jvmModulesTargetingUnsupportedJvm = compatibility.modulesByIncompatibleJvmTarget
         modulesAndJvmTargets = compatibility.moduleJvmTargets
 
-        val kotlinVersions = getKotlinVersionsAndModules(project, configurator)
+        val kotlinVersions = runReadAction { getKotlinVersionsAndModules(project, configurator) }
         versionsAndModules = kotlinVersions.first
         rootModuleVersion = kotlinVersions.second
 

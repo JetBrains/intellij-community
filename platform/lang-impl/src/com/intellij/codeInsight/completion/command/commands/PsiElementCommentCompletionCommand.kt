@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.lang.CodeDocumentationAwareCommenter
+import com.intellij.lang.LanguageCommenters
 import com.intellij.codeInsight.generation.CommentByBlockCommentHandler
 import com.intellij.codeInsight.generation.CommentByLineCommentHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -26,14 +28,21 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
     if (offset - 1 < 0) return false
-    getHighLevelContext(offset, psiFile) ?: return false
+    val context = getHighLevelContext(offset, psiFile) ?: return false
+    if (context is PsiComment) {
+      // For uncomment, only allow block comments — line comments are handled by UncommentLineCompletionCommandProvider
+      val commenter = LanguageCommenters.INSTANCE.forLanguage(psiFile.language) as? CodeDocumentationAwareCommenter
+                      ?: return true
+      if (context.tokenType != commenter.blockCommentTokenType) return false
+    }
     return true
   }
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     val element = getHighLevelContext(context.offset, context.psiFile) ?: return null
     val range = element.textRange ?: return null
-    val adjustedName = if (element is PsiComment) CodeInsightBundle.message("command.completion.psi.element.uncomment.block.text") else presentableName
+    val adjustedName =
+      if (element is PsiComment) CodeInsightBundle.message("command.completion.psi.element.uncomment.block.text") else presentableName
     return object : ActionCompletionCommand(actionId = super.actionId,
                                             synonyms = super.synonyms,
                                             presentableActionName = adjustedName,
@@ -66,7 +75,11 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
       override fun getPreview(): IntentionPreviewInfo {
         val commentByBlockCommentHandler = CommentByBlockCommentHandler()
         return tryToCalculateCommandCompletionPreview(commentByBlockCommentHandler, context,
-                                                      highlight = ({ offset, psiFile, selectionModel -> highlight(offset, psiFile, selectionModel) }),
+                                                      highlight = ({ offset, psiFile, selectionModel ->
+                                                        highlight(offset,
+                                                                  psiFile,
+                                                                  selectionModel)
+                                                      }),
                                                       fallback = { super.getPreview() })
       }
     }
@@ -134,7 +147,11 @@ internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandP
       override fun getPreview(): IntentionPreviewInfo {
         val handler = CommentByLineCommentHandler()
         return tryToCalculateCommandCompletionPreview(handler, context,
-                                                      highlight = ({ offset, psiFile, selectionModel -> highlight(offset, psiFile, selectionModel) }),
+                                                      highlight = ({ offset, psiFile, selectionModel ->
+                                                        highlight(offset,
+                                                                  psiFile,
+                                                                  selectionModel)
+                                                      }),
                                                       fallback = { super.getPreview() })
       }
     }
@@ -154,4 +171,33 @@ private fun getHighLevelContext(offset: Int, psiFile: PsiFile): PsiElement? {
     break
   }
   return context
+}
+
+internal class UncommentLineCompletionCommandProvider : ActionCommandProvider(
+  actionId = "CommentByLineComment",
+  synonyms = listOf("Uncomment line", "Toggle comment"),
+  presentableName = CodeInsightBundle.message("command.completion.uncomment.line.text"),
+  previewText = ActionsBundle.message("action.CommentByLineComment.description")) {
+
+  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+    if (editor == null || offset - 1 < 0) return false
+    val element = getCommandContext(offset, psiFile) ?: return false
+    if (element !is PsiComment) return false
+    if (element.textRange.endOffset != offset) return false
+    val commenter = LanguageCommenters.INSTANCE.forLanguage(psiFile.language) as? CodeDocumentationAwareCommenter ?: return false
+    return element.tokenType == commenter.lineCommentTokenType
+  }
+
+  override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    val element = getCommandContext(context.offset, context.psiFile) ?: return null
+    if (element !is PsiComment) return null
+    val range = element.textRange ?: return null
+    return ActionCompletionCommand(actionId = actionId,
+                                   presentableActionName = presentableName,
+                                   icon = icon,
+                                   priority = priority,
+                                   previewText = previewText,
+                                   synonyms = synonyms,
+                                   highlightInfo = HighlightInfoLookup(range, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
+  }
 }

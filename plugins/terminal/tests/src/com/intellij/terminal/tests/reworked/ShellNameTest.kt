@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Test
 
 internal class ShellNameTest {
@@ -73,6 +74,7 @@ internal class ShellNameTest {
       shellCommand = listOf(executablePath),
       workingDirectory = "",
       envVariables = emptyMap(),
+      processType = TerminalProcessType.SHELL,
       pid = null,
     )
     assertThat(options.guessShellName()).isEqualTo(expectedName)

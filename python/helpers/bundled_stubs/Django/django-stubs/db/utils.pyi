@@ -1,12 +1,13 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from types import TracebackType
-from typing import Any
+from typing import Any, TypeVar
 
 from django.apps import AppConfig
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Model
 from django.utils.connection import BaseConnectionHandler
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 DEFAULT_DB_ALIAS: str
 DJANGO_VERSION_PICKLE_KEY: str
@@ -21,24 +22,29 @@ class InternalError(DatabaseError): ...
 class ProgrammingError(DatabaseError): ...
 class NotSupportedError(DatabaseError): ...
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
 class DatabaseErrorWrapper:
     def __init__(self, wrapper: Any) -> None: ...
+    def __del__(self) -> None: ...
     def __enter__(self) -> None: ...
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        exc_tb: TracebackType | None,
+        traceback: TracebackType | None,
     ) -> None: ...
+    def __call__(self, func: _F) -> _F: ...
 
 def load_backend(backend_name: str) -> Any: ...
 
 class ConnectionHandler(BaseConnectionHandler[BaseDatabaseWrapper]):
+    @override
     def configure_settings(self, databases: dict[str, Any] | None) -> dict[str, Any]: ...
     @property
     def databases(self) -> dict[str, dict[str, Any]]: ...
+    @override
     def create_connection(self, alias: str) -> BaseDatabaseWrapper: ...
-    def close_all(self) -> None: ...
 
 class ConnectionRouter:
     def __init__(self, routers: Iterable[Any] | None = None) -> None: ...

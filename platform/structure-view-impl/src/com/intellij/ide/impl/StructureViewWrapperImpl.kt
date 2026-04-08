@@ -285,8 +285,18 @@ class StructureViewWrapperImpl(
       return
     }
     val dataContext = DataManager.getInstance().getDataContext(owner)
-    // do not update view if current structure view is in focus, but proceed if a file was closed
-    if (WRAPPER_DATA_KEY.getData(dataContext) === this && myFileEditor?.isValid == true) return
+    // If the context component is the structure view itself, do not update,
+    // as it would cause unexpected and useless behavior:
+    // the view could disappear on the first click inside the structure if there's no active editor,
+    // or it could change to the structure of the active editor even if something else was opened on purpose
+    // (for example, a file from the Project View).
+    // Therefore, we do not update if:
+    // 1. The data context is within the current structure, AND
+    // 2. One of:
+    // 2.1. The structure view was created with an editor, and it's still valid (myFileEditor?.isValid == true),
+    // 2.2. The structure view was created without an editor (myFileEditor?.isValid == null),
+    // hence the second condition is != false and not == true, to cover the second case (a null editor is a valid one).
+    if (WRAPPER_DATA_KEY.getData(dataContext) === this && myFileEditor?.isValid != false) return
     val aProject = CommonDataKeys.PROJECT.getData(dataContext)
     if (aProject != null && aProject !== project) return
     if (insideToolwindow) {

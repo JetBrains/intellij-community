@@ -11,14 +11,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 
-@ApiStatus.Internal
 interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableInternal {
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
   suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     throw AbstractMethodError()
   }
 
+  @ApiStatus.Internal
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
     throw AbstractMethodError()
   }
@@ -46,7 +44,7 @@ interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableIn
   fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit)
 
   /**
-   * Use only if approved by core team.
+   * Use only if approved by the core team.
    */
   @ApiStatus.Internal
   fun registerService(

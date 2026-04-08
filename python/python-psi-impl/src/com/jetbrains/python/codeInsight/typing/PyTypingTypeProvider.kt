@@ -397,27 +397,27 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
                 return type
               }
             }
-            else if (current is PyNamedParameter) {
-              val type = getTypeFromTypeHint(current, context)
-              if (type != null) {
-                if (current.isPositionalContainer) {
-                  return Ref.create(current.toPositionalContainerType(type.get()))
-                }
-                else if (current.isKeywordContainer) {
-                  return Ref.create(current.toKeywordContainerType(type.get()))
-                }
-                return type
-              }
-            }
+            // TODO Temporarily fixes PY-86904
+            //else if (current is PyNamedParameter) {
+            //  val type = getTypeFromTypeHint(current, context)
+            //  if (type != null) {
+            //    if (current.isPositionalContainer) {
+            //      return Ref.create(current.toPositionalContainerType(type.get()))
+            //    }
+            //    else if (current.isKeywordContainer) {
+            //      return Ref.create(current.toKeywordContainerType(type.get()))
+            //    }
+            //    return type
+            //  }
+            //}
           }
         }
         else {
-          val candidates =
-            when (scopeOwner) {
-              is PyFile -> scopeOwner.topLevelAttributes
-              is PyClass -> scopeOwner.classAttributes
-              else -> null
-            }
+          val candidates = when (scopeOwner) {
+            is PyFile -> scopeOwner.topLevelAttributes
+            is PyClass -> scopeOwner.classAttributes
+            else -> null
+          }
           if (candidates != null) {
             return candidates
               .filter { name == it.name }

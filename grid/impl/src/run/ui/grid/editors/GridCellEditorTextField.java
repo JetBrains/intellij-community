@@ -74,6 +74,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
                                  @NotNull DataGrid grid,
                                  @NotNull ModelIndex<GridRow> row,
                                  @NotNull ModelIndex<GridColumn> column,
+                                 @Nullable Object value,
                                  boolean multiline,
                                  EventObject initiator,
                                  TextCompletionProvider provider,
@@ -82,9 +83,9 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
     // Not passing multiline flag allows to reuse oneLineMode's initialization logic.
     // The editor is turned into a multiline editor via SettingsProvider, if needed.
     // We also set "JBListTable.isTableCellEditor" to Boolean.TRUE: see EditorTextField.updateBorder()
-    super(createDocument(DefaultTextRendererFactory.getLanguage(grid, row, column)), project, FileTypes.PLAIN_TEXT);
+    super(createDocument(DefaultTextRendererFactory.getLanguage(grid, row, column, value)), project, FileTypes.PLAIN_TEXT);
     boolean clear = initiator instanceof KeyEvent && grid.isEditable();
-    if (!clear) setText(valueFormatter, grid, row, column);
+    if (!clear) setText(valueFormatter, grid, row, column, value);
     putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
     myGrid = grid;
     installEditorSettingsProvider(multiline);
@@ -106,7 +107,8 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
   public void setText(@NotNull GridCellEditorFactory.ValueFormatter valueFormatter,
                       @NotNull DataGrid grid,
                       @NotNull ModelIndex<GridRow> row,
-                      @NotNull ModelIndex<GridColumn> column) {
+                      @NotNull ModelIndex<GridColumn> column,
+                      @Nullable Object value) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ValueFormatterResult result = valueFormatter.format();
       VirtualFile file = FileDocumentManager.getInstance().getFile(getDocument());
@@ -115,7 +117,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
         file.setBOM(result.bom);
       }
       setText(result.text);
-      PsiCodeFragment fragment = GridHelper.get(grid).createCellCodeFragment(getDocument().getText(), getProject(), grid, row, column);
+      PsiCodeFragment fragment = GridHelper.get(grid).createCellCodeFragment(getDocument().getText(), getProject(), grid, row, column, value);
       if (fragment != null) {
         GridUtilCore.associatePsiSafe(getDocument(), fragment);
       }

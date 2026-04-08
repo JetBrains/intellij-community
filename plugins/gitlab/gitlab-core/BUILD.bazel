@@ -61,11 +61,15 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "//libraries/jsoup",
     "//platform/util/coroutines",
+    "//platform/util-ex",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/vcs-impl/shared",
     "//platform/code-style-api:codeStyle",
     "//platform/observable",
+    "//platform/progress/shared:ide-progress",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -122,13 +126,17 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "//platform/dvcs-impl/shared:shared_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/observable:observable_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end
@@ -256,6 +264,8 @@ jvm_library(
     "//platform/observable",
     "//platform/collaboration-tools:collaborationTools-tests",
     "//platform/collaboration-tools:collaborationTools-tests_test_lib",
+    "//platform/testFramework/junit5/codeInsight",
+    "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
   ],
   runtime_deps = [
     ":vcs-gitlab-tests",

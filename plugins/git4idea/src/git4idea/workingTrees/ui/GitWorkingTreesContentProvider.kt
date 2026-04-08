@@ -86,6 +86,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     init {
       list.cellRenderer = WorkingTreesListRenderer()
+      list.accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
       initEmptyText(list.emptyText)
       addToCenter(list)
 

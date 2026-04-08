@@ -2,13 +2,23 @@
 package com.intellij.openapi.vcs.merge.flow
 
 import com.intellij.CommonBundle
+import com.intellij.ide.setToolTipText
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
 import com.intellij.openapi.ui.DialogWrapper.createJButtonForAction
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeResolveActionPresentation
+import com.intellij.openapi.vcs.merge.MergeResolveActionProvider
+import com.intellij.openapi.vcs.merge.MergeResolveActionSupport
+import com.intellij.openapi.vcs.merge.MergeResolveWithAgentContext
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.Align
@@ -16,7 +26,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +40,7 @@ import javax.swing.tree.DefaultTreeModel
 
 internal class OneShotMergeFlowDelegate(
   private val project: Project?,
-  private val table: TreeTable,
+  private val tableComponent: JComponent,
   private val mergeDialogCustomizer: MergeDialogCustomizer,
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
@@ -51,7 +60,6 @@ internal class OneShotMergeFlowDelegate(
       row {
         label(VcsBundle.message("merge.loading.merge.details")).applyToComponent {
           initOnShow("MultipleFileMergeDialog - Load Label") {
-            @Suppress("HardCodedStringLiteral") // withContext loses the nls annotation
             val title = withContext(Dispatchers.Default) {
               mergeDialogCustomizer.getMultipleFileMergeDescription(files)
             }
@@ -61,7 +69,7 @@ internal class OneShotMergeFlowDelegate(
       }
 
       row {
-        scrollCell(table)
+        scrollCell(tableComponent)
           .align(Align.FILL)
           .resizableColumn()
 
@@ -88,6 +96,11 @@ internal class OneShotMergeFlowDelegate(
             mergeButton = createJButtonForAction(mergeAction, rootPane)
             cell(mergeButton)
               .align(AlignX.FILL)
+          }
+          createResolveActionButtons().forEach { button ->
+            row {
+              cell(button).align(AlignX.FILL)
+            }
           }
         }.align(AlignY.TOP)
       }.resizableRow()
@@ -132,4 +145,92 @@ internal class OneShotMergeFlowDelegate(
   ): DefaultTreeModel = TreeModelBuilder.buildFromVirtualFiles(project, grouping, unresolvedFiles)
 
   override fun createSouthPanel(): JComponent? = null
+
+  private fun createResolveActionButtons(): List<JComponent> {
+    val project = project ?: return emptyList()
+    val mergeContext = MergeResolveWithAgentContext(
+      project = project,
+      files = files,
+      closeDialogForAgentHandoffHandler = onClose,
+      isLaunchContextValidHandler = { rootPane.isDisplayable },
+    )
+    return MergeResolveActionProvider.EP_NAME.extensionList
+      .sortedBy(MergeResolveActionProvider::order)
+      .mapNotNull { provider -> createResolveActionComponent(provider, mergeContext) }
+  }
+
+  private fun createResolveActionComponent(
+    provider: MergeResolveActionProvider,
+    mergeContext: MergeResolveWithAgentContext,
+  ): JComponent? {
+    val action = provider.action
+    return if (action is CustomComponentAction) {
+      createResolveActionCustomComponent(action, mergeContext)
+    }
+    else {
+      createResolveActionButton(provider, mergeContext)
+    }
+  }
+
+  private fun createResolveActionButton(
+    provider: MergeResolveActionProvider,
+    mergeContext: MergeResolveWithAgentContext,
+  ): JButton? {
+    val button = JButton()
+    updateResolveActionButton(provider, mergeContext, button)
+    if (!button.isVisible) return null
+    button.addActionListener {
+      MergeResolveActionSupport.performAction(provider, mergeContext, button, MERGE_DIALOG_ACTION_PLACE)
+      updateResolveActionButton(provider, mergeContext, button)
+    }
+    return button
+  }
+
+  private fun createResolveActionCustomComponent(
+    action: CustomComponentAction,
+    mergeContext: MergeResolveWithAgentContext,
+  ): JComponent? {
+    val anAction = action as? com.intellij.openapi.actionSystem.AnAction ?: return null
+    val presentation = MergeResolveActionSupport.getUpdatedPresentation(anAction, mergeContext, null, MERGE_DIALOG_ACTION_PLACE)
+                       ?: return null
+    val component = action.createCustomComponent(presentation, MERGE_DIALOG_ACTION_PLACE)
+    action.updateCustomComponent(component, presentation)
+    return wrapResolveActionComponent(component, mergeContext)
+  }
+
+  private fun updateResolveActionButton(
+    provider: MergeResolveActionProvider,
+    mergeContext: MergeResolveWithAgentContext,
+    button: JButton,
+  ) {
+    syncResolveActionButton(button, MergeResolveActionSupport.createActionPresentation(provider, mergeContext, button, MERGE_DIALOG_ACTION_PLACE))
+  }
+
+  private fun syncResolveActionButton(button: JButton, presentation: MergeResolveActionPresentation?) {
+    if (presentation == null) {
+      button.isVisible = false
+      return
+    }
+
+    button.text = presentation.text
+    button.icon = presentation.icon
+    button.setToolTipText(presentation.description?.let(HtmlChunk::text))
+    button.isEnabled = presentation.isEnabled
+    button.isVisible = true
+  }
+
+  private fun wrapResolveActionComponent(
+    component: JComponent,
+    mergeContext: MergeResolveWithAgentContext,
+  ): JComponent {
+    return UiDataProvider.wrapComponent(component) { sink ->
+      sink[CommonDataKeys.PROJECT] = mergeContext.project
+      sink[PlatformCoreDataKeys.CONTEXT_COMPONENT] = component
+      sink[MergeResolveWithAgentContext.KEY] = mergeContext
+    }
+  }
+
+  private companion object {
+    const val MERGE_DIALOG_ACTION_PLACE: String = "Merge.OneShotDialog"
+  }
 }

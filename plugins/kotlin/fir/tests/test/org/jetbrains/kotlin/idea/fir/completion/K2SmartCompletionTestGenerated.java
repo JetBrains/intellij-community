@@ -1663,6 +1663,21 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/ParameterWithDefaultValue.kt");
         }
 
+        @TestMetadata("PreferInstantiationOverAnonymousObject.kt")
+        public void testPreferInstantiationOverAnonymousObject() throws Exception {
+            runTest("../../completion/testData/smart/PreferInstantiationOverAnonymousObject.kt");
+        }
+
+        @TestMetadata("PreferNonDeprecated.kt")
+        public void testPreferNonDeprecated() throws Exception {
+            runTest("../../completion/testData/smart/PreferNonDeprecated.kt");
+        }
+
+        @TestMetadata("PreferNonDeprecatedObjects.kt")
+        public void testPreferNonDeprecatedObjects() throws Exception {
+            runTest("../../completion/testData/smart/PreferNonDeprecatedObjects.kt");
+        }
+
         @TestMetadata("PreviousArgError.kt")
         public void testPreviousArgError() throws Exception {
             runTest("../../completion/testData/smart/PreviousArgError.kt");

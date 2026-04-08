@@ -24,12 +24,13 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class FileChooserUtil {
   private static final String LAST_OPENED_FILE = "last_opened_file_path";
-  private static final String RECENT_FILES = "file.chooser.recent.files";
+  public static final String RECENT_FILES = "file.chooser.recent.files";
   private static final int RECENT_FILES_LIMIT = 30;
 
   @ApiStatus.Internal
@@ -70,25 +71,40 @@ public final class FileChooserUtil {
 
   @ApiStatus.Internal
   public static @NotNull List<@SystemIndependent String> getRecentPaths() {
-    List<String> values = PropertiesComponent.getInstance().getList(RECENT_FILES);
+    return getRecentPaths(RECENT_FILES);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<@SystemIndependent String> getRecentPaths(@NonNls @NotNull String propertyName) {
+    List<String> values = PropertiesComponent.getInstance().getList(propertyName);
     return values != null ? values : List.of();
   }
 
   @ApiStatus.Internal
   public static void updateRecentPaths(@Nullable Project project, @NotNull VirtualFile file) {
+    updateRecentPaths(project, file, RECENT_FILES, null);
+  }
+
+  @ApiStatus.Internal
+  public static void updateRecentPaths(
+    @Nullable Project project,
+    @NotNull VirtualFile file,
+    @NonNls @NotNull String propertyName,
+    @Nullable Function<VirtualFile, String> pathProvider
+  ) {
     var fs = file.getFileSystem();
     if (fs instanceof ArchiveFileSystem) {
       file = ((ArchiveFileSystem)fs).getLocalByEntry(file);
       if (file == null) return;
     }
 
-    var path = file.getPath();
+    var path = pathProvider != null ? pathProvider.apply(file) : file.getPath();
     setLastOpenedPath(project, path);
-    var recent = Stream.concat(Stream.of(path), getRecentPaths().stream())
+    var recent = Stream.concat(Stream.of(path), getRecentPaths(propertyName).stream())
       .distinct()
       .limit(RECENT_FILES_LIMIT)
       .collect(Collectors.toList());
-    PropertiesComponent.getInstance().setList(RECENT_FILES, recent);
+    PropertiesComponent.getInstance().setList(propertyName, recent);
   }
 
   @ApiStatus.Internal

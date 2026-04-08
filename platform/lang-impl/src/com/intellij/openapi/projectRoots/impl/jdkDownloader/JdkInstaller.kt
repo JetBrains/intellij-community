@@ -127,13 +127,10 @@ class JdkInstaller : JdkInstallerBase() {
     return wrap(d)
   }
 
-  public override fun eelFromPath(targetDir: Path): OsAbstractionForJdkInstaller.Eel? =
-    if (Registry.`is`("java.home.finder.use.eel"))
-      EelForJdkInstallerImpl(runBlockingMaybeCancellable {
-        targetDir.getEelDescriptor().toEelApi()
-      })
-    else
-      null
+  public override fun eelFromPath(targetDir: Path): OsAbstractionForJdkInstaller.Eel =
+    EelForJdkInstallerImpl(runBlockingMaybeCancellable {
+      targetDir.getEelDescriptor().toEelApi()
+    })
 
   private fun wrap(d: WSLDistribution) = WSLDistributionForJdkInstallerImpl(d)
 
@@ -513,11 +510,7 @@ abstract class JdkInstallerBase {
     try {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
-      val predicate = when {
-        Registry.`is`("java.home.finder.use.eel") -> JdkPredicate.forEel(jdkPath.getEelDescriptor().toEelApiBlocking())
-        WslPath.isWslUncPath(jdkPath.toString()) -> JdkPredicate.forWSL()
-        else -> JdkPredicate.default()
-      }
+      val predicate = JdkPredicate.forEel(jdkPath.getEelDescriptor().toEelApiBlocking())
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
       val markerFile = generateSequence(jdkPath) { file -> file.parent }

@@ -30,11 +30,31 @@ interface PsiSyntaxBuilderFactory {
   ): PsiSyntaxBuilder
 
   fun createBuilder(
+    chameleon: ASTNode,
+    lexer: Lexer?,
+    lang: Language,
+    text: CharSequence,
+    additionalConverter: ElementTypeConverter?,
+  ): PsiSyntaxBuilder {
+    return createBuilder(chameleon, lexer, lang, text)
+  }
+
+  fun createBuilder(
     chameleon: LighterLazyParseableNode,
     lexer: Lexer? = null,
     lang: Language = chameleon.tokenType.language,
     text: CharSequence = chameleon.text,
   ): PsiSyntaxBuilder
+
+  fun createBuilder(
+    chameleon: LighterLazyParseableNode,
+    lexer: Lexer?,
+    lang: Language,
+    text: CharSequence,
+    additionalConverter: ElementTypeConverter?,
+  ): PsiSyntaxBuilder {
+    return createBuilder(chameleon, lexer, lang, text)
+  }
 
   companion object {
     @JvmStatic
@@ -60,8 +80,27 @@ internal class PsiSyntaxBuilderFactoryImpl : PsiSyntaxBuilderFactory {
     lang: Language,
     text: CharSequence,
   ): PsiSyntaxBuilder {
+    return createBuilder(chameleon, lexer, lang, text, null)
+  }
+
+  override fun createBuilder(
+    chameleon: LighterLazyParseableNode,
+    lexer: Lexer?,
+    lang: Language,
+    text: CharSequence,
+  ): PsiSyntaxBuilder {
+    return createBuilder(chameleon, lexer, lang, text, null)
+  }
+
+  override fun createBuilder(
+    chameleon: ASTNode,
+    lexer: Lexer?,
+    lang: Language,
+    text: CharSequence,
+    additionalConverter: ElementTypeConverter?,
+  ): PsiSyntaxBuilder {
     val parserDefinition = getParserDefinition(lang, chameleon.getElementType())
-    val tokenConverter = getConverter(lang, chameleon.getElementType())
+    val tokenConverter = getConverter(lang, chameleon.getElementType(), additionalConverter)
     val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
                            ?: throw IllegalStateException("No SyntaxDefinition for language: $lang")
     val actualLexer = lexer ?: syntaxDefinition.createLexer()
@@ -90,9 +129,10 @@ internal class PsiSyntaxBuilderFactoryImpl : PsiSyntaxBuilderFactory {
     lexer: Lexer?,
     lang: Language,
     text: CharSequence,
+    additionalConverter: ElementTypeConverter?,
   ): PsiSyntaxBuilder {
     val parserDefinition = getParserDefinition(null, chameleon.getTokenType())
-    val tokenConverter = getConverter(lang, chameleon.getTokenType())
+    val tokenConverter = getConverter(lang, chameleon.getTokenType(), additionalConverter)
     val languageSyntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
     val actualLexer = lexer ?: languageSyntaxDefinition.createLexer()
     val cachedLexemes = extractCachedLexemes(chameleon)
@@ -123,9 +163,15 @@ internal class PsiSyntaxBuilderFactoryImpl : PsiSyntaxBuilderFactory {
     return parserDefinition
   }
 
-  private fun getConverter(language: Language?, tokenType: IElementType): ElementTypeConverter {
+  private fun getConverter(
+    language: Language?,
+    tokenType: IElementType,
+    additionalConverter: ElementTypeConverter? = null,
+  ): ElementTypeConverter {
     val adjusted = language ?: tokenType.language
-    return ElementTypeConverters.getConverter(adjusted)
+    val base = ElementTypeConverters.getConverter(adjusted)
+    if (additionalConverter == null) return base
+    return compositeElementTypeConverter(listOf(base, additionalConverter)) ?: base
   }
 }
 

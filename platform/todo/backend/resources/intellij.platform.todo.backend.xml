@@ -2,10 +2,14 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.todo"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="fleet.rhizomedb"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->

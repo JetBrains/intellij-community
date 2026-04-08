@@ -1,10 +1,10 @@
 class Test {
     void test() {
-        int x = getAnInt();
+        int x = getInt();
         System.out.println(x);
     }
 
-    private static int getAnInt() {
+    private static int getInt() {
         int x = 42;
         return x;
     }

@@ -246,7 +246,8 @@ public class InjectedLanguageUtilBase {
     element = skipNonInjectablePsi(element, probeUp);
     if (element == null) return;
 
-    InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(hostPsiFile.getProject());
+    InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.findInstanceImpl(hostPsiFile.getProject());
+    if (injectedManager == null) return;
     InjectionResult result = null;
     PsiElement current;
 

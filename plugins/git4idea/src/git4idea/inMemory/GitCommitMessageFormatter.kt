@@ -67,8 +67,9 @@ object GitCommitMessageFormatter {
   enum class CleanupMode {
     SPACE,
     NONE,
+
     @Suppress("unused")
-    SCISSORS, // Not used, as we don't open a commit message in the editor.'
+    SCISSORS, // Not used, as we don't open a commit message in the editor.
     ALL;
 
     companion object {
@@ -81,13 +82,10 @@ object GitCommitMessageFormatter {
        * assuming the message is not open in the editor
        */
       private fun parseOrNull(value: String?): CleanupMode? {
-        if (value == null) return SPACE
-
         return when (value) {
-          "default" -> SPACE
+          null, "default", "whitespace", "scissors" -> SPACE
           "verbatim" -> NONE
           "strip" -> ALL
-          "scissors" -> SPACE // scissors behave as SPACE when a message is not open in the editor
           else -> null
         }
       }

@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.JComponent;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EventListener;
@@ -304,7 +304,7 @@ public final class SdkListModelBuilder {
           indicator.setText(ProjectBundle.message("progress.text.jdk.combo.box.resolving.jdk.home", StringUtil.trimMiddle(homePath, 50)));
           // IDEA-237709
           // make sure VFS has the right image of our SDK to avoid empty SDK from being created
-          VfsUtil.markDirtyAndRefresh(false, true, true, new File(homePath));
+          VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(homePath));
         }
       });
 

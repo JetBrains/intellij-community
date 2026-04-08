@@ -12,8 +12,6 @@ class BaseSpatialOperations:
     select: str
     @cached_property
     def select_extent(self) -> str: ...
-    geography: bool
-    geometry: bool
     disallowed_aggregates: Any
     geom_func_prefix: str
     function_names: Any

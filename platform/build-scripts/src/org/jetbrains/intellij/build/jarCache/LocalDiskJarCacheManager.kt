@@ -21,7 +21,7 @@ private const val CACHE_VERSION = 0
 
 class LocalDiskJarCacheManager(
   cacheDir: Path,
-  private val productionClassOutDir: Path,
+  private val classesOutputDirectory: Path,
   private val maxAccessTimeAge: Duration = 3.days,
   metadataTouchInterval: Duration = metadataTouchMinInterval,
   private val cleanupInterval: Duration = defaultCleanupEveryDuration,
@@ -64,7 +64,7 @@ class LocalDiskJarCacheManager(
     span: Span,
     producer: SourceBuilder,
   ): Path {
-    val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
+    val items = createSourceAndCacheStrategyList(sources = sources, classesOutputDirectory = classesOutputDirectory)
     val targetFileName = targetFile.fileName?.toString() ?: targetFile.toString()
     val hash = Hashing.xxh3_128().hashStream()
     for (source in items) {

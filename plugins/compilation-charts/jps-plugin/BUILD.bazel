@@ -17,6 +17,8 @@ jvm_library(
   deps = [
     "//jps/jps-builders:build",
     "//platform/util",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//libraries/gson",
     "//jps/model-api:model",
   ]
@@ -32,6 +34,8 @@ jvm_library(
     ":compilation-charts-jps",
     "//jps/jps-builders:build_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//libraries/gson:gson_test_lib",
     "//jps/model-api:model_test_lib",
   ]

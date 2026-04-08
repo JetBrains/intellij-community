@@ -2,7 +2,7 @@ from datetime import date, tzinfo
 from datetime import datetime as builtin_datetime
 from datetime import time as builtin_time
 from re import Pattern
-from typing import Any, Literal
+from typing import Literal
 
 re_formatchars: Pattern[str]
 re_escaped: Pattern[str]
@@ -33,7 +33,6 @@ class TimeFormat(Formatter):
 class DateFormat(TimeFormat):
     data: builtin_datetime | date | builtin_time  # type: ignore[assignment]
     timezone: tzinfo | None
-    year_days: Any
     def __init__(self, obj: builtin_datetime | builtin_time | date) -> None: ...
     def b(self) -> str: ...
     def c(self) -> str: ...

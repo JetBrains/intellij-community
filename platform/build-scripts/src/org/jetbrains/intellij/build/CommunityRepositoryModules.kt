@@ -165,9 +165,9 @@ object CommunityRepositoryModules {
         "intellij.gradle.plugin",
         "intellij.gradle",
         "intellij.gradle.common",
-        "intellij.gradle.toolingProxy",
       )
     ) { spec ->
+      spec.withModule("intellij.gradle.toolingProxy", "gradle-tooling-proxy.jar")
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
@@ -189,7 +189,6 @@ object CommunityRepositoryModules {
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.jps")
-      spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
 
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },

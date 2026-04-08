@@ -31,6 +31,11 @@ public class IfStatementPostfixTemplate extends IfPostfixTemplateBase implements
   }
 
   @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @Override
   protected @NotNull Surrounder getSurrounder() {
     return new JavaWithIfExpressionSurrounder();
   }

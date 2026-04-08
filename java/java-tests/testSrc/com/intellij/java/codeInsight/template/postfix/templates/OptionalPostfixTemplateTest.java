@@ -96,5 +96,12 @@ public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
     doTest();
   }
+
+  public static class ModOptionalPostfixTemplateTest extends OptionalPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

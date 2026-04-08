@@ -30,6 +30,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//plugins/kotlin/test-framework",

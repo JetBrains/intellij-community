@@ -9,10 +9,12 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants.SETTINGS_XML
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID as MAVEN_SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID as GRADLE_SYSTEM_ID
 
+@Disabled("IDEA-387787")
 class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
 
   @Test

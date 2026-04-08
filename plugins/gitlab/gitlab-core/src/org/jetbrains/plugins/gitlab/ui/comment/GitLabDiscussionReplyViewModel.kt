@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 
 interface GitLabDiscussionReplyViewModel {
 
@@ -26,7 +27,8 @@ class GitLabDiscussionReplyViewModelImpl(
   project: Project,
   currentUser: GitLabUserDTO,
   projectData: GitLabProject,
-  discussion: GitLabDiscussion
+  discussion: GitLabDiscussion,
+  private val textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabDiscussionReplyViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -35,7 +37,7 @@ class GitLabDiscussionReplyViewModelImpl(
   override val newNoteVm: Flow<NewGitLabNoteViewModel?> = isWriting.mapScoped {
     if (!it) return@mapScoped null
     val cs = this
-    GitLabNoteEditingViewModel.forReplyNote(cs, project, projectData, discussion, currentUser).apply {
+    GitLabNoteEditingViewModel.forReplyNote(cs, project, projectData, discussion, currentUser, textCompletionViewModel).apply {
       onDoneIn(cs) {
         text.value = ""
       }

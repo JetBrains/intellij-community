@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
+import com.intellij.util.cancelOnDispose
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.MiniDetailsGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
@@ -23,6 +24,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.flow.Flow
@@ -40,25 +42,25 @@ import javax.swing.JTable
 import javax.swing.event.ChangeListener
 import javax.swing.event.TableModelEvent
 import javax.swing.event.TableModelListener
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : Disposable {
   protected abstract val scope: CoroutineScope
 
-  private val providers = mutableMapOf<GraphTableModel, CachingVcsCommitsDataLoader<T>>()
+  private val providers = mutableMapOf<GraphTableModel, WindowedVcsCommitsDataModel<T>>()
 
   fun initialize(table: VcsLogGraphTable, column: VcsLogCustomColumn<T>) {
     if (table.model in providers) return
 
     val loader = getDataLoader(table.logData.project)
-    val provider = CachingVcsCommitsDataLoader(loader)
-    loadDataForVisibleRows(table, column, provider, scope)
+    val model = WindowedVcsCommitsDataModel(loader)
+    loadDataForVisibleRows(scope, model, table, column).cancelOnDispose(model)
+    Disposer.register(this, model)
 
-    Disposer.register(this, provider)
-
-    providers[table.model] = provider
+    providers[table.model] = model
     Disposer.register(table, Disposable {
       providers.remove(table.model)
-      Disposer.dispose(provider)
+      Disposer.dispose(model)
     })
   }
 
@@ -72,31 +74,40 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
   companion object {
     @OptIn(FlowPreview::class)
-    private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(table: VcsLogGraphTable,
-                                                                     column: VcsLogCustomColumn<T>,
-                                                                     dataProvider: VcsCommitsDataLoader<T>,
-                                                                     coroutineScope: CoroutineScope) {
+    private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(
+      coroutineScope: CoroutineScope,
+      model: WindowedVcsCommitsDataModel<T>,
+      table: VcsLogGraphTable,
+      column: VcsLogCustomColumn<T>,
+    ): Job {
       // Dispatchers.EDT is not immediate -
       // later invocation is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
-      val job = coroutineScope.launch(Dispatchers.EDT + CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
-        combine(
-          table.columnVisibilityFlow(column),
-          combine(table.modelChangedFlow(),
-                  table.logData.miniDetailsGetter.detailsLoadedFlow(),
-                  table.expandedVisibleRowsFlow(15)) { _, _, rowsRange -> rowsRange }
-            .debounce(300L),
-          ::Pair
-        ).collectLatest { (isColumnVisible, rowsRange) ->
-          val commits: List<CommitId> =
-            if (rowsRange.isEmpty() || !isColumnVisible) emptyList()
-            else rowsRange.limitedBy(0 until table.model.rowCount).mapNotNull(table.model::getCommitId)
-          dataProvider.loadData(commits) {
+      return coroutineScope.launch(Dispatchers.EDT + CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
+        val listener = object : WindowedVcsCommitsDataModel.Listener {
+          override fun onDataChanged(commits: List<CommitId>) {
+            //TODO: only repaint specific rows
             table.onColumnDataChanged(column)
           }
         }
-      }
-      Disposer.register(dataProvider) {
-        job.cancel()
+        model.addListener(listener)
+        try {
+          combine(
+            table.columnVisibilityFlow(column),
+            combine(table.modelChangedFlow(),
+                    table.logData.miniDetailsGetter.detailsLoadedFlow(),
+                    table.expandedVisibleRowsFlow(15)) { _, _, rowsRange -> rowsRange }
+              .debounce(300.milliseconds),
+            ::Pair
+          ).collectLatest { (isColumnVisible, rowsRange) ->
+            val commits: List<CommitId> =
+              if (rowsRange.isEmpty() || !isColumnVisible) emptyList()
+              else rowsRange.limitedBy(0 until table.model.rowCount).mapNotNull(table.model::getCommitId)
+            model.requestData(commits)
+          }
+        }
+        finally {
+          model.removeListener(listener)
+        }
       }
     }
 

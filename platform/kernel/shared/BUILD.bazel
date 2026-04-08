@@ -23,6 +23,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/coroutines",
     "//platform/kernel/pasta",
+    "//fleet/rhizomedb",
   ],
   exports = [
     "//platform/kernel/rpc",
@@ -51,6 +52,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/kernel/pasta:pasta_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.kernel` end

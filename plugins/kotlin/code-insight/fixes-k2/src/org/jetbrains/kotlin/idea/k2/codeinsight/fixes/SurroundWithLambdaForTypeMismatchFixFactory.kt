@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isPrimitive
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -53,4 +55,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         }
         return null
     }
+
+    context(_: KaSession)
+    private fun KaType.isPrimitiveNumberType(): Boolean = isPrimitive && !isBooleanType
 }

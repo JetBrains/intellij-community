@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
+import com.intellij.lang.documentation.psi.createPsiDocumentationTarget
 import com.intellij.openapi.externalSystem.util.runReadAction
+import com.intellij.platform.backend.documentation.DocumentationData
+import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.testFramework.findReferenceByText
 import com.intellij.testFramework.utils.vfs.getPsiFile
+import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -20,15 +23,20 @@ class KotlinGradleBuildNavigationTest : KotlinGradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testBuildGradleWithMppPlugin(gradleVersion: GradleVersion) {
-        test(gradleVersion, KOTLIN_PLUGIN_FIXTURE) {
-            runReadAction {
-                val buildGradle = getFile("build.gradle").getPsiFile(project)
-                val jvmElement = buildGradle.findReferenceByText("jvm").element
-                val documentationProvider = DocumentationManager.getProviderFromElement(jvmElement)
-                val doc = documentationProvider.generateDoc(jvmElement, jvmElement)
-                assertEquals("""
+        runBlocking {
+            test(gradleVersion, KOTLIN_PLUGIN_FIXTURE) {
+                runReadAction {
+                    val buildGradle = getFile("build.gradle").getPsiFile(project)
+                    val jvmElement = buildGradle.findReferenceByText("jvm").element
+                    val documentationTarget = createPsiDocumentationTarget(jvmElement, jvmElement)
+                    val docResult = documentationTarget.computeDocumentation() as DocumentationResult.Documentation
+                    val doc = (docResult as DocumentationData).html
+                    assertEquals(
+                        """
                     <html>Candidates for method call <b>jvm</b> are:<br><br>&nbsp;&nbsp;<a href="psi_element://org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension#jvm()"><code><span style="color:#0000ff;">KotlinJvmTarget jvm</span><span style="">()</span></code></a><br></html>
-                """.trimIndent(), doc)
+                """.trimIndent(), doc
+                    )
+                }
             }
         }
     }

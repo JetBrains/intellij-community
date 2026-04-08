@@ -24,7 +24,7 @@ import com.intellij.execution.runners.GenericProgramRunner
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.ExecutionToolset
 import com.intellij.mcpserver.util.prepareRunConfigurationForExecution
 import com.intellij.mcpserver.util.relativizeIfPossible
@@ -53,7 +53,7 @@ import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 import javax.swing.JPanel
 
-class ExecutionToolsetTest : McpToolsetTestBase() {
+class ExecutionToolsetTest : GeneralMcpToolsetTestBase() {
   private val mainKotlinFileFixture = sourceRootFixture.virtualFileFixture(
     "Main.kt",
     """

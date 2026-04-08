@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.RevealFileAction;
@@ -15,8 +15,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
+import java.nio.file.Path;
 
 public class PsiNavigationSupportImpl extends PsiNavigationSupport {
   @Override
@@ -45,7 +44,7 @@ public class PsiNavigationSupportImpl extends PsiNavigationSupport {
   }
 
   @Override
-  public void openDirectoryInSystemFileManager(@NotNull File file) {
+  public void openDirectoryInSystemFileManager(@NotNull Path file) {
     RevealFileAction.openDirectory(file);
   }
 }

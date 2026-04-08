@@ -1,45 +1,37 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
-import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.end
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeProjection
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf("kotlin.arrayOf")
 
@@ -69,25 +61,11 @@ fun KaSession.areTypeArgumentsRedundant(
 }
 
 private fun buildCallExpressionWithoutTypeArgs(element: KtCallExpression): KtCallExpression? {
-    val context = findContextToAnalyze(element) ?: return null
-    val typeArgumentListRange = element.typeArgumentList?.textRange ?: return null
-    val contextStartOffset = context.range.start
-
-    val textWithoutTypeArgs = context.text.removeRange(
-        typeArgumentListRange.start - contextStartOffset,
-        typeArgumentListRange.end - contextStartOffset,
-    )
-
-    val (prefix, suffix) = if (context.parent !is KtClassBody) {
-        "object Obj {" to "}"
-    } else "" to ""
-
-    val codeFragment = KtPsiFactory(
-        element.project,
-        markGenerated = false,
-    ).createBlockCodeFragment("$prefix$textWithoutTypeArgs$suffix", context)
-
-    return codeFragment.findElementAt(typeArgumentListRange.start + prefix.length - contextStartOffset)?.parentOfType()
+    val fileCopy = element.containingKtFile.copied()
+    val elementCopy = PsiTreeUtil.findSameElementInCopy(element, fileCopy)
+    return elementCopy?.also {
+        it.typeArgumentList?.delete()
+    }
 }
 
 private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =
@@ -96,53 +74,44 @@ private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean
             symbol.isInline &&
             symbol.typeParameters.any { it.isReified }
 
-private fun findContextToAnalyze(
-    expression: KtExpression,
-): KtExpression? {
-    for (element in expression.parentsWithSelf) {
-        when (element) {
-            is KtFunctionLiteral -> continue
-            is KtParameter -> continue
-            is KtPropertyAccessor -> continue
-            is KtProperty -> if (element.parent is KtClassBody) continue else return element
-            is KtFunction -> if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue else return element
-            is KtEnumEntry -> continue
-            is KtDeclaration -> return element
-            else -> continue
-        }
-
-    }
-    return null
-}
-
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
 private fun areTypeArgumentsEqual(
     originalCallExpression: KtCallExpression,
     newCallExpression: KtCallExpression,
     approximateFlexible: Boolean,
-): Boolean = analyze(newCallExpression) {
-    val originalTypeArgs = originalCallExpression
-        .resolveToCall()
-        ?.singleFunctionCallOrNull()
-        ?.typeArgumentsMapping
-        ?: return false
+): Boolean {
+    val originalCallInfo = collectCallExpressionInfo(originalCallExpression) ?: return false
+    return analyze(newCallExpression) {
+        val newCallInfo = collectCallExpressionInfo(newCallExpression) ?: return false
 
-    val newTypeArgs = newCallExpression
-        .resolveToCall()
-        ?.singleFunctionCallOrNull()
-        ?.typeArgumentsMapping
-        ?: return false
+        val originalTypeArgs = restoreTypes(originalCallInfo) ?: return false
+        val newTypeArgs = restoreTypes(newCallInfo) ?: return false
 
-    return areAllTypesEqual(originalTypeArgs, newTypeArgs, approximateFlexible) &&
-            !hasNewDiagnostics(originalCallExpression, newCallExpression)
+        areAllTypesEqual(originalTypeArgs, newTypeArgs, approximateFlexible) &&
+                !hasNewDiagnostics(originalCallExpression, newCallExpression)
+    }
 }
 
-private fun KaSession.areAllTypesEqual(
-    originalTypeArgs: Map<KaTypeParameterSymbol, KaType>,
-    newTypeArgs: Map<KaTypeParameterSymbol, KaType>,
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+private fun collectCallExpressionInfo(callExpression: KtCallExpression): List<KaTypePointer<KaType>>? {
+    return callExpression
+        .resolveToCall()
+        ?.singleFunctionCallOrNull()
+        ?.typeArgumentsMapping
+        ?.values
+        ?.map { it.createPointer() }
+}
+
+context(_: KaSession)
+private fun areAllTypesEqual(
+    originalTypeArgs: List<KaType>,
+    newTypeArgs: List<KaType>,
     approximateFlexible: Boolean,
 ): Boolean {
     return originalTypeArgs.size == newTypeArgs.size &&
-            originalTypeArgs.values.zip(newTypeArgs.values).all { (originalType, newType) ->
+            originalTypeArgs.zip(newTypeArgs).all { (originalType, newType) ->
                 areTypesEqual(originalType, newType, approximateFlexible)
             }
 }
@@ -159,6 +128,11 @@ private fun hasNewDiagnostics(originalCallExpression: KtCallExpression, newCallE
     // they effectively in different files
     return newDiagnostics.size != oldDiagnostics.size
 }
+
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+context(session: KaSession)
+private fun restoreTypes(typePointers: List<KaTypePointer<KaType>>): List<KaType>? =
+    typePointers.map { it.restore(session) ?: return null }
 
 // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` to reduce resolve and avoid psi checks
 @OptIn(KaExperimentalApi::class)
@@ -178,7 +152,8 @@ private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
             }
         }
 
-private fun KaSession.areTypesEqual(
+context(session: KaSession)
+private fun areTypesEqual(
     type1: KaType,
     type2: KaType,
     approximateFlexible: Boolean,
@@ -203,20 +178,25 @@ fun KtTypeProjection.canBeReplacedWithUnderscore(callExpression: KtCallExpressio
     return areTypeArgumentsEqual(callExpression, newCallExpression, false)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun buildCallExpressionWithUnderscores(element: KtCallExpression, typeProjectionToReplace: KtTypeProjection): KtCallExpression? {
-    val context = findContextToAnalyze(element) ?: return null
-    val typeArgumentRange = typeProjectionToReplace.textRange.shiftLeft(context.startOffset)
-
-    val textWithUnderscore = context.text.replaceRange(typeArgumentRange.startOffset, typeArgumentRange.endOffset, "_")
-
-    val (prefix, suffix) = if (context.parent !is KtClassBody) {
-        "object Obj {" to "}"
-    } else "" to ""
-
-    val codeFragment = KtPsiFactory(
-        element.project,
-        markGenerated = false,
-    ).createBlockCodeFragment("$prefix$textWithUnderscore$suffix", context)
-
-    return codeFragment.findElementAt(typeArgumentRange.start + prefix.length)?.parentOfType()
+    val fileCopy = if (element.containingKtFile.copyOrigin != null) {
+        /**
+         * In intention actions such as
+         * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction],
+         * the PSI context is recomputed on a copied file right before the intention is invoked.
+         * In such cases, we can reuse and modify that existing copy instead of creating a new one.
+         *
+         * @see org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction.perform
+         */
+        element.containingFile
+    } else {
+        element.containingKtFile.copied()
+    }
+    val elementCopy = PsiTreeUtil.findSameElementInCopy(element, fileCopy)
+    val typeProjectionCopy = PsiTreeUtil.findSameElementInCopy(typeProjectionToReplace, fileCopy)
+    return elementCopy?.also {
+        val newTypeProjection = KtPsiFactory(element.project).createTypeArgument("_")
+        typeProjectionCopy.replace(newTypeProjection)
+    }
 }

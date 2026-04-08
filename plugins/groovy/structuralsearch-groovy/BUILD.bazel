@@ -21,11 +21,13 @@ jvm_library(
     "//plugins/groovy",
     "//platform/core-impl",
     "//java/openapi:java",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/lang-impl",
     "//platform/duplicates-analysis",
     "//platform/core-ui",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/code-style-api:codeStyle",
+    "//java/java-psi-api:psi",
   ]
 )
 
@@ -45,6 +47,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/structuralsearch:structuralSearch-tests",
     "//platform/structuralsearch:structuralSearch-tests_test_lib",
@@ -54,6 +57,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
+    "//java/java-psi-api:psi_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.structuralSearch` end

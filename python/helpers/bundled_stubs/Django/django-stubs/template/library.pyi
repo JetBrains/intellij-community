@@ -1,7 +1,7 @@
 from collections.abc import Callable, Collection, Iterable, Mapping, Sequence, Sized
 from typing import Any, TypeVar, overload
 
-from django.template.base import FilterExpression, Origin, Parser, Token
+from django.template.base import FilterExpression, Parser
 from django.template.context import Context
 from django.utils.safestring import SafeString
 
@@ -12,8 +12,8 @@ class InvalidTemplateLibrary(Exception): ...
 _C = TypeVar("_C", bound=Callable[..., Any])
 
 class Library:
-    filters: dict[str, Callable]
-    tags: dict[str, Callable]
+    filters: dict[str, Callable[..., Any]]
+    tags: dict[str, Callable[..., Any]]
     def __init__(self) -> None: ...
     @overload
     def tag(self, name: _C) -> _C: ...
@@ -35,13 +35,6 @@ class Library:
     def simple_tag(
         self, func: None = None, takes_context: bool | None = None, name: str | None = None
     ) -> Callable[[_C], _C]: ...
-    def inclusion_tag(
-        self,
-        filename: Template | str,
-        func: Callable | None = None,
-        takes_context: bool | None = None,
-        name: str | None = None,
-    ) -> Callable[[_C], _C]: ...
     @overload
     def simple_block_tag(
         self,
@@ -58,6 +51,22 @@ class Library:
         name: str | None = None,
         end_name: str | None = None,
     ) -> Callable[[_C], _C]: ...
+    @overload
+    def inclusion_tag(
+        self,
+        filename: Template | str,
+        func: _C,
+        takes_context: bool | None = None,
+        name: str | None = None,
+    ) -> _C: ...
+    @overload
+    def inclusion_tag(
+        self,
+        filename: Template | str,
+        func: None = None,
+        takes_context: bool | None = None,
+        name: str | None = None,
+    ) -> Callable[[_C], _C]: ...
 
 class TagHelperNode(Node):
     func: Any
@@ -66,7 +75,7 @@ class TagHelperNode(Node):
     kwargs: Any
     def __init__(
         self,
-        func: Callable,
+        func: Callable[..., Any],
         takes_context: bool | None,
         args: list[FilterExpression],
         kwargs: dict[str, FilterExpression],
@@ -75,15 +84,13 @@ class TagHelperNode(Node):
 
 class SimpleNode(TagHelperNode):
     args: list[FilterExpression]
-    func: Callable
+    func: Callable[..., Any]
     kwargs: dict[str, FilterExpression]
-    origin: Origin
     takes_context: bool | None
-    token: Token
     target_var: str | None
     def __init__(
         self,
-        func: Callable,
+        func: Callable[..., Any],
         takes_context: bool | None,
         args: list[FilterExpression],
         kwargs: dict[str, FilterExpression],
@@ -96,24 +103,19 @@ class SimpleBlockNode(SimpleNode):
     def __init__(
         self,
         nodelist: NodeList,
-        func: Callable,
-        takes_context: bool | None,
-        args: list[FilterExpression],
-        kwargs: dict[str, FilterExpression],
-        target_var: str | None,
+        *args: Any,
+        **kwargs: Any,
     ) -> None: ...
 
 class InclusionNode(TagHelperNode):
     args: list[FilterExpression]
-    func: Callable
+    func: Callable[..., Any]
     kwargs: dict[str, FilterExpression]
-    origin: Origin
     takes_context: bool | None
-    token: Token
     filename: Template | str
     def __init__(
         self,
-        func: Callable,
+        func: Callable[..., Any],
         takes_context: bool | None,
         args: list[FilterExpression],
         kwargs: dict[str, FilterExpression],

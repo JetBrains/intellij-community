@@ -88,6 +88,7 @@ class CodexAppServerClient(
   private val workingDirectoryPath = workingDirectory
   private val idleShutdownTimeoutMs = idleShutdownTimeoutMs.coerceAtLeast(0)
   private val protocol = CodexAppServerProtocol()
+
   // Queue notifications until the refresh pipeline is ready to consume them.
   // SharedFlow with replay=0 drops events when no collector is active, which leaves
   // stale working states behind until some unrelated refresh occurs.
@@ -188,17 +189,28 @@ class CodexAppServerClient(
       return null
     }
 
-    return request(
-      method = "thread/read",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", normalizedThreadId)
-        generator.writeBooleanField("includeTurns", true)
-        generator.writeEndObject()
-      },
-      resultParser = { parser -> protocol.parseThreadReadActivityResult(parser) },
-      defaultResult = null,
-    )
+    return try {
+      request(
+        method = "thread/read",
+        paramsWriter = { generator ->
+          generator.writeStartObject()
+          generator.writeStringField("threadId", normalizedThreadId)
+          generator.writeBooleanField("includeTurns", true)
+          generator.writeEndObject()
+        },
+        resultParser = { parser -> protocol.parseThreadReadActivityResult(parser) },
+        defaultResult = null,
+      )
+    }
+    catch (e: CodexAppServerException) {
+      if (e.isThreadReadIncludeTurnsFallback()) {
+        LOG.debug { "thread/read includeTurns fallback for threadId=$normalizedThreadId: ${e.message}" }
+        null
+      }
+      else {
+        throw e
+      }
+    }
   }
 
   suspend fun suggestPrompt(request: CodexPromptSuggestionRequest): CodexPromptSuggestionResult? {
@@ -206,7 +218,7 @@ class CodexAppServerClient(
       "Codex prompt suggestions require parsed notification routing"
     }
 
-    val thread = startThread(
+    val session = startThread(
       cwd = request.cwd,
       approvalPolicy = "never",
       sandbox = "read-only",
@@ -221,7 +233,7 @@ class CodexAppServerClient(
         method = "turn/start",
         paramsWriter = { generator ->
           generator.writeStartObject()
-          generator.writeStringField("threadId", thread.id)
+          generator.writeStringField("threadId", session.thread.id)
           generator.writeFieldName("input")
           generator.writeStartArray()
           generator.writeStartObject()
@@ -239,13 +251,13 @@ class CodexAppServerClient(
         defaultResult = null,
       ) ?: throw CodexAppServerException("Codex app-server returned empty turn/start result")
       turnId = turn.turnId
-      val completion = awaitPromptSuggestionTurnCompletion(threadId = thread.id, turnId = turn.turnId)
+      val completion = awaitPromptSuggestionTurnCompletion(threadId = session.thread.id, turnId = turn.turnId)
       terminalObserved = true
       return completion.toPromptSuggestionResult()
     }
     catch (t: Throwable) {
       if (turnId != null && !terminalObserved) {
-        cleanupPromptSuggestionTurn(threadId = thread.id, turnId = turnId)
+        cleanupPromptSuggestionTurn(threadId = session.thread.id, turnId = turnId)
       }
       throw t
     }
@@ -257,12 +269,64 @@ class CodexAppServerClient(
     sandbox: String? = null,
     ephemeral: Boolean? = null,
   ): CodexThread {
+    return createThreadSession(
+      cwd = cwd,
+      approvalPolicy = approvalPolicy,
+      sandbox = sandbox,
+      ephemeral = ephemeral,
+    ).thread
+  }
+
+  suspend fun createThreadSession(
+    cwd: String? = null,
+    approvalPolicy: String? = null,
+    sandbox: String? = null,
+    ephemeral: Boolean? = null,
+  ): CodexStartedThreadSession {
     return startThread(
       cwd = cwd,
       approvalPolicy = approvalPolicy,
       sandbox = sandbox,
       ephemeral = ephemeral,
     )
+  }
+
+  suspend fun startTurn(
+    threadId: String,
+    promptText: String,
+    collaborationMode: CodexTurnCollaborationMode? = null,
+  ): String {
+    val turn = request(
+      method = "turn/start",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeFieldName("input")
+        generator.writeStartArray()
+        generator.writeStartObject()
+        generator.writeStringField("type", "text")
+        generator.writeStringField("text", promptText)
+        generator.writeEndObject()
+        generator.writeEndArray()
+        if (collaborationMode != null) {
+          generator.writeFieldName("collaborationMode")
+          generator.writeStartObject()
+          generator.writeStringField("mode", collaborationMode.mode)
+          generator.writeFieldName("settings")
+          generator.writeStartObject()
+          generator.writeStringField("model", collaborationMode.model)
+          collaborationMode.reasoningEffort?.let { generator.writeStringField("reasoning_effort", it) }
+          ?: generator.writeNullField("reasoning_effort")
+          generator.writeNullField("developer_instructions")
+          generator.writeEndObject()
+          generator.writeEndObject()
+        }
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseTurnStartResult(parser) },
+      defaultResult = null,
+    )
+    return turn?.turnId ?: throw CodexAppServerException("Codex app-server returned empty turn/start result")
   }
 
   private suspend fun startThread(
@@ -272,7 +336,7 @@ class CodexAppServerClient(
     ephemeral: Boolean? = null,
     experimentalRawEvents: Boolean? = null,
     persistExtendedHistory: Boolean? = null,
-  ): CodexThread {
+  ): CodexStartedThreadSession {
     val thread = request(
       method = "thread/start",
       paramsWriter = { generator ->
@@ -302,25 +366,24 @@ class CodexAppServerClient(
     )
   }
 
+  suspend fun setThreadName(threadId: String, name: String) {
+    requestUnit(
+      method = "thread/name/set",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeStringField("name", name)
+        generator.writeEndObject()
+      },
+    )
+  }
+
   suspend fun unarchiveThread(threadId: String) {
     requestUnit(
       method = "thread/unarchive",
       paramsWriter = { generator ->
         generator.writeStartObject()
         generator.writeStringField("threadId", threadId)
-        generator.writeEndObject()
-      },
-    )
-  }
-
-  @Suppress("unused")
-  suspend fun interruptTurn(threadId: String, turnId: String) {
-    requestUnit(
-      method = "turn/interrupt",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeStringField("turnId", turnId)
         generator.writeEndObject()
       },
     )
@@ -495,6 +558,10 @@ class CodexAppServerClient(
           generator.writeStringField("name", "IntelliJ Agent Workbench")
           generator.writeStringField("version", "1.0")
           generator.writeEndObject()
+          generator.writeFieldName("capabilities")
+          generator.writeStartObject()
+          generator.writeBooleanField("experimentalApi", true)
+          generator.writeEndObject()
           generator.writeEndObject()
         },
         ensureInitialized = false,
@@ -634,10 +701,10 @@ class CodexAppServerClient(
     val notification = try {
       protocol.parseNotification(payload)
     }
-    catch (e: Throwable) {
-      LOG.warn("Failed to parse Codex app-server notification: $payload", e)
-      null
-    } ?: return
+                       catch (e: Throwable) {
+                         LOG.warn("Failed to parse Codex app-server notification: $payload", e)
+                         null
+                       } ?: return
 
     val parsedChannel = parsedNotificationsChannel
     if (parsedChannel != null) {
@@ -755,7 +822,7 @@ class CodexAppServerClient(
 
   private suspend fun receiveParsedNotification(): ParsedCodexAppServerNotification {
     val channel = parsedNotificationsChannel
-      ?: throw CodexAppServerException("Codex parsed notifications are not available")
+                  ?: throw CodexAppServerException("Codex parsed notifications are not available")
     return channel.receive()
   }
 
@@ -835,6 +902,15 @@ private fun isExecutableNotFound(error: Throwable): Boolean {
 open class CodexAppServerException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 class CodexCliNotFoundException : CodexAppServerException("Codex CLI not found")
+
+private fun Throwable.isThreadReadIncludeTurnsFallback(): Boolean {
+  return generateSequence(this) { it.cause }
+    .mapNotNull(Throwable::message)
+    .any { message ->
+      message.contains("includeTurns is unavailable before first user message") ||
+      message.contains("ephemeral threads do not support includeTurns")
+    }
+}
 
 private data class PromptSuggestionTurnCompletion(
   @JvmField val turnStatus: String?,

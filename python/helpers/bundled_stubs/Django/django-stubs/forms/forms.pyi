@@ -2,16 +2,18 @@ from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequenc
 from typing import Any, ClassVar, overload
 
 from django.core.exceptions import ValidationError
+from django.db.models.query import _SupportsContains
 from django.forms.boundfield import BoundField
 from django.forms.fields import Field
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorDict, ErrorList, RenderableFormMixin, _DataT, _FilesT
 from django.forms.widgets import Media, MediaDefiningClass
 from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import override
 
 class DeclarativeFieldsMetaclass(MediaDefiningClass): ...
 
-class BaseForm(RenderableFormMixin):
+class BaseForm(_SupportsContains[str], RenderableFormMixin):
     default_renderer: BaseRenderer | type[BaseRenderer] | None
     field_order: Iterable[str] | None
     use_required_attribute: bool
@@ -46,6 +48,7 @@ class BaseForm(RenderableFormMixin):
         field_order: Iterable[str] | None = None,
         use_required_attribute: bool | None = None,
         renderer: BaseRenderer | None = None,
+        bound_field_class: type[BoundField] | None = None,
     ) -> None: ...
     def order_fields(self, field_order: Iterable[str] | None) -> None: ...
     def __iter__(self) -> Iterator[BoundField]: ...
@@ -57,6 +60,8 @@ class BaseForm(RenderableFormMixin):
     def add_initial_prefix(self, field_name: str) -> str: ...
     @property
     def template_name(self) -> str: ...
+    @override
+    def get_context(self) -> dict[str, Any]: ...
     def non_field_errors(self) -> ErrorList: ...
     @overload
     def add_error(

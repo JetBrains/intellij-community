@@ -97,6 +97,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
    * This handler is called after the base copyAdditionalFiles logic.
    *
    * @param handler Lambda receiving targetDir, arch, and context
+   * @see [ProductProperties.copyAdditionalOsSpecificFiles]
    */
   fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     this.copyAdditionalFilesHandler = handler
@@ -152,6 +153,7 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
 
     override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
       super.copyAdditionalFiles(targetDir = targetDir, arch = arch, context = context)
+      context.productProperties.copyAdditionalOsSpecificFiles(targetDir, OsFamily.LINUX, arch, context)
       builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
     }
 
@@ -233,7 +235,7 @@ open class LinuxDistributionCustomizer {
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl, context: BuildContext): Sequence<String> {
-    val basePatterns = if (context.options.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
+    val basePatterns = if (context.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
     else sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",

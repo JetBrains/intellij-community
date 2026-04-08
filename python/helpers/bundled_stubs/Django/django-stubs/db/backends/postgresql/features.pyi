@@ -3,6 +3,7 @@ from typing import Any
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.postgresql.base import DatabaseWrapper
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 class DatabaseFeatures(BaseDatabaseFeatures):
     connection: DatabaseWrapper
@@ -39,21 +40,37 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_over_clause: bool
     only_supports_unbounded_with_preceding_and_following: bool
     supports_aggregate_filter_clause: bool
-    supported_explain_formats: Any
-    validates_explain_options: bool
+    supported_explain_formats: set[str]
     supports_deferrable_unique_constraints: bool
     has_json_operators: bool
     json_key_contains_list_matching_requires_list: bool
-    @property
+    @cached_property
+    @override
+    def django_test_skips(self) -> dict[str, set[str]]: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def django_test_expected_failures(self) -> set[str]: ...  # type: ignore[override]
+    @cached_property
+    def uses_server_side_binding(self) -> bool: ...
+    @cached_property
+    @override
+    def prohibits_null_characters_in_text_exception(self) -> tuple[type[Exception], str]: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def introspected_field_types(self) -> dict[str, str]: ...  # type: ignore[override]
+    @cached_property
     def is_postgresql_15(self) -> bool: ...
     @cached_property
     def is_postgresql_16(self) -> bool: ...
-    @property
+    @cached_property
     def is_postgresql_17(self) -> bool: ...
-    has_brin_autosummarize: bool
-    has_websearch_to_tsquery: bool
-    supports_table_partitions: bool
     supports_covering_indexes: bool
-    supports_covering_gist_indexes: bool
     supports_non_deterministic_collations: bool
-    supports_alternate_collation_providers: bool
+    can_return_rows_from_update: bool
+    supports_aggregate_order_by_clause: bool
+    @property
+    @override
+    def supports_nulls_distinct_unique_constraints(self) -> bool: ...  # type: ignore[override]
+    @property
+    @override
+    def supports_any_value(self) -> bool: ...  # type: ignore[override]

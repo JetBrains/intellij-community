@@ -41,6 +41,8 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         return unpackedDistDir.toFile();
     }
 
+    public void testRootClassIsNotEmpty() {}
+
     @TestMetadata("pureKotlin")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)

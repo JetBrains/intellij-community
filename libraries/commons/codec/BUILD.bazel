@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":codec_resources"],
-  exports = ["@lib//:commons-codec"],
-  runtime_deps = ["@lib//:commons-codec"]
+  exports = ["@lib//:libraries-commons-codec-commons-codec"],
+  runtime_deps = ["@lib//:libraries-commons-codec-commons-codec"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:commons-codec"],
+  exports = ["@lib//:libraries-commons-codec-commons-codec"],
   runtime_deps = [":codec"]
 )
 ### auto-generated section `build intellij.libraries.commons.codec` end

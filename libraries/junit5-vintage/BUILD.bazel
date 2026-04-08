@@ -13,9 +13,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":junit5-vintage_resources"],
-  exports = ["@lib//:junit5Vintage"],
+  exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
   runtime_deps = [
-    "@lib//:junit5Vintage",
+    "@lib//:libraries-junit5-vintage-_j_unit5_vintage",
     "//libraries/junit4",
     "//libraries/junit5-launcher",
   ]
@@ -26,7 +26,7 @@ jvm_library(
   module_name = "intellij.libraries.junit5.vintage",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:junit5Vintage"],
+  exports = ["@lib//:libraries-junit5-vintage-_j_unit5_vintage"],
   runtime_deps = [
     ":junit5-vintage",
     "//libraries/junit4:junit4_test_lib",

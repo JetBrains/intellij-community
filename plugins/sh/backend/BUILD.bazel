@@ -26,6 +26,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/editor-ui-api:editor-ui",
@@ -44,6 +45,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -67,6 +70,7 @@ jvm_library(
     "//platform/usageView:usageView_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
@@ -85,6 +89,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.sh.backend` end

@@ -39,6 +39,18 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test punctuation`() = doTest()
 
+  fun `test reflow parenthesized text`() = doTest()
+
+  fun `test reflow short parenthesized text`() = doTest()
+
+  fun `test reflow opening parenthesis`() = doTest()
+
+  fun `test reflow closing parenthesis`() = doTest()
+
+  fun `test reflow no extra new lines`() = doTest(rightMargin = 80)
+
+  fun `test reflow no extra new lines_keep line breaks`() = doTest(rightMargin = 80, keepLineBreaks = true)
+
   fun `test emphasis`() = doTest()
 
   override fun getTestDataPath(): String {
@@ -50,18 +62,18 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     return name.trimStart().replace(' ', '_')
   }
 
-  private fun doTest() {
+  private fun doTest(rightMargin: Int = 40, keepLineBreaks: Boolean = false) {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
     runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
         WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
         getCommonSettings(MarkdownLanguage.INSTANCE).apply {
-          RIGHT_MARGIN = 40
+          RIGHT_MARGIN = rightMargin
         }
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           WRAP_TEXT_IF_LONG = true
-          KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
+          KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = keepLineBreaks
           // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
           // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
           FORMAT_TABLES = false

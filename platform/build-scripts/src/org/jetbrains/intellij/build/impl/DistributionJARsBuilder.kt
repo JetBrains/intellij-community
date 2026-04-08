@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -14,9 +14,9 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -80,10 +80,12 @@ internal suspend fun buildDistribution(
   context.productProperties.validateLayout(platformLayout, context)
   createBuildBrokenPluginListJob(context)
 
-  val productRunner = context.createProductRunner()
-  if (context.productProperties.buildDocAuthoringAssets) {
+  val productRunner = suspendingLazy("distribution product runner") {
+    context.createProductRunner()
+  }
+  if (context.productProperties.buildDocAuthoringAssets && !context.isStepSkipped(BuildOptions.DOC_AUTHORING_ASSETS_STEP)) {
     launch(CoroutineName("build authoring assets")) {
-      buildAdditionalAuthoringArtifacts(productRunner, context)
+      buildAdditionalAuthoringArtifacts(productRunner.await(), context)
     }
   }
 
@@ -91,7 +93,7 @@ internal suspend fun buildDistribution(
   val contentReport = coroutineScope {
     // must be completed before plugin building
     val searchableOptionSet = context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
-      buildSearchableOptions(productRunner, context)
+      buildSearchableOptions(productRunner.await(), context)
     }
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
@@ -170,15 +172,18 @@ private suspend fun generateCoreClassPath(
   if (context.useModularLoader) {
     return listOf(PLATFORM_LOADER_JAR)
   }
+
   val libDir = context.paths.distAllDir.resolve("lib")
-  val platformClassPath = generateClassPathByLayoutReport(
+  val result = ArrayList<String>()
+  generateClassPathByLayoutReport(
     libDir = libDir,
     entries = platformDistribution,
     skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)
-  ).map { libDir.relativize(it).toString() }
+  )
+    .mapTo(result) { libDir.relativize(it).toString() }
   val pluginsDir = context.paths.distAllDir.resolve("plugins")
-  val coreClassPathFromPlugins = generateCoreClasspathFromPlugins(platformLayout, context, bundledPluginsDistribution).map { pluginsDir.resolve(it).toString() }
-  return platformClassPath + coreClassPathFromPlugins
+  generateCoreClasspathFromPlugins(platformLayout, bundledPluginsDistribution, context).mapTo(result) { pluginsDir.resolve(it).toString() }
+  return result
 }
 
 @VisibleForTesting
@@ -228,7 +233,7 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
 }
 
 /**
- * Validates module structure to be ensure all module dependencies are included.
+ * Validates module structure to ensure all module dependencies are included.
  */
 fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   if (context.options.validateModuleStructure) {
@@ -326,7 +331,7 @@ internal fun collectPluginExecutablePatterns(
   context: BuildContext,
   os: OsFamily,
   arch: JvmArchitecture,
-  libc: LibcImpl
+  libc: LibcImpl,
 ): Sequence<String> {
   val productLayout = context.productProperties.productLayout
   val bundledPluginLayouts = getPluginLayoutsByJpsModuleNames(
@@ -384,7 +389,7 @@ internal suspend fun layoutPlatformDistribution(
       launch(CoroutineName("write patched app info")) {
         spanBuilder("write patched app info").use {
           val moduleName = "intellij.platform.core"
-          val module = context.findRequiredModule(moduleName)
+          val module = context.outputProvider.findRequiredModule(moduleName)
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val sourceBytes = context.outputProvider.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found")
           val patchedBytes = injectAppInfo(inFileBytes = sourceBytes, newFieldValue = context.appInfoXml)
@@ -418,7 +423,7 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
 
   val moduleName = "intellij.platform.resources"
   val relativePath = $$"keymaps/$default.xml"
-  val sourceFileContent = context.outputProvider.readFileContentFromModuleOutput(module = context.findRequiredModule(moduleName), relativePath = relativePath)
+  val sourceFileContent = context.outputProvider.readFileContentFromModuleOutput(module = context.outputProvider.findRequiredModule(moduleName), relativePath = relativePath)
                           ?: error("Not found '$relativePath' in module $moduleName output")
   var text = String(sourceFileContent, StandardCharsets.UTF_8)
   text = text.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
@@ -454,8 +459,8 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
   }
 }
 
-private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext): Job {
-  return createSkippableJob(
+private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
+  createSkippableJob(
     spanBuilder("generate table of licenses for used third-party libraries"),
     BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context
   ) {

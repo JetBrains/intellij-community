@@ -61,21 +61,12 @@ internal fun generateXIncludes(
   outputProvider: ModuleOutputProvider,
   inlineXmlIncludes: Boolean,
   sb: StringBuilder,
-  isUltimateBuild: Boolean,
 ) {
   for (include in spec.deprecatedXmlIncludes) {
-    // When inlining: skip ultimate-only `xi-includes` in Community builds
-    if (inlineXmlIncludes && include.ultimateOnly && !isUltimateBuild) {
-      continue
-    }
-
     // Find the module and file
     val module = outputProvider.findModule(include.contentModuleName.value)
     val resourcePath = include.resourcePath
     if (module == null) {
-      if (include.ultimateOnly) {
-        error("Ultimate-only module '${include.contentModuleName.value}' not found in Ultimate build - this is a configuration error (referenced in xi:include for '$resourcePath')")
-      }
       error("Module '${include.contentModuleName.value}' not found (referenced in xi:include for '$resourcePath')")
     }
 
@@ -97,7 +88,7 @@ internal fun generateXIncludes(
     else {
       // Generate xi:include with absolute path (resources are in /META-INF/... in jars)
       // Wrap ultimate-only and optional xi-includes with xi:fallback for graceful handling
-      if (include.ultimateOnly || include.optional) {
+      if (include.optional) {
         sb.append("""  <xi:include href="${resourcePathToXIncludePath(resourcePath)}">""")
         sb.append("\n")
         sb.append("""    <xi:fallback/>""")

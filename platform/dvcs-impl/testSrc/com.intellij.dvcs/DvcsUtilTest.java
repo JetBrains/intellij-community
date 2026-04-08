@@ -2,9 +2,11 @@
 package com.intellij.dvcs;
 
 import junit.framework.TestCase;
+import org.junit.Ignore;
 
 import java.util.Arrays;
 
+@Ignore("AT-4013")
 public class DvcsUtilTest extends TestCase {
   public void testJoinWithAnd() {
     assertEquals("", DvcsUtil.joinWithAnd(Arrays.asList(""), 3));

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
 import com.intellij.ide.structureView.impl.java.FieldsFilter;
@@ -128,6 +128,48 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
               -X
                colons: String = "a:b:c:"
              """);
+  }
+  
+  public void testFoldingRegions() {
+    myFixture.configureByText("Test.java", """
+             public final class Student {
+                private String fullName;
+                private int age;
+             
+                // <editor-fold desc="Getters">
+                public String getFullName () {
+                  return fullName;
+                }
+             
+                public String getAge () {
+                  return age;
+                }
+                // </editor-fold>
+            
+                public void setFullName (String fullName) {
+                  this.fullName = fullName;
+                }
+             }""");
+    myFixture.testStructureView(svc -> {
+      svc.setActionActive(KindSorter.ID, false);
+      svc.setActionActive(SuperTypesGrouper.ID, false);
+      svc.setActionActive(PropertiesGrouper.ID, false);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+      svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);
+      JTree tree = svc.getTree();
+      PlatformTestUtil.waitWhileBusy(tree);
+      PlatformTestUtil.expandAll(tree);
+      PlatformTestUtil.assertTreeEqual(tree, """
+        -Test.java
+         -Student
+          fullName: String
+          age: int
+          -Getters
+           getFullName(): String
+           getAge(): String
+          setFullName(String): void
+        """);
+    });
   }
 
   public void testSuperTypeGrouping() {
@@ -787,7 +829,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
-  private void doTest(String classText, @Language("TEXT") String expected) {
+  private void doTest(@Language("JAVA") String classText, @Language("TEXT") String expected) {
     doTest(classText, expected, false, false, false);
   }
 

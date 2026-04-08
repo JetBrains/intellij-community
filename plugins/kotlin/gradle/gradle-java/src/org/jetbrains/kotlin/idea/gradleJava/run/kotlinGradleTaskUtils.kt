@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.GradleExtension
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService
@@ -192,15 +194,15 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
-    val scriptParameterList = when (runTask.gradlePluginType) {
-        KotlinGradlePluginType.Jvm -> {
-            configuration.isComposeJvm = true
+    configuration.isComposeGradlePluginConfigured = runTask.isComposeGradlePluginConfigured
+    val scriptParameterList = when {
+        runTask.isComposeGradlePluginConfigured -> {
             val mainFunctionClassFqn = ReadAction.compute<String, Throwable> { function.containingKtFile.javaFileFacadeFqName.asString() }
             configuration.mainFunctionClassFqn = mainFunctionClassFqn
             listOf(quietParameter)
         }
 
-        KotlinGradlePluginType.Multiplatform ->{
+        else -> {
             val mainClassParameter = ReadAction.compute<String, Throwable> { mainClassScriptParameter(function) }
             listOf(mainClassParameter, quietParameter)
         }
@@ -217,6 +219,13 @@ private const val quietParameter: String = "--quiet"
 
 fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
     ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
+
+fun usesComposeGradlePlugin(mainModuleDataNode: DataNode<out ModuleData>): Boolean =
+    getGradleExtensions(mainModuleDataNode)?.any {
+        it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
+    } == true
+
+fun Module.findMainModuleCachedData(): DataNode<out ModuleData>? = CachedModuleDataFinder.findMainModuleData(this)
 
 enum class KotlinGradlePluginType {
     Jvm,

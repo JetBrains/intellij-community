@@ -2,86 +2,89 @@
 name: Dedicated Frame Terminal Hyperlink Routing
 description: Requirements for opening terminal file hyperlinks in source projects when clicked from Agent Workbench dedicated frame.
 targets:
-  - ../sessions/src/service/AgentWorkbenchTerminalHyperlinkNavigationInterceptor.kt
-  - ../sessions/resources/intellij.agent.workbench.sessions.xml
-  - ../sessions/intellij.agent.workbench.sessions.iml
-  - ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
-  - ../../terminal/src/org/jetbrains/plugins/terminal/hyperlinks/TerminalHyperlinkNavigationInterceptor.kt
+  - ../chat/src/AgentChatTerminalTabSupport.kt
+  - ../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  - ../../terminal/frontend/src/com/intellij/terminal/frontend/toolwindow/TerminalToolWindowTabBuilder.kt
+  - ../../terminal/frontend/src/com/intellij/terminal/frontend/toolwindow/impl/TerminalToolWindowTabsManagerImpl.kt
+  - ../../terminal/frontend/src/com/intellij/terminal/frontend/view/impl/TerminalViewImpl.kt
+  - ../../terminal/src/org/jetbrains/plugins/terminal/hyperlinks/TerminalAsyncHyperlinkInfo.kt
+  - ../../terminal/src/org/jetbrains/plugins/terminal/hyperlinks/TerminalCrossProjectFileHyperlinkNavigator.kt
   - ../../terminal/resources/META-INF/terminal.xml
-  - ../../terminal/backend/src/com/intellij/terminal/backend/hyperlinks/BackendTerminalHyperlinkFacade.kt
   - ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
+  - ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
 ---
 
 # Dedicated Frame Terminal Hyperlink Routing
 
 Status: Draft
-Date: 2026-03-01
+Date: 2026-04-05
 
 ## Summary
 Define how terminal file hyperlinks behave when clicked from Agent Workbench dedicated frame.
 
 This spec owns:
-- terminal hyperlink interception extension point contract,
-- dedicated-frame-only routing from clicked hyperlink to source project,
-- fallback behavior to terminal default navigation when not handled.
+- terminal tab metadata for alternate source-project navigation,
+- terminal-owned cross-project execution of `FileHyperlinkInfo`,
+- dedicated-frame integration that sets the source project path when the tab is created,
+- fallback behavior for directories and non-openable files.
 
 ## Goals
-- Open terminal file hyperlinks in the source project associated with the selected chat tab when click originates in dedicated frame.
-- Keep terminal plugin behavior unchanged for all non-dedicated contexts.
-- Keep interception low-level and minimal to avoid reimplementing terminal hyperlink pipeline in sessions plugin.
+- Open terminal file hyperlinks in the source project associated with the Agent Workbench chat tab.
+- Keep terminal behavior unchanged for tabs that do not declare alternate source-navigation metadata.
+- Keep terminal hyperlink models storing the original hyperlinks; no wrapper hyperlink types are introduced for dedicated frame routing.
 
 ## Non-goals
 - Intercepting non-file terminal hyperlinks.
-- Global override of hyperlink behavior outside dedicated-frame context.
-- Defining terminal text parsing/highlighting rules.
+- Adding a new platform-wide hyperlink API for cross-project navigation.
+- Persisting alternate source-navigation metadata across terminal restoration in this pass.
 
 ## Requirements
-- Terminal plugin must define dynamic extension point `org.jetbrains.plugins.terminal.hyperlinkNavigationInterceptor` with `TerminalHyperlinkNavigationInterceptor` interface.
+- Terminal tool window tabs may declare an optional `sourceNavigationProjectPath`.
+  [@test] ../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+
+- Terminal view must stamp that path onto the live editors so click handling can resolve it from the active tab context.
+
+- Terminal hyperlink click handling must keep stored hyperlinks unchanged and must consult alternate source-navigation metadata only at click time.
   [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
 
-- Terminal backend hyperlink click flow must consult interceptors before default `hyperlink.navigate(...)` behavior.
+- If the clicked hyperlink is not `FileHyperlinkInfo`, or the tab has no alternate source-navigation path, terminal must keep its normal navigation behavior.
   [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
 
-- If any interceptor returns handled (`true`), terminal must skip default hyperlink navigation and still log hyperlink-followed usage event.
-  [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
+- If the tab declares an alternate source-navigation path and the clicked hyperlink is `FileHyperlinkInfo`, terminal must open or reuse that project and delegate navigation through the standard file hyperlink flow in that project.
+  [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
 
-- Agent Workbench sessions plugin must register dedicated-frame interceptor in terminal extension namespace.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+- Cross-project file navigation must preserve exact offsets when the descriptor already has an offset, and otherwise preserve line and column when rebuilding the target-project descriptor.
+  [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
 
-- Agent Workbench interceptor must handle only when all conditions are true:
-  - current project is dedicated frame,
-  - selected chat tab has non-empty source path,
-  - source path is not dedicated-frame project path,
-  - hyperlink is `FileHyperlinkInfo` with non-null descriptor.
-  [@test] ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
+- For directory hyperlinks, terminal must navigate to project view for in-project directories and reveal the directory in the system file manager for external directories.
+  This behavior is provided by the existing file hyperlink implementation once the target-project descriptor is rebuilt.
 
-- Agent Workbench interceptor must open or reuse source project by selected source path, focus its window, and navigate using descriptor reconstructed for target project.
-  [@test] ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
+- For file hyperlinks without editor providers, terminal must fall back to browser navigation.
+  This behavior is provided by the existing file hyperlink implementation once the target-project descriptor is rebuilt.
 
-- If source project cannot be resolved/opened or descriptor is invalid/non-navigable, interceptor must fail safely (`false`) and let terminal fallback run.
-  [@test] ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
+- Agent Workbench must contribute only the source-navigation project path when creating the detached chat terminal tab. It must not register a terminal hyperlink extension for this behavior.
+  [@test] ../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
 
 ## User Experience
-- Clicking file path hyperlink in dedicated-frame terminal opens file in corresponding source project.
-- If source project is closed, it opens and receives focus before navigation.
-- In non-dedicated frames, terminal hyperlink behavior remains unchanged.
+- Clicking a file-path hyperlink inside a dedicated-frame chat terminal opens the file in the source project.
+- If the source project is closed, it opens before navigation.
+- If the hyperlink targets an external directory, the system file manager opens that directory.
+- In ordinary terminal tabs, hyperlink behavior remains unchanged.
 
 ## Data & Backend
-- Source-project resolution uses active chat-tab source path (`AgentChatTabSelectionService.selectedChatTab`).
-- Path normalization/parsing uses Agent Workbench path helpers.
-- Navigation executes on EDT via `OpenFileHyperlinkInfo` built from project-bound `OpenFileDescriptor`.
+- Agent Workbench passes the normalized source project path into the terminal tab builder.
+- Terminal resolves alternate source-navigation metadata from editor user data attached to the tab’s live editors.
+- Terminal rebuilds an `OpenFileDescriptor` for the target project and delegates to the standard file hyperlink navigation path there.
 
 ## Error Handling
-- Interceptor exceptions must be logged and ignored (except cancellation), preserving terminal fallback behavior.
-- Invalid source paths must not crash hyperlink handling.
-- Missing or invalid descriptors must result in no-op interceptor handling.
+- Invalid or missing source project paths must not crash hyperlink handling.
+- If source project opening fails or the file hyperlink descriptor is invalid, terminal falls back to its default hyperlink behavior.
+- Browser and external-directory fallbacks stay owned by the existing file hyperlink implementation.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.terminal.tests.reworked.backend.BackendTerminalHyperlinkHighlighterTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest'`
-
-## Open Questions / Risks
-- Current implementation handles only `FileHyperlinkInfo`; future hyperlink types may require explicit dedicated-frame semantics.
+- `./tests.cmd --module intellij.terminal.tests --test com.intellij.terminal.tests.reworked.backend.BackendTerminalHyperlinkHighlighterTest`
+- `./tests.cmd --module intellij.terminal.tests --test com.intellij.terminal.tests.reworked.backend.TerminalCrossProjectFileHyperlinkNavigatorTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatTerminalTabBuilderConfigurationTest`
 
 ## References
 - `spec/agent-dedicated-frame.spec.md`

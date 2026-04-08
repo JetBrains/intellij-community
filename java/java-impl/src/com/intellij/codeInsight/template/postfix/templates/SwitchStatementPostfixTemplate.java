@@ -81,11 +81,16 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
   }
 
   @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @Override
   protected @NotNull Surrounder getSurrounder() {
     return new JavaExpressionModCommandSurrounder() {
       @Override
       public boolean isApplicable(PsiExpression expr) {
-        return expr.isPhysical() && SWITCH_TYPE.value(expr);
+        return SWITCH_TYPE.value(expr);
       }
 
       @Override

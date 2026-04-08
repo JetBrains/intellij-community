@@ -1,0 +1,18 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.jetbrains.performancePlugin.backend.BackendCommandProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PerformanceTestingBundle">
+    <group id="IndexingDiagnosticGroup">
+      <action class="com.jetbrains.performancePlugin.actions.OpenIndexingDiagnosticsAction" id="performancePlugin.OpenIndexingDiagnosticsAction"/>
+      <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="CollectTroubleshootingInformation"/>
+    </group>
+  </actions>
+</idea-plugin>

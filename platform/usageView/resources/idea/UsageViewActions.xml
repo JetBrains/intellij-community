@@ -59,6 +59,9 @@
       <action id="UsageFiltering.Imports"
               icon="com.intellij.icons.AllIcons.Actions.ShowImportStatements"
               class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="UsageFiltering.Comments"
+              icon="com.intellij.icons.AllIcons.Actions.InlayRenameInComments"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
     </group>
   </actions>

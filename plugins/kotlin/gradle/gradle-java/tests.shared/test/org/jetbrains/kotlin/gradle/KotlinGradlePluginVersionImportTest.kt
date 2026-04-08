@@ -40,7 +40,7 @@ class KotlinGradlePluginVersionImportTest : MultiplePluginVersionGradleImporting
         }
 
         importProject(true)
-        assertEquals(kotlinPluginVersion, getModule("project.main").kotlinGradlePluginVersion?.toKotlinToolingVersion())
+        assertEquals(kotlinPluginVersion.version, getModule("project.main").kotlinGradlePluginVersion?.toKotlinToolingVersion())
     }
 
     @Test
@@ -80,7 +80,7 @@ class KotlinGradlePluginVersionImportTest : MultiplePluginVersionGradleImporting
         listOf("project", "project.jvmMain", "project.jvmTest", "project.linuxX64Main", "project.linuxX64Test").forEach { moduleName ->
             assertEquals(
                 "Expected $kotlinPluginVersion for module $moduleName, got ${getModule(moduleName).kotlinGradlePluginVersion}",
-                kotlinPluginVersion, getModule(moduleName).kotlinGradlePluginVersion?.toKotlinToolingVersion())
+                kotlinPluginVersion.version, getModule(moduleName).kotlinGradlePluginVersion?.toKotlinToolingVersion())
         }
     }
 }

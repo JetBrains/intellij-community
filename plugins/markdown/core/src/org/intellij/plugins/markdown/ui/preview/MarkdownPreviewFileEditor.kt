@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.ide.DataManager
@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -50,6 +51,7 @@ import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -72,6 +74,12 @@ class MarkdownPreviewFileEditor(
   private var isDisposed: Boolean = false
 
   private val coroutineScope = MarkdownPluginScope.createChildScope(project)
+
+  /**
+   * [updateHtml] performs heavy calculations,
+   * this field is responsible for debouncing: only one calculation is allowed simultaneously
+   */
+  private val updateHtmlInProgress = AtomicReference<Job>()
 
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
@@ -185,6 +193,7 @@ class MarkdownPreviewFileEditor(
     if (panel != null) {
       detachHtmlPanel()
     }
+    cancelHtmlUpdate()
     isDisposed = true
     coroutineScope.cancel()
   }
@@ -209,7 +218,12 @@ class MarkdownPreviewFileEditor(
   }
 
   @RequiresEdt
-  private suspend fun updateHtml() {
+  private fun updateHtml() {
+    cancelHtmlUpdate()
+    startHtmlUpdate()
+  }
+
+  private suspend fun doUpdateHtml() {
     logger.info("MarkdownPreviewFileEditor: updateHtml")
     val panel = this.panel ?: run {
       logger.warn("MarkdownPreviewFileEditor: panel is null, cannot update preview")
@@ -260,7 +274,7 @@ class MarkdownPreviewFileEditor(
   }
 
   @RequiresEdt
-  private suspend fun attachHtmlPanel() {
+  private fun attachHtmlPanel() {
     logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
     val settings = MarkdownSettings.getInstance(project)
     val panelProvider = retrievePanelProvider(settings)
@@ -276,8 +290,22 @@ class MarkdownPreviewFileEditor(
 
   private inner class ReparseContentDocumentListener : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      coroutineScope.launch(Dispatchers.EDT) { updateHtml() }
+      updateHtml()
     }
+  }
+
+  private fun startHtmlUpdate() {
+    val job = coroutineScope.launch(Dispatchers.EDT) {
+      doUpdateHtml()
+    }
+    val set = updateHtmlInProgress.compareAndSet(null, job)
+    if (!set) {
+      job.cancel()
+    }
+  }
+
+  private fun cancelHtmlUpdate() {
+    updateHtmlInProgress.getAndSet(null)?.cancel()
   }
 
   private inner class AttachPanelOnVisibilityChangeListener : ComponentAdapter() {

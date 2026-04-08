@@ -15,7 +15,7 @@ public interface GridCellEditorFactoryProvider {
   Key<GridCellEditorFactoryProvider> FACTORY_PROVIDER_KEY = new Key<>("FACTORY_PROVIDER_KEY");
 
   @Nullable
-  GridCellEditorFactory getEditorFactory(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
+  GridCellEditorFactory getEditorFactory(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value);
 
   static void set(@NotNull DataGrid grid, @Nullable GridCellEditorFactoryProvider provider) {
     grid.putUserData(FACTORY_PROVIDER_KEY, provider);

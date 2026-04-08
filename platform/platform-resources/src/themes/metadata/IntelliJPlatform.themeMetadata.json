@@ -1441,21 +1441,6 @@
       "since": "2026.1"
     },
     {
-      "key": "Island.inactiveAlphaInStatusBar.os.linux",
-      "description": "The transparency of islands in the status bar when it is inactive on Linux",
-      "since": "2026.1"
-    },
-    {
-      "key": "Island.inactiveAlphaInStatusBar.os.mac",
-      "description": "The transparency of islands in the status bar when it is inactive on macOS",
-      "since": "2026.1"
-    },
-    {
-      "key": "Island.inactiveAlphaInStatusBar.os.windows",
-      "description": "The transparency of islands in the status bar when it is inactive on Windows",
-      "since": "2026.1"
-    },
-    {
       "key": "Islands",
       "description": "Enables or disables islands UI mode",
       "since": "2026.1"

@@ -1,0 +1,547 @@
+{
+  "frontend": [
+    {
+      "apiName": "com.intellij.openapi.wm.ToolWindowFactory",
+      "extensionPointNames": [
+        "com.intellij.toolWindow"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.wm.ToolWindow"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider"
+    },
+    {
+      "apiName": "com.intellij.openapi.ui.DialogWrapper"
+    },
+    {
+      "apiName": "com.intellij.openapi.fileEditor.FileEditorProvider",
+      "extensionPointNames": [
+        "com.intellij.fileEditorProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.ui.popup.JBPopupFactory"
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.TypedHandlerDelegate",
+      "extensionPointNames": [
+        "com.intellij.typedHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate",
+      "extensionPointNames": [
+        "com.intellij.enterHandlerDelegate"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter",
+      "extensionPointNames": [
+        "com.intellij.enterHandlerDelegate"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.highlighting.BraceMatcher",
+      "extensionPointNames": [
+        "com.intellij.braceMatcher",
+        "com.intellij.lang.braceMatcher"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.fileEditor.FileEditorManager.getFocusedEditor"
+    },
+    {
+      "apiName": "com.intellij.execution.services.ServiceViewContributor",
+      "extensionPointNames": [
+        "com.intellij.serviceViewContributor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.ui.tree.AsyncTreeModel"
+    },
+    {
+      "apiName": "com.intellij.ui.jcef.JBCefClient"
+    },
+    {
+      "apiName": "com.intellij.notification.NotificationGroup"
+    },
+    {
+      "apiName": "com.jetbrains.rdclient.daemon.FrontendHighlighterSuppressionHandler",
+      "extensionPointNames": [
+        "com.intellij.rdclient.highlighterSuppressionHandler"
+      ]
+    },
+    {
+      "apiName": "com.jetbrains.rdclient.actions.base.BackendDelegatingActionCustomization",
+      "extensionPointNames": [
+        "com.intellij.rdclient.actionCustomization"
+      ]
+    },
+    {
+      "apiName": "com.jetbrains.rdclient.editorActions.cwm.FrontendEditorActionHandlerStrategyCustomizer",
+      "extensionPointNames": [
+        "com.intellij.rdclient.editorActionHandlerStrategyCustomizer"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.wm.StatusBarWidgetFactory",
+      "extensionPointNames": [
+        "com.intellij.statusBarWidgetFactory"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.options.Configurable",
+      "extensionPointNames": [
+        "com.intellij.applicationConfigurable",
+        "com.intellij.projectConfigurable"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.CopyPastePostProcessor",
+      "extensionPointNames": [
+        "com.intellij.copyPastePostProcessor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.lang.folding.FoldingBuilder",
+      "extensionPointNames": [
+        "com.intellij.lang.foldingBuilder"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.folding.CollapseBlockHandler",
+      "extensionPointNames": [
+        "com.intellij.codeInsight.folding.collapseBlockHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.LineWrapPositionStrategy",
+      "extensionPointNames": [
+        "com.intellij.lang.lineWrapStrategy"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.actionSystem.EditorActionHandler"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.CaretListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.EditorMouseMotionListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.EditorMouseListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.SelectionListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.VisibleAreaListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.ex.FoldingListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.ui.popup.JBPopupListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT"
+    },
+    {
+      "apiName": "com.intellij.psi.impl.source.codeStyle.PreFormatProcessor",
+      "extensionPointNames": [
+        "com.intellij.preFormatProcessor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.impl.source.codeStyle.PostFormatProcessor",
+      "extensionPointNames": [
+        "com.intellij.postFormatProcessor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.fileTypes.SyntaxHighlighter",
+      "extensionPointNames": [
+        "com.intellij.syntaxHighlighter",
+        "com.intellij.lang.syntaxHighlighter"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory",
+      "extensionPointNames": [
+        "com.intellij.lang.syntaxHighlighterFactory"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.fileTypes.EditorHighlighterProvider",
+      "extensionPointNames": [
+        "com.intellij.editorHighlighterProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.ElementDescriptionProvider",
+      "extensionPointNames": [
+        "com.intellij.elementDescriptionProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.templateLanguages.MultipleLangCommentProvider",
+      "extensionPointNames": [
+        "com.intellij.multiLangCommenter"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.highlighting.HighlightErrorFilter",
+      "extensionPointNames": [
+        "com.intellij.highlightErrorFilter"
+      ]
+    },
+    {
+      "apiName": "com.intellij.formatting.service.FormattingService",
+      "extensionPointNames": [
+        "com.intellij.formattingService"
+      ]
+    },
+    {
+      "apiName": "com.intellij.formatting.FormattingModelBuilder",
+      "extensionPointNames": [
+        "com.intellij.lang.formatter"
+      ]
+    },
+    {
+      "apiName": "com.intellij.lang.CustomAutoFormatSyntaxErrorsVerifier",
+      "extensionPointNames": [
+        "com.intellij.lang.formatter.syntaxErrorsVerifier"
+      ]
+    },
+    {
+      "apiName": "com.intellij.lang.LanguageFormattingRestriction",
+      "extensionPointNames": [
+        "com.intellij.lang.formatter.restriction"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.codeStyle.arrangement.Rearranger",
+      "extensionPointNames": [
+        "com.intellij.lang.rearranger"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.formatter.WhiteSpaceFormattingStrategy",
+      "extensionPointNames": [
+        "com.intellij.lang.whiteSpaceFormattingStrategy"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.IndentStrategy",
+      "extensionPointNames": [
+        "com.intellij.lang.indentStrategy"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler",
+      "extensionPointNames": [
+        "com.intellij.extendWordSelectionHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover",
+      "extensionPointNames": [
+        "com.intellij.statementUpDownMover"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler",
+      "extensionPointNames": [
+        "com.intellij.moveLeftRightHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper",
+      "extensionPointNames": [
+        "com.intellij.flipCommaIntention.flipper"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate",
+      "extensionPointNames": [
+        "com.intellij.joinLinesHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.lang.Commenter",
+      "extensionPointNames": [
+        "com.intellij.lang.commenter"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate",
+      "extensionPointNames": [
+        "com.intellij.backspaceHandlerDelegate"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.BackspaceModeOverride",
+      "extensionPointNames": [
+        "com.intellij.editor.backspaceModeOverride"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.codeStyle.lineIndent.LineIndentProvider",
+      "extensionPointNames": [
+        "com.intellij.lineIndentProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate",
+      "extensionPointNames": [
+        "com.intellij.enterBetweenBracesDelegate"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.QuoteHandler",
+      "extensionPointNames": [
+        "com.intellij.lang.quoteHandler"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.editorActions.TypingActionsExtension",
+      "extensionPointNames": [
+        "com.intellij.typingActionsExtension"
+      ]
+    }
+  ],
+  "backend": [
+    {
+      "apiName": "com.intellij.openapi.vfs.VirtualFileManager"
+    },
+    {
+      "apiName": "com.intellij.openapi.vfs.VfsUtil"
+    },
+    {
+      "apiName": "com.intellij.psi.stubs.StubIndex",
+      "extensionPointNames": [
+        "com.intellij.stubIndex"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.stubs.StubIndexExtension",
+      "extensionPointNames": [
+        "com.intellij.stubIndex"
+      ]
+    },
+    {
+      "apiName": "com.intellij.util.indexing.IndexExtension",
+      "extensionPointNames": [
+        "com.intellij.fileBasedIndex"
+      ]
+    },
+    {
+      "apiName": "com.intellij.util.indexing.FileBasedIndexExtension",
+      "extensionPointNames": [
+        "com.intellij.fileBasedIndex"
+      ]
+    },
+    {
+      "apiName": "com.intellij.execution.configurations.ConfigurationType"
+    },
+    {
+      "apiName": "com.intellij.psi.search.searches.ReferencesSearch"
+    },
+    {
+      "apiName": "com.intellij.psi.search.SearchService"
+    },
+    {
+      "apiName": "com.intellij.util.Query"
+    },
+    {
+      "apiName": "com.intellij.codeInsight.hints.InlayHintsProvider"
+    },
+    {
+      "apiName": "com.intellij.codeInsight.hints.declarative.InlayHintsProvider"
+    },
+    {
+      "apiName": "com.intellij.codeInsight.daemon.LineMarkerProvider",
+      "extensionPointNames": [
+        "com.intellij.codeInsight.lineMarkerProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInspection.LocalInspectionTool",
+      "extensionPointNames": [
+        "com.intellij.localInspection"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.PsiReferenceContributor",
+      "extensionPointNames": [
+        "com.intellij.psi.referenceContributor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.codeInsight.completion.CompletionContributor",
+      "extensionPointNames": [
+        "com.intellij.completion.contributor"
+      ]
+    },
+    {
+      "apiName": "com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"
+    },
+    {
+      "apiName": "com.intellij.execution.actions.RunConfigurationProducer",
+      "extensionPointNames": [
+        "com.intellij.runConfigurationProducer"
+      ]
+    },
+    {
+      "apiName": "com.intellij.ide.structureView.StructureViewBuilder"
+    },
+    {
+      "apiName": "com.intellij.openapi.vfs.AsyncFileListener",
+      "extensionPointNames": [
+        "com.intellij.vfs.asyncListener",
+        "com.intellij.vfs.asyncListenerBackgroundable"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.ResolveScopeProvider",
+      "extensionPointNames": [
+        "com.intellij.resolveScopeProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.vfs.VirtualFileListener"
+    },
+    {
+      "apiName": "com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.project.ProjectManagerListener"
+    },
+    {
+      "apiName": "com.intellij.execution.process.ProcessHandler"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.CommonDataKeys.SYMBOLS"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.LangDataKeys.MODULE_CONTEXT"
+    },
+    {
+      "apiName": "com.intellij.openapi.actionSystem.LangDataKeys.MODIFIABLE_MODULE_MODEL"
+    }
+  ],
+  "shared": [
+    {
+      "apiName": "com.intellij.lang.ParserDefinition",
+      "extensionPointNames": [
+        "com.intellij.lang.parserDefinition"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.LanguageInjector",
+      "extensionPointNames": [
+        "com.intellij.languageInjector"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.ElementManipulator",
+      "extensionPointNames": [
+        "com.intellij.lang.elementManipulator"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.rd.LocalEditorSupportBean",
+      "extensionPointNames": [
+        "com.intellij.editor.rd.localSupport"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.FileViewProviderFactory",
+      "extensionPointNames": [
+        "com.intellij.lang.fileViewProviderFactory"
+      ]
+    },
+    {
+      "apiName": "com.intellij.lang.ASTFactory",
+      "extensionPointNames": [
+        "com.intellij.lang.ast.factory",
+        "lang.ast.factory"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.options.colors.ColorSettingsPage",
+      "extensionPointNames": [
+        "com.intellij.colorSettingsPage"
+      ]
+    },
+    {
+      "apiName": "com.intellij.application.options.colors.ColorAndFontPanelFactory",
+      "extensionPointNames": [
+        "com.intellij.colorAndFontPanelFactory"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider",
+      "extensionPointNames": [
+        "com.intellij.colorAndFontDescriptorProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.codeStyle.CodeStyleSettingsProvider",
+      "extensionPointNames": [
+        "com.intellij.codeStyleSettingsProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider",
+      "extensionPointNames": [
+        "com.intellij.langCodeStyleSettingsProvider"
+      ]
+    },
+    {
+      "apiName": "com.intellij.psi.codeStyle.LanguageCodeStyleSettingsContributor",
+      "extensionPointNames": [
+        "com.intellij.langCodeStyleSettingsContributor"
+      ]
+    },
+    {
+      "apiName": "com.intellij.openapi.util.registry.RegistryValueListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.application.ApplicationListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.project.ProjectListener"
+    },
+    {
+      "apiName": "com.intellij.ide.plugins.DynamicPluginListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.SelectionListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.fileEditor.FileEditorManagerListener"
+    },
+    {
+      "apiName": "com.intellij.openapi.editor.event.DocumentListener"
+    }
+  ]
+}

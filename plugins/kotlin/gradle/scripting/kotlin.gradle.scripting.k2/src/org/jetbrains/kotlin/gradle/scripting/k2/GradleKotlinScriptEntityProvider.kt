@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.map
@@ -39,7 +38,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibrar
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
@@ -60,27 +58,16 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
-class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinScriptEntityProvider(project) {
+class GradleKotlinScriptEntityProvider(val project: Project) {
     private val urlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
-
-    override suspend fun updateWorkspaceModel(
-        virtualFile: VirtualFile,
-        definition: ScriptDefinition
-    ) {
-        val configuration = refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), definition, project)
-
-        project.updateKotlinScriptEntities(KotlinGradleScriptEntitySource) { storage ->
-            updateStorage(storage, virtualFile.virtualFileUrl, configuration, null)
-        }
-    }
 
     fun getUpdatedStorage(
         scriptData: GradleScriptData,
         storageToUpdate: MutableEntityStorage
     ): ImmutableEntityStorage {
         val javaHome = scriptData.definitionsParams.javaHome
-        val definitions = loadGradleDefinitions(scriptData.definitionsParams).map { it.withIdeKeys(project) }
+        val definitions = loadGradleDefinitions(scriptData.definitionsParams).map { it.withIdeKeys() }
         return getUpdatedStorage(storageToUpdate, scriptData.models, definitions, javaHome)
     }
 
@@ -117,7 +104,7 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             }.adjustByDefinition(definition)
 
             val configurationResult = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
-            updateStorage(storage, model.virtualFile.virtualFileUrl, configurationResult, model.classpathModel)
+            updateStorage(storage, model.virtualFile.toVirtualFileUrl(urlManager), configurationResult, model.classpathModel)
         }
 
         return storage.toSnapshot()

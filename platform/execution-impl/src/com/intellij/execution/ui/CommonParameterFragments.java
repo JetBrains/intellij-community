@@ -28,6 +28,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,9 +182,13 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
   }
 
   public static void setMonospaced(Component field) {
-    field.setFont(EditorUtil.getEditorFont(JBUI.Fonts.label().getSize()));
+    field.setFont(getMonospaced());
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Font getMonospaced() {
+    return EditorUtil.getEditorFont(JBUI.Fonts.label().getSize());
+  }
 
   public static <S> SettingsEditorFragment<S, JLabel> createHeader(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     JLabel jLabel = new JLabel(title);

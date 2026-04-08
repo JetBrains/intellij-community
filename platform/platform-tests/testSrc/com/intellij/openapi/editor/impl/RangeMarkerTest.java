@@ -946,6 +946,47 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
+  public void testRandomAddDeleteStress_NoCommand() {
+    int N_TRIES = Timings.adjustAccordingToMySpeed(100_000, false);
+    LOG.debug("N_TRIES = " + N_TRIES);
+    int LEN = 1000;
+    Random random = new Random();
+    IntStream.range(0, N_TRIES)
+      .parallel()
+      .forEach(__-> {
+        long seed = random.nextLong();
+        addDelete(seed, LEN);
+      });
+  }
+
+  private static void addDelete(long seed, int LEN) {
+    Random gen = new Random(seed);
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', LEN));
+
+    List<RangeMarker> adds = new ArrayList<>();
+    try {
+      for (int i = 0; i < 1000; i++) {
+        boolean create = gen.nextBoolean();
+        if (create || adds.isEmpty()) {
+          int x = gen.nextInt(LEN);
+          int y = x + gen.nextInt(LEN - x);
+          RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
+          adds.add(r);
+        }
+        else {
+          int c = gen.nextInt(adds.size());
+          RangeMarker marker = adds.get(c);
+          marker.dispose();
+          adds.remove(c);
+        }
+      }
+    }
+    catch (AssertionError e) {
+      System.err.println("Error during testing seed="+seed+"L");
+      throw e;
+    }
+  }
+
   private static void printFailingSteps(List<Pair<RangeMarker, TextRange>> adds,
                                         List<Pair<RangeMarker, TextRange>> dels,
                                         List<Trinity<Integer, Integer, Integer>> edits) {

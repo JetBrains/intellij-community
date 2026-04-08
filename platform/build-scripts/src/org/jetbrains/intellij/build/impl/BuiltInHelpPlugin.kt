@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.trace.Span
@@ -45,7 +45,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
         resourceRoot = resourceRoot,
-        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
+        classPath = buildContext.getModuleRuntimeClasspath(buildContext.outputProvider.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
         assetJar = assetJar,
         context = context,
       )

@@ -21,6 +21,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/tasks-platform-impl:tasks-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/util:util-ui",
     "//libraries/xml-rpc",
   ]
 )
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/tasks-platform-impl:tasks-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//libraries/xml-rpc:xml-rpc_test_lib",
   ]
 )

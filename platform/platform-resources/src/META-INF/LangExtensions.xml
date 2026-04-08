@@ -1,9 +1,9 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <appStarter id="traverseUI" implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
-    <appStarter id="format" implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
-    <appStarter id="ideScript" implementation="com.intellij.ide.script.IdeScriptStarter"/>
+    <appStarter id="traverseUI" implementation="com.intellij.ide.ui.search.TraverseUIStarter" internal="true"/>
+    <appStarter id="format" implementation="com.intellij.formatting.commandLine.FormatterStarter" bundle="messages.CodeStyleBundle" key="formatter.help"/>
+    <appStarter id="ideScript" implementation="com.intellij.ide.script.IdeScriptStarter" internal="true"/>
 
     <applicationService serviceInterface="com.intellij.util.Queries"
                         serviceImplementation="com.intellij.util.QueriesImpl"/>
@@ -91,6 +91,8 @@
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
                  description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
+    <registryKey defaultValue="true" key="vfs.eel.scanning.prefetch.enabled"
+                 description="Pre-walk common ancestor directories via EEL walkDirectory before scanning to reduce per-directory gRPC round-trips"/>
     <registryKey defaultValue="true" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
@@ -694,7 +696,7 @@
     <lookup.customizer implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupCustomizer" order="last" id="commandCompletionLookupCustomizer"/>
 
     <platform.backend.documentation.lookupElementTargetProvider
-      implementation="com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider"/>
+      implementation="com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider"/>
     <lookup.may.have.custom.preview.provider
       implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupMayHaveCustomPreviewProvider"/>
     <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.command.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>
@@ -1011,8 +1013,9 @@
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager" open="true"
+    <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
                         serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
+    <codeInsight.documentation.render.itemUpdateProvider implementation="com.intellij.codeInsight.documentation.render.DefaultDocRenderItemUpdateProvider"/>
     <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRendererProvider" open="true"
                         serviceImplementation="com.intellij.codeInsight.documentation.render.DocRendererProviderImpl" />
     <projectService serviceInterface="com.intellij.codeInsight.documentation.render.InlineDocumentationFinder" open="true"

@@ -10,7 +10,8 @@
   - name: intellij.agent.workbench.codex.sessions
   - name: intellij.agent.workbench.sessions.core
   - name: intellij.agent.workbench.sessions.launch.config.backend
-  - name: intellij.agent.workbench.prompt
+  - name: intellij.agent.workbench.prompt.core
+  - name: intellij.agent.workbench.prompt.ui
   - name: intellij.agent.workbench.prompt.vcs
   - name: intellij.agent.workbench.prompt.testrunner
   - name: intellij.agent.workbench.sessions

@@ -28,24 +28,6 @@ fun String.uppercaseWithCurrentLocaleNative(): String =
   toNSString().localizedUppercaseString()
 
 @Actual
-fun String.encodeUriComponentNative(): String = encodeUriComponentImpl(this)
-
-private fun encodeUriComponentImpl(value: String): String {
-  NSCharacterSet.URLQueryAllowedCharacterSet()
-  val allowed = (NSCharacterSet.alphanumericCharacterSet.mutableCopy() as NSMutableCharacterSet).apply {
-    addCharactersInString("-_.!~*'()")
-  }
-
-  return value.toNSString().stringByAddingPercentEncodingWithAllowedCharacters(allowed) ?: value
-}
-
-@Actual
-fun String.decodeUriComponentNative(): String = decodeUriComponentImpl(this)
-
-private fun decodeUriComponentImpl(value: String): String =
-  value.toNSString().stringByRemovingPercentEncoding ?: value
-
-@Actual
 fun String.isValidUriStringNative(): Boolean = tryParseUrl(this)
 
 private fun tryParseUrl(value: String): Boolean {

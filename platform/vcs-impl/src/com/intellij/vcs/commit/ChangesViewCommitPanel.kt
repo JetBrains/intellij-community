@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class ChangesViewCommitPanel internal constructor(
   project: Project,
   private val changesView: ChangesViewProxy,
@@ -36,7 +37,6 @@ class ChangesViewCommitPanel internal constructor(
   private val commitActions = commitActionsPanel.createActions()
   private var rootComponent: JComponent? = null
 
-  @ApiStatus.Internal
   var postCommitCallback: (() -> Unit)? = null
 
   init {
@@ -58,7 +58,6 @@ class ChangesViewCommitPanel internal constructor(
 
   override val isActive: Boolean get() = component.isVisible
 
-  @ApiStatus.Internal
   fun registerRootComponent(newRootComponent: JComponent) {
     logger<ChangesViewCommitPanel>().assertTrue(rootComponent == null)
     rootComponent = newRootComponent

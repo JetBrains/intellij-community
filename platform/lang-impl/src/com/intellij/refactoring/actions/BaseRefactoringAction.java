@@ -25,6 +25,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -139,7 +140,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
 
-    if (activeInplaceRenamer == null) {
+    if (activeInplaceRenamer == null &&
+        !(editor != null && editor.getCaretModel() instanceof CaretModelImpl caretModel && caretModel.isIteratingOverCarets())) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);

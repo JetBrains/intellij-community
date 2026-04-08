@@ -55,7 +55,7 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
   @Throws(VcsException::class)
   fun commitStaged(commitMessage: String) {
     val fullMessage = when (val commitToAmend = commitOptions.commitToAmend) {
-      is CommitToAmend.Specific -> GitSquashedCommitsMessage.formatAmendSpecificCommitMessage(commitToAmend.targetSubject, commitMessage)
+      is CommitToAmend.Specific -> GitSquashedCommitsMessage.formatAmendSpecificCommitMessage(commitToAmend.subject, commitMessage)
       else -> commitMessage
     }
 
@@ -110,13 +110,14 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 
   private fun performPostCommitSquashIfNeeded(commitMessage: String) {
     if (commitOptions.commitToAmend is CommitToAmend.Specific) {
-      GitAmendSpecificCommitSquasher.squashAmendCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
+      GitAmendSpecificCommitSquasher.squashAmendCommitIntoTarget(repository, commitOptions.commitToAmend.hash, commitMessage)
     }
   }
 }
 
 private fun GitLineHandler.setCommitOptions(options: GitCommitOptions) {
   if (options.commitToAmend is CommitToAmend.Last) addParameters("--amend")
+  if (options.commitToAmend is CommitToAmend.Specific) addParameters("--allow-empty")
   if (options.isSignOff) addParameters("--signoff")
   if (options.isSkipHooks) addParameters("--no-verify")
   if (options.isCleanupCommitMessage) addParameters("--cleanup=strip")

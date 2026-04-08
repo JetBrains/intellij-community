@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
@@ -103,7 +104,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (!t.isDefinition) {
         continue
       }
-      val dataclassType = Helper.getDataclassTypeForClass(t, context)
+      val dataclassType = Helper.getDataclassTypeForClass(t, context) as? PyCallableType
       if (dataclassType != null) {
         return Ref.create(dataclassType)
       }
@@ -192,7 +193,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     fun constructGeneratedMatchArgs(classType: PyClassType, context: TypeEvalContext): List<String>? {
       if (parseDataclassParameters(classType.pyClass, context)?.matchArgs != true) return null
 
-      val params = collectDataclassFieldParameters(classType, context, initOnly = false) ?: return null
+      val allCallableParameters = collectDataclassFieldParameters(classType, context, initOnly = false) ?: return null
+      val params = allCallableParameters.firstOrNull() ?: return null
       return params
         .asSequence()
         .takeWhile { !it.isKeywordOnlySeparator }
@@ -200,19 +202,23 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         .toList()
     }
 
-    fun getDataclassTypeForClass(clsType: PyType?, context: TypeEvalContext): PyCallableType? {
+    fun getDataclassTypeForClass(clsType: PyType?, context: TypeEvalContext): PyType? {
       if (clsType !is PyClassType) return null
       val genericClassType = clsType as? PyCollectionType ?: PyTypeChecker.findGenericDefinitionType(clsType.pyClass, context) ?: clsType
 
-      val params = collectDataclassFieldParameters(genericClassType, context, initOnly = true) ?: return null
-      return PyCallableTypeImpl(params, genericClassType.toInstance())
+      val paramsSets = collectDataclassFieldParameters(genericClassType, context, initOnly = true) ?: return null
+      if (paramsSets.isEmpty()) return null
+
+      return PyUnsafeUnionType.unsafeUnion(
+        paramsSets.map {PyCallableTypeImpl(it, genericClassType.toInstance())}
+      )
     }
 
     private fun collectDataclassFieldParameters(
       clsType: PyClassType,
       context: TypeEvalContext,
       initOnly: Boolean = false,
-    ): List<PyCallableParameter>? {
+    ): List<List<PyCallableParameter>>? {
       val resolveContext = PyResolveContext.defaultContext(context)
       val elementGenerator = PyElementGenerator.getInstance(clsType.pyClass.project)
       val ellipsis = elementGenerator.createEllipsis()
@@ -222,6 +228,11 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val keywordOnly = linkedSetOf<String>()
       var seenKeywordOnlyClass = false
       val seenNames = mutableSetOf<String>()
+
+      val collectedFieldNames = linkedMapOf<String, PyCallableParameter>()
+      val keywordOnlyFieldNames = linkedSetOf<String>()
+
+      var populateByName: Boolean? = null
 
       for (currentType in StreamEx.of<PyClassLikeType>(clsType).append(clsType.getAncestorTypes(context))) {
         if (currentType == null ||
@@ -238,8 +249,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           // The base class decorated with @dataclass_transform gets filtered out already here, because for it we don't detect DataclassParameters
           if (PyKnownDecoratorUtil.hasUnknownDecorator(current, context)) break else continue
         }
-        else if (parameters.type.asPredefinedType == null) {
+        else if (parameters.type.asPredefinedType == null &&
+                 parameters.type.asPredefinedType != PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) {
           break
+        }
+
+        if (populateByName == null && parameters.populateByName != null) {
+          populateByName = parameters.populateByName
         }
 
         seenInit = seenInit || parameters.init
@@ -252,14 +268,14 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             .asSequence()
             .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
             .mapNotNull { fieldToParameter(current, it, parameters, ellipsis, context) }
-            .filterNot { it.first in seenNames }
+            .filterNot { it.parameterName in seenNames }
             .toList()
 
-          val indexOfKeywordOnlyAttribute = fieldsInfo.indexOfLast { (_, _, parameter) ->
+          val indexOfKeywordOnlyAttribute = fieldsInfo.indexOfLast { (_, _, parameter, _) ->
             parameter != null && isKwOnlyMarkerField(parameter, context)
           }
 
-          fieldsInfo.forEachIndexed { index, (name, kwOnly, parameter) ->
+          fieldsInfo.forEachIndexed { index, (name, kwOnly, parameter, fieldName) ->
             // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
             if ((seenKeywordOnlyClass && (parameters.type == PyDataclassParameters.PredefinedType.ATTRS || kwOnly != false)
@@ -276,6 +292,15 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                   parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
                 collected[name] = collected.remove(name) ?: parameter
+
+                if (fieldName != null) {
+                  val fieldNameParam = PyCallableParameterImpl.nonPsi(
+                    fieldName,
+                    parameter.getType(context),
+                    parameter.defaultValue
+                  )
+                  collectedFieldNames[fieldName] = collectedFieldNames.remove(fieldName) ?: fieldNameParam
+                }
               }
               else if (!collected.containsKey(name)) {
                 // attrs: attribute that overrides ancestor's attribute changes the order
@@ -287,7 +312,16 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       }
 
       if (initOnly && !seenInit) return null
-      return buildParameters(elementGenerator, collected, keywordOnly)
+
+      return if (populateByName == true) {
+        listOf(
+          buildParameters(elementGenerator, collected, keywordOnly),
+          buildParameters(elementGenerator, collectedFieldNames, keywordOnlyFieldNames)
+        )
+      }
+      else {
+        listOf(buildParameters(elementGenerator, collected, keywordOnly))
+      }
     }
 
     private fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
@@ -321,24 +355,33 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       return positionalOrKeyword + listOf(PyCallableParameterImpl.psi(singleStarParameter)) + keyword
     }
 
+    private data class FieldParameterInfo(
+      val parameterName: String,
+      val kwOnly: Boolean?,
+      val parameter: PyCallableParameter?,
+      val fieldName: String?
+    )
+
     private fun fieldToParameter(
       cls: PyClass,
       field: PyTargetExpression,
       dataclassParameters: PyDataclassParameters,
       ellipsis: PyEllipsisLiteralExpression,
       context: TypeEvalContext,
-    ): Triple<String, Boolean?, PyCallableParameter?>? {
+    ): FieldParameterInfo? {
       val fieldName = field.name ?: return null
 
       val fieldParams = resolveDataclassFieldParameters(cls, dataclassParameters, field, context)
-      if (fieldParams != null && !fieldParams.initValue) return Triple(fieldName, false, null)
+      if (fieldParams != null && !fieldParams.initValue) return FieldParameterInfo(fieldName, false, null, fieldName)
       if (fieldParams == null && field.annotationValue == null) return null // skip fields that are not annotated
 
-      val parameterName = when (dataclassParameters.type.asPredefinedType) {
+      val type = dataclassParameters.type
+      val predefinedType = type.asPredefinedType
+      val parameterName = when {
         // Fields starting with more than one underscore will be mangled into ClassName__field_name, but we don't support that
-        PyDataclassParameters.PredefinedType.ATTRS -> fieldParams?.alias ?: fieldName.removePrefix("_")
-        PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM -> fieldParams?.alias ?: fieldName
-        PyDataclassParameters.PredefinedType.STD -> fieldName
+        predefinedType == PyDataclassParameters.PredefinedType.ATTRS -> fieldParams?.alias ?: fieldName.removePrefix("_")
+        predefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM -> fieldParams?.alias ?: fieldName
+        predefinedType == PyDataclassParameters.PredefinedType.STD -> fieldName
         else -> fieldName
       }
 
@@ -349,7 +392,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         field
       )
 
-      return Triple(parameterName, fieldParams?.kwOnly, parameter)
+      return FieldParameterInfo(parameterName, fieldParams?.kwOnly, parameter, fieldName)
     }
 
     private fun getTypeForParameter(
@@ -438,7 +481,7 @@ private fun getDataclassesReplaceType(resolvedCallee: PyCallable, call: PyCallEx
   val objType = context.getType(obj) as? PyClassType ?: return null
   if (objType.isDefinition) return null
 
-  val dataclassType = getDataclassTypeForClass(objType, context) ?: return null
+  val dataclassType = getDataclassTypeForClass(objType, context) as? PyCallableType ?: return null
   val dataclassParameters = dataclassType.getParameters(context) ?: return null
 
   val parameters = mutableListOf<PyCallableParameter>()

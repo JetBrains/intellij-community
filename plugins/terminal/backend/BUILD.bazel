@@ -18,6 +18,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/terminal",
     "//libraries/jediterm-core",
@@ -35,6 +36,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/execution",
     "//platform/platform-impl/eel:ide-impl-wsl",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -49,6 +51,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/terminal:terminal_test_lib",
     "//libraries/jediterm-core:jediterm-core_test_lib",
@@ -66,6 +69,7 @@ jvm_library(
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.terminal.backend` end

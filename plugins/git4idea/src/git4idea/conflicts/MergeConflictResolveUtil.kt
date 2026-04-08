@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.conflicts
 
 import com.intellij.diff.DiffDialogHints
@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,8 +27,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeResolveActionSupport
+import com.intellij.openapi.vcs.merge.MergeResolveWithAgentContext
 import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -45,6 +49,7 @@ import git4idea.status.GitStagingAreaHolder.StagingAreaListener
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.event.HyperlinkEvent
 
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
@@ -186,24 +191,69 @@ object MergeConflictResolveUtil {
     }
 
     private fun createPanelForFileWithConflict(project: Project, fileEditor: FileEditor, file: VirtualFile): EditorNotificationPanel {
-      val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning)
-      panel.text = GitBundle.message("link.label.editor.notification.merge.conflicts.suggest.resolve")
-      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.suggest.resolve.show.window")) {
-        showMergeWindow(project, file)
-      }
-      return panel
-    }
-
-    private fun showMergeWindow(project: Project, file: VirtualFile) {
-      val conflict = findConflictFor(project, file) ?: return
-      GitConflictsUtil.showMergeWindow(project, createMergeHandler(project), listOf(conflict))
-    }
-
-    private fun findConflictFor(project: Project, file: VirtualFile): GitConflict? {
-      val repo = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return null
-      return repo.stagingAreaHolder.findConflict(VcsUtil.getFilePath(file))
+      return MergeConflictEditorNotificationPanel(project, fileEditor, file)
     }
   }
+
+  private class MergeConflictEditorNotificationPanel(
+    private val project: Project,
+    fileEditor: FileEditor,
+    private val file: VirtualFile,
+  ) : EditorNotificationPanel(fileEditor, Status.Warning) {
+    private val mergeContext: MergeResolveWithAgentContext = createMergeResolveWithAgentContext(project, file)
+
+    init {
+      text = GitBundle.message("link.label.editor.notification.merge.conflicts.suggest.resolve")
+      createActionLabel(GitBundle.message("link.label.merge.conflicts.suggest.resolve.show.window")) {
+        showMergeWindow(project, file)
+      }
+      addContributedResolveLinks()
+    }
+
+    private fun addContributedResolveLinks() {
+      MergeResolveActionSupport.collectActionPresentations(mergeContext, this, GIT_EDITOR_NOTIFICATION_ACTION_PLACE)
+        .filter { presentation -> presentation.isEnabled }
+        .forEach { presentation ->
+          createActionLabel(presentation.text, object : ActionHandler {
+            override fun handlePanelActionClick(panel: EditorNotificationPanel, event: HyperlinkEvent) {
+              val contextComponent = event.inputEvent?.component as? JComponent ?: this@MergeConflictEditorNotificationPanel
+              MergeResolveActionSupport.performAction(
+                provider = presentation.provider,
+                mergeContext = mergeContext,
+                contextComponent = contextComponent,
+                place = GIT_EDITOR_NOTIFICATION_ACTION_PLACE,
+                inputEvent = event.inputEvent,
+              )
+            }
+
+            override fun handleQuickFixClick(editor: Editor, psiFile: PsiFile) {
+              MergeResolveActionSupport.performAction(
+                provider = presentation.provider,
+                mergeContext = mergeContext,
+                contextComponent = this@MergeConflictEditorNotificationPanel,
+                place = GIT_EDITOR_NOTIFICATION_ACTION_PLACE,
+              )
+            }
+          }, true)
+        }
+    }
+  }
+
+  private fun createMergeResolveWithAgentContext(project: Project, file: VirtualFile): MergeResolveWithAgentContext {
+    return MergeResolveWithAgentContext(project = project, files = listOf(file))
+  }
+
+  private fun showMergeWindow(project: Project, file: VirtualFile) {
+    val conflict = findConflictFor(project, file) ?: return
+    GitConflictsUtil.showMergeWindow(project, createMergeHandler(project), listOf(conflict))
+  }
+
+  private fun findConflictFor(project: Project, file: VirtualFile): GitConflict? {
+    val repo = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return null
+    return repo.stagingAreaHolder.findConflict(VcsUtil.getFilePath(file))
+  }
+
+  private const val GIT_EDITOR_NOTIFICATION_ACTION_PLACE = "Git.EditorNotification.MergeConflicts"
 
   class MyStagingAreaListener : StagingAreaListener {
     override fun stagingAreaChanged(repository: GitRepository) {

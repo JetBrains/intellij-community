@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -8,9 +8,6 @@ import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
-import org.jetbrains.intellij.build.BuildOptions.Companion.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA
-import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_DMG_STEP
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -47,7 +44,6 @@ data class BuildOptions(
    */
   @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
-  @JvmField var isLanguageServer: Boolean = getBooleanProperty("intellij.build.lsp.mode", false),
 
   /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
@@ -75,24 +71,7 @@ data class BuildOptions(
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
-  @JvmField var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
-    .split(',')
-    .dropLastWhile { it.isEmpty() }
-    .filterNot { it.isBlank() }
-    .toMutableSet()
-    .apply {
-      /* Skip signing and notarization for local builds */
-      if (isInDevelopmentMode) {
-        add(MAC_SIGN_STEP)
-        add(MAC_NOTARIZE_STEP)
-      }
-      // repair utility is unbundled for all IDEs
-      add(REPAIR_UTILITY_BUNDLE_STEP)
-      // IJI-1070
-      add(LIBRARY_URL_CHECK_STEP)
-      // IJI-725
-      add(FUS_METADATA_BUNDLE_STEP)
-    },
+  @JvmField var buildStepsToSkip: Set<String> = computeInitialBuiltStepsToSkip(isInDevelopmentMode),
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
@@ -544,6 +523,12 @@ data class BuildOptions(
   @Internal
   var buildStepListener: BuildStepListener = BuildStepListener()
 
+  /**
+  Option for [DownloadLibrariesBuildTarget]
+   */
+  @Internal
+  var mavenLibrariesDownloadLocation: Path? = null
+
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
     targetOs = when {
@@ -559,6 +544,28 @@ data class BuildOptions(
     val targetArchProperty = System.getProperty(TARGET_ARCH_PROPERTY)?.takeIf { it.isNotBlank() }
     targetArch = if (targetArchProperty == ARCH_CURRENT) JvmArchitecture.currentJvmArch else targetArchProperty?.let(JvmArchitecture::valueOf)
   }
+}
+
+private fun computeInitialBuiltStepsToSkip(isInDevelopmentMode: Boolean): Set<String> {
+  val result = LinkedHashSet<String>()
+  System.getProperty(BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY)?.let { csv ->
+    csv
+      .splitToSequence(',')
+      .filterTo(result) { !it.isBlank() }
+  }
+
+  // skip signing and notarization for local builds
+  if (isInDevelopmentMode) {
+    result.add(BuildOptions.MAC_SIGN_STEP)
+    result.add(BuildOptions.MAC_NOTARIZE_STEP)
+  }
+  // repair utility is unbundled for all IDEs
+  result.add(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)
+  // IJI-1070
+  result.add(BuildOptions.LIBRARY_URL_CHECK_STEP)
+  // IJI-725
+  result.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
+  return result
 }
 
 private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.filterTo(LinkedHashSet()) { it.isNotBlank() } ?: emptySet()

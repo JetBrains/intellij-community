@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
@@ -45,6 +46,7 @@ import org.junit.runners.Parameterized
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.ObjectInputStream
+import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -157,11 +159,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
                         clearTextFromMarkup(FileUtil.loadFile(it, /* convertLineSeparators = */ true)),
                         properties
                     )
-                    val virtualFile = createProjectSubFile(it.path.substringAfter(rootDir.path + File.separator), text)
+                    val relativePath = it.path.substringAfter(rootDir.path + File.separator)
+                    val afterFile = rootDir.parentFile.toPath().resolve("after").resolve(relativePath)
+                    val virtualFile = createProjectSubFile(relativePath, text)
 
                     // Real file with expected testdata allows to throw nicer exceptions in
                     // case of mismatch, as well as open interactive diff window in IDEA
-                    virtualFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, it.absolutePath)
+                    virtualFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH,
+                        afterFile.takeIf(Files::exists)?.toCanonicalPath() ?: it.absolutePath)
 
                     virtualFile
                 }

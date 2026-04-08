@@ -32,6 +32,7 @@ class PySdkComboBox(private val addDefault: Boolean,
     if (addDefault) {
       pythonSdks.add(0, null)
     }
+    removeAllItems() // initList is called at least twice: on creation and on reset, so we need to clean it up 
     for (item in pythonSdks) {
       addItem(item)
     }

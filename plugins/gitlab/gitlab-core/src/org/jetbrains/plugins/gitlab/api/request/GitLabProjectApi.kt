@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceRestDTO
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO
 import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
+import org.jetbrains.plugins.gitlab.api.projectApiUri
 import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
@@ -138,6 +140,22 @@ fun GitLabApi.Rest.getProjectUsersURI(projectId: String): URI = projectApiUrl(pr
 suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
   val request = request(uri).GET().build()
   return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_USERS) {
+    loadJsonList(request)
+  }
+}
+
+/**
+ * Returns up to 20 users that match the search string.
+ * If a search string is less than 3 characters, the endpoint returns nothing, so let's not use a search parameter then.
+ */
+@SinceGitLab("14.0", note = "No exact version")
+suspend fun GitLabApi.Rest.getProjectSearchUsers(projectId: String, searchString: String): HttpResponse<out List<GitLabUserRestDTO>> {
+  val uri = projectApiUrl(projectId).resolveRelative("search").withQuery {
+    "scope" eq "users"
+    "search" eq searchString
+  }
+  val request = request(uri).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_SEARCH_USERS) {
     loadJsonList(request)
   }
 }

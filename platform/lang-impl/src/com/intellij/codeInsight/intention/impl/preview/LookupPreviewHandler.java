@@ -34,7 +34,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
   private final IntentionPreviewPopupUpdateProcessor myProcessor;
   private final LookupImpl myLookup;
   private final Function<Object, @Nullable T> myMapper;
-  private final Map<T, Integer> counterHolder = new HashMap<>();
+  private final Map<@Nullable T, Integer> counterHolder = new HashMap<>();
   private final AtomicInteger counterValue = new AtomicInteger(0);
   private final AtomicBoolean shown = new AtomicBoolean(false);
   private final IntentionPreviewComponentHolder myPopup;
@@ -50,11 +50,12 @@ public final class LookupPreviewHandler<T> implements LookupListener {
    */
   public LookupPreviewHandler(@NotNull Project project,
                               @NotNull LookupImpl lookup,
-                              @NotNull Function<Object, @Nullable T> mapper,
+                              @NotNull Function<@Nullable Object, @Nullable T> mapper,
                               @NotNull Function<? super @NotNull T, ? extends @NotNull IntentionPreviewInfo> previewGenerator) {
     myLookup = lookup;
     myMapper = mapper;
-    myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> {
+    myProcessor = new IntentionPreviewPopupUpdateProcessor(project, (@Nullable Object obj) -> {
+      if (obj == null) return IntentionPreviewInfo.EMPTY;
       T target = mapper.apply(obj);
       if (target == null) return IntentionPreviewInfo.EMPTY;
       return previewGenerator.apply(target);
@@ -105,9 +106,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
   private void update(@NotNull LookupImpl list) {
     Object selectedItem = list.getCurrentItem();
     T item = myMapper.apply(selectedItem);
-    if (item != null) {
-      update(item);
-    }
+    update(item);
   }
 
   /**
@@ -120,7 +119,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
   }
 
   @RequiresEdt
-  private void update(T action) {
+  private void update(@Nullable T action) {
     if (!shown.get()) {
       return;
     }

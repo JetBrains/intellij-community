@@ -2,7 +2,7 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FileToolset
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.EDT
@@ -15,7 +15,7 @@ import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-class FileToolsetTest : McpToolsetTestBase() {
+class FileToolsetTest : GeneralMcpToolsetTestBase() {
   @Disabled("Output contains the project directory name that is not predictable because of generated")
   @Test
   fun list_directory_tree() = runBlocking(Dispatchers.Default) {

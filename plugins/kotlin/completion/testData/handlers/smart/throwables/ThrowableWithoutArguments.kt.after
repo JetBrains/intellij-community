@@ -1,0 +1,4 @@
+class ThrowableWithArguments(): Exception()
+val a = throw ThrowableWithArguments()<caret>
+
+// ELEMENT: ThrowableWithArguments

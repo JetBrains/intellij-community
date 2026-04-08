@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class MoveMinimapAction : AnAction(MiniMessagesBundle.message("action.moveLeft")) {
+class MoveMinimapAction : AnAction() {
   override fun isDumbAware(): Boolean = true
   override fun update(e: AnActionEvent) {
     e.presentation.text = if (MinimapSettings.getInstance().state.rightAligned) MiniMessagesBundle.message("action.moveLeft")

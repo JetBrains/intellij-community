@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.actions
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
+import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.selectedChatSourceProjectPath
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -28,7 +28,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
 
   @Suppress("unused")
   constructor() {
-    selectedSourcePath = { project -> project.service<AgentChatTabSelectionService>().selectedChatTab.value?.projectPath }
+    selectedSourcePath = ::selectedChatSourceProjectPath
     isDedicatedProject = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject
     openProject = { path, entryPoint -> service<AgentSessionLaunchService>().openOrFocusProject(path, entryPoint) }
   }
@@ -65,13 +65,15 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
     if (sourceProjectPath == null) {
       e.presentation.isEnabled = false
       e.presentation.text = AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.empty.text")
-      e.presentation.description = AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.empty.description")
+      e.presentation.description =
+        AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.empty.description")
       return
     }
 
     e.presentation.isEnabled = true
     e.presentation.text = sourceProjectName(sourceProjectPath)
-    e.presentation.description = AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description", sourceProjectPath)
+    e.presentation.description =
+      AgentSessionsBundle.message("action.AgentWorkbenchSessions.GoToSourceProjectFromToolbar.description", sourceProjectPath)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -83,15 +85,7 @@ internal class AgentSessionsGoToSourceProjectFromToolbarAction : DumbAwareAction
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun resolveSourceProjectPath(project: Project): @NlsSafe String? {
-    val sourceProjectPath = selectedSourcePath(project) ?: return null
-    val normalizedPath = normalizeAgentWorkbenchPath(sourceProjectPath)
-    if (normalizedPath.isBlank()) {
-      return null
-    }
-    if (AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalizedPath)) {
-      return null
-    }
-    return normalizedPath
+    return normalizeOpenableSourceProjectPath(selectedSourcePath(project))
   }
 
   private fun sourceProjectName(path: @NlsSafe String): @NlsSafe String {

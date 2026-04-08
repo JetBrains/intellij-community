@@ -28,5 +28,10 @@ public class WhileStatementPostfixTemplate extends JavaEditablePostfixTemplate i
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }
 

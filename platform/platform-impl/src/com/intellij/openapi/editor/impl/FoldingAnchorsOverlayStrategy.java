@@ -20,7 +20,7 @@ public final class FoldingAnchorsOverlayStrategy {
   @VisibleForTesting
   public FoldingAnchorsOverlayStrategy(EditorImpl editor) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
   }
 
   @NotNull

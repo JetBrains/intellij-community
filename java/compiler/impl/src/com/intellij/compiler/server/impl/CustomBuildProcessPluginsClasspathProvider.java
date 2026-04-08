@@ -5,8 +5,6 @@ import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * Adds custom plugins configured in {@link BuildProcessCustomPluginsConfiguration} to the build process' classpath.
  */
@@ -18,7 +16,7 @@ public final class CustomBuildProcessPluginsClasspathProvider extends BuildProce
   }
 
   @Override
-  public @NotNull List<String> getClassPath() {
+  public @NotNull Iterable<String> getPrependedClassPath() {
     return BuildProcessCustomPluginsConfiguration.getInstance(myProject).getCustomPluginsClasspath();
   }
 }

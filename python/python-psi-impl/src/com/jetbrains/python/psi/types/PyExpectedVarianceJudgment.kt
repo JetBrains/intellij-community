@@ -1,8 +1,12 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.findParentOfType
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE_EXT
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.GENERIC
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.PROTOCOL_EXT
@@ -27,10 +31,11 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyTypeDeclarationStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.combineVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionDoesNotAffectVarianceInference
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance.BIVARIANT
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance.CONTRAVARIANT
@@ -48,7 +53,8 @@ object PyExpectedVarianceJudgment {
    */
   @JvmStatic
   fun getExpectedVariance(element: PsiElement, context: TypeEvalContext): Variance? {
-    val parent = element.parent ?: return null
+    val parent = PyUtil.getFragmentContextAwareParent(element)
+    if (parent == null) return null
 
     return when (element) {
       is PyClass,
@@ -61,10 +67,9 @@ object PyExpectedVarianceJudgment {
         -> fromTypeDeclarationStatement(element, parent, context)
       is PyNamedParameter,
         -> getExpectedVariance(parent, context)?.invert()
-      is PyListLiteralExpression,
-        -> fromListLiteral(element, parent, context)
 
       // keep the following list as precise and short as possible to enforce returning null whenever possible
+      is PyListLiteralExpression,
       is PyArgumentList,
       is PyBinaryExpression,
       is PyParameterList,
@@ -114,14 +119,23 @@ object PyExpectedVarianceJudgment {
     context: TypeEvalContext,
   ): Variance? {
     val qualifier = subscriptionExpr.qualifier as? PyReferenceExpression ?: return null
-    var qualifierType = PyTypingTypeProvider.getType(qualifier, context)?.get()
+    val physicalElement = PyUtil.getFragmentContext(qualifier)
+    val parentNamedParameter = physicalElement?.findParentOfType<PyNamedParameter>()
+    if (parentNamedParameter?.isSelf == true) return null
+
+    val qualifierQNames = PyTypingTypeProvider.resolveToQualifiedNames(qualifier, context)
+    if (qualifierQNames.any { it in setOf(GENERIC, PROTOCOL, PROTOCOL_EXT) }) {
+      return BIVARIANT // for T in: `class C(Generic[T])` or `class C(Protocol[T])`
+    }
+    if (qualifierQNames.any { it in setOf(CALLABLE, CALLABLE_EXT) } && refIndex == 0) {
+      val outerVariance = getExpectedVariance(subscriptionExpr, context) ?: return null
+      return combineVariance(outerVariance, CONTRAVARIANT)
+    }
+
+    var qualifierType = PyTypingTypeProvider.getType(subscriptionExpr.operand, context)?.get()
     if (qualifierType is PyClassType && qualifierType !is PyCollectionType) {
       // convert raw types to generic types
       qualifierType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
-    }
-
-    if (qualifierType is PyClassLikeType && setOf(GENERIC, PROTOCOL, PROTOCOL_EXT).contains(qualifierType.classQName)) {
-      return BIVARIANT // for T in: `class C(Generic[T])` or `class C(Protocol[T])`
     }
     if (qualifierType is PyCollectionType) {
       val paramVariance = getTypeParameterVarianceAtIndex(qualifierType, refIndex, context) ?: return null
@@ -133,33 +147,17 @@ object PyExpectedVarianceJudgment {
 
   private fun getTypeParameterVarianceAtIndex(qualifierType: PyClassType, index: Int, context: TypeEvalContext): Variance? {
     if (qualifierType is PyCollectionType) {
+      if (qualifierType.classQName == PyNames.TUPLE) {
+        return COVARIANT
+      }
       // check definition type since generic type aliases are parameterized, i.e.: `A_Alias_1 = ClassA[T_co]` will be ClassA[Any]
       val definitionType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
       val typeParamType = definitionType.elementTypes.getOrNull(index) as? PyTypeVarType
-        ?: qualifierType.elementTypes.getOrNull(index) as? PyTypeVarType
-        ?: return null
-      return getInferredVariance(typeParamType, context)
+                          ?: qualifierType.elementTypes.getOrNull(index) as? PyTypeVarType
+                          ?: return null
+      return getDeclaredOrInferredVariance(typeParamType, context)
     }
     return null
-  }
-
-  private fun fromListLiteral(element: PyListLiteralExpression, parent: PsiElement, context: TypeEvalContext): Variance? {
-    val parentVariance = getExpectedVariance(parent, context) ?: return null
-    val grandParent = parent.parent
-    if (grandParent is PySubscriptionExpression && parent is PyTupleExpression
-        && parent.elements.size == 2 && parent.elements[0] === element && grandParent.qualifier != null
-    ) {
-      val type = context.getType(grandParent.qualifier!!)
-      if (isTypingCallable(type)) {
-        // element is at the argument position of Callable[[...], ...]
-        return combineVariance(parentVariance, CONTRAVARIANT)
-      }
-    }
-    return parentVariance
-  }
-
-  private fun isTypingCallable(type: PyType?): Boolean {
-    return type is PyClassLikeType && PyTypingTypeProvider.CALLABLE == type.classQName
   }
 
   private fun isEffectivelyReadOnly(element: PsiElement, parentClass: PyClass, context: TypeEvalContext): Boolean {

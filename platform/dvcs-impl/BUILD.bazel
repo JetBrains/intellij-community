@@ -33,6 +33,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/dvcs-api:vcs-dvcs",
     "//libraries/miglayout-swing",
     "//libraries/stream",
@@ -48,6 +50,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -77,6 +80,8 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/vcs-api:vcs_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/dvcs-api:vcs-dvcs_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -98,6 +103,7 @@ jvm_library(
     "//platform/kernel/backend:backend_test_lib",
     "//jps/model-api:model_test_lib",
     "//platform/lang-core:lang-core_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end
@@ -197,6 +203,8 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":vcs-dvcs-impl-tests",

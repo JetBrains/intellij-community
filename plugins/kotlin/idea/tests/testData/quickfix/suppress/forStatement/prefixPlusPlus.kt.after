@@ -1,9 +1,9 @@
 // "Suppress 'USELESS_CAST' for statement " "true"
 
-fun foo() {
+fun foo(index: Int) {
     val arr = IntArray(1)
     @Suppress("USELESS_CAST")
-    ++arr[1 as Int]
+    ++arr[index as Int]
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

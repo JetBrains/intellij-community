@@ -30,6 +30,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-api:analysis",
     "//platform/ide-core-impl",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -54,6 +55,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.recentFiles` end

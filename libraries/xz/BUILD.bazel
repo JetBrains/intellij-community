@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":xz_resources"],
-  exports = ["@lib//:xz"],
-  runtime_deps = ["@lib//:xz"]
+  exports = ["@lib//:libraries-xz-xz"],
+  runtime_deps = ["@lib//:libraries-xz-xz"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:xz"],
+  exports = ["@lib//:libraries-xz-xz"],
   runtime_deps = [":xz"]
 )
 ### auto-generated section `build intellij.libraries.xz` end

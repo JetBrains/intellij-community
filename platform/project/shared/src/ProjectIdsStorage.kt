@@ -3,6 +3,7 @@ package com.intellij.platform.project
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -68,5 +69,8 @@ internal class ProjectIdsStorage(cs: CoroutineScope) {
 
     @JvmStatic
     fun getInstance(): ProjectIdsStorage = service<ProjectIdsStorage>()
+
+    @JvmStatic
+    fun getInstanceIfCreated(): ProjectIdsStorage? = serviceIfCreated<ProjectIdsStorage>()
   }
 }

@@ -2,7 +2,7 @@ import java.util.*;
 
 class LambdaTest {
     public void testR() {
-        new ArrayList<String>() :: <error descr="Reference to 'size' is ambiguous, both 'size()' and 'size()' match">size</error> = ""; 
+        <error descr="Reference to variable expected on left-hand side of assignment">new ArrayList<String>() :: size</error> = ""; 
 
     }
 }

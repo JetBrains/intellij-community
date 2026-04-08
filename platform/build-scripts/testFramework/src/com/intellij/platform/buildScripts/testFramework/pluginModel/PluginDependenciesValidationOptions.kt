@@ -38,6 +38,7 @@ class PluginDependenciesValidationOptions(
    * are present in the classpath.
    */
   val compileOnlyDependencies: List<Pair<String, String>> = compileOnlyDependenciesInCommunity,
+
   /**
    * Specifies variants of plugins enabled via a system property.
    * Such variants won't be checked, but this information will be used to determine modules which are loaded by separate classloaders in such a variant, and therefore shouldn't be

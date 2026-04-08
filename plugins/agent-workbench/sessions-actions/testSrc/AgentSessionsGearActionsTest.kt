@@ -7,12 +7,14 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrame
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
+import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -21,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.project.DumbService
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -171,6 +174,9 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.SelectThreadInAgentThreads"))
       .isNotNull
       .isInstanceOf(AgentSessionsSelectThreadInToolWindowAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.RenameThreadFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsEditorTabRenameThreadAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ArchiveThreadFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsEditorTabArchiveThreadAction::class.java)
@@ -183,6 +189,7 @@ class AgentSessionsGearActionsTest {
 
     val entries = actionManager.editorTabPopupEntries()
 
+    val renameIndex = entries.requiredIndex("AgentWorkbenchSessions.RenameThreadFromEditorTab")
     val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.ArchiveThreadFromEditorTab")
     val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
     val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
@@ -192,12 +199,13 @@ class AgentSessionsGearActionsTest {
 
     assertThat(archiveIndex).isLessThan(goToSourceIndex)
     assertThat(goToSourceIndex).isLessThan(closeEditorsGroupIndex)
-    assertThat(closeEditorsGroupIndex).isLessThan(copyThreadIdIndex)
+    assertThat(closeEditorsGroupIndex).isLessThan(renameIndex)
+    assertThat(renameIndex).isLessThan(copyThreadIdIndex)
     assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
     assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)
     assertThat(entries[closeEditorsGroupIndex - 1]).isEqualTo(SEPARATOR_MARKER)
     assertThat(entries[closeEditorsGroupIndex + 1]).isEqualTo(SEPARATOR_MARKER)
-    assertThat(entries.subList(selectInThreadsIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
+    assertThat(entries.subList(renameIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
   }
 
   @Test
@@ -229,6 +237,24 @@ class AgentSessionsGearActionsTest {
       .isInstanceOf(AgentSessionsEditorTabNewThreadPopupGroup::class.java)
     assertThat(actionManager.getAction(popupGroupId)?.templatePresentation?.icon)
       .isEqualTo(AllIcons.General.Add)
+  }
+
+  @Test
+  fun aggregateAgentWorkbenchGroupsAreDumbAware() {
+    val actionManager = ActionManager.getInstance()
+
+    listOf(
+      "AgentWorkbenchSessions.ToolWindow.GearActions",
+      "AgentWorkbenchSessions.TreePopup",
+      "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions",
+    ).forEach { groupId ->
+      val group = actionManager.getAction(groupId)
+
+      assertThat(group)
+        .withFailMessage("Action group '%s' is not registered", groupId)
+        .isInstanceOf(DumbAwareDefaultActionGroup::class.java)
+      assertThat(DumbService.isDumbAware(group)).isTrue()
+    }
   }
 
   @Test

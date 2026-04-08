@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.icons.AllIcons
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -27,6 +28,7 @@ import javax.swing.event.HyperlinkListener
 abstract class ToolWindowManager {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(project: Project): ToolWindowManager = project.service<ToolWindowManager>()
   }
 

@@ -27,6 +27,9 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//libraries/asm",
     "//platform/util/jdom",
+    "//platform/util/multiplatform",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
   ]
@@ -52,6 +55,9 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader_test_lib",
     "//libraries/asm:asm_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.jps` end

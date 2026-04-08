@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -21,6 +21,13 @@ private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", Plu
 private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
 private val REMOTE_DEVELOPMENT_RIDER_MODULE_ID = PluginModuleId("intellij.rider.plugins.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
+private val XDEBUGGER_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.xdebugger")
+private val XDEBUGGER_MODULE_IDS = listOf(
+  PluginModuleId("intellij.platform.debugger", PluginModuleId.JETBRAINS_NAMESPACE),
+  PluginModuleId("intellij.platform.debugger.impl", PluginModuleId.JETBRAINS_NAMESPACE),
+  PluginModuleId("intellij.platform.debugger.impl.shared", PluginModuleId.JETBRAINS_NAMESPACE),
+  PluginModuleId("intellij.platform.debugger.impl.ui", PluginModuleId.JETBRAINS_NAMESPACE),
+)
 
 
 internal class ModulesWithDependencies(
@@ -106,6 +113,11 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         }
         if (doesDependOnPluginAlias(module, CWM_RIDER_PLUGIN_ID)) {
           moduleIdToModule.get(REMOTE_DEVELOPMENT_RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
+        if (doesDependOnPluginAlias(module, XDEBUGGER_PLUGIN_ALIAS_ID)) {
+          for (moduleId in XDEBUGGER_MODULE_IDS) {
+            moduleIdToModule.get(moduleId)?.let { dependenciesCollector.add(it) }
+          }
         }
         moduleIdToModule.get(COLLABORATION_TOOLS_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
@@ -200,6 +212,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.relaxng",
   "intellij.spellchecker",
   "intellij.platform.structuralSearch",
+  "intellij.xml.emmet",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**

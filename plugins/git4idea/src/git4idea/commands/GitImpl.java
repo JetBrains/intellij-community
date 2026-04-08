@@ -44,6 +44,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import git4idea.workingTrees.GitWorktreeListParser;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -866,18 +867,21 @@ public class GitImpl extends GitImplBase {
     handler.setSilent(false);
     handler.setStdoutSuppressed(false);
     handler.setStderrSuppressed(false);
-    handler.addParameters(asList("remove", tree.getPath().getPath(), "--force"));
+    handler.addParameters("remove");
+    handler.addAbsoluteFile(tree.getPath().getIOFile());
+    handler.addParameters("--force");
     return Git.getInstance().runCommand(handler);
   }
 
   @Override
-  public @NotNull GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
+  public @NotNull List<GitWorkingTree> listWorktrees(@NotNull GitRepository repository) throws VcsException {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
     handler.addParameters("list");
     handler.addParameters("--porcelain");
 
-    addListeners(handler, listeners);
-    return Git.getInstance().runCommand(handler);
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    result.throwOnError();
+    return new GitWorktreeListParser(handler.getExecutable(), repository.getRoot().toNioPath()).parseOrEmpty(result.getOutput());
   }
 
   @Override
@@ -893,7 +897,8 @@ public class GitImpl extends GitImplBase {
     if (newBranchName != null) {
       handler.addParameters("-b", newBranchName);
     }
-    handler.addParameters(workingTreePath.getPath(), sourceBranch.getName());
+    handler.addAbsoluteFile(workingTreePath.getIOFile());
+    handler.addParameters(sourceBranch.getName());
     return Git.getInstance().runCommand(handler);
   }
 

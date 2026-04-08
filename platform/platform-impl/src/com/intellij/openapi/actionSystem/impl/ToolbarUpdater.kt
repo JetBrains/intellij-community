@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.openapi.actionSystem.TimerListener
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
-import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -33,6 +33,7 @@ abstract class ToolbarUpdater
   private val myKeymapManagerListener = MyKeymapManagerListener()
   private val myTimerListener = MyTimerListener(this, debugName)
 
+  private var keymapConnection: MessageBusConnection? = null
   private var myListenersArmed = false
   private var myInUpdate = false
 
@@ -48,7 +49,9 @@ abstract class ToolbarUpdater
     myListenersArmed = true
     val actionManager = getInstanceEx()
     actionManager.addTimerListener(myTimerListener)
-    KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener)
+    keymapConnection = ApplicationManager.getApplication().messageBus.connect().also {
+      it.subscribe(KeymapManagerListener.TOPIC, myKeymapManagerListener)
+    }
     updateActionTooltips()
   }
 
@@ -60,7 +63,8 @@ abstract class ToolbarUpdater
     myListenersArmed = false
     val actionManager = getInstanceEx()
     actionManager.removeTimerListener(myTimerListener)
-    KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener)
+    keymapConnection?.disconnect()
+    keymapConnection = null
   }
 
   fun updateActions(now: Boolean, forced: Boolean, includeInvisible: Boolean) {
@@ -93,6 +97,10 @@ abstract class ToolbarUpdater
     override fun activeKeymapChanged(keymap: Keymap?) {
       updateActionTooltips()
     }
+
+    override fun shortcutsChanged(keymap: Keymap, actionIds: Collection<String>, fromSettings: Boolean) {
+      updateActionTooltips()
+    }
   }
 
   private class MyTimerListener(
@@ -109,7 +117,6 @@ abstract class ToolbarUpdater
 
     override fun run() {
       val updater = myReference.get() ?: return
-
       if (!updater.component.isShowing()) {
         return
       }

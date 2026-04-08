@@ -1,9 +1,10 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.common"/>
-    <module name="intellij.agent.workbench.sessions.core"/>
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->
@@ -17,4 +18,15 @@
     <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
   </extensions>
+
+  <actions resource-bundle="messages.AgentChatBundle">
+    <action
+      id="AgentWorkbenchSessions.EditorTab.PreviousProposedPlan"
+      icon="AllIcons.Actions.PreviousOccurence"
+      class="com.intellij.agent.workbench.chat.AgentChatPreviousProposedPlanAction"/>
+    <action
+      id="AgentWorkbenchSessions.EditorTab.NextProposedPlan"
+      icon="AllIcons.Actions.NextOccurence"
+      class="com.intellij.agent.workbench.chat.AgentChatNextProposedPlanAction"/>
+  </actions>
 </idea-plugin>

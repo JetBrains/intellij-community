@@ -61,6 +61,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-impl",
     "//platform/ide-core/plugins",
+    "//platform/ide-core",
     "//platform/execution-impl",
     "//platform/platform-api:ide",
     "//platform/util/jdom",
@@ -72,6 +73,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -112,6 +114,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/util/jdom:jdom_test_lib",
@@ -123,6 +126,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grid.impl` end

@@ -996,6 +996,7 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext,Z,Z):com.intellij.openapi.actionSystem.AnActionEvent
 - f:getActionManager():com.intellij.openapi.actionSystem.ActionManager
+- f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - f:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 - f:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - s:getInjectedDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext

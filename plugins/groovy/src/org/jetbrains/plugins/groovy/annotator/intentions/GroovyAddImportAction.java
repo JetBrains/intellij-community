@@ -5,6 +5,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -19,7 +20,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -173,6 +176,11 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     else {
       super.bindReference(reference, targetClass);
     }
+  }
+
+  @Override
+  protected @NotNull ImportOptimizer getModCommandFriendlyImportOptimizer() {
+    return new GroovyImportOptimizer();
   }
 
   private static void handleNewifiedClass(@NotNull PsiElement referringElement, @NotNull PsiClass targetClass) {

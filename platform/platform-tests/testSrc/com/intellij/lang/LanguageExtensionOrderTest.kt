@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.readDescriptorFromBytesForTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -31,7 +32,9 @@ class LanguageExtensionOrderTest : LightPlatformTestCase() {
   }
 
   private fun registerMetaLanguage() {
-    ApplicationManager.getApplication().extensionArea.getExtensionPoint(MetaLanguage.EP_NAME).registerExtension(MyMetaLanguage.INSTANCE, testRootDisposable)
+    val area = ApplicationManager.getApplication().extensionArea
+    area.getExtensionPoint(ExtensionPointName("com.intellij.metaLanguageProvider"))
+      .registerExtension(MetaLanguageProvider { MyMetaLanguage.INSTANCE }, testRootDisposable)
   }
 
   private fun registerLanguageEP() {

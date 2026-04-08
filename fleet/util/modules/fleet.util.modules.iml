@@ -25,27 +25,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
-      <library name="jetbrains.intellij.platform.util.zip.squashed" type="repository">
-        <properties maven-id="com.jetbrains.intellij.platform:util-zip-squashed:252.16432">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-zip-squashed/252.16432/util-zip-squashed-252.16432.jar">
-              <sha256sum>7df07e447c1de46592dfe4b20345b61ff57c5f3b796b8e946086559b260f7690</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains:annotations" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-zip-squashed/252.16432/util-zip-squashed-252.16432.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-zip-squashed/252.16432/util-zip-squashed-252.16432-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="fleet:jetbrains.intellij.platform.util.zip.squashed" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @LcrDslMarker
-sealed class LcrInitParams {
+sealed class LcrInitParams @ApiStatus.Internal constructor() {
 
   enum class Align {
     LEFT,

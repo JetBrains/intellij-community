@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
@@ -123,7 +123,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     resolveProjectDependencies: Boolean = false,
     canceledStatus: CanceledStatus = CanceledStatus.NULL,
   ) = context.withCompilationLock {
-    require(!BazelRunfiles.isRunningFromBazel) {
+    val mavenLibrariesDownloading = resolveProjectDependencies && context.options.mavenLibrariesDownloadLocation != null && moduleSet.isEmpty() && artifactNames.isEmpty()
+    require(!BazelRunfiles.isRunningFromBazel || mavenLibrariesDownloading) {
       "Running JPS compiler is not supported when running from Bazel."
     }
 

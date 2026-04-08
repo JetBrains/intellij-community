@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
+import org.intellij.lang.annotations.Language;
 
 import java.util.List;
 
@@ -13,10 +13,9 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 
 public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTest {
-  public void test_rearrangement_doesn_t_brake_anon_classes_alignment() {
-
-    String text = """
-      public class Test {
+  public void testDoNotBreakAnonymousClassAlignment() {
+    @Language("JAVA") String text = """
+      public final class Test {
           public static void main(String[] args) {
               Action action1 = new AbstractAction() {
                   @Override
@@ -34,7 +33,23 @@ public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTe
     doTest(text, text, classic);
   }
 
-  public void test_anonymous_classes_inside_method() {
+  public void testAnonymousAndLocalClasses() {
+    String text = """
+      class Main {
+          void run() {
+              empty(new Cloneable() {
+              });
+              class MyRunnable {
+              }
+          }
+
+          void empty(Object o) {
+          }
+      }""";
+    doTest(text, text, classic);
+  }
+
+  public void testAnonymousClassesInsideMethod() {
     doTest("""
              public class Rearranging {
 
@@ -75,7 +90,6 @@ public class JavaRearrangerAnonymousClassesTest extends AbstractJavaRearrangerTe
 
                  }
              }
-             """, List.of(AbstractRearrangerTest.rule(FIELD), AbstractRearrangerTest.rule(ENUM), AbstractRearrangerTest.rule(INTERFACE),
-                          AbstractRearrangerTest.rule(CLASS), AbstractRearrangerTest.rule(CONSTRUCTOR), AbstractRearrangerTest.rule(METHOD)));
+             """, List.of(rule(FIELD), rule(ENUM), rule(INTERFACE), rule(CLASS), rule(CONSTRUCTOR), rule(METHOD)));
   }
 }

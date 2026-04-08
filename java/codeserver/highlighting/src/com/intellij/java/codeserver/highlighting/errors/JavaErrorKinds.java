@@ -33,6 +33,7 @@ import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiCaseLabelElement;
 import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiCatchSection;
@@ -730,15 +731,15 @@ public final class JavaErrorKinds {
     parameterized(PsiMethodCallExpression.class, IncompatibleIntersectionContext.class, "type.parameter.incompatible.upper.bounds")
       .withRange((call, ctx) -> getRange(call))
       .withDescription((call, ctx) -> message("type.parameter.incompatible.upper.bounds", ctx.parameter().getName(), ctx.message()));
-  public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
+  public static final Parameterized<PsiCallExpression, TypeParameterBoundMismatchContext>
     TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_EXTEND_BOUND =
-    parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
+    parameterized(PsiCallExpression.class, TypeParameterBoundMismatchContext.class,
                   "type.parameter.inferred.type.not.within.extend.bound")
       .withDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.extend.bound", formatClass(ctx.parameter()),
                                               formatType(ctx.bound()), formatType(ctx.actualType())));
-  public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
+  public static final Parameterized<PsiCallExpression, TypeParameterBoundMismatchContext>
     TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_IMPLEMENT_BOUND =
-    parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
+    parameterized(PsiCallExpression.class, TypeParameterBoundMismatchContext.class,
                   "type.parameter.inferred.type.not.within.implement.bound")
       .withDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.implement.bound", formatClass(ctx.parameter()),
                                               formatType(ctx.bound()), formatType(ctx.actualType())));
@@ -910,7 +911,15 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
     error(PsiElement.class, "exception.unhandled")
-      .withRange(JavaErrorFormatUtil::getRange)
+      .withRange(element -> {
+        if (element instanceof PsiMethodReferenceExpression ref) {
+          PsiElement nameElement = ref.getReferenceNameElement();
+          if (nameElement != null) {
+            return nameElement.getTextRangeInParent();
+          }
+        }
+        return getRange(element);
+      })
       .withHighlightType(JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
       .withDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
@@ -1208,15 +1217,16 @@ public final class JavaErrorKinds {
     error(PsiJavaCodeReferenceElement.class, "expression.qualified.class.expected");
   public static final Simple<PsiTypeElement> EXPRESSION_CLASS_TYPE_PARAMETER = error("expression.class.type.parameter");
   public static final Simple<PsiTypeElement> EXPRESSION_CLASS_PARAMETERIZED_TYPE = error("expression.class.parameterized.type");
-  
+
   public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
     parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
       .withDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> ASSIGNMENT_TO_FINAL_VARIABLE =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "assignment.to.final.variable")
       .withDescription((expr, variable) -> message("assignment.to.final.variable", variable.getName()));
-  public static final Simple<PsiExpression> LVALUE_VARIABLE_EXPECTED = error("lvalue.variable.expected"); 
-  
+  public static final Simple<PsiExpression> LVALUE_VARIABLE_EXPECTED = error("lvalue.variable.expected");
+  public static final Simple<PsiExpression> UNARY_OPERATION_VARIABLE_EXPECTED = error("unary.operation.variable.expected");
+
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
       .withAnchor(token -> TypeConversionUtil.convertEQtoOperation(token.getTokenType()) == null ? token.getParent() : token)
@@ -1420,9 +1430,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
   public static final Simple<PsiDeconstructionPattern> CALL_PARSED_AS_DECONSTRUCTION_PATTERN =
     error("call.parsed.as.deconstruction.pattern");
-  public static final Simple<PsiJavaCodeReferenceElement> CALL_STATIC_INTERFACE_METHOD_QUALIFIER =
-    error(PsiJavaCodeReferenceElement.class, "call.static.interface.method.qualifier")
-      .withRange(JavaErrorFormatUtil::getRange);
+  public static final Simple<PsiElement> CALL_STATIC_INTERFACE_METHOD_QUALIFIER =
+    error(PsiElement.class, "call.static.interface.method.qualifier");
   public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
     parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")
       .withAnchor(call -> requireNonNullElse(call.getArgumentList(), call))

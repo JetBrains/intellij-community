@@ -40,7 +40,8 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     super.setUp();
     myValidatorsManager = new MockFacetValidatorsManager();
     myFacet = createFacet();
-    myFastUtilJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
+    myFastUtilJar = IntelliJProjectConfiguration.getVirtualFile(
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min"));
     myBBJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("byte-buddy");
     myDescription = new FacetLibrariesValidatorDescription(LIB_NAME);
   }

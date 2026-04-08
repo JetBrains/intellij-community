@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions.launch.config.backend
 // @spec community/plugins/agent-workbench/spec/agent-project-launch-config.spec.md
 
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.PathManager

@@ -2,11 +2,11 @@ import org.jetbrains.annotations.NotNull;
 
 class X {
     void test() {
-        Runnable r = getRunnable();
+        Runnable r = createR();
         r.run();
     }
 
-    private static @NotNull Runnable getRunnable() {
+    private static @NotNull Runnable createR() {
         Runnable r = new Runnable() {
             @Override
             public void run() {

@@ -28,7 +28,7 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
     "//fleet/util/core",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//fleet/util/codepoints",
@@ -51,6 +51,7 @@ jvm_library(
   runtime_deps = [
     ":andel",
     "//fleet/util/core:core_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
     "//fleet/util/codepoints:codepoints_test_lib",
     "//fleet/bifurcan:bifurcan_test_lib",
     "//fleet/fastutil:fastutil_test_lib",

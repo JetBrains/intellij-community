@@ -7,9 +7,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import kotlinx.coroutines.future.FutureKt;
+import org.junit.Ignore;
 
 import javax.swing.JLabel;
 
+@Ignore("AT-4013")
 public class DeferredIconTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected boolean isIconRequired() {

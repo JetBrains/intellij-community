@@ -31,7 +31,7 @@ public class EditorModificationUtilEx {
       caretModel.moveToOffset(selectionStart);
     }
     selectionModel.removeSelection();
-    editor.getUiDocument().deleteString(selectionStart, selectionEnd);
+    editor.getElfDocument().deleteString(selectionStart, selectionEnd);
     scrollToCaret(editor);
   }
 
@@ -70,7 +70,7 @@ public class EditorModificationUtilEx {
       s = filler + s;
     }
 
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
@@ -208,11 +208,19 @@ public class EditorModificationUtilEx {
    */
   @ApiStatus.Experimental
   public static int calcAfterLineEnd(@NotNull Editor editor, int caretOffset, @NotNull LogicalPosition logicalPosition, @NotNull VisualPosition visualPosition) {
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     int lineNumber = logicalPosition.line;
     int columnNumber = logicalPosition.column;
     if (lineNumber >= document.getLineCount()) {
       return columnNumber;
+    }
+
+    List<CustomWrap> customWraps = editor.getCustomWrapModel().getWrapsAtOffset(caretOffset);
+    if (!customWraps.isEmpty()) {
+      VisualPosition beforeWrap = editor.offsetToVisualPosition(caretOffset, true, true);
+      if (beforeWrap.line == visualPosition.line) {
+        return visualPosition.column - beforeWrap.column;
+      }
     }
 
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);

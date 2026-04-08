@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.build.events.BuildEventsNls
+import com.intellij.execution.rpc.ProcessHandlerDto
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.components.Service
@@ -13,7 +14,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class BuildViewViewModel(scope: CoroutineScope) : FlowWithHistory<BuildViewEvent>(scope) {
+class BuildViewViewModel(val scope: CoroutineScope) : FlowWithHistory<BuildViewEvent>(scope) {
   companion object {
     fun getInstance(project: Project): BuildViewViewModel = project.service()
   }
@@ -30,11 +31,12 @@ class BuildViewViewModel(scope: CoroutineScope) : FlowWithHistory<BuildViewEvent
     activateToolWindow: Boolean,
     treeViewId: BuildViewId?,
     consoleComponent: ComponentDirectTransferId,
+    processHandler: ProcessHandlerDto?,
   ) {
     updateHistoryAndEmit {
       val viewState = viewStates.computeIfAbsent(view) { ViewState() }
       BuildViewEvent.BuildStarted(view.toDto(), buildId, title, startTime, message, requestFocus, activateToolWindow,
-                                  treeViewId, consoleComponent).also {
+                                  treeViewId, consoleComponent, processHandler).also {
         viewState.buildMap[buildId] = BuildState(it.copy(requestFocus = false, activateToolWindow = false))
       }
     }

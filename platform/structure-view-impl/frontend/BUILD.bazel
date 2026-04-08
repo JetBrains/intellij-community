@@ -19,6 +19,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//platform/lang-api:lang",
@@ -34,6 +35,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/remote-topics/frontend",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -48,6 +50,7 @@ jvm_library(
     "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/lang-api:lang_test_lib",
@@ -63,6 +66,7 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/remote-topics/frontend:frontend_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.frontend` end

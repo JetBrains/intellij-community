@@ -256,9 +256,9 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       }
     }
 
-  override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+  override suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     wrapIntoEelResult {
-      if (removeContent) {
+      if (recursive) {
         Files.walkFileTree(path.asNioPath(), object : SimpleFileVisitor<Path>() {
           override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
             Files.delete(file)

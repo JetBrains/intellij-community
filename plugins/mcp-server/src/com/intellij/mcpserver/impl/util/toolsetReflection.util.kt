@@ -175,13 +175,16 @@ fun KFunction<*>.asTool(json: Json = McpServerJson, thisRef: Any? = null, name: 
 private val unknownCategory = McpToolCategory(shortName = "Unknown", fullyQualifiedName = "Unknown")
 
 fun KFunction<*>.asToolDescriptor(name: String? = null, description: String? = null, category: McpToolCategory? = null, fullyQualifiedName: String? = null, vararg additionalImplicitParameters: KParameter): McpToolDescriptor {
-    val toolName = name ?: this.getPreferredToolAnnotation()?.name?.ifBlank { this.name } ?: this.name
+    val preferredToolAnnotation = this.getPreferredToolAnnotation()
+    val toolName = name ?: preferredToolAnnotation?.name?.ifBlank { this.name } ?: this.name
+    val toolTitle = preferredToolAnnotation?.title?.ifEmpty { null }
     val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description?.trimMargin() ?: this.name
 
   val parametersSchema = this.parametersSchema(*additionalImplicitParameters)
   val returnTypeSchema = this.returnTypeSchema()
   return McpToolDescriptor(
     name = toolName,
+    title = toolTitle,
     description = toolDescription,
     category = category ?: unknownCategory,
     fullyQualifiedName = fullyQualifiedName ?: toolName,

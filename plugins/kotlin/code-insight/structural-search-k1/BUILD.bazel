@@ -33,6 +33,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/util",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -44,9 +45,11 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//platform/lang-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/structuralsearch:structuralSearch",
     "//platform/duplicates-analysis",
     "//java/java-indexing-impl:indexing-impl",
+    "//java/java-psi-api:psi",
   ]
 )
 
@@ -64,6 +67,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//plugins/kotlin/base/util:util_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
@@ -75,9 +79,11 @@ jvm_library(
     "//plugins/kotlin/idea:idea_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/structuralsearch:structuralSearch_test_lib",
     "//platform/duplicates-analysis:duplicates-analysis_test_lib",
     "//java/java-indexing-impl:indexing-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.structural-search.k1` end

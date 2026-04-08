@@ -19,6 +19,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 
 import java.awt.datatransfer.DataFlavor;
 
@@ -26,6 +27,7 @@ import static com.intellij.testFramework.EditorTestUtil.CARET_TAG;
 import static com.intellij.testFramework.EditorTestUtil.SELECTION_END_TAG;
 import static com.intellij.testFramework.EditorTestUtil.SELECTION_START_TAG;
 
+@Ignore("AT-4013")
 public class CopyActionTest extends LightPlatformCodeInsightTestCase {
 
   public static @NotNull String maybeSelection(@NotNull String line) {

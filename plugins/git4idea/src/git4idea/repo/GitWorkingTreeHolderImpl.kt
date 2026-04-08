@@ -3,12 +3,11 @@ package git4idea.repo
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitWorkingTree
 import git4idea.commands.Git
 import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
-import git4idea.workingTrees.GitListWorktreeLineListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -28,10 +27,6 @@ internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) :
     cs.launch { updateState() }
   }
 
-  fun reloadBlocking() {
-    runBlockingCancellable { updateState() }
-  }
-
   suspend fun updateState() {
     updateLock.withLock {
       _state.value = withContext(Dispatchers.IO) {
@@ -44,17 +39,19 @@ internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) :
   private fun readWorkingTreesFromGit(): Collection<GitWorkingTree> {
     LOG.debug { "Reloading working trees for ${repository.root}" }
 
-    val listener = GitListWorktreeLineListener(repository)
-    val commandResult = Git.getInstance().listWorktrees(repository, listener)
-    if (!commandResult.success()) {
-      LOG.info("Failed to list worktrees: $commandResult.errorOutputAsJoinedString")
+    val trees = try {
+      Git.getInstance().listWorktrees(repository)
+    }
+    catch (e: VcsException) {
+      LOG.info("Failed to list worktrees for ${repository.root}", e)
+      return emptyList()
     }
 
     if (LOG.isDebugEnabled) {
-      LOG.debug("Get working trees for ${repository.root}: ${listener.trees}")
+      LOG.debug("Get working trees for ${repository.root}: $trees")
     }
 
-    return listener.trees
+    return trees
   }
 
   companion object {

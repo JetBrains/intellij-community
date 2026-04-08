@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -620,6 +622,37 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new CustomHandler(), getTestRootDisposable());
     showParameterInfo();
     checkHintContents("<html><strike>&lt;ABC&gt;, <b>DEF</b></strike></html>");
+  }
+
+  @NeedsIndex.SmartMode(reason = "Just to test with smart mode")
+  public void testConstructorCallInsideLambda() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, ()->{
+      configureJava(
+        """
+          public class ModuleLauncher {
+              interface Func {
+                  void invoke();
+              }
+          
+              static void foo(Func f) {
+                  f.invoke();
+              }
+          
+              record Test(int x, int y) {
+              }
+          
+              static void main() {
+                  foo(() -> {
+                      new Test(1,<caret>);
+                  });
+              }
+          }""");
+
+      MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+      PsiExpressionList list = handler.findElementForParameterInfo(context);
+      assertEquals("(1,)", list.getText());
+    });
   }
 
   @Override

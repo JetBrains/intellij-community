@@ -99,6 +99,40 @@ class GitConfigTest : GitPlatformTest() {
     assertEquals(listOf("git@github.com::foo/bar.git"), remote.urls)
   }
 
+  fun `test insteadOf resolving when pushInsteadOf is specified`() {
+    createRepository()
+    addRemote("test:group/bar.git")
+    git("""config url.https://github.com/.insteadOf test:""")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+
+    val config = readConfig()
+    val remote = config.parseRemotes().first()
+    assertEquals(listOf("https://github.com/group/bar.git"), remote.urls)
+  }
+
+  // todo: update the test when the URL-resolving logic is updated to resolve this URL's placeholder (see GitConfig.parseRemotes())
+  fun `test pushInsteadOf goes before insteadOf and the placeholder is not resolved`() {
+    createRepository()
+    addRemote("test:group/bar.git")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+    git("""config url.https://github.com/.insteadof test:""")
+
+    val config = readConfig()
+    val remote = config.parseRemotes().first()
+    assertEquals(listOf("test:group/bar.git"), remote.urls)
+  }
+
+  fun `test pushInsteadOf with a placeholder doesn't affect URL-resolving of other placeholders`() {
+    createRepository()
+    addRemote("test:group/bar.git")
+    git("""config url.git@github.com:.pushInsteadOf notTest:""")
+    git("""config url.https://github.com/.insteadof test:""")
+
+    val config = readConfig()
+    val remote = config.parseRemotes().first()
+    assertEquals(listOf("https://github.com/group/bar.git"), remote.urls)
+  }
+
   fun `test config values are case sensitive`() {
     createRepository()
     val url = "git@GITHUB.com:foo/bar.git"

@@ -39,6 +39,7 @@ PKGS = [
     "java.desktop/sun.lwawt",
     "java.desktop/sun.lwawt.macosx",
     "java.desktop/sun.swing",
+    "java.desktop/sun.swing.text",
     "jdk.attach/sun.tools.attach",
     "jdk.compiler/com.sun.tools.javac.api",
     "jdk.internal.jvmstat/sun.jvmstat.monitor",
@@ -69,7 +70,7 @@ TEST_FRAMEWORK_DEPS = [
 
   # Provide test engines to run actual tests
   # Junit 3/4 is also run by junit5 via junit vintage
-  "@lib//:junit5Vintage",
+  "@community//libraries/junit5-vintage",
   "@lib//:junit5Launcher",
 ]
 

@@ -22,6 +22,7 @@ import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSortingModel;
+import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
@@ -30,6 +31,7 @@ import com.intellij.database.datagrid.RowSortOrder;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.datagrid.mutating.CellMutation;
 import com.intellij.database.datagrid.color.GridColorModel;
 import com.intellij.database.datagrid.color.GridColorModelImpl;
 import com.intellij.database.editor.DataGridColors;
@@ -656,9 +658,10 @@ public class TableResultPanel extends UserDataHolderBase
     if (sortingModel == null) return;
 
     boolean reload = updateDataOrdering(false) || sortingModel.isSortingEnabled() != sortViaOrderBy;
+    boolean shouldClearPendingChanges = hasPendingMutations();
     sortingModel.setSortingEnabled(sortViaOrderBy);
     if (reload && isSafeToReload()) {
-      myDataHookUp.getLoader().loadFirstPage(new GridRequestSource(new DataGridRequestPlace(this)));
+      myDataHookUp.getLoader().loadFirstPage(createReloadRequestSource(shouldClearPendingChanges));
     }
   }
 
@@ -881,6 +884,13 @@ public class TableResultPanel extends UserDataHolderBase
   public void editSelectedCell() {
     if (myResultView instanceof ResultViewWithCells) {
       ((ResultViewWithCells)myResultView).editSelectedCell();
+    }
+  }
+
+  @Override
+  public void editSelectedCellWithValue(@Nullable Object value) {
+    if (myResultView instanceof ResultViewWithCells) {
+      ((ResultViewWithCells)myResultView).editSelectedCellWithValue(value);
     }
   }
 
@@ -1535,6 +1545,17 @@ public class TableResultPanel extends UserDataHolderBase
                          boolean allowImmediateUpdate,
                          @Nullable Runnable moveToNextCellRunnable,
                          @NotNull GridRequestSource source) {
+    setValueAt(viewRows, viewColumns, value, allowImmediateUpdate, moveToNextCellRunnable, source, null);
+  }
+
+  @Override
+  public void setValueAt(@NotNull ModelIndexSet<GridRow> viewRows,
+                         @NotNull ModelIndexSet<GridColumn> viewColumns,
+                         @Nullable Object value,
+                         boolean allowImmediateUpdate,
+                         @Nullable Runnable moveToNextCellRunnable,
+                         @NotNull GridRequestSource source,
+                         @Nullable Object metadata) {
     final GridMutator<GridRow, GridColumn> mutator = getDataHookup().getMutator();
 
     int[] validRows = valid(viewRows);
@@ -1542,14 +1563,23 @@ public class TableResultPanel extends UserDataHolderBase
     ModelIndexSet<GridRow> rows = validRows.length > 0 ? ModelIndexSet.forRows(this, validRows) : null;
     ModelIndexSet<GridColumn> columns = validRows.length > 0 ? ModelIndexSet.forColumns(this, validColumns) : null;
 
-    if (mutator == null || rows == null || getDataModel(DATA_WITH_MUTATIONS).allValuesEqualTo(rows, columns, value)) {
+    if (mutator == null || rows == null ||
+        (metadata == null && getDataModel(DATA_WITH_MUTATIONS).allValuesEqualTo(rows, columns, value))) {
       if (moveToNextCellRunnable != null) ApplicationManager.getApplication().invokeLater(moveToNextCellRunnable);
       return;
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (moveToNextCellRunnable != null) source.getActionCallback().doWhenDone(moveToNextCellRunnable);
-      mutator.mutate(source, rows, columns, value, allowImmediateUpdate);
+      List<CellMutation> mutations = GridUtilCore.createMutations(rows, columns, value);
+      if (metadata != null) {
+        // Metadata-aware callers currently edit a single logical cell.
+        // Multi-cell updates would need per-cell metadata instead of reusing one shared instance.
+        for (CellMutation mutation : mutations) {
+          mutation.withMetadata(metadata);
+        }
+      }
+      mutator.mutate(source, mutations, allowImmediateUpdate);
     });
   }
 
@@ -1611,9 +1641,10 @@ public class TableResultPanel extends UserDataHolderBase
 
     sortingModel.setOrdering(newOrdering);
     if (reloadIfUpdated) {
+      boolean shouldClearPendingChanges = hasPendingMutations();
       alarm.cancelAllRequests();
       alarm.addRequest(() -> {
-        myDataHookUp.getLoader().loadFirstPage(new GridRequestSource(new DataGridRequestPlace(this)));
+        myDataHookUp.getLoader().loadFirstPage(createReloadRequestSource(shouldClearPendingChanges));
       }, 300); // wait for double click
     }
     return true;
@@ -1754,8 +1785,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public boolean isSafeToReload() {
-    GridMutator<GridRow, GridColumn> mutator = myDataHookUp.getMutator();
-    return mutator == null || !mutator.hasPendingChanges() || showIgnoreUnsubmittedChangesYesNoDialog(this);
+    return !hasPendingMutations() || showIgnoreUnsubmittedChangesYesNoDialog(this);
   }
 
   @Override
@@ -1777,6 +1807,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void resetView() {
+    boolean shouldClearPendingChanges = hasPendingMutations();
     if (isSortViaOrderBy() && !isSafeToReload()) {
       return;
     }
@@ -1793,8 +1824,19 @@ public class TableResultPanel extends UserDataHolderBase
     getSelectionModel().restore(selection);
 
     if (isSortViaOrderBy()) {
-      myDataHookUp.getLoader().reloadCurrentPage(new GridRequestSource(new DataGridRequestPlace(this)));
+      myDataHookUp.getLoader().reloadCurrentPage(createReloadRequestSource(shouldClearPendingChanges));
     }
+  }
+
+  private boolean hasPendingMutations() {
+    GridMutator<GridRow, GridColumn> mutator = myDataHookUp.getMutator();
+    return mutator != null && mutator.hasPendingChanges();
+  }
+
+  private @NotNull GridRequestSource createReloadRequestSource(boolean clearPendingChanges) {
+    GridRequestSource source = GridRequestSource.create(new DataGridRequestPlace(this));
+    source.setMutatedDataLocally(clearPendingChanges);
+    return source;
   }
 
   @Override

@@ -15,3 +15,10 @@ com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,kotlin.jvm.functions.Function0,Z):java.util.concurrent.CompletableFuture
 - logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
 - a:rollOver():V
+com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider
+- sf:Companion:com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:init(com.intellij.openapi.project.Project):V
+- a:subscribe(java.lang.String,kotlin.jvm.functions.Function1):V
+- a:unsubscribe(java.lang.String):V
+f:com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider$Companion

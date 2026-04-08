@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -11,6 +11,10 @@ public class OpenFileHyperlinkInfo extends FileHyperlinkInfoBase implements File
 
   private final VirtualFile myFile;
 
+  /**
+   * Adapts descriptor coordinates into hyperlink navigation.
+   * Exact offsets and descriptor-specific editor hints are not preserved.
+   */
   public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {
     this(descriptor.getProject(), descriptor.getFile(), descriptor.getLine(), descriptor.getColumn());
   }
@@ -20,7 +24,11 @@ public class OpenFileHyperlinkInfo extends FileHyperlinkInfoBase implements File
     myFile = file;
   }
 
-  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file, int documentLine, int documentColumn, boolean isUseBrowser) {
+  public OpenFileHyperlinkInfo(@NotNull Project project,
+                               @NotNull VirtualFile file,
+                               int documentLine,
+                               int documentColumn,
+                               boolean isUseBrowser) {
     super(project, documentLine, documentColumn, isUseBrowser);
     myFile = file;
   }

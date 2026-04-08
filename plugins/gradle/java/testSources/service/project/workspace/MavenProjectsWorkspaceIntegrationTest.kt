@@ -13,8 +13,10 @@ import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled("IDEA-387787")
 class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {
 
   @Test

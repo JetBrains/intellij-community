@@ -20,6 +20,12 @@ public class ArgumentPostfixTemplate extends JavaEditablePostfixTemplate impleme
           LanguageLevel.JDK_1_3, false, provider);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   public boolean isBuiltin() {
     return true;

@@ -14,6 +14,7 @@ sealed interface WalkDirectoryEntry {
     interface Directory : Type
     interface Regular : Type {
       val hash: Long?
+      val size: Long?
     }
 
     interface Other : Type

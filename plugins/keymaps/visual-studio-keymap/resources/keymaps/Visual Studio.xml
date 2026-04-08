@@ -82,9 +82,11 @@
   </action>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/><!--VS Edit.FindNext-->
-    <keyboard-shortcut first-keystroke="control shift DOWN"/><!--VS Edit.NextHighlightedReference-->
     <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--ReSharper_ResultListGoToNextLocation-->
     <keyboard-shortcut first-keystroke="alt shift SLASH"/><!--VS Edit.MoveLastCaretDown-->
+  </action>
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="control shift DOWN"/><!--VS Edit.NextHighlightedReference-->
   </action>
   <action id="Print">
     <keyboard-shortcut first-keystroke="control P"/>
@@ -98,8 +100,10 @@
   </action>
   <action id="FindPrevious">
     <keyboard-shortcut first-keystroke="shift F3"/><!--VS Edit.FindPrevious-->
-    <keyboard-shortcut first-keystroke="control shift UP"/><!--VS Edit.PreviousHighlightedReference-->
     <keyboard-shortcut first-keystroke="control alt PAGE_UP"/><!--ReSharper_ResultListGoToPrevLocation-->
+  </action>
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="control shift UP"/><!--VS Edit.PreviousHighlightedReference-->
   </action>
   <action id="CompileDirty">
     <keyboard-shortcut first-keystroke="F7"/>

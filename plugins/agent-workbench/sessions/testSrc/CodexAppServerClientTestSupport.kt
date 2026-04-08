@@ -146,6 +146,22 @@ internal fun createRealPromptSuggestionHarness(
   responsePlans: List<MockResponsesPlan>,
   notificationRouting: CodexAppServerNotificationRouting = CodexAppServerNotificationRouting.PARSED_ONLY,
 ): RealCodexPromptSuggestionHarness {
+  return createRealMockResponsesHarness(
+    scope = scope,
+    tempDir = tempDir,
+    responsePlans = responsePlans,
+    notificationRouting = notificationRouting,
+    requestValidator = ::validateStrictStructuredOutputRequest,
+  )
+}
+
+internal fun createRealMockResponsesHarness(
+  scope: CoroutineScope,
+  tempDir: Path,
+  responsePlans: List<MockResponsesPlan>,
+  notificationRouting: CodexAppServerNotificationRouting = CodexAppServerNotificationRouting.PARSED_ONLY,
+  requestValidator: ((String) -> String?)? = null,
+): RealCodexPromptSuggestionHarness {
   val codexBinary = resolveCodexBinary()
   assumeTrue(codexBinary != null, "Codex CLI not found. Set CODEX_BIN or ensure codex is on PATH.")
 
@@ -153,7 +169,7 @@ internal fun createRealPromptSuggestionHarness(
   Files.createDirectories(projectDir)
   val responsesServer = MockResponsesServer(
     responsePlans = responsePlans,
-    requestValidator = ::validateStrictStructuredOutputRequest,
+    requestValidator = requestValidator,
   )
   val codexHome = tempDir.resolve("codex-home")
   Files.createDirectories(codexHome)

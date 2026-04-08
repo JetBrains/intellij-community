@@ -19,8 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
@@ -31,6 +29,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -178,8 +177,10 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
 
   private void assertTodoCountInIndexStorage(int count) {
     try {
-      Map<TodoIndexEntry, Integer> map =
-        ContainerUtil.getFirstItem(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(TodoIndex.NAME)
+      ID<Integer, Map<?, Integer>> todoIndex = ID.findByName("TodoIndex");
+      assertNotNull("TodoIndex is not registered", todoIndex);
+      Map<?, Integer> map =
+        ContainerUtil.getFirstItem(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(todoIndex)
                                      .getIndexedFileData(FileBasedIndex.getFileId(getVFile())).values());
       int result = map == null ? 0 : map.values().stream().mapToInt(o -> o).sum();
       assertEquals(count, result);

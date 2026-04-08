@@ -1346,8 +1346,6 @@ open class FileEditorManagerImpl(
     }
   }
 
-  protected open suspend fun canOpenFileAsync(file: VirtualFile, providers: List<FileEditorProvider>): Boolean = !providers.isEmpty()
-
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
     return clientManager.openFile(file = file, options)

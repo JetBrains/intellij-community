@@ -4,6 +4,7 @@ package com.intellij.platform.util.coroutines.flow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -22,6 +23,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -69,6 +71,67 @@ fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> {
     finally {
       latchJob.cancel()
       latch.close()
+    }
+  }
+}
+
+/**
+ * Returns a cold flow that emits the latest value of [this] flow after a fixed [delay] since the first event in each burst.
+ *
+ * The delay is event-triggered: no timer runs during idle periods.
+ * When the first event arrives, a delay starts. All events during the delay are
+ * conflated (only the latest is kept). When the delay expires, the latest value is emitted.
+ *
+ * Unlike [throttle], the first value is **not** emitted immediately — a full delay always elapses first.
+ * Unlike [sample][kotlinx.coroutines.flow.sample], the window starts on the first event, not on a fixed clock.
+ *
+ * Example:
+ * ```kotlin
+ * flow {
+ *   delay(40)
+ *   emit(1)
+ *   delay(40)
+ *   emit(2)
+ *   delay(40)
+ *   emit(3) // emitted as the latest value after the window from the first emission
+ *   delay(40)
+ *   emit(4) // last value is emitted after the given window
+ * }.throttleLatest(100.milliseconds)
+ * ```
+ * produces the following emissions
+ * ```text
+ * 3, 4
+ * ```
+ */
+@ApiStatus.Experimental
+fun <T> Flow<T>.throttleLatest(delay: Duration): Flow<T> {
+  if (delay <= Duration.ZERO) {
+    return this
+  }
+  return channelFlow {
+    val events = Channel<T>(Channel.CONFLATED)
+    launch {
+      try {
+        this@throttleLatest.collect { events.send(it) }
+      }
+      finally {
+        events.close()
+      }
+    }
+    for (first in events) {
+      var latest = first
+      withTimeoutOrNull(delay) {
+        while (true) {
+          val result = events.receiveCatching()
+          if (result.isClosed) {
+            awaitCancellation()
+          }
+          else {
+            latest = result.getOrThrow()
+          }
+        }
+      }
+      send(latest)
     }
   }
 }

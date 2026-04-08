@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
@@ -93,7 +93,7 @@ class ModuleStructureValidator(
       if (ignoreModules.contains(moduleName)) {
         continue
       }
-      validateModuleDependencies(visitedModules, context.findRequiredModule(moduleName))
+      validateModuleDependencies(visitedModules, context.outputProvider.findRequiredModule(moduleName))
     }
 
     messages.info("Validating xml descriptors...")
@@ -160,7 +160,7 @@ class ModuleStructureValidator(
     val roots = ArrayList<Path>()
     val libraries = HashSet<JpsLibrary>()
     for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
-      val module = context.findRequiredModule(moduleName)
+      val module = context.outputProvider.findRequiredModule(moduleName)
       for (root in module.sourceRoots) {
         roots.add(root.path)
       }
@@ -203,7 +203,6 @@ class ModuleStructureValidator(
         metadataBuilder = { sb ->
           sb.append("  <id>com.intellij</id>\n")
         },
-        isUltimateBuild = context.productProperties.platformPrefix != "Idea",
       )
 
       // Parse generated XML and validate it
@@ -285,7 +284,7 @@ class ModuleStructureValidator(
     val classes = HashSet<String>(predefinedTypes)
     val visitedLibraries = HashSet<String>()
     for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
-      val jpsModule = context.findRequiredModule(moduleName)
+      val jpsModule = context.outputProvider.findRequiredModule(moduleName)
 
       if (jpsModule.sourceRoots.isEmpty()) {
         // no source roots -> no classes

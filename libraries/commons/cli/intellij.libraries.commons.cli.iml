@@ -7,6 +7,26 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="commons-cli" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="commons-cli" type="repository">
+        <properties maven-id="commons-cli:commons-cli:1.11.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.11.0/commons-cli-1.11.0.jar">
+              <sha256sum>8f7f8605d68e15bf32db61ec94eac6fdafc51b1bdbe1e0e0802b57d23f387792</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <ANNOTATIONS>
+          <root url="file://$MODULE_DIR$/../../../lib/annotations/commons-cli" />
+        </ANNOTATIONS>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.11.0/commons-cli-1.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.11.0/commons-cli-1.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

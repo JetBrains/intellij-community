@@ -905,7 +905,6 @@ f:com.intellij.openapi.util.io.FileAttributes
 - isSymLink():Z
 - isWritable():Z
 - withCaseSensitivity(com.intellij.openapi.util.io.FileAttributes$CaseSensitivity):com.intellij.openapi.util.io.FileAttributes
-- withTimeStamp(J):com.intellij.openapi.util.io.FileAttributes
 e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 - java.lang.Enum
 - sf:INSENSITIVE:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity

@@ -2,11 +2,15 @@
   <dependencies>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.codeInsight.intentions"/>
-    <module name="kotlin.code-insight.inspections.shared"/>
-    <module name="intellij.kotlin.searching"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.kotlin.refactorings"/>
-    <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.searching"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <projectService
@@ -768,6 +772,15 @@
                      language="kotlin"
                      key="inspection.map.get.with.not.null.assertion.operator.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.DoubleBangInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.double.bang.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PublicApiImplicitTypeInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
@@ -1324,6 +1337,32 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.kotlin.convert.to.explicit.backing.fields.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedClassToSealedInterfaceInspection"
+            shortName="ConvertSealedClassToSealedInterface"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.convert.sealed.class.to.interface.display.name"
+            />
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedInterfaceToSealedClassInspection"
+            shortName="ConvertSealedInterfaceToSealedClass"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            bundle="messages.KotlinBundle"
+            key="inspection.convert.sealed.interface.to.class.display.name"
+    />
 
     </extensions>
 </idea-plugin>

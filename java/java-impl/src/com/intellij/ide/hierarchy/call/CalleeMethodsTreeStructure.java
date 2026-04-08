@@ -12,6 +12,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightDefaultConstructor;
@@ -55,14 +56,14 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    List<PsiMethod> methods = new ArrayList<>();
+    List<MethodWithReference> methods = new ArrayList<>();
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       collectCallees(body, methods);
     }
     if (method.isConstructor() && JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method) == null) {
       PsiMethod superConstructor = findNoArgSuperConstructor(method);
-      if (superConstructor != null) methods.add(superConstructor);
+      if (superConstructor != null) methods.add(new MethodWithReference(superConstructor, null));
     }
 
     Map<PsiMethod, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
@@ -70,8 +71,12 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
     // also add overriding methods as children
     SearchScope scope = getSearchScope(myScopeType, base);
-    Iterable<PsiMethod> allMethods = ContainerUtil.concat(methods, OverridingMethodsSearch.search(method, scope, true).findAll());
-    for (PsiMethod callee : allMethods) {
+    Iterable<MethodWithReference> allMethods = ContainerUtil.concat(
+      methods,
+      ContainerUtil.map(OverridingMethodsSearch.search(method, scope, true).findAll(), m -> new MethodWithReference(m, null))
+    );
+    for (MethodWithReference entry : allMethods) {
+      PsiMethod callee = entry.method;
       if (!isInScope(base, callee, myScopeType) || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
         continue;
       }
@@ -84,6 +89,9 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
       }
       else {
         d.incrementUsageCount();
+      }
+      if (entry.reference != null) {
+        d.addReference(entry.reference);
       }
     }
 
@@ -109,25 +117,32 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     return null;
   }
 
-  private static void collectCallees(@NotNull PsiElement element, @NotNull List<? super PsiMethod> methods) {
+  private static void collectCallees(@NotNull PsiElement element, @NotNull List<MethodWithReference> methods) {
     for (PsiElement child : element.getChildren()) {
       collectCallees(child, methods);
       if (child instanceof PsiMethodCallExpression callExpression) {
         PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
         PsiMethod method = (PsiMethod)methodExpression.resolve();
         if (method != null) {
-          methods.add(method);
+          methods.add(new MethodWithReference(method, methodExpression));
         }
       }
       else if (child instanceof PsiNewExpression newExpression) {
         PsiMethod method = newExpression.resolveConstructor();
         if (method != null) {
-          methods.add(method);
+          methods.add(new MethodWithReference(method, newExpression.getClassOrAnonymousClassReference()));
         }
       }
       else if (child instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
-        methods.add(method);
+        methods.add(new MethodWithReference(method, methodRef));
       }
     }
   }
+
+  /**
+   *
+   * @param method resolved method that was called within the caller method
+   * @param reference reference that was used to call the method
+   */
+  private record MethodWithReference(@NotNull PsiMethod method, @Nullable PsiReference reference) {}
 }

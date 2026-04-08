@@ -1,8 +1,8 @@
 package com.intellij.mcpserver.clients
 
-import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
 import com.intellij.mcpserver.clients.impl.CodexClient
 import com.intellij.mcpserver.clients.impl.CursorClient
+import com.intellij.mcpserver.clients.impl.JunieClient
 import com.intellij.mcpserver.clients.impl.TestMcpServerConnectionAddressProvider
 import com.intellij.mcpserver.clients.impl.TestMcpServerService
 import com.intellij.mcpserver.clients.impl.VSCodeClient
@@ -143,6 +143,25 @@ class McpClientAutoConfigureTest {
     assertTrue(result.contains("[mcp_servers.codextest]"))
     assertTrue(result.contains("url ="))
     assertTrue(result.contains("/stream"))
+  }
+
+  @Test
+  fun `Junie autoConfigure with HTTP Stream succeeds`() {
+    val configPath = tempDir.resolve("config.json")
+    configPath.writeText("""{"mcpServers": {}}""")
+
+    McpClient.overrideProductSpecificServerKeyForTests("test")
+
+    val client = JunieClient(McpClientInfo.Scope.GLOBAL, configPath)
+    runBlocking(Dispatchers.Default) {
+      client.autoConfigure()
+    }
+
+    val servers = readServers(client, configPath)
+    val config = servers["test"]
+    requireNotNull(config)
+    assertEquals("http://localhost:7777/stream", config.url!!)
+    assertEquals("http", config.type!!)
   }
 
   @OptIn(ExperimentalSerializationApi::class)

@@ -961,6 +961,216 @@ public class PyIntentionTest extends PyTestCase {
     doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias.to.name", "MyClass"));
   }
 
+  // PY-47325
+  public void testAddKeywordArgumentNamesBasic() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesCaretOnFirst() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesCaretOnLast() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesWithExistingKeyword() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesConstructor() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesMethod() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesAfterSlash() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesStarArgsNotUsed() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesSingleArg() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesAlreadyKeyword() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesPositionalOnly() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesStarArgsReceives() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesUnpackingBefore() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesUnpackingAtCaret() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesUnpackingAfterCaret() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesUnresolved() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesPositionalOnlyAtCaret() {
+    doNegativeTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+  
+  // PY-47325
+  public void testAddKeywordArgumentNamesImported() {
+    doMultiFileTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testAddKeywordArgumentDataclass() {
+    doTest(PyPsiBundle.message("INTN.add.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesBasic() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesCaretOnFirst() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesCaretOnLast() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesWithPrecedingPositional() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesSingleArg() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesReorderArgs() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesConstructor() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesMethod() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesAfterSlash() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesVarargInDefinition() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesImported() {
+    doMultiFileTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesAlreadyPositional() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesKeywordOnly() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesKeywordOnlyAfterArgs() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesKwargsReceives() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesMissingPrecedingArg() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesMissingPrecedingDefault() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesKeywordUnpacking() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesUnresolved() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesStarArgsBefore() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentNamesIncompleteMapping() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentDataclass() {
+    doTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
+  // PY-47325
+  public void testRemoveKeywordArgumentDataclassKwOnly() {
+    doNegativeTest(PyPsiBundle.message("INTN.remove.keyword.argument.names"));
+  }
+
   private void doDocStubTest(@NotNull DocStringFormat format) {
     runWithDocStringFormat(format, () -> {
       CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;

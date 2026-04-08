@@ -48,7 +48,9 @@ public abstract class AbstractBasicJavaHighlightingLexer extends LayeredLexer {
         JavaDocTokenType.DOC_SHARP,
         JavaDocTokenType.DOC_DOUBLE_SHARP,
         JavaDocTokenType.DOC_COMMA,
-        JavaDocTokenType.DOC_TAG_VALUE_SLASH
+        JavaDocTokenType.DOC_TAG_VALUE_SLASH,
+        JavaDocTokenType.DOC_GT,
+        JavaDocTokenType.DOC_LT
       )
     ));
 

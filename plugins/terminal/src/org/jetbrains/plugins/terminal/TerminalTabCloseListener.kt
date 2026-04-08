@@ -32,7 +32,7 @@ abstract class TerminalTabCloseListener(
 
     val startTime = TimeSource.Monotonic.markNow()
     try {
-      if (!hasChildProcesses(content)) {
+      if (!shouldConfirmClosing(content)) {
         return true
       }
     }
@@ -51,7 +51,7 @@ abstract class TerminalTabCloseListener(
     return result != null
   }
 
-  abstract fun hasChildProcesses(content: Content): Boolean
+  abstract fun shouldConfirmClosing(content: Content): Boolean
 
   override fun canClose(project: Project): Boolean {
     return project === this.project && closeQuery(this.content, true)

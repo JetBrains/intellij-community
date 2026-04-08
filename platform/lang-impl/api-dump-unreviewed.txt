@@ -10224,7 +10224,6 @@ c:com.intellij.ide.util.PsiNavigationSupportImpl
 - createNavigatable(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.pom.Navigatable
 - getDescriptor(com.intellij.psi.PsiElement):com.intellij.pom.Navigatable
 - navigateToDirectory(com.intellij.psi.PsiDirectory,Z):V
-- openDirectoryInSystemFileManager(java.io.File):V
 f:com.intellij.ide.util.TreeFileChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeFileChooser

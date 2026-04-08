@@ -32,7 +32,7 @@ class McpToolFilterIntegrationTest {
 
   private val tool1 = "list_directory_tree"
   private val tool2 = "open_file_in_editor"
-  private val tool3 = "get_file_text_by_path"
+  private val tool3 = "read_file"
 
   @Test
   fun `server exposes all tools with AllowAll filter`() = runBlocking(Dispatchers.Default) {
@@ -119,7 +119,7 @@ class McpToolFilterIntegrationTest {
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
-      // Only read_file should be available
+      // Only list_directory_tree should be available
       assertThat(tools).hasSize(1)
       assertThat(tools.first().name).isEqualTo(tool1)
 

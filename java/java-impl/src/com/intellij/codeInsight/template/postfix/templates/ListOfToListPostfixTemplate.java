@@ -24,4 +24,9 @@ public class ListOfToListPostfixTemplate extends JavaEditablePostfixTemplate imp
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

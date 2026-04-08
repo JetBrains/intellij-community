@@ -7,17 +7,20 @@ from django.db.models import Func, Transform
 from django.db.models.expressions import Combinable
 from django.db.models.fields import Field
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
+from typing_extensions import override
 
 class TimezoneMixin:
     tzinfo: Any
     def get_tzname(self) -> str | None: ...
 
 class Extract(TimezoneMixin, Transform):
-    lookup_name: str
+    lookup_name: str | None  # type: ignore[assignment]
     output_field: ClassVar[models.IntegerField]
     def __init__(
         self, expression: Combinable | str, lookup_name: str | None = None, tzinfo: Any | None = None, **extra: Any
     ) -> None: ...
+    @override
+    def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
 class ExtractYear(Extract): ...
 class ExtractIsoYear(Extract): ...
@@ -33,11 +36,14 @@ class ExtractSecond(Extract): ...
 
 class Now(Func):
     output_field: ClassVar[models.DateTimeField]
-
+    def as_postgresql(
+        self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
+    ) -> _AsSqlType: ...
+    def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class TruncBase(TimezoneMixin, Transform):
-    kind: str
+    kind: str | None
     tzinfo: Any
 
     def __init__(
@@ -47,6 +53,7 @@ class TruncBase(TimezoneMixin, Transform):
         tzinfo: tzinfo | None = None,
         **extra: Any,
     ) -> None: ...
+    @override
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
 class Trunc(TruncBase):

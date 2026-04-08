@@ -29,6 +29,6 @@ class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
   }
 
   override fun loadState(state: MinimapSettingsState) {
-    this.state = state.copy()
+    this.state = state.copy(width = MinimapSettingsState.FIXED_WIDTH)
   }
 }

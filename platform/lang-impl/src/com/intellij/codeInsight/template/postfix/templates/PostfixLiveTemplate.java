@@ -40,6 +40,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return keys;
   }
 
-  private static @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull PostfixTemplateProvider provider,
+  @ApiStatus.Experimental
+  public static @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull PostfixTemplateProvider provider,
                                                                                     @NotNull CharSequence documentContent,
                                                                                     int currentOffset) {
     int startOffset = currentOffset;
@@ -400,7 +402,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return PsiUtilCore.getLanguageAtOffset(callback.getFile(), callback.getOffset());
   }
 
-  private static int positiveOffset(int offset) {
+  public static int positiveOffset(int offset) {
     return offset > 0 ? offset - 1 : offset;
   }
 }

@@ -62,12 +62,16 @@ public class GridStorageAndModelUpdater implements GridModelUpdater {
     int rowsUpdated = 0;
     for (int i = firstRowIndex; i < myMutationModel.getRowCount() && rowsUpdated < rows.size(); i++, rowsUpdated++) {
       ModelIndex<GridRow> rowIdx = ModelIndex.forRow(myModel, i);
-      GridRow oldRow = myMutationModel.getRow(rowIdx);
+      GridRow currentRow = myMutationModel.getRow(rowIdx);
+      GridRow baseRow = myModel.getRow(rowIdx);
       GridRow newRow = rows.get(rowsUpdated);
 
       // This condition has been moved here because, in general, a GridRow may serve as a wrapper for data stored in the grid model.
       // In this scenario, performing an equality check after calling model.set(i, row) would not make much sense.
-      boolean areRowsEqual = rowsEqual(Objects.requireNonNull(oldRow), newRow);
+      // Compare against the underlying model row so unchanged refreshes do not discard pending local mutations.
+      // Requests marked as clearing local changes still drop row-local state even when the incoming row is equal.
+      boolean areRowsEqual = rowsEqual(Objects.requireNonNull(baseRow != null ? baseRow : currentRow), newRow);
+      boolean shouldPreserveRowState = areRowsEqual && !source.isMutatedDataLocally();
 
       if (myStorage != null && myStorage.isInsertedRow(rowIdx)) {
         myModel.addRow(newRow);
@@ -76,6 +80,8 @@ public class GridStorageAndModelUpdater implements GridModelUpdater {
         myModel.set(i, newRow);
       }
 
+      // Keep update notifications tied to actual row data changes. Whether row-local mutation state should be
+      // preserved is a separate concern handled by storage clearing below.
       if (areRowsEqual) {
         if (firstChangedRowIndex != -1) {
           ModelIndexSet<GridRow> updatedRows = ModelIndexSet.forRows(myMutationModel, range(firstChangedRowIndex, i - firstChangedRowIndex));
@@ -89,7 +95,7 @@ public class GridStorageAndModelUpdater implements GridModelUpdater {
         firstChangedRowIndex = i;
       }
 
-      if (myStorage != null) myStorage.clearRow(rowIdx);
+      if (myStorage != null && !shouldPreserveRowState) myStorage.clearRow(rowIdx);
     }
 
     if (firstChangedRowIndex != -1) {

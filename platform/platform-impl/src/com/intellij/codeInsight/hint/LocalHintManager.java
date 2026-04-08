@@ -455,7 +455,7 @@ public final class LocalHintManager implements ClientHintManager {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);
-        myLastEditor.getUiDocument().removeDocumentListener(myEditorDocumentListener);
+        myLastEditor.getElfDocument().removeDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().removeCaretListener(myCaretMoveListener);
         myLastEditor.getSelectionModel().removeSelectionListener(mySelectionListener);
@@ -464,7 +464,7 @@ public final class LocalHintManager implements ClientHintManager {
       myLastEditor = editor;
       if (myLastEditor != null) {
         myLastEditor.addEditorMouseListener(myEditorMouseListener);
-        myLastEditor.getUiDocument().addDocumentListener(myEditorDocumentListener);
+        myLastEditor.getElfDocument().addDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().addCaretListener(myCaretMoveListener);
         myLastEditor.getSelectionModel().addSelectionListener(mySelectionListener);

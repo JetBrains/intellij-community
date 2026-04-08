@@ -21,6 +21,8 @@ jvm_library(
     "//jps/jps-builders:build",
     "//java/java-runtime:rt",
     "//platform/util/jdom",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
   ]
 )
 
@@ -38,6 +40,8 @@ jvm_library(
     "//jps/jps-builders:build_test_lib",
     "//java/java-runtime:rt_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ant.jps` end
@@ -78,6 +82,8 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":jps-tests"]

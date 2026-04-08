@@ -38,12 +38,14 @@ jvm_library(
     "//platform/platform-frontend:frontend",
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/execution-impl/frontend",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/xdebugger-impl/ui",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/core-impl",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -77,12 +79,14 @@ jvm_library(
     "//platform/platform-frontend:frontend_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/execution-impl/frontend:frontend_test_lib",
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/rpc:rpc_test_lib",
     "//platform/xdebugger-impl/ui:ui_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` end
@@ -168,6 +172,8 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/core-impl",
     "//platform/core-impl:core-impl_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":debugger-impl-frontend-tests",

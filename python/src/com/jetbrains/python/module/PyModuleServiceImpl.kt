@@ -1,30 +1,27 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module
 
+//import com.intellij.platform.eel.provider.LocalEelMachine
+//import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.facet.FacetManager
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.facet.PythonFacetSettings
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-internal class PyModuleServiceImpl(val project: Project) : PyModuleService {
-  // Lazy to avoid calling JpsProjectLoadingManager.jpsProjectLoaded during service construction.
-  // jpsProjectLoaded acquires a @Synchronized lock on JpsProjectLoadingManagerImpl, which may
-  // already be held by a worker thread running JpsProjectLoadedListenerImpl.loaded() (triggered
-  // by ModuleBridgeLoaderService after modules finish loading). If the service is instantiated
-  // on EDT, EDT blocks on that lock.
-  private val isJpsProjectLoaded by lazy {
-    CompletableDeferred<Unit>().also {
-      JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { it.complete(Unit) }
+internal class PyModuleServiceImpl(val project: Project, coroutineScope: CoroutineScope) : PyModuleService {
+  private val isJpsProjectLoaded = CompletableDeferred<Unit>().also { deferred ->
+    coroutineScope.launch {
+      //GlobalWorkspaceModel.getInstance(LocalEelMachine).awaitSynchronizationWithJpsModel()
+      deferred.complete(Unit)
     }
   }
 

@@ -66,7 +66,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -127,6 +126,7 @@ import java.util.function.Supplier;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
+import static com.intellij.openapi.application.impl.AppImplKt.computableFunction;
 import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
 import static com.intellij.openapi.application.impl.AppImplKt.runnableUnitFunction;
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
@@ -1173,7 +1173,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
     incrementBackgroundWriteActionCounter();
     try {
-      return getThreadingSupport().runWriteActionBlocking(computation::compute);
+      return getThreadingSupport().runWriteActionBlocking(computableFunction(computation));
     }
     finally {
       decrementBackgroundWriteActionCounter();
@@ -1500,8 +1500,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, @NlsSafe String advice) {
-    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnableUnitFunction(runnable), advice);
+  public <T> T withLocksProhibited(@NotNull String advice, @NotNull Supplier<T> action) {
+    return getThreadingSupport().withLocksProhibited(advice, () -> action.get());
   }
 
   @Override

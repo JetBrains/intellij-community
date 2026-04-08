@@ -213,6 +213,51 @@ class SegmentedButtonTest {
   }
 
   @Test
+  fun testBindMutablePropertyAfterComponentSwitch() {
+    var property = "a"
+    lateinit var segmentedButton: SegmentedButton<String>
+    val panel = panel {
+      row {
+        segmentedButton = segmentedButton(listOf("a", "b", "c")) { text = it }
+          .bind(MutableProperty({ property }, { property = it }).toNullableProperty())
+          .apply { maxButtonsCount(3) }
+      }
+    }
+
+    assertThat(findSegmentedButtons(panel)).isNotEmpty()
+    assertThat(UIUtil.findComponentOfType(panel, JComboBox::class.java)).isNull()
+    assertThat(segmentedButton.selectedItem).isEqualTo("a")
+
+    // switch to comboBox mode
+    segmentedButton.items = listOf("a", "b", "c", "d")
+    assertThat(UIUtil.findComponentOfType(panel, JComboBox::class.java)).isNotNull()
+    assertThat(findSegmentedButtons(panel)).isEmpty()
+
+    assertThat(segmentedButton.selectedItem).isEqualTo("a")
+
+    segmentedButton.selectedItem = "b"
+    assertThat(panel.isModified()).isTrue()
+    panel.apply()
+    assertThat(property).isEqualTo("b")
+    assertThat(panel.isModified()).isFalse()
+
+    property = "c"
+    panel.reset()
+    assertThat(segmentedButton.selectedItem).isEqualTo("c")
+
+    // back to buttons mode
+    segmentedButton.items = listOf("a", "b", "c")
+    assertThat(findSegmentedButtons(panel)).isNotEmpty()
+    assertThat(UIUtil.findComponentOfType(panel, JComboBox::class.java)).isNull()
+    assertThat(segmentedButton.selectedItem).isEqualTo("c")
+
+    segmentedButton.selectedItem = "a"
+    assertThat(panel.isModified()).isTrue()
+    panel.apply()
+    assertThat(property).isEqualTo("a")
+  }
+
+  @Test
   fun testIdea345782() {
     fun item(i: Int) = "Item".repeat(6) + i
 

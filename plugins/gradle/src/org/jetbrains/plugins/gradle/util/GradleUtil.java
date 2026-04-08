@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -121,6 +121,11 @@ public final class GradleUtil {
     Properties wrapperProperties = new Properties();
     setFromWrapperConfiguration(wrapperConfiguration, wrapperProperties);
     return writeWrapperConfigurationToByteArray(wrapperProperties);
+  }
+
+  public static @NotNull String writeWrapperConfigurationToString(@NotNull WrapperConfiguration wrapperConfiguration) {
+    byte[] wrapperConfigurationByteArray = writeWrapperConfigurationToByteArray(wrapperConfiguration);
+    return new String(wrapperConfigurationByteArray, StandardCharsets.ISO_8859_1);
   }
 
   public static @Nullable WrapperConfiguration readWrapperConfiguration(@NotNull Path wrapperPropertiesFile) {

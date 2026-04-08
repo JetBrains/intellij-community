@@ -106,7 +106,7 @@ public final class ProductModulesSerialization {
                                          @NotNull Set<RuntimeModuleId> withoutModules) throws IOException, XMLStreamException {
     for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
       RuntimeModuleId includedId = includedFromData.getFromModule();
-      InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getStringId() + "/product-modules.xml");
+      InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getName() + "/product-modules.xml");
       if (inputStream == null) {
         throw new MalformedRepositoryException("'" + includedId.getPresentableName() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");
@@ -114,6 +114,11 @@ public final class ProductModulesSerialization {
       RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
       var withoutIncluding = new HashSet<>(withoutModules);
       withoutIncluding.addAll(includedFromData.getWithoutModules());
+      for (RuntimeModuleId module : includedFromData.getWithoutModules()) {
+        if (module.getNamespace().equals(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE)) {
+          withoutIncluding.add(RuntimeModuleId.contentModule(module.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));
+        }
+      }
       mergeIncludedFiles(includedModules, debugName, resolver, mainGroupModules, bundledPluginMainModules, withoutIncluding);
       for (RawIncludedRuntimeModule mainGroupModule : includedModules.getMainGroupModules()) {
         if (!withoutIncluding.contains(mainGroupModule.getModuleId())) {

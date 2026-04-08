@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":fastutil_resources"],
-  exports = ["@lib//:fastutil-min"],
-  runtime_deps = ["@lib//:fastutil-min"]
+  exports = ["@lib//:libraries-fastutil-fastutil-min"],
+  runtime_deps = ["@lib//:libraries-fastutil-fastutil-min"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:fastutil-min"],
+  exports = ["@lib//:libraries-fastutil-fastutil-min"],
   runtime_deps = [":fastutil"]
 )
 ### auto-generated section `build intellij.libraries.fastutil` end

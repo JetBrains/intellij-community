@@ -9,13 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JList;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -35,16 +31,7 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
                                      Consumer<? super ActionListener> listenerConsumer) {
     myDefaultMethodSupplier = () -> ShortenCommandLine.getDefaultMethod(project, getJdkRoot(pathEditor, component.get()));
     initModel(myDefaultMethodSupplier.get(), pathEditor, component.get());
-    setRenderer(new ColoredListCellRenderer<>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends ShortenCommandLine> list,
-                                           ShortenCommandLine value,
-                                           int index,
-                                           boolean selected,
-                                           boolean hasFocus) {
-        append(value.getPresentableName()).append(" - " + value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
-    });
+    setRenderer(ShortenCommandLineModeRendererKt.createRenderer());
     ActionListener updateModelListener = e -> {
       ShortenCommandLine item = getSelectedItem();
       initModel(item, pathEditor, component.get());

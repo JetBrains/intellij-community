@@ -27,6 +27,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/vcs-impl/shared",
     "//platform/kernel/shared:kernel",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.shared` end

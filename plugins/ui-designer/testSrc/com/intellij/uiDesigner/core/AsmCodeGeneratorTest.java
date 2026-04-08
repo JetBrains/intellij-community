@@ -11,7 +11,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.rt.execution.application.AppMainV2;
@@ -23,8 +22,12 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
@@ -70,6 +73,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -163,7 +168,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private AsmCodeGenerator initCodeGenerator(String formFileName, String className, String testDataPath) throws Exception {
-    String tmpPath = FileUtil.getTempDirectory();
+    String tmpPath = System.getProperty("java.io.tmpdir");
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
     int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
@@ -182,18 +187,18 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       codeGenerator.patchClass(classStream);
     }
     finally {
-      FileUtil.delete(classFile);
+      Files.deleteIfExists(classFile.toPath());
       File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
-        for (File file : inners) FileUtil.delete(file);
+        for (File file : inners) Files.deleteIfExists(file.toPath());
       }
     }
     return codeGenerator;
   }
 
   private LwRootContainer loadFormData(String formPath) throws Exception {
-    String formData = FileUtil.loadFile(new File(formPath));
-    CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(getClass().getClassLoader());
+    String formData = Files.readString(Path.of(formPath));
+    AsmClassPropertiesProvider provider = new AsmClassPropertiesProvider(myClassFinder);
     return Utils.getRootContainer(formData, provider);
   }
 
@@ -505,6 +510,59 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     Class<?> mainClass = myClassFinder.getLoader().loadClass("Main");
     Object instance = mainClass.getConstructor().newInstance();
     assertNotNull(instance);
+  }
+
+  /**
+   * IDEA-335068: When a component has methods referencing types from non-base JDK modules
+   * (e.g. {@code java.sql.Timestamp}), reflection-based introspection may fail at build time
+   * because the compilation classloader cannot resolve such types. The ASM-based provider
+   * discovers properties by reading bytecode without loading those types.
+   */
+  public void testCustomComponentWithNonBaseModuleType() throws Exception {
+    String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/nonBaseModuleType/";
+    String tmpPath = System.getProperty("java.io.tmpdir");
+
+    int rc = Main.compile(new String[]{"-d", tmpPath,
+      testDataPath + "TimestampComponent.java",
+      testDataPath + "TimestampComponentTest.java"});
+    assertEquals(0, rc);
+
+    File componentClassFile = new File(tmpPath, "TimestampComponent.class");
+    assertTrue(componentClassFile.exists());
+    myClassFinder.addClassDefinition("TimestampComponent", Files.readAllBytes(componentClassFile.toPath()));
+
+    LwRootContainer rootContainer = loadFormData(testDataPath + "TestTimestampComponent.form");
+
+    LwContainer grid = (LwContainer)rootContainer.getComponent(0);
+    LwComponent customComponent = (LwComponent)grid.getComponent(0);
+    assertEquals("TimestampComponent", customComponent.getComponentClassName());
+    LwIntrospectedProperty[] assignedProps = customComponent.getAssignedIntrospectedProperties();
+    assertThat(assignedProps).hasSize(2);
+
+    HashMap<String, Object> propValues = new HashMap<>();
+    for (LwIntrospectedProperty prop : assignedProps) {
+      propValues.put(prop.getName(), customComponent.getPropertyValue(prop));
+    }
+    // String properties are wrapped in StringDescriptor
+    assertThat(propValues.get("label")).isInstanceOf(StringDescriptor.class);
+    assertEquals("TestLabel", ((StringDescriptor)propValues.get("label")).getValue());
+    assertEquals(42, propValues.get("customValue"));
+
+    File bindingClassFile = new File(tmpPath, "TimestampComponentTest.class");
+    assertTrue(bindingClassFile.exists());
+
+    AsmCodeGenerator codeGenerator = new AsmCodeGenerator(
+      rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    try (FileInputStream classStream = new FileInputStream(bindingClassFile)) {
+      codeGenerator.patchClass(classStream);
+    }
+    finally {
+      Files.deleteIfExists(componentClassFile.toPath());
+      Files.deleteIfExists(bindingClassFile.toPath());
+    }
+
+    byte[] patchedData = getVerifiedPatchedData(codeGenerator);
+    assertNotNull(patchedData);
   }
 
   private static final class MyClassFinder extends InstrumentationClassFinder {

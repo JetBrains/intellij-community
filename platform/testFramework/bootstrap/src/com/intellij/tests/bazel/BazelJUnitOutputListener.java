@@ -147,6 +147,26 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       knownSuites.computeIfAbsent(parent.orElse(testCase), id -> new ArrayList<>()).add(testCase);
     }
 
+    // If a container (e.g. a whole test class) fails before any test method starts, there may be
+    // no completed test case to infer a suite from. Keep such failed containers so we can emit a
+    // non-empty suite XML by propagating the suite result to all methods in `output`.
+    for (TestData testCase : testCases) {
+      if (!testCase.getId().isContainer()) {
+        continue;
+      }
+
+      TestExecutionResult result = testCase.getResult();
+      if (result == null || result.getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
+        continue;
+      }
+
+      if (!includeIncompleteTests && testCase.getDuration() == null) {
+        continue;
+      }
+
+      knownSuites.computeIfAbsent(testCase, ignored -> new ArrayList<>());
+    }
+
     return knownSuites;
   }
 
@@ -224,9 +244,14 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
           List<TestData> tests = suiteAndTests.getValue();
           if (suite.getResult() != null
               && suite.getResult().getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
-            // If a test suite fails or is skipped, all its tests must be included in the XML output
-            // with the same result as the suite, since the XML format does not support marking a
-            // suite as failed or skipped. This aligns with Bazel's XmlWriter for JUnitRunner.
+            // If a test suite fails or is skipped, include all tests from that suite in the XML.
+            // Existing test method results must be preserved; only missing descendants are added.
+            // For FAILED suite status, add a synthetic test case representing suite failure.
+            TestExecutionResult suiteResult = suite.getResult();
+            if (suiteResult.getStatus() == TestExecutionResult.Status.FAILED) {
+              tests.add(suite);
+            }
+
             getTestsFromSuite(suite.getId())
               .forEach(
                 testIdentifier -> {
@@ -235,8 +260,17 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
                     // add test to results.
                     test = getResult(testIdentifier);
                     tests.add(test);
+                    TestExecutionResult descendantResult =
+                      suiteResult.getStatus() == TestExecutionResult.Status.FAILED
+                      ? TestExecutionResult.aborted(suiteResult.getThrowable().orElse(null))
+                      : suiteResult;
+                    String descendantSkipReason = suite.getSkipReason();
+                    if (descendantSkipReason == null
+                        && suiteResult.getStatus() == TestExecutionResult.Status.FAILED) {
+                      descendantSkipReason = "";
+                    }
+                    test.mark(descendantResult).skipReason(descendantSkipReason);
                   }
-                  test.mark(suite.getResult()).skipReason(suite.getSkipReason());
                 });
           }
           new TestSuiteXmlRenderer(testPlan).toXml(xml, suite, tests);

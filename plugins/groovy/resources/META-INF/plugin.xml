@@ -24,11 +24,18 @@
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <module name="intellij.java.backend"/>
-    <module name="intellij.spellchecker"/>
-    <module name="intellij.java.unscramble"/>
-    <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.regexp"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.unscramble"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.properties.psi"/>
+    <module name="intellij.spellchecker"/>
+    <!-- endregion -->
   </dependencies>
 
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>

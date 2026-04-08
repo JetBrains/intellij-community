@@ -15,8 +15,9 @@ import kotlin.io.path.invariantSeparatorsPathString
 private const val CLAUDE_PROJECTS_DIR = "projects"
 private const val MAX_TITLE_LENGTH = 120
 
+// Claude transcript parsing only reports provider work state.
+// Unread is derived later in ClaudeSessionSource from local read tracking.
 enum class ClaudeSessionActivity {
-  UNREAD,
   PROCESSING,
   READY,
 }
@@ -56,11 +57,8 @@ class ClaudeSessionsStore(
     val normalizedSessionId = headState.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
 
     val tailState = scanJsonlTail(path)
-    val activityState: ActivityTrackingState = if (tailState.lastEventType != null) tailState else headState
-
-    val lastEventType = activityState.lastEventType ?: headState.lastEventType
-    val lastAssistantHadToolUse = if (activityState.lastEventType != null) activityState.lastAssistantHadToolUse else headState.lastAssistantHadToolUse
-    val activity = deriveActivity(lastEventType, lastAssistantHadToolUse)
+    val activityState: ActivityTrackingState = if (tailState.hasActivitySignal) tailState else headState
+    val activity = deriveActivity(activityState.isProcessing)
     val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
 
     val title = resolveThreadTitle(
@@ -74,8 +72,48 @@ class ClaudeSessionsStore(
       id = normalizedSessionId,
       title = title,
       updatedAt = resolvedUpdatedAt,
+      gitBranch = headState.gitBranch,
       activity = activity,
     )
+  }
+
+  fun parseSessionsIndex(path: Path): Map<String, String> {
+    if (!Files.isRegularFile(path)) {
+      return emptyMap()
+    }
+
+    return try {
+      Files.newBufferedReader(path).use { reader ->
+        jsonFactory.createParser(reader).use { parser ->
+          if (parser.nextToken() != JsonToken.START_OBJECT) {
+            emptyMap()
+          }
+
+          else {
+            val summaries = LinkedHashMap<String, String>()
+            forEachJsonObjectField(parser) { fieldName ->
+              when (fieldName) {
+                "entries" -> {
+                  if (parser.currentToken == JsonToken.START_ARRAY) {
+                    parseIndexEntries(parser, summaries)
+                  }
+                  else {
+                    parser.skipChildren()
+                  }
+                }
+
+                else -> parser.skipChildren()
+              }
+              true
+            }
+            summaries
+          }
+        }
+      }
+    }
+    catch (_: Throwable) {
+      emptyMap()
+    }
   }
 
   private fun scanJsonlTail(path: Path): JsonlTailScanState {
@@ -107,6 +145,9 @@ class ClaudeSessionsStore(
       if (scanState.firstPrompt == null && !lineData.firstPrompt.isNullOrBlank()) {
         scanState.firstPrompt = lineData.firstPrompt
       }
+      if (scanState.gitBranch == null && !lineData.gitBranch.isNullOrBlank()) {
+        scanState.gitBranch = lineData.gitBranch
+      }
       if (lineData.hasConversationSignal) {
         scanState.hasConversationSignal = true
       }
@@ -117,12 +158,50 @@ class ClaudeSessionsStore(
 
 }
 
-private fun deriveActivity(lastEventType: String?, lastAssistantHadToolUse: Boolean?): ClaudeSessionActivity {
-  return when (lastEventType) {
-    "progress" -> if (lastAssistantHadToolUse == false) ClaudeSessionActivity.READY else ClaudeSessionActivity.PROCESSING
-    "assistant" -> if (lastAssistantHadToolUse == true) ClaudeSessionActivity.PROCESSING else ClaudeSessionActivity.READY
-    else -> ClaudeSessionActivity.READY
+private fun parseIndexEntries(parser: JsonParser, summaries: MutableMap<String, String>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) {
+      return
+    }
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
+    }
+    parseIndexEntry(parser)?.let { entry ->
+      summaries.put(entry.sessionId, entry.summary)
+    }
   }
+}
+
+private fun parseIndexEntry(parser: JsonParser): IndexedClaudeSummary? {
+  var sessionId: String? = null
+  var summary: String? = null
+  var isSidechain = false
+
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "sessionId" -> sessionId = readJsonStringOrNull(parser)
+      "summary" -> summary = readJsonStringOrNull(parser)
+      "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  if (isSidechain) {
+    return null
+  }
+
+  val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val normalizedSummary = sanitizeTitle(summary)
+    ?.takeUnless { it.equals("No prompt", ignoreCase = true) }
+    ?: return null
+  return IndexedClaudeSummary(sessionId = normalizedSessionId, summary = normalizedSummary)
+}
+
+private fun deriveActivity(isProcessing: Boolean): ClaudeSessionActivity {
+  return if (isProcessing) ClaudeSessionActivity.PROCESSING else ClaudeSessionActivity.READY
 }
 
 private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
@@ -133,9 +212,14 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var timestampMillis: Long? = null
     var firstPrompt: String? = null
     var type: String? = null
+    var gitBranch: String? = null
     var messageRole: String? = null
     var messageContent: String? = null
     var messageHasToolUse = false
+    var messageHasToolResult = false
+    var messageStopReason: String? = null
+    var messageHasStopReason = false
+    var hasBackgroundTaskId = false
 
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
@@ -143,34 +227,55 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
         "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
         "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
         "type" -> type = readJsonStringOrNull(parser)
+        "gitBranch" -> gitBranch = readJsonStringOrNull(parser)
         "message" -> {
           if (parser.currentToken == JsonToken.START_OBJECT) {
             val parsedMessage = readMessageObject(parser)
             messageRole = parsedMessage.role
             messageContent = parsedMessage.contentPreview
             messageHasToolUse = parsedMessage.hasToolUse
+            messageHasToolResult = parsedMessage.hasToolResult
+            messageStopReason = parsedMessage.stopReason
+            messageHasStopReason = parsedMessage.hasStopReason
           }
           else {
             parser.skipChildren()
           }
         }
+        "toolUseResult" -> hasBackgroundTaskId = readToolUseResultObject(parser)
         else -> parser.skipChildren()
       }
       true
     }
-    if (type == "user" && messageRole == "user") {
+    val isTaskNotification = type == "user" && messageRole == "user" && messageContent?.contains("<task-notification>") == true
+    val activityEvent = when (type) {
+      "user" -> when {
+        messageRole != "user" -> ClaudeActivityEvent.OTHER
+        messageHasToolResult || hasBackgroundTaskId || isTaskNotification -> ClaudeActivityEvent.TOOL_CONTINUATION
+        else -> ClaudeActivityEvent.USER_PROMPT
+      }
+      "assistant" -> when {
+        messageRole != "assistant" -> ClaudeActivityEvent.OTHER
+        messageHasToolUse -> ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
+        messageHasStopReason -> if (messageStopReason == "end_turn") ClaudeActivityEvent.ASSISTANT_TERMINAL else ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
+        else -> ClaudeActivityEvent.ASSISTANT_TERMINAL
+      }
+      "progress" -> ClaudeActivityEvent.PROGRESS
+      "queue-operation" -> ClaudeActivityEvent.QUEUE_OPERATION
+      else -> ClaudeActivityEvent.OTHER
+    }
+    if (activityEvent == ClaudeActivityEvent.USER_PROMPT) {
       firstPrompt = sanitizeTitle(messageContent)
     }
     val hasConversationSignal = type == "user" || type == "assistant"
-    val hasToolUse = type == "assistant" && messageHasToolUse
     return ParsedJsonlLine(
       sessionId = sessionId,
       isSidechain = isSidechain,
       timestampMillis = timestampMillis,
       firstPrompt = firstPrompt,
       hasConversationSignal = hasConversationSignal,
-      eventType = type,
-      hasToolUse = hasToolUse,
+      gitBranch = gitBranch,
+      activityEvent = activityEvent,
     )
   }
   catch (_: Throwable) {
@@ -182,38 +287,54 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var role: String? = null
   var contentPreview: String? = null
   var hasToolUse = false
+  var hasToolResult = false
+  var stopReason: String? = null
+  var hasStopReason = false
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "role" -> role = readJsonStringOrNull(parser)
       "content" -> {
         val result = readContentWithToolUseCheck(parser)
-        contentPreview = result.first
-        hasToolUse = result.second
+        contentPreview = result.contentPreview
+        hasToolUse = result.hasToolUse
+        hasToolResult = result.hasToolResult
+      }
+      "stop_reason" -> {
+        hasStopReason = true
+        stopReason = readJsonStringOrNull(parser)
       }
       else -> parser.skipChildren()
     }
     true
   }
-  return ParsedMessageObject(role = role, contentPreview = contentPreview, hasToolUse = hasToolUse)
+  return ParsedMessageObject(
+    role = role,
+    contentPreview = contentPreview,
+    hasToolUse = hasToolUse,
+    hasToolResult = hasToolResult,
+    stopReason = stopReason,
+    hasStopReason = hasStopReason,
+  )
 }
 
-private fun readContentWithToolUseCheck(parser: JsonParser): Pair<String?, Boolean> {
+private fun readContentWithToolUseCheck(parser: JsonParser): ParsedMessageContent {
   return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> Pair(readJsonStringOrNull(parser), false)
+    JsonToken.VALUE_STRING -> ParsedMessageContent(contentPreview = readJsonStringOrNull(parser))
     JsonToken.START_ARRAY -> readFirstTextAndToolUseFromArray(parser)
     else -> {
       parser.skipChildren()
-      Pair(null, false)
+      ParsedMessageContent()
     }
   }
 }
 
-private fun readFirstTextAndToolUseFromArray(parser: JsonParser): Pair<String?, Boolean> {
+private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageContent {
   var firstText: String? = null
   var hasToolUse = false
+  var hasToolResult = false
   while (true) {
-    val token = parser.nextToken() ?: return Pair(firstText, hasToolUse)
-    if (token == JsonToken.END_ARRAY) return Pair(firstText, hasToolUse)
+    val token = parser.nextToken() ?: return ParsedMessageContent(firstText, hasToolUse, hasToolResult)
+    if (token == JsonToken.END_ARRAY) return ParsedMessageContent(firstText, hasToolUse, hasToolResult)
     if (token != JsonToken.START_OBJECT) {
       parser.skipChildren()
       continue
@@ -231,10 +352,30 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): Pair<String?, 
     if (itemType == "tool_use") {
       hasToolUse = true
     }
+    if (itemType == "tool_result") {
+      hasToolResult = true
+    }
     if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
       firstText = itemText
     }
   }
+}
+
+private fun readToolUseResultObject(parser: JsonParser): Boolean {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return false
+  }
+
+  var hasBackgroundTaskId = false
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "backgroundTaskId" -> hasBackgroundTaskId = !readJsonStringOrNull(parser).isNullOrBlank()
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return hasBackgroundTaskId
 }
 
 private fun resolveThreadTitle(firstPrompt: String?, sessionId: String): String {
@@ -297,29 +438,70 @@ private data class ParsedJsonlLine(
   @JvmField val timestampMillis: Long?,
   @JvmField val firstPrompt: String?,
   @JvmField val hasConversationSignal: Boolean,
-  @JvmField val eventType: String?,
-  @JvmField val hasToolUse: Boolean = false,
+  @JvmField val gitBranch: String?,
+  @JvmField val activityEvent: ClaudeActivityEvent,
 )
 
 private data class ParsedMessageObject(
   @JvmField val role: String?,
   @JvmField val contentPreview: String?,
   @JvmField val hasToolUse: Boolean = false,
+  @JvmField val hasToolResult: Boolean = false,
+  @JvmField val stopReason: String? = null,
+  @JvmField val hasStopReason: Boolean = false,
 )
 
+private data class ParsedMessageContent(
+  @JvmField val contentPreview: String? = null,
+  @JvmField val hasToolUse: Boolean = false,
+  @JvmField val hasToolResult: Boolean = false,
+)
+
+private data class IndexedClaudeSummary(
+  @JvmField val sessionId: String,
+  @JvmField val summary: String,
+)
+
+private enum class ClaudeActivityEvent {
+  USER_PROMPT,
+  ASSISTANT_IN_PROGRESS,
+  ASSISTANT_TERMINAL,
+  TOOL_CONTINUATION,
+  PROGRESS,
+  QUEUE_OPERATION,
+  OTHER,
+}
+
 private interface ActivityTrackingState {
-  var lastEventType: String?
-  var lastAssistantHadToolUse: Boolean?
+  var hasActivitySignal: Boolean
+  var awaitingAssistantTurn: Boolean
+  var isProcessing: Boolean
   var updatedAt: Long?
 }
 
 private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJsonlLine) {
-  val eventType = lineData.eventType
-  if (eventType == "user" || eventType == "assistant" || eventType == "progress") {
-    state.lastEventType = eventType
-    when (eventType) {
-      "user" -> state.lastAssistantHadToolUse = null
-      "assistant" -> state.lastAssistantHadToolUse = lineData.hasToolUse
+  if (lineData.activityEvent != ClaudeActivityEvent.OTHER) {
+    state.hasActivitySignal = true
+  }
+  when (lineData.activityEvent) {
+    ClaudeActivityEvent.USER_PROMPT -> {
+      state.awaitingAssistantTurn = true
+      state.isProcessing = false
+    }
+    ClaudeActivityEvent.ASSISTANT_IN_PROGRESS,
+    ClaudeActivityEvent.TOOL_CONTINUATION -> {
+      state.awaitingAssistantTurn = true
+      state.isProcessing = true
+    }
+    ClaudeActivityEvent.ASSISTANT_TERMINAL -> {
+      state.awaitingAssistantTurn = false
+      state.isProcessing = false
+    }
+    ClaudeActivityEvent.PROGRESS,
+    ClaudeActivityEvent.QUEUE_OPERATION -> {
+      state.isProcessing = state.awaitingAssistantTurn || state.isProcessing
+    }
+    ClaudeActivityEvent.OTHER -> {
     }
   }
   val lineTimestamp = lineData.timestampMillis
@@ -329,17 +511,20 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
 }
 
 private data class JsonlTailScanState(
-  override var lastEventType: String? = null,
-  override var lastAssistantHadToolUse: Boolean? = null,
+  override var hasActivitySignal: Boolean = false,
+  override var awaitingAssistantTurn: Boolean = false,
+  override var isProcessing: Boolean = false,
   override var updatedAt: Long? = null,
 ) : ActivityTrackingState
 
 private data class JsonlMetadataScanState(
   @JvmField var firstPrompt: String? = null,
   @JvmField var sessionId: String? = null,
+  @JvmField var gitBranch: String? = null,
   @JvmField var isSidechain: Boolean = false,
   override var updatedAt: Long? = null,
   @JvmField var hasConversationSignal: Boolean = false,
-  override var lastEventType: String? = null,
-  override var lastAssistantHadToolUse: Boolean? = null,
+  override var hasActivitySignal: Boolean = false,
+  override var awaitingAssistantTurn: Boolean = false,
+  override var isProcessing: Boolean = false,
 ) : ActivityTrackingState

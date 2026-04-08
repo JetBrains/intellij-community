@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.NioFiles
@@ -57,6 +57,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.oro.matcher",
     "intellij.libraries.plexus.utils",
     "intellij.libraries.protobuf",
+    "intellij.libraries.netty.buffer",
+    "intellij.libraries.netty.codec.http",
     "intellij.libraries.maven.resolver.provider",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
@@ -97,7 +99,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
   layout.withModule("intellij.eclipse.common", "eclipse-common.jar")
   layout.withModule("intellij.devkit.jps", "devkit-jps.jar")
-  layout.withModule("intellij.devkit.runtimeModuleRepository.jps", "devkit-runtimeModuleRepository-jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
@@ -106,8 +107,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "jna",
     "Log4J",
     "Eclipse",
-    "netty-codec-http",
-    "netty-buffer",
     "netty-codec-protobuf",
     "slf4j-api",
     "jetbrains-annotations",

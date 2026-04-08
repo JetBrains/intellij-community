@@ -1,8 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.lineMarkers">
   <dependencies>
-    <module name="intellij.kotlin.searching"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/diagnostic/telemetry",
     "//platform/util",
+    "//platform/util/base",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//libraries/commons/lang3",
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
     "//libraries/commons/lang3:lang3_test_lib",
   ]
 )

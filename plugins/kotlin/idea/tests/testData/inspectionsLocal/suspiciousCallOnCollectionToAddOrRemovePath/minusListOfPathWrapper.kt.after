@@ -1,4 +1,4 @@
-// PROBLEM: 'minus' call removes Path elements
+// PROBLEM: 'minus' call iterates over the argument instead of removing it as a single element
 // FIX: Convert to 'minusElement' call (changes semantics)
 // IGNORE_K1
 // RUNTIME_WITH_FULL_JDK

@@ -11,8 +11,9 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -36,13 +36,14 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObj
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ClassIdBasedLocality
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
-context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
+context(_: KaSession)
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
     type.abbreviation?.let { abbreviatedType ->
@@ -56,7 +57,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         is KaDefinitelyNotNullType -> {
             printKtType(type.original)
             text(" & ")
-            text(DefaultTypeClassIds.ANY.relativeClassName.asString())
+            text(KaStandardTypeClassIds.ANY.relativeClassName.asString())
         }
         is KaUsualClassType -> printNonErrorClassType(type)
         is KaFlexibleType -> {
@@ -149,7 +150,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, ClassIdBasedLocality::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType
@@ -236,8 +237,9 @@ private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
 }
 
 
+context(_: KaSession)
 private fun isNullabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
-    if (lower.nullability == KaTypeNullability.NON_NULLABLE && upper.nullability == KaTypeNullability.NULLABLE) {
+    if (!lower.isNullable && upper.isNullable) {
         if (lower is KaTypeParameterType && upper is KaTypeParameterType && lower.symbol == upper.symbol) {
             return true
         }
@@ -248,11 +250,12 @@ private fun isNullabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
     return false
 }
 
+context(_: KaSession)
 private fun isNonNullableFlexibleType(lower: KaType, upper: KaType): Boolean {
     if (lower is KaClassType && upper is KaClassType &&
         lower.classId == upper.classId &&
-        lower.nullability == KaTypeNullability.NON_NULLABLE &&
-        upper.nullability == lower.nullability &&
+        !lower.isNullable &&
+        upper.isNullable == lower.isNullable &&
         isSimilarTypes(lower, upper)
     ) {
         val lowerTypeArguments = lower.typeArguments

@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run //build:idea_community" type="BazelRunConfigurationType">
+    <bsp-state handler-provider-id="JvmRunHandlerProvider" check-visibility="true">
+      <bsp-target>@//build:idea_community</bsp-target>
+      <handler-state />
+    </bsp-state>
+    <method v="2">
+      <option name="BuildScriptBeforeRunTaskProvider" enabled="false" />
+    </method>
+  </configuration>
+</component>

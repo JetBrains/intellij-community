@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from django.core.management.base import BaseCommand
+from typing_extensions import override
 
 class TemplateCommand(BaseCommand):
     url_schemes: Sequence[str]
@@ -11,7 +12,9 @@ class TemplateCommand(BaseCommand):
     a_or_an: str
     paths_to_remove: Sequence[Any]
     verbosity: Any
+    @override
     def add_arguments(self, parser: ArgumentParser) -> None: ...
+    @override
     def handle(self, app_or_project: str, name: str, target: str | None = ..., **options: Any) -> None: ...
     def handle_template(self, template: str | None, subdir: str | None) -> str: ...
     def validate_name(self, name: str, name_or_dir: str = ...) -> None: ...

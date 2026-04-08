@@ -1,23 +1,22 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.core.script.k2">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <!-- endregion -->
   </dependencies>
   <applicationListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptEditorListener"/>
-    <listener class="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionStatusBarWidgetListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </applicationListeners>
 
-  <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.k2IdeScriptAdditionalIdeaDependenciesProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.modules.K2IdeScriptAdditionalIdeaDependenciesProvider"
-            dynamic="true"/>
-
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="KotlinScriptNotificationGroup"
+                       displayType="STICKY_BALLOON"
+                       bundle="messages.KotlinBaseScriptingBundle"
+                       key="notification.group.kotlin.script"/>
+
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
@@ -31,9 +30,7 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
-    <statusBarWidgetFactory id="kotlin.script.definition"
-                            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionStatusBarWidgetFactory"
-                            order="first"/>
+    <iw.actionProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionInfoWidgetProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
@@ -43,9 +40,6 @@
                          parentId="preferences.language.Kotlin"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
-
-    <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
-                 description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent"/>
@@ -72,7 +66,16 @@
             id="ScriptConfigurationFloatingToolbarProvider"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptEntityProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
     <scriptAfterRunCallbackProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
@@ -82,16 +85,13 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
 
-    <k2IdeScriptAdditionalIdeaDependenciesProvider
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.MainKtsScriptDependenciesProvider"/>
-
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
     <scriptDefinitionsSource
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService$KotlinScriptWorkspaceModelListener"
+    <listener class="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.PathUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -44,12 +45,16 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
                 val nativeKlibs: Map<LibraryEntity, KLibRoot> =
                     libraryChanges.toNativeKLibs().ifEmpty { return@collect }
                 val workspaceModel = WorkspaceModel.getInstance(project)
-                val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibs)
+                val generatedForwardDeclarations = generateForwardDeclarationSourcesForKlibs(workspaceModel, nativeKlibs)
 
                 cs.launch {
                     workspaceModel.update("Kotlin Forward Declarations workspace model update") { storage ->
-                        createEntityStorageChanges.forEach { (libraryEntity, builder) ->
-
+                        generatedForwardDeclarations.mapValues {  (_, virtualFileUrl) ->
+                            KotlinForwardDeclarationsWorkspaceEntity(
+                                setOf(virtualFileUrl),
+                                KotlinFwdWorkspaceEntitySource
+                            )
+                        }.forEach { (libraryEntity, builder) ->
                             // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
                             if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
                                 storage.modifyLibraryEntity(libraryEntity) {
@@ -69,22 +74,16 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
         KotlinForwardDeclarationsFileGenerator.cleanUp(roots)
     }
 
-    private fun createEntityStorageChanges(
+    private fun generateForwardDeclarationSourcesForKlibs(
         workspaceModel: WorkspaceModel,
-        nativeKlibs: Map<LibraryEntity, KLibRoot>
-    ): Map<LibraryEntity, KotlinForwardDeclarationsWorkspaceEntityBuilder> {
+        nativeKlibs: Map<LibraryEntity, KLibRoot>,
+    ): Map<LibraryEntity, VirtualFileUrl> {
         val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
         return buildMap {
             for ((libraryEntity, klib) in nativeKlibs) {
                 val path = KotlinForwardDeclarationsFileGenerator.generateForwardDeclarationFiles(klib)
                 val virtualFileUrl = path?.toVirtualFileUrl(virtualFileUrlManager) ?: continue
-
-                val entity = KotlinForwardDeclarationsWorkspaceEntity(
-                    setOf(virtualFileUrl),
-                    KotlinFwdWorkspaceEntitySource
-                )
-
-                put(libraryEntity, entity)
+                put(libraryEntity, virtualFileUrl)
             }
         }
     }

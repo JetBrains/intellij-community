@@ -11,16 +11,16 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.launchOnShow
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -416,11 +416,9 @@ sealed interface UpdateQueue<T> {
   fun waitForAllExecuted(timeoutMillis: Long)
 
   /**
-   * EDT-safe condition for use with `PlatformTestUtil.waitWithEventsDispatching`.
+   * Returns `true` when all queued items are processed and no job is currently running.
    *
-   * Returns true when all queued items are processed and no job is currently running.
-   *
-   * Example usage from EDT:
+   * Can be used as an EDT-safe condition with `PlatformTestUtil.waitWithEventsDispatching`:
    * ```kotlin
    * PlatformTestUtil.waitWithEventsDispatching(
    *   "Timed out waiting for queue",
@@ -428,12 +426,13 @@ sealed interface UpdateQueue<T> {
    *   10
    * )
    * ```
-   *
-   * This is the EDT-safe alternative to [waitForAllExecuted] which uses `runBlockingCancellable`
-   * and is forbidden on EDT.
    */
-  @get:TestOnly
   val isAllExecuted: Boolean
+
+  /**
+   * Suspends until all queued items are processed and no job is currently running.
+   */
+  suspend fun awaitAllExecuted()
 }
 
 /**
@@ -540,27 +539,22 @@ private abstract class BaseUpdateQueue<T>(
   override fun waitForAllExecuted(timeoutMillis: Long) {
     waitForAllExecuted(timeoutMillis.milliseconds)
   }
-  
-  /**
-   * EDT-safe condition for use with `PlatformTestUtil.waitWithEventsDispatching`.
-   * 
-   * Returns true when all queued items are processed and no job is currently running.
-   * 
-   * Example usage from EDT:
-   * ```kotlin
-   * PlatformTestUtil.waitWithEventsDispatching(
-   *   "Timed out waiting for queue",
-   *   { updateQueue.isAllExecuted },
-   *   10
-   * )
-   * ```
-   * 
-   * This is the EDT-safe alternative to [waitForAllExecuted] which uses `runBlockingCancellable`
-   * and is forbidden on EDT.
-   */
+
   override val isAllExecuted: Boolean
-    get() = isEmpty && !isProcessing
-  
+    get() = !job.isActive || (isEmpty && !isProcessing)
+
+  override suspend fun awaitAllExecuted() {
+    while (!isAllExecuted) {
+      val currentJob = processingJob.get()
+      if (currentJob != null && !currentJob.isCompleted) {
+        currentJob.join()
+      }
+      else {
+        delay(10.milliseconds)
+      }
+    }
+  }
+
   /**
    * Core function for processing channel items with manual channel processing.
    * 
@@ -621,16 +615,10 @@ private abstract class BaseUpdateQueue<T>(
       val data = onPrepare()
 
       // Process the data in a separate coroutine
-      coroutineScope {
-        val job = launch {
-          try {
-            withContext(context) {
-              onProcess(data)
-            }
-          } catch (e: CancellationException) {
-            throw e
-          } catch (e: Throwable) {
-            logger<DebouncedUpdates>().error("Exception in DebouncedUpdates '$name'", e)
+      supervisorScope {
+        val job = launch(CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
+          withContext(context) {
+            onProcess(data)
           }
         }
         

@@ -32,6 +32,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//fleet/rpc",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
     "//libraries/compose-runtime-desktop",
     "//platform/jewel/ui",
     "//platform/jewel/ide-laf-bridge",
@@ -40,6 +41,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util:util-ui",
     "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
@@ -62,6 +64,7 @@ jvm_library(
     "//platform/project/shared:project_test_lib",
     "//fleet/rpc:rpc_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
@@ -70,6 +73,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//python/common:common_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]

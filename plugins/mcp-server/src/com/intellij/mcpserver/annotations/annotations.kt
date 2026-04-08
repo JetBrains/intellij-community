@@ -8,7 +8,12 @@ annotation class McpTool(
   /**
    * Custom name for the tool. Function/method name will be used if not specified.
    */
-  val name: String = ""
+  val name: String = "",
+
+  /**
+   * Optional human-readable title for the tool. If empty, a null value will be passed to protocol.
+   */
+  val title: String = "",
 )
 
 @OptIn(ExperimentalSerializationApi::class)

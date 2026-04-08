@@ -169,7 +169,21 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadata(typeMetadata)
 
     typeMetadata =
-      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService\$DataServiceEntitySource",
+      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.ModuleToGradleProjectConnector\$GradleBridgeModuleEntitySource",
+                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "virtualFileUrl",
+                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                 isNullable = true,
+                                                                                 typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                               withDefault = false)),
+                                       supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+
+    addMetadata(typeMetadata)
+
+    typeMetadata =
+      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.SyntheticEntitySourceMarker\$DataServiceEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                isKey = false,
                                                                                isOpen = false,
@@ -314,20 +328,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"))
-
-    addMetadata(typeMetadata)
-
-    typeMetadata =
-      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService\$GradleBridgeModuleEntitySource",
-                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                               isKey = false,
-                                                                               isOpen = false,
-                                                                               name = "virtualFileUrl",
-                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                 isNullable = true,
-                                                                                 typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                               withDefault = false)),
-                                       supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
 
@@ -1555,8 +1555,10 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource", metadataHash = -565169080)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource",
                     metadataHash = 1645182578)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService\$DataServiceEntitySource",
-                    metadataHash = -1359272613)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.ModuleToGradleProjectConnector\$GradleBridgeModuleEntitySource",
+                    metadataHash = 1224198223)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.SyntheticEntitySourceMarker\$DataServiceEntitySource",
+                    metadataHash = 1541028041)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = -754421906)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript", metadataHash = -142884038)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase", metadataHash = -1450037938)
@@ -1575,8 +1577,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = -1086434639)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Static", metadataHash = -1839677424)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase", metadataHash = -181947250)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService\$GradleBridgeModuleEntitySource",
-                    metadataHash = -118266230)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource",
                     metadataHash = -754914382)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleProjectModelEntitySource",

@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.PsiManager
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.invokeActionWithRetries
 import com.intellij.driver.sdk.plugins.notebooks.NotebookEditorInfoService
+import com.intellij.driver.sdk.plugins.notebooks.setCurrentCellText
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
@@ -182,7 +183,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun addCodeCell(text: String) {
     addEmptyCodeCell()
-    pasteToCurrentCell(text)
+    driver.setCurrentCellText(text)
   }
 
   fun addCodeCellWithRetry(text: String, maxAttempts: Int = 20, delay: Duration = 1.seconds) {
@@ -192,7 +193,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun addMarkdownCell(content: String) {
     addEmptyMarkdownCell()
-    pasteToCurrentCell(content)
+    driver.setCurrentCellText(content)
+  }
+
+  fun setCurrentCellText(text: String) {
+    driver.setCurrentCellText(text)
   }
 
   /**

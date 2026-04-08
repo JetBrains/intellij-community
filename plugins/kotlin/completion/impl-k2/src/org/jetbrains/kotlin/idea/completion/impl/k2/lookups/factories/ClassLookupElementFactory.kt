@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource.WITH_SHORT_NAMES
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AnonymousObjectInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.KindWeigher.isConstructorCall
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -68,7 +71,7 @@ internal object ClassLookupElementFactory {
         val renderedFullTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.render(position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible().render(position = Variance.INVARIANT)
             }
         }
 
@@ -76,7 +79,7 @@ internal object ClassLookupElementFactory {
         val renderedShortTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible().render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
         }
 
@@ -92,6 +95,7 @@ internal object ClassLookupElementFactory {
             append("{...}")
         }
 
+        val fqName = symbol.importableFqName ?: FqName.topLevel(name)
         val insertHandler = AnonymousObjectInsertHandler(
             constructorParenthesis = constructorParenthesis,
             renderedClassifier = symbol.importableFqName?.withRootPrefixIfNeeded()?.asString() ?: name.asString(),
@@ -99,7 +103,7 @@ internal object ClassLookupElementFactory {
             hasTypeArguments = hasTypeArguments,
         )
 
-        return LookupElementBuilder.create(AnonymousObjectLookupObject(name, importingStrategy), "object")
+        return LookupElementBuilder.create(AnonymousObjectLookupObject(name, importingStrategy, fqName), "object")
             .withPresentableText(itemText)
             .withLookupString(name.asString())
             .withInsertHandler(insertHandler)
@@ -132,6 +136,7 @@ internal object ClassLookupElementFactory {
             hasReceiver = false,
             inputValueArgumentsAreRequired = constructorSymbols.size > 1 || valueParameters?.isNotEmpty() == true,
             inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
+            isConstructorCall = true,
         )
         return LookupElementBuilder.create(lookupObject, name.asString())
             .withInsertHandler(FunctionInsertionHandler)
@@ -154,7 +159,9 @@ internal data class ClassifierLookupObject(
 @Serializable
 internal data class AnonymousObjectLookupObject(
     @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
-    val importingStrategy: ImportStrategy
+    val importingStrategy: ImportStrategy,
+    @Serializable(with = KotlinFqNameSerializer::class)
+    val fqName: FqName,
 ) : KotlinLookupObject
 
 /**

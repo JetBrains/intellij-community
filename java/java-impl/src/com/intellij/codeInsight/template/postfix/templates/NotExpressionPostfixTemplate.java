@@ -33,6 +33,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
@@ -62,6 +63,21 @@ public class NotExpressionPostfixTemplate extends PostfixTemplateWithExpressionS
 
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+    doTemplate(expression);
+  }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander((ctx, updater, elementInCopy) -> doTemplate(elementInCopy));
+  }
+
+  private static void doTemplate(@NotNull PsiElement expression) {
     Project project = expression.getProject();
     DumbService.getInstance(project)
       .runWithAlternativeResolveEnabled(() -> {

@@ -107,6 +107,7 @@
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
+    <!--suppress PluginXmlValidity -->
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <registryKey key="devkit.web.based.plugin.generator.enabled"
                  description="Enables the new IDE Plugin module builder based on web backend"
@@ -154,6 +155,18 @@
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlPluginLogoInspection"
                      key="inspection.plugin.xml.plugin.logo.display.name"/>
+    <localInspection language="XML" shortName="SplitModeXmlApiUsage" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeXmlApiUsageInspection"
+                     key="inspection.split.mode.xml.api.usage.display.name"/>
+    <localInspection language="XML" shortName="SplitModeMixedDependencies" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection"
+                     key="inspection.split.mode.mixed.dependencies.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
@@ -224,6 +237,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"
                      key="inspection.undesirable.class.usage.display.name"/>
+
+    <localInspection language="UAST" shortName="SplitModeApiUsage"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeApiUsageInspection"
+                     key="inspection.split.mode.api.usage.display.name"/>
     <localInspection language="UAST" shortName="FileEqualsUsage"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -665,6 +685,7 @@
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
     <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
+    <!--suppress DeprecatedClassUsageInspection -->
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <!--suppress DeprecatedClassUsageInspection -->
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
@@ -730,7 +751,6 @@
     <console.folding order="first" implementation="org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
-
     <projectService serviceImplementation="org.jetbrains.idea.devkit.run.JUnitDevKitUnitTestingSettings"
                     configurationSchemaKey="unitTesting"/>
 
@@ -773,6 +793,7 @@
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
 
     <postStartupActivity implementation="org.jetbrains.idea.devkit.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
+    <postStartupActivity implementation="org.jetbrains.idea.devkit.inspections.remotedev.RestrictionsLoadingActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

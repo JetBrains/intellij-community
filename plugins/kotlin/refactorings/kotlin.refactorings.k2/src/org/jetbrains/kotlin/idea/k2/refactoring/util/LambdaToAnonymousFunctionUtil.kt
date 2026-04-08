@@ -28,6 +28,10 @@ object LambdaToAnonymousFunctionUtil {
      * Build function signature and body based on provided [lambda].
      * Returns null for function literals without body.
      *
+     * @param parameterNames fallback names to use when a parameter name is special (e.g. unnamed).
+     * @param forceNonNullReturnType when `true`, the return type is rendered as non-nullable
+     *   provided that no nullable expressions are returned anywhere in the lambda body.
+     *
      * NB: to perform required calculations, the whole file with the lambda expression is copied!
      * So it should not be used during highlighting or other non-explicitly started activities
      */
@@ -36,11 +40,12 @@ object LambdaToAnonymousFunctionUtil {
         lambda: KtLambdaExpression,
         functionName: String = "",
         parameterNames: List<String> = emptyList(),
+        forceNonNullReturnType: Boolean = false,
     ): String? {
         val functionLiteral = lambda.functionLiteral
         val psiFactory = KtPsiFactory.contextual(lambda)
         val bodyExpression = functionLiteral.bodyExpression ?: return null
-
+        var hasNullableReturn = false
         val fileCopy = bodyExpression.containingFile.copied()
         //we don't want to change the code, thus we have to operate on copy
         //bodyExpression.copied() produces expression with JavaDummyHolder containing file,
@@ -50,8 +55,12 @@ object LambdaToAnonymousFunctionUtil {
 
         analyze(bodyExpressionCopy) {
             bodyExpressionCopy.collectDescendantsOfType<KtReturnExpression>().forEach {
-                val targetDescriptor = it.targetSymbol
-                if (targetDescriptor?.psi == functionLiteralInCopy) {
+                val targetSymbol = it.resolveSymbol()
+                if (targetSymbol?.psi == functionLiteralInCopy) {
+                    val returnType = it.returnedExpression?.expressionType
+                    if (returnType?.isNullable == true) {
+                        hasNullableReturn = true
+                    }
                     it.labeledExpression?.delete()
                 }
             }
@@ -100,11 +109,18 @@ object LambdaToAnonymousFunctionUtil {
                         analyze(lastStatement) {
                             val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)
                             if (foldableReturns.isNullOrEmpty()) {
+                                if (lastStatement.expressionType?.isNullable == true) {
+                                    hasNullableReturn = true
+                                }
                                 lastStatement.replace(psiFactory.createExpressionByPattern("return $0", lastStatement))
                             }
                         }
                     }
-                    returnType(it.render(position = Variance.OUT_VARIANCE))
+                    val finalReturnType = when {
+                        forceNonNullReturnType && !hasNullableReturn -> it.withNullability(false)
+                        else -> it
+                    }
+                    returnType(finalReturnType.render(position = Variance.OUT_VARIANCE))
                 } ?: noReturnType()
                 blockBody(" " + bodyExpressionCopy.text)
             }.asString()

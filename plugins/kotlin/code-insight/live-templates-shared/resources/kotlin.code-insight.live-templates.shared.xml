@@ -1,4 +1,9 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.liveTemplates">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
 

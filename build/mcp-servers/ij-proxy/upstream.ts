@@ -3,16 +3,17 @@
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
-import {resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
+import {resolveAnalysisCapabilities, resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {McpStreamTransport} from './stream-transport'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike} from './proxy-tools/types'
+import type {AnalysisCapabilities, ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike} from './proxy-tools/types'
 
 export interface UpstreamConnectionOptions {
   transport: McpStreamTransport
   projectPath: string
   defaultProjectPathKey: 'project_path' | 'projectPath'
   toolCallTimeoutMs: number
+  buildTimeoutMs: number
   warn: (message: string) => void
 }
 
@@ -39,12 +40,14 @@ export class UpstreamConnection {
   private _projectPathManager: ReturnType<typeof createProjectPathManager>
   private readonly _defaultProjectPathKey: 'project_path' | 'projectPath'
   private readonly _toolCallTimeoutMs: number
+  private readonly _buildTimeoutMs: number
   private readonly _warn: (message: string) => void
 
   private _connectedPromise: Promise<void> | null = null
   private _tools: ToolSpecLike[] | null = null
 
   searchCapabilities: SearchCapabilities = resolveSearchCapabilities([]).capabilities
+  analysisCapabilities: AnalysisCapabilities = resolveAnalysisCapabilities([]).capabilities
   readCapabilities: ReadCapabilities = resolveReadCapabilities([]).capabilities
   ideVersion: string | null = null
 
@@ -54,6 +57,7 @@ export class UpstreamConnection {
   constructor(options: UpstreamConnectionOptions) {
     this._transport = options.transport
     this._toolCallTimeoutMs = options.toolCallTimeoutMs
+    this._buildTimeoutMs = options.buildTimeoutMs
     this._warn = options.warn
     this._defaultProjectPathKey = options.defaultProjectPathKey
     this._projectPathManager = createProjectPathManager({
@@ -98,6 +102,7 @@ export class UpstreamConnection {
     this._connectedPromise = null
     this._tools = null
     this.searchCapabilities = resolveSearchCapabilities([]).capabilities
+    this.analysisCapabilities = resolveAnalysisCapabilities([]).capabilities
     this.readCapabilities = resolveReadCapabilities([]).capabilities
     this.ideVersion = null
     this.onStateChange?.()
@@ -129,6 +134,7 @@ export class UpstreamConnection {
       this._projectPathManager.stripProjectPathFromTools(tools)
       this._tools = tools
       this.searchCapabilities = resolveSearchCapabilities(tools).capabilities
+      this.analysisCapabilities = resolveAnalysisCapabilities(tools).capabilities
       this.readCapabilities = resolveReadCapabilities(tools).capabilities
       this.onStateChange?.()
       return tools
@@ -149,7 +155,8 @@ export class UpstreamConnection {
       await this.getTools()
       const callArgs = {...args}
       this._projectPathManager.injectProjectPathArgs(toolName, callArgs)
-      const options = this._toolCallTimeoutMs > 0 ? {timeout: this._toolCallTimeoutMs} : undefined
+      const timeoutMs = this._resolveTimeoutMs(toolName)
+      const options = timeoutMs > 0 ? {timeout: timeoutMs} : undefined
       const result = normalizeToolResult(
         await this.client.callTool({name: toolName, arguments: callArgs}, undefined, options)
       )
@@ -167,10 +174,17 @@ export class UpstreamConnection {
       await this.connect()
       await this.getTools()
       this._projectPathManager.injectProjectPathArgs(toolName, args)
-      const options = this._toolCallTimeoutMs > 0 ? {timeout: this._toolCallTimeoutMs} : undefined
+      const timeoutMs = this._resolveTimeoutMs(toolName)
+      const options = timeoutMs > 0 ? {timeout: timeoutMs} : undefined
       const result = await this.client.callTool({name: toolName, arguments: args}, undefined, options)
       return normalizeToolResult(result)
     })
+  }
+
+  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project', 'lint_files'])
+
+  private _resolveTimeoutMs(toolName: string): number {
+    return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs
   }
 
   /** Forward arbitrary request to upstream. */

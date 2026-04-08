@@ -96,7 +96,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   }
 
   FileUtil.copyDir(originalProjectDir.toFile(), projectDir.toFile())
-  VfsUtil.markDirtyAndRefresh(false, true, true, projectDir.toFile())
+  VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
 
   val pathVariables = if (setupPathVariables) mapOf("variable" to "variableidea", "srcvariable" to "srcvariableidea") else emptyMap()
   for ((name, relativePath) in pathVariables) {

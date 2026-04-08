@@ -1,9 +1,9 @@
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -88,6 +88,14 @@ class AgentSessionUiPreferencesStateServiceTest {
   }
 
   @Test
+  fun lastUsedVcsMergePreferencesDefaultToNull() {
+    val service = AgentSessionUiPreferencesStateService()
+
+    assertThat(service.getLastUsedVcsMergeProvider()).isNull()
+    assertThat(service.getLastUsedVcsMergeLaunchMode()).isNull()
+  }
+
+  @Test
   fun updateProviderPreferencesOnLaunchPersistsAllFields() {
     val service = AgentSessionUiPreferencesStateService()
     val request = AgentPromptInitialMessageRequest(
@@ -139,5 +147,26 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(loaded.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
     assertThat(loaded.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
+  }
+
+  @Test
+  fun updateVcsMergeProviderPreferencesOnLaunchDoesNotOverwriteGeneralDefaults() {
+    val service = AgentSessionUiPreferencesStateService()
+    service.setProviderPreferences(
+      AgentPromptLauncherBridge.ProviderPreferences(
+        providerId = AgentSessionProvider.CLAUDE.value,
+        launchMode = AgentSessionLaunchMode.YOLO,
+        providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
+      )
+    )
+
+    service.updateVcsMergeProviderPreferencesOnLaunch(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+
+    val generalPreferences = service.getProviderPreferences()
+    assertThat(generalPreferences.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
+    assertThat(generalPreferences.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(generalPreferences.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
+    assertThat(service.getLastUsedVcsMergeProvider()).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(service.getLastUsedVcsMergeLaunchMode()).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 }

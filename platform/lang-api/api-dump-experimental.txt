@@ -534,6 +534,12 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:startInWriteAction():Z
 - a:surroundElements(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand
 - f:surroundElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[]):com.intellij.openapi.util.TextRange
+*a:com.intellij.lang.surroundWith.PsiUpdateModCommandSurrounder
+- com.intellij.lang.surroundWith.ModCommandSurrounder
+- <init>():V
+- getWritable(com.intellij.modcommand.ModPsiUpdater,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- f:surroundElements(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand
+- a:surroundElements(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement[],com.intellij.modcommand.ModPsiUpdater):V
 *:com.intellij.microservices.MicroservicesFeaturesAvailabilityProvider
 - a:searchEverywhereTabAvailableFor(com.intellij.openapi.project.Project):Z
 *:com.intellij.microservices.client.generator.AvailableClientSettings

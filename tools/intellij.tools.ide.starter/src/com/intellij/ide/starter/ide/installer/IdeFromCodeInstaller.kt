@@ -43,7 +43,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
     return if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
       val moduleRepository = RuntimeModuleRepository.create(installationDirectory.resolve("modules").resolve("module-descriptors.jar"))
-      moduleRepository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader")).moduleClasspath.map { it.toString() }
+      moduleRepository.getModule(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).moduleClasspath.map { it.toString() }
     }
     else {
       Files.readAllLines(coreClassPathFile)

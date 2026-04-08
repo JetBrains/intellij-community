@@ -27,4 +27,10 @@ public class ElseStatementPostfixTemplate extends ElseExpressionPostfixTemplateB
   protected @NotNull Surrounder getSurrounder() {
     return new JavaWithIfExpressionSurrounder();
   }
+
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

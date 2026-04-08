@@ -5,7 +5,6 @@ a:com.intellij.codeInsight.hint.HintManager
 @:com.intellij.codeInsight.hint.HintManager$HideFlags
 @:com.intellij.codeInsight.hint.HintManager$PositionFlags
 c:com.intellij.execution.ExecutionFinishedException
-c:com.intellij.execution.filters.BrowserHyperlinkInfo
 a:com.intellij.execution.filters.HyperlinkInfoBase
 c:com.intellij.execution.process.BinaryOSProcessHandler
 c:com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler

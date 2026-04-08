@@ -1047,7 +1047,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void addListeners() {
-    editor.getUiDocument().addDocumentListener(new DocumentListener() {
+    editor.getElfDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         if (canHideOnChange()) {

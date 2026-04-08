@@ -436,6 +436,23 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
       """.trimIndent())
   }
 
+  fun `test malformed inherited source for parameterized class`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["title"])
+        abstract class ParentTest {
+        }
+        
+        class OkChildTest: ParentTest() {
+          @org.junit.jupiter.params.Parameter
+          var value: String? = null
+        
+          @org.junit.jupiter.api.Test
+          fun test() { }
+        }
+      """.trimIndent())
+  }
+
   fun `test malformed parameterized class must specify a method name when using MethodSource`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """

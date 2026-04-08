@@ -123,6 +123,9 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
         if (ex == null) {
           ex = e;
         }
+        else {
+          ex.addSuppressed(e);
+        }
       }
     }
     myMaps.clear();
@@ -130,7 +133,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
       throw new BuildDataCorruptedException((IOException) ex);
     }
     else if (ex != null) {
-      throw new RuntimeException(ex);
+      throw ex instanceof RuntimeException? (RuntimeException)ex : new RuntimeException(ex);
     }
   }
 

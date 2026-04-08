@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
 import org.jetbrains.annotations.ApiStatus
 
 /**

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/kernel/shared:kernel",
     "//platform/core-api:core",
+    "//fleet/rhizomedb",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/core-api:core_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.progress.backend` end

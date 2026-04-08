@@ -40,4 +40,11 @@ public class ThrowStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testIncompleteExpression() {
     doTest();
   }
+
+  public static class ModThrowStatementPostfixTemplateTest extends ThrowStatementPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

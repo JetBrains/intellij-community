@@ -21,5 +21,11 @@ public class AsListToListPostfixTemplateTest extends PostfixTemplateTestCase {
     doTestCompletion("asList");
   }
 
+  public static class ModAsListToListPostfixTemplateTest extends AsListToListPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

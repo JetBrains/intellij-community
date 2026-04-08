@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.USES_STATEMENT;
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class ModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
     ContainerUtil.newHashSet(JavaKeywords.REQUIRES, JavaKeywords.EXPORTS, JavaKeywords.USES, JavaKeywords.PROVIDES);

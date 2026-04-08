@@ -9,9 +9,13 @@ const MERGE_TOOL_NAMES = new Set([
   'search_text', 'search_regex', 'search_file', 'search_symbol'
 ])
 
+const SPLIT_MERGE_TOOL_NAMES = new Set([
+  'lint_files'
+])
+
 // --- Routing decisions ---
 
-export type RouteAction = 'merge' | 'target-idea' | 'target-rider' | 'primary'
+export type RouteAction = 'merge' | 'split-merge' | 'target-idea' | 'target-rider' | 'primary'
 
 /**
  * Determines how a tool call should be routed in dual-IDE mode.
@@ -22,6 +26,7 @@ export function resolveRoute(
   projectRoot: string
 ): RouteAction {
   if (MERGE_TOOL_NAMES.has(toolName)) return 'merge'
+  if (SPLIT_MERGE_TOOL_NAMES.has(toolName)) return 'split-merge'
 
   return resolveIdeForPath(args, projectRoot) === 'rider' ? 'target-rider' : 'primary'
 }
@@ -89,6 +94,42 @@ export function isRiderPath(filePath: string, projectRoot: string): boolean {
   const relative = path.relative(projectRoot, absolute)
   if (relative.startsWith('..') || path.isAbsolute(relative)) return false
   return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path.sep)
+}
+
+export function splitPathListArgsByIde(
+  args: Record<string, unknown>,
+  projectRoot: string,
+  argName: string = 'file_paths'
+): {ideaArgs?: Record<string, unknown>; riderArgs?: Record<string, unknown>} {
+  const rawPaths = args[argName]
+  if (!Array.isArray(rawPaths)) {
+    throw new Error(`${argName} must be an array of strings`)
+  }
+
+  const normalizedPaths = rawPaths.map((rawPath) => {
+    if (typeof rawPath !== 'string' || rawPath.trim().length === 0) {
+      throw new Error(`${argName} must contain non-empty strings`)
+    }
+    return rawPath.trim()
+  })
+  if (normalizedPaths.length === 0) {
+    throw new Error(`${argName} must contain at least one path`)
+  }
+
+  const ideaPaths: string[] = []
+  const riderPaths: string[] = []
+  for (const filePath of normalizedPaths) {
+    if (isRiderPath(filePath, projectRoot)) {
+      riderPaths.push(stripRiderPrefix(filePath))
+    } else {
+      ideaPaths.push(filePath)
+    }
+  }
+
+  return {
+    ideaArgs: ideaPaths.length > 0 ? {...args, [argName]: ideaPaths} : undefined,
+    riderArgs: riderPaths.length > 0 ? {...args, [argName]: riderPaths} : undefined
+  }
 }
 
 const PATH_ARG_KEYS = ['pathInProject', 'file_path', 'dir_path', 'directoryPath', 'filePath']

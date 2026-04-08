@@ -119,6 +119,14 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     assertEquals(nativeMessage, inMemMessage)
   }
 
+  fun `test compare messages with whitespace cleanup`() {
+    GitConfigUtil.setValue(project, repo.root, GitConfigUtil.COMMIT_CLEANUP, "whitespace")
+
+    val (inMemMessage, nativeMessage) = rewordInMemoryAndNativeAndGetMessages(COMPLEX_MESSAGE)
+
+    assertEquals(nativeMessage, inMemMessage)
+  }
+
   // IJPL-212686
   private fun rewordInMemoryAndNativeAndGetMessages(message: String): Pair<String, String> {
     file("a").create().addCommit("Add a")

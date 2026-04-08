@@ -14,6 +14,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteActionListener;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -22,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -739,6 +742,70 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       MockApplication application = new MockApplication(disposable);
       ApplicationManager.setApplication(application, disposable);
       assertNull(ProgressManager.getInstanceOrNull());
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public void testWriteActionListenerMustReceiveCorrectClazz() throws Throwable {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      AtomicReference<Class<?>> expectedClass = new AtomicReference<>();
+      AtomicInteger called = new AtomicInteger();
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      application.addWriteActionListener(new WriteActionListener() {
+        @Override
+        public void beforeWriteActionStart(@NotNull Class<?> action) {
+          assertSame(expectedClass.get(), action);
+          called.incrementAndGet();
+        }
+
+        @Override
+        public void writeActionStarted(@NotNull Class<?> action) {
+          assertSame(expectedClass.get(), action);
+          called.incrementAndGet();
+        }
+
+        @Override
+        public void writeActionFinished(@NotNull Class<?> action) {
+          assertSame(expectedClass.get(), action);
+          called.incrementAndGet();
+        }
+
+        @Override
+        public void afterWriteActionFinished(@NotNull Class<?> action) {
+          assertSame(expectedClass.get(), action);
+          called.incrementAndGet();
+        }
+      }, disposable);
+
+      Runnable action = () -> {
+        LOG.debug(getTestName(false));
+      };
+      expectedClass.set(action.getClass());
+      application.runWriteAction(action);
+      assertEquals(4, called.getAndSet(0));
+
+      Computable<String> computation = () -> {
+        return getTestName(false);
+      };
+      expectedClass.set(computation.getClass());
+      application.runWriteAction(computation);
+      assertEquals(4, called.getAndSet(0));
+
+      ThrowableComputable<String, Throwable> t = () -> {
+        //noinspection ConstantValue
+        if (this == null) {
+          throw new Throwable();
+        }
+        else {
+          return getTestName(false);
+        }
+      };
+      expectedClass.set(t.getClass());
+      application.runWriteAction(t);
+      assertEquals(4, called.getAndSet(0));
     }
     finally {
       Disposer.dispose(disposable);

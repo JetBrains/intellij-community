@@ -20,6 +20,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/ui",
+    "//platform/ide-core",
     "//platform/core-ui",
     "//platform/execution",
     "//platform/execution-impl",
@@ -28,6 +29,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//libraries/jcef",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -43,6 +45,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/ui:ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
@@ -51,6 +54,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//libraries/jcef:jcef_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.newUiOnboarding` end

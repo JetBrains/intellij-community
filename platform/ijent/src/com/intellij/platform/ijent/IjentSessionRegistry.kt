@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.application.ApplicationManager
@@ -24,8 +24,8 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
   private val counter = AtomicLong()
 
   private class IjentBundle(
-    val factory: suspend (ijentId: IjentId) -> IjentSession<IjentPosixApi>,
-    val deferred: Deferred<IjentSession<IjentPosixApi>>?,
+    val factory: suspend (ijentId: IjentId) -> IjentSession.Posix,
+    val deferred: Deferred<IjentSession.Posix>?,
     val oneOff: Boolean,
   )
 
@@ -39,7 +39,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
    */
   fun register(
     ijentName: String,
-    launcher: suspend (ijentId: IjentId) -> IjentSession<IjentPosixApi>,
+    launcher: suspend (ijentId: IjentId) -> IjentSession.Posix,
   ): IjentId {
     val ijentId = IjentId("ijent-${counter.getAndIncrement()}-${ijentName.replace(Regex("[^A-Za-z0-9-]"), "-")}")
     ijents[ijentId] = IjentBundle(launcher, null, oneOff = false)
@@ -71,7 +71,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
    * An instance of [IjentApi] that has ever thrown [IjentUnavailableException] will never be returned by this function again.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  suspend fun get(ijentId: IjentId): IjentSession<IjentPosixApi> {
+  suspend fun get(ijentId: IjentId): IjentSession.Posix {
     val currentDispatcher = currentCoroutineDispatcher()
     val bundle = ijents.compute(ijentId, @Suppress("NAME_SHADOWING") { ijentId, oldBundle ->
       require(oldBundle != null) {
@@ -80,7 +80,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
 
       val oldDeferred = oldBundle.deferred
 
-      val reusedOldDeferred: Deferred<IjentSession<IjentPosixApi>>? = when {
+      val reusedOldDeferred: Deferred<IjentSession.Posix>? = when {
         oldDeferred == null -> null
         oldBundle.oneOff -> oldDeferred
         !oldDeferred.isCompleted -> oldDeferred

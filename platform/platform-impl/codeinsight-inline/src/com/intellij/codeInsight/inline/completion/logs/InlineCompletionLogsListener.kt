@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.editorIdOrNull
 import java.time.Duration
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionFilteringEventListener(),
@@ -196,10 +197,11 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     val selectedVariant = holder.variantStates[selectedIndex] ?: return
     val insertOffset = holder.trackedStartOffset ?: return
     val endOffset = holder.trackedEndOffset ?: return
-    service<InsertedStateTracker>().trackV2(
+    val project = editor.project ?: return
+    project.service<InsertedStateTracker>().trackV2(
       holder.requestId,
       holder.trackedLanguage,
-      editor,
+      editor.editorIdOrNull() ?: return,
       endOffset,
       insertOffset,
       selectedVariant.finalSuggestion,

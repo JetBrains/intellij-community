@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
@@ -32,9 +31,6 @@ open class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutine
   companion object {
     const val PREFIX: String = CMD_PREFIX + "doLocalInspection"
     const val SPAN_NAME: String = "localInspections"
-
-    @JvmStatic
-    protected val LOG = logger<DoLocalInspection>()
   }
 
   @Suppress("TestOnlyProblems")

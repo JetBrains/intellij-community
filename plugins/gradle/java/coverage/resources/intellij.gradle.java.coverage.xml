@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Coverage"/>
+    <module name="intellij.gradle"/>
   </dependencies>
   <!-- endregion -->
 

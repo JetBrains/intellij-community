@@ -35,6 +35,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/ml-impl",
     "//platform/platform-impl/internal",
+    "//platform/ide-core",
     "//platform/core-ui",
     "//platform/execution-impl",
     "//json/backend",
@@ -50,8 +51,8 @@ jvm_library(
     "//plugins/search-everywhere-ml",
     "//platform/execution",
     "//platform/searchEverywhere/frontend",
-  ],
-  exports = ["//platform/statistics"]
+    "//platform/util:util-ui",
+  ]
 )
 
 jvm_library(
@@ -59,10 +60,6 @@ jvm_library(
   module_name = "intellij.searchEverywhereMl.ranking.core",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/statistics",
-    "//platform/statistics:statistics_test_lib",
-  ],
   runtime_deps = [
     ":core",
     "//libraries/jackson/jackson:jackson_test_lib",
@@ -87,6 +84,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/ml-impl:ml-impl_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
     "//json/backend:backend_test_lib",
@@ -102,6 +100,7 @@ jvm_library(
     "//platform/statistics/testFramework:testFramework_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/searchEverywhere/frontend:frontend_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end
@@ -117,8 +116,7 @@ jvm_library(
   name = "searchEverywhereMl-ranking-core-tests",
   module_name = "intellij.searchEverywhereMl.ranking.core.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["//platform/statistics"]
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -201,10 +199,8 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/searchEverywhere/frontend",
     "//platform/searchEverywhere/frontend:frontend_test_lib",
-  ],
-  exports = [
-    "//platform/statistics",
-    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
   ],
   runtime_deps = [
     ":searchEverywhereMl-ranking-core-tests",

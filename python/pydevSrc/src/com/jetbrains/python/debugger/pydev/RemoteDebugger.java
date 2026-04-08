@@ -22,7 +22,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.IPyDebugProcess;
-import com.jetbrains.python.debugger.PyConcurrencyEvent;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyFrameAccessor;
@@ -596,9 +595,6 @@ public class RemoteDebugger implements ProcessDebugger {
       else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
         recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
       }
-      else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
-        recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
-      }
       else if (AbstractCommand.isInputRequested(frame.getCommand())) {
         myDebugProcess.consoleInputRequested(ProtocolParser.parseInputCommand(frame.getPayload()));
       }
@@ -621,10 +617,6 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private void recordCallSignature(PySignature signature) {
     myDebugProcess.recordSignature(signature);
-  }
-
-  private void recordConcurrencyEvent(PyConcurrencyEvent event) {
-    myDebugProcess.recordLogEvent(event);
   }
 
   // todo: extract response processing

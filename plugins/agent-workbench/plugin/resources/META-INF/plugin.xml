@@ -25,7 +25,8 @@
     <module name="intellij.agent.workbench.codex.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.sessions.launch.config.backend"/>
-    <module name="intellij.agent.workbench.prompt"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.agent.workbench.prompt.vcs"/>
     <module name="intellij.agent.workbench.prompt.testrunner"/>
     <module name="intellij.agent.workbench.sessions"/>
@@ -33,11 +34,15 @@
     <module name="intellij.agent.workbench.sessions.toolwindow"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.filewatch"/>
+    <module name="intellij.agent.workbench.vcs.merge"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="agent.workbench.codex.tui.patch.folding"
                  defaultValue="false"
                  description="Collapse large Codex TUI patch transcripts in Agent Workbench chat tabs"/>
+    <registryKey key="agent.workbench.semantic.proposed.plan.navigation"
+                 defaultValue="false"
+                 description="Highlight and navigate proposed plans in Agent Workbench chat tabs"/>
   </extensions>
 </idea-plugin>

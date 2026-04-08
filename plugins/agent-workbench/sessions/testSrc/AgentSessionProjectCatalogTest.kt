@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.git.GitWorktreeInfo
 import com.intellij.agent.workbench.sessions.model.ProjectBuildSystemBadge
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -21,6 +21,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import javax.swing.Icon
 
 class AgentSessionProjectCatalogTest {
@@ -75,7 +76,13 @@ class AgentSessionProjectCatalogTest {
 
   @Test
   fun resolveOpenProjectPathNormalizesManagerPath() {
-    assertThat(resolveOpenProjectPath(managerProjectPath = "/work/project-a/", projectBasePath = null))
+    assertThat(resolveOpenProjectPath(managerProjectPath = Path.of("/work/project-a/"), projectBasePath = null))
+      .isEqualTo("/work/project-a")
+  }
+
+  @Test
+  fun resolveOpenProjectPathPrefersManagerPathWhenBothProvided() {
+    assertThat(resolveOpenProjectPath(managerProjectPath = Path.of("/work/project-a/"), projectBasePath = "/work/project-b/"))
       .isEqualTo("/work/project-a")
   }
 

@@ -3,9 +3,12 @@
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
   <dependencies>
-    <module name="intellij.platform.ml.impl"/>
     <plugin id="tanvd.grazi"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.platform.ml.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

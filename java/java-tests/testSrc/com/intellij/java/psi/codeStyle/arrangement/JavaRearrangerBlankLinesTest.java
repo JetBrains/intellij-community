@@ -1,7 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
-
-import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest;
 
 import java.util.List;
 
@@ -90,7 +88,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
 
                  void test2() {
                  }
-             }""", List.of(AbstractRearrangerTest.rule(FIELD, PACKAGE_PRIVATE), AbstractRearrangerTest.rule(METHOD)));
+             }""", List.of(rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)));
   }
 
   public void test_blank_lines_settings_are_not_applied_to_anonymous_classes() {
@@ -102,7 +100,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
           a(new Intf() {});
         }
       }""";
-    doTest(text, text, List.of(AbstractRearrangerTest.rule(CLASS)));
+    doTest(text, text, List.of(rule(CLASS)));
   }
 
   public void test_statements_on_the_same_line() {

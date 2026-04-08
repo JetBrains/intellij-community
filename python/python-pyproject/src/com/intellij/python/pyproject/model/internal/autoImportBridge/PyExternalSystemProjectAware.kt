@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
@@ -80,6 +81,9 @@ class PyExternalSystemProjectAware private constructor(
 
     project.messageBus.syncAndPreloadPublisher(PROJECT_AWARE_TOPIC).apply {
       try {
+        log.debug {
+          "Reload project called"
+        }
         this.onProjectReloadStart()
         val files = walkFileSystemWithTomlContent(projectRootDir).getOr {
           if (log.isTraceEnabled) {
@@ -88,6 +92,10 @@ class PyExternalSystemProjectAware private constructor(
           this.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
           return
         }
+        log.debug {
+          "Files found: ${files.tomlFiles.keys.joinToString(", ")}"
+        }
+
         rebuildProjectModel(project, files)
         this.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
         // Even though we have no entities, we still "rebuilt" the model, time to configure SDK

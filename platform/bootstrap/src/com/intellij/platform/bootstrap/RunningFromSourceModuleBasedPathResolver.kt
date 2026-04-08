@@ -22,7 +22,7 @@ internal class RunningFromSourceModuleBasedPathResolver(
 ) : PathResolver by fallbackResolver {
   override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
     val moduleName = path.removeSuffix(".xml")
-    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.module(moduleName)).resolvedModule
+    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.contentModule(moduleName, PluginModuleId.JETBRAINS_NAMESPACE)).resolvedModule
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
       val reader = PluginDescriptorFromXmlStreamConsumer(readContext,
@@ -34,7 +34,7 @@ internal class RunningFromSourceModuleBasedPathResolver(
   }
 
   override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
-    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
+    val moduleDescriptor = moduleRepository.resolveModule(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)).resolvedModule
     return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 }

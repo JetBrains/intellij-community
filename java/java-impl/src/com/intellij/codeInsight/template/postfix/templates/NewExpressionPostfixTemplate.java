@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
@@ -29,9 +28,8 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.DumbModeAccessType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,30 +70,28 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     return element instanceof PsiMethodCallExpression ? "new $expr$" : "new $expr$($END$)";
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     if (expression instanceof PsiReferenceExpression ref) {
-      JavaResolveResult result = DumbService.getInstance(expression.getProject())
-        .withAlternativeResolveEnabled(() -> ref.advancedResolve(true));
-      PsiElement element = result.getElement();
-      
-      if (element == null) {
-        String name = ref.getReferenceName();
-        if (name != null && ref.getQualifierExpression() == null) {
-          PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
-            () -> PsiShortNamesCache.getInstance(ref.getProject()).getClassesByName(name, ref.getResolveScope()));
-          if (classes.length == 1) {
-            element = classes[0];
-          }
-        }
-      }
-
-      if (element instanceof PsiClass psiClass) {
+      PsiClass psiClass = NewExpressionModExpandAction.resolveClass(ref);
+      if (psiClass != null) {
         WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, psiClass));
         return;
       }
     }
     super.expandForChooseExpression(expression, editor);
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander(new NewExpressionModExpandAction(new StringBasedModExpandAction(this)));
   }
 
   @Override
@@ -111,7 +107,8 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     Project project = expression.getProject();
 
     SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaClass);
-    int startOffset = replaceExpressionTextByNewExpressionInDocument(project, expression, document);
+    int startOffset = NewExpressionModExpandAction.replaceExpressionTextByNewExpression(expression, document);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
 
     if (!javaClass.isValid()) {
       javaClass = pointer.getElement();
@@ -137,16 +134,5 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
 
     int offset = editor.getCaretModel().getOffset();
     return CompletionUtil.newContext(insertionContext, item, startOffset, offset);
-  }
-
-  private static int replaceExpressionTextByNewExpressionInDocument(@NotNull Project project,
-                                                                    @NotNull PsiElement expression,
-                                                                    @NotNull Document document) {
-    TextRange range = expression.getTextRange();
-    String newPrefix = "new ";
-    document.replaceString(range.getStartOffset(), range.getEndOffset(), newPrefix + expression.getText());
-
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    return range.getStartOffset() + newPrefix.length();
   }
 }

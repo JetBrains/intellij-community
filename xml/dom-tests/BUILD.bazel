@@ -11,6 +11,7 @@ jvm_library(
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",
+    "//java/java-psi-api:psi",
   ]
 )
 
@@ -26,8 +27,12 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/indexing-api:indexing",
@@ -40,6 +45,8 @@ jvm_library(
     "//java/testFramework:testFramework_test_lib",
     "//java/java-psi-impl:psi-impl",
     "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl:impl",
@@ -51,6 +58,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-parser:parser",
+    "//xml/xml-parser:parser_test_lib",
     "//platform/libraries/cglib",
     "//platform/libraries/cglib:cglib_test_lib",
     "//xml/xml-analysis-api:analysis",
@@ -59,6 +68,8 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
   ],
   runtime_deps = [":dom-tests"]
 )

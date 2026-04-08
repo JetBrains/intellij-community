@@ -105,9 +105,16 @@ object APIQueries {
                           services: Set<CorrectionServiceType>,
                           userSettings: UserSettings? = null,
                           clientAbilities: Set<ClientAbility>? = null): List<Problem>? {
+    val actualClientAbilities = if (CorrectionServiceType.MLEC in services) {
+      val abilities = clientAbilities?.toMutableSet() ?: mutableSetOf()
+      abilities.add(ClientAbility.closeMlecMerging)
+      abilities
+    } else {
+      clientAbilities
+    }
     return handleExceptions(project, BackgroundCloudService.GEC) {
       withContext(Dispatchers.IO) {
-        GrazieCloudConnector.api()?.gec()?.correctText(paragraphs, services, userSettings, clientAbilities)?.corrections
+        GrazieCloudConnector.api()?.gec()?.correctText(paragraphs, services, userSettings, actualClientAbilities)?.corrections
       }
     }
   }
@@ -115,7 +122,9 @@ object APIQueries {
   suspend fun mlec(sentences: List<SentenceWithExclusions>, lang: Language, project: Project): List<SentenceWithProblems>? {
     return handleExceptions(project, BackgroundCloudService.GEC) {
       withContext(Dispatchers.IO) {
-        GrazieCloudConnector.api()?.gec()?.problemsWithExclusions(lang, sentences, setOf(CorrectionServiceType.MLEC))
+        GrazieCloudConnector.api()?.gec()?.problemsWithExclusions(
+          lang, sentences, setOf(CorrectionServiceType.MLEC), clientAbilities = setOf(ClientAbility.closeMlecMerging)
+        )
       }
     }
   }

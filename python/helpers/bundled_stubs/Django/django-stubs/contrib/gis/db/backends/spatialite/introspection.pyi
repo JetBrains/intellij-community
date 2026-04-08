@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.db.backends.sqlite3.introspection import DatabaseIntrospection, FlexibleFieldLookupDict
+from typing_extensions import override
 
 class GeoFlexibleFieldLookupDict(FlexibleFieldLookupDict):
     base_data_types_reverse: Any
@@ -8,4 +9,5 @@ class GeoFlexibleFieldLookupDict(FlexibleFieldLookupDict):
 class SpatiaLiteIntrospection(DatabaseIntrospection):
     data_types_reverse: Any
     def get_geometry_type(self, table_name: Any, description: Any) -> Any: ...
+    @override
     def get_constraints(self, cursor: Any, table_name: Any) -> Any: ...

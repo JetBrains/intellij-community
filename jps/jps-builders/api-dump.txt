@@ -2447,6 +2447,7 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - f:wipe():Z
 f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - sf:PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY:java.lang.String
+- clean():V
 - clean(java.util.function.Consumer):V
 - cleanStaleTarget(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):V
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V

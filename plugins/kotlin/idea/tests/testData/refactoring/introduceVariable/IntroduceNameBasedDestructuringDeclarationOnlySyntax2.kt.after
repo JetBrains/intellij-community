@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// IGNORE_K1
+fun test() {
+    (val width1 = width, val height1 = height) = Dimension(0, 0)
+    (val width, val height) = Dimension(1, 2)
+}
+
+data class Dimension(val width: Int, val height: Int)

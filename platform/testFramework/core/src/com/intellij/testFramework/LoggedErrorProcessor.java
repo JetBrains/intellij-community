@@ -52,6 +52,17 @@ public class LoggedErrorProcessor {
    * Reports failures if no errors or more than one error were logged.
    */
   public static @NotNull Throwable executeAndReturnLoggedError(@NotNull Runnable runnable) {
+    return executeAndReturnLoggedError(Action.NONE, runnable);
+  }
+
+  /**
+   * Runs {@code runnable} and returns an exception which was logged from it.
+   * Reports failures if no errors or more than one error were logged.
+   *
+   * @param action the actions to be performed on the logged error.
+   * @param runnable the runnable to execute.
+   */
+  public static @NotNull Throwable executeAndReturnLoggedError(EnumSet<Action> action, @NotNull Runnable runnable) {
     AtomicReference<Throwable> error = new AtomicReference<>();
     executeWith(new LoggedErrorProcessor() {
       @Override
@@ -60,7 +71,7 @@ public class LoggedErrorProcessor {
         if (!error.compareAndSet(null, t)) {
           Assert.fail("Multiple errors were reported: " + error.get().getMessage() + " and " + t.getMessage());
         }
-        return Action.NONE;
+        return action;
       }
     }, () -> runnable.run());
     Throwable result = error.get();

@@ -2,15 +2,15 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -26,6 +26,7 @@ class TestAgentSessionProviderDescriptor(
   override val editorTabActionIds: List<String> = emptyList(),
   override val supportsPendingEditorTabRebind: Boolean = false,
   override val supportsNewThreadRebind: Boolean = false,
+  private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
 ) : AgentSessionProviderDescriptor {
@@ -36,7 +37,8 @@ class TestAgentSessionProviderDescriptor(
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
-    get() = iconOverride ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
+    get() = iconOverride
+            ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes
@@ -68,18 +70,10 @@ class TestAgentSessionProviderDescriptor(
     return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
   }
 
-  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(command = listOf("test"))
-  }
-
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     return AgentInitialMessagePlan.composeDefault(request)
   }
 
-  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    return AgentSessionLaunchSpec(
-      sessionId = null,
-      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
-    )
-  }
+  override val threadRenameHandler: AgentThreadRenameHandler?
+    get() = threadRenameHandlerOverride
 }

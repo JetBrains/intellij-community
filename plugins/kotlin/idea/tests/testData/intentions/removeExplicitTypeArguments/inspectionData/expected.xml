@@ -304,4 +304,95 @@
     <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
     <description>Explicit type arguments can be inferred</description>
   </problem>
+  <problem>
+    <file>script.kts</file>
+    <line>1</line>
+    <module>light_idea_test_case</module>
+    <package>&lt;default&gt;</package>
+    <entry_point TYPE="file" FQNAME="script.kts" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>6</offset>
+    <length>8</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInInnerClassNecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInInnerClassNecessary</package>
+    <entry_point TYPE="field" FQNAME="valueDeclarationWithReceiverInInnerClassNecessary.Outer.Inner inner" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Inner&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>23</offset>
+    <length>7</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInInnerClassUnnecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInInnerClassUnnecessary</package>
+    <entry_point TYPE="field" FQNAME="valueDeclarationWithReceiverInInnerClassUnnecessary.Outer.Inner inner" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Inner&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>23</offset>
+    <length>7</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInMemberExtensionNecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInMemberExtensionNecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverInMemberExtensionNecessary.Main void test(int $this$test)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInMemberExtensionUnnecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInMemberExtensionUnnecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverInMemberExtensionUnnecessary.Main void test(int $this$test)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverNecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverNecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverNecessary.ValueDeclarationWithReceiverNecessaryKt void testMeToo(java.lang.String $this$testMeToo)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverUnnecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverUnnecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverUnnecessary.ValueDeclarationWithReceiverUnnecessaryKt void testMeToo(java.lang.String $this$testMeToo)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
 </problems>

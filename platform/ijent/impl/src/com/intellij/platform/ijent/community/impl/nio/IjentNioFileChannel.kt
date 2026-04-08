@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.logger
@@ -118,10 +118,9 @@ internal class IjentNioFileChannel private constructor(
     if (length < 0) throw IndexOutOfBoundsException("Number of written buffers $length is negative")
     if (length > buffers.size - offset) throw IndexOutOfBoundsException("Attempting to write to $length buffers while only ${buffers.size - offset} are available")
 
-    val iter = buffers.asSequence().take(length).iterator()
+    val iter = buffers.asSequence().drop(offset).take(length).iterator()
     if (iter.hasNext()) {
       var buf = iter.next()
-      buf.position(buf.position() + offset)
       while (true) {
         body(buf)  // Can return through the whole function.
         buf = when {

@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.configuration
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.addKotlinCompilerPlugin
@@ -51,6 +54,35 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
                 configurationResultBuilder.configuredModule(module)
             }
         }
+    }
+
+    override fun configureModuleModCommand(module: Module): ModCommand {
+        val pomFile = findModulePomFile(module) as? XmlFile ?: return ModCommand.nop()
+        val actionContext = ActionContext.from(null, pomFile)
+        return ModCommand.psiUpdate(actionContext) { updater ->
+            val writablePomFile = updater.getWritable(pomFile)
+            val pom = PomFile.forFileOrNull(writablePomFile) ?: return@psiUpdate
+            val kotlinPlugin = pom.findPlugin(kotlinPluginId(null)) ?: return@psiUpdate
+
+            val execution =
+                kotlinPlugin.executions.executions.firstOrNull { execution: MavenDomPluginExecution ->
+                    execution.goals.goals.any {
+                        it.rawText == PomFile.KotlinGoals.Compile
+                    }
+                } ?: return@psiUpdate
+
+            val configurationElement = execution.configuration.ensureTagExists()
+            val compilerPlugins = configurationElement.findSubTags("compilerPlugins").firstOrNull()
+
+            if (compilerPlugins?.findSubTags("plugin")?.firstOrNull { it.value.trimmedText == kotlinCompilerPluginId } != null)
+                return@psiUpdate
+
+            pom.addKotlinCompilerPlugin(kotlinCompilerPluginId)?.let { kotlinPlugin ->
+                pluginDependencyMavenId?.let {
+                    pom.addPluginDependency(kotlinPlugin, it)
+                }
+            }
+        }.andThen(KotlinDependencyProvider.syncModCommand(pomFile))
     }
 
     protected abstract val pluginDependencyMavenId: MavenId?

@@ -33,7 +33,7 @@ Define VCS-driven prompt context behavior for selected commits, including auto-c
 ## Requirements
 - Contributor registration contract:
   - phase is `INVOCATION`,
-  - order is `50`.
+  - registration is ordered after the editor contributor and before the project-view contributor via extension ordering.
 
 - Manual VCS source registration contract:
   - registered through `com.intellij.agent.workbench.promptManualContextSource`,

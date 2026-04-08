@@ -76,6 +76,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/ide-core",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
@@ -109,6 +110,7 @@ jvm_library(
     ":lambda-sampleTestsWithFixtures",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures` end

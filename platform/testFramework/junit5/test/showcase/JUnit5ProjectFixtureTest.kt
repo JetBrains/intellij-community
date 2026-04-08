@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.showcase
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -20,12 +22,17 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 @TestApplication
 class JUnit5ProjectFixtureTest {
 
   private companion object {
+    val blueprintProjectRoot: Path = PathManager.getHomeDirFor(JUnit5ProjectFixtureTest::class.java)!!
+      .resolve("platform/testFramework/junit5/test-resources/projectFixture/blueprintProject")
+    val projectFromBlueprint = projectFixture(openAfterCreation = true, blueprintResourcePath = blueprintProjectRoot)
+    val mainFileInBlueprintProject = projectFromBlueprint.fileOrDirInProjectFixture("src/Main.java")
     val sharedProject0 = projectFixture()
     val sharedProject1 = projectFixture()
     val openedProject = projectFixture(openAfterCreation = true)
@@ -97,6 +104,17 @@ class JUnit5ProjectFixtureTest {
     val project = existingProject.get()
     assertEquals("existingProject", project.name)
     assertTrue(project.isOpen)
+  }
+
+  @Test
+  fun `copy project blueprint before opening`() {
+    val project = projectFromBlueprint.get()
+    assertTrue(project.isOpen)
+    assertEquals("Main.java", mainFileInBlueprintProject.get().name)
+    assertEquals(
+      "public class Main {\n}\n",
+      Path.of(project.basePath!!).resolve("src/Main.java").readText(),
+    )
   }
 }
 

@@ -201,6 +201,99 @@ DOC_SPACE ('\n ')
 DOC_COMMENT_END ('*/')""")
   }
 
+  fun testParameterized() {
+    doTest("///@see List<List<List>>", """
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_TAG_NAME ('@see')
+DOC_SPACE (' ')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_GT ('>')
+DOC_TAG_VALUE_GT ('>')""")
+  }
+
+  fun testParameterized02() {
+    doTest("///@see #meth(List<List<Int>>)", """
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_TAG_NAME ('@see')
+DOC_SPACE (' ')
+DOC_TAG_VALUE_SHARP_TOKEN ('#')
+DOC_TAG_VALUE_TOKEN ('meth')
+DOC_TAG_VALUE_LPAREN ('(')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_TAG_VALUE_TOKEN ('Int')
+DOC_TAG_VALUE_GT ('>')
+DOC_TAG_VALUE_GT ('>')
+DOC_TAG_VALUE_RPAREN (')')
+""")
+  }
+
+  fun testParameterizedMalformed() {
+    doTest("""
+      /// {@link List<}
+      /// @see #classic(List<)
+    """.trimIndent(), """
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_SPACE (' ')
+DOC_INLINE_TAG_START ('{')
+DOC_TAG_NAME ('@link')
+DOC_SPACE (' ')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_INLINE_TAG_END ('}')
+DOC_SPACE ('\n')
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_COMMENT_DATA (' ')
+DOC_TAG_NAME ('@see')
+DOC_SPACE (' ')
+DOC_TAG_VALUE_SHARP_TOKEN ('#')
+DOC_TAG_VALUE_TOKEN ('classic')
+DOC_TAG_VALUE_LPAREN ('(')
+DOC_TAG_VALUE_TOKEN ('List')
+DOC_TAG_VALUE_LT ('<')
+DOC_TAG_VALUE_RPAREN (')')""")
+  }
+
+  fun testParameterizedMarkdown() {
+    doTest("///[List<List<List>>]", """
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_LBRACKET ('[')
+DOC_COMMENT_DATA ('List')
+DOC_LT ('<')
+DOC_COMMENT_DATA ('List')
+DOC_LT ('<')
+DOC_COMMENT_DATA ('List')
+DOC_GT ('>')
+DOC_GT ('>')
+DOC_RBRACKET (']')
+""")
+  }
+
+  fun testParameterizedMarkdown02() {
+    doTest("///[#meth(List<List<Int>>)]", """
+DOC_COMMENT_LEADING_ASTERISKS ('///')
+DOC_LBRACKET ('[')
+DOC_SHARP ('#')
+DOC_COMMENT_DATA ('meth')
+DOC_LPAREN ('(')
+DOC_COMMENT_DATA ('List')
+DOC_LT ('<')
+DOC_COMMENT_DATA ('List')
+DOC_LT ('<')
+DOC_COMMENT_DATA ('Int')
+DOC_GT ('>')
+DOC_GT ('>')
+DOC_RPAREN (')')
+DOC_RBRACKET (']')
+""")
+  }
+
   abstract override fun createLexer(): Lexer
 
   override val dirPath: String

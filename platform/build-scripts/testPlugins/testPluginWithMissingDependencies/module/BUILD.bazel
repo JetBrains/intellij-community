@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util",
     "//platform/util/base",
+    "//tools/launcher-generator",
   ]
 )
 
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/util:util_test_lib",
     "//platform/util/base:base_test_lib",
+    "//tools/launcher-generator:launcher-generator_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

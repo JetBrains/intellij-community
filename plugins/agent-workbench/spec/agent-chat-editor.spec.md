@@ -21,7 +21,7 @@ Status: Draft
 Date: 2026-03-09
 
 ## Summary
-Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
+Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`. Semantic transcript navigation and proposed-plan editor affordances are owned by `spec/agent-chat-semantic-navigation.spec.md`.
 
 ## Goals
 - Open and reuse chat tabs deterministically from thread/sub-agent selection.
@@ -33,6 +33,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Defining sessions aggregation and tree-state behavior.
 - Defining dedicated-frame routing policy details.
 - Defining provider command mapping and shared popup-action contracts.
+- Defining semantic transcript navigation and proposed-plan markers.
 
 ## Requirements
 - Agent Workbench modules must register:
@@ -81,7 +82,11 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - terminal session starts only on first explicit tab selection/focus.
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 
-- Disposing an initialized chat editor must always release terminal tab resources:
+- Agent Chat live terminal lifetime belongs to the logical open chat tab (`tabKey`), not to a transient `FileEditor` instance recreated by tab drag-and-drop reorder, move between splitters, or detach/reattach.
+- Agent Chat files are unsplittable: simultaneous duplicate editor copies of the same chat are not supported because one live terminal view backs the logical tab.
+- Reordering an open chat tab by drag-and-drop must preserve the running session and visible transcript state; the move must not interrupt, restart, or replace the live terminal.
+- Disposing an initialized chat editor instance must only release editor-local controller state; it must not interrupt or restart the live terminal while the same chat file remains open in the project.
+- Closing the chat file after transient editor recreation has settled must always release terminal tab resources:
   - manager-backed tab content must close through `TerminalToolWindowTabsManager.closeTab`,
   - detached tab content (no content manager) must still be released.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
@@ -95,7 +100,12 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Reopening an already-open tab with a newer thread title must update existing tab presentation.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Session-driven rename refreshes (including provider rename actions resolved through Sessions refresh) must update existing tab titles and tooltips without reopening the tab.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
+- After the first pending Codex key event, chat must emit an immediate scoped refresh for the tab path and keep a bounded pending-only scoped refresh retry loop active until the tab rebinds, the tab closes, or the pending rebind window expires.
+- Restored pending Codex tabs with persisted first-input metadata must resume the same bounded scoped refresh retries on initialization.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Concrete top-level Codex tabs must detect execution of exact terminal command `/new`, persist a single rebind anchor timestamp (`newThreadRebindRequestedAtMs`), and request scoped refresh for the tab path.
@@ -113,13 +123,18 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - On existing-tab opens, startup launch override is not applicable and post-start dispatch steps must update the existing tab state for readiness-gated delivery.
 - Post-start initial prompt steps must be dispatched only after terminal session state reaches `Running` and terminal output indicates startup readiness (first meaningful output plus idle stabilization window), not eagerly at editor initialization.
 - Readiness stabilization defaults: 250ms output-idle window after first meaningful output; if no readiness signal appears within 2s after `Running`, timeout fallback dispatch is allowed for non-plan messages.
-- Codex `/plan <prompt>` startup must dispatch as sequenced steps: first `/plan`, then stripped prompt body after the `/plan` step completes.
-- The Codex `/plan` step must not dispatch on readiness timeout and must continue waiting for explicit readiness until session termination/editor disposal.
-- After sending Codex `/plan`, chat must inspect new terminal output only since that send attempt; if Codex emits `'/plan' is disabled while a task is in progress.`, the same `/plan` step must remain pending, back off briefly, and retry before any prompt-body step is sent.
+- Codex plan-mode startup must dispatch sequenced steps: first `/plan`, then stripped prompt body after the `/plan` step completes.
+- For Codex plan-mode startup, the `/plan` step must not dispatch on readiness timeout and must continue waiting for explicit readiness until session termination/editor disposal.
+- Existing-thread prompt launch must reject known-busy Codex plan-mode requests before chat dispatch when the selected thread activity is already `PROCESSING` or `REVIEWING`.
+- Before sending Codex `/plan`, chat must inspect the latest visible terminal tail and defer the step while that tail still reflects active Codex busy UI markers such as MCP startup headers, working-status header text, or queue-hint footer text; stale older tail content must not keep blocking once the latest tail is idle.
+- After sending Codex `/plan`, chat must inspect new terminal output only since that send attempt; if Codex emits `'/plan' is disabled while a task is in progress.`, the same `/plan` step must remain pending, back off briefly, and retry on a timer before any prompt-body step is sent, without requiring fresh terminal readiness output between retries.
+- Codex `/plan` retries that already observed a busy rejection must pause while the open tab still reports `PROCESSING` or `REVIEWING`, then resume the same `/plan` step after activity clears.
+- Codex busy-response detection must tolerate terminal formatting noise such as ANSI color sequences or collapsed/expanded whitespace around the canonical busy message.
 - If the Codex `/plan` step produces no such rejection within the post-send observation window, it is treated as complete even if Codex emitted no explicit success text.
-- If terminal session reaches `Terminated` before `Running`, or the editor is disposed before `Running`, pending initial prompt metadata must remain unsent.
+- If terminal session reaches `Terminated` before `Running`, or an editor instance is disposed before `Running`, pending initial prompt metadata must remain unsent until a later attached editor can resume dispatch.
 - If initial prompt metadata is updated while waiting for `Running`, dispatch must use the latest metadata and stale in-flight dispatch attempts must not mark metadata as sent.
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Editor tab icon must be provider-specific using canonical identity; every normalized `AgentThreadActivity` state is represented by an activity badge, unknown provider uses the default chat icon as the base icon, and unknown activity defaults to `READY`.
 - Pending YOLO-mode tabs must overlay a red error-dot badge on the provider icon (via `withYoloModeBadge`) to visually distinguish YOLO sessions from standard ones.
@@ -159,17 +174,18 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Command lookup failures should expose actionable diagnostics (command + startup `PATH`) without adding fallback launch behavior.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest -Dintellij.build.test.main.module=intellij.agent.workbench.plugin.tests'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatRestoreNotificationServiceTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
+- `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.chat.AgentChatEditorServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatRestoreNotificationServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
 
 ## Open Questions / Risks
 - If product policy changes restart-restore scope (for example single-tab restore), this spec requires explicit revision and migration behavior.
 
 ## References
 - `spec/agent-core-contracts.spec.md`
+- `spec/agent-chat-semantic-navigation.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
 - `spec/agent-sessions.spec.md`
 - `spec/agent-dedicated-frame-project-switching.spec.md`

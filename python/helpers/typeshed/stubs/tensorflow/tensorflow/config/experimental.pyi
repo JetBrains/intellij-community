@@ -1,8 +1,9 @@
 import typing_extensions
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 
 from tensorflow.config import PhysicalDevice
 
+@type_check_only
 class _MemoryInfo(TypedDict):
     current: int
     peak: int

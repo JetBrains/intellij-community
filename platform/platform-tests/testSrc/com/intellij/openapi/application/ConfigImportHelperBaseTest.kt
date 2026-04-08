@@ -13,6 +13,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ExternalResource
+import java.lang.invoke.MethodHandles
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDateTime
@@ -33,6 +34,12 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
       "'${ConfigImportHelper.IMPORT_FROM_ENV_VAR}' might affect tests. Please quit the IDE and open it again (don't use File | Restart)",
       System.getenv(ConfigImportHelper.IMPORT_FROM_ENV_VAR) == null
     )
+  }
+
+  @Before fun enforceTestMode() {
+    MethodHandles.privateLookupIn(ConfigImportHelper::class.java, MethodHandles.lookup())
+      .findStaticSetter(ConfigImportHelper::class.java, "isUnitTestMode", Boolean::class.java)
+      .invoke(true)
   }
 
   protected fun newTempDir(name: String): Path =

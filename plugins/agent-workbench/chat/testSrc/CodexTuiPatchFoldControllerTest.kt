@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -144,9 +144,9 @@ class CodexTuiPatchFoldControllerTest {
   @Test
   @RegistryKey(key = CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY, value = "true")
   fun installCheckHonorsRegistryKey() {
-    assertThat(shouldInstallCodexTuiPatchFolding(AgentSessionProvider.CODEX)).isTrue()
-    assertThat(shouldInstallCodexTuiPatchFolding(AgentSessionProvider.CLAUDE)).isFalse()
-    assertThat(shouldInstallCodexTuiPatchFolding(null)).isFalse()
+    assertThat(shouldInstallAgentChatPatchFolding(AgentSessionProvider.CODEX)).isTrue()
+    assertThat(shouldInstallAgentChatPatchFolding(AgentSessionProvider.CLAUDE)).isFalse()
+    assertThat(shouldInstallAgentChatPatchFolding(null)).isFalse()
   }
 }
 

@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Computable
@@ -567,6 +566,7 @@ abstract class DumbService {
     }
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(project: Project): DumbService = project.service()
 
     @JvmStatic

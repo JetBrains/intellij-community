@@ -166,7 +166,7 @@ final class ExportToHTMLManager {
       }
     }
     finally {
-      VfsUtil.markDirtyAndRefresh(true, true, false, new File(exportToHTMLSettings.OUTPUT_DIRECTORY));
+      VfsUtil.markDirtyAndRefresh(true, true, false, Path.of(exportToHTMLSettings.OUTPUT_DIRECTORY));
     }
   }
 

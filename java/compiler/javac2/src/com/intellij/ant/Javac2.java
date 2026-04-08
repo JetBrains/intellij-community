@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -300,7 +300,7 @@ public class Javac2 extends Javac {
       log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new AsmClassPropertiesProvider(finder));
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms

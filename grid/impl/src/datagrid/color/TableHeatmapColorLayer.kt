@@ -104,7 +104,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
 
       if (column == null ||
           column.attributes.contains(ColumnDescriptor.Attribute.INDEX) ||
-          !ObjectFormatterUtil.isNumericCell(dataGrid, firstRow, columnIndex)) {
+          !ObjectFormatterUtil.isNumericCell(dataGrid, firstRow, columnIndex, dataModel.getValueAt(firstRow, columnIndex))) {
         return@forEach
       }
 
@@ -164,8 +164,9 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
 
     val dataModel = dataGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
 
-    if (colorBooleanColumns && ObjectFormatterUtil.isBooleanCell(grid, row, column)) {
-      return if (dataModel.getValueAt(row, column).toString().lowercase() == "true") {
+    val value = dataModel.getValueAt(row, column)
+    if (colorBooleanColumns && ObjectFormatterUtil.isBooleanCell(grid, row, column, value)) {
+      return if (value.toString().lowercase() == "true") {
         getColor(0.6, 0.0, 1.0)
       }
       else {
@@ -175,7 +176,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
 
     val columnRange = columns[column] ?: return null
 
-    val doubleValue = dataModel.getValueAt(row, column).toString().toDoubleOrNull() ?: return null
+    val doubleValue = value.toString().toDoubleOrNull() ?: return null
 
     return if (perColumn) getColor(doubleValue, columnRange.min, columnRange.max)
     else getColor(doubleValue, globalMin, globalMax)

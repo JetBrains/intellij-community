@@ -13,7 +13,7 @@ private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
  * Options available for tests running on TeamCity.
  * If you want to run it locally, see [CommunityRunTestsBuildTarget] or [IdeaUltimateRunTestsBuildTarget].
  *
- * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=JAVA_TESTS`
+ * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=COMMUNITY_JAVA_TESTS`
  */
 open class TestingOptions {
   companion object {
@@ -208,13 +208,13 @@ open class TestingOptions {
   val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
 
   /**
-   * Test search scope, for local runs only.
+   * Test search scope.
    * Allowed values:
    * - singleModule
    * - moduleWithDependencies
    * By default, tests are searched across module dependencies.
    */
-  val searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
+  var searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

@@ -47,6 +47,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
@@ -143,16 +145,24 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/ide-core",
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/base/statistics:statistics_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
   ],
   runtime_deps = [
     ":tests",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.project-wizard.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.text
 
 import com.intellij.openapi.actionSystem.ActionManager
@@ -11,13 +11,14 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-@ApiStatus.Experimental
-@ApiStatus.Internal
+@Experimental
+@Internal
 object ShortcutsRenderingUtil {
   val SHORTCUT_PART_SEPARATOR: String = NON_BREAK_SPACE.repeat(3)
 
@@ -94,7 +95,7 @@ object ShortcutsRenderingUtil {
    * Example of input: Ctrl + Shift + T
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
-    val parts = shortcut.split(Regex(""" *\+ *""")).map(this::getPresentableModifier)
+    val parts = shortcut.split(Regex(""" *\+ *""")).map(::getPresentableModifier)
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
@@ -126,55 +127,55 @@ object ShortcutsRenderingUtil {
     updated.add(IntRange(start, start + actionName.length - 1))
     return Pair(gotoAction.first + "  →  " + actionName, updated)
   }
-
-  private fun getModifiersText(modifiers: Int): List<String> {
-    val modifiersString = if (ClientSystemInfo.isMac()) {
-      // returns glyphs if native shortcuts are enabled, text presentation otherwise
-      MacKeymapUtil.getModifiersText(modifiers, "+")
-    }
-    else KeyEvent.getKeyModifiersText(modifiers)
-    return modifiersString
-      .split("[ +]+".toRegex())
-      .dropLastWhile { it.isEmpty() }
-      .map(this::getPresentableModifier)
-  }
-
-  private fun getKeyString(code: Int) = when (code) {
-    KeyEvent.VK_LEFT -> "←"
-    KeyEvent.VK_RIGHT -> "→"
-    KeyEvent.VK_UP -> "↑"
-    KeyEvent.VK_DOWN -> "↓"
-    KeyEvent.VK_BACK_SLASH -> """\"""
-    else -> if (ClientSystemInfo.isMac()) getMacKeyString(code) else getLinuxWinKeyString(code)
-  }.replaceSpacesWithNonBreakSpaces()
-
-  private fun getLinuxWinKeyString(code: Int) = when (code) {
-    KeyEvent.VK_ENTER -> "Enter"
-    KeyEvent.VK_BACK_SPACE -> "Backspace"
-    else -> KeyEvent.getKeyText(code)
-  }
-
-  private fun getMacKeyString(code: Int) = when (code) {
-    KeyEvent.VK_ENTER -> "↩ Return"
-    KeyEvent.VK_BACK_SPACE -> "⌫ Del"
-    KeyEvent.VK_ESCAPE -> "⎋ Esc"
-    KeyEvent.VK_TAB -> "⇥ Tab"
-    KeyEvent.VK_SHIFT -> "⇧ Shift"
-    else -> KeyEvent.getKeyText(code)
-  }
-
-  private fun getPresentableModifier(rawModifier: String): String {
-    val modifier = if (KeymapUtil.isSimplifiedMacShortcuts()) getSimplifiedMacModifier(rawModifier) else rawModifier
-    return modifier.replaceSpacesWithNonBreakSpaces()
-  }
-
-  private fun getSimplifiedMacModifier(modifier: String) = when (modifier) {
-    "Ctrl" -> "⌃ Ctrl"
-    "Alt" -> "⌥ Opt"
-    "Shift" -> "⇧ Shift"
-    "Cmd" -> "⌘ Cmd"
-    else -> modifier
-  }
-
-  private fun String.replaceSpacesWithNonBreakSpaces() = this.replace(" ", NON_BREAK_SPACE)
 }
+
+private fun getModifiersText(modifiers: Int): List<String> {
+  val modifiersString = if (ClientSystemInfo.isMac()) {
+    // returns glyphs if native shortcuts are enabled, text presentation otherwise
+    MacKeymapUtil.getModifiersText(modifiers, "+")
+  }
+  else KeyEvent.getKeyModifiersText(modifiers)
+  return modifiersString
+    .split("[ +]+".toRegex())
+    .dropLastWhile { it.isEmpty() }
+    .map(::getPresentableModifier)
+}
+
+private fun getKeyString(code: Int) = when (code) {
+  KeyEvent.VK_LEFT -> "←"
+  KeyEvent.VK_RIGHT -> "→"
+  KeyEvent.VK_UP -> "↑"
+  KeyEvent.VK_DOWN -> "↓"
+  KeyEvent.VK_BACK_SLASH -> """\"""
+  else -> if (ClientSystemInfo.isMac()) getMacKeyString(code) else getLinuxWinKeyString(code)
+}.replaceSpacesWithNonBreakSpaces()
+
+private fun getLinuxWinKeyString(code: Int) = when (code) {
+  KeyEvent.VK_ENTER -> "Enter"
+  KeyEvent.VK_BACK_SPACE -> "Backspace"
+  else -> KeyEvent.getKeyText(code)
+}
+
+private fun getMacKeyString(code: Int) = when (code) {
+  KeyEvent.VK_ENTER -> "↩ Return"
+  KeyEvent.VK_BACK_SPACE -> "⌫ Del"
+  KeyEvent.VK_ESCAPE -> "⎋ Esc"
+  KeyEvent.VK_TAB -> "⇥ Tab"
+  KeyEvent.VK_SHIFT -> "⇧ Shift"
+  else -> KeyEvent.getKeyText(code)
+}
+
+private fun getPresentableModifier(rawModifier: String): String {
+  val modifier = if (KeymapUtil.isSimplifiedMacShortcuts) getSimplifiedMacModifier(rawModifier) else rawModifier
+  return modifier.replaceSpacesWithNonBreakSpaces()
+}
+
+private fun getSimplifiedMacModifier(modifier: String) = when (modifier) {
+  "Ctrl" -> "⌃ Ctrl"
+  "Alt" -> "⌥ Opt"
+  "Shift" -> "⇧ Shift"
+  "Cmd" -> "⌘ Cmd"
+  else -> modifier
+}
+
+private fun String.replaceSpacesWithNonBreakSpaces() = this.replace(" ", NON_BREAK_SPACE)

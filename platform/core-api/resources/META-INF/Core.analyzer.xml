@@ -28,6 +28,7 @@
     <extensionPoint qualifiedName="com.intellij.iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.metaLanguageProvider" interface="com.intellij.lang.MetaLanguageProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
       <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>

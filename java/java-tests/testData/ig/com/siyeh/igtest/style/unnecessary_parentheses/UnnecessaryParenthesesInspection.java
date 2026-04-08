@@ -147,7 +147,7 @@ public class UnnecessaryParenthesesInspection
   }
 
   public java.util.function.IntFunction context() {
-    return <error descr="Variable expected">(a -> a)</error>=1;
+    return <error descr="Reference to variable expected on left-hand side of assignment">(a -> a)</error>=1;
   }
 
   void conditionals(boolean prevConnect, boolean nextConnect) {

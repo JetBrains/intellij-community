@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
-@Internal
 @Experimental
 fun Job.cancelOnDispose(disposable: Disposable) {
   val origin = Throwable()

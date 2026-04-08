@@ -62,8 +62,8 @@ internal class A {
         val d = b + c
     }
 
-    fun intToLong() {
-        val a = 1.toLong()
+    fun intToLong(intParam: Int) {
+        val a = intParam.toLong()
         val b = 2
         val c = b.toLong()
         val d = b + c

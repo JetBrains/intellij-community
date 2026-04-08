@@ -4,6 +4,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.concurrency.ThreadContext;
@@ -39,6 +41,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
+import com.intellij.platform.backend.observation.Observation;
 import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -63,6 +66,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.AWTEvent;
 import java.awt.event.InvocationEvent;
@@ -117,8 +121,8 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
     assert application.isUnitTestMode();
 
-    waitForAllThingsBeforeDaemonStart(mustWaitForSmartMode, 10_000);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    waitForAllThingsBeforeDaemonStart(mustWaitForSmartMode, 10_000);
     myDaemonCodeAnalyzer.clearReferences();
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myDaemonCodeAnalyzer.myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
@@ -148,7 +152,6 @@ public final class TestDaemonCodeAnalyzerImpl {
     do {
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       // refresh will fire write actions interfering with highlighting
-      // heavy ops are bad, but VFS refresh is ok
     }
     while (RefreshQueueImpl.isRefreshInProgress() || DaemonCodeAnalyzerImpl.heavyProcessIsRunning());
     long deadline = System.currentTimeMillis() + timeoutMs;
@@ -162,15 +165,32 @@ public final class TestDaemonCodeAnalyzerImpl {
     dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
+    // tracked activities (e.g., external system import, vendor scan) may fire write actions
+    // that trigger rootsChanged — same reason we wait for VFS refresh above
+    while (Observation.INSTANCE.configurationFlow(myProject).getValue()) {
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+    }
     // update the file status map before prohibiting its modifications
     waitForUpdateFileStatusBackgroundQueueInTests();
+    try {
+      waitUpdateExpensiveFlags();
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException(e);
+    }
+    while (!((CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(myProject)).isContextInvalidationComplete()) {
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+      if (System.currentTimeMillis() > deadline) {
+        throw new IllegalStateException("Timeout waiting for context invalidation");
+      }
+    }
   }
 
   private void doRunPasses(@NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer,
                            @NotNull TextEditor textEditor,
                            int @NotNull [] passesToIgnore,
                            boolean canChangeDocument,
-                           @Nullable Runnable callbackWhileWaiting) throws Exception {
+                           @Nullable Runnable callbackWhileWaiting) {
     ThreadingAssertions.assertEventDispatchThread();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
@@ -185,9 +205,9 @@ public final class TestDaemonCodeAnalyzerImpl {
       if (session == null) {
         DaemonCodeAnalyzerImpl.LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
           "; fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
-          "; getCachedFileToHighlight()="+TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context)+
-          "; getRawCachedFile()="+((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).getRawCachedFile(virtualFile, context)+
-          "; virtualFile=" + virtualFile+"("+virtualFile.getClass()+")");
+          "; getCachedFileToHighlight()=" + TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context) +
+          "; getRawCachedFile()=" + ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).getRawCachedFile(virtualFile, context) +
+          "; virtualFile=" + virtualFile + "(" + virtualFile.getClass() + ")");
         throw new ProcessCanceledException();
       }
       ProgressIndicator progress = session.getProgressIndicator();
@@ -315,35 +335,41 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
   }
 
-  public void prepareForTest() throws InterruptedException, ExecutionException {
+  public void prepareForTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     waitForTermination();
     myDaemonCodeAnalyzer.clearReferences();
   }
 
-  public void cleanupAfterTest() throws InterruptedException, ExecutionException {
+  public void cleanupAfterTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     if (myProject.isOpen()) {
       prepareForTest();
     }
   }
-  public void waitForTermination() throws InterruptedException, ExecutionException {
+  public void waitForTermination() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
       // wait outside EDT to avoid stealing work from FJP
-      myDaemonCodeAnalyzer.myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
+      while (!myDaemonCodeAnalyzer.myPassExecutorService.waitFor(50)) {
+        Thread.yield();
+      }
     });
+
     waitWhilePumping(future);
   }
 
-  public static void waitWhilePumping(@NotNull Future<?> future) throws InterruptedException, ExecutionException {
+  public static void waitWhilePumping(@NotNull Future<?> future) {
     do {
       try {
         future.get(10, TimeUnit.MILLISECONDS);
         return;
       }
       catch (TimeoutException ignored) {
+      }
+      catch (ExecutionException | InterruptedException e) {
+        throw new RuntimeException(e);
       }
       if (EDT.isCurrentThreadEdt()) {
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
@@ -359,10 +385,15 @@ public final class TestDaemonCodeAnalyzerImpl {
     myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
   }
 
+  public void waitUpdateExpensiveFlags() throws TimeoutException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myDaemonCodeAnalyzer.myListeners.waitUpdateExpensiveFlags(1, TimeUnit.MINUTES);
+  }
+
   @RequiresEdt
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull PsiFile psiFile) {
     return waitForDaemonToFinish(psiFile, () -> {
-      TimeoutUtil.sleep(100);
+      TimeoutUtil.sleep(10);
     });
   }
 
@@ -374,14 +405,12 @@ public final class TestDaemonCodeAnalyzerImpl {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     assert document != null;
     long start = System.currentTimeMillis();
-    int timeoutMs = 60_000;
-    long deadline = start + timeoutMs;
-    waitForAllThingsBeforeDaemonStart(mustWaitForSmartModeByDefault, timeoutMs);
+    long deadline = start + WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS;
     assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
     Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(psiFile, deadline - System.currentTimeMillis());
     Disposable disposable = Disposer.newDisposable();
+    Semaphore listenersCalled = new Semaphore(1);
     try {
-      Semaphore listenersCalled = new Semaphore(1);
       myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
         @Override
         public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
@@ -400,8 +429,10 @@ public final class TestDaemonCodeAnalyzerImpl {
         listenersCalled.up();
       }
 
+      long untilDeadline;
       do {
-        if (System.currentTimeMillis() > deadline) {
+        untilDeadline = deadline - System.currentTimeMillis();
+        if (untilDeadline < 0) {
           String dump = ThreadDumper.dumpThreadsToString();
           MarkupModelImpl markupModel = (MarkupModelImpl)DocumentMarkupModel.forDocument(document, myProject, true);
           List<RangeHighlighter> highlighters = List.of(markupModel.getAllHighlighters());
@@ -409,13 +440,14 @@ public final class TestDaemonCodeAnalyzerImpl {
              "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() +
              "\nprogress: "+progresses+
              "\ndaemonIsWorkingOrPending(document)="+daemonIsWorkingOrPending(document)+
-             "\nPsiDocumentManager.getInstance(myProject).isUncommited(document)="+PsiDocumentManager.getInstance(myProject).isUncommited(document)+
+             "\nPsiDocumentManager.getInstance(myProject).isCommitted(document)="+PsiDocumentManager.getInstance(myProject).isCommitted(document)+
              "\ncurrent highlights:("+highlighters.size()+")\n" + StringUtil.join(ContainerUtil.getFirstItems(highlighters, 100), Object::toString, "\n")+
              "\nthread dump:"+ dump);
           DaemonCodeAnalyzerImpl.LOG.info(e);
           throw e;
         }
         callbackWhileWaiting.run();
+        waitForUpdateFileStatusBackgroundQueueInTests(); // commit can happen here any moment, so make sure PSI changes are handled
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
         for (DaemonProgressIndicator indicator : progresses) {
           Throwable trace = indicator.getCancellationTrace();
@@ -426,7 +458,7 @@ public final class TestDaemonCodeAnalyzerImpl {
           if (indicator.isCanceled() && indicator.isRunning()) {
             // wait for daemon listeners to be called,
             // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
-            if (!listenersCalled.waitFor(60_000)) {
+            if (!listenersCalled.waitFor(untilDeadline)) {
               throw new IncorrectOperationException();
             }
             DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish canceled: indicator was canceled: "+indicator
@@ -442,13 +474,16 @@ public final class TestDaemonCodeAnalyzerImpl {
         }
       }
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
-      DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish("+document+") finished: "+progresses+"; fileStatusMap:"+ myDaemonCodeAnalyzer.getFileStatusMap()+"\n"+ContainerUtil.map(progresses, indicator -> {
+      DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish("+document+") finished: "+progresses+"; fileStatusMap:"+ myDaemonCodeAnalyzer.getFileStatusMap()+"\n"+ContainerUtil.mapNotNull(progresses, indicator -> {
+        if (!indicator.isRunning()) {
+          return null;
+        }
         Throwable trace = indicator.getCancellationTrace();
         return (trace == null ? indicator.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(trace));
       }));
       // wait for daemon listeners to be called,
       // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
-      if (!listenersCalled.waitFor(60_000)) {
+      if (!listenersCalled.waitFor(untilDeadline)) {
         throw new IncorrectOperationException();
       }
       return progresses;
@@ -461,6 +496,8 @@ public final class TestDaemonCodeAnalyzerImpl {
 
   @RequiresEdt
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToStart(@NotNull PsiFile psiFile, long timeoutMs) {
+    ThreadingAssertions.assertEventDispatchThread();
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     PassExecutorService.LOG.trace("waitForDaemonToStart start");
     Disposable disposable = Disposer.newDisposable();
@@ -574,5 +611,16 @@ public final class TestDaemonCodeAnalyzerImpl {
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       }
     }
+  }
+
+  @VisibleForTesting
+  public boolean isMarkedExcluded(@NotNull Document document) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myDaemonCodeAnalyzer.myListeners.isMarkedExcluded(document);
+  }
+  @VisibleForTesting
+  public boolean isMarkedCodeFragment(@NotNull Document document) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myDaemonCodeAnalyzer.myListeners.isMarkedCodeFragment(document);
   }
 }

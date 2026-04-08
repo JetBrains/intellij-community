@@ -76,6 +76,7 @@ _ASGILoopValidatorType: TypeAlias = Callable[[str | None], str]
 _ASGILifespanValidatorType: TypeAlias = Callable[[str | None], str]
 _HTTP2FrameSizeValidatorType: TypeAlias = Callable[[ConvertibleToInt], int]
 _HTTPProtocolsValidatorType: TypeAlias = Callable[[str | None], list[str]]
+_HttpParserValidatorType: TypeAlias = Callable[[str | None], str]
 
 _ValidatorType: TypeAlias = (  # noqa: Y047
     _BoolValidatorType
@@ -92,6 +93,7 @@ _ValidatorType: TypeAlias = (  # noqa: Y047
     | _ASGILifespanValidatorType
     | _HTTP2FrameSizeValidatorType
     | _HTTPProtocolsValidatorType
+    | _HttpParserValidatorType
 )
 
 KNOWN_SETTINGS: list[Setting]
@@ -1156,6 +1158,7 @@ class HeaderMap(Setting):
 
 def validate_asgi_loop(val: str | None) -> str: ...
 def validate_asgi_lifespan(val: str | None) -> str: ...
+def validate_http_parser(val: str | None) -> str: ...
 
 class ASGILoop(Setting):
     name: ClassVar[str]
@@ -1183,6 +1186,15 @@ class ASGIDisconnectGracePeriod(Setting):
     validator: ClassVar[_IntValidatorType]
     type: ClassVar[type[int]]
     default: ClassVar[int]
+    desc: ClassVar[str]
+
+class HttpParser(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_HttpParserValidatorType]
+    default: ClassVar[str]
     desc: ClassVar[str]
 
 class RootPath(Setting):
@@ -1291,6 +1303,7 @@ class ControlSocket(Setting):
     meta: ClassVar[str]
     validator: ClassVar[_StringValidatorType]
     default: ClassVar[str]
+    default_doc: ClassVar[str]
     desc: ClassVar[str]
 
 class ControlSocketMode(Setting):

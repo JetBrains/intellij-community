@@ -58,7 +58,6 @@ kotlin {
     api(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.bouncycastle.bcpkix.jdk18on845177467.get())
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
@@ -68,6 +67,7 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
+    implementation(jps.org.bouncycastle.bcpkix.jdk18on845177467.get())
     api(project(":fleet.util.core"))
     implementation(project(":fleet.preferences"))
     implementation(project(":fleet.ktor.client.cio"))

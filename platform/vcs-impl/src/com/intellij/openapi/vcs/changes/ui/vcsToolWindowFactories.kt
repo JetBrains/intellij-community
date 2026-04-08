@@ -12,13 +12,13 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.commit.CommitModeManager
 import java.util.function.Supplier
-import javax.swing.UIManager
 
 internal class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
@@ -99,10 +99,10 @@ internal class CommitToolWindowFactory : VcsToolWindowFactory() {
       !toolWindow.isAvailable || !MergeConflictManager.isNonModalMergeEnabled(project) -> return
       !MergeConflictManager.getInstance(project).isMergeConflict() -> toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCommit)
       else -> {
-        val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
+        val focusColor = StripeButtonUi.SELECTED_FOREGROUND_COLOR
         val originalIcon = toolWindow.icon
         if (originalIcon != null) {
-          val badgeColor = JBColor { if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.ERROR }
+          val badgeColor = JBColor.lazy { if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.ERROR }
           val badgeIcon = IconManager.getInstance().withIconBadge(originalIcon, badgeColor)
           toolWindow.setIcon(badgeIcon)
         }

@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.intellij.groovy"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.repository.search.common"/>
   </dependencies>

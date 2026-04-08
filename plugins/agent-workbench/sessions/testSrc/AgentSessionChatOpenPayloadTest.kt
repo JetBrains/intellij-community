@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.service.resolveAgentSessionChatOpenPayload
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -155,6 +155,50 @@ class AgentSessionChatOpenPayloadTest {
         .containsEntry(AGENT_WORKBENCH_TEST_ENV_NAME, AGENT_WORKBENCH_TEST_ENV_VALUE)
       assertThat(payload.launchSpec.envVariables.getValue("PATH").split(java.io.File.pathSeparator))
         .containsExactly(AGENT_WORKBENCH_TEST_PATH_PREPEND)
+    }
+  }
+
+  @Test
+  fun preservesRemoteResumeCommandFromResumeLaunchProvider() {
+    runBlocking(Dispatchers.Default) {
+      val thread = AgentSessionThread(
+        id = "thread-1",
+        title = "Parent title",
+        updatedAt = 1,
+        archived = false,
+        provider = AgentSessionProvider.CODEX,
+      )
+
+      val payload = resolveAgentSessionChatOpenPayload(
+        projectPath = PROJECT_PATH,
+        thread = thread,
+        subAgent = null,
+        launchSpecOverride = null,
+        resumeLaunchSpecProvider = { provider, sessionId ->
+          check(provider == AgentSessionProvider.CODEX)
+          AgentSessionTerminalLaunchSpec(
+            command = listOf(
+              "codex",
+              "-c",
+              "check_for_update_on_startup=false",
+              "--remote",
+              "ws://127.0.0.1:31337",
+              "resume",
+              sessionId,
+            ),
+          )
+        },
+      )
+
+      assertThat(payload.launchSpec.command).containsExactly(
+        "codex",
+        "-c",
+        "check_for_update_on_startup=false",
+        "--remote",
+        "ws://127.0.0.1:31337",
+        "resume",
+        "thread-1",
+      )
     }
   }
 }

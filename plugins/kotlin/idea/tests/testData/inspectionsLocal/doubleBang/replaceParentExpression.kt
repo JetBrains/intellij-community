@@ -1,0 +1,9 @@
+// FIX: "Replace with '?: error(…)'"
+class A {
+    fun f(): Int = 42
+}
+
+fun main() {
+    val a: A? = A()
+    a<caret>!!.f()
+}

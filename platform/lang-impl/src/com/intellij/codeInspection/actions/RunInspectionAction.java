@@ -13,7 +13,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.OptionPaneRenderer;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
@@ -71,6 +73,8 @@ import java.util.Set;
  */
 public final class RunInspectionAction extends GotoActionBase implements UiDataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
+  private static final ExtensionPointName<RunInspectionDialogExtension> EP_NAME =
+    ExtensionPointName.create("com.intellij.runInspectionDialogExtension");
   private final String myPredefinedText;
 
   @SuppressWarnings("unused")
@@ -187,6 +191,7 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
     private final @NotNull Project myProject;
     private final FileFilterPanel myFileFilterPanel;
     private final AnalysisScope myInitialAnalysisScope;
+    private final List<RunInspectionDialogExtension> myExtensions;
 
     RunInspectionDialog(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                         @NotNull Project project,
@@ -200,6 +205,8 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
       myFileFilterPanel = new FileFilterPanel();
       myFileFilterPanel.init(getOptions());
       myInitialAnalysisScope = initialAnalysisScope;
+      myExtensions = EP_NAME.getExtensionList();
+
       super.init();
 
       //don't show if called for regexp inspection which makes no sense without injection
@@ -221,6 +228,16 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
         .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
       panel.add(myFileFilterPanel.getPanel(), constraints.nextLine());
+
+      // Add extension options panels
+      for (RunInspectionDialogExtension extension : myExtensions) {
+        var pane = extension.getOptionsPane();
+        if (!pane.equals(OptPane.EMPTY)) {
+          var extensionPanel = OptionPaneRenderer.getInstance().render(
+            extension.getOptionController(), pane, myDisposable, project);
+          panel.add(extensionPanel, constraints.nextLine().insetTop(8));
+        }
+      }
 
       if (hasOptionsPanel) {
         myUpdatedSettingsToolWrapper = copyToolWithSettings();
@@ -283,6 +300,12 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
         public void actionPerformed(ActionEvent e) {
           AnalysisScope scope = getScope();
           InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
+
+          // Notify extensions before inspection run
+          for (RunInspectionDialogExtension extension : myExtensions) {
+            extension.beforeInspectionRun(myProject);
+          }
+
           DumbService.getInstance(myProject)
             .smartInvokeLater(() -> RunInspectionIntention.rerunInspection(wrapper, managerEx, scope, null));
           close(OK_EXIT_CODE);

@@ -23,4 +23,9 @@ public class LocalDateToJavaSqlDatePostfixTemplate extends JavaEditablePostfixTe
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

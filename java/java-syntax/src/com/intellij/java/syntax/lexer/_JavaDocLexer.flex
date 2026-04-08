@@ -10,7 +10,7 @@ import kotlin.jvm.JvmStatic
 %%
 
 %{
-  private val myJdk15Enabled: Boolean
+  private val myJdk1_5Enabled: Boolean
   private var mySnippetBracesLevel = 0;
   /* Enable markdown support for java 23 */
   private var myMarkdownMode = false;
@@ -18,9 +18,11 @@ import kotlin.jvm.JvmStatic
   private var commentDataWithSpaces = false;
   /** Whether we're in @value tag and should accept VALUE_FORMAT */
   private var inValueTag = false;
+  /** Nesting level of generic types `<T>` (Eg. `List<List<List>>`) Only used in the DOG_TAG outside of parentheses */
+  private var genericNestingLevel = 0;
 
-  constructor(isJdk15Enabled: Boolean) {
-    myJdk15Enabled = isJdk15Enabled;
+  constructor(isJdk1_5Enabled: Boolean) {
+    myJdk1_5Enabled = isJdk1_5Enabled;
   }
 
   /** Should be called right after a reset */
@@ -117,11 +119,16 @@ LEADING_TOKEN_MARKDOWN="///"
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA; }
 <DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE; }
 
+// Allowed since JDK 15
+<DOC_TAG_VALUE_IN_PAREN> [\<] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT; }
+<DOC_TAG_VALUE_IN_PAREN> [\>] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT; }
+
 <INLINE_TAG_NAME, COMMENT_DATA_START> "@param" { yybegin(PARAM_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <PARAM_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ {yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_SPACE; }
 <DOC_TAG_VALUE> [\<] {
-  if (myJdk15Enabled) {
+  if (myJdk1_5Enabled) {
     yybegin(DOC_TAG_VALUE_IN_LTGT);
+    genericNestingLevel += 1;
     return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT;
   }
   else {
@@ -129,9 +136,18 @@ LEADING_TOKEN_MARKDOWN="///"
     return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
   }
 }
+<DOC_TAG_VALUE_IN_LTGT> [\<] {
+        genericNestingLevel += 1;
+        return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT;
+      }
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN; }
-<DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN; }
-<DOC_TAG_VALUE_IN_LTGT> [\>] { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT; }
+<DOC_TAG_VALUE_IN_LTGT> [\>] {
+        genericNestingLevel -= 1;
+        if (genericNestingLevel <= 0) {
+          yybegin(COMMENT_DATA);
+        }
+        return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT;
+      }
 
 <COMMENT_DATA_START, COMMENT_DATA> {
       {CODE_FENCE} {
@@ -220,6 +236,22 @@ LEADING_TOKEN_MARKDOWN="///"
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
        }
+
+      [\<] {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return JavaDocSyntaxTokenType.DOC_LT;
+        }
+        return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+      }
+
+      [\>] {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return JavaDocSyntaxTokenType.DOC_GT;
+        }
+        return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+      }
 }
 
 <COMMENT_DATA_START, COMMENT_DATA, CODE_TAG> "{" {
@@ -239,7 +271,7 @@ LEADING_TOKEN_MARKDOWN="///"
 <INLINE_TAG_NAME> "@value" { inValueTag = true; yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
-SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}" { inValueTag = false; yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END; }
+SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC_TAG_VALUE_IN_LTGT> "}" { inValueTag = false; yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END; }
 
 <CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_SPACE; }
 <CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }

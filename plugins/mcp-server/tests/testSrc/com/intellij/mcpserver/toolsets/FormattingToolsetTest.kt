@@ -2,7 +2,7 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FormattingToolset
 import com.intellij.mcpserver.util.relativizeIfPossible
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
 
-class FormattingToolsetTest : McpToolsetTestBase() {
+class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
   @Test
   fun reformat_file() = runBlocking(Dispatchers.Default) {
     testMcpTool(

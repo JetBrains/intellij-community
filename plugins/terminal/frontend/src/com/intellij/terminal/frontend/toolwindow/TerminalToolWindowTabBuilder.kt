@@ -78,6 +78,12 @@ interface TerminalToolWindowTabBuilder {
   fun contentManager(manager: ContentManager?): TerminalToolWindowTabBuilder
 
   /**
+   * Whether to close the tool window tab when the process terminates on its own.
+   * Default value depends on user settings: [org.jetbrains.plugins.terminal.TerminalOptionsProvider.closeSessionOnLogout].
+   */
+  fun closeOnProcessTermination(shouldClose: Boolean): TerminalToolWindowTabBuilder
+
+  /**
    * Whether to add the tab to the Terminal tool window or create the detached tab.
    * True by default.
    *
@@ -85,6 +91,13 @@ interface TerminalToolWindowTabBuilder {
    */
   @ApiStatus.Internal
   fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalToolWindowTabBuilder
+
+  /**
+   * Specifies an alternate project path to use when opening file hyperlinks from this terminal tab.
+   * If not specified, hyperlinks navigate in the current terminal project as usual.
+   */
+  @ApiStatus.Internal
+  fun sourceNavigationProjectPath(projectPath: String?): TerminalToolWindowTabBuilder
 
   @ApiStatus.Internal
   fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalToolWindowTabBuilder

@@ -19,8 +19,9 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/extensions",
     "//platform/util",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
   ],
-  exports = ["//platform/extensions"],
   runtime_deps = ["//platform/backend"]
 )
 
@@ -29,10 +30,6 @@ jvm_library(
   module_name = "intellij.xml.analysis",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/extensions",
-    "//platform/extensions:extensions_test_lib",
-  ],
   runtime_deps = [
     ":analysis",
     "//xml/xml-psi-api:psi_test_lib",
@@ -40,6 +37,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/backend:backend_test_lib",
   ]
 )

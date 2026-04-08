@@ -48,6 +48,7 @@ data class KillableProcessInfo(
 @Serializable
 data class ProcessHandlerDto(
   val processHandlerId: ProcessHandlerId,
+  val buildExecutionName: String?,
   val detachIsDefault: Boolean,
   val processHandlerEvents: RpcFlow<ProcessHandlerEvent>,
   @Serializable(with = DeferredSerializer::class) val nativePid: Deferred<Long?>?,

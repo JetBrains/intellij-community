@@ -21,6 +21,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.PathUtil
@@ -108,7 +109,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     val environment = targetEnvRequest.prepareEnvironment(targetIndicator)
     try {
       // XXX Make it automatic
-      environment.uploadVolumes.values.forEach { it.upload(".", targetIndicator) }
+      environment.uploadVolumes.values.forEach { it.uploadMeasureTime(".", targetIndicator, "sourceRefresher") }
 
       val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
       cmd.execute(environment, indicator)

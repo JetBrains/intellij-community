@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +106,12 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   @Override
   public @NotNull ScrollingModel getScrollingModel() {
     return getEditor().getScrollingModel();
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull CustomWrapModel getCustomWrapModel() {
+    return getEditor().getCustomWrapModel();
   }
 
   @Override

@@ -39,6 +39,8 @@ jvm_library(
     "//java/java-analysis-api:analysis",
     "//platform/platform-impl:ide-impl",
     "//java/openapi:java",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//plugins/kotlin/base/psi",
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/project-structure",
@@ -46,6 +48,8 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/util/concurrency",
+    "//platform/statistics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -76,12 +80,16 @@ jvm_library(
     "//java/java-analysis-api:analysis_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//plugins/kotlin/base/facet:facet_test_lib",
     "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.searching.base` end

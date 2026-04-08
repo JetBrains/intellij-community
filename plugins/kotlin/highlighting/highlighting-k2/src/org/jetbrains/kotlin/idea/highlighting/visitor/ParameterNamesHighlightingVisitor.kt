@@ -9,9 +9,13 @@ import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -61,11 +65,17 @@ internal class ParameterNamesHighlightingVisitor(
 
                 else -> {
                     context(kaSession) {
-                        val resolvedSymbol =
-                            callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                        val contextArguments = resolvedSymbol?.contextArguments ?: emptyList()
-                        contextArguments.any { (it as? KaExplicitReceiverValue)?.expression == argumentExpression } ||
-                                (contextArguments.isEmpty() && argumentExpression == null)
+                        val resolveToCall = callExpression.resolveToCall()
+                        val call =
+                            when(resolveToCall) {
+                                is KaSuccessCallInfo -> resolveToCall.call
+                                is KaErrorCallInfo -> callExpression.resolveToCallCandidates().firstOrNull()?.candidate
+                                else -> null
+                            }
+                        val callableMemberCall = call as? KaCallableMemberCall<*, *>
+                        val contextParameterSymbols =
+                            (callableMemberCall?.symbol as? KaFunctionSymbol)?.contextParameters ?: return
+                        contextParameterSymbols.any { it.name == argumentName.asName }
                     }
                 }
             }

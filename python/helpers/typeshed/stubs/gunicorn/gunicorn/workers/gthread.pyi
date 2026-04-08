@@ -5,6 +5,7 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from selectors import DefaultSelector
 from types import FrameType
+from typing import Final
 
 from gunicorn.config import Config
 from gunicorn.glogging import Logger as GLogger
@@ -15,6 +16,8 @@ from gunicorn.uwsgi.parser import UWSGIParser
 from .._types import _AddressType
 from . import base
 
+DEFAULT_WORKER_DATA_TIMEOUT: Final = 5.0
+
 class TConn:
     cfg: Config
     sock: socket.socket
@@ -24,10 +27,12 @@ class TConn:
     parser: HTTP2ServerConnection | UWSGIParser | RequestParser | None
     initialized: bool
     is_http2: bool
+    data_ready: bool
 
     def __init__(self, cfg: Config, sock: socket.socket, client: _AddressType, server: _AddressType) -> None: ...
     def init(self) -> None: ...
     def set_timeout(self) -> None: ...
+    def wait_for_data(self, timeout: float | None) -> bool: ...
     def close(self) -> None: ...
 
 class PollableMethodQueue:
@@ -48,6 +53,7 @@ class ThreadWorker(base.Worker):
     poller: DefaultSelector
     method_queue: PollableMethodQueue
     keepalived_conns: deque[TConn]
+    pending_conns: deque[TConn]
     nr_conns: int
     alive: bool
 
@@ -61,7 +67,9 @@ class ThreadWorker(base.Worker):
     def enqueue_req(self, conn: TConn) -> None: ...
     def accept(self, listener: socket.socket) -> None: ...
     def on_client_socket_readable(self, conn: TConn, client: socket.socket) -> None: ...
+    def on_pending_socket_readable(self, conn: TConn, client: socket.socket) -> None: ...
     def murder_keepalived(self) -> None: ...
+    def murder_pending(self) -> None: ...
     def is_parent_alive(self) -> bool: ...
     def wait_for_and_dispatch_events(self, timeout: float | None) -> None: ...
     def run(self) -> None: ...

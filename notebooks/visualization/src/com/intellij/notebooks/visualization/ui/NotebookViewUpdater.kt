@@ -60,8 +60,9 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
       val newCtx = UpdateContext(force)
       updateCtx = newCtx
       try {
-        if (keepScrollingPositon) {
-          editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
+        val notebookEditor = editor.notebookEditorOrNull
+        if (keepScrollingPositon && notebookEditor != null) {
+          notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
             updateImpl(newCtx, block)
           }
         }

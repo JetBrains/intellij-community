@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module-library">
       <library name="pngencoder" type="repository">
         <properties maven-id="com.pngencoder:pngencoder:0.14.0">

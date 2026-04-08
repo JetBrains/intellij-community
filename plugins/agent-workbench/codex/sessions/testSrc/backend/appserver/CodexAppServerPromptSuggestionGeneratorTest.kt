@@ -3,15 +3,15 @@
 package com.intellij.agent.workbench.codex.sessions.backend.appserver
 
 import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionResult
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncation
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReason
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionCandidate
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionProvenance
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSuggestionSeeds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionProvenance
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionSeeds
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers

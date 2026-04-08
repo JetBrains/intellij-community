@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.events" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-events-jvm:3.3.2">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-events-jvm:3.4.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.3.2/ktor-events-jvm-3.3.2.jar">
-          <sha256sum>18499cd64a921117add9f9b8d4da48bad6f1b1861edb7193eaaad82bae013912</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1.jar">
+          <sha256sum>23298cc59f787e5d4f0f61b297a5990197910b2d368a0cac20c05a26b97f2419</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.3.2/ktor-events-jvm-3.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.3.2/ktor-events-jvm-3.3.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3.4.1/ktor-events-jvm-3.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

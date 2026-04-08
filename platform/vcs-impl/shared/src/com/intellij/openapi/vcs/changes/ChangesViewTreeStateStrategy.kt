@@ -25,7 +25,7 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
     val state = TreeState.createOn(tree, oldRoot)
     state.setScrollToSelection(false)
 
-    val fileCount = oldRoot.getDefaultChangeListNode()?.getFileCount() ?: 0
+    val fileCount = oldRoot.getDefaultChangeListNode()?.getFileCount().takeIf { tree.isShowing } ?: 0
 
     return MyState(state, fileCount)
   }
@@ -34,7 +34,7 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
     val newRoot = tree.root
     state.treeState.applyTo(tree, newRoot)
 
-    initTreeStateIfNeeded(tree as ChangesListView, newRoot, state.oldFileCount)
+    initTreeStateIfNeeded(tree as ChangesListView, newRoot, state.lastShownFileCount)
   }
 
   private fun initTreeStateIfNeeded(
@@ -52,9 +52,22 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
     }
 
     // IJPL-75200: Expand Default changelist only if it was empty and no other changelists are expanded
-    if (shouldExpandDefaultChangeList(newRoot, oldFileCount, isNodeExpanded = {  view.isExpanded(TreePath(it.path))})) {
+    if (shouldExpandDefaultChangeList(newRoot, oldFileCount, isNodeExpanded = { view.isExpanded(TreePath(it.path)) })) {
       view.expandSafe(defaultListNode)
+      defaultListNode.expandDefaultsUnder(view)
     }
+  }
+
+  private fun ChangesBrowserNode<*>.expandDefaultsUnder(view: ChangesListView) {
+    iterateNodeChildren()
+      .asSequence()
+      .filterIsInstance<ChangesBrowserNode<*>>()
+      .filter { node ->
+        node.shouldExpandByDefault() && !node.isLeaf
+      }.forEach { node ->
+        view.expandSafe(node)
+        node.expandDefaultsUnder(view)
+      }
   }
 
   private fun ChangesBrowserNode<*>.getDefaultChangeListNode() =
@@ -83,7 +96,6 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
       .filterIsInstance<ChangesBrowserChangeNode>()
       .find { node -> isMergeConflict(node.getUserObject()) }
 
-
   private fun ChangesListView.getFirstResolvedConflictNode() =
     VcsTreeModelData.allUnderTag(this, RESOLVED_CONFLICTS_NODE_TAG).iterateRawNodes()
       .asSequence()
@@ -93,11 +105,11 @@ class ChangesViewTreeStateStrategy : TreeStateStrategy<ChangesViewTreeStateStrat
   @VisibleForTesting
   fun shouldExpandDefaultChangeList(
     newRoot: ChangesBrowserNode<*>,
-    oldFileCount: Int,
+    lastShownFileCount: Int,
     isNodeExpanded: (ChangesBrowserChangeListNode) -> Boolean,
-  ): Boolean = oldFileCount == 0 && !newRoot.hasNonDefaultExpandedChangeLists(isNodeExpanded)
+  ): Boolean = lastShownFileCount == 0 && !newRoot.hasNonDefaultExpandedChangeLists(isNodeExpanded)
 
   companion object {
-    data class MyState(val treeState: TreeState, val oldFileCount: Int)
+    data class MyState(val treeState: TreeState, val lastShownFileCount: Int)
   }
 }

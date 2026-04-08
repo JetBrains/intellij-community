@@ -9,6 +9,7 @@ import com.intellij.build.BuildDescriptor
 import com.intellij.build.BuildId
 import com.intellij.build.BuildViewEvent
 import com.intellij.build.events.BuildEventsNls
+import com.intellij.build.process.BuildProcessHandler
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
 import com.intellij.execution.process.ProcessOutputTypes
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.buildView.BuildDataKeys
 import com.intellij.platform.buildView.BuildViewApi
+import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.OnePixelSplitter
@@ -231,7 +233,8 @@ internal class FrontendMultipleBuildsView(
           buildList.selectedIndex = 0
           setBuildListVisible(true)
         }
-        buildContentManager.startBuildNotified(info, content, null /* todo support termination check */)
+        val processHandler = event.processHandler?.let { createFrontendProcessHandler(project, it) } as? BuildProcessHandler
+        buildContentManager.startBuildNotified(info, content, processHandler)
         buildContentManager.setSelectedContent(content, event.requestFocus, event.requestFocus, event.activateToolWindow) {
           scope.launch {
             log { "notifyTooWindowActivated($info)" }

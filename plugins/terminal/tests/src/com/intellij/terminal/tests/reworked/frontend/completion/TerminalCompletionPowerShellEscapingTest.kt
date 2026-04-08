@@ -11,10 +11,10 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.event.KeyEvent
 
 @RunWith(JUnit4::class)
 internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase() {
@@ -73,8 +73,8 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
         "with spaces",
         "dummy"
       )
-      fixture.type("test_cmd C:/'")
-      fixture.pressKey(KeyEvent.VK_LEFT)
+    fixture.type("test_cmd C:/'")
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       fixture.insertCompletionItem("with spaces")
       fixture.assertCommandTextState("test_cmd 'C:/with spaces<cursor>'")
@@ -89,8 +89,8 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
         "with spaces",
         "dummy"
       )
-      fixture.type("test_cmd 'C:/'")
-      fixture.pressKey(KeyEvent.VK_LEFT)
+    fixture.type("test_cmd 'C:/'")
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       fixture.insertCompletionItem("with spaces")
       fixture.assertCommandTextState("test_cmd 'C:/with spaces<cursor>'")
@@ -118,6 +118,7 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
       shellCommand = listOf("powershell.exe"),
       workingDirectory = System.getProperty("user.home"),
       envVariables = emptyMap(),
+      processType = TerminalProcessType.SHELL,
       pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))

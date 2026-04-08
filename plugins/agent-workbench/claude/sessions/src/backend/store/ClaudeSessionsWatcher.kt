@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
 private val LOG = logger<ClaudeSessionsWatcher>()
+private const val CLAUDE_SESSION_INDEX_FILE = "sessions-index.json"
 
 internal class ClaudeSessionsWatcher(
   claudeHomeProvider: () -> Path,
@@ -52,6 +53,9 @@ internal class ClaudeSessionsWatcher(
     if (eventPath != null && isJsonlPath(eventPath, projectsRoot)) {
       return FileBackedSessionChangeSet(changedPaths = setOf(normalizeFileBackedSessionPath(eventPath)))
     }
+    if (eventPath != null && isIndexPath(eventPath, projectsRoot)) {
+      return FileBackedSessionChangeSet(changedPaths = setOf(normalizeFileBackedSessionPath(eventPath)))
+    }
 
     val isProjectsEvent = when {
       eventPath != null -> isUnderRoot(eventPath, projectsRoot)
@@ -77,4 +81,9 @@ private fun isUnderRoot(path: Path, normalizedRoot: Path): Boolean {
 private fun isJsonlPath(path: Path, normalizedRoot: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false
   return fileName.endsWith(".jsonl") && isUnderRoot(path, normalizedRoot)
+}
+
+private fun isIndexPath(path: Path, normalizedRoot: Path): Boolean {
+  val fileName = path.fileName?.toString() ?: return false
+  return fileName == CLAUDE_SESSION_INDEX_FILE && isUnderRoot(path, normalizedRoot)
 }

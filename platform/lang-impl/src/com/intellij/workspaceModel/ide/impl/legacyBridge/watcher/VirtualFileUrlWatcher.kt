@@ -32,6 +32,8 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.ProjectRootEntity
+import com.intellij.workspaceModel.ide.ProjectRootEntityBuilder
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
@@ -100,6 +102,11 @@ open class VirtualFileUrlWatcher(val project: Project) {
       JavaModuleSettingsEntity::class, JavaModuleSettingsEntityBuilder::class,
       propertyName = JavaModuleSettingsEntity::compilerOutputForTests.name,
       modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
+    ),
+    EntityVirtualFileUrlWatcher(
+      ProjectRootEntity::class, ProjectRootEntityBuilder::class,
+      propertyName = ProjectRootEntity::root.name,
+      modificator = { _, newVirtualFileUrl -> root = newVirtualFileUrl }
     ),
     EntitySourceFileWatcher(JpsProjectFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) }),
     EntitySourceFileWatcher(JpsProjectFileEntitySource.FileInDirectory::class, { it.directory.url },

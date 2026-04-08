@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorTextField;
@@ -467,7 +468,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Component c = getCurrentRendererComponent();
 
     c.setFont(comboBox.getFont());
-    c.setBackground(getBackgroundColor());
+    if (UIUtil.getDeprecatedBackground() != null && c instanceof ColoredListCellRenderer<?> jComponent) {
+      UIUtil.applyDeprecatedBackground(jComponent);
+    }
+    else {
+      c.setBackground(getBackgroundColor());
+    }
 
     if (!Boolean.TRUE.equals(comboBox.getClientProperty(DISABLE_SETTING_FOREGROUND))) {
       if (hasFocus && !isPopupVisible(comboBox)) {

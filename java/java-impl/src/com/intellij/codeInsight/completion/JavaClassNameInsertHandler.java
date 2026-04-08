@@ -245,22 +245,10 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
       return !DumbService.getInstance(position.getProject())
-        .computeWithAlternativeResolveEnabled(() -> isArrayTypeExpected((PsiExpression)prevElement.getParent()));
+        .computeWithAlternativeResolveEnabled(() -> JavaCompletionUtil.isArrayTypeExpected((PsiExpression)prevElement.getParent()));
     }
 
     return false;
-  }
-
-  static boolean isArrayTypeExpected(PsiExpression expr) {
-    return ContainerUtil.exists(ExpectedTypesProvider.getExpectedTypes(expr, true),
-                                info -> {
-                                  if (info.getType() instanceof PsiArrayType) {
-                                    PsiMethod method = info.getCalledMethod();
-                                    return method == null || !method.isVarArgs() || !(expr.getParent() instanceof PsiExpressionList) ||
-                                           MethodCallUtils.getParameterForArgument(expr) != null;
-                                  }
-                                  return false;
-                                });
   }
 
   private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {

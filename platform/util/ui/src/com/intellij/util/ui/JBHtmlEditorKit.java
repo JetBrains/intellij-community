@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JEditorPane;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -254,10 +256,30 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @ApiStatus.Internal
   public final class JBHtmlDocument extends HTMLDocument {
+
+    private long myModCount = 0L;
+
     private JBHtmlDocument(StyleSheet styles) {
       super(styles);
       TextLayoutUtil.disableTextLayoutIfNeeded(this);
       patchAttributes(styles);
+      addDocumentListener(new DocumentListener() {
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+          myModCount++;
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+          myModCount++;
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+          myModCount++;
+        }
+      });
     }
 
     @Override
@@ -284,6 +306,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       }
       HTMLReader reader = new JBHtmlReader(pos, popDepth, pushDepth, insertTag);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
+    }
+
+    public long getModCount() {
+      return myModCount;
     }
 
     public void tryRunUnderWriteLock(Runnable runnable) {

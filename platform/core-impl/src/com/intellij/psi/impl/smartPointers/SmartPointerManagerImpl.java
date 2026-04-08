@@ -79,7 +79,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
 
   @Override
   public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
-                                                                                                PsiFile containingFile) {
+                                                                                                @Nullable PsiFile containingFile) {
     return createSmartPsiElementPointer(element, containingFile, false);
   }
 
@@ -191,7 +191,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
         }
-        reference.tracker.removeReference(reference);
+        reference.getTracker().removeReference(reference);
       }
     }
   }

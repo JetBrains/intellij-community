@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelOpenedFile
@@ -203,6 +204,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       streamingRead(path)
     }
 
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
+
   override suspend fun listDirectory(
     path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
@@ -278,9 +282,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+  override suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     holder.withDelegateRetrying {
-      delete(path, removeContent)
+      delete(path, recursive)
     }
 
   override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
@@ -371,6 +375,9 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
       streamingRead(path)
     }
 
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
+
   override suspend fun listDirectory(
     path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
@@ -457,9 +464,9 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+  override suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     holder.withDelegateRetrying {
-      delete(path, removeContent)
+      delete(path, recursive)
     }
 
   override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =

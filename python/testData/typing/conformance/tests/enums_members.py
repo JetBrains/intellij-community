@@ -24,16 +24,20 @@ class Pet(Enum):
         self.species = species
 
 
-assert_type(Pet.genus, str)
-assert_type(Pet.species, str)
+def func1(pet: Pet) -> None:
+    assert_type(pet.genus, str)
+    assert_type(pet.species, str)
+
 assert_type(Pet.CAT, Literal[Pet.CAT])
 assert_type(Pet.DOG, Literal[Pet.DOG])
 
 
 from _enums_members import Pet2
 
-assert_type(Pet2.genus, str)
-assert_type(Pet2.species, str)
+def func2(pet: Pet2) -> None:
+    assert_type(pet.genus, str)
+    assert_type(pet.species, str)
+
 assert_type(Pet2.CAT, Literal[Pet2.CAT])
 assert_type(Pet2.DOG, Literal[Pet2.DOG])
 

@@ -10,19 +10,19 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.util.IncrementallyComputedValue
+import com.intellij.collaboration.util.consumeIncrementally
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 private val LOG: Logger = logger<GithubMarkdownCompletionContributor>()
 
-internal class GithubMarkdownCompletionContributor : CompletionContributor() {
+internal class GithubMarkdownCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun fillCompletionVariants(
     parameters: CompletionParameters,
@@ -50,29 +50,12 @@ internal class GithubMarkdownCompletionContributor : CompletionContributor() {
     customResult: CompletionResultSet,
     priority: Double,
   ) {
-    var counter = 0
-    users.takeWhile {
-      val batches: List<GHUser>? = it.valueOrNull
-      if (batches != null && batches.size > counter) {
-        val userSequence: Sequence<GHUser> = batches.subList(counter, batches.size).asSequence()
-        val newElements: List<LookupElement> = userSequence.map { it: GHUser ->
-          createLookupElement(avatarIconsProvider, it, priority)
-        }.toList()
-        customResult.addAllElements(newElements)
-        counter = batches.size
-      }
-
-      if (it.isComplete) {
-        return@takeWhile false
-      }
-
-      if (it.exceptionOrNull != null) {
-        LOG.error("Error fetching GitHub users for completion", it.exceptionOrNull)
-        return@takeWhile false
-      }
-
-      true
-    }.collect()
+    users.consumeIncrementally(
+      batchConsumer = { users ->
+        customResult.addAllElements(users.map { createLookupElement(avatarIconsProvider, it, priority) })
+      },
+      onError = { LOG.error("Error fetching GitHub users for completion", it) },
+    )
   }
 
   private fun createLookupElement(

@@ -18,7 +18,7 @@ import tools.jackson.databind.json.JsonMapper
 
 private val logger = logger<LaunchJsonUsagesCollector>()
 
-private val OBJECT_MAPPER = JsonMapper.builder()
+internal val VSCODE_OBJECT_MAPPER = JsonMapper.builder()
   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
   .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
@@ -43,7 +43,7 @@ internal class LaunchJsonUsagesCollector : ProjectUsagesCollector() {
       val launchJsonFile = vsCodeDir.findChild("launch.json") ?: return@buildSet
       if (!launchJsonFile.isFile) return@buildSet
       val rootNode = try {
-        OBJECT_MAPPER.readTree(launchJsonFile.inputStream)
+        VSCODE_OBJECT_MAPPER.readTree(launchJsonFile.inputStream)
       }
       catch (e: Throwable) {
         logger.warn("Cannot parse \"launch.json\" file", e)
@@ -70,7 +70,7 @@ internal class LaunchJsonUsagesCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    val GROUP = EventLogGroup("other.ide.vscode", version = 1)
+    val GROUP = EventLogGroup("other.ide.vscode", version = 2)
 
     val vsCodeFolderDetectedEvent = GROUP.registerEvent("folder.detected")
 

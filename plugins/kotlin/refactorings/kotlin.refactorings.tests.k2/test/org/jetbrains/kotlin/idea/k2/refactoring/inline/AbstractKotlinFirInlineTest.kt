@@ -88,3 +88,7 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
+
+abstract class AbstractInlineTestWithSomeDescriptors : AbstractKotlinFirInlineTest() {
+    override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromFileDirective()
+}

@@ -38,6 +38,15 @@ interface KotlinCompilerReferenceIndexStorageProvider {
      */
     fun createStorage(project: Project, projectPath: String): KotlinCompilerReferenceIndexStorage?
 
+    /**
+     * Represents an identifier for the builder associated with the build system.
+     *
+     * Builder identifier is needed to identify the origin of messages, which effectively say that the module was compiled
+     * and its compilation outputs are ready to be used as CRI inputs.
+     */
+    val builderId: String?
+        get() = null
+
 
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCompilerReferenceIndexStorageProvider> =

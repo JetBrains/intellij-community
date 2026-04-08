@@ -435,7 +435,7 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static boolean canInsertBlob(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column);
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, grid.getDataModel(DATA_WITH_MUTATIONS).getValueAt(row, column)); //todo: maybe pass null?
     return type == Types.BINARY || type == Types.BLOB || type == Types.LONGVARBINARY || type == Types.VARBINARY;
   }
 
@@ -496,7 +496,7 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static boolean canInsertClob(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column);
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, grid.getDataModel(DATA_WITH_MUTATIONS).getValueAt(row, column)); //todo: maybe pass null?
     return type == Types.CLOB || type == Types.NCLOB || type == Types.LONGVARCHAR || type == Types.LONGNVARCHAR ||
            type == Types.NCHAR || type == Types.CHAR || type == Types.VARCHAR || type == Types.NVARCHAR || type == Types.SQLXML;
   }

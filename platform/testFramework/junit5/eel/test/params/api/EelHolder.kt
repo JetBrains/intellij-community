@@ -29,7 +29,11 @@ sealed interface EelHolder {
    */
   val type: EelType
 
+  /**
+   * Legacy Targets API, do not use it. Use eel instead.
+   */
+  @get:ApiStatus.Internal
+  val target: TargetEnvironmentConfiguration
+
   fun isEnabled(filter: EelFixtureFilter): Boolean
 }
-
-val EelHolder.target: TargetEnvironmentConfiguration get() = EelTargetEnvironmentRequest.Configuration(eel)

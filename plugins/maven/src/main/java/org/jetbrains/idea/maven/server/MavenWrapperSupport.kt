@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.build.FilePosition
@@ -284,5 +284,11 @@ internal class MavenWrapperSupport {
     @JvmStatic
     fun getWrapperProperties(baseDir: Path?): Path? =
       baseDir?.resolve(".mvn")?.resolve("wrapper")?.resolve("maven-wrapper.properties")
+
+    private val MAVEN_VERSION_REGEX = Regex("""apache-maven-(\d+\.\d+(?:\.\d+)?(?:-[\w.-]+)?)-bin\.zip""")
+
+    @JvmStatic
+    fun extractVersionFromDistributionUrl(url: String): String? =
+      MAVEN_VERSION_REGEX.find(url)?.groupValues?.get(1)
   }
 }

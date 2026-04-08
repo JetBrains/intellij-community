@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.platform.exploratory.tests.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "exploratory-tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "exploratory-tests-main",
+  module_name = "intellij.platform.exploratory.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "exploratory-tests-main_test_lib",
+  module_name = "intellij.platform.exploratory.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":exploratory-tests-main_test_resources"],
+  runtime_deps = [
+    ":exploratory-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//plugins/groovy:groovy-tests",
+    "//plugins/groovy:groovy-tests_test_lib",
+    "//java/compiler:compiler-tests",
+    "//java/compiler:compiler-tests_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//platform/workspace/jps/tests",
+    "//platform/workspace/jps/tests:tests_test_lib",
+    "//platform/workspace/storage/tests",
+    "//platform/workspace/storage/tests:tests_test_lib",
+    "//plugins/properties/tests",
+    "//plugins/properties/tests:tests_test_lib",
+    "//plugins/yaml/backend:backend-tests",
+    "//plugins/yaml/backend:backend-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.exploratory.tests.main` end
+
+### auto-generated section `iml intellij.platform.exploratory.tests.main` start
+exports_files([
+  "intellij.platform.exploratory.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.exploratory.tests.main` end

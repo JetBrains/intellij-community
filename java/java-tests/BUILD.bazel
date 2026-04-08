@@ -183,6 +183,8 @@ jvm_library(
     "//xml/xml-analysis-impl:analysis-impl_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-parser:parser",
+    "//xml/xml-parser:parser_test_lib",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-impl:psi-impl_test_lib",
     "@lib//:kotlin-test",
@@ -229,10 +231,14 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
     "//java/java-frontback-tests:frontback-tests",
     "//java/java-frontback-tests:frontback-tests_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "@lib//:junit5",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
@@ -253,10 +259,16 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/navbar/testFramework",
     "//platform/navbar/testFramework:testFramework_test_lib",
     "//java/unscramble",
@@ -297,6 +309,8 @@ jvm_library(
     "//plugins/grazie/src:core_test_lib",
     "//platform/testFramework/junit5/codeInsight",
     "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//java/java-psi-impl:psi-impl",
     "//java/java-psi-impl:psi-impl_test_lib",
     "//platform/execution",
@@ -316,6 +330,8 @@ jvm_library(
     "//platform/locking-impl:locking-impl_test_lib",
     "//platform/smRunner:smRunner-tests",
     "//platform/smRunner:smRunner-tests_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ],
   exports = [
     "//plugins/java-i18n",
@@ -334,6 +350,8 @@ jvm_library(
     "//platform/platform-impl/internal:internal_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.tests` end
@@ -352,3 +370,59 @@ jps_test(
   runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `test intellij.java.tests` end
+
+### auto-generated section `build intellij.java.tests.main` start
+resourcegroup(
+  name = "tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "tests-main",
+  module_name = "intellij.java.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests-main_test_lib",
+  module_name = "intellij.java.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":tests-main_test_resources"],
+  runtime_deps = [
+    ":tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//plugins/java-decompiler/engine:java-decompiler-engine-tests",
+    "//plugins/java-decompiler/engine:java-decompiler-engine-tests_test_lib",
+    "//plugins/java-decompiler/plugin:java-decompiler-tests",
+    "//plugins/java-decompiler/plugin:java-decompiler-tests_test_lib",
+    "//java/java-features-trainer:featuresTrainer-tests",
+    "//java/java-features-trainer:featuresTrainer-tests_test_lib",
+    "//java/ide-customization:ide-customization-tests",
+    "//java/ide-customization:ide-customization-tests_test_lib",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings-tests",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings-tests_test_lib",
+    "//java/structuralsearch-java:structuralSearch-tests",
+    "//java/structuralsearch-java:structuralSearch-tests_test_lib",
+    "//java/java-terminal:terminal-tests",
+    "//java/java-terminal:terminal-tests_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//jvm/jvm-analysis-java-tests:analysis-java-tests",
+    "//jvm/jvm-analysis-java-tests:analysis-java-tests_test_lib",
+    "//plugins/lombok:lombok-tests",
+    "//plugins/lombok:lombok-tests_test_lib",
+    "//uast/uast-tests:tests",
+    "//uast/uast-tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.tests.main` end
+
+### auto-generated section `iml intellij.java.tests.main` start
+exports_files([
+  "intellij.java.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.tests.main` end

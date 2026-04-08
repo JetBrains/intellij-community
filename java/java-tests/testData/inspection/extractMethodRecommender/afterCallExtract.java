@@ -18,7 +18,7 @@ class Test {
       System.out.println(9);
       System.out.println(10);
 
-        String s = getString<caret>(o);
+        String s = getS<caret>(o);
 
         System.out.println(s);
       System.out.println(s);
@@ -36,7 +36,7 @@ class Test {
     }
   }
 
-    private static @NotNull String getString(Object o) {
+    private static @NotNull String getS(Object o) {
         String s;
         if (o instanceof String s2 && s2.length() == 1) {
           s = "1";

@@ -5,6 +5,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
@@ -17,7 +18,7 @@
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction">
       <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
     </action>
-    <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
+    <group id="AgentWorkbenchSessions.ToolWindow.GearActions" class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup">
       <reference ref="OpenFile"/>
       <separator/>
       <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
@@ -38,6 +39,11 @@
       popup="true"
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup"/>
+    <action
+      id="AgentWorkbenchSessions.RenameThreadFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>
+    </action>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction">
@@ -62,7 +68,7 @@
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingThreadFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
     </action>
-    <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
+    <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions" class="com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup">
       <separator/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
     </group>

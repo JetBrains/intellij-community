@@ -237,7 +237,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = LocalDiskJarCacheManager(
         cacheDir = cacheDir,
-        productionClassOutDir = tempDir.resolve("classes/production"),
+        classesOutputDirectory = tempDir.resolve("classes"),
         maxAccessTimeAge = 30.days,
       )
       val produceCalls = AtomicInteger()
@@ -901,7 +901,7 @@ internal class LocalDiskJarCacheManagerTest {
   ): LocalDiskJarCacheManager {
     return LocalDiskJarCacheManager(
       cacheDir = cacheDir,
-      productionClassOutDir = tempDir.resolve("classes/production"),
+      classesOutputDirectory = tempDir.resolve("classes"),
       maxAccessTimeAge = maxAccessTimeAge,
       metadataTouchInterval = metadataTouchInterval,
     )

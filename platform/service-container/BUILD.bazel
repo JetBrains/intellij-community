@@ -28,6 +28,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/asm",
     "//platform/util-class-loader:util-classLoader",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
   ]
 )
 
@@ -55,6 +57,8 @@ jvm_library(
     "//libraries/junit5:junit5_test_lib",
     "//libraries/asm:asm_test_lib",
     "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.serviceContainer` end

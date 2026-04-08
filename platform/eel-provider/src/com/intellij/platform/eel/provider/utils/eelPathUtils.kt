@@ -358,7 +358,7 @@ object EelPathUtils {
       is TransferTarget.Explicit -> {
         val sink = target.path
         runBlockingMaybeCancellable {
-          incrementalWalkingTransfer(source, sink, fileAttributesStrategy, absoluteSymlinkHandler)
+          incrementalWalkingTransfer(source, sink, fileAttributesStrategy, absoluteSymlinkHandler, null)
         }
         return sink
       }
@@ -407,7 +407,7 @@ object EelPathUtils {
 
         scope.async {
           val targetPath = targetPath ?: eel.createTempFor(source, true)
-          incrementalWalkingTransfer(source, targetPath, fileAttributesStrategy, absoluteSymlinkHandler)
+          incrementalWalkingTransfer(source, targetPath, fileAttributesStrategy, absoluteSymlinkHandler, null)
           CacheValue(targetPath)
         }
       }!!.await().transferredFilePath
@@ -475,11 +475,12 @@ object EelPathUtils {
     removeSource: Boolean,
     fileAttributesStrategy: FileTransferAttributesStrategy,
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
+    filter: ((Path) -> Boolean)? = null,
   ) {
     LOG.debug { "walkingTransfer($sourceRoot -> $targetRoot)" }
     if (Registry.`is`("ijent.incremental.walking.transfer")) {
       runBlockingMaybeCancellable {
-        incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler)
+        incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler, filter)
         if (removeSource) {
           val sourceEel = sourceRoot.asEelPath()
           val sourceEelApi = sourceEel.descriptor.toEelApi()
@@ -590,7 +591,8 @@ object EelPathUtils {
    * Get individual parts of a relative path.
    * Example: "a/b" -> ["a", "b"]
    */
-  private fun getRelativePathParts(path: Path): List<String> {
+  @VisibleForTesting
+  fun getRelativePathParts(path: Path): List<String> {
     val parts = mutableListOf<String>()
     var current: Path? = path
 
@@ -770,6 +772,7 @@ object EelPathUtils {
     targetHashFlow: Flow<WalkDirectoryEntryResult>,
     fileAttributesStrategy: FileTransferAttributesStrategy,
     ignoreCase: Boolean,
+    filter: ((Path) -> Boolean)?,
   ): Flow<DiffOperation> = flow {
     val sourceHashChan = sourceHashFlow.produceIn(scope)
     val targetHashChan = targetHashFlow.produceIn(scope)
@@ -778,6 +781,20 @@ object EelPathUtils {
     var sourceEntry: WalkDirectoryEntry? = null
     var targetEntryResult: WalkDirectoryEntryResult? = null
     var targetEntry: WalkDirectoryEntry? = null
+
+    // walkDirectory does not support filtering, so it will recurse into filtered directories. A way around this problem is to keep track
+    // of filtered directories and check if any of them are parents of the current path.
+    // The relative paths are stored as components to avoid recomputing the components on each check.
+    val filteredParents = mutableListOf<List<String>>()
+    fun isParentFilteredOut(
+      path: Path,
+      parents: List<List<String>>,
+    ): Boolean {
+      val pathParts = getRelativePathParts(path)
+      return parents.any { parentParts ->
+        pathParts.take(parentParts.size) == parentParts
+      }
+    }
 
     while (true) {
       if (sourceEntryResult == null) {
@@ -830,106 +847,127 @@ object EelPathUtils {
         continue
       }
 
+      val relativeLocalPath = sourceEntry!!.path.asNioPath().relativeTo(sourceEntryPoint)
+      val shouldTransfer = filter?.invoke(relativeLocalPath) ?: true && !isParentFilteredOut(relativeLocalPath, filteredParents)
+
       // if there is a file on the source side but not on the target side, the file was created
-      if (sourceEntry != null && targetEntry == null) {
-        when (sourceEntry.type) {
-          is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
-          is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
-          else -> emit(DiffOperation.Create(sourceEntry))
+      if (targetEntry == null) {
+        if (shouldTransfer) {
+          when (sourceEntry.type) {
+            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
+            is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
+            else -> emit(DiffOperation.Create(sourceEntry))
+          }
+        }
+        else {
+          when (sourceEntry.type) {
+            is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
+            else -> Unit
+          }
         }
         sourceEntry = null
         sourceEntryResult = null
         continue
       }
 
-      when (sourceEntry!!.type) {
+      when (sourceEntry.type) {
         is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
         else -> Unit
       }
-      when (targetEntry!!.type) {
+      when (targetEntry.type) {
         is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
         else -> Unit
       }
 
-      val relativeLocalPath = sourceEntry.path.asNioPath().relativeTo(sourceEntryPoint)
       val relativeRemotePath = targetEntry.path.asNioPath().relativeTo(targetEntryPoint)
 
       val pathComparison = compareRelativePathComponents(relativeLocalPath, relativeRemotePath, ignoreCase)
 
       // if the same file is present on both sides, and if the permissions/hash/type is different, sync them
       if (pathComparison == 0) {
-        val transferAttributes = when (fileAttributesStrategy) {
-          is FileTransferAttributesStrategy.Skip -> false
-          else -> true
-        }
-        val updatePermissions =
-          transferAttributes && !arePermissionsEqual(fileAttributesStrategy, sourceEntry.permissions!!, targetEntry.permissions!!)
-        val updateAttributes = transferAttributes && !areAttributesEqual(sourceEntry, targetEntry)
-        val updateTimestamps = transferAttributes && !areTimestampsEqual(sourceEntry, targetEntry)
-        var opEmitted = false
-
-        when (sourceEntry.type) {
-          is WalkDirectoryEntry.Type.Directory -> {
-            if (targetEntry.type !is WalkDirectoryEntry.Type.Directory) {
-              emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
-              opEmitted = true
-            }
+        if (shouldTransfer) {
+          val transferAttributes = when (fileAttributesStrategy) {
+            is FileTransferAttributesStrategy.Skip -> false
+            else -> true
           }
-          is WalkDirectoryEntry.Type.Regular -> {
-            when (targetEntry.type) {
-              is WalkDirectoryEntry.Type.Regular -> {
-                if ((sourceEntry.type as WalkDirectoryEntry.Type.Regular).hash != (targetEntry.type as WalkDirectoryEntry.Type.Regular).hash) {
-                  // updating file contents implies updating modification timestamp
-                  emit(DiffOperation.UpdateContents(updatePermissions, updateAttributes, true, sourceEntry, targetEntry))
-                  opEmitted = true
-                }
-              }
-              else -> {
+          val updatePermissions =
+            transferAttributes && !arePermissionsEqual(fileAttributesStrategy, sourceEntry.permissions!!, targetEntry.permissions!!)
+          val updateAttributes = transferAttributes && !areAttributesEqual(sourceEntry, targetEntry)
+          val updateTimestamps = transferAttributes && !areTimestampsEqual(sourceEntry, targetEntry)
+          var opEmitted = false
+
+          when (sourceEntry.type) {
+            is WalkDirectoryEntry.Type.Directory -> {
+              if (targetEntry.type !is WalkDirectoryEntry.Type.Directory) {
                 emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
                 opEmitted = true
               }
             }
-          }
-          is WalkDirectoryEntry.Type.Symlink.Relative -> {
-            when (targetEntry.type) {
-              is WalkDirectoryEntry.Type.Symlink.Relative -> {
-                // to be able to compare both relative paths are converted to have the same separator
-                val sourceTarget = (sourceEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
-                val targetTarget = (targetEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
-                val areEqual = compareRelativePathComponents(Path.of(sourceTarget), Path.of(targetTarget)) == 0
-                if (!areEqual) {
+            is WalkDirectoryEntry.Type.Regular -> {
+              when (targetEntry.type) {
+                is WalkDirectoryEntry.Type.Regular -> {
+                  if ((sourceEntry.type as WalkDirectoryEntry.Type.Regular).hash != (targetEntry.type as WalkDirectoryEntry.Type.Regular).hash) {
+                    // updating file contents implies updating modification timestamp
+                    emit(DiffOperation.UpdateContents(updatePermissions, updateAttributes, true, sourceEntry, targetEntry))
+                    opEmitted = true
+                  }
+                }
+                else -> {
                   emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
                   opEmitted = true
                 }
               }
-              else -> {
-                emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
-                opEmitted = true
+            }
+            is WalkDirectoryEntry.Type.Symlink.Relative -> {
+              when (targetEntry.type) {
+                is WalkDirectoryEntry.Type.Symlink.Relative -> {
+                  // to be able to compare both relative paths are converted to have the same separator
+                  val sourceTarget = (sourceEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+                  val targetTarget = (targetEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+                  val areEqual = compareRelativePathComponents(Path.of(sourceTarget), Path.of(targetTarget)) == 0
+                  if (!areEqual) {
+                    emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+                    opEmitted = true
+                  }
+                }
+                else -> {
+                  emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+                  opEmitted = true
+                }
               }
             }
+            is WalkDirectoryEntry.Type.Symlink.Absolute -> {
+              emit(DiffOperation.AbsoluteSymlink(sourceEntry, targetEntry))
+              opEmitted = true
+            }
+            is WalkDirectoryEntry.Type.Other -> {
+              // other file types have been handled prior to this when
+            }
           }
-          is WalkDirectoryEntry.Type.Symlink.Absolute -> {
-            emit(DiffOperation.AbsoluteSymlink(sourceEntry, targetEntry))
-            opEmitted = true
-          }
-          is WalkDirectoryEntry.Type.Other -> {
-            // other file types have been handled prior to this when
+
+          // if no other op has been emitted, but there could still be differences in metadata
+          if (!opEmitted && (updatePermissions || updateAttributes || updateTimestamps)) {
+            when (sourceEntry.type) {
+              // permissions, timestamps, and attributes are generally ignored on symlinks
+              is WalkDirectoryEntry.Type.Symlink -> Unit
+              else ->
+                emit(DiffOperation.UpdateMetadata(
+                  updatePermissions = updatePermissions,
+                  updateAttributes = updateAttributes,
+                  updateTimestamps = updateTimestamps,
+                  sourceFile = sourceEntry,
+                  targetFile = targetEntry,
+                ))
+            }
           }
         }
+        else {
+          // if the source file is not to be transferred and the target file exists, the target file should be removed
+          emit(DiffOperation.Delete(targetEntry))
 
-        // if no other op has been emitted, but there could still be differences in metadata
-        if (!opEmitted && (updatePermissions || updateAttributes || updateTimestamps)) {
           when (sourceEntry.type) {
-            // permissions, timestamps, and attributes are generally ignored on symlinks
-            is WalkDirectoryEntry.Type.Symlink -> Unit
-            else ->
-              emit(DiffOperation.UpdateMetadata(
-                updatePermissions = updatePermissions,
-                updateAttributes = updateAttributes,
-                updateTimestamps = updateTimestamps,
-                sourceFile = sourceEntry,
-                targetFile = targetEntry,
-              ))
+            is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
+            else -> Unit
           }
         }
 
@@ -940,9 +978,17 @@ object EelPathUtils {
       }
       // if the source path is in lower lexicographical order than the target path, it means that the source file was created
       else if (pathComparison < 0) {
-        when (sourceEntry.type) {
-          is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
-          else -> emit(DiffOperation.Create(sourceEntry))
+        if (shouldTransfer) {
+          when (sourceEntry.type) {
+            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
+            else -> emit(DiffOperation.Create(sourceEntry))
+          }
+        }
+        else {
+          when (sourceEntry.type) {
+            is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
+            else -> Unit
+          }
         }
         sourceEntry = null
         sourceEntryResult = null
@@ -1069,12 +1115,17 @@ object EelPathUtils {
    * [sourceRoot] Has to be a valid path to a directory
    *
    * [targetRoot] Has to be a valid path to a directory
+   *
+   * [ignoreCase] Whether to ignore case when comparing paths
+   *
+   * [filter] Lambda that checks whether a given directory is supposed to be transferred. Returns true if the directory should be transferred.
    */
   @VisibleForTesting
   suspend fun directoryOnlySync(
     sourceRoot: EelPath,
     targetRoot: EelPath,
     ignoreCase: Boolean,
+    filter: ((Path) -> Boolean)?,
   ) {
     suspend fun listDirectories(
       path: Path,
@@ -1117,12 +1168,15 @@ object EelPathUtils {
         val path = sourceCurrentLayerQ.removeFirst()
         val relativeDirPath = path.relativeTo(sourceRoot)
         val targetDirPath = targetRoot.resolve(relativeDirPath)
+        val shouldTransfer = filter?.invoke(relativeDirPath) ?: true
 
-        // edge case when a source file is deleted and replaced by a directory with the same name
-        Files.deleteIfExists(targetDirPath)
+        if (shouldTransfer) {
+          // edge case when a source file is deleted and replaced by a directory with the same name
+          Files.deleteIfExists(targetDirPath)
 
-        Files.createDirectory(targetDirPath)
-        sourceNextLayerQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
+          Files.createDirectory(targetDirPath)
+          sourceNextLayerQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
+        }
       }
       else if (sourceCurrentLayerQ.isEmpty() && targetCurrentLayerQ.isNotEmpty()) {
         val path = targetCurrentLayerQ.removeFirst()
@@ -1137,19 +1191,34 @@ object EelPathUtils {
         if (comparison > 0) {
           val dirTargetPath = targetRoot.resolve(sourceRelativeDirPath)
 
-          // edge case when a source file is deleted and replaced by a directory with the same name
-          Files.deleteIfExists(dirTargetPath)
+          val shouldTransfer = filter?.invoke(sourceRelativeDirPath) ?: true
+          if (shouldTransfer) {
+            // edge case when a source file is deleted and replaced by a directory with the same name
+            Files.deleteIfExists(dirTargetPath)
 
-          Files.createDirectory(dirTargetPath)
-          sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
+            Files.createDirectory(dirTargetPath)
+            sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
+          }
+          else {
+            sourceCurrentLayerQ.removeFirst()
+          }
         }
         // the source directory was deleted
         else if (comparison < 0) {
           targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrow()
         }
         else {
-          sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
-          targetNextLayerQ.addAll(listDirectories(targetCurrentLayerQ.removeFirst(), isTargetLocal, targetEelApi))
+          val shouldTransfer = filter?.invoke(sourceRelativeDirPath) ?: true
+          if (shouldTransfer) {
+            sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
+            targetNextLayerQ.addAll(listDirectories(targetCurrentLayerQ.removeFirst(), isTargetLocal, targetEelApi))
+          }
+          else {
+            // if the filter dictates that a source directory should not be transferred and the target directory exists, it should be deleted
+            // to maintain the proper directory structure on the target side
+            targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrow()
+            sourceCurrentLayerQ.removeFirst()
+          }
         }
       }
       if (sourceCurrentLayerQ.isEmpty() && targetCurrentLayerQ.isEmpty()) {
@@ -1224,6 +1293,7 @@ object EelPathUtils {
     targetRoot: Path,
     fileAttributesStrategy: FileTransferAttributesStrategy,
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+    filter: ((Path) -> Boolean)?,
   ) {
     coroutineScope {
       val targetRootEel = targetRoot.asEelPath()
@@ -1255,7 +1325,7 @@ object EelPathUtils {
             Files.createDirectory(targetRoot)
           }
           withContext(Dispatchers.IO) {
-            directoryOnlySync(sourcePathEel, targetRootEel, false)
+            directoryOnlySync(sourcePathEel, targetRootEel, false, filter)
           }
         }
         sourceAttrs.isRegularFile -> {
@@ -1315,7 +1385,8 @@ object EelPathUtils {
                       sourceHashes.await(),
                       targetHashes.await(),
                       fileAttributesStrategy,
-                      false).collect { diffOp ->
+                      false,
+                      filter).collect { diffOp ->
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
         launch(Dispatchers.IO) {

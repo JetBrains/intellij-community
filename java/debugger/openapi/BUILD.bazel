@@ -15,8 +15,10 @@ jvm_library(
   resources = [":java-debugger_resources"],
   deps = [
     "//java/execution/openapi:java-execution",
+    "//java/java-syntax:syntax",
     "//java/jsp-openapi:jsp",
     "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -46,8 +48,10 @@ jvm_library(
   runtime_deps = [
     ":java-debugger",
     "//java/execution/openapi:java-execution_test_lib",
+    "//java/java-syntax:syntax_test_lib",
     "//java/jsp-openapi:jsp_test_lib",
     "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",

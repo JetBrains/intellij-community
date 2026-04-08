@@ -178,6 +178,7 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
 
                 else -> {
                     selectableLazyListState.selectedKeys = setOf(key)
+                    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
                 }
             }
         }

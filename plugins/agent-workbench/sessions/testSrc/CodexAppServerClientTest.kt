@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerException
+import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexAppServerValue
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
@@ -14,6 +15,7 @@ import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionResult
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
+import com.intellij.agent.workbench.codex.common.CodexTurnCollaborationMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -63,6 +65,21 @@ class CodexAppServerClientTest {
   private fun CoroutineScope.awaitNoNotification(client: CodexAppServerClient) = async(start = CoroutineStart.UNDISPATCHED) {
     withTimeoutOrNull(500.milliseconds) {
       client.notifications.firstOrNull()
+    }
+  }
+
+  private suspend fun waitForRequestLogMethod(
+    requestLogPath: Path,
+    method: String,
+    timeout: kotlin.time.Duration = 30.seconds,
+  ) {
+    withTimeout(timeout) {
+      while (true) {
+        if (Files.exists(requestLogPath) && Files.readAllLines(requestLogPath).contains(method)) {
+          return@withTimeout
+        }
+        delay(10.milliseconds)
+      }
     }
   }
 
@@ -392,6 +409,106 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun readThreadActivitySnapshotReturnsNullForUnmaterializedIncludeTurnsError(): Unit = runBlocking(Dispatchers.Default) {
+    val configPath = tempDir.resolve("codex-thread-read-unmaterialized.json")
+    writeConfig(path = configPath, threads = emptyList())
+
+    val backendDir = tempDir.resolve("backend-thread-read-unmaterialized")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_ERROR_METHOD" to "thread/read",
+        "CODEX_TEST_ERROR_MESSAGE" to "thread thr_123 is not materialized yet; includeTurns is unavailable before first user message",
+      ),
+    )
+    try {
+      assertThat(client.readThreadActivitySnapshot("thread-read-1")).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun readThreadActivitySnapshotReturnsNullForEphemeralIncludeTurnsError(): Unit = runBlocking(Dispatchers.Default) {
+    val configPath = tempDir.resolve("codex-thread-read-ephemeral.json")
+    writeConfig(path = configPath, threads = emptyList())
+
+    val backendDir = tempDir.resolve("backend-thread-read-ephemeral")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_ERROR_METHOD" to "thread/read",
+        "CODEX_TEST_ERROR_MESSAGE" to "ephemeral threads do not support includeTurns",
+      ),
+    )
+    try {
+      assertThat(client.readThreadActivitySnapshot("thread-read-1")).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun readThreadActivitySnapshotRethrowsUnexpectedThreadReadError(): Unit = runBlocking(Dispatchers.Default) {
+    val configPath = tempDir.resolve("codex-thread-read-error.json")
+    writeConfig(path = configPath, threads = emptyList())
+
+    val backendDir = tempDir.resolve("backend-thread-read-error")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_ERROR_METHOD" to "thread/read",
+        "CODEX_TEST_ERROR_MESSAGE" to "boom",
+      ),
+    )
+    try {
+      try {
+        client.readThreadActivitySnapshot("thread-read-1")
+        fail("Expected CodexAppServerException")
+      }
+      catch (e: CodexAppServerException) {
+        assertThat(e.message).contains("boom")
+      }
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun readThreadActivitySnapshotReturnsNullForUnmaterializedRealThreadBeforeFirstUserMessage(): Unit = runBlocking(Dispatchers.Default) {
+    val projectDir = tempDir.resolve("project-real-thread-read-unmaterialized")
+    Files.createDirectories(projectDir)
+
+    val backendDir = tempDir.resolve("backend-real-thread-read-unmaterialized")
+    Files.createDirectories(backendDir)
+    val client = createRealBackendDefinition().createClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = tempDir.resolve("unused-real-thread-read-config.json"),
+    )
+    try {
+      val session = client.createThreadSession(cwd = projectDir.toString())
+      assertThat(session.rolloutPath).isNotBlank()
+      assertThat(client.readThreadActivitySnapshot(session.thread.id)).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun appServerNotificationsAreExposedAsFlowEvents(): Unit = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-notifications")
     Files.createDirectories(project)
@@ -621,6 +738,52 @@ class CodexAppServerClientTest {
       assertThat(event.threadId).isEqualTo("thread-notify-object")
       assertThat(event.method).isEqualTo("thread/status/changed")
       assertThat(event.startedThread).isNull()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun appServerNotificationsParseThreadNameUpdatedKind(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-notifications-name-updated")
+    Files.createDirectories(project)
+    val configPath = tempDir.resolve("codex-notifications-name-updated.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-notify-name",
+          title = "Thread notify name",
+          cwd = project.toString(),
+          statusType = "idle",
+          updatedAt = 1_700_000_052_500L,
+          archived = false,
+        )
+      )
+    )
+    val backendDir = tempDir.resolve("backend-notifications-name-updated")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_NOTIFY_METHOD" to "thread/name/updated",
+        "CODEX_TEST_NOTIFY_ON_METHOD" to "thread/read",
+        "CODEX_TEST_NOTIFY_THREAD_ID" to "thread-notify-name",
+      ),
+    )
+    try {
+      val notification = awaitNextNotification(client)
+
+      val snapshot = client.readThreadActivitySnapshot("thread-notify-name")
+      assertThat(snapshot).isNotNull
+
+      val event = notification.await()
+      assertThat(event.method).isEqualTo("thread/name/updated")
+      assertThat(event.kind).isEqualTo(CodexAppServerNotificationKind.THREAD_NAME_UPDATED)
+      assertThat(event.threadId).isEqualTo("thread-notify-name")
     }
     finally {
       client.shutdown()
@@ -860,7 +1023,10 @@ class CodexAppServerClientTest {
         ),
         ThreadSpec(
           id = "thread-name",
-          name = "Named thread",
+          title = "Title fallback",
+          preview = "Preview fallback",
+          name = "  Named\n   thread  ",
+          summary = "Summary fallback",
           cwd = workingDir.toString(),
           createdAt = 1_700_000_500_000L,
           createdAtField = "createdAt",
@@ -881,11 +1047,63 @@ class CodexAppServerClientTest {
       val threadsById = threads.associateBy { it.id }
       val previewThread = threadsById.getValue("thread-preview")
       assertThat(previewThread.updatedAt).isEqualTo(1_700_000_000_000L)
-      assertThat(previewThread.title).endsWith("...")
-      assertThat(previewThread.title.length).isLessThan(longPreview.length)
+      assertThat(previewThread.title).isEqualTo(longPreview)
       val namedThread = threadsById.getValue("thread-name")
       assertThat(namedThread.title).isEqualTo("Named thread")
       assertThat(namedThread.updatedAt).isEqualTo(1_700_000_500_000L)
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun listThreadsFallsBackWhenExplicitNameIsBlank(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-blank-name")
+    Files.createDirectories(workingDir)
+    val normalizedCwd = workingDir.toString().replace('\\', '/').trimEnd('/')
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-title",
+          title = "Title fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_600_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-summary",
+          summary = "Summary fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_500_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-preview",
+          preview = "Preview fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_400_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-blank-name")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val threadsById = client.listThreads(archived = false, cwdFilter = normalizedCwd).associateBy { it.id }
+      assertThat(threadsById.getValue("thread-title").title).isEqualTo("Title fallback")
+      assertThat(threadsById.getValue("thread-summary").title).isEqualTo("Summary fallback")
+      assertThat(threadsById.getValue("thread-preview").title).isEqualTo("Preview fallback")
     }
     finally {
       client.shutdown()
@@ -1011,6 +1229,89 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun startTurnPassesPlanModePromptThrough(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-turn-start")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(path = configPath, threads = emptyList())
+
+    val backendDir = tempDir.resolve("backend-turn-start")
+    Files.createDirectories(backendDir)
+    val requestPayloadLogPath = backendDir.resolve("turn-start-requests.log")
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_REQUEST_PAYLOAD_LOG" to requestPayloadLogPath.toString(),
+      ),
+    )
+    try {
+      val created = client.createThreadSession(cwd = workingDir.toString())
+      val turnId = client.startTurn(
+        threadId = created.thread.id,
+        promptText = "Refactor this",
+        collaborationMode = CodexTurnCollaborationMode(
+          mode = "plan",
+          model = created.model,
+          reasoningEffort = created.reasoningEffort,
+        ),
+      )
+
+      assertThat(turnId).startsWith("turn-")
+
+      val payloadLog = Files.readString(requestPayloadLogPath)
+      assertThat(payloadLog).contains("\"method\":\"initialize\"")
+      assertThat(payloadLog).contains("\"capabilities\":{\"experimentalApi\":true}")
+      assertThat(payloadLog).contains("\"method\":\"turn/start\"")
+      assertThat(payloadLog).contains("\"threadId\":\"${created.thread.id}\"")
+      assertThat(payloadLog).contains("\"type\":\"text\"")
+      assertThat(payloadLog).contains("\"text\":\"Refactor this\"")
+      assertThat(payloadLog).contains("\"collaborationMode\":{\"mode\":\"plan\"")
+      assertThat(payloadLog).contains("\"settings\":{\"model\":\"${created.model}\"")
+      assertThat(payloadLog).contains("\"reasoning_effort\":\"${created.reasoningEffort}\"")
+      assertThat(payloadLog).contains("\"developer_instructions\":null")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun startTurnWithPlanModeUsesRealCodexAppServer(): Unit = runBlocking(Dispatchers.Default) {
+    val backendDir = tempDir.resolve("backend-turn-start-real")
+    Files.createDirectories(backendDir)
+    createRealMockResponsesHarness(
+      scope = this,
+      tempDir = backendDir,
+      responsePlans = listOf(MockResponsesPlan.completedAssistantMessage("Done")),
+    ).use { harness ->
+      val created = harness.client.createThreadSession(cwd = harness.projectDir.toString())
+      assertThat(created.rolloutPath).isNotBlank()
+
+      val turnId = harness.client.startTurn(
+        threadId = created.thread.id,
+        promptText = "Refactor this",
+        collaborationMode = CodexTurnCollaborationMode(
+          mode = "plan",
+          model = created.model,
+          reasoningEffort = created.reasoningEffort,
+        ),
+      )
+
+      assertThat(turnId).isNotBlank()
+      withTimeout(5.seconds) {
+        while (harness.responsesServer.requests().isEmpty()) {
+          delay(10.milliseconds)
+        }
+      }
+      val requests = harness.responsesServer.requests()
+      assertThat(requests).hasSize(1)
+      assertThat(requests.single()).contains("Refactor this")
+    }
+  }
+
+  @Test
   fun archiveThreadMovesThreadFromActiveToArchivedList(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-archive")
     Files.createDirectories(workingDir)
@@ -1051,6 +1352,51 @@ class CodexAppServerClientTest {
       val archived = client.listThreads(archived = true)
       assertThat(active.map { it.id }).doesNotContain("thread-1")
       assertThat(archived.map { it.id }).contains("thread-1")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
+  fun setThreadNameSendsRequestAndUpdatesListResult(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-rename")
+    Files.createDirectories(workingDir)
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-rename",
+          title = "Original title",
+          cwd = workingDir.toString(),
+          updatedAt = 1_700_000_005_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-rename")
+    Files.createDirectories(backendDir)
+    val requestPayloadLogPath = backendDir.resolve("thread-rename-requests.log")
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+      environmentOverrides = mapOf(
+        "CODEX_TEST_REQUEST_PAYLOAD_LOG" to requestPayloadLogPath.toString(),
+      ),
+    )
+    try {
+      client.setThreadName("thread-rename", "Renamed thread")
+
+      val cwdFilter = workingDir.toString().replace('\\', '/').trimEnd('/')
+      val renamedThread = client.listThreads(archived = false, cwdFilter = cwdFilter).single()
+      assertThat(renamedThread.title).isEqualTo("Renamed thread")
+
+      val payloadLog = Files.readString(requestPayloadLogPath)
+      assertThat(payloadLog).contains("\"method\":\"thread/name/set\"")
+      assertThat(payloadLog).contains("\"threadId\":\"thread-rename\"")
+      assertThat(payloadLog).contains("\"name\":\"Renamed thread\"")
     }
     finally {
       client.shutdown()
@@ -1354,11 +1700,7 @@ class CodexAppServerClientTest {
         client.suggestPrompt(createPromptSuggestionRequest())
       }
 
-      withTimeout(5.seconds) {
-        while (!Files.exists(requestLogPath) || !Files.readAllLines(requestLogPath).contains("turn/start")) {
-          delay(10.milliseconds)
-        }
-      }
+      waitForRequestLogMethod(requestLogPath, method = "turn/start")
 
       suggestion.cancel()
       try {
@@ -1368,6 +1710,7 @@ class CodexAppServerClientTest {
       catch (_: CancellationException) {
       }
 
+      waitForRequestLogMethod(requestLogPath, method = "turn/interrupt")
       assertThat(Files.readAllLines(requestLogPath)).contains("turn/interrupt")
     }
     finally {

@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,6 +27,19 @@ interface PythonPackageRequirementsTreeExtractor {
         .firstNotNullOfOrNull { it.createExtractor(sdk, project) }
 
     fun parseTrees(lines: List<String>): List<PackageNode> = treeParser.parseTrees(lines)
+
+    fun collectAllPackages(treeOutput: String): List<PythonPackage> {
+      val packages = mutableSetOf<String>()
+      val result = mutableListOf<PythonPackage>()
+      fun collect(node: PackageNode) {
+        if (packages.add(node.name.name)) {
+          result.add(PythonPackage(node.name.name, "", false))
+        }
+        node.children.forEach { collect(it) }
+      }
+      parseTrees(treeOutput.lines()).forEach { collect(it) }
+      return result
+    }
   }
 }
 

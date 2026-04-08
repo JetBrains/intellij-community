@@ -41,9 +41,13 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/caffeine",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
     "@lib//:apache-sshd-osgi",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
   ],
   exports = [
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
@@ -85,8 +89,12 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//libraries/caffeine:caffeine_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.settingsRepository` end
@@ -131,6 +139,8 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/vcs-impl",
@@ -165,12 +175,16 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/workspace/jps",
     "//platform/workspace/jps:jps_test_lib",
   ],
   runtime_deps = [
     ":settingsRepository-tests",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
   ]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end

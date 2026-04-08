@@ -1,7 +1,12 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.codeinsight">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

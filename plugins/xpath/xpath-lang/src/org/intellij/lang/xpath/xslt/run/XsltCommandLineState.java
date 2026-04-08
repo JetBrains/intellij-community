@@ -28,8 +28,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
 import org.intellij.plugins.xpathView.XPathBundle;
-import org.intellij.plugins.xslt.run.rt.XSLTMain;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,6 +52,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public final class XsltCommandLineState extends CommandLineState {
+  private static final Logger LOG = Logger.getInstance(XsltCommandLineState.class);
   public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
   private final XsltRunConfiguration myXsltRunConfiguration;
@@ -140,12 +140,8 @@ public final class XsltCommandLineState extends CommandLineState {
       parameters.getClassPath().addTail(rtPath.toAbsolutePath().toString());
     }
     else {
-      String rtPath = PathManager.getJarPathForClass(XSLTMain.class);
-      if (rtPath == null) {
-        throw new CantRunException(XPathBundle.message("dialog.message.cannot.find.runtime.classes.on.classpath"));
-      }
-      parameters.getClassPath().addTail(rtPath);
-      parameters.getVMParametersList().prepend("-ea");
+      LOG.error("Plugin descriptor not found for XSLT plugin by class " + getClass().getName());
+      throw new CantRunException(XPathBundle.message("dialog.message.cannot.find.runtime.classes.on.classpath"));
     }
 
     parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");

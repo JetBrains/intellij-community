@@ -2,12 +2,13 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object NullCommitWorkflowHandler : CommitWorkflowHandler {
-  override val amendCommitHandler: AmendCommitHandler = NullAmendCommitHandler
+class NullCommitWorkflowHandler(project: Project) : CommitWorkflowHandler {
+  override val amendCommitHandler: AmendCommitHandler = NullAmendCommitHandler(project)
 
   override fun getExecutor(executorId: String): CommitExecutor? = null
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = false
@@ -16,7 +17,7 @@ object NullCommitWorkflowHandler : CommitWorkflowHandler {
 
 @ApiStatus.Internal
 @Suppress("UNUSED_PARAMETER")
-object NullAmendCommitHandler : AmendCommitHandler {
+class NullAmendCommitHandler(override val project: Project) : AmendCommitHandler {
   override var commitToAmend: CommitToAmend
     get() = CommitToAmend.None
     set(value) = Unit

@@ -84,6 +84,7 @@ public final class JavaParserUtil {
    * @deprecated Use {@link #obtainTokens(PsiFile)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull com.intellij.lexer.TokenList obtainTokensOutdated(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
@@ -110,6 +111,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull PsiBuilder createBuilder(final ASTNode chameleon) {
     return createBuilder(chameleon,
                          (psi) -> PsiUtil.getLanguageLevel(psi),
@@ -134,6 +136,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
     done(marker, type, OldParserWhiteSpaceAndCommentSetHolder.INSTANCE);
   }
@@ -144,6 +147,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
     builder.putUserData(LANG_LEVEL_KEY, level);
   }
@@ -153,6 +157,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
@@ -164,6 +169,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
     builder.putUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
   }
@@ -173,6 +179,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
     return Boolean.TRUE.equals(builder.getUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
@@ -181,6 +188,7 @@ public final class JavaParserUtil {
    * @deprecated use {@link JavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, OldParserWhiteSpaceAndCommentSetHolder)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void done(final @NotNull PsiBuilder.Marker marker,
                           final @NotNull IElementType type,
                           final @NotNull OldParserWhiteSpaceAndCommentSetHolder commentSetHolder) {
@@ -199,6 +207,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void done(final @NotNull PsiBuilder.Marker marker,
                           final @NotNull IElementType type,
                           final @NotNull PsiBuilder builder,
@@ -218,6 +227,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return marker != null ? marker.getTokenType() : null;
   }
@@ -229,6 +239,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     builder.mark().error(message);
   }
@@ -238,6 +249,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
                            final @Nullable PsiBuilder.Marker before) {
@@ -254,6 +266,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean expectOrError(PsiBuilder builder,
                                       TokenSet expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -269,6 +282,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean expectOrError(PsiBuilder builder,
                                       IElementType expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -284,6 +298,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     builder.mark().done(type);
   }
@@ -293,6 +308,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
     before.precede().doneBefore(type, before);
   }
@@ -302,6 +318,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void semicolon(final PsiBuilder builder) {
     expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
   }
@@ -311,6 +328,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
     final PsiBuilder.Marker pos = builder.mark();
 
@@ -336,6 +354,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -355,6 +374,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -419,6 +439,17 @@ public final class JavaParserUtil {
   public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull ASTNode chameleon,
                                                                                @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                                                @NotNull Function<PsiFile, TokenList> psiAsLexer) {
+    return createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer, null);
+  }
+
+  /**
+   * @deprecated used only temporarily for drool, will be deleted
+   */
+  @Deprecated
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull ASTNode chameleon,
+                                                                               @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
+                                                                               @NotNull Function<PsiFile, TokenList> psiAsLexer,
+                                                                               @Nullable ElementTypeConverter additionalConverter) {
     PsiElement psi = chameleon.getPsi();
     assert psi != null : chameleon;
 
@@ -439,9 +470,18 @@ public final class JavaParserUtil {
     Language language = psi.getLanguage();
     if (!language.isKindOf(JavaLanguage.INSTANCE)) language = JavaLanguage.INSTANCE;
     PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
-    PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, language, text);
+    PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, language, text, additionalConverter);
 
     return new PsiSyntaxBuilderWithLanguageLevel(builder, level);
+  }
+
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(
+    final ASTNode chameleon,
+    @Nullable ElementTypeConverter additionalConverter) {
+    return createSyntaxBuilder(chameleon,
+                               (psi) -> PsiUtil.getLanguageLevel(psi),
+                               (psi) -> obtainTokens(psi),
+                               additionalConverter);
   }
 
   public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull LighterLazyParseableNode chameleon,
@@ -462,6 +502,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull PsiBuilder createBuilder(final @NotNull ASTNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                   @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction,
@@ -497,6 +538,7 @@ public final class JavaParserUtil {
    * See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                   @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction) {

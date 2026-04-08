@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -31,7 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
 class PartialChangesHolder(project: Project, cs: CoroutineScope) {
-  private val mapping: MutableMap<FilePath, List<LocalRange>> = mutableMapOf()
+  private val mapping = ConcurrentHashMap<FilePath, List<LocalRange>>()
 
   val updates: SharedFlow<Unit>
 

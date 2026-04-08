@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.Collection;
 
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
-
   @Override
   public boolean isValid() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -47,9 +46,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract void setTimeStamp(long time) throws IOException;
 
   @Override
-  public abstract @NotNull CharSequence getNameSequence();
-
-  @Override
   public abstract int getId();
 
   @Override
@@ -60,10 +56,10 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Override
   public abstract void setWritable(boolean writable) throws IOException;
 
-  /** Marks this file, and all it's parents up to the root, as 'needed a refresh' */
+  /// Marks this file, and all it's parents up to the root, as 'needed a refresh'
   public abstract void markDirty();
 
-  /** {@link #markDirty()} starting from this file, and down the hierarchy -- skipping circular symlinks, if met any */
+  /// [#markDirty()] starting from this file, and down the hierarchy -- skipping circular symlinks, if met any
   public abstract void markDirtyRecursively();
 
   public abstract boolean isDirty();
@@ -90,7 +86,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
       throw new IOException("Destination is not a folder: " + newParent.getPath());
     }
 
-    VirtualFile child = newParent.findChild(getName());
+    var child = newParent.findChild(getName());
     if (child != null) {
       throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
     }
@@ -101,70 +97,58 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     });
   }
 
-  /**
-   * @return true if VFS _thinks_ it already cached _in_memory_ all the children of this file, false otherwise.
-   * It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
-   * in the underlying FS with delay -- it just means VFS _thinks_ it caches all the children, i.e., it _was_
-   * all the children in the folder at some moment.
-   */
+  /// @return true if VFS \_thinks\_ it already cached \_in\_memory\_ all the children of this file, false otherwise.
+  /// It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
+  /// in the underlying FS with delay -- it just means VFS \_thinks\_ it caches all the children, i.e., it \_was\_
+  /// all the children in the folder at some moment.
   @ApiStatus.Experimental
   public boolean allChildrenLoaded() {
     return false;//= safe, but not good for performance
   }
 
-  /**
-   * @return true if VFS _thinks_ it already knows all the children of this file, false otherwise.
-   * It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
-   * in the underlying FS with delay -- it just means VFS _thinks_ it knows all the children, i.e., it _was_
-   * all the children in the folder at some moment.
-   * It also doesn't mean all those children are now loaded in memory -- they could be in VFS persistent
-   * storage yet.
-   */
+  /// @return true if VFS \_thinks\_ it already knows all the children of this file, false otherwise.
+  /// It doesn't mean there are no yet-uncached children in the actual underlying FS: VFS may catch up changes
+  /// in the underlying FS with delay -- it just means VFS \_thinks\_ it knows all the children, i.e., it \_was\_
+  /// all the children in the folder at some moment.
+  /// It also doesn't mean all those children are now loaded in memory -- they could be in VFS persistent
+  /// storage yet.
   @ApiStatus.Experimental
   public boolean allChildrenCached() {
     return false;
   }
 
-  /**
-   * @return children that VFS already loaded in memory. This may be not all the children in the actual underlying FS,
-   * since: (a) FS changes may be caught to VFS with delay (b) some children could be known to VFS, but not loaded
-   * in-memory (=stored in VFS persistent storage)
-   * @see #allChildrenLoaded()
-   */
+  /// @return children that VFS already loaded in memory. This may be not all the children in the actual underlying FS,
+  /// since: (a) FS changes may be caught to VFS with delay (b) some children could be known to VFS, but not loaded
+  /// in-memory (=stored in VFS persistent storage)
+  /// @see #allChildrenLoaded()
   public abstract @NotNull @Unmodifiable Collection<VirtualFile> getCachedChildren();
 
-  /** @return all the children that are cached in VFS, including the ones that are not cached-in-memory now */
-  @SuppressWarnings("SpellCheckingInspection")
+  /// @return all the children that are cached in VFS, including the ones that are not cached-in-memory now
   public abstract @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren();
 
   @ApiStatus.Internal
-  @SuppressWarnings("SpellCheckingInspection")
   public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }
 
-  /**
-   * @return a wrapper that prevents VFS from caching new entries during file operations
-   * @see CacheAvoidingVirtualFile
-   * @see CacheAvoidingVirtualFileWrapper
-   */
+  /// @return a wrapper that prevents VFS from caching new entries during file operations
+  /// @see CacheAvoidingVirtualFile
+  /// @see CacheAvoidingVirtualFileWrapper
   @ApiStatus.Internal
   public @NotNull VirtualFile asCacheAvoiding() {
     return new CacheAvoidingVirtualFileWrapper(this);
   }
 
-  /**
-   * @return VirtualFile, converted to cache-avoiding type -- so walking through its children won't trash VFS cache with new
-   * entries
-   * @throws IllegalArgumentException if VirtualFile can't be converted to cache-avoiding type
-   */
+  /// @return VirtualFile, converted to cache-avoiding type -- so walking through its children won't trash VFS cache with new
+  /// entries
+  /// @throws IllegalArgumentException if VirtualFile can't be converted to cache-avoiding type
   @ApiStatus.Internal
   public static @NotNull VirtualFile asCacheAvoiding(@NotNull VirtualFile vFile) {
     if (vFile instanceof CacheAvoidingVirtualFile) {
       return vFile;
     }
-    else if (vFile instanceof NewVirtualFile) {
-      return ((NewVirtualFile)vFile).asCacheAvoiding();
+    else if (vFile instanceof NewVirtualFile nvf) {
+      return nvf.asCacheAvoiding();
     }
     else {
       throw new IllegalArgumentException(

@@ -18,6 +18,7 @@
     <module name="intellij.performanceTesting.remoteDriver.compose"/>
     <module name="intellij.performanceTesting.vcs"/>
     <module name="intellij.performanceTesting.frontend"/>
+    <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
     <module name="intellij.driver.model" loading="embedded"/>
     <module name="intellij.driver.impl" loading="embedded"/>
@@ -31,10 +32,6 @@
   <actions>
     <group id="StartProfileGroup">
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
-    </group>
-    <group id="IndexingDiagnosticGroup">
-      <action class="com.jetbrains.performancePlugin.actions.OpenIndexingDiagnosticsAction" id="performancePlugin.OpenIndexingDiagnosticsAction"/>
-      <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="CollectTroubleshootingInformation"/>
     </group>
     <group id="DiagnosticGroup">
       <separator/>

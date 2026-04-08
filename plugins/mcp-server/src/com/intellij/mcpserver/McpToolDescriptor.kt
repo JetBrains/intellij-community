@@ -9,6 +9,11 @@ class McpToolDescriptor(
   val name: @NlsSafe String,
 
   /**
+   * Tool title
+   */
+  val title: @NlsSafe String? = null,
+
+  /**
    * Tool description
    */
   val description: @NlsSafe String,

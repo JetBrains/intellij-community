@@ -13,10 +13,6 @@ class KotlinGradleTaskRunLineMarkerProvider : RunLineMarkerContributor() {
         if (!isRunTaskInGutterCandidate(element)) return null
         findTaskNameAround(element)?.takeIf { it.isNotEmpty() } ?: return null
         val actions = getActions()
-        val event = createActionEvent(element)
-        return Info(AllIcons.RunConfigurations.TestState.Run, actions) {
-            actions.mapNotNull { action: AnAction -> getText(action, event) }
-                .joinToString("\n")
-        }
+        return Info(AllIcons.RunConfigurations.TestState.Run, actions)
     }
 }

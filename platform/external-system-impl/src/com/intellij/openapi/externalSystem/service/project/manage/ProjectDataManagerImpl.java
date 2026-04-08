@@ -174,6 +174,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       ProjectDataService.EP_NAME.forEachExtensionSafe(dataService -> allKeys.add(dataService.getTargetDataKey()));
       WorkspaceDataService.EP_NAME.forEachExtensionSafe(dataService -> allKeys.add(dataService.getTargetDataKey()));
 
+      ProjectDataImportExtension.EP_NAME.forEachExtensionSafe(listener -> listener.prepareImportData(projectData, modelsProvider));
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setIndeterminate(false);
@@ -193,6 +194,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
       }
 
+      ProjectDataImportExtension.EP_NAME.forEachExtensionSafe(listener -> listener.finalizeImportData(projectData, modelsProvider));
       ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "postImportTasks", span -> {
         for (Runnable postImportTask : postImportTasks) {
           postImportTask.run();

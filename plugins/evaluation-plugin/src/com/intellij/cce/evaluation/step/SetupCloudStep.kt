@@ -3,6 +3,7 @@ package com.intellij.cce.evaluation.step
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 
 class SetupCloudStep : UndoableEvaluationStep {
   override val name: String
@@ -10,9 +11,9 @@ class SetupCloudStep : UndoableEvaluationStep {
   override val description: String
     get() = "Set appropriate registry keys"
 
-  private var tokenFromEnvOriginalValue: Boolean = false
-  private var endpointTypeOriginalValue: String = "User"
-  private var stagingOriginalValue: Boolean = false
+  private var tokenFromEnvOriginalValue: Boolean? = null
+  private var endpointTypeOriginalValue: String? = null
+  private var stagingOriginalValue: Boolean? = null
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
     start()
@@ -20,10 +21,34 @@ class SetupCloudStep : UndoableEvaluationStep {
   }
 
   fun start() {
-    Registry.get(TOKEN_FROM_ENV).also { tokenFromEnvOriginalValue = it.asBoolean() }.setValue(true)
-    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = System.getenv(EVAL_ENDPOINT_TYPE) ?: "Application"
-    Registry.get(USE_STAGING_URL).also { stagingOriginalValue = it.asBoolean() }.setValue(true)
-    println("Cloud Authentication is set up. \n $ENDPOINT_TYPE = ${Registry.stringValue(ENDPOINT_TYPE)} \n $USE_STAGING_URL = ${Registry.stringValue(USE_STAGING_URL)}")
+    setRegistryIfMissing(TOKEN_FROM_ENV, true) { tokenFromEnvOriginalValue = it.asBoolean() }
+    setRegistryIfMissing(USE_STAGING_URL, true) { stagingOriginalValue = it.asBoolean() }
+    setRegistryIfMissing(ENDPOINT_TYPE, System.getenv(EVAL_ENDPOINT_TYPE) ?: "Application") {
+      endpointTypeOriginalValue = it.selectedOption ?: "User"
+    }
+    println("Cloud Authentication is set up. \n $ENDPOINT_TYPE = ${Registry.stringValue(ENDPOINT_TYPE)} \n $USE_STAGING_URL = ${
+      Registry.stringValue(USE_STAGING_URL)
+    }")
+  }
+
+  fun setRegistryIfMissing(name: String, value: Boolean, reader: (RegistryValue) -> Unit) {
+    val existed = System.getProperty(name)
+    if (existed == null) {
+      Registry.get(name).also { reader.invoke(it) }.setValue(value)
+    }
+    else {
+      println("Property $name is already provided as $existed")
+    }
+  }
+
+  fun setRegistryIfMissing(name: String, value: String, reader: (RegistryValue) -> Unit) {
+    val existed = System.getProperty(name)
+    if (existed == null) {
+      Registry.get(name).also { reader.invoke(it) }.selectedOption = value
+    }
+    else {
+      println("Property $name is already provided as $existed")
+    }
   }
 
   override fun undoStep(): UndoableEvaluationStep.UndoStep {
@@ -34,9 +59,9 @@ class SetupCloudStep : UndoableEvaluationStep {
         get() = "Reset registry keys"
 
       override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
-        Registry.get(TOKEN_FROM_ENV).setValue(tokenFromEnvOriginalValue)
-        Registry.get(ENDPOINT_TYPE).selectedOption = endpointTypeOriginalValue
-        Registry.get(USE_STAGING_URL).setValue(stagingOriginalValue)
+        tokenFromEnvOriginalValue?.let { Registry.get(TOKEN_FROM_ENV).setValue(it) }
+        endpointTypeOriginalValue?.let { Registry.get(ENDPOINT_TYPE).selectedOption = it }
+        stagingOriginalValue?.let { Registry.get(USE_STAGING_URL).setValue(it) }
         return workspace
       }
     }

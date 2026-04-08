@@ -12,12 +12,12 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.annotations.ApiStatus
+import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.RenderingHints
-import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -47,6 +47,7 @@ class EditorCellFoldingBar(
         updateBounds()
       }
       else {
+        if (draggableAdapter?.isDragging == true) return
         removePanel()
       }
     }
@@ -93,44 +94,48 @@ class EditorCellFoldingBar(
     private var mouseOver = false
 
     init {
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseEntered(e: MouseEvent) {
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK)
+
+      if (draggableAdapter != null) {
+        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
+      }
+
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    }
+
+    override fun processMouseEvent(e: MouseEvent) {
+      when (e.id) {
+        MouseEvent.MOUSE_ENTERED -> {
           mouseOver = true
           repaint()
         }
-
-        override fun mouseExited(e: MouseEvent) {
+        MouseEvent.MOUSE_EXITED -> {
           mouseOver = false
           repaint()
         }
-
-        override fun mousePressed(e: MouseEvent) {
+        MouseEvent.MOUSE_CLICKED -> {
+          if (draggableAdapter?.isDragging == true) return
+          toggleListener.invoke()
+        }
+        MouseEvent.MOUSE_PRESSED -> {
           if (SwingUtilities.isLeftMouseButton(e)) {
             draggableAdapter?.initDrag(e)
           }
         }
-
-        override fun mouseReleased(e: MouseEvent) {
+        MouseEvent.MOUSE_RELEASED -> {
           if (SwingUtilities.isLeftMouseButton(e)) {
             draggableAdapter?.finishDrag(e)
           }
         }
+      }
+    }
 
-        override fun mouseClicked(e: MouseEvent) {
-          when (draggableAdapter) {
-            null -> toggleListener.invoke()
-            else -> if (!draggableAdapter.isDragging) toggleListener.invoke()
-          }
-        }
-      })
-
-      addMouseMotionListener(object : MouseAdapter() {
-        override fun mouseDragged(e: MouseEvent) {
+    override fun processMouseMotionEvent(e: MouseEvent) {
+      when (e.id) {
+        MouseEvent.MOUSE_DRAGGED -> {
           draggableAdapter?.updateDragOperation(e)
         }
-      })
-
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      }
     }
 
     private fun getBackgroundColor(): Color {

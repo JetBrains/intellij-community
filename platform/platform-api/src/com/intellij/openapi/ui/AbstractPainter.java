@@ -66,5 +66,15 @@ public abstract class AbstractPainter implements Painter {
     executePaint(component, g);
   }
 
+  @Override
+  public final void paint(@NotNull Component component, @NotNull Component source, @NotNull Graphics2D g) {
+    isRepaintNeeded = false;
+    executePaint(component, source, g);
+  }
+
   public abstract void executePaint(@NotNull Component component, @NotNull Graphics2D g);
+
+  public void executePaint(@NotNull Component component, @NotNull Component source, @NotNull Graphics2D g) {
+    executePaint(component, g);
+  }
 }

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.AbstractFindUsagesDialog
 import com.intellij.find.findUsages.FindUsagesOptions
-import com.intellij.find.impl.FindManagerImpl
+import com.intellij.find.impl.FindManagerBase
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
@@ -414,7 +414,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
         return if (baseDeclarations.isNotEmpty()) {
             baseDeclarations.flatMap {
-                val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(it, true)
+                val handler = (FindManager.getInstance(project) as FindManagerBase).findUsagesManager.getFindUsagesHandler(it, true)
                 handler?.findReferencesToHighlight(it, searchScope) ?: emptyList()
             }
         } else {

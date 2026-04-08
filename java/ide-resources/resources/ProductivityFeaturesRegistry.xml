@@ -120,6 +120,14 @@
       <dependency id="editing.completion.finishByDotEtc"/>
       <track-action id="EditorCompleteStatement"/>
     </feature>
+    <feature
+      id="editing.completion.command"
+      tip-id="CommandCompletion"
+      min-usage-count="3"
+      first-show="2"
+      successive-show="3"
+      utility-score="4"
+    />
   </group>
   
   <group id="editing">

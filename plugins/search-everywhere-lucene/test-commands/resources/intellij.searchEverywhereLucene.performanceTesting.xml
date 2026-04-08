@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.searchEverywhereLucene.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.commandProvider
+      implementation="com.intellij.searchEverywhereLucene.performanceTesting.LuceneTestCommandProvider"/>
+  </extensions>
+</idea-plugin>

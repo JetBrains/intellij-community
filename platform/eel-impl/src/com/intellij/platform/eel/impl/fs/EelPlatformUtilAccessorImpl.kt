@@ -25,7 +25,7 @@ internal class EelPlatformUtilAccessorImpl : EelSharedSecrets.PlatformUtilAccess
 
     val eelPath = fileOrDirectory.asEelPath()
     runBlocking {
-      eelPath.descriptor.toEelApi().fs.delete(eelPath, removeContent = true)
+      eelPath.descriptor.toEelApi().fs.delete(eelPath, recursive = true)
     }
   }
 }

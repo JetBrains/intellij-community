@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -238,8 +239,51 @@ class SpeedSearchableLazyColumnTest {
         onSpeedSearchAreaInput.assertDoesNotExist()
     }
 
+    @Test
+    fun `on lose focus with dismissOnLoseFocus false, keep input visible`() =
+        runComposeTest(dismissOnLoseFocus = false) {
+            onLazyColumn.performKeyPress("Item 42", rule = this)
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+
+            onNodeWithTag("Button").performClick()
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+        }
+
+    @Test
+    fun `after dismissing search, clicking a different item should not be overridden by stale matching indexes`() =
+        runComposeTest {
+            // Type to activate search — "Item 4" matches several items and selects the first
+            onLazyColumn.performKeyPress("Item 4", rule = this)
+            onLazyColumnItem("Item 4").assertIsDisplayed().assertIsSelected()
+
+            // Dismiss search; matchingIndexes is now empty (isVisible = false)
+            onLazyColumn.performKeyPress(Key.Escape, rule = this)
+            onSpeedSearchAreaInput.assertDoesNotExist()
+
+            // Click a completely different item; item 1 should be the only selected option
+            onLazyColumnItem("Item 1").performClick()
+
+            onLazyColumnItem("Item 1").assertIsSelected()
+            onLazyColumnItem("Item 4").assertIsNotSelected()
+        }
+
+    @Test
+    fun `shift+arrow should extend selection without resetting anchor when search is inactive`() = runComposeTest {
+        // Click item 5 to establish selection anchor
+        onLazyColumnItem("Item 5").performClick()
+
+        // Shift+Down twice — should select Items 5, 6, 7
+        onLazyColumn.performKeyPress(Key.DirectionDown, shift = true, rule = this)
+        onLazyColumn.performKeyPress(Key.DirectionDown, shift = true, rule = this)
+
+        onLazyColumnItem("Item 5").assertIsSelected()
+        onLazyColumnItem("Item 6").assertIsSelected()
+        onLazyColumnItem("Item 7").assertIsSelected()
+    }
+
     private fun runComposeTest(
         listEntries: List<String> = List(500) { "Item ${it + 1}" },
+        dismissOnLoseFocus: Boolean = true,
         block: ComposeContentTestRule.() -> Unit,
     ) {
         rule.setContent {
@@ -247,7 +291,10 @@ class SpeedSearchableLazyColumnTest {
 
             IntUiTheme {
                 Column {
-                    SpeedSearchArea(modifier = Modifier.testTag("SpeedSearchArea")) {
+                    SpeedSearchArea(
+                        modifier = Modifier.testTag("SpeedSearchArea"),
+                        dismissOnLoseFocus = dismissOnLoseFocus,
+                    ) {
                         SpeedSearchableLazyColumn(
                             modifier = Modifier.size(200.dp).testTag("LazyColumn").focusRequester(focusRequester),
                             dispatcher = testDispatcher,

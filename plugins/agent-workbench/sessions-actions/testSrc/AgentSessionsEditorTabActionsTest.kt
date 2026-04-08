@@ -4,18 +4,20 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
-import com.intellij.agent.workbench.sessions.actions.providerIcon
+import com.intellij.agent.workbench.sessions.actions.buildQuickStartProjectPopupGroup
+import com.intellij.agent.workbench.sessions.actions.collectProjectPathCandidates
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -23,6 +25,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -223,6 +227,23 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
+  fun collectProjectPathCandidatesUsesAllOpenProjectsForDedicatedFrameProject() {
+    val candidates = collectProjectPathCandidates(
+      project = ProjectManager.getInstance().defaultProject,
+      isDedicatedProject = { true },
+      openProjectPaths = {
+        listOf(
+          "/work/repo-a",
+          "/tmp/repo-a",
+        )
+      },
+    )
+
+    assertThat(checkNotNull(candidates).map(AgentPromptProjectPathCandidate::path))
+      .containsExactly("/work/repo-a", "/tmp/repo-a")
+  }
+
+  @Test
   fun quickNewThreadPopupAnchorPrefersInputEventComponent() {
     val action = AgentSessionsEditorTabNewThreadQuickAction(resolveContext = { null }, allBridges = { emptyList() })
     val inputComponent = JPanel()
@@ -263,6 +284,20 @@ class AgentSessionsEditorTabActionsTest {
     val event = TestActionEvent.createTestEvent(action)
 
     assertThat(resolveQuickStartProjectPopupAnchor(event)).isNull()
+  }
+
+  @Test
+  fun quickNewThreadProjectPopupActionsAreDumbAware() {
+    val candidates = listOf(
+      projectCandidate(path = "/work/repo-a", displayName = "Project A"),
+      projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
+    )
+
+    val group = buildQuickStartProjectPopupGroup(candidates) { }
+
+    assertThat(DumbService.isDumbAware(group)).isTrue()
+    assertThat(group.getChildren(TestActionEvent.createTestEvent()))
+      .allSatisfy { action -> assertThat(DumbService.isDumbAware(action)).isTrue() }
   }
 
   @Test
@@ -359,7 +394,10 @@ class AgentSessionsEditorTabActionsTest {
     assertThat(children.map { it.templatePresentation.text }).containsExactly("Project A", "/tmp/repo-a")
 
     val secondProjectGroup = children.last() as ActionGroup
+    assertThat(DumbService.isDumbAware(secondProjectGroup)).isTrue()
     val secondProjectChildren = secondProjectGroup.getChildren(event)
+    assertThat(secondProjectChildren.filterNot { action -> action is Separator })
+      .allSatisfy { action -> assertThat(DumbService.isDumbAware(action)).isTrue() }
     val yoloAction = secondProjectChildren.first { action ->
       action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo")
     }
@@ -388,6 +426,92 @@ class AgentSessionsEditorTabActionsTest {
 
     assertThat(event.presentation.isEnabledAndVisible).isFalse()
     assertThat(group.getChildren(event)).isEmpty()
+  }
+
+  @Test
+  fun renameThreadActionVisibleOnlyForSupportedTopLevelThreadTargets() {
+    val threadContext = editorContext()
+    val unsupported = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameThread = { _, _ -> false },
+      renameThread = { _, _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
+    unsupported.update(unsupportedEvent)
+    assertThat(unsupportedEvent.presentation.isVisible).isTrue()
+    assertThat(unsupportedEvent.presentation.isEnabled).isFalse()
+
+    val supported = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val supportedEvent = TestActionEvent.createTestEvent(supported)
+    supported.update(supportedEvent)
+    assertThat(supportedEvent.presentation.isVisible).isTrue()
+    assertThat(supportedEvent.presentation.isEnabled).isTrue()
+
+    val subAgentContext = editorContext(
+      threadIdentity = "codex:thread-1",
+      sessionId = "thread-1",
+      threadId = "sub-agent-1",
+      subAgentId = "sub-agent-1",
+    )
+    val subAgentAction = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { subAgentContext },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val hiddenSubAgentEvent = TestActionEvent.createTestEvent(subAgentAction)
+    subAgentAction.update(hiddenSubAgentEvent)
+    assertThat(hiddenSubAgentEvent.presentation.isVisible).isFalse()
+    assertThat(hiddenSubAgentEvent.presentation.isEnabled).isFalse()
+
+    val pendingContext = editorContext(threadIdentity = "codex:new-1", sessionId = "new-1", isPendingThread = true)
+    val pendingAction = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { pendingContext },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val pendingEvent = TestActionEvent.createTestEvent(pendingAction)
+    pendingAction.update(pendingEvent)
+    assertThat(pendingEvent.presentation.isVisible).isFalse()
+    assertThat(pendingEvent.presentation.isEnabled).isFalse()
+  }
+
+  @Test
+  fun renameThreadActionUsesThreadTargetAndPromptValue() {
+    val context = editorContext(threadTitle = "Refactor session setup")
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.Thread
+    var promptedProjectName: String? = null
+    var promptedTitle: String? = null
+    var renamedTarget: SessionActionTarget.Thread? = null
+    var renamedTo: String? = null
+
+    val action = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { context },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, target, requestedName ->
+        renamedTarget = target
+        renamedTo = requestedName
+      },
+      promptForName = { project, currentTitle ->
+        promptedProjectName = project.name
+        promptedTitle = currentTitle
+        "Renamed thread"
+      },
+    )
+
+    action.actionPerformed(TestActionEvent.createTestEvent(action))
+
+    assertThat(promptedProjectName).isEqualTo(context.project.name)
+    assertThat(promptedTitle).isEqualTo("Refactor session setup")
+    assertThat(renamedTarget).isEqualTo(contextTarget)
+    assertThat(renamedTo).isEqualTo("Renamed thread")
   }
 
   @Test

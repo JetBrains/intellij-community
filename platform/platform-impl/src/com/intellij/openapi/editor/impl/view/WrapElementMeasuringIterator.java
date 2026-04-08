@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -24,8 +25,9 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
 
   public WrapElementMeasuringIterator(@NotNull EditorView view, int startOffset, int endOffset,
                                       List<Inlay<?>> inlineInlays,
-                                      List<Inlay<?>> afterLineEndInlays) {
-    super(view.getEditor(), startOffset, endOffset);
+                                      List<Inlay<?>> afterLineEndInlays,
+                                      List<? extends CustomWrap> customWraps) {
+    super(view.getEditor(), customWraps, startOffset, endOffset);
     myView = view;
     this.inlineInlays = inlineInlays;
     this.afterLineEndInlays = afterLineEndInlays;

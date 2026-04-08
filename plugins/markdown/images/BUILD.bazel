@@ -26,10 +26,12 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-impl",
     "//images",
     "//xml/xml-parser:parser",
     "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -53,10 +55,12 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//images:images_test_lib",
     "//xml/xml-parser:parser_test_lib",
     "//platform/backend:backend_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.images` end

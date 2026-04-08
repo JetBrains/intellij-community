@@ -413,17 +413,17 @@ public final class ControlFlowUtil {
           // initializers will be checked later
           for (PsiMethod constructor : aClass.getConstructors()) {
             // the variable must be initialized before its usage
-            if (offset < constructor.getTextRange().getStartOffset()) continue;
+            boolean usedBefore = offset < constructor.getTextRange().getStartOffset();
             PsiCodeBlock body = constructor.getBody();
-            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
+            if (body != null && fieldDefinitelyAssignedIn(variable, body, usedBefore)) {
               return true;
             }
             // as a last chance, the field may be initialized in this() call
             for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
               // the variable must be initialized before its usage
-              if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
+              usedBefore = offset < redirectedConstructor.getTextRange().getStartOffset();
               PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
-              if (redirectedBody != null && variableDefinitelyAssignedIn(variable, redirectedBody)) {
+              if (redirectedBody != null && fieldDefinitelyAssignedIn(variable, redirectedBody, usedBefore)) {
                 return true;
               }
             }
@@ -458,6 +458,28 @@ public final class ControlFlowUtil {
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
     }
     return !codeBlockProblems.contains(expression);
+  }
+
+  private static boolean fieldDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiCodeBlock body, boolean onlyBeforeSuper) {
+    ControlFlow flow = getControlFlow(body);
+    if (flow == null) return false;
+    if (onlyBeforeSuper) {
+      ControlFlow subFlow = null;
+      for (PsiStatement statement : body.getStatements()) {
+        if (statement instanceof PsiExpressionStatement) {
+          PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+          if (JavaPsiConstructorUtil.isSuperConstructorCall(expression)) {
+            int offset = flow.getStartOffset(expression);
+            if (offset != -1) {
+              subFlow = new ControlFlowSubRange(flow, 0, offset);
+            }
+          }
+        }
+      }
+      if (subFlow == null) return false;
+      flow = subFlow;
+    }
+    return isVariableDefinitelyAssigned(variable, flow);
   }
 
   private static @Nullable PsiElement getTopBlock(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {

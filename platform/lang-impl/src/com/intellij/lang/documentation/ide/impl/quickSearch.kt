@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
@@ -7,7 +7,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
-import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
@@ -113,7 +113,9 @@ private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {
       if (!targetElement.isValid) {
         return@readAction null
       }
-      PsiElementDocumentationTarget(targetElement.project, targetElement).documentationRequest()
+      // TODO: It's better to allow producing multiple requests in the flow (as there might be multiple providers)
+      //  but that requires DocumentationBrowser to allow consuming multiple requests at once in the `reset`.
+      psiDocumentationTargets(targetElement, null).firstOrNull()?.documentationRequest()
     }
   }
 }

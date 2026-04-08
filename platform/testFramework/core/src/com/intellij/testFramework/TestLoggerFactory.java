@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -228,10 +227,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
   private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
     synchronized (myBuffer) {
-      int messageLen = message == null ? 0 : message.length();
-      // do not call substring to reduce work
-      CharSequence truncated = messageLen <= MAX_BUFFER_LENGTH ? message : CharBuffer.wrap(message, messageLen - MAX_BUFFER_LENGTH, messageLen);
-      Record logRecord = new Record(System.currentTimeMillis(), level, category, truncated, t);
+      Record logRecord = new Record(System.currentTimeMillis(), level, category, message, t);
       myBuffer.add(logRecord);
       length += logRecord.estimateSize();
       while (length >= MAX_BUFFER_LENGTH && !myBuffer.isEmpty()) {
@@ -335,25 +331,49 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private @NotNull CharSequence myBufferStaticFixtureInit = ""; // guarded by myBuffer
   private @NotNull CharSequence myBufferFixtureInit = ""; // guarded by myBuffer
-  public static <T extends Throwable> void fixtureInitialization(boolean isStatic, @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void fixtureInitialization(boolean isStatic, @NotNull String testName, @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
       runnable.run();
     }
-    finally {
+    catch (Throwable t) {
       var factory = getTestLoggerFactory();
       if (factory != null) {
-        synchronized (factory.myBuffer) {
-          if (isStatic) {
-            factory.buffer(LogLevel.TRACE, "","---Static Fixtures Initialization End---", null);
-            factory.myBufferStaticFixtureInit = factory.toBuffer();
-          }
-          else {
-            factory.buffer(LogLevel.TRACE, "","---Instance Fixtures Initialization End---", null);
-            factory.myBufferFixtureInit = factory.toBuffer();
-          }
-          factory.clear();
-        }
+        factory.saveFixtureLogs(isStatic);
+        factory.dumpLogBuffer(false, testName);
+        // JUnit5 dumps logs even when fixture fails, which is different with JUnit4 setUp behavior.
+        // So we want to clear both logs to not print myBufferStaticFixtureInit twice when instance fixture failed
+        factory.clearFixtureLogs(true);
+        factory.clearFixtureLogs(false);
       }
+      throw t;
+    }
+
+    var factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.saveFixtureLogs(isStatic);
+    }
+  }
+
+  private void saveFixtureLogs(boolean isStatic) {
+    synchronized (myBuffer) {
+      if (isStatic) {
+        buffer(LogLevel.TRACE, "","---Static Fixtures Initialization End---", null);
+        myBufferStaticFixtureInit = toBuffer();
+      }
+      else {
+        buffer(LogLevel.TRACE, "","---Instance Fixtures Initialization End---", null);
+        myBufferFixtureInit = toBuffer();
+      }
+      clear();
+    }
+  }
+
+  private void clearFixtureLogs(boolean isStatic) {
+    synchronized (myBuffer) {
+      if (isStatic) {
+        myBufferStaticFixtureInit = "";
+      }
+      myBufferFixtureInit = "";
     }
   }
 
@@ -375,10 +395,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   public static void onFixturesDisposeStart(boolean isStatic) {
     var factory = getTestLoggerFactory();
     if (factory != null) {
-      if (isStatic) {
-        factory.myBufferStaticFixtureInit = "";
-      }
-      factory.myBufferFixtureInit = "";
+      factory.clearFixtureLogs(isStatic);
     }
   }
 

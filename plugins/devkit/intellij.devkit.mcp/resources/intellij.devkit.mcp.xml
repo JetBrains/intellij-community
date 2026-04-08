@@ -3,6 +3,7 @@
     <module name="intellij.java.backend"/>
     <plugin id="com.intellij.mcpServer"/>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.scaffolding"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.mcpServer">

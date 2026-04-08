@@ -868,7 +868,6 @@ f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHand
 - sf:Companion:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler$Companion
 - sf:HANDLER_ID:java.lang.String
 - <init>():V
-- handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler$Companion
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 - com.intellij.codeInsight.hints.declarative.InlayActionPayload

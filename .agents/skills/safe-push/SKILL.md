@@ -114,6 +114,6 @@ The Bazel sandbox does NOT inherit environment variables by default. Use `env_in
 
 ## References
 
-- [Safe Push Documentation](../docs/IntelliJ-Platform/2_Running-and-Testing/Safe-Push.md)
+- [Safe Push Documentation](../../../../docs/IntelliJ-Platform/2_Running-and-Testing/Safe-Push.md)
 - [Patronus Manual](https://youtrack.jetbrains.com/articles/PAT-A-6)
 - Slack: `#patronus-support`, `#ij-builds`, `#ij-qa-watch`

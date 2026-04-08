@@ -55,12 +55,10 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
         if (runTask.taskName !in configuration.settings.taskNames) return false
 
-        val isComposeJvm = runTask.gradlePluginType == KotlinGradlePluginType.Jvm
-        if (isComposeJvm != configuration.isComposeJvm) return false
         val isDifferentMainFunction = function.containingKtFile.javaFileFacadeFqName.asString() != configuration.mainFunctionClassFqn
         if (isDifferentMainFunction) return false
 
-        if (runTask.gradlePluginType == KotlinGradlePluginType.Multiplatform &&
+        if (!runTask.isComposeGradlePluginConfigured &&
             mainClassScriptParameter(function) !in configuration.settings.scriptParameters) return false
 
         return true

@@ -67,6 +67,36 @@ class Request:
     decoded_body: list[tuple[str, str]] | None
     oauth_params: list[str]
     validator_log: dict[str, Any]  # value type depends on the key
+    access_token: Incomplete | None
+    client: Incomplete | None
+    client_id: Incomplete | None
+    client_secret: Incomplete | None
+    code: Incomplete | None
+    code_challenge: Incomplete | None
+    code_challenge_method: Incomplete | None
+    code_verifier: Incomplete | None
+    extra_credentials: Incomplete | None
+    grant_type: Incomplete | None
+    redirect_uri: Incomplete | None
+    refresh_token: Incomplete | None
+    request_token: Incomplete | None
+    response_type: Incomplete | None
+    scope: Incomplete | None
+    scopes: Incomplete | None
+    state: Incomplete | None
+    token: Incomplete | None
+    user: Incomplete | None
+    token_type_hint: Incomplete | None
+    response_mode: Incomplete | None
+    nonce: Incomplete | None
+    display: Incomplete | None
+    prompt: Incomplete | None
+    claims: Incomplete | None
+    max_age: Incomplete | None
+    ui_locales: Incomplete | None
+    id_token_hint: Incomplete | None
+    login_hint: Incomplete | None
+    acr_values: Incomplete | None
     def __init__(
         self,
         uri: str,

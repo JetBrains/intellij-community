@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -14,6 +15,7 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
@@ -23,6 +25,7 @@
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

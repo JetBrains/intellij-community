@@ -20,9 +20,25 @@ import java.util.List;
  * and prohibits explicitly manipulating daemon state via e.g. {@link CodeInsightTestFixtureImpl#instantiateAndRun}
  */
 public abstract class ProductionDaemonAnalyzerTestCase extends DaemonAnalyzerTestCase {
+  private String myMLProperty;
+  @Override
+  protected void setUp() throws Exception {
+    myMLProperty = System.setProperty("intellij.ml.llm.embeddings.start.indexing.on.project.open", "false");
+    super.setUp();
+  }
+  @Override
+  protected void tearDown() throws Exception {
+    if (myMLProperty == null) {
+      System.clearProperty("intellij.ml.llm.embeddings.start.indexing.on.project.open");
+    }
+    else {
+      System.setProperty("intellij.ml.llm.embeddings.start.indexing.on.project.open", myMLProperty);
+    }
+    super.tearDown();
+  }
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(isStressTest(), myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
   }
   @Override
   protected final void configureByExistingFile(@NotNull VirtualFile virtualFile) {

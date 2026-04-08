@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IMPORT: dependency.div
 import java.math.BigDecimal
 import kotlin.math.div

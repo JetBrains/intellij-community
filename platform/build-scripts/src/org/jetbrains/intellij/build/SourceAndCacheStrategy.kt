@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build
@@ -20,7 +20,9 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
 private const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
 
-internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
+internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, classesOutputDirectory: Path): List<SourceAndCacheStrategy> {
+  val productionClassOutDir = getProductionClassesOutputDirectory(classesOutputDirectory)
+  val testClassOutDir = getTestClassesOutputDirectory(classesOutputDirectory)
   return sources.map { source ->
     when (source) {
       is DirSource -> {
@@ -28,8 +30,8 @@ internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, produ
         if (dir.startsWith(productionClassOutDir)) {
           ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.relativize(dir).toString())
         }
-        else if (dir.startsWith(productionClassOutDir.resolveSibling("test"))) {
-          ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.resolveSibling("test").relativize(dir).toString())
+        else if (dir.startsWith(testClassOutDir)) {
+          ModuleOutputSourceAndCacheStrategy(source = source, name = testClassOutDir.relativize(dir).toString())
         }
         else {
           throw UnsupportedOperationException("$source is not supported")
@@ -76,6 +78,7 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
     val relativePath = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
     hash = Hashing.xxh3_64().hashCharsToLong(relativePath)
     digest.putLong(hash).putInt(relativePath.length)
+    digest.putInt(if (source.isPreSignedAndExtractedCandidate) 1 else 0)
   }
 }
 
@@ -123,6 +126,7 @@ private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) 
 
     digest.putString(source.file.fileName.toString())
     digest.putLong(hash)
+    digest.putInt(if (source.isPreSignedAndExtractedCandidate) 1 else 0)
   }
 }
 

@@ -12,8 +12,7 @@ import com.intellij.grazie.ide.ui.mass.GrazieMassApplyDialog
 import com.intellij.grazie.text.ProofreadingService
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
-import com.intellij.grazie.text.TextProblem
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
@@ -41,11 +40,19 @@ class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, Customizab
   override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
     if (file == null || editor == null) return
     val problems = runWithModalProgressBlocking(project, GrazieBundle.message("grazie.mass.apply.action.title")) {
-      ReadAction.compute<List<TextProblem>, Throwable> {
+      readActionBlocking {
         ProofreadingService.covering(file, getSelectionRange(editor))
       }
     }
     if (problems.isEmpty()) return
+
+    val suggestions = runWithModalProgressBlocking(project, GrazieBundle.message("grazie.mass.apply.action.title")) {
+      readActionBlocking {
+        problems.flatMap { it.suggestions }
+      }
+    }
+    if (suggestions.isEmpty()) return
+
     val dialog = GrazieMassApplyDialog(file, problems)
     dialog.show()
     dialog.apply(editor)

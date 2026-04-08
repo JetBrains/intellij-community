@@ -30,4 +30,9 @@ public class ForDescendingPostfixTemplate extends ForIndexedPostfixTemplate {
   private static @NotNull String getSign(@NotNull PsiElement element) {
     return element instanceof PsiExpression && JavaPostfixTemplatesUtils.isNumber(((PsiExpression)element).getType()) ? ">" : ">=";
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

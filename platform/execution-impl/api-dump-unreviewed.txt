@@ -1483,6 +1483,7 @@ a:com.intellij.execution.target.TargetWizardModel
 - a:getLanguageConfigForIntrospection():com.intellij.execution.target.LanguageRuntimeConfiguration
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSubject():com.intellij.execution.target.TargetEnvironmentConfiguration
+- prepareTarget():V
 com.intellij.execution.ui.AdjustingTabSettingsEditor
 a:com.intellij.execution.ui.BaseContentCloseListener
 - com.intellij.openapi.Disposable

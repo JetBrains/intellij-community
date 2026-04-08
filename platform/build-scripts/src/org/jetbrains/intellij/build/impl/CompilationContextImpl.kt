@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -7,12 +7,15 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.BazelEnvironmentUtil.isBazelTestRun
+import com.intellij.util.io.URLUtil
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -26,8 +29,6 @@ import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
-import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
-import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.checkCompilationOptions
 import org.jetbrains.intellij.build.impl.compilation.isCompilationRequired
 import org.jetbrains.intellij.build.impl.compilation.keepCompilationState
@@ -60,7 +61,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import java.util.stream.Stream
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
@@ -114,10 +117,12 @@ suspend fun createCompilationContext(
   }
 
   if (options.printEnvironmentInfo) {
-    Span.current().addEvent("environment info", Attributes.of(
-      AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
-      AttributeKey.stringKey("project home"), projectHome.toString(),
-    ))
+    Span.current().addEvent(
+      "environment info", Attributes.of(
+        AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
+        AttributeKey.stringKey("project home"), projectHome.toString(),
+      )
+    )
     printEnvironmentDebugInfo()
   }
 
@@ -125,7 +130,16 @@ suspend fun createCompilationContext(
     logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
   }
 
-  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired(options))
+  val isCompilationRequired = isCompilationRequired(options)
+
+  val mavenLibrariesDownloadLocation = options.mavenLibrariesDownloadLocation
+  val mavenRepositoryPath = when {
+    mavenLibrariesDownloadLocation != null -> mavenLibrariesDownloadLocation.absolutePathString()
+    // set this to a missing path, so the code won't access library downloaded by maven
+    isRunningFromBazelOut() -> getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
+    else -> getMavenRepositoryPath()
+  }
+  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired, mavenRepositoryPath = mavenRepositoryPath)
 
   val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
 
@@ -134,19 +148,17 @@ suspend fun createCompilationContext(
   if (setupTracer) {
     JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
   }
-
-  val messages = BuildMessagesImpl.create()
-  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
-  /**
-   * [defineJavaSdk] may be skipped using [isCompilationRequired]
-   * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
-   */
-  spanBuilder("define JDK").use {
-    defineJavaSdk(context)
-  }
   if (enableCoroutinesDump) {
     spanBuilder("enable coroutines dump").use {
       enableCoroutinesDump(it)
+    }
+  }
+
+  val messages = BuildMessagesImpl.create()
+  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
+  if (isCompilationRequired) {
+    spanBuilder("define JDK").use {
+      defineJavaSdk(context)
     }
   }
 
@@ -156,7 +168,7 @@ suspend fun createCompilationContext(
 
   messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
   // this is not a proper place to initialize logging, but this is the only place called in most build scripts
-  BuildMessagesHandler.initLogging(messages)
+  BuildMessagesHandler.initLoggingIfNeeded(messages)
   return context
 }
 
@@ -166,11 +178,12 @@ class CompilationContextImpl internal constructor(
   override val messages: BuildMessages,
   override val paths: BuildPaths,
   override val options: BuildOptions,
+  @JvmField val outputProviderState: JpsModuleOutputProviderState = JpsModuleOutputProviderState(model.project),
 ) : CompilationContext {
   val global: JpsGlobal
     get() = model.global
 
-  override val outputProvider: ModuleOutputProvider = JpsModuleOutputProvider(project, useTestCompilationOutput = options.useTestCompilationOutput)
+  override val outputProvider: ModuleOutputProvider = outputProviderState.createProvider(useTestCompilationOutput = options.useTestCompilationOutput)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
@@ -226,11 +239,11 @@ class CompilationContextImpl internal constructor(
   private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@CompilationContextImpl)
   }
-  
+
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options)
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
+    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options, outputProviderState = outputProviderState)
     copy.compilationData = compilationData
     return copy
   }
@@ -269,9 +282,11 @@ class CompilationContextImpl internal constructor(
       cleanOutput(context = this@CompilationContextImpl, keepCompilationState(options))
     }
     else {
-      Span.current().addEvent("skip output cleaning", Attributes.of(
-        AttributeKey.stringKey("dir"), paths.buildOutputDir.toString(),
-      ))
+      Span.current().addEvent(
+        "skip output cleaning", Attributes.of(
+          AttributeKey.stringKey("dir"), paths.buildOutputDir.toString(),
+        )
+      )
     }
   }
 
@@ -311,7 +326,7 @@ class CompilationContextImpl internal constructor(
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
-    return org.jetbrains.intellij.build.findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
+    return org.jetbrains.intellij.build.findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = relativePath)
   }
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
@@ -342,7 +357,8 @@ class CompilationContextImpl internal constructor(
 private fun enableCoroutinesDump(span: Span) {
   try {
     enableCoroutineDump()
-    JBR.getJstack()?.includeInfoFrom { """
+    JBR.getJstack()?.includeInfoFrom {
+      """
 $COROUTINE_DUMP_HEADER
 ${dumpCoroutines()}
 """ // dumpCoroutines is multiline, trimIndent won't work
@@ -353,7 +369,7 @@ ${dumpCoroutines()}
   }
 }
 
-private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, isCompilationRequired: Boolean): JpsModel {
+private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, isCompilationRequired: Boolean, mavenRepositoryPath: String): JpsModel {
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
   if (isCompilationRequired) {
@@ -365,14 +381,6 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   spanBuilder("load project").use(Dispatchers.IO) { span ->
-    val mavenRepositoryPath = if (isRunningFromBazelOut()) {
-      // set this to a missing path, so the code won't access libraries download by maven
-      getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
-    }
-    else {
-      getMavenRepositoryPath()
-    }
-
     span.addEvent(
       "Resolved local maven repository path",
       Attributes.of(AttributeKey.stringKey("m2 repository path"), mavenRepositoryPath),
@@ -449,8 +457,8 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
       addAll(compilationState)
     }
   }
+  val outDir = context.paths.buildOutputDir
   spanBuilder("clean output").use { span ->
-    val outDir = context.paths.buildOutputDir
     for (dir in outputDirectoriesToKeep) {
       val path = dir.relativeToOrNull(outDir) ?: dir
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
@@ -474,6 +482,29 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
       }
     }
     Files.createDirectories(context.paths.tempDir)
+  }
+
+  spanBuilder("list output dirs after clean").use { span ->
+    span.addEvent(
+      "out absolute path",
+      Attributes.of(AttributeKey.stringKey("dir"), "${outDir.toAbsolutePath()}")
+    )
+
+    Files.list(outDir).use { stream ->
+      stream
+        .filter { Files.isDirectory(it) }
+        .forEach { subDir ->
+          val empty = Files.newDirectoryStream(subDir).use { !it.iterator().hasNext() }
+          val relativeToOut = outDir.relativize(subDir)
+          span.addEvent(
+            "out subdir",
+            Attributes.of(
+              AttributeKey.stringKey("empty"), "$empty",
+              AttributeKey.stringKey("dir"), "$relativeToOut",
+            )
+          )
+        }
+    }
   }
 }
 
@@ -508,4 +539,27 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
  */
 internal fun isBazelTestRun(): Boolean {
   return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
+}
+
+private fun defineJdk(global: JpsGlobal, jdkName: String, homeDir: Path) {
+  JpsJavaExtensionService.getInstance().addJavaSdk(global, jdkName, homeDir.normalize().invariantSeparatorsPathString)
+  Span.current().addEvent("'$jdkName' JDK set", Attributes.of(AttributeKey.stringKey("jdkHomePath"), homeDir.toString()))
+}
+
+/**
+ * Code is copied from com.intellij.openapi.projectRoots.impl.JavaSdkImpl.findClasses
+ */
+private fun readModulesFromReleaseFile(jbrBaseDir: Path): List<String> {
+  val releaseFile = jbrBaseDir.resolve("release")
+  check(Files.exists(releaseFile)) {
+    "JRE release file is missing: $releaseFile"
+  }
+
+  Files.newInputStream(releaseFile).use { stream ->
+    val p = Properties()
+    p.load(stream)
+    val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${jbrBaseDir.toAbsolutePath().invariantSeparatorsPathString}${URLUtil.JAR_SEPARATOR}"
+    val modules = p.getProperty("MODULES") ?: return emptyList()
+    return StringUtilRt.unquoteString(modules).splitToSequence(' ').map { jbrBaseUrl + it }.toList()
+  }
 }

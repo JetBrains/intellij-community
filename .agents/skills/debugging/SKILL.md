@@ -7,9 +7,9 @@ description: Debugging techniques and tools for IntelliJ development. Use when d
 
 ## Documentation
 
-- [Logger FAQ](../docs/IntelliJ-Platform/4_man/Logger.md) - Frequently asked questions about logging
-- [How to Investigate Freezes](../docs/IntelliJ-Platform/4_man/Performance/How-To-Investigate-Freezes.md) - Diagnosing IDE freezes
-- [Exception Analyzing FAQ](../docs/IntelliJ-Platform/4_man/Exception-Analyzing-FAQ.md) - Analyzing and categorizing exceptions
+- [Logger FAQ](../../../../docs/IntelliJ-Platform/4_man/Logger.md) - Frequently asked questions about logging
+- [How to Investigate Freezes](../../../../docs/IntelliJ-Platform/4_man/Performance/How-To-Investigate-Freezes.md) - Diagnosing IDE freezes
+- [Exception Analyzing FAQ](../../../../docs/IntelliJ-Platform/4_man/Exception-Analyzing-FAQ.md) - Analyzing and categorizing exceptions
 
 ## Searching idea.log
 

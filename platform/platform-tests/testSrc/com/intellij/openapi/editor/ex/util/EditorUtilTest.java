@@ -15,16 +15,28 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.BreakpointArea;
+import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
+import com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider;
+import com.intellij.openapi.editor.impl.InterLineBreakpointHitArea;
+import com.intellij.openapi.editor.impl.InterLineBreakpointProperties;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.FlowKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class EditorUtilTest extends AbstractEditorTest {
   public void testGetNotFoldedLineStartEndOffsets() {
@@ -108,8 +120,103 @@ public class EditorUtilTest extends AbstractEditorTest {
     assertEquals(2, i2.intervalEnd());
   }
 
+  public void testInterLineBreakpointHitAreaLarge() {
+    createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
+    InterLineBreakpointConfiguration configuration = registerInterLineConfigurationProvider(InterLineBreakpointHitArea.LARGE, 1, 2, 3);
+
+    assertBreakpointAreas(Map.ofEntries(
+      Map.entry(17, new BreakpointArea.OnLine(0)),
+      Map.entry(18, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(19, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(21, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(22, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(24, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(26, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(27, new BreakpointArea.OnLine(1)),
+      Map.entry(33, new BreakpointArea.OnLine(1)),
+      Map.entry(40, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(41, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(43, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(44, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(46, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(48, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(49, new BreakpointArea.OnLine(2)),
+      Map.entry(55, new BreakpointArea.OnLine(2)),
+      Map.entry(62, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(63, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(65, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(66, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(68, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(70, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(71, new BreakpointArea.OnLine(3))
+    ));
+  }
+
+  public void testInterLineBreakpointHitAreaMedium() {
+    createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
+    InterLineBreakpointConfiguration configuration = registerInterLineConfigurationProvider(InterLineBreakpointHitArea.MEDIUM, 1, 2, 3);
+
+    assertBreakpointAreas(Map.ofEntries(
+      Map.entry(18, new BreakpointArea.OnLine(0)),
+      Map.entry(19, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(21, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(22, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(24, new BreakpointArea.InterLine(1, configuration)),
+      Map.entry(26, new BreakpointArea.OnLine(1)),
+      Map.entry(33, new BreakpointArea.OnLine(1)),
+      Map.entry(40, new BreakpointArea.OnLine(1)),
+      Map.entry(41, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(43, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(44, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(46, new BreakpointArea.InterLine(2, configuration)),
+      Map.entry(48, new BreakpointArea.OnLine(2)),
+      Map.entry(55, new BreakpointArea.OnLine(2)),
+      Map.entry(62, new BreakpointArea.OnLine(2)),
+      Map.entry(63, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(65, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(66, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(68, new BreakpointArea.InterLine(3, configuration)),
+      Map.entry(70, new BreakpointArea.OnLine(3))
+    ));
+  }
+
+  public void testInterLineBreakpointHitAreaNone() {
+    createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
+
+    assertBreakpointAreas(Map.ofEntries(
+      Map.entry(18, new BreakpointArea.OnLine(0)),
+      Map.entry(19, new BreakpointArea.OnLine(0)),
+      Map.entry(21, new BreakpointArea.OnLine(0)),
+      Map.entry(22, new BreakpointArea.OnLine(1)),
+      Map.entry(24, new BreakpointArea.OnLine(1)),
+      Map.entry(26, new BreakpointArea.OnLine(1)),
+      Map.entry(33, new BreakpointArea.OnLine(1)),
+      Map.entry(40, new BreakpointArea.OnLine(1)),
+      Map.entry(41, new BreakpointArea.OnLine(1)),
+      Map.entry(43, new BreakpointArea.OnLine(1)),
+      Map.entry(44, new BreakpointArea.OnLine(2)),
+      Map.entry(46, new BreakpointArea.OnLine(2)),
+      Map.entry(48, new BreakpointArea.OnLine(2)),
+      Map.entry(55, new BreakpointArea.OnLine(2)),
+      Map.entry(62, new BreakpointArea.OnLine(2)),
+      Map.entry(63, new BreakpointArea.OnLine(2)),
+      Map.entry(65, new BreakpointArea.OnLine(2)),
+      Map.entry(66, new BreakpointArea.OnLine(3)),
+      Map.entry(68, new BreakpointArea.OnLine(3)),
+      Map.entry(70, new BreakpointArea.OnLine(3))
+    ));
+  }
+
   private void createEditor(String text) {
     configureFromFileText(getTestName(false) + ".txt", text);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private void createEditor(String text, float lineSpacing, int expectedLineHeight) {
+    createEditor(text);
+    getEditor().getColorsScheme().setLineSpacing(lineSpacing);
+    int lineHeight = getEditor().getLineHeight();
+    assertEquals(expectedLineHeight, lineHeight);
   }
 
   private void createSmallEditor(String text) {
@@ -128,5 +235,65 @@ public class EditorUtilTest extends AbstractEditorTest {
   private void assertVisualLineRange(int offset, int lineStartOffset, int lineEndOffset) {
     assertEquals(lineStartOffset, EditorUtil.getNotFoldedLineStartOffset(getEditor(), offset));
     assertEquals(lineEndOffset, EditorUtil.getNotFoldedLineEndOffset(getEditor(), offset));
+  }
+
+  private @NotNull InterLineBreakpointConfiguration registerInterLineConfigurationProvider(@NotNull InterLineBreakpointHitArea hitArea,
+                                                                                            int @NotNull ... lines) {
+    TestInterLineBreakpointConfigurationProvider provider = new TestInterLineBreakpointConfigurationProvider(hitArea, lines);
+    ExtensionPointName.<InterLineBreakpointConfigurationProvider>create("com.intellij.editor.interLineBreakpointConfigurationProvider")
+      .getPoint()
+      .registerExtension(provider, getTestRootDisposable());
+    PlatformTestUtil.waitWithEventsDispatching("Inter-line configuration wasn't initialized",
+                                               () -> InterLineBreakpointConfigurationProvider.findConfigurationForLine(getEditor(), lines[0]) != null,
+                                               10);
+    return provider.getConfiguration();
+  }
+
+  private void assertBreakpointAreas(@NotNull Map<Integer, BreakpointArea> expectedAreas) {
+    Map<Integer, BreakpointArea> actualAreas = new LinkedHashMap<>();
+    for (Integer y : expectedAreas.keySet()) {
+      actualAreas.put(y, EditorUtil.yToLogicalLineWithInterLineDetection(getEditor(), y));
+    }
+    assertEquals(expectedAreas, actualAreas);
+  }
+
+  private static final class TestInterLineBreakpointConfigurationProvider implements InterLineBreakpointConfigurationProvider {
+    private final int @NotNull [] myLines;
+    private final @NotNull InterLineBreakpointConfiguration myConfiguration;
+
+    private TestInterLineBreakpointConfigurationProvider(@NotNull InterLineBreakpointHitArea hitArea, int @NotNull [] lines) {
+      myLines = lines;
+      myConfiguration = new InterLineBreakpointConfiguration(
+        AllIcons.Actions.Cancel,
+        "test",
+        new InterLineBreakpointProperties(false),
+        null,
+        hitArea,
+        this::isConfiguredLine
+      );
+    }
+
+    @Override
+    public @NotNull String getUniqueId() {
+      return "EditorUtilTest.InterLineBreakpointConfigurationProvider." + myConfiguration.getHitArea();
+    }
+
+    @Override
+    public @NotNull Flow<InterLineBreakpointConfiguration> getConfiguration(@NotNull com.intellij.openapi.editor.Editor editor) {
+      return FlowKt.flowOf(myConfiguration);
+    }
+
+    private @NotNull InterLineBreakpointConfiguration getConfiguration() {
+      return myConfiguration;
+    }
+
+    private boolean isConfiguredLine(int line) {
+      for (int configuredLine : myLines) {
+        if (configuredLine == line) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

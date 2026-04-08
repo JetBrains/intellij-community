@@ -35,14 +35,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
 
-class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScope,
-                                                         private val requestExecutor: GithubApiRequestExecutor,
-                                                         override val remoteCoordinates: GitRemoteUrlCoordinates,
-                                                         override val repositoryCoordinates: GHRepositoryCoordinates,
-                                                         private val repoOwner: GHRepositoryOwnerName,
-                                                         override val repositoryId: String,
-                                                         override val defaultBranchName: String?,
-                                                         override val isFork: Boolean)
+class GHPRRepositoryDataServiceImpl internal constructor(
+  parentCs: CoroutineScope,
+  private val requestExecutor: GithubApiRequestExecutor,
+  override val remoteCoordinates: GitRemoteUrlCoordinates,
+  override val repositoryCoordinates: GHRepositoryCoordinates,
+  private val repoOwner: GHRepositoryOwnerName,
+  override val repositoryId: String,
+  override val defaultBranchName: String?,
+  override val isFork: Boolean,
+)
   : GHPRRepositoryDataService {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -73,6 +75,20 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   override suspend fun loadCollaborators(): List<GHUser> = convertedCollaboratorsRequest.awaitCompleted()
+
+  private val pullRequestAuthorsRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
+    MutableStateFlow(doLoadPRAuthorsAsync())
+  }
+
+  private fun doLoadPRAuthorsAsync(): Deferred<List<GHUser>> = cs.async {
+    ApiPageUtil.createGQLPagesFlow {
+      requestExecutor.executeSuspend(GHGQLRequests.Repo.getPullRequestsAuthors(repositoryCoordinates, it))
+    }.map { it.nodes.mapNotNull { it.author } }
+      .foldToList()
+      .distinctBy { it.id }
+      .filterIsInstance<GHUser>()
+  }
+  override suspend fun loadPRsAuthors(): List<GHUser> = pullRequestAuthorsRequest.awaitCompleted()
 
   private val assigneesRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
     MutableStateFlow(doLoadIssuesAssigneesAsync())
@@ -144,6 +160,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
 
   override fun resetData() {
     collaboratorsRequest.restart(doLoadCollaboratorsAsync())
+    pullRequestAuthorsRequest.restart(doLoadPRAuthorsAsync())
     teamsRequest.restart(doLoadTeamsAsync())
     assigneesRequest.restart(doLoadIssuesAssigneesAsync())
     labelsRequest.restart(doLoadLabelsAsync())

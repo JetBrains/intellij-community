@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.async.BatchesLoader
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.mapScoped
@@ -34,6 +36,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
@@ -53,6 +56,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.GitLabMergeRequestNewState
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestLabelEventsUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestMilestoneEventsUri
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestParticipants
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestParticipantsUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestStateEventsUri
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestAccept
@@ -84,6 +89,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val author: GitLabUserDTO
 
   val isLoading: SharedFlow<Boolean>
+  val mergeRequestReloadSignal: SharedFlow<Unit>
 
   val details: StateFlow<GitLabMergeRequestFullDetails>
   val changes: SharedFlow<GitLabMergeRequestChanges>
@@ -116,6 +122,8 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
    * into a fully featured discussion without this.
    */
   fun reloadDiscussions()
+
+  fun getParticipantsBatches(): Flow<List<GitLabUserDTO>>
 
   suspend fun merge(commitMessage: String?, removeSourceBranch: Boolean)
 
@@ -164,6 +172,7 @@ internal class LoadedGitLabMergeRequest(
 
   private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>(1)
   private val mergeRequestReloadRequest = MutableSharedFlow<Unit>(1)
+  override val mergeRequestReloadSignal = mergeRequestReloadRequest.asSharedFlow()
   private val stateEventsRefreshRequest = MutableSharedFlow<Unit>(1)
 
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
@@ -225,6 +234,11 @@ internal class LoadedGitLabMergeRequest(
       )
     }.resultOrErrorFlow.modelFlow(cs, LOG)
   }
+
+  private val participantLoader =
+    BatchesLoader(cs, ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getMergeRequestParticipantsUri(projectId, iid)) {
+      api.rest.getMergeRequestParticipants(it)
+    }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
@@ -425,6 +439,8 @@ internal class LoadedGitLabMergeRequest(
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
+
+  override fun getParticipantsBatches(): Flow<List<GitLabUserDTO>> = participantLoader.getBatches()
 
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
   override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes

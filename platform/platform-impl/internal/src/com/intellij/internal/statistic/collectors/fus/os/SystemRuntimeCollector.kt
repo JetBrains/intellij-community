@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.sun.management.OperatingSystemMXBean
@@ -29,6 +30,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 @ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("system.runtime", 23)
 
@@ -41,15 +43,15 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   @Suppress("SpellCheckingInspection")
   private val OS_VMS = listOf("none", "xen", "kvm", "vmware", "hyperv", "other", "unknown")
 
-  // make it futureproof with ^2 logic and exceptions
-  private val CORES =
-    GROUP.registerEvent(
-      "cores",
-      EventFields.BoundedInt("value", (IntArray(20) { 1 shl it } + intArrayOf(6, 10, 12, 14, 20, 24, 28, 48, 192)).sortedArray()))
-  private val MEMORY_SIZE =
-    GROUP.registerEvent(
-      "memory.size",
-      EventFields.BoundedInt("gigabytes", (IntArray(20) { 1 shl it } + intArrayOf(12, 24, 36, 48, 96, 192)).sortedArray()))
+  // make it future-proof with ^2 logic and exceptions
+  private val CORES = GROUP.registerEvent(
+    "cores",
+    EventFields.BoundedInt("value", (IntArray(20) { 1 shl it } + intArrayOf(6, 10, 12, 14, 20, 24, 28, 48, 192)).sortedArray())
+  )
+  private val MEMORY_SIZE = GROUP.registerEvent(
+    "memory.size",
+    EventFields.BoundedInt("gigabytes", (IntArray(20) { 1 shl it } + intArrayOf(12, 24, 36, 48, 96, 192)).sortedArray())
+  )
 
   private val SWAP_SIZE = GROUP.registerEvent("swap.size", Int("gigabytes"))
   private val DISK_SIZE = GROUP.registerEvent("disk.size", Int("index_partition_size"), Int("index_partition_free"))
@@ -150,23 +152,23 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     return "Other"
   }
 
-  private fun getRenderingPipelineName() =
-    if (UIUtil.isMetalRendering()) "Metal"
-    else if (JBR.isVulkanSupported() && JBR.getVulkan().isPresentationEnabled) "Vulkan"
-    else "Other"
+  private fun getRenderingPipelineName() = when {
+    UIUtil.isMetalRendering() -> "Metal"
+    JBR.isVulkanSupported() && JBR.getVulkan().isPresentationEnabled -> "Vulkan"
+    else -> "Other"
+  }
 
-  private fun getJavaVendor(): String =
-    when {
-      SystemInfo.isJetBrainsJvm -> "JetBrains"
-      SystemInfo.isOracleJvm -> "Oracle"
-      SystemInfo.isIbmJvm -> "IBM"
-      SystemInfo.isAzulJvm -> "Azul"
-      else -> "Other"
-    }
+  private fun getJavaVendor(): String = when {
+    SystemInfo.isJetBrainsJvm -> "JetBrains"
+    SystemInfo.isOracleJvm -> "Oracle"
+    SystemInfo.isIbmJvm -> "IBM"
+    SystemInfo.isAzulJvm -> "Azul"
+    else -> "Other"
+  }
 
   private fun collectJvmOptions(): Map<String, Long> =
     ManagementFactory.getRuntimeMXBean().inputArguments.asSequence()
-      .map { arg ->
+      .mapNotNull { arg ->
         try {
           fun parse(arg: String, start: Int) = VMOptions.parseMemoryOption(arg.substring(start)) shr 20
           fun roundDown(value: Long, vararg steps: Long) = steps.findLast { it <= value } ?: 0
@@ -182,7 +184,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
           null
         }
       }
-      .filterNotNull()
       .toMap()
 
   private fun collectSystemProperties(): Map<String, String> =

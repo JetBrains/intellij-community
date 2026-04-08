@@ -18,9 +18,11 @@ jvm_library(
     "//plugins/tasks/tasks-api:tasks",
     "//platform/tasks-platform-impl:tasks-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//libraries/xml-rpc",
     "//plugins/tasks/tasks-core:core",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//plugins/tasks/tasks-compatibility:compatibility",
   ]
 )
@@ -36,9 +38,11 @@ jvm_library(
     "//plugins/tasks/tasks-api:tasks_test_lib",
     "//platform/tasks-platform-impl:tasks-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/xml-rpc:xml-rpc_test_lib",
     "//plugins/tasks/tasks-core:core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
   ]
 )

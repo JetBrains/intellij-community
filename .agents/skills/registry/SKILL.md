@@ -9,8 +9,8 @@ Guidelines for using the IntelliJ Registry API.
 
 ## Documentation
 
-- **Defining Registry Keys**: [Registry.md](../docs/IntelliJ-Platform/4_man/Registry.md) - How to declare keys in `plugin.xml` or `registry.properties`
-- **Cloud Registry**: [Cloud Registry and Notifications.md](../docs/IntelliJ-Platform/4_man/Cloud%20Registry%20and%20Notifications.md) - Remote registry updates for JetBrains IDEs
+- **Defining Registry Keys**: [Registry.md](../../../../docs/IntelliJ-Platform/4_man/Registry.md) - How to declare keys in `plugin.xml` or `registry.properties`
+- **Cloud Registry**: [Cloud Registry and Notifications.md](../../../../docs/IntelliJ-Platform/4_man/Cloud%20Registry%20and%20Notifications.md) - Remote registry updates for JetBrains IDEs
 
 ## Quick Reference
 

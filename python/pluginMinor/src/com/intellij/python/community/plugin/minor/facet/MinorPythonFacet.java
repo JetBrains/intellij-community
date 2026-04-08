@@ -5,6 +5,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,6 +27,10 @@ public final class MinorPythonFacet extends LibraryContributingFacet<PythonFacet
 
   @Override
   public void updateLibrary() {
+    // Keep ModuleRootManager.sdk in sync with the facet SDK so that components
+    // reading ModuleRootManager directly (e.g. run configurations using
+    // "Use SDK of module") always see the current Python interpreter.
+    ModuleRootModificationUtil.setModuleSdk(getModule(), getConfiguration().getSdk());
     PythonFacetUtil.updateLibrary(getModule(), getConfiguration());
   }
 

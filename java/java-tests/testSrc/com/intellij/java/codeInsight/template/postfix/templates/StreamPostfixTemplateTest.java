@@ -63,5 +63,12 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testDoNotExpandOnJavaLess8() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
+
+  public static class ModStreamPostfixTemplateTest extends StreamPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

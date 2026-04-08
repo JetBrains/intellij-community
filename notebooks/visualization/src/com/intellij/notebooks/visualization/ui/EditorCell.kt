@@ -120,7 +120,7 @@ class EditorCell(
 
   /** Called only in RD mode with a ready list of NotebookOutputDataKey, to avoid reading data from JSON which is missing on the frontend. */
   fun updateOutputs(keys: List<NotebookOutputDataKey>): Unit = editor.notebookViewUpdater.update {
-    outputs.outputs.set(keys.map { EditorCellOutput(it) })
+    outputs.updateWith(keys)
   }
 
   data class ExecutionStatus(

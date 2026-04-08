@@ -8,7 +8,7 @@ from typing import Any
 from django.apps.registry import Apps
 from django.dispatch import Signal
 from django.utils._os import _PathCompatible
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, override
 
 _P = ParamSpec("_P")
 
@@ -53,6 +53,7 @@ class StatReloader(BaseReloader):
     SLEEP_TIME: int
     def snapshot_files(self) -> Iterator[tuple[Path, float]]: ...
     @classmethod
+    @override
     def check_availability(cls) -> bool: ...
 
 class WatchmanUnavailable(RuntimeError): ...
@@ -68,7 +69,9 @@ class WatchmanReloader(BaseReloader):
     def request_processed(self, **kwargs: Any) -> None: ...
     def check_server_status(self, inner_ex: BaseException | None = None) -> bool: ...
     @classmethod
+    @override
     def check_availability(cls) -> None: ...
+    @override
     def stop(self) -> None: ...
 
 def get_reloader() -> BaseReloader: ...

@@ -9,6 +9,7 @@ import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
+import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHBranchProtectionRule
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.api.data.GHPullRequestMetrics
@@ -138,8 +139,8 @@ object GHGQLRequests {
         withOperationName("get branch protection rules")
       }
 
-    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule> = listOf())
-      : GraphQLConnectionDTO<GHBranchProtectionRule>(pageInfo, nodes)
+    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule> = listOf()) :
+      GraphQLConnectionDTO<GHBranchProtectionRule>(pageInfo, nodes)
 
     fun getCommitStatus(
       repo: GHRepositoryCoordinates,
@@ -180,6 +181,32 @@ object GHGQLRequests {
       pageInfo: GraphQLCursorPageInfoDTO,
       nodes: List<GHCommitStatusRollupContextDTO> = listOf(),
     ) : GraphQLConnectionDTO<GHCommitStatusRollupContextDTO>(pageInfo, nodes)
+
+    fun getPullRequestsAuthors(
+      repo: GHRepositoryCoordinates,
+      pagination: GraphQLRequestPagination? = null,
+    ): GQLQuery<GraphQLPagedResponseDataDTO<PullRequestAuthorDTO>> =
+      GQLQuery.TraversedParsed(
+        repo.serverPath.toGraphQLUrl(), GHGQLQueries.getPullRequestsAuthors,
+        mapOf("repoOwner" to repo.repositoryPath.owner,
+              "repoName" to repo.repositoryPath.repository,
+              "pageSize" to pagination?.pageSize,
+              "cursor" to pagination?.afterCursor),
+        PullRequestsAuthorsConnection::class.java,
+        "repository", "pullRequests"
+      ).apply {
+        withOperation(GithubApiRequestOperation.GraphQLGetPullRequestsAuthors)
+        withOperationName("get pull requests authors")
+      }
+
+    private class PullRequestsAuthorsConnection(
+      pageInfo: GraphQLCursorPageInfoDTO,
+      nodes: List<PullRequestAuthorDTO> = listOf(),
+    ) : GraphQLConnectionDTO<PullRequestAuthorDTO>(pageInfo, nodes)
+
+    class PullRequestAuthorDTO(
+      val author: GHActor?,
+    )
   }
 
   object Comment {

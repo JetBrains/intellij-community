@@ -41,6 +41,14 @@ class LicenseDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val closeButton = x { byVisibleText("Close") }
   val optionsButton = x { byAccessibleName("Options") }
 
+  // Non-commercial use
+  val nonCommercialUseButton = button { byAccessibleName("Non-commercial use") }
+  val logInForNonCommercialUseButton = button { byAccessibleName("Log In for Non-Commercial Use") }
+  val agreeWithNonCommercialUseCheckBox = x { byAccessibleName("I agree with non-commercial use ") }
+  val startNonCommercialUseButton = button { byAccessibleName("Start Non-Commercial Use") }
+  val forNonCommercialUseOnlyLabel = x { byAccessibleName("For non-commercial use only") }
+  val nonCommercialDescriptionLabel = x { contains(byVisibleText("Develop for non-commercial purposes only")) }
+
   val exitButton: UiComponent = x { byAccessibleName("Quit ${driver.fullProductName}") }
 }
 

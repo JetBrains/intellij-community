@@ -70,9 +70,9 @@ internal class BackendTerminalHyperlinkHighlighter(
 
   // The state is only modified from the model coroutine but can be read concurrently.
   private val currentTaskState = MutableStateFlow(TaskState(null, null))
-  
+
   // Could've used update { ... } for flows, but let's use plain assignment to highlight that there are no concurrent updates.
-  
+
   private var currentTaskRunner: TaskRunner?
     get() = currentTaskState.value.currentTaskRunner
     set(value) {
@@ -345,7 +345,7 @@ private class TrimTaskRunner(
   override val filter: CompositeFilter,
 ) : TaskRunner() {
 
-  override suspend fun run() { } // nothing to actually "do"
+  override suspend fun run() {} // nothing to actually "do"
 
   override fun isRunning(): Boolean = false
 
@@ -449,7 +449,11 @@ private class HighlightTaskRunner(
     return results
   }
 
-  private fun collectValidAndRemoveInvalidResults(from: Deque<TaskResult>, to: MutableList<TaskResult>, predicate: (TaskResult) -> Boolean) {
+  private fun collectValidAndRemoveInvalidResults(
+    from: Deque<TaskResult>,
+    to: MutableList<TaskResult>,
+    predicate: (TaskResult) -> Boolean,
+  ) {
     // It's important to do everything in one loop because results are added asynchronously into the same deque.
     // If we try to split this thing into "remove trimmed - collect valid - remove invalid" parts,
     // we'll get flaky bugs because after removing trimmed results there may be nothing left,
@@ -542,7 +546,9 @@ private class HyperlinkProcessor(
   ): List<TerminalFilterResultInfoDto> =
     readAction {
       mutableListOf<TerminalFilterResultInfoDto>().also { results ->
-        filter.applyToLineRange(outputModel.asHypertext(), startLine.toRelative(outputModel), endLine.toRelative(outputModel)) { applyResult ->
+        filter.applyToLineRange(outputModel.asHypertext(),
+                                startLine.toRelative(outputModel),
+                                endLine.toRelative(outputModel)) { applyResult ->
           checkCanceled()
           val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
           results.addAll(hyperlinks)

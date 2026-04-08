@@ -37,7 +37,7 @@ public class Simple {
   
   void testMethodRef() {
     Runnable r1 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>::new;
-    Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::<error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">new</error>;
+    Runnable r2 = <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'"><info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;</error>
     IntFunction<<info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]> r3 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;
     Runnable r4 = String::<error descr="Cannot resolve method 'blahblah'">blahblah</error>;
     Runnable r5 = <error descr="Non-static method cannot be referenced from a static context">String::getBytes</error>;

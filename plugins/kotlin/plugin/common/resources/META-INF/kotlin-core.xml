@@ -124,6 +124,10 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.kotlinRunLineMarkerHider"
                     interface="org.jetbrains.kotlin.idea.codeInsight.KotlinRunLineMarkerHider"
                     dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -260,6 +264,11 @@
             id="KotlinDumbCompletionContributor"
             order="first, after KotlinCompletionContributor"
             implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+
+    <completion.plainTextSymbol
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
+
     <codeInsight.wordCompletionFilter language="kotlin"
                                       implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
@@ -348,6 +357,9 @@
             implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
 
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.JpsDependencyProvider"/>
   </extensions>
 
   <!-- Editing -->

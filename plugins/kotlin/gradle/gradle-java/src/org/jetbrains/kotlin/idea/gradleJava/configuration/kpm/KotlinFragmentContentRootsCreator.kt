@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator
-import org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver.Companion.getIdeaKpmProject
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -33,7 +32,7 @@ class KotlinFragmentContentRootsCreator : ContentRootsCreator {
             createContentRootData(
                 fragment.sourceDirs.toSet(),
                 fragment.computeSourceType(),
-                KotlinKPMGradleProjectResolver.extractPackagePrefix(fragment),
+                null,
                 moduleDataNode
             )
             createContentRootData(

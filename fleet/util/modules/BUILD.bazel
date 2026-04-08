@@ -25,10 +25,9 @@ jvm_library(
   resources = [":modules_resources"],
   kotlinc_opts = ":custom_modules",
   deps = [
-    "@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed",
+    "@lib//:fleet-jetbrains-intellij-platform-util-zip-squashed",
     "@lib//:jetbrains-annotations",
-  ],
-  exports = ["@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed"]
+  ]
 )
 
 jvm_library(
@@ -37,7 +36,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_modules",
-  exports = ["@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed"],
   runtime_deps = [":modules"]
 )
 ### auto-generated section `build fleet.util.modules` end

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="hash4j" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.dynatrace.hash4j:hash4j:0.29.0">
+        <properties include-transitive-deps="false" maven-id="com.dynatrace.hash4j:hash4j:0.30.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.29.0/hash4j-0.29.0.jar">
-              <sha256sum>5a24e0ff0bf6227ba071bac35b0d2addf9b981690d2fd70cbe7ebcd8b089e51e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar">
+              <sha256sum>d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.29.0/hash4j-0.29.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.29.0/hash4j-0.29.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

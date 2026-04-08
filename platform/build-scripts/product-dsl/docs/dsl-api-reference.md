@@ -98,7 +98,6 @@ productModules {
 fun deprecatedInclude(
   moduleName: String,
   resourcePath: String,
-  ultimateOnly: Boolean = false,
   optional: Boolean = false
 )
 ```
@@ -109,13 +108,12 @@ Adds an xi:include directive to include XML content from a module's resources.
 |-----------|-------------|
 | `moduleName` | Module containing the resource |
 | `resourcePath` | Path within the module (e.g., `META-INF/Plugin.xml`) |
-| `ultimateOnly` | If true, skipped in Community builds |
 | `optional` | If true, always uses xi:fallback (never inlined) |
 
 **Example:**
 ```kotlin
 deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-deprecatedInclude("intellij.ultimate.resources", "META-INF/UltimatePlugin.xml", ultimateOnly = true)
+deprecatedInclude("intellij.ultimate.resources", "META-INF/UltimatePlugin.xml")
 deprecatedInclude("intellij.rider.languages", "intellij.rider.languages.xml", optional = true)
 ```
 
@@ -499,7 +497,6 @@ Represents an XML include directive.
 data class DeprecatedXmlInclude(
   val moduleName: String,
   val resourcePath: String,
-  val ultimateOnly: Boolean = false,
   val optional: Boolean = false
 )
 ```

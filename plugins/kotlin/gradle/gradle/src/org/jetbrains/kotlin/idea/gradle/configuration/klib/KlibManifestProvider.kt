@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
-import com.intellij.util.containers.orNull
 import org.jetbrains.kotlin.library.KlibConstants.KLIB_MANIFEST_FILE_NAME
 import java.io.IOException
 import java.nio.file.Files
@@ -90,7 +89,7 @@ internal object ZipKlibManifestProvider : KlibManifestProvider {
     }
 
     private fun ZipFile.findManifestEntry(): ZipEntry? {
-        return this.stream().filter { entry -> entry.name.matches(manifestEntryRegex) }.findFirst().orNull()
+        return entries().asSequence().firstOrNull { entry -> entry.name.matches(manifestEntryRegex) }
     }
 }
 

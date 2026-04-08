@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -37,6 +39,21 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCom
             topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
             moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
             configurationResultBuilder.configuredModule(module)
+        }
+    }
+
+    override fun configureModuleModCommand(module: Module): ModCommand {
+        val project = module.project
+        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return ModCommand.nop()
+
+        val actionContext = ActionContext.from(null, topLevelFile)
+        return ModCommand.psiUpdate(actionContext) { updater ->
+            val writablePomFile = updater.getWritable(topLevelFile)
+            val changedFiles = ChangedConfiguratorFiles()
+            val moduleBuildScriptPsiFile = module.getBuildScriptPsiFile()
+            val moduleFile = moduleBuildScriptPsiFile.takeIf { it != topLevelFile }?.let(updater::getWritable)
+            writablePomFile.add(addVersion = true, sourceModule = module, changedFiles = changedFiles)
+            moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = changedFiles)
         }
     }
 

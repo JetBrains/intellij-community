@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 
-class OpenMinimapSettingsAction : AnAction(MiniMessagesBundle.message("action.settings")), ActionRemoteBehaviorSpecification.Frontend {
+class OpenMinimapSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun isDumbAware(): Boolean = true
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

@@ -3,7 +3,7 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.vcs.VcsToolset
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -22,7 +22,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
-class VcsToolsetTest : McpToolsetTestBase() {
+class VcsToolsetTest : GeneralMcpToolsetTestBase() {
   @Test
   fun git_status_returns_empty_when_no_git_roots() = runBlocking(Dispatchers.Default) {
     cleanupExistingGitRepository(project.projectDirectory)

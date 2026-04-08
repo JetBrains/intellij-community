@@ -20,6 +20,13 @@ public class FormatPostfixTemplate extends JavaEditablePostfixTemplate implement
           LanguageLevel.JDK_1_3, false, provider);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
   @Override
   public boolean isBuiltin() {
     return true;

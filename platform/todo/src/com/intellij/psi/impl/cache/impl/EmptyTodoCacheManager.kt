@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Empty implementation of TodoCacheManager that doesn't access file indexes (for frontend).
- * The actual index-based implementation [IndexTodoCacheManagerImpl] runs on the backend.
+ * The actual index-based implementation [com.intellij.psi.impl.cache.impl.todo.IndexTodoCacheManagerImpl] runs on the backend.
  * TODO: update to use RPC to fetch TODOs from backend
  */
 @ApiStatus.Internal

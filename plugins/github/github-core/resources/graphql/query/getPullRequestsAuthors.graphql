@@ -1,0 +1,18 @@
+query($repoOwner: String!, $repoName: String!, $pageSize: Int, $cursor: String) {
+  repository(owner: $repoOwner, name: $repoName) {
+    pullRequests(first: $pageSize, after: $cursor) {
+      pageInfo {
+        ...pageInfo
+      }
+      nodes {
+        author {
+          ...actor
+        }
+      }
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

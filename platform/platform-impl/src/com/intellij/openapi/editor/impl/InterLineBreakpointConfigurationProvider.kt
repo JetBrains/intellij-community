@@ -28,6 +28,7 @@ private val INTER_LINE_BREAKPOINT_CONFIGS_KEY: Key<Map<String, InterLineBreakpoi
  * @param hoverTooltip tooltip to show on hover
  * @param breakpointProperties properties for the breakpoint (e.g., logging)
  * @param animator optional animator for line shift effects (null for no animation)
+ * @param hitArea size of the hit area for inter-line placement
  * @param availableFor predicate to check if this config applies to the given line (for inter-line placement)
  */
 @ApiStatus.Internal
@@ -36,8 +37,25 @@ class InterLineBreakpointConfiguration(
   val hoverTooltip: @Nls String,
   val breakpointProperties: InterLineBreakpointProperties,
   val animator: InterLineShiftAnimator? = null,
+  val hitArea: InterLineBreakpointHitArea = InterLineBreakpointHitArea.LARGE,
   val availableFor: (line: Int) -> Boolean = { false },
 )
+
+/**
+ * Size of the hit area for inter-line placement.
+ */
+@ApiStatus.Internal
+enum class InterLineBreakpointHitArea {
+  /**
+   * The inter-line area takes about 50% of the gutter.
+   */
+  LARGE,
+
+  /**
+   * The inter-line area takes about 20-25% of the gutter.
+   */
+  MEDIUM,
+}
 
 @ApiStatus.Internal
 data class InterLineBreakpointProperties(

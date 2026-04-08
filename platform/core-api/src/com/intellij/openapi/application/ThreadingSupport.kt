@@ -147,10 +147,10 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: () -> Unit, advice: String)
+  fun <T> withLocksProhibited(advice: String, action: () -> T): T
 
   /**
-   * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
+   * If locking is prohibited for this thread (via [withLocksProhibited]),
    * this function will return not-null string with advice on how to fix the problem
    */
   @ApiStatus.Internal

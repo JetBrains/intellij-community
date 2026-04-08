@@ -1,3 +1,4 @@
+// IGNORE_K1
 // WITH_STDLIB
 // AFTER-WARNING: Variable 'n' is never used
 

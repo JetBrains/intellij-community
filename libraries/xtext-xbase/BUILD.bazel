@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":xtext-xbase_resources"],
-  exports = ["@lib//:xtext-xbase"],
-  runtime_deps = ["@lib//:xtext-xbase"]
+  exports = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
+  runtime_deps = ["@lib//:libraries-xtext-xbase-xtext-xbase"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:xtext-xbase"],
+  exports = ["@lib//:libraries-xtext-xbase-xtext-xbase"],
   runtime_deps = [":xtext-xbase"]
 )
 ### auto-generated section `build intellij.libraries.xtext.xbase` end

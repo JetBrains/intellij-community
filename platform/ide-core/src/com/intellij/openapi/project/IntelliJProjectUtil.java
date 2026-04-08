@@ -25,8 +25,6 @@ public final class IntelliJProjectUtil {
     "intellij.android.studio.integration",
     // Bazel module names
     "community.platform.platform-api.ide",
-    "community.platform.platform-api._ide__jps",
-    "community.platform.platform-api._ide__kt",
   };
 
   private static final CachedValue<Boolean> isIntelliJPlatformProjectValue = new CachedValue<>(storage -> {

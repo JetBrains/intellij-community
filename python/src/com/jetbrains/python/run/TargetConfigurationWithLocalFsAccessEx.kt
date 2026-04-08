@@ -6,13 +6,15 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * When module sits on this target, should allow user create sdk on [confType]?
  * ``\\wsl$`` projects allow WSL and Docker
  */
-fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(confType: TargetEnvironmentType<*>): Boolean {
+@ApiStatus.Internal
+internal fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(confType: TargetEnvironmentType<*>): Boolean {
   val javaClass = asTargetConfig.getTargetType().javaClass
   return javaClass == confType.javaClass || javaClass in confType.canProbablyRunCodeForeignTypes
 }
@@ -22,7 +24,8 @@ fun TargetConfigurationWithLocalFsAccess.allowCreationTargetOfThisType(confType:
  * When module sits on this target, should allow user to choose sdk with [config]?
  * ``\\wsl$`` projects allow Docker AND only WSL with right distro
  */
-fun TargetConfigurationWithLocalFsAccess.codeCouldProbablyBeRunWithConfig(config: TargetEnvironmentConfiguration?): Boolean {
+@ApiStatus.Internal
+internal fun TargetConfigurationWithLocalFsAccess.codeCouldProbablyBeRunWithConfig(config: TargetEnvironmentConfiguration?): Boolean {
   if (config == null) return false // For now no local target could run remote
   if (asTargetConfig == config) return true // Same config (like same wsl distro)
   return asTargetConfig.getTargetType().javaClass in config.getTargetType().canProbablyRunCodeForeignTypes

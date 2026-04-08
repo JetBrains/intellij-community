@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -28,6 +28,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
   val classPath = LinkedHashSet<Path>()
 
   val libDir = context.paths.distAllDir.resolve("lib")
+  val outputProvider = context.outputProvider
   for (entry in contentReport.first) {
     if (entry !is ModuleOutputEntry || !ModuleIncludeReasons.isProductModule(entry.reason)) {
       val relativePath = libDir.relativize(entry.path)
@@ -42,7 +43,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(context.outputProvider.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
+        classPath.addAll(outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(entry.owner.moduleName)))
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
@@ -58,12 +59,12 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
       continue
     }
 
-    val outputProvider = context.outputProvider
+    val outputProvider = outputProvider
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(outputProvider.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
+        classPath.addAll(outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(entry.owner.moduleName)))
         for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.owner.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
-          classPath.addAll(outputProvider.getModuleOutputRoots(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
+          classPath.addAll(outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
         }
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
@@ -122,7 +123,7 @@ private suspend fun generateProjectStructureMapping(
     }
 
     val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(pluginLayout.directoryName)
-    val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
+    val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
     val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
     val element = JDOMUtil.load(descriptorContent)
 

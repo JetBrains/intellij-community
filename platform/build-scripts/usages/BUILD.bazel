@@ -19,6 +19,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//jps/model-api:model",
     "//jps/model-serialization",
+    "@community//build:dependency-graph",
+    "//libraries/mvstore",
   ],
   runtime_deps = ["//jps/model-impl"]
 )
@@ -39,8 +41,10 @@ jvm_library(
     "//libraries/hash4j:hash4j_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//jps/model-api:model_test_lib",
-    "//jps/model-impl:model-impl_test_lib",
     "//jps/model-serialization:model-serialization_test_lib",
+    "@community//build:dependency-graph_test_lib",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.usages` end
@@ -50,3 +54,54 @@ exports_files([
   "intellij.platform.buildScripts.usages.iml",
 ], visibility = ["//visibility:public"])
 ### auto-generated section `iml intellij.platform.buildScripts.usages` end
+
+### auto-generated section `build intellij.platform.buildScripts.usages.tests` start
+jvm_library(
+  name = "buildScripts-usages-tests",
+  module_name = "intellij.platform.buildScripts.usages.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "buildScripts-usages-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/build-scripts/usages",
+    "//platform/build-scripts/usages:usages_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/asm",
+    "//libraries/asm:asm_test_lib",
+    "//libraries/mvstore",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
+    "@community//build:dependency-graph",
+    "@community//build:dependency-graph_test_lib",
+  ],
+  runtime_deps = [":buildScripts-usages-tests"]
+)
+### auto-generated section `build intellij.platform.buildScripts.usages.tests` end
+
+### auto-generated section `iml intellij.platform.buildScripts.usages.tests` start
+exports_files([
+  "intellij.platform.buildScripts.usages.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.usages.tests` end
+
+### auto-generated section `test intellij.platform.buildScripts.usages.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "buildScripts-usages-tests_test",
+  runtime_deps = [":buildScripts-usages-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.buildScripts.usages.tests` end

@@ -182,9 +182,11 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     }
 
     @TestOnly
-    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<FilesAndDiagnostic>): Int {
-      return getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
-                                                     indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
+    fun getDiagnosticDataSizeCheckMessageIfNeeded(existingDiagnostics: List<FilesAndDiagnostic>): String? {
+      val size = existingDiagnostics.sumOf { it.jsonFile.fileSizeSafe() + it.htmlFile.fileSizeSafe() }
+      val sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
+      if (size <= sizeLimit) return null
+      return "Size of index diagnostics is ${size / 1024 / 1024} MB, while size limit is $indexingDiagnosticsSizeLimitOfFilesInMiBPerProject MB."
     }
 
     private fun <T> fastReadJsonField(bufferedReader: Reader, propertyName: String, type: Class<T>): T? {

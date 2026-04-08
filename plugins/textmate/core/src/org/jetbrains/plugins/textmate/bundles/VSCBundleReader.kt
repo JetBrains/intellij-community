@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
@@ -38,7 +39,7 @@ fun readVSCBundle(plistReader: PlistReaderCore, resourceReader: TextMateResource
 private class VSCBundleReader(private val extension: VSCodeExtension,
                               private val plistReader: PlistReaderCore,
                               private val resourceReader: TextMateResourceReader) : TextMateBundleReader {
-  override val bundleName: String = extension.name
+  override val bundleName: String = extension.displayName ?: extension.name
 
   private val languages: Map<VSCodeExtensionLanguageId, VSCodeExtensionLanguage> by lazy {
     extension.contributes.languages.associateBy { language -> language.id }
@@ -50,7 +51,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
 
   private val embeddedLanguages: Map<VSCodeExtensionLanguageId, Collection<TextMateScopeName>> by lazy {
     val map = HashMap<VSCodeExtensionLanguageId, MutableSet<TextMateScopeName>>()
-    extension.contributes.grammars.map { grammar ->
+    extension.contributes.grammars.forEach { grammar ->
       for ((scopeName, languageId) in grammar.embeddedLanguages) {
         map.getOrPut(languageId) { HashSet() }.add(scopeName)
       }
@@ -170,7 +171,7 @@ private fun readBrackets(pairs: List<List<String>>): Set<TextMateBracePair> {
 private fun readComments(scopeName: TextMateScopeName, comments: VSCodeExtensionComments): List<TextMateShellVariable> {
   return buildList {
     comments.lineComment?.let {
-      add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE, "${it.trim()} "))
+      add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE, "${it.comment.trim()} "))
     }
     comments.blockComment.takeIf { it.size == 2 }?.let {
       val suffix = if (comments.lineComment != null) "_2" else ""
@@ -210,7 +211,9 @@ internal data class VSCodeExtensionContributes(
 )
 
 @Serializable
-internal data class VSCodeExtension(val name: String, val contributes: VSCodeExtensionContributes)
+internal data class VSCodeExtension(val name: String,
+                                    val displayName: String? = null,
+                                    val contributes: VSCodeExtensionContributes)
 
 @Serializable
 internal data class VSCodeExtensionLanguageConfiguration(
@@ -279,8 +282,11 @@ internal class VSCodeExtensionAutoClosingPairsDeserializer : KSerializer<VSCodeE
   }
 }
 
+@Serializable(with = LineCommentConfigDeserializer::class)
+internal data class VSCodeLineCommentConfig(val comment: String, val noIndent: Boolean)
+
 @Serializable
-internal data class VSCodeExtensionComments(val lineComment: String? = null, val blockComment: List<String> = emptyList())
+internal data class VSCodeExtensionComments(val lineComment: VSCodeLineCommentConfig? = null, val blockComment: List<String> = emptyList())
 
 @Serializable(with = VSCodeExtensionIndentationRulesDeserializer::class)
 internal data class VSCodeExtensionIndentationRules(
@@ -337,5 +343,22 @@ internal class TextRuleDeserializer : KSerializer<TextRule> {
 
   override fun serialize(encoder: Encoder, value: TextRule) {
     encoder.encodeString(value.text)
+  }
+}
+
+internal class LineCommentConfigDeserializer : KSerializer<VSCodeLineCommentConfig> {
+  override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+
+  override fun deserialize(decoder: Decoder): VSCodeLineCommentConfig {
+    require(decoder is JsonDecoder)
+    return when (val json = decoder.decodeJsonElement()) {
+      is JsonObject -> VSCodeLineCommentConfig(json["comment"]!!.jsonPrimitive.content, json["comment"]!!.jsonPrimitive.booleanOrNull ?: false)
+      is JsonPrimitive -> VSCodeLineCommentConfig(json.content, noIndent = false)
+      else -> error("cannot deserialize $json")
+    }
+  }
+
+  override fun serialize(encoder: Encoder, value: VSCodeLineCommentConfig) {
+    encoder.encodeString(value.comment)
   }
 }

@@ -180,6 +180,7 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSeeTag19Markdown() { doTest(true); }
   public void testSeeTag20Markdown() { doTest(true); }
   public void testSeeTag21Markdown() { doTest(true); }
+  public void testSeeTag22Markdown() { doTest(true); }
 
   public void testSeparated01Markdown() { doTest(true); }
 

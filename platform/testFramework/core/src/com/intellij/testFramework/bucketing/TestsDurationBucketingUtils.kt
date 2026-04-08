@@ -192,7 +192,7 @@ internal object TestsDurationBucketingUtils {
 
   private fun createBucketsFromTestsStatistics(statistics: Map<String, Int>,
                                                bucketsCount: Int): List<ItemsAndTotalTime<PackageClassesGroup>> {
-    val partitionPerPackages = statistics.entries.groupBy { it.packageName() }.map {
+    val partitionPerPackages = statistics.entries.groupBy { it.packageName() }.map {  // TODO: partition per jars
       ItemsAndTotalTime(it.value, it.value.sumOf { it.value }.milliseconds)
     }
     val averageTime = (partitionPerPackages.sumOf { it.totalTime.inWholeMilliseconds } / bucketsCount).milliseconds
@@ -225,21 +225,29 @@ internal object TestsDurationBucketingUtils {
       result
     }
 
-    return tossElementsIntoBuckets(partition.map { Pair(it, it.groupTime) }, bucketsCount)
+    return tossElementsIntoBuckets(partition.map { Pair(it, it.groupTime) }, bucketsCount, averageTime, deltaTimeMax)
   }
 
   private data class ItemsAndTotalTime<T>(val items: List<T>, val totalTime: Duration)
 
-  private fun <T> tossElementsIntoBuckets(elements: List<Pair<T, Duration>>, binCount: Int): List<ItemsAndTotalTime<T>> {
+  private fun <T> tossElementsIntoBuckets(elements: List<Pair<T, Duration>>, binCount: Int, averageTime: Duration, deltaTimeMax: Duration): List<ItemsAndTotalTime<T>> {
     val queue = PriorityQueue<ItemsAndTotalTime<T>>(binCount, Comparator.comparing { it.totalTime })
     (0 until binCount).forEach { _ ->
         queue.add(ItemsAndTotalTime(emptyList(), ZERO))
     }
 
-    for (element in elements.sortedByDescending { it.second }) {
-      val smallestBin = queue.poll()
-      queue.add(ItemsAndTotalTime(smallestBin.items + element.first, smallestBin.totalTime + element.second))
+    var smallestBin = queue.poll()
+    for (element in elements) {  // keep alphabetical order
+      // add consecutive elements while they don't exceed the limit, don't skip the big ones to preserve alphabetical order
+      if (smallestBin.totalTime >= averageTime ||
+          smallestBin.totalTime + element.second >= averageTime + deltaTimeMax) {
+        queue.add(smallestBin)
+        smallestBin = queue.poll()
+      }
+
+      smallestBin = ItemsAndTotalTime(smallestBin.items + element.first, smallestBin.totalTime + element.second)
     }
+    queue.add(smallestBin)
 
     return queue.sortedBy { it.totalTime }
   }

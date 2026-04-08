@@ -5,6 +5,7 @@ import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -39,13 +41,15 @@ public final class PathMacroTable extends JBTable {
   private final List<Couple<String>> myMacros = new ArrayList<>();
   private static final Comparator<Pair<String, String>> MACRO_COMPARATOR = Pair.comparingByFirst();
 
+  @Nullable private final Project myProject;
   private final Collection<String> myUndefinedMacroNames;
 
-  public PathMacroTable() {
-    this(null);
+  public PathMacroTable(@Nullable Project project) {
+    this(project, null);
   }
 
-  public PathMacroTable(Collection<String> undefinedMacroNames) {
+  public PathMacroTable(@Nullable Project project, Collection<String> undefinedMacroNames) {
+    myProject = project;
     myUndefinedMacroNames = undefinedMacroNames;
     setShowGrid(false);
     setModel(myTableModel);
@@ -73,7 +77,7 @@ public final class PathMacroTable extends JBTable {
 
   public void addMacro() {
     final String title = ApplicationBundle.message("title.add.variable");
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", new AddValidator(title));
+    final PathMacroEditor macroEditor = new PathMacroEditor(myProject, title, "", "", new AddValidator(title));
     if (macroEditor.showAndGet()) {
       final String name = macroEditor.getName();
       myMacros.add(Couple.of(name, macroEditor.getValue()));
@@ -175,7 +179,7 @@ public final class PathMacroTable extends JBTable {
     final Couple<String> pair = myMacros.get(selectedRow);
     final String title = ApplicationBundle.message("title.edit.variable");
     final String macroName = pair.getFirst();
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond(), new EditValidator());
+    final PathMacroEditor macroEditor = new PathMacroEditor(myProject, title, macroName, pair.getSecond(), new EditValidator());
     if (macroEditor.showAndGet()) {
       myMacros.remove(selectedRow);
       myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));

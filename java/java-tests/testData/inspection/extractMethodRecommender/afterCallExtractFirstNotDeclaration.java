@@ -10,7 +10,7 @@ class Test {
   List<List<String>> simpleWithPrecedingComment() {
     // Create list
                         // Comment
-      List<String> list = getStrings();
+      List<String> list = comment();
 
       List<String> list2 = new ArrayList<>();
     list2.add("v1");
@@ -20,7 +20,7 @@ class Test {
     return List.of(list, list2);
   }
 
-    private static @NotNull List<String> getStrings() {
+    private static @NotNull List<String> comment() {
         List<String> list = new ArrayList<>();
         list.add("one");
         list.add("two");

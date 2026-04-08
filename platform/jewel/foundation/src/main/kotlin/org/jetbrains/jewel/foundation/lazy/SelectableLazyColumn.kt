@@ -130,7 +130,10 @@ public fun SelectableLazyColumn(
     LaunchedEffect(container, state.selectedKeys) {
         val selectedKeysSnapshot = state.selectedKeys
         val indices = selectedKeysSnapshot.mapNotNull { key -> container.getKeyIndex(key) }
-        if (indices != lastEmittedIndices) {
+        // The `state.lastActiveItemIndex` can also be changed by the SpeedSearch flow.
+        // If the last active index is not among the selected indices, the SpeedSearch
+        // has selected a different value and an update must be triggered.
+        if (indices != lastEmittedIndices || (indices.isNotEmpty() && state.lastActiveItemIndex !in indices)) {
             lastEmittedIndices = indices
 
             // Keep keyboard navigation gate in sync after key→index remaps, including through empty→non‑empty

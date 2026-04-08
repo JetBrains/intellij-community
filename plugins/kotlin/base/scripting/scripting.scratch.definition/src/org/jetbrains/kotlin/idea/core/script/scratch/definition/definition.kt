@@ -44,7 +44,9 @@ private class KotlinScratchEvaluationConfiguration : ScriptEvaluationConfigurati
                         System.getProperty(KOTLIN_SCRATCH_EXPLAIN_FILE)?.let { location ->
                             val path = Path(location)
                             Files.createDirectories(path.parent)
-                            path.writeText(explainMap.entries.joinToString(separator = "\n") { entry -> "${entry.key}=${entry.value}" })
+                            path.writeText(explainMap.entries.joinToString(separator = "\n") { entry ->
+                                "${entry.key}=${entry.value?.toString()?.escapedExplainValue()}"
+                            })
                         }
                     }
                 }
@@ -66,3 +68,7 @@ private class KotlinScratchHostConfiguration : ScriptingHostConfiguration(
 
 
 private const val SCRATCH_EXPLAIN_VARIABLE_NAME: String = $$$"$$explain"
+
+private fun String.escapedExplainValue(): String = replace("\\", "\\\\")
+    .replace("\n", "\\n")
+    .replace("\r", "\\r")

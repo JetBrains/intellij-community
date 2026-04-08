@@ -34,6 +34,7 @@ import javax.swing.text.html.StyleSheet
 @Suppress("FunctionName")
 fun SimpleHtmlPane(
   additionalStyleSheet: StyleSheet? = null,
+  additionalStyleSheetProvider: ((JBHtmlPane) -> StyleSheet)? = null,
   addBrowserListener: Boolean = true,
   customImageLoader: AsyncHtmlImageLoader? = null,
   baseUrl: URL? = null,
@@ -51,6 +52,7 @@ fun SimpleHtmlPane(
         }
       """.trimIndent())
       .customStyleSheetProvider { additionalStyleSheet ?: StyleSheet() }
+      .customStyleSheetProvider { pane -> additionalStyleSheetProvider?.invoke(pane) ?: StyleSheet() }
       .extensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
                   HtmlEditorPaneUtil.CONTENT_TOOLTIP,
                   HtmlEditorPaneUtil.inlineIconExtension(aClass),
@@ -76,6 +78,15 @@ fun SimpleHtmlPane(
 
     name = "Simple HTML Pane"
   }
+
+@Suppress("FunctionName")
+fun SimpleHtmlPane(
+  additionalStyleSheet: StyleSheet? = null,
+  addBrowserListener: Boolean = true,
+  customImageLoader: AsyncHtmlImageLoader? = null,
+  baseUrl: URL? = null,
+  aClass: Class<*> = HtmlEditorPaneUtil::class.java,
+): JEditorPane = SimpleHtmlPane(additionalStyleSheet, null, addBrowserListener, customImageLoader, baseUrl, aClass)
 
 /**
  * Read-only editor pane intended to display simple HTML snippet

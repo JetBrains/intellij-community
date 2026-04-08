@@ -20,8 +20,8 @@ jvm_library(
     "@lib//:opentelemetry-extension-kotlin",
     "//libraries/hash4j",
     "//libraries/ktor/client",
-    "//libraries/ktor/io",
-  ]
+  ],
+  runtime_deps = ["//libraries/commons/lang3"]
 )
 
 jvm_library(
@@ -33,11 +33,11 @@ jvm_library(
   runtime_deps = [
     ":downloader",
     "//libraries/commons/compress:compress_test_lib",
+    "//libraries/commons/lang3:lang3_test_lib",
     "//libraries/commons/io:io_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/hash4j:hash4j_test_lib",
     "//libraries/ktor/client:client_test_lib",
-    "//libraries/ktor/io:io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl.util
 
+import com.intellij.mcpserver.McpProjectPathCustomizer
 import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolSchema
@@ -30,6 +31,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import kotlinx.serialization.serializerOrNull
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KCallable
@@ -67,6 +69,21 @@ fun KCallable<*>.parametersSchema(vararg additionalImplicitParameters: KParamete
     }
     if (!parameter.isOptional) requiredParameters.add(parameterName)
   }
+
+  // Customize projectPath name and description via EP if needed
+  if (additionalImplicitParameters.any { it.name == "projectPath" }) {
+    val customizer = McpProjectPathCustomizer.EP.extensionList.firstOrNull()
+    if (customizer != null) {
+      parameterSchemas.remove("projectPath")?.let { originalSchema ->
+        parameterSchemas[customizer.parameterName] = buildJsonObject {
+          for ((key, value) in originalSchema as kotlinx.serialization.json.JsonObject) {
+            if (key == "description") put("description", customizer.parameterDescription) else put(key, value)
+          }
+        }
+      }
+    }
+  }
+
   return McpToolSchema.ofPropertiesMap(properties = parameterSchemas, requiredProperties = requiredParameters, definitions = definitions, definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
 }
 
@@ -77,7 +94,7 @@ private fun projectPathParameterStub(
     | If you're not aware about the project path you can ask user about it.""")
   projectPath: String? = null) {}
 internal val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
-val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
+val projectPathParameterName: String get() = McpProjectPathCustomizer.EP.extensionList.firstOrNull()?.parameterName ?: "projectPath"
 
 fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
   val type = this.returnType

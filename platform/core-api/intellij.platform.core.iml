@@ -34,6 +34,9 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" exported="" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
   </component>

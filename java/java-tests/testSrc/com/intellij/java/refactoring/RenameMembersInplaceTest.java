@@ -55,6 +55,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     doTestInplaceRename("xxx");
   }
 
+  public void testMultipleSuperMethods() {
+    doTestInplaceRename("x");
+  }
+
   public void testUnresolvedMethod() {
     doTestInplaceRename("second");
   }

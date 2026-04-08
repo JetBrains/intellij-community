@@ -268,6 +268,7 @@
     <module value="com.intellij.modules.ruby-capable"/>
     <module value="com.intellij.modules.c-capable"/>
     <module value="com.intellij.modules.go-capable"/>
+    <module value="com.intellij.modules.database-capable"/>
     <module value="com.intellij.modules.nativeDebug-plugin-capable"/>
     <module value="com.intellij.modules.platform"/>
     <module value="com.intellij.modules.lang"/>
@@ -1204,10 +1205,5 @@
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.microservices</depends>
     <depends>-org-jetbrains-plugins-yaml-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.python.concurrencyVisualizer/META-INF/plugin.xml">
-    <id>-org-jetbrains-python-concurrency-visualiser-</id>
-    <name>Concurrency Visualiser</name>
-    <depends>com.intellij.modules.pycharm.professional</depends>
   </idea-plugin>
 </root>

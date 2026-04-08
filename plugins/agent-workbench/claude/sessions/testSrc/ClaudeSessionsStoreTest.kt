@@ -281,6 +281,82 @@ class ClaudeSessionsStoreTest {
     assertThat(thread).isNull()
   }
 
+  @Test
+  fun explicitPartialAssistantChunkStaysProcessingUntilTerminalAssistantArrives() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-partial")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("partial-processing.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantPartial("2026-02-08T01:00:01.000Z", "I am thinking"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
+
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantPartial("2026-02-08T01:00:01.000Z", "I am thinking"),
+        assistant("2026-02-08T01:00:02.000Z", "Done"),
+      ),
+    )
+
+    val completedThread = store.parseJsonlFile(transcript)
+
+    assertThat(completedThread).isNotNull
+    assertThat(completedThread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
+  }
+
+  @Test
+  fun backgroundTaskNotificationKeepsThreadProcessingUntilFinalAssistantReply() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-background")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("background-processing.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantToolUse("2026-02-08T01:00:01.000Z"),
+        claudeBackgroundToolResultLine("2026-02-08T01:00:02.000Z", S, C, "task-123"),
+        claudeQueueOperationLine("2026-02-08T01:00:03.000Z", S, C, "task-123"),
+        claudeTaskNotificationLine("2026-02-08T01:00:04.000Z", S, C, "task-123"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.activity).isEqualTo(ClaudeSessionActivity.PROCESSING)
+
+    Files.write(
+      transcript,
+      listOf(
+        user("2026-02-08T01:00:00.000Z"),
+        assistantToolUse("2026-02-08T01:00:01.000Z"),
+        claudeBackgroundToolResultLine("2026-02-08T01:00:02.000Z", S, C, "task-123"),
+        claudeQueueOperationLine("2026-02-08T01:00:03.000Z", S, C, "task-123"),
+        claudeTaskNotificationLine("2026-02-08T01:00:04.000Z", S, C, "task-123"),
+        assistant("2026-02-08T01:00:05.000Z", "All done"),
+      ),
+    )
+
+    val completedThread = store.parseJsonlFile(transcript)
+
+    assertThat(completedThread).isNotNull
+    assertThat(completedThread!!.activity).isEqualTo(ClaudeSessionActivity.READY)
+  }
+
   companion object {
     private const val S = "test-session"
     private const val C = "/work/project"
@@ -291,6 +367,9 @@ class ClaudeSessionsStoreTest {
     private fun assistant(ts: String, content: String = "Hi"): String =
       claudeAssistantLine(ts, S, C, content)
 
+    private fun assistantPartial(ts: String, content: String = "Hi"): String =
+      claudeAssistantPartialLine(ts, S, C, content)
+
     private fun assistantToolUse(ts: String, content: String = "editing"): String =
       claudeAssistantToolUseLine(ts, S, C, content)
 
@@ -299,9 +378,6 @@ class ClaudeSessionsStoreTest {
 
     private fun systemEvent(ts: String): String =
       """{"type":"system","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
-
-    private fun queueOp(ts: String): String =
-      """{"type":"queue-operation","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
 
     private fun toolResult(ts: String): String =
       """{"type":"user","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"ok"}]}}"""
@@ -312,13 +388,17 @@ class ClaudeSessionsStoreTest {
       Arguments.of("user → assistant(text) → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistant("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
       Arguments.of("user → assistant(tool_use) → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("user → progress → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), progress("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z")), ClaudeSessionActivity.PROCESSING),
-      Arguments.of("user → assistant(text) → progress → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistant("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of("user → assistant(partial) → progress → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantPartial("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("user → assistant(tool_use) → progress → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), progress("2026-02-08T01:00:03.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("full tool cycle → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z")), ClaudeSessionActivity.READY),
       Arguments.of("full tool cycle + trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z"), progress("2026-02-08T01:00:05.000Z"), systemEvent("2026-02-08T01:00:06.000Z")), ClaudeSessionActivity.READY),
       Arguments.of("multi-turn re-ask → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), toolResult("2026-02-08T01:00:02.000Z"), assistant("2026-02-08T01:00:03.000Z"), user("2026-02-08T01:00:04.000Z", "follow up"), progress("2026-02-08T01:00:05.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), systemEvent("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
-      Arguments.of("trailing queue-operation → READY", listOf(user("2026-02-08T01:00:00.000Z"), queueOp("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of(
+        "trailing queue-operation while awaiting assistant → PROCESSING",
+        listOf(user("2026-02-08T01:00:00.000Z"), claudeQueueOperationLine("2026-02-08T01:00:01.000Z", S, C, "task-123")),
+        ClaudeSessionActivity.PROCESSING,
+      ),
     )
   }
 }

@@ -46,4 +46,11 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor"
                     interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"
+      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableServiceImpl"
+      overrides="true"/>
+  </extensions>
 </idea-plugin>

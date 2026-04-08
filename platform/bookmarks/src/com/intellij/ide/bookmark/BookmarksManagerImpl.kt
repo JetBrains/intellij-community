@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.providers.FileBookmarkImpl
+import com.intellij.ide.bookmark.providers.InvalidBookmark
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.ide.bookmark.ui.BookmarksViewState
@@ -35,8 +36,8 @@ import java.io.File
 private val LOG = Logger.getInstance(BookmarksManager::class.java)
 
 @State(name = "BookmarksManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: Project, private val coroutineScope: CoroutineScope)
-  : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
+class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: Project, private val coroutineScope: CoroutineScope) :
+  BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
 
   private val invoker = Invoker.forBackgroundThreadWithReadAction(project)
   private val notifier = ModificationNotifier(project)
@@ -83,7 +84,6 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
   }
 
   override fun loadState(state: ManagerState) {
-    remove() // see com.intellij.tasks.context.BookmarkContextProvider
     state.groups.forEach {
       val group = addOrReuseGroup(it.name, it.isDefault)
       it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
@@ -123,7 +123,14 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
     else -> sortedProviders.firstNotNullOfOrNull { it.createBookmark(context) }
   }
 
-  private fun createDescription(bookmark: Bookmark) = LineBookmarkProvider.Util.readLineText(bookmark as? LineBookmark)?.trim() ?: ""
+  private fun createDescription(bookmark: Bookmark): String {
+    val text = when (bookmark) {
+      is LineBookmark -> LineBookmarkProvider.Util.readLineText(bookmark)
+      is InvalidBookmark -> bookmark.expectedText
+      else -> null
+    }
+    return text?.trim() ?: ""
+  }
 
   override fun getBookmarks(): List<Bookmark> = synchronized(notifier) { allBookmarks.keys.toList() }
 
@@ -311,7 +318,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       val iterator = map.iterator()
       while (iterator.hasNext()) {
         val entry = iterator.next()
-        val updated = entry.value?.let { updateInAllGroups(entry.key, it) }
+        val updated = entry.value?.let { updateInAllGroups(entry.key, it, map) }
         if (updated == null) removeFromAllGroups(entry.key)
         if (updated != false) iterator.remove()
       }
@@ -324,20 +331,63 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
     }
   }
 
-  private fun updateInAllGroups(old: Bookmark, new: Bookmark): Boolean = synchronized(notifier) {
-    if (allBookmarks.contains(new)) return false // cannot update to new bookmark if it exists
-    val oldInfo = allBookmarks.remove(old) ?: return true
-    val newInfo = InManagerInfo(new, oldInfo.type)
+  private fun updateInAllGroups(old: Bookmark, new: Bookmark, updatesMap: Map<Bookmark, Bookmark?>): Boolean = synchronized(notifier) {
+    val oldInfo = allBookmarks[old] ?: return true
+    val existingInfo = allBookmarks[new]
+    
+    if (existingInfo != null && existingInfo !== oldInfo) {
+      if (updatesMap.containsKey(existingInfo.bookmark)) {
+        return false
+      }
+      return mergeBookmarkIntoExisting(oldInfo, existingInfo)
+    }
+    
+    return replaceBookmarkInAllGroups(oldInfo, old, new)
+  }
+
+  private fun mergeBookmarkIntoExisting(oldInfo: InManagerInfo, existingInfo: InManagerInfo): Boolean {
     val oldIterator = oldInfo.groups.iterator()
     while (oldIterator.hasNext()) {
       val group = oldIterator.next()
-      if (group.updateInfo(old, new)) newInfo.groups.add(group)
+      val groupContainsNew = group.indexOf(existingInfo.bookmark) >= 0
+      
+      if (groupContainsNew) {
+        group.removeInfo(oldInfo.bookmark)
+      }
+      else {
+        if (group.updateInfo(oldInfo.bookmark, existingInfo.bookmark)) {
+          if (!existingInfo.groups.contains(group)) {
+            val initial = existingInfo.groups.isEmpty()
+            existingInfo.groups.add(group)
+            existingInfo.bookmarkAdded(group, initial)
+          }
+        }
+      }
+      
       oldIterator.remove()
       oldInfo.bookmarkRemoved(group, !oldIterator.hasNext())
     }
-    val newIterator = newInfo.groups.iterator()
-    if (newIterator.hasNext()) {
+    allBookmarks.remove(oldInfo.bookmark)
+    return true
+  }
+
+  private fun replaceBookmarkInAllGroups(oldInfo: InManagerInfo, old: Bookmark, new: Bookmark): Boolean {
+    allBookmarks.remove(old)
+    val newInfo = InManagerInfo(new, oldInfo.type)
+    
+    val oldIterator = oldInfo.groups.iterator()
+    while (oldIterator.hasNext()) {
+      val group = oldIterator.next()
+      if (group.updateInfo(old, new)) {
+        newInfo.groups.add(group)
+      }
+      oldIterator.remove()
+      oldInfo.bookmarkRemoved(group, !oldIterator.hasNext())
+    }
+    
+    if (newInfo.groups.isNotEmpty()) {
       allBookmarks[new] = newInfo
+      val newIterator = newInfo.groups.iterator()
       newInfo.bookmarkAdded(newIterator.next(), true)
       while (newIterator.hasNext()) {
         newInfo.bookmarkAdded(newIterator.next(), false)
@@ -516,7 +566,8 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       val index = indexOf(old)
       if (index < 0) return false
       val info = groupBookmarks[index]
-      groupBookmarks[index] = InGroupInfo(new, info.description)
+      val description = if (info.isCustomDescription) info.description else null
+      groupBookmarks[index] = InGroupInfo(new, description, info.isCustomDescription)
       return true
     }
 
@@ -531,8 +582,9 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
 
     override fun setDescription(bookmark: Bookmark, description: String): Unit = synchronized(notifier) {
       val info = getInfo(bookmark) ?: return
-      if (info.description == description) return
+      if (info.isCustomDescription && info.description == description) return
       info.description = description
+      info.isCustomDescription = true
       notifier.bookmarkChanged(this, bookmark)
     }
 
@@ -551,7 +603,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       if (!canAdd(bookmark)) return false // bookmark is already exist
       rewriteType(type, bookmark)
       val info = allBookmarks.computeIfAbsent(bookmark) { InManagerInfo(it, type) }
-      groupBookmarks.add(if (index < 0) groupBookmarks.size else index, InGroupInfo(info.bookmark, description))
+      groupBookmarks.add(if (index < 0) groupBookmarks.size else index, InGroupInfo(info.bookmark, description, description != null))
       val added = info.groups.isEmpty()
       info.groups.add(this)
       info.bookmarkAdded(this, added)
@@ -632,12 +684,12 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
   }
 
 
-  internal inner class InGroupInfo(val bookmark: Bookmark, var description: String?) {
+  internal inner class InGroupInfo(val bookmark: Bookmark, var description: String?, var isCustomDescription: Boolean = false) {
     val hash: Int = bookmark.hashCode()
 
     fun getState(): BookmarkState = BookmarkState().also {
       it.provider = bookmark.provider.javaClass.name
-      it.description = description
+      it.description = if (isCustomDescription) description else null
       it.type = allBookmarks[bookmark]?.type ?: BookmarkType.DEFAULT
       it.attributes.putAll(bookmark.attributes)
     }

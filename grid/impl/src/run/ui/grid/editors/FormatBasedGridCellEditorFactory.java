@@ -17,6 +17,7 @@ import com.intellij.database.run.ui.grid.editors.UnparsedValue.ParsingError;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,22 +51,22 @@ public abstract class FormatBasedGridCellEditorFactory implements GridCellEditor
                                               @Nullable Object object,
                                               EventObject initiator) {
     Project project = grid.getProject();
-    Formatter formatter = getFormat(grid, row, column);
+    Formatter formatter = getFormat(grid, row, column, object);
     TextCompletionProvider provider = GridUtil.createCompletionProvider(grid, row, column);
     GridCellEditorHelper helper = GridCellEditorHelper.get(grid);
     ReservedCellValue nullValue = helper.getDefaultNullValue(grid, column);
     TextCompletionProvider resultProvider = new NullCompletionProvider(helper.isNullable(grid, column), provider);
-    ValueParser valueParser = getValueParser(grid, row, column);
+    ValueParser valueParser = getValueParser(grid, row, column, object);
     ValueFormatter valueFormatter = getValueFormatter(grid, row, column, object);
-    return createEditorImpl(project, grid, formatter, nullValue, initiator, resultProvider, row, column, valueParser, valueFormatter);
+    return createEditorImpl(project, grid, formatter, nullValue, initiator, resultProvider, row, column, object, valueParser, valueFormatter);
   }
 
-  private @NotNull Formatter getFormat(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    Formatter baseFormatter = getFormatInner(grid, row, column);
+  private @NotNull Formatter getFormat(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    Formatter baseFormatter = getFormatInner(grid, row, column, value);
     return makeFormatterLenient(grid) ? new LenientFormatter(baseFormatter) : baseFormatter;
   }
 
-  protected abstract @NotNull Formatter getFormatInner(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
+  protected abstract @NotNull Formatter getFormatInner(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value);
 
   @Override
   public @NotNull IsEditableChecker getIsEditableChecker() {
@@ -75,12 +76,15 @@ public abstract class FormatBasedGridCellEditorFactory implements GridCellEditor
   @Override
   public @NotNull ValueParser getValueParser(@NotNull DataGrid grid,
                                              @NotNull ModelIndex<GridRow> rowIdx,
-                                             @NotNull ModelIndex<GridColumn> columnIdx) {
+                                             @NotNull ModelIndex<GridColumn> columnIdx,
+                                             @Nullable Object value) {
+    String initialText = getValueFormatter(grid, rowIdx, columnIdx, value).format().text;
     Object databaseValue = grid.getDataModel(DataAccessType.DATABASE_DATA).getValueAt(rowIdx, columnIdx);
     String databaseValueText = getValueFormatter(grid, rowIdx, columnIdx, databaseValue).format().text;
-    Formatter format = getFormat(grid, rowIdx, columnIdx);
-    return getValueParser(format, grid, databaseValue, databaseValueText, columnIdx,
-                          (text, e) -> GridCellEditorHelper.get(grid).createUnparsedValue(text, e, grid, rowIdx, columnIdx));
+    Formatter format = getFormat(grid, rowIdx, columnIdx, value);
+    ValueParser baseParser = getValueParser(format, grid, databaseValue, databaseValueText, columnIdx,
+                                            (text, e) -> GridCellEditorHelper.get(grid).createUnparsedValue(text, e, grid, rowIdx, columnIdx));
+    return (text, document) -> initialText.equals(text) ? ObjectUtils.notNull(value, ReservedCellValue.NULL) : baseParser.parse(text, document);
   }
 
   protected static @NotNull ValueParser getValueParser(@NotNull Formatter format,
@@ -118,7 +122,7 @@ public abstract class FormatBasedGridCellEditorFactory implements GridCellEditor
     if (value instanceof UnparsedValue) {
       return new DefaultValueToText(grid, columnIdx, value);
     }
-    format = getFormat(grid, rowIdx, columnIdx);
+    format = getFormat(grid, rowIdx, columnIdx, value);
     return () -> {
       try {
         return new ValueFormatterResult(value instanceof ReservedCellValue || value == null ? "" : format.format(value));
@@ -155,9 +159,10 @@ public abstract class FormatBasedGridCellEditorFactory implements GridCellEditor
                                                                 @Nullable TextCompletionProvider provider,
                                                                 @NotNull ModelIndex<GridRow> row,
                                                                 @NotNull ModelIndex<GridColumn> column,
+                                                                @Nullable Object value,
                                                                 @NotNull ValueParser valueParser,
                                                                 @NotNull ValueFormatter valueFormatter) {
-    return new FormatBasedGridCellEditor(project, grid, format, column, row, nullValue, initiator, provider, valueParser, valueFormatter, myMultiline);
+    return new FormatBasedGridCellEditor(project, grid, format, column, row, value, nullValue, initiator, provider, valueParser, valueFormatter, myMultiline);
   }
 
   private static class LenientFormatter extends Formatter.Wrapper {

@@ -3,7 +3,7 @@ name: Agent Workbench Telemetry
 description: Requirements for custom IntelliJ Feature Usage Statistics collected by Agent Workbench.
 targets:
   - ../sessions-core/src/statistics/AgentWorkbenchTelemetry.kt
-  - ../sessions-core/src/prompt/AgentPromptModels.kt
+  - ../prompt/core/src/AgentPromptModels.kt
   - ../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../prompt/src/ui/AgentPromptPaletteDecisions.kt
   - ../prompt/src/ui/AgentPromptPalettePopup.kt
@@ -84,6 +84,7 @@ This spec covers only Agent Workbench-specific semantic telemetry. Generic actio
   - `PROVIDER_UNAVAILABLE`
   - `UNSUPPORTED_LAUNCH_MODE`
   - `TARGET_THREAD_NOT_FOUND`
+  - `TARGET_THREAD_BUSY_FOR_PLAN_MODE`
   - `CANCELLED`
   - `DROPPED_DUPLICATE`
   - `INTERNAL_ERROR`

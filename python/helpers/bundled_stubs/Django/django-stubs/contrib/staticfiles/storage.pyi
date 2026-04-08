@@ -6,6 +6,7 @@ from django.core.files.base import File
 from django.core.files.storage import FileSystemStorage, Storage
 from django.utils._os import _PathCompatible
 from django.utils.functional import LazyObject
+from typing_extensions import override
 
 _PostProcessT: TypeAlias = Iterator[tuple[str, str, bool] | tuple[str, None, RuntimeError]]
 
@@ -13,6 +14,7 @@ class StaticFilesStorage(FileSystemStorage):
     def __init__(
         self, location: _PathCompatible | None = None, base_url: str | None = None, *args: Any, **kwargs: Any
     ) -> None: ...
+    @override
     def path(self, name: _PathCompatible) -> str: ...
 
 class HashedFilesMixin:
@@ -46,7 +48,9 @@ class ManifestFilesMixin(HashedFilesMixin):
     def read_manifest(self) -> str: ...
     def load_manifest(self) -> dict[str, Any]: ...
     def save_manifest(self) -> None: ...
+    @override
     def post_process(self, *args: Any, **kwargs: Any) -> _PostProcessT: ...
+    @override
     def stored_name(self, name: str) -> str: ...
 
 class ManifestStaticFilesStorage(ManifestFilesMixin, StaticFilesStorage): ...  # type: ignore[misc]

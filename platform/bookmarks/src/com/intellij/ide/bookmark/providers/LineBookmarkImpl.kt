@@ -3,12 +3,20 @@ package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.ui.tree.LineNode
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
-class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: VirtualFile, line: Int) : LineBookmark {
+class LineBookmarkImpl @ApiStatus.Internal constructor(
+  override val provider: LineBookmarkProvider,
+  file: VirtualFile,
+  line: Int,
+  expectedText: String? = null
+) : LineBookmark {
+  constructor(provider: LineBookmarkProvider, file: VirtualFile, line: Int) : this(provider, file, line, null)
+
   val descriptor: OpenFileDescriptor = OpenFileDescriptor(provider.project, file, line, 0)
 
   override val file: VirtualFile
@@ -17,8 +25,21 @@ class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: Virtua
   override val line: Int
     get() = descriptor.line
 
+  internal var expectedText: String? = expectedText
+    private set
+
+  internal fun ensureExpectedTextInitialized(document: Document) {
+    if (expectedText == null) {
+      expectedText = LineBookmarkProvider.Util.readLineText(document, line)
+    }
+  }
+
   override val attributes: Map<String, String>
-    get() = mapOf("url" to file.url, "line" to line.toString())
+    get() = buildMap {
+      put("url", file.url)
+      put("line", line.toString())
+      expectedText?.let { put("lineText", it) }
+    }
 
   @ApiStatus.Internal
   override fun createNode(): LineNode = LineNode(provider.project, this)
@@ -33,5 +54,5 @@ class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: Virtua
                                               && other.file == file
                                               && other.line == line
 
-  override fun toString(): String = "LineBookmarkImpl(line=$line,file=$file,provider=$provider)"
+  override fun toString(): String = "LineBookmarkImpl(line=$line,file=$file,expectedText=$expectedText,provider=$provider)"
 }

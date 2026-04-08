@@ -28,7 +28,7 @@ class EmptyCellViewer : CellViewer {
 }
 
 object EmptyCellViewerFactory : CellViewerFactory {
-  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability {
+  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability {
     return if (!row.isValid(grid) || !column.isValid(grid)) Suitability.MAX else Suitability.NONE
   }
 

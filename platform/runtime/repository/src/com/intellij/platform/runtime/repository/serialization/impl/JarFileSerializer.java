@@ -97,14 +97,16 @@ public final class JarFileSerializer {
     attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, SPECIFICATION_VERSION + "." + generatorVersion);
     if (bootstrapModuleName != null) {
       attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
-      Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(descriptors, RuntimeModuleId.module(bootstrapModuleName));
+      Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(descriptors, RuntimeModuleId.legacyJpsModule(bootstrapModuleName));
       attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, String.join(" ", bootstrapClasspath));
     }
     try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
       for (RawRuntimeModuleDescriptor descriptor : descriptors) {
-        String id = descriptor.getModuleId().getStringId();
-        jarOutput.putNextEntry(new JarEntry(id + ".xml"));
+        String moduleName = descriptor.getModuleId().getName();
+        String namespace = descriptor.getModuleId().getNamespace();
+        String fileName = namespace.equals(RuntimeModuleId.DEFAULT_NAMESPACE) ? moduleName : moduleName + "_" + namespace;
+        jarOutput.putNextEntry(new JarEntry(fileName + ".xml"));
         PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
         jarOutput.closeEntry();

@@ -354,7 +354,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:inlineIconExtension$default(com.intellij.collaboration.ui.HtmlEditorPaneUtil,java.lang.Class,I,java.lang.Object):com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 *f:com.intellij.collaboration.ui.HtmlEditorPaneUtilKt
 - sf:SimpleHtmlPane(java.lang.String):javax.swing.JEditorPane
+- sf:SimpleHtmlPane(javax.swing.text.html.StyleSheet,kotlin.jvm.functions.Function1,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class):javax.swing.JEditorPane
 - sf:SimpleHtmlPane(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class):javax.swing.JEditorPane
+- bs:SimpleHtmlPane$default(javax.swing.text.html.StyleSheet,kotlin.jvm.functions.Function1,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class,I,java.lang.Object):javax.swing.JEditorPane
 - bs:SimpleHtmlPane$default(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class,I,java.lang.Object):javax.swing.JEditorPane
 - sf:onHyperlinkActivated(javax.swing.JEditorPane,kotlin.jvm.functions.Function1):V
 - sf:setHtmlBody(javax.swing.JEditorPane,java.lang.String):V

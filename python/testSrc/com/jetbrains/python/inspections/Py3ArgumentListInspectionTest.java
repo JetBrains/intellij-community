@@ -681,4 +681,69 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    A().set_f(1)
                    """);
   }
+
+  // PY-77611
+  public void testClassDunderNewInPresenceOfInit() {
+    doTestByText("""
+                   class C:
+                       def __new__(cls) -> int: ...
+                   
+                       def __init__(self, x: int): ...
+                   
+                   
+                   c1 = C()
+                   c2 = C(<warning descr="Unexpected argument">1</warning>)
+                   
+                   class Base:
+                       def __new__(cls, x: int) -> Base: ...
+                   
+                   class Derived(Base):
+                       def __init__(self): ...
+
+                   d = Derived(<warning descr="Unexpected argument">1</warning>) # TODO (PY-87329): Expected no warnings
+                   d = Derived() # TODO (PY-87329): Expected warning: Parameter 'x' unfilled
+                   """);
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameWithAlias() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doMultiFileTest("b.py");
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameWithFieldName() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameInherited() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameInheritedMultiFile() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doMultiFileTest();
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameModelConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameDisabled() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
+
+  // PY-72077
+  public void testPydanticPopulateByNameExplicitFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTest();
+  }
 }

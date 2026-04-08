@@ -483,6 +483,7 @@ libraries/netty/buffer
 libraries/netty/codec-compression
 libraries/netty/codec-http
 libraries/netty/handler-proxy
+libraries/netty/tcnative-boringssl
 libraries/opencsv
 libraries/opentelemetry-exporter-otlp
 libraries/opentelemetry-exporter-sender-jdk
@@ -545,6 +546,7 @@ platform/build-scripts/icons
 platform/build-scripts/product-dsl
 platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework
+platform/build-scripts/testFramework/tests
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
 platform/build-scripts/tests
@@ -615,6 +617,7 @@ platform/execution.serviceView
 platform/execution.serviceView/backend
 platform/execution.serviceView/frontend
 platform/experiment
+platform/exploratory-tests
 platform/extensions
 platform/external-process-auth-helper
 platform/external-process-auth-helper/rt
@@ -659,6 +662,7 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
+platform/jewel/markdown/testing
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
@@ -904,14 +908,16 @@ plugins/agent-workbench/common
 plugins/agent-workbench/filewatch
 plugins/agent-workbench/json
 plugins/agent-workbench/plugin
-plugins/agent-workbench/prompt
-plugins/agent-workbench/prompt-testrunner
-plugins/agent-workbench/prompt-vcs
+plugins/agent-workbench/prompt/core
+plugins/agent-workbench/prompt/testrunner
+plugins/agent-workbench/prompt/ui
+plugins/agent-workbench/prompt/vcs
 plugins/agent-workbench/sessions
 plugins/agent-workbench/sessions-actions
 plugins/agent-workbench/sessions-core
 plugins/agent-workbench/sessions-launch-config/backend
 plugins/agent-workbench/sessions-toolwindow
+plugins/agent-workbench/vcs-merge
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help
@@ -985,7 +991,7 @@ plugins/devkit/intellij.kotlin.devkit/k1
 plugins/devkit/intellij.kotlin.devkit/k2
 plugins/devkit/jps-plugin
 plugins/devkit/runtimeModuleRepository/generator
-plugins/devkit/runtimeModuleRepository/jps
+plugins/devkit/runtimeModuleRepository/generator/tests
 plugins/eclipse
 plugins/eclipse/common-eclipse-util
 plugins/eclipse/jps-plugin
@@ -1043,7 +1049,9 @@ plugins/gradle/java/performance
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
+plugins/gradle/java/toml/tests
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin
 plugins/gradle/native
 plugins/gradle/native/tooling
 plugins/gradle/plugin
@@ -1262,7 +1270,6 @@ plugins/kotlin/gradle/code-insight-common
 plugins/kotlin/gradle/code-insight-groovy
 plugins/kotlin/gradle/code-insight-groovy/tests.k2
 plugins/kotlin/gradle/code-insight-toml
-plugins/kotlin/gradle/code-insight-toml/k2
 plugins/kotlin/gradle/gradle
 plugins/kotlin/gradle/gradle-java
 plugins/kotlin/gradle/gradle-java/k1
@@ -1448,6 +1455,7 @@ plugins/mcp-server/tests
 plugins/mcp-server/tests/plugin
 plugins/ml-local-models
 plugins/ml-local-models/java
+plugins/performanceTesting/backend
 plugins/performanceTesting/commands-model
 plugins/performanceTesting/core
 plugins/performanceTesting/event-bus
@@ -1472,6 +1480,7 @@ plugins/search-everywhere-lucene
 plugins/search-everywhere-lucene/backend
 plugins/search-everywhere-lucene/common
 plugins/search-everywhere-lucene/frontend
+plugins/search-everywhere-lucene/test-commands
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
 plugins/search-everywhere-ml/ranking/ext
@@ -1613,8 +1622,6 @@ spellchecker
 spellchecker/xml
 tools/apiDump
 tools/apiDump/testData
-tools/devLauncher
-tools/devLauncher/tests
 tools/intellij.lambda.sampleTests
 tools/intellij.lambda.sampleTestsWithFixtures
 tools/intellij.lambda.sampleTestsWithFixtures/plugin
@@ -1647,6 +1654,7 @@ xml/dom-openapi
 xml/dom-tests
 xml/emmet
 xml/emmet/backend
+xml/emmet/frontend
 xml/impl
 xml/langInjection
 xml/langInjection/xpath

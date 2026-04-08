@@ -164,6 +164,12 @@ public interface Editor extends UserDataHolder {
    */
   @NotNull SoftWrapModel getSoftWrapModel();
 
+  @ApiStatus.Experimental
+  @NotNull
+  default CustomWrapModel getCustomWrapModel() {
+    return EmptyCustomWrapModel.INSTANCE;
+  }
+
   /**
    * Returns the editor settings for this editor instance.
    * Changes to these settings affect only the current editor instance.
@@ -458,7 +464,7 @@ public interface Editor extends UserDataHolder {
   }
 
   @ApiStatus.Internal
-  default @NotNull Document getUiDocument() {
+  default @NotNull Document getElfDocument() {
     return getDocument();
   }
 

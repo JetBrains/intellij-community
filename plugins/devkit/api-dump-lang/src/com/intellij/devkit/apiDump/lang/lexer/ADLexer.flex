@@ -30,7 +30,7 @@ WHITE_SPACE={EOL}|{SPACE}
 
 /*
  * NOTE: the rule set does not include rules for whitespaces, comments, and text literals -
- * they are implemented in com.intellij.lang.java.lexer.JavaLexer class.
+ * they are implemented in com.intellij.java.syntax.lexer.JavaLexer class.
  */
 
 <YYINITIAL> {

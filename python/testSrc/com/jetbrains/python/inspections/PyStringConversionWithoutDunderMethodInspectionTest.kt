@@ -90,15 +90,14 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
     """.trimIndent())
 
   fun `test should not warn for builtin types`() = doTestByText("""
-    # Should not warn for builtin types
-    str(42)
-    str([1, 2, 3])
-    str({"key": "value"})
-    str(None)
-    str(True)
-
-    format(42)
-    format("hello")
+    # see default ignore list for explanation
+    repr(42)
+    repr((1, 2, 3))
+    repr([1, 2, 3])
+    repr({"key": "value"})
+    repr(None)
+    repr(True)
+    repr("asdf")
     """.trimIndent())
 
   fun `test should warn for type`() = doTestByText("""

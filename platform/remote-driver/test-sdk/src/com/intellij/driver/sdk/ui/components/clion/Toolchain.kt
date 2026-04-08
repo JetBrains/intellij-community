@@ -1,58 +1,116 @@
 package com.intellij.driver.sdk.ui.components.clion
 
+import com.intellij.util.system.OS
+
 sealed class Toolchain(
   val name: ToolchainNames,
   val compiler: Compiler,
   val debugger: Debugger,
-  val buildTool: Make
+  val buildTool: BuildTool,
 ) {
   override fun toString(): String {
-    return if (compiler == Compiler.DEFAULT) "$debugger"
-    else "${compiler}_$debugger"
+    return if (compiler == Compiler.DEFAULT) "${name}_$debugger"
+    else "${name}_${compiler}_$debugger"
   }
 
   class Default(
     compiler: Compiler = Compiler.DEFAULT,
     debugger: Debugger = Debugger.BUNDLED_GDB,
-    buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.DEFAULT
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.DEFAULT,
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   class Gnu(
     compiler: Compiler = Compiler.GCC,
     debugger: Debugger = Debugger.BUNDLED_GDB,
-    buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.GCC
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.GCC,
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   class Llvm(
     compiler: Compiler = Compiler.CLANG,
     debugger: Debugger = Debugger.BUNDLED_LLDB,
-    buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.CLANG
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CLANG,
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   class CustomGDB(
     compiler: Compiler = Compiler.DEFAULT,
     debugger: Debugger = Debugger.CUSTOM_GDB,
-    buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.CUSTOM_GDB
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CUSTOM_GDB,
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   class CustomLLDB(
     compiler: Compiler = Compiler.DEFAULT,
     debugger: Debugger = Debugger.CUSTOM_LLDB,
-    buildTool: Make = Make.DEFAULT,
-    name: ToolchainNames = ToolchainNames.CUSTOM_LLDB
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CUSTOM_LLDB,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class MingwGDB(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.BUNDLED_GDB,
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.MINGW_GDB,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class CustomMingwGDB(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.CUSTOM_GDB,
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.MINGW_GDB,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class MSVC(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.BUNDLED_LLDB,
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.MSVC,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class Cygwin(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.CYGWIN_GDB,
+    buildTool: BuildTool = BuildTool.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CYGWIN,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class WSL(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.WSL_DEBUGGER,
+    buildTool: BuildTool = BuildTool.GMAKE,
+    name: ToolchainNames = ToolchainNames.WSL,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class Docker(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.DOCKER_GDB,
+    buildTool: BuildTool = BuildTool.GMAKE,
+    name: ToolchainNames = ToolchainNames.DOCKER,
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class RemoteHost(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.REMOTE_GDB,
+    buildTool: BuildTool = BuildTool.GMAKE,
+    name: ToolchainNames = ToolchainNames.REMOTE_HOST,
   ) : Toolchain(name, compiler, debugger, buildTool)
 }
 
-enum class Make {
+enum class BuildTool {
   DEFAULT {
-    override fun getMakePath(): String = ""
+    override fun getPath(): String = ""
+    override fun getName(): String = "ninja"
+  },
+
+  GMAKE {
+    override fun getPath(): String = ""
+    override fun getName(): String = "gmake"
   };
 
-  abstract fun getMakePath(): String
+  abstract fun getPath(): String
+  abstract fun getName(): String
 }
 
 enum class Compiler {
@@ -75,6 +133,7 @@ enum class Compiler {
   abstract fun getCCompilerPath(): String
 }
 
+
 enum class Debugger {
   BUNDLED_GDB {
     override fun getDebuggerPath(): String = "Bundled GDB"
@@ -91,7 +150,11 @@ enum class Debugger {
   },
 
   CUSTOM_GDB {
-    override fun getDebuggerPath(): String = "/usr/bin/gdb"
+    override fun getDebuggerPath(): String = when (OS.CURRENT) {
+      // Windows will use cygwin gdbserver executable as the custom gdb server
+      OS.Windows -> "C:/Tools/cygwin/bin/gdbserver.exe"
+      else -> "/usr/bin/gdb"
+    }
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom GDB"
     override fun type(): String = "GDB"
@@ -102,6 +165,34 @@ enum class Debugger {
     override fun getDebuggerFieldName(): String = "Custom LLDB executable"
     override fun toString(): String = "Custom LLDB"
     override fun type(): String = "LLDB"
+  },
+
+  CYGWIN_GDB {
+    override fun getDebuggerPath(): String = "Cygwin GDB"
+    override fun getDebuggerFieldName(): String = "Custom GDB executable"
+    override fun toString(): String = "Cygwin GDB"
+    override fun type(): String = "GDB"
+  },
+
+  WSL_DEBUGGER {
+    override fun getDebuggerPath(): String = "WSL GDB"
+    override fun getDebuggerFieldName(): String = "Custom GDB executable"
+    override fun toString(): String = "WSL GDB"
+    override fun type(): String = "GDB"
+  },
+
+  DOCKER_GDB {
+    override fun getDebuggerPath(): String = "Docker GDB"
+    override fun getDebuggerFieldName(): String = "Custom GDB executable"
+    override fun toString(): String = "Custom GDB executable"
+    override fun type(): String = "GDB"
+  },
+
+  REMOTE_GDB {
+    override fun getDebuggerPath(): String = "Remote Host GDB"
+    override fun getDebuggerFieldName(): String = "Custom GDB executable"
+    override fun toString(): String = "Remote Host GDB"
+    override fun type(): String = "GDB"
   };
 
   abstract fun getDebuggerPath(): String
@@ -134,6 +225,18 @@ enum class ToolchainNames {
   },
   CUSTOM_LLDB {
     override fun toString(): String = "Custom LLDB executable"
+  },
+  MINGW_GDB {
+    override fun toString(): String = "MinGW"
+  },
+  MSVC {
+    override fun toString(): String = "Visual Studio"
+  },
+  CYGWIN {
+    override fun toString(): String = "Cygwin"
+  },
+  WSL {
+    override fun toString(): String = "WSL"
   }
 }
 

@@ -45,6 +45,10 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
 
   fun getParameters(): List<TargetValue<out String?>> = parameters
 
+  fun clearParameters() {
+    parameters.clear()
+  }
+
   fun addParameter(parameter: TargetValue<out String?>) {
     parameters.add(parameter)
   }

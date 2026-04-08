@@ -30,6 +30,7 @@ export interface SearchItem {
   filePath: string
   lineNumber?: number
   lineText?: string
+  [key: string]: unknown
 }
 
 export interface SearchCapabilities {
@@ -41,6 +42,11 @@ export interface SearchCapabilities {
   supportsText: boolean
   supportsRegex: boolean
   supportsFile: boolean
+}
+
+export interface AnalysisCapabilities {
+  hasLintFiles: boolean
+  supportsLintFiles: boolean
 }
 
 export interface ReadCapabilities {

@@ -287,7 +287,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     val contentManager = getContentManagerForRunner(executor, descriptor)
     val toolWindowId = getToolWindowIdForRunner(executor, descriptor)
-    updateToolWindowDecoration(toolWindowId, executor)
     val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, null, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
     val content: Content?
     if (oldDescriptor == null) {
@@ -506,12 +505,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getContentManagerForRunner(executor: Executor, descriptor: RunContentDescriptor?): ContentManager {
-    // When contentToolWindowId is explicitly set, it takes priority over the attachedContent.manager shortcut.
-    // The attached content may come from a different toolwindow via contentToReuse (e.g., a terminated Run tab
-    // reused for a Profiler run), so blindly returning its manager would route content to the wrong toolwindow.
-    if (descriptor?.contentToolWindowId != null) {
-      return getOrCreateContentManagerForToolWindow(descriptor.contentToolWindowId!!, executor)
-    }
     return descriptor?.attachedContent?.manager
            ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
   }
@@ -520,6 +513,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val dashboardManager = RunDashboardUiManager.getInstance(project) // initialize RunDashboardContentManager before getting content manger
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
+      updateToolWindowDecoration(id, executor)
       return contentManager
     }
 

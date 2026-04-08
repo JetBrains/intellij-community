@@ -286,7 +286,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link SmartList()}
+   * @deprecated Use {@link SmartList#SmartList()}
    */
   @Deprecated
   public static @NotNull <T> List<T> newSmartList() {

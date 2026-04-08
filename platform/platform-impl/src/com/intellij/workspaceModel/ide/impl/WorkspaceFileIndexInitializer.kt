@@ -5,6 +5,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
@@ -16,7 +17,7 @@ internal class WorkspaceFileIndexInitializer : InitProjectActivity {
       }
       catch (e: RuntimeException) {
         // IDEA-345082 There is a chance that the index was not initialized due to the broken cache.
-        WorkspaceModelCacheImpl.invalidateCaches()
+        WorkspaceModelCache.getInstance(project)?.invalidateCaches()
         throw e
       }
     }

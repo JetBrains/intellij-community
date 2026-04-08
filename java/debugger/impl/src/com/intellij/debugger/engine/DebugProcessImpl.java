@@ -199,6 +199,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -266,8 +267,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected DebugProcessImpl(Project project) {
     this.project = project;
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    myCoroutineScope = com.intellij.platform.util.coroutines.CoroutineScopeKt
-      .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
+    myCoroutineScope = childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
     myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
     myRunToCursorManager = new RunToCursorManager(this, myCoroutineScope);
@@ -574,7 +574,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    */
   @ApiStatus.Internal
   public void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
-                        RequestHint hint, Object commandToken) {
+                     RequestHint hint, Object commandToken) {
+    doStep(suspendContext, stepThread, size, depth, hint, commandToken, -1);
+  }
+
+  /**
+   * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
+   * @param hint may be null
+   */
+  @ApiStatus.Internal
+  public void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+                        RequestHint hint, Object commandToken, int explicitSuspendPolicy) {
     if (stepThread == null) {
       return;
     }
@@ -596,9 +606,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
       // if only event thread was suspended, then only this particular thread must be suspended during stepping
-      int policy = (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && !DebuggerSettings.SUSPEND_ALL.equals(policyFromRequestors))
+      int policy = explicitSuspendPolicy >= 0 ? explicitSuspendPolicy :
+        (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && !DebuggerSettings.SUSPEND_ALL.equals(policyFromRequestors))
                    ? EventRequest.SUSPEND_EVENT_THREAD
                    : EventRequest.SUSPEND_ALL;
+      //noinspection MagicConstant
       stepRequest.setSuspendPolicy(policy);
 
       stepRequest.addCountFilter(1);
@@ -1008,6 +1020,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   public @NotNull Project getProject() {
     return project;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getChildScope(@NotNull String name) {
+    return childScope(myCoroutineScope, name, EmptyCoroutineContext.INSTANCE, true);
   }
 
   public boolean canRedefineClasses() {

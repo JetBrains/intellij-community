@@ -9,6 +9,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.stateStore as moduleStateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
@@ -906,6 +908,41 @@ class ModuleBridgesTest {
     val persistentModule = moduleManager.modules.single()
     assertTrue(persistentModule.canStoreSettings())
     assertSame(newNonPersistentModule, persistentModule)
+  }
+
+  @Test
+  fun `rename non-persistent module while making it persistent`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "module1"
+    val renamedModuleName = "module2"
+    val moduleManager = ModuleManager.getInstance(project)
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+
+    val newNonPersistentModule = moduleManager.newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+    assertFalse(newNonPersistentModule.canStoreSettings())
+
+    val moduleDirPath = temporaryDirectoryRule.newDirectoryPath(renamedModuleName)
+    val moduleDirVfu = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(moduleDirPath.toString()))
+    val moduleEntitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
+      baseModuleDir = moduleDirVfu,
+      externalSource = null,
+    )
+
+    workspaceModel.updateProjectModel { builder ->
+      val entity = builder.resolve(ModuleId(moduleName))!!
+      builder.modifyModuleEntity(entity) {
+        name = renamedModuleName
+        entitySource = moduleEntitySource
+      }
+    }
+
+    val persistentModule = moduleManager.modules.single()
+    val expectedModuleFile = moduleDirPath.resolve("$renamedModuleName.iml")
+    assertTrue(persistentModule.canStoreSettings())
+    assertSame(newNonPersistentModule, persistentModule)
+    assertEquals(renamedModuleName, persistentModule.name)
+    assertEquals(expectedModuleFile, persistentModule.moduleNioFile)
+    assertEquals(expectedModuleFile, persistentModule.moduleStateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE))
   }
 
   class OutCatcher(printStream: PrintStream) : PrintStream(printStream) {

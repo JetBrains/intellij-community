@@ -9,6 +9,7 @@ import {
   isMergeTool,
   isRiderPath,
   extractPathArg,
+  splitPathListArgsByIde,
   riderItemTransformer,
   createPathPrefixTransformer
 } from './routing'
@@ -88,6 +89,10 @@ describe('ij MCP proxy routing', () => {
       strictEqual(resolveRoute('search_symbol', {}, PROJECT_ROOT), 'merge')
     })
 
+    it('returns split-merge for lint_files', () => {
+      strictEqual(resolveRoute('lint_files', {}, PROJECT_ROOT), 'split-merge')
+    })
+
     it('returns target-rider for dotnet file ops', () => {
       strictEqual(resolveRoute('get_file_problems', {pathInProject: 'dotnet/Foo.cs'}, PROJECT_ROOT), 'target-rider')
     })
@@ -157,6 +162,31 @@ describe('ij MCP proxy routing', () => {
       const result = rewriteArgsForTarget('primary', original)
       strictEqual(result !== original, true)
       strictEqual(result.extra, 'data')
+    })
+  })
+
+  describe('splitPathListArgsByIde', () => {
+    it('splits mixed batches across IDEs', () => {
+      const result = splitPathListArgsByIde({
+        file_paths: ['src/Main.java', 'dotnet/Foo.cs', 'dotnet/sub/Bar.cs']
+      }, PROJECT_ROOT)
+
+      deepStrictEqual(result.ideaArgs, {file_paths: ['src/Main.java']})
+      deepStrictEqual(result.riderArgs, {file_paths: ['Foo.cs', 'sub/Bar.cs']})
+    })
+
+    it('preserves sibling arguments', () => {
+      const result = splitPathListArgsByIde({
+        file_paths: ['dotnet/Foo.cs'],
+        min_severity: 'warning',
+        timeout: 1000
+      }, PROJECT_ROOT)
+
+      deepStrictEqual(result.riderArgs, {
+        file_paths: ['Foo.cs'],
+        min_severity: 'warning',
+        timeout: 1000
+      })
     })
   })
 

@@ -1,19 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -34,12 +38,6 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
-    fun buildNewEntryLaunchSpec() {
-        assertThat(bridge.buildNewEntryLaunchSpec().command)
-            .containsExactly("codex", "-c", "check_for_update_on_startup=false")
-    }
-
-    @Test
     fun buildNewSessionLaunchSpec() {
         assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
             .containsExactly("codex", "-c", "check_for_update_on_startup=false")
@@ -48,21 +46,26 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
-    fun buildLaunchSpecWithInitialPromptForYoloCommand() {
+    fun buildLaunchSpecWithInitialMessageForYoloCommand() {
         assertThat(
-            bridge.buildLaunchSpecWithInitialPrompt(
+            bridge.buildLaunchSpecWithInitialMessage(
                 baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO),
-                "-draft plan\nstep 2",
+                initialMessagePlan = AgentInitialMessagePlan(message = "-draft plan\nstep 2"),
             ).command
         )
             .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto", "--", "-draft plan\nstep 2")
     }
 
     @Test
-    fun buildLaunchSpecWithInitialPromptForResumeCommand() {
+    fun buildLaunchSpecWithInitialMessageForResumeCommand() {
         val resumeLaunchSpec = bridge.buildResumeLaunchSpec("thread-1")
 
-        assertThat(bridge.buildLaunchSpecWithInitialPrompt(resumeLaunchSpec, "Summarize changes").command)
+        assertThat(
+            bridge.buildLaunchSpecWithInitialMessage(
+                baseLaunchSpec = resumeLaunchSpec,
+                initialMessagePlan = AgentInitialMessagePlan(message = "Summarize changes"),
+            ).command
+        )
             .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1", "--", "Summarize changes")
     }
 
@@ -72,66 +75,73 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
-    fun createNewSessionReturnsPendingLaunchSpec() {
-        runBlocking(Dispatchers.Default) {
-            val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)
-            assertThat(standard.sessionId).isNull()
-            assertThat(standard.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false")
+    fun renameThreadHandlerUsesSharedBackendContract() {
+        val renameHandler = bridge.threadRenameHandler
 
-            val yolo = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.YOLO)
-            assertThat(yolo.sessionId).isNull()
-            assertThat(yolo.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
-        }
+        assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
+        renameHandler as AgentThreadRenameHandler.Backend
+        assertThat(renameHandler.supportedContexts)
+            .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
     }
 
-    @Test
+  @Test
     fun composeInitialMessageWithoutContext() {
         val plan = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(prompt = "  Refactor this  ")
         )
 
         assertThat(plan.message).isEqualTo("Refactor this")
+        assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
         assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
         assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
     }
 
     @Test
-    fun composeInitialMessagePrefixesPlanCommandWhenOptionIsEnabled() {
-        val message = messageFor(
-            bridge,
+    fun composeInitialMessageUsesPlainPromptBodyWhenOptionIsEnabled() {
+        val plan = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(
                 prompt = "Refactor this",
                 providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
             )
         )
 
-        assertThat(message).isEqualTo("/plan Refactor this")
+        assertThat(plan.message).isEqualTo("Refactor this")
+        assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
     }
 
     @Test
-    fun composeInitialMessagePrefixesPlanCommandWhenLegacyFlagIsEnabled() {
-        val message = messageFor(
-            bridge,
-            AgentPromptInitialMessageRequest(
-                prompt = "Refactor this",
-                planModeEnabled = true,
-            )
-        )
-
-        assertThat(message).isEqualTo("/plan Refactor this")
-    }
-
-    @Test
-    fun composeInitialMessageDoesNotDoublePrefixPlanCommand() {
-        val message = messageFor(
-            bridge,
+    fun composeInitialMessageStripsManualPlanCommandPrefix() {
+        val plan = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(
                 prompt = " /plan Refactor this ",
-                providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
             )
         )
 
-        assertThat(message).isEqualTo("/plan Refactor this")
+        assertThat(plan.message).isEqualTo("Refactor this")
+        assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    }
+
+    @Test
+    fun planModeBuildsSplitPostStartDispatchSteps() {
+        val steps = bridge.buildPostStartDispatchSteps(
+            AgentInitialMessagePlan(
+                message = "Refactor this",
+                mode = AgentInitialMessageMode.PLAN,
+                timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+            )
+        )
+
+        assertThat(steps).containsExactly(
+            com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
+                text = AGENT_PROMPT_PLAN_MODE_COMMAND,
+                timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+                completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+            ),
+            com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep(
+                text = "Refactor this",
+                timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+            ),
+        )
     }
 
     @Test
@@ -139,6 +149,7 @@ class CodexAgentSessionProviderDescriptorTest {
         val defaultPlan = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(prompt = "Refactor this")
         )
+        assertThat(defaultPlan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
         assertThat(defaultPlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
         assertThat(defaultPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
 
@@ -148,18 +159,22 @@ class CodexAgentSessionProviderDescriptorTest {
                 providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
             )
         )
+        assertThat(planModePlan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
         assertThat(planModePlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
         assertThat(planModePlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
 
         val plannerPlan = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(prompt = "/planner follow-up")
         )
+        assertThat(plannerPlan.mode).isEqualTo(AgentInitialMessageMode.STANDARD)
         assertThat(plannerPlan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
 
         val manualPlanCommand = bridge.buildInitialMessagePlan(
             AgentPromptInitialMessageRequest(prompt = "/plan from manual input")
         )
-        assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+        assertThat(manualPlanCommand.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+        assertThat(manualPlanCommand.message).isEqualTo("from manual input")
+        assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
         assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
     }
 

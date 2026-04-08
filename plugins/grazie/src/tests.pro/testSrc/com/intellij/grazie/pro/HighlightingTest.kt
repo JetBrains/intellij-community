@@ -474,10 +474,22 @@ class HighlightingTest : BaseTestCase() {
   @Test
   fun `test LT Oxford spelling rules are synchronized with our setting`() {
     enableLanguages(setOf(Lang.BRITISH_ENGLISH), project, testRootDisposable)
+    val nonOtherDomains = TextStyleDomain.entries.filterNot { it == TextStyleDomain.Other }
+
     assertFalse(GrazieConfig.get().useOxfordSpelling)
     assertNotEmpty(GrazieConfig.get().userDisabledRules.filter { it.contains("OXFORD_SPELLING") })
+    TextStyleDomain.entries.filterNot { it == TextStyleDomain.Other }.forEach { domain ->
+      assertNotEmpty(GrazieConfig.get().domainDisabledRules[domain].orEmpty().filter { it.contains("OXFORD_SPELLING") })
+    }
 
-    myFixture.configureByText("a.txt", "Summarising a text is great!")
+    myFixture.configureByText("Test.java", """
+      // Summarising a text is great! This sentence is required for language detection.
+
+      /**
+       * Summarising a text is great! This sentence is required for language detection.
+       */
+      public class Test {}
+    """.trimIndent())
     myFixture.checkHighlighting()
 
     GrazieConfig.update { it.withOxfordSpelling(true) }
@@ -486,7 +498,18 @@ class HighlightingTest : BaseTestCase() {
     }
 
     assertEmpty(GrazieConfig.get().userDisabledRules.filter { it.contains("OXFORD_SPELLING") })
-    assertNotEmpty(myFixture.doHighlighting())
+    nonOtherDomains.forEach { domain ->
+      assertEmpty(GrazieConfig.get().domainDisabledRules[domain].orEmpty().filter { it.contains("OXFORD_SPELLING") })
+    }
+    myFixture.configureByText("Test.java", """
+      // <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">Summarising</STYLE_SUGGESTION> a text is great! This sentence is required for language detection.
+
+      /**
+       * <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">Summarising</STYLE_SUGGESTION> a text is great! This sentence is required for language detection.
+       */
+      public class Test {}
+    """.trimIndent())
+    myFixture.checkHighlighting()
   }
 
   @Test
@@ -494,6 +517,27 @@ class HighlightingTest : BaseTestCase() {
     myFixture.configureByText("a.txt", "The future development would <GRAMMAR_ERROR>be <caret>tends</GRAMMAR_ERROR> to increase the horsepower.")
     myFixture.checkHighlighting()
     myFixture.findSingleIntention("tend")
+  }
+
+  @Test
+  fun `test closeMlecMerging MLEC client ability`() {
+    myFixture.configureByText(
+      "a.txt",
+      "One can <GRAMMAR_ERROR descr=\"MD_BASEFORM\">li<caret>stened</GRAMMAR_ERROR> <GRAMMAR_ERROR descr=\"Grazie.RuleEngine.En.Grammar.PREPOSITION_ISSUES\">music</GRAMMAR_ERROR> or <GRAMMAR_ERROR descr=\"Grazie.MLEC.En.All: Incorrect verb tense form\">watched</GRAMMAR_ERROR> some funny videos."
+    )
+    myFixture.checkHighlighting()
+    val listenIntention = myFixture.findSingleIntention("listen")
+    myFixture.launchAction(listenIntention)
+    myFixture.checkResult("One can listen music or watched some funny videos.")
+
+    myFixture.configureByText(
+      "a.txt",
+      "One can listen <GRAMMAR_ERROR descr=\"Grazie.RuleEngine.En.Grammar.PREPOSITION_ISSUES\"><caret>music</GRAMMAR_ERROR> or <GRAMMAR_ERROR descr=\"Grazie.MLEC.En.All: Incorrect verb tense form\">watched</GRAMMAR_ERROR> some funny videos."
+    )
+    myFixture.checkHighlighting()
+    val musicIntention = myFixture.findSingleIntention("to music")
+    myFixture.launchAction(musicIntention)
+    myFixture.checkResult("One can listen to music or watched some funny videos.")
   }
 
   @NeedsCloud

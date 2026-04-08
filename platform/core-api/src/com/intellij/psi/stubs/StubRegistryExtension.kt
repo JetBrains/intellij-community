@@ -3,6 +3,7 @@ package com.intellij.psi.stubs
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 
 /**
  * Implement this interface in order to provide stub implementation for your language.
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 interface StubRegistryExtension {
+  @Contract(pure = true)
   fun register(registry: StubRegistry)
 }
 
@@ -18,11 +20,18 @@ interface StubRegistryExtension {
  */
 @ApiStatus.NonExtendable
 interface StubRegistry {
+  @Contract(pure = true)
   fun registerStubSerializingFactory(type: IElementType, factory: StubSerializingElementFactory<*, *>) {
     registerStubFactory(type, factory)
     registerStubSerializer(type, factory)
   }
+
+  @Contract(pure = true)
   fun registerStubFactory(type: IElementType, factory: StubElementFactory<*, *>)
+
+  @Contract(pure = true)
   fun registerLightStubFactory(type: IElementType, factory: LightStubElementFactory<*, *>)
+
+  @Contract(pure = true)
   fun registerStubSerializer(type: IElementType, serializer: ObjectStubSerializer<*, *>)
 }

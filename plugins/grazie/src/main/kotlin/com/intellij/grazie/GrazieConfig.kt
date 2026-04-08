@@ -72,7 +72,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     override fun toString(): String = ordinal.toString()
 
     companion object {
-      val CURRENT = NEW_UI
+      val CURRENT: Version = NEW_UI
     }
   }
 
@@ -288,7 +288,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
     /** Update Grazie config state */
     @Synchronized
-    fun update(change: (State) -> State) = service<GrazieConfig>().loadState(change(get()))
+    fun update(change: (State) -> State): Unit = service<GrazieConfig>().loadState(change(get()))
 
     fun stateChanged(prevState: State, newState: State) {
       service<GrazieInitializerManager>().publisher.update(prevState, newState)
@@ -302,7 +302,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
   data class UserChangedRules(val enabled: Set<String>, val disabled: Set<String>)
 
   class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
-    override fun get() = GrazieBundle.message("grazie.config.name")
+    override fun get(): String = GrazieBundle.message("grazie.config.name")
   }
 
   private var myState = State()
@@ -332,14 +332,18 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
   private fun syncOxfordSpelling() {
     application.invokeLater {
       update { state ->
-        val oxford = get().useOxfordSpelling
-        if (oxford) {
-          state.copy(userDisabledRules = state.userDisabledRules - oxfordSpellingLtRules)
-        }
-        else {
-          state.copy(userDisabledRules = state.userDisabledRules + oxfordSpellingLtRules)
+        val useOxfordSpelling = get().useOxfordSpelling
+        TextStyleDomain.entries.fold(state) { acc, domain ->
+          if (domain == TextStyleDomain.Other) {
+            acc.copy(userDisabledRules = updateOxfordSpellingRules(useOxfordSpelling, acc.userDisabledRules))
+          } else {
+            acc.withDomainDisabledRules(domain, updateOxfordSpellingRules(useOxfordSpelling, acc.domainDisabledRules[domain].orEmpty()))
+          }
         }
       }
     }
   }
+
+  private fun updateOxfordSpellingRules(useOxfordSpelling: Boolean, rules: Set<String>): Set<String> =
+    if (useOxfordSpelling) rules - oxfordSpellingLtRules else rules + oxfordSpellingLtRules
 }

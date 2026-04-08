@@ -1,19 +1,31 @@
 from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 from django.test import LiveServerTestCase
 from typing_extensions import Self
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
-class SeleniumTestCaseBase:
+_WebDriver: TypeAlias = Any
+_Options: TypeAlias = Any
+
+class SeleniumTestCaseBase(type):
     browsers: Any
+    selenium_hub: str | None = None
+    external_host: str | None = None
     browser: Any
+    headless: bool = False
+    def __new__(cls, name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> SeleniumTestCaseBase: ...
     @classmethod
-    def import_webdriver(cls, browser: Any) -> type[Any]: ...  # Type[WebDriver]
-    def create_webdriver(self) -> Any: ...  # WebDriver
+    def import_webdriver(cls, browser: Any) -> type[_WebDriver]: ...
+    @classmethod
+    def import_options(cls, browser: Any) -> type[_Options]: ...
+    @classmethod
+    def get_capability(cls, browser: Any) -> dict[str, Any]: ...
+    def create_options(self) -> _Options: ...
+    def create_webdriver(self) -> _WebDriver: ...
 
 class ChangeWindowSize:
     def __init__(self, width: int, height: int, selenium: Any) -> None: ...
@@ -25,8 +37,10 @@ class ChangeWindowSize:
         traceback: TracebackType | None,
     ) -> None: ...
 
-class SeleniumTestCase(LiveServerTestCase):
+class SeleniumTestCase(LiveServerTestCase, metaclass=SeleniumTestCaseBase):
+    tags: set[str]
     implicit_wait: int
+    external_host: str | None = None
     screenshots: bool = False
     selenium: Any
     def desktop_size(self) -> AbstractContextManager[None]: ...
@@ -37,6 +51,7 @@ class SeleniumTestCase(LiveServerTestCase):
     def set_emulated_media(self, *, media: str | None = None, features: list[dict[str, str]] | None = None) -> None: ...
     def high_contrast(self) -> AbstractContextManager[None]: ...
     def take_screenshot(self, name: str) -> None: ...
+    def get_browser_logs(self, source: str | None = None, level: str = "ALL") -> list[dict[str, Any]]: ...
     def disable_implicit_wait(self) -> AbstractContextManager[None]: ...
 
 def screenshot_cases(method_names: str | Sequence[str]) -> Callable[[_F], _F]: ...

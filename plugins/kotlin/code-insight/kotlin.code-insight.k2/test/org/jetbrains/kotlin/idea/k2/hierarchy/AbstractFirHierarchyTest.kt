@@ -9,6 +9,7 @@ import com.intellij.ide.hierarchy.LanguageCallHierarchy
 import com.intellij.ide.hierarchy.LanguageMethodHierarchy
 import com.intellij.ide.hierarchy.LanguageTypeHierarchy
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
+import com.intellij.ide.hierarchy.call.CalleeMethodsTreeStructure
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
@@ -55,6 +56,15 @@ abstract class AbstractFirHierarchyTest : KotlinHierarchyViewTestBase() {
 
     protected fun doCallerJavaHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
         CallerMethodsTreeStructure(
+            project,
+            getElementAtCaret(LanguageCallHierarchy.INSTANCE) as PsiMember,
+            HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
+    }
+
+
+    protected fun doCalleeJavaHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        CalleeMethodsTreeStructure(
             project,
             getElementAtCaret(LanguageCallHierarchy.INSTANCE) as PsiMember,
             HierarchyBrowserBaseEx.SCOPE_PROJECT

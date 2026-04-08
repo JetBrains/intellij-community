@@ -7,6 +7,7 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.text.ExternalTextChecker
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextChecker
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.containers.Interner
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.html.p
@@ -41,7 +43,7 @@ import java.util.Locale
 import java.util.function.Predicate
 
 
-open class LanguageToolChecker : TextChecker() {
+open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
   class TestChecker : LanguageToolChecker()
 
@@ -52,10 +54,10 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  override fun check(context: ProofreadingContext): List<Problem> {
+  override suspend fun checkExternally(context: ProofreadingContext): List<Problem> {
     if (!context.hasLanguage()) return emptyList()
     val domain = context.text.getTextDomain()
-    return runWithCheckCanceled(Dispatchers.Default) {
+    return computeDetached(Dispatchers.Default) {
       computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
         collectLanguageToolProblems(context.text, context.language.toAvailableLang(), domain)
       }

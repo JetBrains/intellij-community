@@ -222,11 +222,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
 
-  @Suppress("SameParameterValue")
-  protected fun setDispatcherMergingSpan(delay: Int) {
-    projectTracker.setDispatcherMergingSpan(delay)
-  }
-
   protected fun setAutoReloadType(type: AutoReloadType) {
     projectTrackerSettings.autoReloadType = type
   }
@@ -372,7 +367,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     }
   }
 
-  protected fun test(relativePath: String = SETTINGS_FILE, test: SimpleTestBench.(VirtualFile) -> Unit) {
+  protected open fun test(relativePath: String = SETTINGS_FILE, test: SimpleTestBench.(VirtualFile) -> Unit) {
     withProjectTracker {
       val projectAware = mockProjectAware()
 

@@ -78,6 +78,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -660,6 +661,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
     setRegistryPropertyForTest("debugger.preload.types.async", "false");
     setRegistryPropertyForTest("debugger.preload.types.hierarchy", "false");
+    try {
+      setRegistryPropertyForTest("debugger.navigation.from.console.to.sources", "off");
+    }
+    catch (MissingResourceException ignored) {
+    }
 
     boolean dfa = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST;
     boolean dfaGray = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT;

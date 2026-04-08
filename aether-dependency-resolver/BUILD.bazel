@@ -28,6 +28,7 @@ jvm_library(
     "//libraries/plexus-utils",
     "//libraries/commons/codec",
     "//platform/util",
+    "//platform/util/base",
   ]
 )
 
@@ -48,6 +49,7 @@ jvm_library(
     "//libraries/plexus-utils:plexus-utils_test_lib",
     "//libraries/commons/codec:codec_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end
@@ -97,6 +99,8 @@ jvm_library(
     "//libraries/commons/codec:codec_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
   ],
   runtime_deps = [":java-aetherDependencyResolver-tests"]
 )

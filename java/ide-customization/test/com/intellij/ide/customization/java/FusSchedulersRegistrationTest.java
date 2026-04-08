@@ -12,14 +12,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class FusSchedulersRegistrationTest {
   // runs with intellij.java.tests classpath
 
-  public static final String PLUGIN_ID = "com.intellij.java.ide";
+  private static final String CORE_PLUGIN_ID = "com.intellij";
 
   private final ExtensionPointName<ApplicationActivity> APP_ACTIVITIES_EP =
     new ExtensionPointName<>("com.intellij.applicationActivity");
@@ -34,14 +34,14 @@ public class FusSchedulersRegistrationTest {
     assertTrue(applicationActivities.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"),
                "StatisticsStateCollectorsScheduler is missing");
 
-    assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsJobsScheduler"));
-    assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"));
+    assertThat(applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsJobsScheduler")).isEqualTo(CORE_PLUGIN_ID);
+    assertThat(applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler")).isEqualTo(CORE_PLUGIN_ID);
 
     var postStartup = getExtensionClasses(POST_STARTUP_ACTIVITIES_EP);
     assertTrue(postStartup.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsSchedulerProjectActivity"),
                "StatisticsStateCollectorsSchedulerProjectActivity is missing");
 
-    assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"));
+    assertThat(applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler")).isEqualTo(CORE_PLUGIN_ID);
   }
 
   // operates with EP adapters instead of instances, because those activities are not created in unit tests mode

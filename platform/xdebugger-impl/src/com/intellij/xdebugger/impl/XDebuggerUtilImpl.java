@@ -165,7 +165,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     List<XLineBreakpointType.XLineBreakpointVariant> allVariants = new SmartList<>();
     for (XLineBreakpointType type : types) {
       var variants = type.computeVariants(project, position);
-      if (variants.isEmpty() && multipleTypes) {
+      if (variants.isEmpty() && multipleTypes && type.isCreationOfDefaultBreakpointAllowed()) {
         // We have multiple types, but no non-default variants for this type. So we just create one.
         allVariants.add(createDefaultBreakpointVariant(position, type));
       }
@@ -176,7 +176,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
     if (allVariants.isEmpty()) {
       assert !multipleTypes;
-      return Collections.singletonList(createDefaultBreakpointVariant(position, types.get(0)));
+      XLineBreakpointType type = types.getFirst();
+      return type.isCreationOfDefaultBreakpointAllowed() ? Collections.singletonList(createDefaultBreakpointVariant(position, type)) : allVariants;
     } else {
       return allVariants;
     }
@@ -197,7 +198,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     List<Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>> promises = new SmartList<>();
     for (XLineBreakpointType type : types) {
       promises.add(type.computeVariantsAsync(project, position).then(o -> {
-        if (((List<?>)o).isEmpty() && multipleTypes) {
+        if (((List<?>)o).isEmpty() && multipleTypes && type.isCreationOfDefaultBreakpointAllowed()) {
           // We have multiple types, but no non-default variants for this type. So we just create one.
           return Collections.singletonList(createDefaultBreakpointVariant(position, type));
         }
@@ -210,7 +211,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       var variants = StreamEx.of(v).toFlatList(l -> l);
       if (variants.isEmpty()) {
         assert !multipleTypes;
-        return Collections.singletonList(createDefaultBreakpointVariant(position, types.get(0)));
+        XLineBreakpointType type = types.getFirst();
+        return type.isCreationOfDefaultBreakpointAllowed() ? Collections.singletonList(createDefaultBreakpointVariant(position, type)) : variants;
       } else {
         return variants;
       }

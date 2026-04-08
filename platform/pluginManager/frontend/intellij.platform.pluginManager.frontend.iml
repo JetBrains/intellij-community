@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

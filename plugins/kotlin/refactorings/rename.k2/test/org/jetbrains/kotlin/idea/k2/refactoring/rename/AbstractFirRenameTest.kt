@@ -40,7 +40,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = analyze(contextFile) {
         fun getContainingMemberSymbol(classId: ClassId): KaDeclarationContainerSymbol {
             findClass(classId)?.let { return it }
-            val parentSymbol = findClass(classId.parentClassId!!)!!
+            val parentSymbol = findClass(classId.outerClassId!!)!!
 
             // The function supports getting a `KaEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
             // semantically correct in FIR (enum entries aren't classes), it simplifies referring to the initializing object.

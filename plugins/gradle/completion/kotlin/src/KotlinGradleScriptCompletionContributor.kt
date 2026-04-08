@@ -9,5 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 class KotlinGradleScriptCompletionContributor : CompletionContributor() {
     init {
         extend(CompletionType.BASIC, insideScriptBlockPattern(DEPENDENCIES), KotlinGradleDependenciesCompletionProvider())
+        extend(CompletionType.BASIC, insideBuildGradleKts(), KotlinGradleVersionCatalogCompletionProvider())
     }
 }

@@ -75,7 +75,6 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     include(CommunityProductFragments.pycharmCoreFragment())
 
     // Static includes
-    deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
 
     allowMissingDependencies(knownMissingModuleDependencies)

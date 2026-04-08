@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -51,11 +51,12 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
+      val fullBranchName = GitBranchUtil.getDisplayableBranchText(repository)
       return when (vm.actualChangesState.value) {
         GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.PresentationData(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-          GitLabBundle.message("merge.request.on.branch.error", vm.mergeRequestIid, currentBranchName)
+          GitLabBundle.message("merge.request.on.branch.error", vm.mergeRequestIid, fullBranchName)
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.PresentationData(
           CollaborationToolsUIUtil.animatedLoadingIcon,
@@ -68,14 +69,14 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
             GitCurrentBranchPresenter.PresentationData(
               GitlabIcons.GitLabWarning,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-              GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
+              GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, fullBranchName)
             )
           }
           else {
             GitCurrentBranchPresenter.PresentationData(
               GitlabIcons.GitLabLogo,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-              GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
+              GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, fullBranchName)
             )
           }
         }

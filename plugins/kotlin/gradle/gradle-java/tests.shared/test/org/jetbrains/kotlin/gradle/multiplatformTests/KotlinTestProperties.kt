@@ -29,6 +29,12 @@ class TestVersion<T : Any>(
         }
         return super.equals(other)
     }
+
+    override fun hashCode(): Int {
+        var result = version.hashCode()
+        result = 31 * result + (alias?.hashCode() ?: 0)
+        return result
+    }
 }
 
 abstract class KotlinTestProperties {

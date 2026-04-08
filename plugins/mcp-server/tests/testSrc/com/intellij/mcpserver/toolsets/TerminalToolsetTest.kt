@@ -2,7 +2,7 @@
 
 package com.intellij.mcpserver.toolsets
 
-import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.terminal.TerminalToolset
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class TerminalToolsetTest : McpToolsetTestBase() {
+class TerminalToolsetTest : GeneralMcpToolsetTestBase() {
 
   @BeforeEach
   fun init() {

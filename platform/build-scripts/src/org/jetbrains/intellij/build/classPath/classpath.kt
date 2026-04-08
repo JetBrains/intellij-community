@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.classPath
@@ -104,10 +104,10 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  */
 internal suspend fun generateCoreClasspathFromPlugins(
   platformLayout: PlatformLayout,
-  context: BuildContext,
   pluginEntities: List<PluginBuildDescriptor>,
+  context: BuildContext,
 ): Set<Path> {
-  val classPathResult = mutableSetOf<Path>()
+  val classPathResult = LinkedHashSet<Path>()
   for (pluginEntity in pluginEntities) {
     val pluginLayout = pluginEntity.layout
     val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(pluginEntity.dir)
@@ -130,7 +130,7 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   cacheContainer: ScopedCachedDescriptorContainer?,
   context: BuildContext,
 ): Set<String> {
-  val pluginModule = context.findRequiredModule(pluginMainModule)
+  val pluginModule = context.outputProvider.findRequiredModule(pluginMainModule)
   val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context.outputProvider)
   val pluginXmlContent = pluginXmlBytes.decodeToString()
   val rootElement = JDOMUtil.load(pluginXmlContent)

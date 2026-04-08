@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
@@ -237,8 +238,8 @@ public interface ApplicationEx extends Application {
   default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, @NlsSafe String advice) {
-    runnable.run();
+  default <T> T withLocksProhibited(@NotNull @NlsSafe String advice, @NotNull Supplier<T> action) {
+    return action.get();
   }
 
   /**

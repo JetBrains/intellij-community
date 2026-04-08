@@ -41,7 +41,7 @@ class JavaDocParser(
   private var closingStatusList: MutableList<Boolean> = mutableListOf() // true for all '{' opening an inline tag
 
   fun parseJavadocReference(parser: JavaParser) {
-    parser.referenceParser.parseJavaCodeReference(builder, true, true, false, false)
+    parser.referenceParser.parseJavaCodeReference(builder, true, true, false, true)
     swallowTokens()
   }
 
@@ -171,7 +171,7 @@ class JavaDocParser(
     else if (tokenType === JavaDocSyntaxTokenType.DOC_LBRACKET) {
       parseMarkdownReferenceOrLink()
     }
-    else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA || (isWhiteSpace(tokenType) && !isEolToken(tokenType, builder.tokenText))) {
+    else if (COMMENT_DATA_TOKENS.contains(tokenType) || (isWhiteSpace(tokenType) && !isEolToken(tokenType, builder.tokenText))) {
       parseCommentData()
     }
     else {
@@ -377,8 +377,7 @@ class JavaDocParser(
         isMethodFieldOrRef = true
       }
       else {
-        builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
-        builder.advanceLexer()
+        parseMaybeGenericType(true)
       }
     }
 
@@ -410,15 +409,15 @@ class JavaDocParser(
           if (type === JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
             if(!dataSinceComma) {
               dataSinceComma = true
-              builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_TYPE_HOLDER)
+              parseMaybeGenericType(false)
             }
           }
           else if (type !== JavaDocSyntaxTokenType.DOC_COMMA) {
             break
           } else {
             dataSinceComma = false
+            builder.advanceLexer()
           }
-          builder.advanceLexer()
         }
 
         if (getTokenType() === JavaDocSyntaxTokenType.DOC_RPAREN) {
@@ -656,8 +655,7 @@ class JavaDocParser(
     }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN) {
       val refStart = builder.mark()
-      builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
-      builder.advanceLexer()
+      parseMaybeGenericType(true)
 
       if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
         parseMethodRef(refStart)
@@ -683,6 +681,33 @@ class JavaDocParser(
     }
 
     moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
+  }
+
+  /** Attempt to parse a class with a potential generic type attached to it (e.g. `List<String>`) */
+  private fun parseMaybeGenericType(isReferenceHolder: Boolean) {
+    val refStart = builder.mark()
+    val newElement = if (isReferenceHolder) JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER else JavaDocSyntaxElementType.DOC_TYPE_HOLDER
+    val type = builder.tokenType
+
+    if (type !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN && type !== JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+      refStart.rollbackTo()
+      return
+    }
+
+    builder.remapCurrentToken(newElement)
+    builder.advanceLexer()
+
+    if (builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT || builder.tokenType === JavaDocSyntaxTokenType.DOC_LT) {
+      builder.advanceLexer()
+      if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT && builder.tokenType !== JavaDocSyntaxTokenType.DOC_GT)
+        parseMaybeGenericType(false)
+    }
+
+    if (builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT || builder.tokenType === JavaDocSyntaxTokenType.DOC_GT) {
+      builder.advanceLexer()
+    }
+
+    refStart.collapse(newElement)
   }
 
   private fun parseModuleRef(
@@ -737,8 +762,7 @@ class JavaDocParser(
       while (TAG_VALUES_SET.contains(getTokenType().also { tokenType = it })) {
         when (tokenType) {
           JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN -> {
-            builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_TYPE_HOLDER)
-            builder.advanceLexer()
+            parseMaybeGenericType(false)
 
             while (TAG_VALUES_SET.contains(getTokenType().also { tokenType = it }) && tokenType !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA && tokenType !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN
             ) {
@@ -876,6 +900,7 @@ private val COMMENT_DATA_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH,
   JavaDocSyntaxTokenType.DOC_COMMA,
   JavaDocSyntaxTokenType.DOC_SHARP, JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP,
+  JavaDocSyntaxTokenType.DOC_LT, JavaDocSyntaxTokenType.DOC_GT,
 )
 
 private const val SEE_TAG = "@see"

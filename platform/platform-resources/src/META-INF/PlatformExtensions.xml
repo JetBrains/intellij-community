@@ -21,23 +21,21 @@
     />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
-    <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
-    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>
-    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
-    <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
-    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp"/>
-    <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
-    <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
-    <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
-    <appStarter id="-version" implementation="com.intellij.help.impl.ShowProductVersion"/>
-    <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
-    <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
-    <appStarter id="generateEnvironmentKeysFile" implementation="com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator"/>
-    <appStarter id="buildEventsScheme"
-                implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
-    <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
+    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication" bundle="messages.IdeBundle" key="diff.help"/>
+    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication" bundle="messages.IdeBundle" key="merge.help"/>
+    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>
+    <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller" bundle="messages.IdeBundle" key="install.plugins.help"/>
+    <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter" internal="true"/>
+    <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter" internal="true"/>
+    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter" internal="true"/>
+    <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication" internal="true"/>
+    <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator" internal="true"/>
+    <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
+    <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
+    <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister" internal="true"/>
+    <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter" internal="true"/>
+    <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter" internal="true"/>
+    <appStarter id="generateEnvironmentKeysFile" implementation="com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator" internal="true"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
     <protocolNavigationCommandProcessor implementation="com.intellij.navigation.MonolithProtocolNavigationProcessor" order="last"/>
 
@@ -378,7 +376,7 @@
                     key="configurable.ExternalDiffSettingsConfigurable.display.name"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
-    <applicationConfigurable groupId="appearance" groupWeight="-10"
+    <projectConfigurable groupId="appearance" groupWeight="-10"
                              id="preferences.pathVariables"
                              key="title.path.variables"
                              bundle="messages.ApplicationBundle"
@@ -999,6 +997,8 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
     <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector"/>
+    <statistics.projectUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.otherIde.VsCodeCppDataCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
                                            allowOnStartup="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
@@ -1673,6 +1673,7 @@
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
     <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+    <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <notificationGroup id="proxy.auth.failed" displayType="STICKY_BALLOON" bundle="messages.UIBundle" key="proxy.auth.notification.title"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
@@ -1831,12 +1832,22 @@
                        key="presentation.assistant.notification"/>
 
     <!-- Minimap -->
-    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables minimap"/>
+    <registryKey key="editor.minimap.mode" defaultValue="[disabled*|legacy|new]"
+                 description="Minimap mode: disabled, legacy, new"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
     <applicationConfigurable id="com.intellij.minimap" parentId="editor"
-                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
-                             key="settings.name" bundle="messages.MinimapBundle"/>
+                             key="settings.name" bundle="messages.MinimapBundle"
+                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.LegacyPreviewLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.SelectionLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.DiagnosticsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.FoldMarkersLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.BreakpointsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.HoverLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.CaretLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.ThumbLayerFactory"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
     <registryKey key="wayland.true.popups" defaultValue="true" description="Show popups in Wayland as true popups (allows remembering the location, but limits them to the IDE window)"/>
     <registryKey key="wayland.screen.vInsets" defaultValue="50" description="The sum of vertical screen insets (top + bottom) assumed for Wayland (because it doesn't report the actual insets)"/>
@@ -2061,15 +2072,13 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.elf.ElfTheManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.elf.ElfTheManagerImpl" />
 
-    <!-- Remove all this stuff when the notification is no longer needed -->
-    <typedHandler implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
-    <editorFactoryMouseListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
-    <editorFactoryMouseMotionListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
-    <registryKey key="wayland.notification.delay.after.first.activity" defaultValue="20"
-                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the first user activity" />
-    <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
-                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
-    <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
+    <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="false"
+                 description="Enables support for custom soft wraps in the editor. Only takes effect if editor.use.new.soft.wraps.impl=true." restartRequired="true"/>
+    <registryKey key="editor.use.new.soft.wraps.impl" defaultValue="true"
+                 description="Use the new custom-wrap aware soft wraps implementation (in favor of the legacy implementation)."
+                 restartRequired="true"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.EditorHyperlinkUsageCollector"/>
   </extensions>
 
   <applicationListeners>

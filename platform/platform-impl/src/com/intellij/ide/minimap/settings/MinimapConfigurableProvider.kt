@@ -3,12 +3,12 @@ package com.intellij.ide.minimap.settings
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ide.minimap.MinimapRegistry
 
 internal class MinimapConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
-    return if (Registry.`is`("editor.minimap.enabled", false)) MinimapConfigurable() else null
+    return if (MinimapRegistry.isEnabled()) MinimapConfigurable() else null
   }
 
-  override fun canCreateConfigurable() = Registry.`is`("editor.minimap.enabled", false)
+  override fun canCreateConfigurable() = MinimapRegistry.isEnabled()
 }

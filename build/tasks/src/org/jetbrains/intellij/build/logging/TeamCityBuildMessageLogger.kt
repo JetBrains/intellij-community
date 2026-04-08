@@ -79,7 +79,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
     }
 
     /**
-     * Wraps a [span] into a TeamCity block linked to a parent flow of a parent span.
+     * Wraps a [span] into a TeamCity block linked to a parent flow of a parent span via a new subflow.
      */
     @ApiStatus.Internal
     suspend fun <T> withBlock(span: Span, operation: suspend () -> T): T {
@@ -87,19 +87,25 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         return operation()
       }
 
+      // no parent attribute in [ServiceMessageTypes.BLOCK_OPENED], start a new subflow to link it to the parent flow (if any)
       val parentFlowId = span.parentSpanContext?.takeIf { it.isValid }?.spanId
-      val attributes = if (parentFlowId == null) {
-        java.util.Map.of("name", span.name)
+      if (parentFlowId != null) {
+        val attributes = java.util.Map.of("parent", parentFlowId)
+        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = attributes))
       }
-      else {
-        java.util.Map.of("name", span.name, "parent", parentFlowId)
-      }
+
+      val attributes = java.util.Map.of("name", span.name)
       println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_OPENED, attributes = attributes))
       try {
         return operation()
       }
       finally {
         println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_CLOSED, attributes = attributes))
+
+        if (parentFlowId != null) {
+          println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_FINSIHED, attributes = java.util.Map.of()))
+        }
+
         TraceManager.scheduleExportPendingSpans()
       }
     }

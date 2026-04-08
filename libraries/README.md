@@ -4,4 +4,4 @@ This directory contains product-embedded library modules that make third-party l
 
 ## Creating a New Library Module
 
-See [convert-lib-to-product-module.md](../../.claude/commands/convert-lib-to-product-module.md)
+See [convert-lib-to-product-module skill](../../.agents/skills/convert-lib-to-product-module/SKILL.md)

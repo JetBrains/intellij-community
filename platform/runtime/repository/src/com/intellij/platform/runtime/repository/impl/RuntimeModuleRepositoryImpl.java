@@ -52,6 +52,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
 
     RawRuntimeModuleRepositoryData rawData = getMainData();
     RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId);
+    if (rawDescriptor == null && moduleId.getNamespace().equals(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE)) {
+      /* we don't have syntax to specify namespace in product-modules.xml, so currently all elements are supposed to be from the
+         LEGACY_JPS_MODULE_NAMESPACE, but they actually can be registered as content modules */
+      rawDescriptor = rawData.findDescriptor(RuntimeModuleId.contentModule(moduleId.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));
+    }
     if (rawDescriptor == null) {
       if (myAdditionalData != null) {
         for (RawRuntimeModuleRepositoryData data : myAdditionalData) {
@@ -72,8 +77,8 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     
     List<RuntimeModuleId> rawDependencies = rawDescriptor.getDependencyIds();
     List<RuntimeModuleDescriptor> resolvedDependencies = new ArrayList<>(rawDependencies.size());
-    RuntimeModuleDescriptorImpl descriptor = new RuntimeModuleDescriptorImpl(moduleId, rawData.getBasePath(), rawDescriptor.getResourcePaths(), resolvedDependencies);
-    dependencyPath.put(moduleId, descriptor);
+    RuntimeModuleDescriptorImpl descriptor = new RuntimeModuleDescriptorImpl(rawDescriptor.getModuleId(), rawData.getBasePath(), rawDescriptor.getResourcePaths(), resolvedDependencies);
+    dependencyPath.put(rawDescriptor.getModuleId(), descriptor);
     for (RuntimeModuleId dependencyId : rawDependencies) {
       RuntimeModuleDescriptor circularDependency = dependencyPath.get(dependencyId);
       if (circularDependency != null) {
@@ -112,7 +117,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     else {
       List<RuntimeModuleId> reversed = new ArrayList<>(failedDependencyPath.subList(0, failedDependencyPath.size() - 1));
       Collections.reverse(reversed);
-      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getStringId() + "' (" +
+      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getPresentableName() + "' (" +
                 reversed.stream().map(id -> " <- '" + id.getPresentableName() + "'").collect(Collectors.joining()).trim() + ") is not found";
     }
     throw new MalformedRepositoryException(message);
@@ -156,7 +161,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       catch (IOException ignore) {
       }
     }
-    return getModule(RuntimeModuleId.module(bootstrapModuleName)).getModuleClasspath();
+    return getModule(RuntimeModuleId.legacyJpsModule(bootstrapModuleName)).getModuleClasspath();
   }
 
   /**

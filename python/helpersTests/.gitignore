@@ -1,2 +1,2 @@
-.tox/
-helperstests.egg-info/
+# Virtual environment created by `uv`
+.venv/

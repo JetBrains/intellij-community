@@ -43,7 +43,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   - thread/sub-agent open requests must route to dedicated frame project,
   - dedicated frame project must be created/opened on demand and then reused,
   - closed source project must not be auto-opened.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Dedicated frame project must suppress Project View capability and must not initialize Project View for dedicated projects.
   [@test] ../sessions/testSrc/AgentWorkbenchToolWindowLayoutProfileProviderTest.kt
@@ -55,10 +55,9 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In current-project mode (`false`), chat opens must use source project frame; closed source projects must open first.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Dedicated-frame project must be hidden from recent-project metadata.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
   [@test] ../sessions/testSrc/AgentSessionProjectCatalogTest.kt
@@ -69,18 +68,18 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 - Dedicated-frame terminal hyperlink routing to source projects must follow `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
-  [@test] ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
+  [@test] ../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
+  [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/TerminalCrossProjectFileHyperlinkNavigatorTest.kt
   [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
 
 - Chat terminal `cwd` must remain source project path regardless of frame mode.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Chat persistence and restore behavior must follow `spec/agent-chat-editor.spec.md` in both modes.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 ## Architecture Decision — Welcome Screen Independence
 - Implementation must stay independent from `welcomeScreenProjectProvider` singleton model. Dedicated-frame lifecycle is self-contained and must not couple to welcome-screen project provider internals.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
 ## User Experience
 - Default click behavior opens chat in dedicated frame.
@@ -102,7 +101,7 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingNewSessionActionsTest'`
 
 ## Open Questions / Risks

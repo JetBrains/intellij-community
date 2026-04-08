@@ -54,9 +54,9 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads).hasSize(1)
         assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
 
-        primeWatcher(
+        primeWatcherWithAtomicReplace(
           updates = updates,
-          sessionsDirectory = rollout.parent,
+          watchedFile = rollout,
         )
         replaceRolloutAtomically(
           file = rollout,
@@ -109,9 +109,9 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads).hasSize(1)
         assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
 
-        primeWatcher(
+        primeWatcherWithRefreshPing(
           updates = updates,
-          sessionsDirectory = rollout.parent,
+          watchedFile = rollout,
         )
         writeRollout(
           file = rollout,
@@ -166,9 +166,9 @@ class CodexRolloutSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads).hasSize(1)
         assertThat(initialThreads.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
 
-        primeWatcher(
+        primeWatcherWithRefreshPing(
           updates = updates,
-          sessionsDirectory = rollout.parent,
+          watchedFile = rollout,
         )
         writeRollout(
           file = rollout,
@@ -289,27 +289,55 @@ private fun drainUpdateChannel(updates: Channel<Unit>) {
   }
 }
 
-private suspend fun primeWatcher(updates: Channel<Unit>, sessionsDirectory: Path) {
+private suspend fun primeWatcherWithAtomicReplace(updates: Channel<Unit>, watchedFile: Path) {
+  primeWatcher(
+    updates = updates,
+    watchedFile = watchedFile,
+    changeDescription = "atomic replace",
+  ) { attempt ->
+    replaceFileAtomically(watchedFile, attempt)
+  }
+}
+
+private suspend fun primeWatcherWithRefreshPing(updates: Channel<Unit>, watchedFile: Path) {
+  primeWatcher(
+    updates = updates,
+    watchedFile = watchedFile,
+    changeDescription = "watcher startup refresh ping",
+  ) { attempt ->
+    writeWatcherPrimeFile(watchedFile, attempt)
+  }
+}
+
+private suspend fun primeWatcher(
+  updates: Channel<Unit>,
+  watchedFile: Path,
+  changeDescription: String,
+  primeChange: (attempt: Int) -> Unit,
+) {
   drainUpdateChannel(updates)
-  Files.createDirectories(sessionsDirectory)
 
   var attempt = 0
   val primed = withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
     while (true) {
       attempt++
-      val marker = sessionsDirectory.resolve("watcher-prime-${System.nanoTime()}-$attempt.tmp")
-      Files.write(marker, listOf("prime-$attempt"))
+      primeChange(attempt)
       if (awaitWatcherUpdate(updates, timeout = WATCHER_PRIME_ATTEMPT_TIMEOUT)) {
         return@withTimeoutOrNull true
       }
       delay(WATCHER_PRIME_RETRY_DELAY)
     }
   } == true
-  if (!primed) {
-    drainUpdateChannel(updates)
-    return
-  }
+
+  assertThat(primed)
+    .withFailMessage("Timed out waiting for watcher to observe %s on %s", changeDescription, watchedFile)
+    .isTrue()
   drainUpdateChannel(updates)
+}
+
+private fun writeWatcherPrimeFile(watchedFile: Path, attempt: Int) {
+  val primeFile = watchedFile.resolveSibling("${watchedFile.fileName}.watcher-prime-$attempt.tmp")
+  Files.writeString(primeFile, "prime-$attempt")
 }
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
@@ -324,6 +352,17 @@ private fun writeRollout(file: Path, lines: List<String>) {
 private fun replaceRolloutAtomically(file: Path, lines: List<String>) {
   val temporaryFile = file.resolveSibling("${file.fileName}.tmp")
   Files.write(temporaryFile, lines)
+  Files.move(
+    temporaryFile,
+    file,
+    StandardCopyOption.REPLACE_EXISTING,
+    StandardCopyOption.ATOMIC_MOVE,
+  )
+}
+
+private fun replaceFileAtomically(file: Path, attempt: Int) {
+  val temporaryFile = file.resolveSibling("${file.fileName}.watcher-prime-$attempt.tmp")
+  Files.write(temporaryFile, Files.readAllBytes(file))
   Files.move(
     temporaryFile,
     file,

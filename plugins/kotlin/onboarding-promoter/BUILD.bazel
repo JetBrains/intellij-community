@@ -18,10 +18,12 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//java/java-features-trainer:featuresTrainer",
     "//plugins/kotlin/features-trainer",
     "//platform/statistics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -35,10 +37,12 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//java/java-features-trainer:featuresTrainer_test_lib",
     "//plugins/kotlin/features-trainer:features-trainer_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.onboarding.promoter` end

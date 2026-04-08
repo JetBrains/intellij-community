@@ -10,6 +10,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UpdateJavaScriptFileCopyright extends UpdatePsiFileCopyright
 {
     public UpdateJavaScriptFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
@@ -21,6 +24,9 @@ public class UpdateJavaScriptFileCopyright extends UpdatePsiFileCopyright
     protected void scanFile()
     {
         PsiElement first = getFile().getFirstChild();
+        if (first instanceof PsiComment && first.getText().startsWith("#!")) {
+          first = first.getNextSibling();
+        }
         if (first != null) {
           final PsiElement child = first.getFirstChild();
           if (child instanceof PsiComment) {
@@ -44,7 +50,9 @@ public class UpdateJavaScriptFileCopyright extends UpdatePsiFileCopyright
 
         if (first != null)
         {
-            checkComments(first, last, true);
+            List<PsiComment> comments = new ArrayList<>();
+            collectComments(first, last, comments);
+            checkComments(last != null ? last : first, true, comments);
         }
         else
         {

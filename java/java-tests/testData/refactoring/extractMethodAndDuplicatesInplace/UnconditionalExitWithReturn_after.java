@@ -3,14 +3,14 @@ public class Test {
         String xValue = null;
         for (String arg : args) {
 
-            xValue = getString(arg, xValue);
+            xValue = getXValue(arg, xValue);
             continue;
 
         }
         System.out.println(xValue);
     }
 
-    private static String getString(String arg, String xValue) {
+    private static String getXValue(String arg, String xValue) {
         if (arg.endsWith("y")) {
             return xValue;
         }

@@ -75,6 +75,7 @@ class BazelGeneratorIntegrationTests {
         "--manifest=${createManifest(tempDir)}",
         "--default-custom-modules=$defaultCustomModules",
         "--output=$bazelTargetsBeforeRunningGenerator",
+        "--no-starlark-targets",
       )
     )
 
@@ -102,6 +103,7 @@ class BazelGeneratorIntegrationTests {
         "--manifest=${createManifest(tempDir)}",
         "--default-custom-modules=$defaultCustomModules",
         "--output=$bazelTargetsAfterRunningGenerator",
+        "--no-starlark-targets",
       )
     )
 

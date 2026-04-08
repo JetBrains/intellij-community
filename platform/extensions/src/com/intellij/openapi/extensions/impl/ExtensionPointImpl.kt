@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Java11Shim
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -61,13 +62,13 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   private var adapters: List<ExtensionComponentAdapter> = Java11Shim.INSTANCE.listOf()
 
   @Volatile
-  private var adaptersAreSorted = true
+  private var adaptersAreSorted: Boolean = true
 
   @Volatile
   private var listeners = persistentListOf<ExtensionPointListener<T>>()
 
   @Volatile
-  private var keyMapperToCache: ConcurrentMap<*, Map<*, *>>? = null
+  private var keyMapperToCache: ConcurrentMap<*, *>? = null
 
   companion object {
     // XmlExtensionAdapter.createInstance takes a lock on itself.
@@ -75,9 +76,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     // (EP->adapter in one thread, adapter->EP in the other thread).
     // Could happen if an extension constructor calls addExtensionPointListener on EP.
     // So, updating of listeners is a lock-free as a solution.
-    private val listenerUpdater =
-      AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, PersistentList::class.java, "listeners")
-    private val keyMapperToCacheUpdater =
+    @Suppress("UNCHECKED_CAST")
+    private val listenerUpdater: AtomicReferenceFieldUpdater<ExtensionPointImpl<*>, PersistentList<ExtensionPointListener<*>>> =
+      AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, PersistentList::class.java as Class<PersistentList<ExtensionPointListener<*>>>, "listeners")
+
+    private val keyMapperToCacheUpdater: AtomicReferenceFieldUpdater<ExtensionPointImpl<*>, ConcurrentMap<*, *>> =
       AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, ConcurrentMap::class.java, "keyMapperToCache")
 
     fun setCheckCanceledAction(checkCanceled: Runnable) {
@@ -95,10 +98,9 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     }
   }
 
-  fun <CACHE_KEY : Any, V : Any?> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
+  fun <CACHE_KEY : Any, V : Any> getCacheMap(): ConcurrentMap<CACHE_KEY, V> {
     @Suppress("UNCHECKED_CAST")
-    return (keyMapperToCache ?: keyMapperToCacheUpdater.updateAndGet(this) { ConcurrentHashMap<Any, Map<*, *>>() })
-      as ConcurrentMap<CACHE_KEY, V>
+    return (keyMapperToCache ?: keyMapperToCacheUpdater.updateAndGet(this) { ConcurrentHashMap<Any, V>() }) as ConcurrentMap<CACHE_KEY, V>
   }
 
   final override fun isDynamic(): Boolean = isDynamic
@@ -370,7 +372,6 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     else if (totalSize == 1) {
       val extension = processAdapter(adapter = adapters.get(0),
                                      listeners = listeners,
-                                     result = null,
                                      duplicates = null,
                                      extensionClassForCheck = extensionClass,
                                      adapters = adapters) ?: return Java11Shim.INSTANCE.listOf()
@@ -380,26 +381,12 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     val duplicates = if (this is BeanExtensionPoint<*>) null else Collections.newSetFromMap<T>(IdentityHashMap(totalSize))
     val listeners = listeners
 
-    val result = arrayOfNulls<Any>(totalSize)
-    var index = 0
-    for (adapter in adapters) {
-      val extension = processAdapter(adapter = adapter,
-                                     listeners = listeners,
-                                     result = result,
-                                     duplicates = duplicates,
-                                     extensionClassForCheck = extensionClass,
-                                     adapters = adapters)
-      if (extension != null) {
-        result[index++] = extension
-      }
-    }
-    @Suppress("UNCHECKED_CAST")
-    return Java11Shim.INSTANCE.listOf(result, index) as List<T>
+    val result = adapters.mapNotNull { processAdapter(it, listeners, duplicates, extensionClass, adapters) }
+    return Java11Shim.INSTANCE.copyOfList(result)
   }
 
   private fun processAdapter(adapter: ExtensionComponentAdapter,
                              listeners: List<ExtensionPointListener<T>>?,
-                             result: Array<*>?,
                              duplicates: MutableSet<T>?,
                              extensionClassForCheck: Class<T>,
                              adapters: List<ExtensionComponentAdapter>): T? {
@@ -429,14 +416,13 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   prev extension:  $duplicate;
   adapter:         $adapter;
   extension class: $extensionClassForCheck;
-  result:          $result;
   adapters:        $adapters"""
         )
       }
       else {
         checkExtensionType(extension = extension, extensionClass = extensionClassForCheck, adapter = adapter)
         if (isNotifyThatAdded) {
-          notifyListeners(isRemoved = false, adapters = listOf(adapter), listeners = listeners ?: emptyList())
+          notifyListeners(isRemoved = false, adapters = listOf(adapter), listeners = listeners)
         }
         return extension
       }
@@ -655,10 +641,10 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     for (listener in listeners) {
       if (listener is ExtensionPointAdapter<*>) {
         try {
-          (listener as ExtensionPointAdapter<T>).extensionListChanged()
+          listener.extensionListChanged()
         }
         catch (ce: CancellationException) {
-          LOG.warn("Cancellation while notifying `${listener}`", ce)
+          LOG.warn("Cancellation while notifying `${listener}` ($ce)", ce.cause)
         }
         catch (e: Throwable) {
           LOG.error("Exception while notifying `$listener`", e)
@@ -682,10 +668,10 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
             }
           }
           catch (ce: CancellationException) {
-            LOG.warn("Cancellation while notifying `$listener`", ce)
+            LOG.warn("Cancellation while notifying `$listener` about $adapter ($ce)", ce.cause)
           }
           catch (e: Throwable) {
-            LOG.error("Exception while notifying `$listener`", e)
+            LOG.error("Exception while notifying `$listener`about $adapter", e)
           }
         }
       }
@@ -851,20 +837,14 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     adaptersAreSorted = false
 
     val oldAdapters = adapters
-    val oldSize = oldAdapters.size
-    val newAdapters = arrayOfNulls<ExtensionComponentAdapter>(oldAdapters.size + descriptors.size)
-    var newSize = oldSize
-    for ((index, item) in oldAdapters.withIndex()) {
-      newAdapters[index] = item
-    }
-    for (descriptor in descriptors) {
-      if (descriptor.os == null || descriptor.os.isSuitableForOs()) {
-        newAdapters[newSize++] = createAdapter(descriptor = descriptor, pluginDescriptor = pluginDescriptor, componentManager = componentManager)
+    val newAdapters = descriptors.mapNotNull {
+      if (it.os == null || it.os.isSuitableForOs()) {
+        createAdapter(it, pluginDescriptor, componentManager)
       }
+      else null
     }
 
-    @Suppress("UNCHECKED_CAST")
-    adapters = Java11Shim.INSTANCE.listOf(newAdapters as Array<ExtensionComponentAdapter>, newSize)
+    adapters = Java11Shim.INSTANCE.copyOfList(ContainerUtil.concat(oldAdapters, newAdapters))
 
     clearCache()
     val listeners = listeners
@@ -879,7 +859,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       }
 
       // must be reported in order
-      val newlyAddedUnsortedList = adapters.subList(oldSize, newSize)
+      val newlyAddedUnsortedList = newAdapters
       val newlyAddedSet = Collections.newSetFromMap<ExtensionComponentAdapter>(IdentityHashMap(newlyAddedUnsortedList.size))
       newlyAddedSet.addAll(newlyAddedUnsortedList)
       addedAdapters = ArrayList(newlyAddedSet.size)

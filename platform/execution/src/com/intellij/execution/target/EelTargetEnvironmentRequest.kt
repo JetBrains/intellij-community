@@ -164,6 +164,8 @@ class EelTargetEnvironmentRequest(
 
   override val targetPlatform: TargetPlatform = configuration.descriptor.osFamily.toTargetPlatform()
 
+  var uploadVolumeFilters: MutableMap<TargetEnvironment.UploadRoot, (Path) -> Boolean> = HashMap()
+
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
     val env = EelTargetEnvironment(this)
     environmentPrepared(env, progressIndicator)
@@ -193,7 +195,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
   init {
     request.uploadVolumes.forEach { uploadRoot ->
-      myUploadVolumes[uploadRoot] = EelVolume.createFor(eel, uploadRoot)
+      myUploadVolumes[uploadRoot] = EelVolume.createFor(eel, uploadRoot, request.uploadVolumeFilters[uploadRoot])
     }
 
     request.downloadVolumes.forEach { downloadRoot ->
@@ -250,8 +252,9 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     }
   }
 
-  private class EelVolume private constructor(
+  class EelVolume private constructor(
     private val eel: EelApi,
+    private val filter: ((Path) -> Boolean)?,
     override val localRoot: Path,
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
@@ -269,7 +272,12 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         if (!Files.exists(from)) throw err
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
-      EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
+      EelPathUtils.walkingTransfer(from,
+                                   to,
+                                   removeSource = false,
+                                   EelPathUtils.FileTransferAttributesStrategy.Copy,
+                                   absoluteSymlinkHandler = null,
+                                   filter = filter)
     }
 
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
@@ -282,7 +290,12 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         if (!Files.exists(from)) throw err
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
-      EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
+      EelPathUtils.walkingTransfer(from,
+                                   to,
+                                   removeSource = false,
+                                   EelPathUtils.FileTransferAttributesStrategy.Copy,
+                                   absoluteSymlinkHandler = null,
+                                   filter = null)
     }
 
     override fun resolveTargetPath(relativePath: String): String {
@@ -290,7 +303,12 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     }
 
     companion object {
-      private fun createFor(eel: EelApi, localPathGetter: () -> Path, targetPathGetter: () -> TargetPath): EelVolume {
+      private fun createFor(
+        eel: EelApi,
+        localPathGetter: () -> Path,
+        targetPathGetter: () -> TargetPath,
+        filter: ((Path) -> Boolean)?,
+      ): EelVolume {
         val localRootPath = localPathGetter()
 
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
@@ -314,11 +332,11 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
           is TargetPath.Persistent -> targetRootPath.absolutePath
         }
 
-        return EelVolume(eel, localRootPath, remoteRoot)
+        return EelVolume(eel, filter, localRootPath, remoteRoot)
       }
 
-      fun createFor(eel: EelApi, uploadRoot: UploadRoot): EelVolume {
-        return createFor(eel, { uploadRoot.localRootPath }, { uploadRoot.targetRootPath })
+      fun createFor(eel: EelApi, uploadRoot: UploadRoot, filter: ((Path) -> Boolean)?): EelVolume {
+        return createFor(eel, { uploadRoot.localRootPath }, { uploadRoot.targetRootPath }, filter)
       }
 
       fun createFor(eel: EelApi, downloadRoot: DownloadRoot): EelVolume {
@@ -326,7 +344,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
           downloadRoot.localRootPath
           ?: FileUtil.createTempDirectory("intellij-eel-target.", "").toPath()
 
-        return createFor(eel, { localRootPath }, { downloadRoot.targetRootPath })
+        return createFor(eel, { localRootPath }, { downloadRoot.targetRootPath }, null)
       }
     }
   }

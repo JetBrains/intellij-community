@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+// IGNORE_K1
+fun test() {
+    val [first1, second1] = "a" to "b"
+    val [first, second] = 1 to "2"
+}

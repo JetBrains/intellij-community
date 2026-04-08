@@ -9,25 +9,15 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JCheckBox;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,25 +28,40 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   private final Item[] myOptionItems;
   private boolean myPreventPopupClosing;
   private @Nullable @Nls String myNoModule;
-  private static final Item mySeparator = new Item((String)null);
 
   public static class Item {
-    public Item(Module module) {
-      myModule = module;
-    }
 
-    public Item(String optionName) {
+    private Item(Module module, @Nls String optionName) {
+      myModule = module;
       myOptionName = optionName;
     }
 
-    private Module myModule;
-    private @NlsSafe String myOptionName;
+    public Item(Module module) {
+      this(module, null);
+    }
+
+    public Item(@Nls String optionName) {
+      this(null, optionName);
+    }
+
+    private final Module myModule;
+    private final @Nls String myOptionName;
     public boolean myOptionValue;
+
+    @ApiStatus.Internal
+    public Module getModule() {
+      return myModule;
+    }
+
+    @ApiStatus.Internal
+    public @Nls String getOptionName() {
+      return myOptionName;
+    }
   }
 
   public ModuleClasspathCombo(Item... optionItems) {
     myOptionItems = optionItems;
-    setRenderer(new ListRenderer());
+    setRenderer(ModuleClasspathRendererKt.createRenderer(ArrayUtil.getFirstElement(optionItems), () -> myNoModule));
     setSwingPopup(false);
     ComboboxSpeedSearch.installSpeedSearch(this, item -> item.myModule == null ? "" : item.myModule.getName());
   }
@@ -76,9 +81,6 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
     model.add(items);
     if (myNoModule != null) {
       model.add((Item)null);
-    }
-    if (myOptionItems.length > 0) {
-      model.add(mySeparator);
     }
     model.add(Arrays.asList(myOptionItems));
     setModel(model);
@@ -146,44 +148,6 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
         myPreventPopupClosing = true;
         update();
       }
-    }
-  }
-
-  private class ListRenderer extends ColoredListCellRenderer<Item> {
-    private final JCheckBox myCheckBox = new JBCheckBox();
-    @Override
-    public Component getListCellRendererComponent(JList<? extends Item> list,
-                                                  Item value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      if (value == mySeparator) {
-        JPanel pane = new JPanel(new GridBagLayout());
-        pane.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(new JSeparator(), gbc);
-        return pane;
-      }
-      else if (value != null && value.myOptionName != null){
-        myCheckBox.setOpaque(false);
-        myCheckBox.setText(value.myOptionName);
-        myCheckBox.setSelected(value.myOptionValue);
-        return myCheckBox;
-      }
-      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null || value.myModule == null ? myNoModule : value.myModule.getName();
-      if (index == -1 && name != null) {
-        //noinspection HardCodedStringLiteral
-        append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
-      append(StringUtil.notNullize(name));
     }
   }
 }

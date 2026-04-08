@@ -26,6 +26,12 @@ public class SerrPostfixTemplate extends JavaEditablePostfixTemplate implements 
     return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   public boolean isBuiltin() {
     return true;

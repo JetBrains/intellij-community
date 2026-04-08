@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.providers
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkProvider
 import com.intellij.ide.bookmark.BookmarksManager
@@ -13,19 +12,23 @@ import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.AbstractUrl
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager.getInstance
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -35,10 +38,16 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.tree.project.ProjectFileNode
-import com.intellij.util.SingleAlarm
+import com.intellij.util.diff.Diff
+import com.intellij.util.diff.FilesTooBigForDiffException
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.update.DebouncedUpdates
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
+import kotlin.coroutines.cancellation.CancellationException
+
+private val LOG = Logger.getInstance(LineBookmarkProvider::class.java)
 
 @Suppress("ExtensionClassShouldBeFinalAndNonPublic")
 class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider {
@@ -68,13 +77,14 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
 
   override fun prepareGroup(nodes: List<AbstractTreeNode<*>>): List<AbstractTreeNode<*>> {
     nodes.forEach { (it as? FileNode)?.ungroup() } // clean all file groups if needed
-    val node = nodes.firstNotNullOfOrNull { it as? LineNode } ?: return nodes.filter(::isNodeVisible) // nothing to group
-    if (node.bookmarksView?.groupLineBookmarks?.isSelected != true) return nodes.filter(::isNodeVisible) // grouping disabled
+    val node = nodes.firstNotNullOfOrNull { it as? LineNode } ?: nodes.firstNotNullOfOrNull { it as? UrlNode } ?: return nodes
+    if (node.bookmarksView?.groupLineBookmarks?.isSelected != true) return nodes // grouping disabled
 
-    val map = mutableMapOf<VirtualFile, FileNode?>()
+    val map = hashMapOf<VirtualFile, FileNode?>()
     nodes.forEach {
       when (it) {
         is LineNode -> map.putIfAbsent(it.virtualFile, null)
+        is UrlNode -> it.virtualFile?.let { file -> map.putIfAbsent(file, null) }
         is FileNode -> map[it.virtualFile] = it
       }
     }
@@ -85,17 +95,36 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
         parent = node.parent
       }
     }
+
     return nodes.mapNotNull {
-      when {
-        !isNodeVisible(it) -> null
-        it is LineNode -> map[it.virtualFile]!!.grouped(it)
-        it is FileNode -> it.grouped()
+      when (it) {
+        is LineNode -> map[it.virtualFile]!!.grouped(it)
+        is UrlNode -> {
+          val file = it.virtualFile
+          if (file != null) {
+            map[file]!!.grouped(it)
+          } else {
+            it
+          }
+        }
+        is FileNode -> it.grouped()
         else -> it
       }
     }
   }
 
-  override fun createBookmark(map: Map<String, String>): Bookmark? = map["url"]?.let { createBookmark(it, StringUtil.parseInt(map["line"], -1)) }
+  /**
+   * Restores a bookmark from serialized state (XML).
+   * 
+   * Always creates InvalidBookmark, which will be converted to LineBookmarkImpl
+   * by async validation if the file exists and content matches.
+   */
+  override fun createBookmark(map: Map<String, String>): Bookmark? {
+    val url = map["url"] ?: return null
+    val line = StringUtil.parseInt(map["line"], -1)
+    val lineText = map["lineText"]
+    return InvalidBookmark(this, url, line, lineText)
+  }
 
   override fun createBookmark(context: Any?): Bookmark? = when (context) {
     is com.intellij.ide.bookmarks.Bookmark -> createBookmark(context.file, context.line)
@@ -111,9 +140,11 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     else -> null
   }
 
-  fun createBookmark(file: VirtualFile, line: Int = -1): FileBookmark? = when {
+  fun createBookmark(file: VirtualFile, line: Int = -1): FileBookmark? = createBookmark(file, line, null)
+
+  internal fun createBookmark(file: VirtualFile, line: Int, expectedText: String?): FileBookmark? = when {
     !file.isValid || file is LightVirtualFile -> null
-    line >= 0 -> LineBookmarkImpl(this, file, line)
+    line >= 0 -> LineBookmarkImpl(this, file, line, expectedText)
     else -> FileBookmarkImpl(this, file)
   }
 
@@ -123,9 +154,27 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)
   }
 
-  private fun createBookmark(url: String, line: Int = -1) = createValidBookmark(url, line) ?: createInvalidBookmark(url, line)
-  private fun createValidBookmark(url: String, line: Int = -1) = getInstance().findFileByUrl(url)?.let { createBookmark(it, line) }
-  private fun createInvalidBookmark(url: String, line: Int = -1) = InvalidBookmark(this, url, line)
+  /**
+   * Creates a validated bookmark from URL.
+   * 
+   * This method is used during async validation to convert InvalidBookmark to LineBookmarkImpl.
+   * It validates that:
+   * - The file exists
+   * - If expectedText is provided, it matches the actual line content
+   * 
+   * @return LineBookmarkImpl if validation succeeds, null otherwise
+   */
+  internal fun createValidBookmark(url: String, line: Int = -1, expectedText: String? = null): Bookmark? {
+    val file = VirtualFileManager.getInstance().findFileByUrl(url) ?: return null
+    if (expectedText != null && line >= 0) {
+      val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      val currentText = Util.readLineText(document, line)
+      if (expectedText != currentText) {
+        return null
+      }
+    }
+    return createBookmark(file, line, expectedText)
+  }
 
   private fun createBookmark(element: PsiElement): FileBookmark? {
     if (element is PsiFileSystemItem) return element.virtualFile?.let { createBookmark(it) }
@@ -149,13 +198,23 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private fun afterDocumentChange(document: Document) {
-    if (reloadingDocs.contains(document)) return
+  private fun afterDocumentChange(document: Document, event: DocumentEvent? = null) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     if (file is LightVirtualFile) return
     val manager = BookmarksManager.getInstance(project) ?: return
+
+    if (event != null && (event.isWholeTextReplaced || document.isInBulkUpdate)) {
+      if (updateBookmarksUsingDiffMapping(file, document, event, manager)) {
+        return
+      }
+    }
+
+    validateBookmarksUsingRangeMarker(file, manager)
+  }
+
+  private fun validateBookmarksUsingRangeMarker(file: VirtualFile, manager: BookmarksManager) {
     val map = sortedMapOf<LineBookmarkImpl, Int>(compareBy { it.line })
-    val set = mutableSetOf<Int>()
+    val set = hashSetOf<Int>()
     for (bookmark in manager.bookmarks) {
       if (bookmark is LineBookmarkImpl && bookmark.file == file) {
         val rangeMarker = (manager as? BookmarksManagerImpl)?.findLineHighlighter(bookmark) ?: bookmark.descriptor.rangeMarker
@@ -167,62 +226,312 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
       }
     }
     if (map.isEmpty()) return
+    val document = FileDocumentManager.getInstance().getDocument(file)
     val bookmarks = mutableMapOf<Bookmark, Bookmark?>()
     map.forEach { (bookmark, line) ->
       bookmarks[bookmark] = when {
         line < 0 || set.contains(line) -> null
         else -> {
           set.add(line)
-          createBookmark(file, line)
+          val newExpectedText = document?.let { Util.readLineText(it, line) }
+          createBookmark(file, line, newExpectedText)
         }
       }
     }
     manager.update(bookmarks)
   }
 
+  private class LineTextIndexBuilder(private val document: Document) {
+    private val lineCache: MutableMap<Int, String> = hashMapOf()
+
+    fun findLineByText(text: String, preferredLine: Int): Int {
+      getLineText(preferredLine)?.let { if (it == text) return preferredLine }
+
+      for (distance in 1 until document.lineCount) {
+        getLineText(preferredLine - distance)?.let { if (it == text) return preferredLine - distance }
+        getLineText(preferredLine + distance)?.let { if (it == text) return preferredLine + distance }
+      }
+
+      return -1
+    }
+
+    private fun getLineText(line: Int): String? {
+      if (line !in 0 until document.lineCount) {
+        return null
+      }
+
+      return lineCache.getOrPut(line) {
+        Util.readLineText(document, line) ?: return null
+      }
+    }
+  }
+
+  private fun updateLineBookmark(
+    bookmark: LineBookmarkImpl,
+    event: DocumentEventImpl,
+    document: Document,
+    file: VirtualFile,
+    indexBuilder: LineTextIndexBuilder,
+    processedLines: MutableSet<Int>,
+    updates: MutableMap<Bookmark, Bookmark?>
+  ) {
+    val mappedLine = event.translateLineViaDiffStrict(bookmark.line)
+    val expectedText = bookmark.expectedText
+
+    when {
+      mappedLine >= 0 && mappedLine < document.lineCount && expectedText == Util.readLineText(document, mappedLine) -> {
+        if (processedLines.add(mappedLine)) {
+          if (bookmark.line != mappedLine) {
+            updates[bookmark] = createBookmark(file, mappedLine, expectedText)
+          }
+        }
+        else {
+          updates[bookmark] = InvalidBookmark(this, file.url, bookmark.line, expectedText)
+        }
+      }
+      expectedText != null -> {
+        val preferredLine = if (mappedLine >= 0) mappedLine else bookmark.line
+        val foundLine = indexBuilder.findLineByText(expectedText, preferredLine)
+        updates[bookmark] = if (foundLine >= 0 && processedLines.add(foundLine)) {
+          createBookmark(file, foundLine, expectedText)
+        }
+        else {
+          InvalidBookmark(this, file.url, bookmark.line, expectedText)
+        }
+      }
+      else -> {
+        updates[bookmark] = InvalidBookmark(this, file.url, bookmark.line, null)
+      }
+    }
+  }
+
+  private fun tryRestoreInvalidBookmark(
+    bookmark: InvalidBookmark,
+    file: VirtualFile,
+    document: Document,
+    event: DocumentEventImpl,
+    indexBuilder: LineTextIndexBuilder,
+    processedLines: MutableSet<Int>,
+    updates: MutableMap<Bookmark, Bookmark?>
+  ) {
+    val expectedText = bookmark.expectedText ?: return
+
+    val insertedLines = try {
+      findInsertedLines(document, event)
+    }
+    catch (_: FilesTooBigForDiffException) {
+      null
+    }
+
+    if (!insertedLines.isNullOrEmpty()) {
+      for (line in insertedLines) {
+        if (Util.readLineText(document, line) == expectedText) {
+          if (processedLines.add(line)) {
+            updates[bookmark] = createBookmark(file, line, expectedText)
+            return
+          }
+          else {
+            updates[bookmark] = null
+            return
+          }
+        }
+      }
+    }
+    else {
+      val foundLine = indexBuilder.findLineByText(expectedText, bookmark.line)
+      if (foundLine >= 0) {
+        if (processedLines.add(foundLine)) {
+          updates[bookmark] = createBookmark(file, foundLine, expectedText)
+        }
+        else {
+          updates[bookmark] = null
+        }
+      }
+    }
+  }
+
+  private fun findInsertedLines(document: Document, event: DocumentEventImpl): Set<Int> {
+    val mappedNewLines = hashSetOf<Int>()
+
+    val startLine = document.getLineNumber(event.offset)
+    val oldFragmentLineCount = Diff.splitLines(event.oldFragment).size
+    val newFragmentLineCount = Diff.splitLines(event.newFragment).size
+
+    for (oldLine in startLine until (startLine + oldFragmentLineCount)) {
+      val newLine = event.translateLineViaDiffStrict(oldLine)
+      if (newLine >= 0) {
+        mappedNewLines.add(newLine)
+      }
+    }
+
+    val insertedLines = hashSetOf<Int>()
+    for (newLine in startLine until (startLine + newFragmentLineCount)) {
+      if (newLine !in mappedNewLines) {
+        insertedLines.add(newLine)
+      }
+    }
+
+    return insertedLines
+  }
+
+  private fun updateBookmarksUsingDiffMapping(
+    file: VirtualFile,
+    document: Document,
+    event: DocumentEvent,
+    manager: BookmarksManager
+  ): Boolean {
+    if (event !is DocumentEventImpl) {
+      return false
+    }
+
+    try {
+      val updates = hashMapOf<Bookmark, Bookmark?>()
+      val processedLines = hashSetOf<Int>()
+      val indexBuilder = LineTextIndexBuilder(document)
+
+      val lineBookmarks = manager.bookmarks.filterIsInstance<LineBookmarkImpl>().filter { it.file == file }
+      val invalidBookmarks = manager.bookmarks.filterIsInstance<InvalidBookmark>().filter { it.url == file.url }
+
+      for (bookmark in lineBookmarks) {
+        updateLineBookmark(bookmark, event, document, file, indexBuilder, processedLines, updates)
+      }
+      for (bookmark in invalidBookmarks) {
+        tryRestoreInvalidBookmark(bookmark, file, document, event, indexBuilder, processedLines, updates)
+      }
+
+      if (updates.isNotEmpty()) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("[Diff] Updated ${updates.size} bookmarks in ${file.name}: " +
+                    updates.entries.joinToString(limit = 10) { (old, new) ->
+                      val oldLine = (old as? LineBookmarkImpl)?.line ?: "?"
+                      val newLine = when (new) {
+                        is LineBookmarkImpl -> new.line.toString()
+                        is InvalidBookmark -> "invalid"
+                        null -> "removed"
+                        else -> "?"
+                      }
+                      "$oldLine -> $newLine"
+                    })
+        }
+        manager.update(updates)
+      }
+      return true
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (_: FilesTooBigForDiffException) {
+      return false
+    }
+  }
+
   private fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    val update = events.any { it is VFileCreateEvent || it is VFileDeleteEvent }
-    if (update) validateAlarm.cancelAndRequest()
+    val update = events.any { it is VFileCreateEvent || it is VFileDeleteEvent || it is VFileContentChangeEvent }
+    if (update) requestValidation()
     return null
   }
 
-  private val validateAlarm = SingleAlarm.singleAlarm(task = ::validateAndUpdate, delay = 100, coroutineScope = coroutineScope)
-  private val reloadingDocs = ConcurrentCollectionFactory.createConcurrentSet<Document>()
+  private val validateQueue = DebouncedUpdates.forScope<Unit>(coroutineScope, "validate-bookmarks", 100)
+    .restartTimerOnAdd(true)
+    .runLatest { validateAndUpdate() }
 
-  private fun validateAndUpdate() {
+  /**
+   * Requests asynchronous validation of all line bookmarks.
+   * 
+   * This validates all bookmarks and converts InvalidBookmark to LineBookmarkImpl 
+   * where the file exists and content matches, or vice versa if content has changed.
+   */
+  fun requestValidation() {
+    validateQueue.queue(Unit)
+  }
+
+  private fun captureExpectedTextBeforeReload(file: VirtualFile, document: Document) {
     val manager = BookmarksManager.getInstance(project) ?: return
-    val bookmarks = mutableMapOf<Bookmark, Bookmark?>()
-    manager.bookmarks.forEach { validate(it)?.run { bookmarks[it] = this } }
-    manager.update(bookmarks)
+    for (bookmark in manager.bookmarks) {
+      if (bookmark is LineBookmarkImpl && bookmark.file == file) {
+        bookmark.ensureExpectedTextInitialized(document)
+      }
+    }
   }
 
-  private fun validate(bookmark: Bookmark) = when (bookmark) {
-    is InvalidBookmark -> createValidBookmark(bookmark.url, bookmark.line)
-    is FileBookmarkImpl -> bookmark.file.run { if (isValid) null else createBookmark(url) }
-    is LineBookmarkImpl -> bookmark.file.run { if (isValid) null else createBookmark(url, bookmark.line) }
-    else -> null
+  private suspend fun validateAndUpdate() {
+    val manager = BookmarksManager.getInstance(project) ?: return
+    
+    if (LOG.isDebugEnabled) {
+      LOG.debug("=== LineBookmarkProvider.validateAndUpdate START ===")
+      LOG.debug("Total bookmarks to validate: ${manager.bookmarks.size}")
+    }
+    
+    val bookmarks = readAction {
+      val indexBuilderCache = mutableMapOf<String, LineTextIndexBuilder>()
+      
+      hashMapOf<Bookmark, Bookmark?>().apply {
+        manager.bookmarks.forEach { validate(it, indexBuilderCache)?.run { this@apply[it] = this } }
+      }
+    }
+    
+    if (bookmarks.isNotEmpty()) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Updating ${bookmarks.size} bookmarks after validation")
+      }
+      manager.update(bookmarks)
+    }
+    
+    if (LOG.isDebugEnabled) {
+      LOG.debug("=== LineBookmarkProvider.validateAndUpdate END ===")
+    }
   }
 
-  private fun isNodeVisible(node: AbstractTreeNode<*>) = (node.value as? InvalidBookmark)?.run { line < 0 } ?: true
+  private fun validate(bookmark: Bookmark, indexBuilderCache: MutableMap<String, LineTextIndexBuilder>): Bookmark? {
+    return when (bookmark) {
+      is InvalidBookmark -> {
+        val created = createValidBookmark(bookmark.url, bookmark.line, bookmark.expectedText)
+        if (created != null) {
+          if (LOG.isDebugEnabled) {
+            LOG.debug("  [VALIDATE] Recovered invalid bookmark at line ${bookmark.line}")
+          }
+          return created
+        }
+
+        if (bookmark.expectedText != null && bookmark.line >= 0) {
+          val indexBuilder = indexBuilderCache.getOrPut(bookmark.url) {
+            val file = VirtualFileManager.getInstance().findFileByUrl(bookmark.url) ?: return null
+            val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+            LineTextIndexBuilder(document)
+          }
+          val foundLine = indexBuilder.findLineByText(bookmark.expectedText, bookmark.line)
+          if (foundLine >= 0) {
+            if (LOG.isDebugEnabled) {
+              LOG.debug("  [VALIDATE] Recovered invalid bookmark using line search: $foundLine (was ${bookmark.line})")
+            }
+            return createValidBookmark(bookmark.url, foundLine, bookmark.expectedText)
+          }
+        }
+        
+        null
+      }
+      is FileBookmarkImpl -> bookmark.file.run { if (isValid) null else InvalidBookmark(this@LineBookmarkProvider, url, -1, null) }
+      is LineBookmarkImpl -> bookmark.file.run { if (isValid) null else InvalidBookmark(this@LineBookmarkProvider, url, bookmark.line, bookmark.expectedText) }
+      else -> null
+    }
+  }
 
   init {
     if (!project.isDefault) {
       val multicaster = EditorFactory.getInstance().eventMulticaster
-      multicaster.addDocumentListener(object : Simple {
-        override fun afterDocumentChange(document: Document) {
-          this@LineBookmarkProvider.afterDocumentChange(document)
+      multicaster.addDocumentListener(object : DocumentListener {
+        override fun beforeDocumentChange(event: DocumentEvent) {
+          val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
+          if (event.isWholeTextReplaced || event.document.isInBulkUpdate) {
+            captureExpectedTextBeforeReload(file, event.document)
+          }
+        }
+
+        override fun documentChanged(event: DocumentEvent) {
+          this@LineBookmarkProvider.afterDocumentChange(event.document, event)
         }
       }, project)
-      getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
-
-      project.messageBus.connect().subscribe<FileDocumentManagerListener>(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
-        override fun beforeFileContentReload(file: VirtualFile, document: Document) {
-          reloadingDocs.add(document)
-        }
-        override fun fileContentReloaded(file: VirtualFile, document: Document) {
-          reloadingDocs.remove(document)
-        }
-      })
+      VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
     }
   }
 
@@ -234,6 +543,10 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     }
 
     fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let {
+      if (it is LineBookmarkImpl && it.expectedText != null) {
+        return it.expectedText
+      }
+
       runReadActionBlocking {
         readLineText(it.file, it.line)
       }
@@ -241,6 +554,12 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
 
     private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      return readLineText(document, line)
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun readLineText(document: Document, line: Int): String? {
       if (line < 0 || document.lineCount <= line) return null
       val start = document.getLineStartOffset(line)
       if (start < 0) return null

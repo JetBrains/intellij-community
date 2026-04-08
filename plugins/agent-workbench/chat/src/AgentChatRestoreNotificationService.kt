@@ -27,7 +27,8 @@ internal object AgentChatRestoreNotificationService {
       file = file,
       reason = reason,
     )
-    ApplicationManager.getApplication().invokeLater {
+    val application = ApplicationManager.getApplication() ?: return
+    application.invokeLater {
       if (!project.isDisposed) {
         FileEditorManager.getInstance(project).closeFile(file)
       }

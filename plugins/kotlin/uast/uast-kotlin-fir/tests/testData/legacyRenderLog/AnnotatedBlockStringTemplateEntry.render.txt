@@ -1,0 +1,11 @@
+public final class AnnotatedBlockStringTemplateEntryKt {
+    public static final fun test(@org.jetbrains.annotations.NotNull expr: java.lang.Object) : void {
+        var v1: java.lang.String = expr
+        var v2: java.lang.String = expr
+        var v3: java.lang.String = expr
+        var v4: java.lang.String = "Start " + expr + " end"
+        var v5: java.lang.String = "Start " + expr
+        var v6: java.lang.String = 1 + 2
+        var v7: java.lang.String = UastEmptyExpression
+    }
+}

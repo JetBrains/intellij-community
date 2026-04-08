@@ -1,0 +1,544 @@
+{
+  "threadDump": {
+    "processId": "21166",
+    "time": "2026-03-11T12:34:29.887964Z",
+    "runtimeVersion": "25.0.2+10-69",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "3",
+            "time": "2026-03-11T12:34:29.892872Z",
+            "name": "main",
+            "state": "WAITING",
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:369)",
+              "java.base\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:305)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl.join(StructuredTaskScopeImpl.java:243)",
+              "Main.runNestedScopes(Main.java:47)",
+              "Main.main(Main.java:11)"
+            ]
+          },
+          {
+            "tid": "15",
+            "time": "2026-03-11T12:34:29.893387Z",
+            "name": "Reference Handler",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.ref.Reference.waitForReferencePendingList(Native Method)",
+              "java.base\/java.lang.ref.Reference.processPendingReferences(Reference.java:246)",
+              "java.base\/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)"
+            ]
+          },
+          {
+            "tid": "16",
+            "time": "2026-03-11T12:34:29.893472Z",
+            "name": "Finalizer",
+            "state": "WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@70797255",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.Object.wait(Object.java:351)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:137)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:215)",
+              "java.base\/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 4,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@70797255"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "17",
+            "time": "2026-03-11T12:34:29.895268Z",
+            "name": "Signal Dispatcher",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "32",
+            "time": "2026-03-11T12:34:29.895408Z",
+            "name": "Common-Cleaner",
+            "state": "TIMED_WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@58d28d92",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:123)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:201)",
+              "java.base\/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 3,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@58d28d92"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "33",
+            "time": "2026-03-11T12:34:29.895715Z",
+            "name": "Monitor Ctrl-Break",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/sun.nio.ch.SocketDispatcher.read0(Native Method)",
+              "java.base\/sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:48)",
+              "java.base\/sun.nio.ch.NioSocketImpl.tryRead(NioSocketImpl.java:255)",
+              "java.base\/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:305)",
+              "java.base\/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:354)",
+              "java.base\/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:798)",
+              "java.base\/java.net.Socket$SocketInputStream.implRead(Socket.java:974)",
+              "java.base\/java.net.Socket$SocketInputStream.read(Socket.java:964)",
+              "java.base\/sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:279)",
+              "java.base\/sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:322)",
+              "java.base\/sun.nio.cs.StreamDecoder.read(StreamDecoder.java:186)",
+              "java.base\/java.io.InputStreamReader.read(InputStreamReader.java:183)",
+              "java.base\/java.io.BufferedReader.fill(BufferedReader.java:166)",
+              "java.base\/java.io.BufferedReader.readLine(BufferedReader.java:333)",
+              "java.base\/java.io.BufferedReader.readLine(BufferedReader.java:400)",
+              "com.intellij.rt.execution.application.AppMainV2$1.run(AppMainV2.java:31)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 10,
+                "locks": [
+                  "java.io.InputStreamReader@1905747c"
+                ]
+              },
+              {
+                "depth": 13,
+                "locks": [
+                  "java.io.InputStreamReader@1905747c"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "34",
+            "time": "2026-03-11T12:34:29.896229Z",
+            "name": "Notification Thread",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "35",
+            "time": "2026-03-11T12:34:29.896301Z",
+            "name": "VirtualThread-unblocker",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.takeVirtualThreadListToUnblock(Native Method)",
+              "java.base\/java.lang.VirtualThread.unblockVirtualThreads(VirtualThread.java:1507)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ]
+          },
+          {
+            "tid": "37",
+            "time": "2026-03-11T12:34:29.896416Z",
+            "name": "Attach Listener",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.ThreadSnapshot.create(Native Method)",
+              "java.base\/jdk.internal.vm.ThreadSnapshot.of(ThreadSnapshot.java:60)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:316)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:291)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:266)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:131)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:89)"
+            ]
+          },
+          {
+            "tid": "61",
+            "time": "2026-03-11T12:34:29.897233Z",
+            "name": "RMI TCP Accept-0",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/sun.nio.ch.Net.accept(Native Method)",
+              "java.base\/sun.nio.ch.NioSocketImpl.accept(NioSocketImpl.java:751)",
+              "java.base\/java.net.ServerSocket.implAccept(ServerSocket.java:593)",
+              "java.base\/java.net.ServerSocket.platformImplAccept(ServerSocket.java:560)",
+              "java.base\/java.net.ServerSocket.implAccept(ServerSocket.java:536)",
+              "java.base\/java.net.ServerSocket.implAccept(ServerSocket.java:482)",
+              "java.base\/java.net.ServerSocket.accept(ServerSocket.java:441)",
+              "jdk.management.agent\/sun.management.jmxremote.LocalRMIServerSocketFactory$1.accept(LocalRMIServerSocketFactory.java:52)",
+              "java.rmi\/sun.rmi.transport.tcp.TCPTransport$AcceptLoop.executeAcceptLoop(TCPTransport.java:369)",
+              "java.rmi\/sun.rmi.transport.tcp.TCPTransport$AcceptLoop.run(TCPTransport.java:333)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          },
+          {
+            "tid": "64",
+            "time": "2026-03-11T12:34:29.897876Z",
+            "name": "JMX server connection timeout 64",
+            "state": "TIMED_WAITING",
+            "waitingOn": "[I@6242c806",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.management\/com.sun.jmx.remote.internal.ServerCommunicatorAdmin$Timeout.run(ServerCommunicatorAdmin.java:171)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 2,
+                "locks": [
+                  "[I@6242c806"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "36",
+            "time": "2026-03-11T12:34:29.898174Z",
+            "virtual": true,
+            "name": "rootContainerThread",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$main$0(Main.java:9)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "38"
+          }
+        ],
+        "threadCount": "12"
+      },
+      {
+        "container": "ForkJoinPool-1\/jdk.internal.vm.SharedThreadContainer@4455e221",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+          {
+            "tid": "38",
+            "time": "2026-03-11T12:34:29.900799Z",
+            "name": "ForkJoinPool-1-worker-1",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.Continuation.run(Continuation.java:251)",
+              "java.base\/java.lang.VirtualThread.runContinuation(VirtualThread.java:293)",
+              "java.base\/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1750)",
+              "java.base\/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1742)",
+              "java.base\/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1659)",
+              "java.base\/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)",
+              "java.base\/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)",
+              "java.base\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)",
+              "java.base\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)"
+            ]
+          },
+          {
+            "tid": "39",
+            "time": "2026-03-11T12:34:29.900925Z",
+            "name": "ForkJoinPool-1-worker-2",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.ForkJoinPool@18bd007d"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:2109)",
+              "java.base\/java.util.concurrent.ForkJoinPool.deactivate(ForkJoinPool.java:2063)",
+              "java.base\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2027)",
+              "java.base\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)"
+            ]
+          },
+          {
+            "tid": "42",
+            "time": "2026-03-11T12:34:29.900990Z",
+            "name": "ForkJoinPool-1-worker-3",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.ForkJoinPool@18bd007d"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:2109)",
+              "java.base\/java.util.concurrent.ForkJoinPool.deactivate(ForkJoinPool.java:2063)",
+              "java.base\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2027)",
+              "java.base\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)"
+            ]
+          }
+        ],
+        "threadCount": "3"
+      },
+      {
+        "container": "java.util.concurrent.ThreadPoolExecutor@1a7dcc0",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": "0"
+      },
+      {
+        "container": "ForkJoinPool.commonPool\/jdk.internal.vm.SharedThreadContainer@788bcb12",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": "0"
+      },
+      {
+        "container": "java.util.concurrent.ThreadPoolExecutor@3176f924",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+          {
+            "tid": "62",
+            "time": "2026-03-11T12:34:29.908902Z",
+            "name": "RMI TCP Connection(1)-172.29.40.176",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/sun.nio.ch.Net.poll(Native Method)",
+              "java.base\/sun.nio.ch.NioSocketImpl.park(NioSocketImpl.java:190)",
+              "java.base\/sun.nio.ch.NioSocketImpl.timedRead(NioSocketImpl.java:279)",
+              "java.base\/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:302)",
+              "java.base\/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:354)",
+              "java.base\/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:798)",
+              "java.base\/java.net.Socket$SocketInputStream.implRead(Socket.java:974)",
+              "java.base\/java.net.Socket$SocketInputStream.read(Socket.java:964)",
+              "java.base\/java.io.BufferedInputStream.fill(BufferedInputStream.java:289)",
+              "java.base\/java.io.BufferedInputStream.read(BufferedInputStream.java:308)",
+              "java.base\/java.io.FilterInputStream.read(FilterInputStream.java:71)",
+              "java.rmi\/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:525)",
+              "java.rmi\/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:744)",
+              "java.rmi\/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:623)",
+              "java.base\/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)",
+              "java.base\/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 9,
+                "locks": [
+                  "java.io.BufferedInputStream@13246ac8"
+                ]
+              }
+            ]
+          }
+        ],
+        "threadCount": "1"
+      },
+      {
+        "container": "java.util.concurrent.ScheduledThreadPoolExecutor@344d9c6a",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+          {
+            "tid": "63",
+            "time": "2026-03-11T12:34:29.909304Z",
+            "name": "RMI Scheduler(0)",
+            "state": "TIMED_WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@5763215c"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)",
+              "java.base\/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1166)",
+              "java.base\/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:883)",
+              "java.base\/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1016)",
+              "java.base\/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1076)",
+              "java.base\/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          }
+        ],
+        "threadCount": "1"
+      },
+      {
+        "container": "Main Scope\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@272d6d25",
+        "parent": "<root>",
+        "owner": "3",
+        "threads": [
+          {
+            "tid": "40",
+            "time": "2026-03-11T12:34:29.910258Z",
+            "virtual": true,
+            "name": "myVT@1111",
+            "state": "WAITING",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:367)",
+              "java.base\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:305)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl.join(StructuredTaskScopeImpl.java:243)",
+              "Main.processGroupImpl(Main.java:72)",
+              "Main.run(Main.java:56)",
+              "Main.lambda$runNestedScopes$1(Main.java:32)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          },
+          {
+            "tid": "41",
+            "time": "2026-03-11T12:34:29.910408Z",
+            "virtual": true,
+            "name": "myVT@2222",
+            "state": "WAITING",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:367)",
+              "java.base\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:305)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl.join(StructuredTaskScopeImpl.java:243)",
+              "Main.processGroupImpl(Main.java:72)",
+              "Main.run(Main.java:56)",
+              "Main.lambda$runNestedScopes$2(Main.java:37)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          },
+          {
+            "tid": "47",
+            "time": "2026-03-11T12:34:29.910491Z",
+            "virtual": true,
+            "name": "myVT@3333",
+            "state": "WAITING",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:367)",
+              "java.base\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:305)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl.join(StructuredTaskScopeImpl.java:243)",
+              "Main.processGroupImpl(Main.java:72)",
+              "Main.run(Main.java:56)",
+              "Main.lambda$runNestedScopes$3(Main.java:42)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          }
+        ],
+        "threadCount": "3"
+      },
+      {
+        "container": "Group-A\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@311ab950",
+        "parent": "Main Scope\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@272d6d25",
+        "owner": "40",
+        "threads": [
+          {
+            "tid": "56",
+            "time": "2026-03-11T12:34:29.910696Z",
+            "virtual": true,
+            "name": "myVT@A11",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "59"
+          },
+          {
+            "tid": "45",
+            "time": "2026-03-11T12:34:29.910953Z",
+            "virtual": true,
+            "name": "myVT@A12",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "53"
+          }
+        ],
+        "threadCount": "2"
+      },
+      {
+        "container": "Group-A\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@7fbd07ee",
+        "parent": "Main Scope\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@272d6d25",
+        "owner": "41",
+        "threads": [
+          {
+            "tid": "49",
+            "time": "2026-03-11T12:34:29.911072Z",
+            "virtual": true,
+            "name": "myVT@A21",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "44"
+          },
+          {
+            "tid": "43",
+            "time": "2026-03-11T12:34:29.911145Z",
+            "virtual": true,
+            "name": "myVT@A22",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "57"
+          }
+        ],
+        "threadCount": "2"
+      },
+      {
+        "container": "Group-B\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@33b50979",
+        "parent": "Main Scope\/jdk.internal.misc.ThreadFlock$ThreadContainerImpl@272d6d25",
+        "owner": "47",
+        "threads": [
+          {
+            "tid": "50",
+            "time": "2026-03-11T12:34:29.911664Z",
+            "virtual": true,
+            "name": "myVT@B",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "48"
+          },
+          {
+            "tid": "51",
+            "time": "2026-03-11T12:34:29.911739Z",
+            "virtual": true,
+            "name": "myVT@B",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "46"
+          },
+          {
+            "tid": "52",
+            "time": "2026-03-11T12:34:29.911803Z",
+            "virtual": true,
+            "name": "myVT@B",
+            "state": "RUNNABLE",
+            "stack": [
+              "Main.lambda$run$0(Main.java:59)",
+              "java.base\/java.util.concurrent.StructuredTaskScopeImpl$SubtaskImpl.run(StructuredTaskScopeImpl.java:325)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "54"
+          }
+        ],
+        "threadCount": "3"
+      }
+    ]
+  }
+}

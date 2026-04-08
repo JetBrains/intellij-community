@@ -359,6 +359,10 @@ open class IDETestContext(
     SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, true) }
   }
 
+  fun enableFuzzyFilesSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
+    addSystemProperty("search.everywhere.fuzzy.files.enabled", true)
+  }
+
   fun withKotlinPluginK2(): IDETestContext = applyVMOptionsPatch {
     addSystemProperty("idea.kotlin.plugin.use.k1", false)
   }
@@ -433,6 +437,7 @@ open class IDETestContext(
     launchName: String = "",
     expectedKill: Boolean = false,
     expectedExitCode: Int = 0,
+    analyzeProcessExit: Boolean = true,
     collectNativeThreads: Boolean = false,
     stdOut: ExecOutputRedirect? = null,
     configure: IDERunContext.() -> Unit = {},
@@ -446,6 +451,7 @@ open class IDETestContext(
         launchName = launchName,
         expectedKill = expectedKill,
         expectedExitCode = expectedExitCode,
+        analyzeProcessExit = analyzeProcessExit,
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut,
         configure = configure,
@@ -464,6 +470,7 @@ open class IDETestContext(
     launchName: String = "",
     expectedKill: Boolean = false,
     expectedExitCode: Int = 0,
+    analyzeProcessExit: Boolean = true,
     collectNativeThreads: Boolean = false,
     stdOut: ExecOutputRedirect? = null,
     configure: suspend IDERunContext.() -> Unit = {},
@@ -480,6 +487,7 @@ open class IDETestContext(
         launchName = launchName,
         expectedKill = expectedKill,
         expectedExitCode = expectedExitCode,
+        analyzeProcessExit = analyzeProcessExit,
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )

@@ -143,6 +143,16 @@ public interface DataGrid extends CoreGrid<GridRow, GridColumn> {
                   @Nullable Runnable moveToNextCellRunnable,
                   @NotNull GridRequestSource source);
 
+  default void setValueAt(@NotNull ModelIndexSet<GridRow> viewRows,
+                          @NotNull ModelIndexSet<GridColumn> viewColumns,
+                          @Nullable Object value,
+                          boolean allowImmediateUpdate,
+                          @Nullable Runnable moveToNextCellRunnable,
+                          @NotNull GridRequestSource source,
+                          @Nullable Object metadata) {
+    setValueAt(viewRows, viewColumns, value, allowImmediateUpdate, moveToNextCellRunnable, source);
+  }
+
   boolean isHeaderSelecting();
 
   void updateSortKeysFromColumnAttributes();

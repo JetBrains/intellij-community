@@ -136,10 +136,7 @@ public final class MethodParameterInfoHandler
   private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart, boolean allowOuter) {
     PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart, this, allowOuter);
     if (argumentList == null && allowOuter) {
-      PsiCall call = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, PsiMethodCallExpression.class, PsiMethod.class);
-      if (call == null) {
-        call = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, PsiNewExpression.class, PsiMethod.class);
-      }
+      PsiCall call = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, PsiCallExpression.class, PsiMethod.class);
       if (call != null) {
         argumentList = call.getArgumentList();
         if (argumentList != null && !argumentList.getTextRange().containsOffset(offset)) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
     }
   }
 
+  @IJIgnore(issue = "AT-4013")
   public void testSimple() {
     doTest();
   }
@@ -36,6 +38,7 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
     doTest();
   }
 
+  @IJIgnore(issue = "AT-4013")
   public void testAssignment() {
     doTest();
   }
@@ -44,5 +47,12 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
   @Override
   protected String getSuffix() {
     return "reqnonnull";
+  }
+
+  public static class ModObjectsRequireNonNullPostfixTemplateTest extends ObjectsRequireNonNullPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
   }
 }

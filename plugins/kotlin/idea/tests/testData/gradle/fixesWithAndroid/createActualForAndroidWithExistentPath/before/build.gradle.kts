@@ -8,6 +8,7 @@ repositories {
 }
 
 android {
+    namespace = "org.jetbrains.kotlin.gradle.idea.importing.android.fix.test"
     compileSdkVersion({{compile_sdk_version}})
     buildToolsVersion("{{build_tools_version}}")
 }

@@ -123,6 +123,35 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/smart/throwables")
+    public static class Throwables extends AbstractSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ThrowableFromJava.kt")
+        public void testThrowableFromJava() throws Exception {
+            runTest("../testData/handlers/smart/throwables/ThrowableFromJava.kt");
+        }
+
+        @TestMetadata("ThrowableFromStdlib.kt")
+        public void testThrowableFromStdlib() throws Exception {
+            runTest("../testData/handlers/smart/throwables/ThrowableFromStdlib.kt");
+        }
+
+        @TestMetadata("ThrowableWithoutArguments.kt")
+        public void testThrowableWithoutArguments() throws Exception {
+            runTest("../testData/handlers/smart/throwables/ThrowableWithoutArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/smart")
     public static class Uncategorized extends AbstractSmartCompletionHandlerTest {
         @java.lang.Override

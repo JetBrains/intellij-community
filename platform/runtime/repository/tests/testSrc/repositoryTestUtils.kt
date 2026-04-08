@@ -22,7 +22,8 @@ fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescrip
 }
 
 fun createModuleDescriptor(id: String, resourcePaths: List<String>, dependencies: List<String> = emptyList()): RawRuntimeModuleDescriptor {
-  return RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(id), resourcePaths, dependencies.map { RuntimeModuleId.raw(it) })
+  return RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(id, RuntimeModuleId.DEFAULT_NAMESPACE), resourcePaths,
+                                           dependencies.map { RuntimeModuleId.raw(it, RuntimeModuleId.DEFAULT_NAMESPACE) })
 }
 
 fun writePluginXml(resourceRoot: Path, @Language("XM") content: String) {

@@ -17,6 +17,8 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/util:util-ui",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "@lib//:kotlin-stdlib",
     "//libraries/hash4j",
   ]
@@ -32,6 +34,8 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//libraries/hash4j:hash4j_test_lib",
   ]
 )

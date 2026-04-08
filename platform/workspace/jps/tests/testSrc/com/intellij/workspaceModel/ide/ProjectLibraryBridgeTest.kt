@@ -29,6 +29,7 @@ import org.junit.ClassRule
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.fail
 
 class ProjectLibraryBridgeTest {
   companion object {
@@ -163,9 +164,10 @@ class ProjectLibraryBridgeTest {
     // Catch exception during library creation
     try {
       createProjectLibrary(libraryName)
+      fail("Exception should be thrown because library named `$libraryName` already exists.")
     }
     catch (e: IllegalStateException) {
-      assertEquals("Project library named $libraryName already exists", e.message)
+      assertEquals("Project library named `$libraryName` already exists", e.message)
     }
 
     // Check event was not published

@@ -16,6 +16,12 @@ internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {
     uncaughtExceptions.add(e)
   }
 
+  fun drainExceptions(predicate: (Throwable) -> Boolean): List<Throwable> {
+    val matching = uncaughtExceptions.filter(predicate)
+    uncaughtExceptions.removeAll(matching)
+    return matching
+  }
+
   fun assertAllExceptionAreCaught() {
     if (uncaughtExceptions.isEmpty()) return
 

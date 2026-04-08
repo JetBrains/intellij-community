@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IMPORT: dependency.util4
 package p
 

@@ -5,9 +5,11 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -18,6 +20,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
@@ -25,7 +29,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -49,6 +56,24 @@ public class ExtensionPointImplTest {
       Disposer.dispose(disposable);
     }
   }
+
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+  @Rule
+  public TestRule checkNoControlFlowExceptionsAreLoggedRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+        @Override
+        public boolean processWarn(@NotNull String category, @NotNull String message, @Nullable Throwable t) {
+          assertThat(message).doesNotContain("Control-flow exceptions (e.g. this");
+
+          return !message.contains("Cancellation while notifying");
+        }
+      }, ()-> base.evaluate());
+    }
+  };
 
   @Test
   public void testCreate() {
@@ -269,6 +294,19 @@ public class ExtensionPointImplTest {
     adapter.setFire(null);
     extensionPoint.getExtensionList();
     assertThat(extensions).contains("first", "second", "");
+  }
+  @Test
+  public void testThrowingListenersMustNotCrashEverythingElse() {
+    ExtensionPoint<@NotNull String> extensionPoint = buildExtensionPoint(String.class);
+    
+    extensionPoint.addExtensionPointListener(new ExtensionPointAdapter<>() {
+      @Override
+      public void extensionListChanged() {
+        throw new ProcessCanceledException();
+      }
+    }, true, null);
+
+    extensionPoint.registerExtension("first", disposable);
   }
 
   @Test

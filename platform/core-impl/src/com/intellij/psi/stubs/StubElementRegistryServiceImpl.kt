@@ -5,27 +5,28 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion
+import com.intellij.util.concurrency.CancellableClearableLazy
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.Collections
 
 @ApiStatus.Internal
 open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : CoreStubElementRegistryServiceImpl() {
-  @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
-  @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
-  @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>
-  @Volatile protected lateinit var serializer2typeMap: Map<ObjectStubSerializer<*, *>, IElementType>
-    private set
+  private val state = CancellableClearableLazy(::doComputeStateUnderLock)
 
   init {
-    STUB_REGISTRY_EP.addChangeListener(coroutineScope) { init() }
+    STUB_REGISTRY_EP.addChangeListener(coroutineScope) { state.clear() }
     STUB_DEFINITION_EP.point?.addChangeListener(coroutineScope) { TemplateLanguageStubBaseVersion.dropVersion() }
-    init()
   }
 
-  private fun init() {
+  protected fun getState(): StubElementRegistryState =
+    state.value
+
+  private fun doComputeStateUnderLock(): StubElementRegistryState {
     val factories = mutableMapOf<IElementType, StubElementFactory<*, *>>()
     val lightFactories = mutableMapOf<IElementType, LightStubElementFactory<*, *>>()
     val type2serializerMap = mutableMapOf<IElementType, ObjectStubSerializer<*, *>>()
@@ -34,31 +35,37 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
     val registry = StubRegistryImpl(factories, lightFactories, type2serializerMap, serializer2typeMap)
 
     STUB_REGISTRY_EP.forEachExtensionSafe {
+      ProgressManager.checkCanceled()
       it.register(registry)
     }
 
-    synchronized(this) {
-      this.factories = factories
-      this.lightFactories = lightFactories
-      this.type2serializerMap = type2serializerMap
-      this.serializer2typeMap = serializer2typeMap
-    }
+    return StubElementRegistryState(
+      factories = Collections.unmodifiableMap(factories),
+      lightFactories = Collections.unmodifiableMap(lightFactories),
+      type2serializerMap = Collections.unmodifiableMap(type2serializerMap),
+      serializer2typeMap = Collections.unmodifiableMap(serializer2typeMap),
+    )
+  }
+
+  fun ensureStateLoaded() {
+    getState()
   }
 
   override fun getStubFactory(type: IElementType): StubElementFactory<*, *>? {
-    return super.getStubFactory(type) ?: factories[type]
+    return super.getStubFactory(type) ?: getState().factories[type]
   }
 
   override fun getLightStubFactory(type: IElementType): LightStubElementFactory<*, *>? {
-    return super.getLightStubFactory(type) ?: lightFactories[type]
+    return super.getLightStubFactory(type) ?: getState().lightFactories[type]
   }
 
   override fun getStubSerializer(type: IElementType): ObjectStubSerializer<*, Stub>? {
-    return (super.getStubSerializer(type) ?: type2serializerMap[type]) as ObjectStubSerializer<*, Stub>?
+    @Suppress("UNCHECKED_CAST")
+    return (super.getStubSerializer(type) ?: getState().type2serializerMap[type]) as ObjectStubSerializer<*, Stub>?
   }
 
   fun getElementTypeBySerializer(serializer: ObjectStubSerializer<*, *>): IElementType? {
-    return serializer as? IElementType ?: serializer2typeMap[serializer]
+    return serializer as? IElementType ?: getState().serializer2typeMap[serializer]
   }
 
   override fun getStubDescriptor(language: Language): LanguageStubDescriptor? {
@@ -80,6 +87,13 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
     )
   }
 
+  protected class StubElementRegistryState(
+    val factories: Map<IElementType, StubElementFactory<*, *>>,
+    val lightFactories: Map<IElementType, LightStubElementFactory<*, *>>,
+    val type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>,
+    val serializer2typeMap: Map<ObjectStubSerializer<*, *>, IElementType>,
+  )
+
   companion object {
     @JvmStatic
     fun getInstanceImpl(): StubElementRegistryServiceImpl = StubElementRegistryService.getInstance() as StubElementRegistryServiceImpl
@@ -87,10 +101,10 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
 }
 
 @JvmField
-internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
+internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension("com.intellij.languageStubDefinition")
 
 @JvmField
-internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
+internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName("com.intellij.stubElementRegistryExtension")
 
 private class StubRegistryImpl(
   private val factories: MutableMap<IElementType, StubElementFactory<*, *>>,

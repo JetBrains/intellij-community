@@ -7,22 +7,21 @@
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-- ... and `tox` with `tox-uv` plugin ...
+- to run all tests ...
 
 ```sh
-uv tool install tox --with tox-uv
+./run_tests.sh
 ```
 
-- to run tests ...
+- to run a specific module, e.g., ...
 
 ```sh
-tox
+uv run --python 3.14 __main__.py tests/pycharm_tests/test_jb_unittest_runner.py
 ```
 
 - the tests are executed on all supported Python versions using `uv.lock` for reproducible builds
-- plus `latest` environment—with latest available dependencies (outside the aggregator)
 - no manual Python installation is required
-- to update the list of dependencies / supported Python versions—edit `pyproject.toml`
+- to update the list of dependencies / supported Python versions - edit `pyproject.toml`
 - to update the lock file ...
 
 ```sh

@@ -79,11 +79,6 @@ class KotlinMppTestsContext(
 ) : AbstractKotlinSyncTestsContext(testFeatures) {
     override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
 
-    override lateinit var description: Description
-    override lateinit var testProjectRoot: File
-    override lateinit var testProject: Project
-    override lateinit var gradleJdkPath: File
-
     // Additionally mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
     override val enabledFeatures: List<TestFeature<*>>
         get() = super.enabledFeatures.filter { it !is TestTasksChecker }

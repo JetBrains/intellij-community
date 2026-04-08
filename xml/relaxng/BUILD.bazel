@@ -26,6 +26,7 @@ jvm_library(
     "//xml/impl",
     "//xml/dom-openapi:dom",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-impl",
     "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
     "@lib//:relaxng-isorelax",
@@ -45,6 +46,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//jps/model-api:model",
     "//jps/model-impl",
+    "//platform/util:util-ui",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -69,6 +71,7 @@ jvm_library(
     "//xml/impl:impl_test_lib",
     "//xml/dom-openapi:dom_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util/nanoxml:nanoxml_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
@@ -84,6 +87,7 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//jps/model-api:model_test_lib",
     "//jps/model-impl:model-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.relaxng` end

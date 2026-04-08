@@ -1697,7 +1697,7 @@ class PluginDependencyGeneratorTest {
   }
 
   @Test
-  fun `plugin dependency is skipped when only CodeServer misses bundled owner`(@TempDir tempDir: Path) {
+  fun `plugin dependency is kept when only bundled owner plugin provides target`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         contentModule("intellij.platform.ide.impl") {
@@ -1734,8 +1734,8 @@ class PluginDependencyGeneratorTest {
 
       if (pluginXmlDiff != null) {
         assertThat(pluginXmlDiff.expectedContent)
-          .describedAs("CodeServer must be excluded from embedded-check scope")
-          .doesNotContain("""<module name="intellij.platform.ide.impl"/>""")
+          .describedAs("Bundled plugin content alone does not make the target globally embedded")
+          .contains("""<module name="intellij.platform.ide.impl"/>""")
       }
     }
   }

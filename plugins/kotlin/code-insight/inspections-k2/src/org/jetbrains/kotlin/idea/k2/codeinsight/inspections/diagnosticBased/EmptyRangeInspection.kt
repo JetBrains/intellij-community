@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -101,7 +100,6 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
             is KtNameReferenceExpression -> {
                 val initializer = when (val resolved = mainReference.resolve()) {
                     is KtProperty -> if (resolved.isVar) null else resolved.initializer
-                    is KtParameter -> resolved.defaultValue
                     else -> null
                 }
                 initializer?.normalizedValue()

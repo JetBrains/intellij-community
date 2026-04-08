@@ -59,6 +59,7 @@ jvm_library(
     "//platform/eel",
     "//java/java-indexing-api:indexing",
     "//java/openapi:java",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/polySymbols",
   ]
 )
@@ -105,6 +106,7 @@ jvm_library(
     "//platform/eel:eel_test_lib",
     "//java/java-indexing-api:indexing_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/polySymbols:polySymbols_test_lib",
   ]
 )

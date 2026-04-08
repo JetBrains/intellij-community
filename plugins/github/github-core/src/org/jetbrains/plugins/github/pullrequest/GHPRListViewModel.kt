@@ -80,7 +80,8 @@ class GHPRListViewModel internal constructor(
   }
 
   private val searchHistoryModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
-  val searchVm: GHPRSearchPanelViewModel = GHPRSearchPanelViewModel(cs, project, repositoryDataService, searchHistoryModel, dataContext.securityService.currentUser)
+  val searchVm: GHPRSearchPanelViewModel =
+    GHPRSearchPanelViewModel(cs, project, repositoryDataService, dataContext.securityService, searchHistoryModel)
 
   private val _focusRequests = Channel<Unit>(1)
   internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()

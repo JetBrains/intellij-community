@@ -68,8 +68,21 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   private final DumbService myDumbService;
   private final PsiDocumentManager myDocManager;
 
+  /**
+   * @deprecated use {@link InjectedLanguageManagerImpl#findInstanceImpl(Project)}
+   */
+  @Deprecated
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)getInstance(project);
+  }
+
+  @Nullable
+  public static InjectedLanguageManagerImpl findInstanceImpl(@NotNull Project project) {
+    InjectedLanguageManager instance = getInstance(project);
+    if (!(instance instanceof InjectedLanguageManagerImpl injectedLanguageManager)) {
+      return null;
+    }
+    return injectedLanguageManager;
   }
 
   public InjectedLanguageManagerImpl(Project project) {

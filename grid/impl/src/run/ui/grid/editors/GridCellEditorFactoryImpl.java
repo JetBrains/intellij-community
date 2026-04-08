@@ -29,7 +29,7 @@ public class GridCellEditorFactoryImpl implements GridCellEditorFactoryProvider 
   }
 
   @Override
-  public @Nullable GridCellEditorFactory getEditorFactory(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return GridCellEditorFactoryProvider.getEditorFactory(myDefaultFactories, factory -> factory.getSuitability(grid, row, column), GridCellEditorFactory.class);
+  public @Nullable GridCellEditorFactory getEditorFactory(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return GridCellEditorFactoryProvider.getEditorFactory(myDefaultFactories, factory -> factory.getSuitability(grid, row, column, value), GridCellEditorFactory.class);
   }
 }

@@ -1,0 +1,8 @@
+// FIX: Convert to sealed class
+interface Base {
+    val value: String
+}
+sealed class Result : Base {
+    override val value: String get() = "default"
+}
+class Success : Result()

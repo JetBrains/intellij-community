@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,7 @@ public final class LombokLibraryUtil {
   }
 
   private static boolean detectLombokJarsSlow(Project project) {
+    if (!Registry.is("lombok.slow.jar.detection.enabled")) return false;
     // it is required for JARs attached directly from disk
     // or via build systems that do not supply Maven coordinates properly via LibraryWithMavenCoordinatesProperties
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {

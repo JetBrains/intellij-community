@@ -1,7 +1,11 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.devkit.core"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.psi"/>
+    <!-- endregion -->
   </dependencies>
   <actions resource-bundle="messages.DevkitScaffoldingBundle">
     <action id="newIjModule" icon="AllIcons.Nodes.Module"

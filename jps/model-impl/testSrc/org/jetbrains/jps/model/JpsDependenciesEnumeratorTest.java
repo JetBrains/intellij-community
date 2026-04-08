@@ -53,19 +53,19 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   }
 
   private static String getFastUtilSources() {
-    return IntelliJProjectConfiguration.getProjectLibrary("fastutil-min").getSourcesUrls().getFirst();
+    return getFastUtilLibrary().getSourcesUrls().getFirst();
   }
 
   private static String getFastUtilJar() {
-    return getJarUrlFromProjectLib("fastutil-min");
+    return assertOneElement(getFastUtilLibrary().getClassesUrls());
+  }
+
+  private static IntelliJProjectConfiguration.LibraryRoots getFastUtilLibrary() {
+    return IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min");
   }
 
   private static String getSampleLibJar() {
-    return getJarUrlFromProjectLib("byte-buddy");
-  }
-
-  private static String getJarUrlFromProjectLib(String libraryName) {
-    return assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls(libraryName));
+    return assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("byte-buddy"));
   }
 
   private static String getRtJarJdk17() {

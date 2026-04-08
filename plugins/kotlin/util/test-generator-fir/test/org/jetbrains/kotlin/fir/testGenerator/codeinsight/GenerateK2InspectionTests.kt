@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractAllOpenLocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2ActualExpectTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2AmbiguousActualsTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
@@ -41,6 +42,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantWith", pattern = pattern)
             model("${idea}/inspectionsLocal/implicitThis")
             model("${idea}/inspectionsLocal/redundantInnerClassModifier")
+            model("${idea}/inspectionsLocal/doubleBang")
             model("${idea}/inspectionsLocal/doubleNegation")
             model("${idea}/inspectionsLocal/emptyRange")
             model("${idea}/inspectionsLocal/safeCastWithReturn")
@@ -182,8 +184,13 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
             // Therefore, we generate a test for the inspection based on the tests for K1-RemoveExplicitTypeArgumentsIntention.
-            model("${idea}/intentions/removeExplicitTypeArguments", testClassName = "RemoveExplicitTypeArgumentsFormerIntentionTest")
+            model("${idea}/intentions/removeExplicitTypeArguments", testClassName = "RemoveExplicitTypeArgumentsFormerIntentionTest", pattern = pattern)
         }
+
+        testClass<AbstractAllOpenLocalInspectionTest> {
+            model("${idea}/inspectionsPlugins/allOpen/local", pattern = Patterns.KT_WITHOUT_DOTS)
+        }
+
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
          * so they extend the other base class [AbstractK2LocalInspectionAndGeneralHighlightingTest]

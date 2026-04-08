@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.lang.Xxh3
@@ -9,7 +11,8 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigu
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.scripting.definitions.isNonScript
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -17,6 +20,8 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.script.experimental.util.PropertiesCollection.Key
@@ -140,3 +145,10 @@ fun ScriptCompilationConfiguration.getOrCreateScriptConfigurationId(
         }
     }
 }
+
+@Suppress("IO_FILE_USAGE")
+fun getVirtualFile(scriptSourceCode: SourceCode): VirtualFile? = when (scriptSourceCode) {
+    is VirtualFileScriptSource -> scriptSourceCode.virtualFile
+    is FileScriptSource -> VfsUtil.findFileByIoFile(scriptSourceCode.file, false)
+    else -> null
+}?.takeIf { !it.isNonScript() }

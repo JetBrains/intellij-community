@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
     "//platform/statistics",
     "//libraries/guava",
   ]
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//libraries/guava:guava_test_lib",
   ]

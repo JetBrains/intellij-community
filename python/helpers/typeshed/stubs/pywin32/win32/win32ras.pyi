@@ -18,7 +18,7 @@ def GetErrorString(error, /) -> str: ...  # noqa: F811
 def HangUp(hras, /) -> None: ...
 def IsHandleValid(hras: int | None, /) -> bool: ...
 def SetEntryDialParams(fileName: str, RasDialParams, bSavePassword, /) -> None: ...
-def RASDIALEXTENSIONS(*args): ...  # incomplete
+def RASDIALEXTENSIONS() -> _win32typing.RASDIALEXTENSIONS: ...
 
 RASCS_AllDevicesConnected: int
 RASCS_AuthAck: int
@@ -49,7 +49,7 @@ RASCS_StartAuthentication: int
 RASCS_WaitForCallback: int
 RASCS_WaitForModemReset: int
 
-def GetEapUserIdentity(*args): ...  # incomplete
+def GetEapUserIdentity(phoneBook: str | None, entry: str, flags: int, hwnd: _win32typing.PyHANDLE | int | None = None, /): ...
 
 RASEAPF_Logon: int
 RASEAPF_NonInteractive: int

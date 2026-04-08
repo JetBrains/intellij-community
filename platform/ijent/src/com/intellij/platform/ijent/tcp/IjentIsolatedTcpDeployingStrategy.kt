@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.tcp
 
-import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.spi.IjentConnectionContext
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
-import com.intellij.platform.ijent.spi.createIjentSession
+import com.intellij.platform.ijent.spi.IjentSessionProvider
 
 /**
  * Strategy for deploying IJent over TCP when standard process spawning is not available
@@ -20,5 +19,5 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
    */
   protected abstract suspend fun deploy(): IjentConnectionContext
 
-  final override suspend fun <T : IjentApi> createIjentSession(): IjentSession<T> = createIjentSession(deploy())
+  final override suspend fun createIjentSession(): IjentSession = IjentSessionProvider.instanceAsync().connect(deploy())
 }

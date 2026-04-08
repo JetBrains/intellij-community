@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -116,6 +115,7 @@ public final class VariableExtractor {
   private final boolean myReplaceSelf;
   private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
   private final @Nullable LogicalPosition myPosition;
+  private boolean myAllowReadAction = false;
 
   VariableExtractor(final @NotNull Project project,
                     final @NotNull PsiExpression expression,
@@ -137,8 +137,8 @@ public final class VariableExtractor {
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
   }
 
-  @NotNull Pair<@NotNull SmartPsiElementPointer<PsiVariable>, @Nullable SmartPsiElementPointer<PsiElement>> extractVariable() {
-    if (!IntentionPreviewUtils.isPreviewElement(myExpression)) {
+  @NotNull VariableExtractor.ExtractionResultPointers extractVariable() {
+    if (!IntentionPreviewUtils.isPreviewElement(myExpression) && !myAllowReadAction) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
@@ -157,7 +157,7 @@ public final class VariableExtractor {
     PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
 
     PsiElement replacedExpr = replaceOccurrences(newExpr);
-    SmartPsiElementPointer<PsiElement> replacedExprPointer = replacedExpr == null ? null : SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(replacedExpr);
+    SmartPsiElementPointer<PsiElement> replacedExprPointer = replacedExpr == null ? null : SmartPointerManager.createPointer(replacedExpr);
 
     ensureCodeBlock(type);
 
@@ -186,7 +186,7 @@ public final class VariableExtractor {
       }
     }
     myFieldConflictsResolver.fix();
-    return new Pair<>(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var), replacedExprPointer);
+    return new ExtractionResultPointers(SmartPointerManager.createPointer(var), replacedExprPointer);
   }
 
   private void ensureCodeBlock(PsiType type) {
@@ -334,6 +334,7 @@ public final class VariableExtractor {
   /**
    * Try to fix the surrounding PSI before inserting the new declaration.
    * Otherwise, the reparsed PSI may not contain the inserted declaration.
+   *
    * @param anchor anchor to insert the declaration before
    */
   private static void tryFixSurroundContext(@NotNull PsiElement anchor) {
@@ -441,9 +442,9 @@ public final class VariableExtractor {
         PsiElement statement = CommonJavaRefactoringUtil.getParentStatement(ancestorCandidate, false);
         PsiElement extractable = statement == null ? PsiTreeUtil.getParentOfType(ancestorCandidate, PsiField.class) : statement;
         if (ContainerUtil.and(allOccurrences, occurrence ->
-                                               PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
-                                               (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
-                                                ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
+          PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
+          (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
+           ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
           return firstOccurrence;
         }
       }
@@ -501,6 +502,24 @@ public final class VariableExtractor {
     return child;
   }
 
+  static @Nullable PsiVariable introduceInReadAction(final @NotNull Project project,
+                                                            final @NotNull PsiExpression expr,
+                                                            final @NotNull PsiElement anchorStatement,
+                                                            final PsiExpression @NotNull [] occurrences,
+                                                            final @NotNull IntroduceVariableSettings settings) {
+    SmartPsiElementPointer<PsiVariable> pointer =
+      new VariableExtractor(project, expr, null, anchorStatement, occurrences, settings)
+        .allowReadAction()
+        .extractVariable().variablePointer();
+    PsiVariable var = pointer.getElement();
+    return var;
+  }
+
+  public VariableExtractor allowReadAction() {
+    myAllowReadAction = true;
+    return this;
+  }
+
   /**
    * @see VariableExtractor#introduceVariableWithExpression(Project, PsiExpression, Editor, PsiElement, PsiExpression[], IntroduceVariableSettings)
    */
@@ -528,21 +547,28 @@ public final class VariableExtractor {
                                                                                 final @NotNull PsiElement anchorStatement,
                                                                                 final PsiExpression @NotNull [] occurrences,
                                                                                 final @NotNull IntroduceVariableSettings settings) {
-    Computable<Pair<SmartPsiElementPointer<PsiVariable>, SmartPsiElementPointer<PsiElement>>> computation =
+    Computable<ExtractionResultPointers> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
     PsiFile file = expr.getContainingFile();
-    Pair<SmartPsiElementPointer<PsiVariable>, SmartPsiElementPointer<PsiElement>> result = ApplicationManager.getApplication().runWriteAction(computation);
+    ExtractionResultPointers result = ApplicationManager.getApplication().runWriteAction(computation);
 
-    SmartPsiElementPointer<PsiVariable> variablePointer = result.first;
-    SmartPsiElementPointer<PsiElement> initialExprPointer = result.second;
-    PsiElement initialExpr = initialExprPointer != null ? initialExprPointer.dereference() : null;
-    PsiVariable var = variablePointer.dereference();
-    if (var == null) {
-      throw new RuntimeExceptionWithAttachments("Refactoring is interrupted due to syntax errors in the file",
-                                                new Attachment("expression.txt", expr.getText()),
-                                                new Attachment("source.java", file.getText()));
+    return result.toVariableWithExpression(file, expr);
+  }
+
+  private record ExtractionResultPointers(
+    @NotNull SmartPsiElementPointer<PsiVariable> variablePointer,
+    @Nullable SmartPsiElementPointer<PsiElement> initialExprPointer) {
+
+    private @NotNull VariableWithExpression toVariableWithExpression(@NotNull PsiFile file, @NotNull PsiExpression expression) {
+      PsiElement initialExpr = initialExprPointer() != null ? initialExprPointer().dereference() : null;
+      PsiVariable var = variablePointer().dereference();
+      if (var == null) {
+        throw new RuntimeExceptionWithAttachments("Refactoring is interrupted due to syntax errors in the file",
+                                                  new Attachment("expression.txt", expression.getText()),
+                                                  new Attachment("source.java", file.getText()));
+      }
+      return new VariableWithExpression(var, initialExpr);
     }
-    return new VariableWithExpression(var, initialExpr);
   }
 
   /**

@@ -54,6 +54,21 @@ data class CodexThread(
 )
 
 @Immutable
+data class CodexStartedThreadSession(
+  @JvmField val thread: CodexThread,
+  @JvmField val model: String,
+  @JvmField val reasoningEffort: String? = null,
+  @JvmField val rolloutPath: String? = null,
+)
+
+@Immutable
+data class CodexTurnCollaborationMode(
+  @JvmField val mode: String,
+  @JvmField val model: String,
+  @JvmField val reasoningEffort: String? = null,
+)
+
+@Immutable
 data class CodexThreadActivitySnapshot(
   @JvmField val threadId: String,
   @JvmField val updatedAt: Long,
@@ -72,6 +87,7 @@ data class CodexThreadPage(
 
 enum class CodexAppServerNotificationKind {
   THREAD_STARTED,
+  THREAD_NAME_UPDATED,
   THREAD_STATUS_CHANGED,
   TURN_STARTED,
   TURN_COMPLETED,

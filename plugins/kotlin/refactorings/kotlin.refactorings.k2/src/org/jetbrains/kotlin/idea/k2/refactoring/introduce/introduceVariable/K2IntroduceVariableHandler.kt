@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -54,8 +55,10 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.psi.isAssignmentLHS
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
+import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -81,12 +84,15 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
@@ -254,11 +260,13 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         editor: Editor,
         declaration: KtDestructuringDeclaration,
         suggestedNames: SuggestedNames,
+        postProcess: (KtDeclaration, Editor?) -> Unit,
     ) {
         StartMarkAction.canStart(editor)?.let { return }
 
         val builder = TemplateBuilderImpl(declaration)
-        for ((entry, names) in declaration.entries.zip(suggestedNames)) {
+        for ((index, entry) in declaration.entries.withIndex()) {
+            val names = suggestedNames[index]
             val templateExpression = object : Expression() {
 
                 private val lookupItems: Array<LookupElementBuilder> = names
@@ -271,7 +279,12 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 override fun calculateLookupItems(context: ExpressionContext): Array<LookupElementBuilder> =
                     lookupItems
             }
-            builder.replaceElement(entry, templateExpression)
+            val nameIdentifier = entry.nameIdentifier
+            if (nameIdentifier != null) {
+                builder.replaceElement(nameIdentifier, "DESTRUCTURING_NAME_$index", templateExpression, true)
+            } else {
+                builder.replaceElement(entry, templateExpression)
+            }
         }
 
         val startMarkAction = StartMarkAction.start(editor, project, INTRODUCE_VARIABLE)
@@ -284,11 +297,37 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 object : TemplateEditingAdapter() {
                     private fun finishMarkAction() = FinishMarkAction.finish(project, editor, startMarkAction)
 
-                    override fun templateFinished(template: Template, brokenOff: Boolean) = finishMarkAction()
+                    override fun templateFinished(template: Template, brokenOff: Boolean) {
+                        if (!brokenOff) postProcess(declaration, editor)
+                        finishMarkAction()
+                    }
 
                     override fun templateCancelled(template: Template?) = finishMarkAction()
                 })
         }
+    }
+
+    private fun convertToFullFormNameBasedDestructuring(
+        declaration: KtDestructuringDeclaration,
+        nameBasedDestructuringForm: NameBasedDestructuringForm,
+        useExplicitMappings: Boolean,
+        entryNames: List<String>? = null,
+    ): KtDestructuringDeclaration {
+        val newText =
+            declaration.buildNameBasedDestructuringText(nameBasedDestructuringForm, useExplicitMappings, entryNames)
+                ?.takeIf { it != declaration.text } ?: return declaration
+
+        val newDeclaration = KtPsiFactory(declaration.project)
+            .createFile("fun extracted() { $newText }")
+            .declarations
+            .singleOrNull()
+            ?.let { it as? KtNamedFunction }
+            ?.bodyBlockExpression
+            ?.allChildren
+            ?.filterIsInstance<KtDestructuringDeclaration>()
+            ?.singleOrNull()
+            ?: return declaration
+        return declaration.replace(newDeclaration) as KtDestructuringDeclaration
     }
 
     context(_: KaSession)
@@ -369,6 +408,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 nameValidator = nameValidator,
             ) { destructuringNames ->
                 val suggestedNames = destructuringNames.takeIf { it.isNotEmpty() } ?: suggestSingleVariableNames(expression, nameValidator)
+                val selectedDestructuringEntryNames = destructuringNames.takeIf { it.isNotEmpty() }?.map { it.first() }
+                val nameBasedDestructuringPropertyNames =
+                    destructuringNames.takeIf { it.isNotEmpty() }?.let { suggestNameBasedDestructuringPropertyNames(expression, it.size) }
 
                 val introduceVariableContext = IntroduceVariableContext(
                     project,
@@ -398,7 +440,18 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
                     }
 
-                    val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
+                    var property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
+                    val destructuringDeclaration = property as? KtDestructuringDeclaration
+                    if (destructuringDeclaration != null && nameBasedDestructuringPropertyNames != null) {
+                        property = runWriteAction {
+                            convertToFullFormNameBasedDestructuring(
+                                destructuringDeclaration,
+                                nameBasedDestructuringPropertyNames,
+                                useExplicitMappings = false,
+                                entryNames = selectedDestructuringEntryNames,
+                            )
+                        }
+                    }
 
                     if (editor == null) {
                         onNonInteractiveFinish?.invoke(property)
@@ -409,10 +462,23 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     editor.selectionModel.removeSelection()
 
                     fun postProcess(declaration: KtDeclaration, editor: Editor?) {
+                        val processedDeclaration = if (declaration is KtDestructuringDeclaration && nameBasedDestructuringPropertyNames != null) {
+                            runWriteAction {
+                                convertToFullFormNameBasedDestructuring(
+                                    declaration,
+                                    nameBasedDestructuringPropertyNames,
+                                    useExplicitMappings = false,
+                                    entryNames = selectedDestructuringEntryNames,
+                                )
+                            }
+                        } else {
+                            declaration
+                        }
+
                         if (renderedTypeArguments != null) {
-                            val initializer = when (declaration) {
-                                is KtProperty -> declaration.initializer
-                                is KtDestructuringDeclaration -> declaration.initializer
+                            val initializer = when (processedDeclaration) {
+                                is KtProperty -> processedDeclaration.initializer
+                                is KtDestructuringDeclaration -> processedDeclaration.initializer
                                 else -> null
                             } ?: return
                             if (introduceVariableContext.renderedTypeArgumentsIfMightBeNeeded != null &&
@@ -425,7 +491,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
 
                         if (editor != null && !replaceFirstOccurrence) {
-                            val endOffset = declaration.children.last { it !is PsiComment && it !is PsiWhiteSpace }.endOffset
+                            val endOffset = processedDeclaration.allChildren.last { it !is PsiComment && it !is PsiWhiteSpace }.endOffset
                             editor.caretModel.moveToOffset(endOffset)
                         }
                     }
@@ -455,7 +521,11 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
 
                         is KtDestructuringDeclaration -> {
-                            executeMultiDeclarationTemplate(project, editor, property, suggestedNames)
+                            if (nameBasedDestructuringPropertyNames != null) {
+                                postProcess(property, editor)
+                            } else {
+                                executeMultiDeclarationTemplate(project, editor, property, suggestedNames, ::postProcess)
+                            }
                         }
 
                         else -> throw AssertionError("Unexpected declaration: ${property.getElementTextWithContext()}")

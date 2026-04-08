@@ -1,5 +1,6 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -65,19 +66,63 @@ private val logger = fileLogger()
 
 
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
+  logger.debug {
+    buildString {
+      appendLine("Build request for files count ${files.tomlFiles.size}")
+      for (file in files.tomlFiles.keys) {
+        appendLine("Building model for file $file")
+      }
+    }
+  }
   changeWorkspaceMutex.withLock {
     val entries = generatePyProjectTomlEntries(files)
     // No pyproject.toml files, no need to touch model at all
     if (entries.isEmpty()) {
       return
     }
-    val syncStorage = createProjectModel(entries, project).toBuilder()
+    // Collect existing Python entity sources to reuse them. Using the same entity source (same fileNameId)
+    // prevents JPS from cycling through delete-old/create-new .iml files on every rebuild,
+    // which causes race conditions with VFS events and JPS reload (PY-86920).
+    val currentSnapshot = project.workspaceModel.currentSnapshot
+    val existingSources: Map<VirtualFileUrl, EntitySource> = currentSnapshot.entities<ModuleEntity>()
+      .filter { it.entitySource.isPythonEntity }
+      .mapNotNull { module ->
+        module.pyProjectTomlEntity?.dirWithToml?.let { dir -> dir to module.entitySource }
+      }
+      .toMap()
+    val syncStorage = createProjectModel(entries, project, existingSources).toBuilder()
     project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage -> // Fake module entity is added by default if nothing was discovered
 
       renameSameModuleAndMoveSources(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
+      logger.debug {
+        buildString {
+          val entities = syncStorage.entities<ModuleEntity>().toList()
+          appendLine("Entities count: ${entities.size}")
+          for (entity in entities) {
+            appendLine("New entity ${entity.name}")
+          }
+        }
+      }
+      logIfNeeded(projectStorage, "before")
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
+      logIfNeeded(projectStorage, "after replace")
       ensureNoSrcIntersectsWithOtherRoots(projectStorage)
+      logIfNeeded(projectStorage, "after no intersect")
+    }
+  }
+}
+
+private fun logIfNeeded(projectStorage: MutableEntityStorage, title: String) {
+  logger.debug {
+    buildString {
+      appendLine("WSM $title")
+      for (moduleEntity in projectStorage.entities<ModuleEntity>()) {
+        appendLine("${moduleEntity.name} (${moduleEntity.entitySource}) num of roots ${moduleEntity.contentRoots.size}")
+      }
+      for (entity in projectStorage.entitiesBySource { true }) {
+        appendLine("${entity} source ${entity.entitySource}")
+      }
     }
   }
 }
@@ -139,12 +184,26 @@ private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectSt
     for (projectModuleEntity in projectStorage.entities<ModuleEntity>()) {
       if (ModuleAnchor(syncModuleEntity).sameAs(ModuleAnchor(projectModuleEntity))) {
         projectStorage.modifyModuleEntity(projectModuleEntity) {
+          logger.debug {
+            buildString {
+              appendLine("modify module entity:")
+              appendLine("name: ${syncModuleEntity.name}")
+              appendLine("source: ${syncModuleEntity.entitySource}")
+            }
+          }
           name = syncModuleEntity.name
           entitySource = syncModuleEntity.entitySource
         }
         for (projectRootEntity in projectModuleEntity.contentRoots.toList()) {
           projectStorage.modifyContentRootEntity(projectRootEntity) {
             entitySource = syncModuleEntity.entitySource
+            logger.debug {
+              buildString {
+                appendLine("modify content root:")
+                appendLine("root: ${projectRootEntity.url}")
+                appendLine("source: ${syncModuleEntity.entitySource}")
+              }
+            }
           }
         }
       }
@@ -322,42 +381,45 @@ private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pa
 private suspend fun createProjectModel(
   graph: Set<PyProjectTomlBasedEntryImpl>,
   project: Project,
+  existingSources: Map<VirtualFileUrl, EntitySource>,
 ): ImmutableEntityStorage = withContext(Dispatchers.Default) {
   val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
   val storage = MutableEntityStorage.create()
   for (pyProject in graph) {
-    val moduleEntity = storage addEntity ModuleEntity(pyProject.name.name, emptyList(), createEntitySource(project)) {
-      dependencies += ModuleSourceDependency
-      for (moduleName in pyProject.dependencies) {
-        dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
-      }
-      contentRoots = listOf(ContentRootEntity(pyProject.root.toVirtualFileUrl(virtualFileUrlManager), emptyList(), entitySource) {
-        sourceRoots = pyProject.sourceRoots.map { srcRoot ->
-          SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), JAVA_SOURCE_ROOT_TYPE, entitySource)
+    val tomlDirUrl = pyProject.tomlFile.parent.toVirtualFileUrl(virtualFileUrlManager)
+    val moduleEntity =
+      storage addEntity ModuleEntity(pyProject.name.name, emptyList(), existingSources[tomlDirUrl] ?: createEntitySource(project)) {
+        dependencies += ModuleSourceDependency
+        for (moduleName in pyProject.dependencies) {
+          dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
-      })
-      val participatedTools: MutableMap<ToolId, ModuleId?> =
-        pyProject.relationsWithTools.associate { Pair(it.toolId, null) }.toMutableMap()
-      for (relation in pyProject.relationsWithTools) {
-        when (relation) {
-          is PyProjectTomlToolRelation.SimpleRelation -> Unit
-          is PyProjectTomlToolRelation.WorkspaceMember -> {
-            participatedTools[relation.toolId] = ModuleId(relation.workspace.name)
+        contentRoots = listOf(ContentRootEntity(pyProject.root.toVirtualFileUrl(virtualFileUrlManager), emptyList(), entitySource) {
+          sourceRoots = pyProject.sourceRoots.map { srcRoot ->
+            SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), JAVA_SOURCE_ROOT_TYPE, entitySource)
+          }
+        })
+        val participatedTools: MutableMap<ToolId, ModuleId?> =
+          pyProject.relationsWithTools.associate { Pair(it.toolId, null) }.toMutableMap()
+        for (relation in pyProject.relationsWithTools) {
+          when (relation) {
+            is PyProjectTomlToolRelation.SimpleRelation -> Unit
+            is PyProjectTomlToolRelation.WorkspaceMember -> {
+              participatedTools[relation.toolId] = ModuleId(relation.workspace.name)
+            }
           }
         }
-      }
 
-      type = PYTHON_MODULE_ID
-      pyProjectTomlEntity =
-        PyProjectTomlWorkspaceEntity(
-          participatedTools = participatedTools, pyProject.tomlFile.parent.toVirtualFileUrl(
-            virtualFileUrlManager
-          ), entitySource
-        )
-      exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
-        externalSystem = PY_PROJECT_SYSTEM_ID.id
+        type = PYTHON_MODULE_ID
+        pyProjectTomlEntity =
+          PyProjectTomlWorkspaceEntity(
+            participatedTools = participatedTools, pyProject.tomlFile.parent.toVirtualFileUrl(
+              virtualFileUrlManager
+            ), entitySource
+          )
+        exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
+          externalSystem = PY_PROJECT_SYSTEM_ID.id
+        }
       }
-    }
     moduleEntity.symbolicId
   }
   return@withContext storage.toSnapshot()

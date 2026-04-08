@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -23,6 +24,7 @@ interface CompilationContext {
 
   val outputProvider: ModuleOutputProvider
 
+  @Deprecated("use outputProvider", replaceWith = ReplaceWith("outputProvider.findRequiredModule(moduleName)"))
   fun findRequiredModule(moduleName: String): JpsModule = outputProvider.findRequiredModule(moduleName)
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
@@ -53,7 +55,7 @@ interface CompilationContext {
   fun notifyArtifactBuilt(artifactPath: Path)
 
   @Internal
-  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
+  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope? = null): CompilationContext
 
   @Internal
   suspend fun prepareForBuild()

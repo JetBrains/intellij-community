@@ -7,6 +7,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="commons-codec" type="repository">
+        <properties maven-id="commons-codec:commons-codec:1.21.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar">
+              <sha256sum>4da851cb6abfb98bfe9eb77c5e5fc47f5414fa28b94e21b7fd9a646705dc167f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -23,11 +23,10 @@ import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,8 +40,10 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -86,12 +87,6 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     finally {
       super.tearDown();
     }
-  }
-
-  @Override
-  protected Sdk getTestProjectJdk() {
-    //noinspection removal
-    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
   }
 
   @Override
@@ -182,7 +177,7 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, text);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-    AtomicInteger creation = new AtomicInteger();
+    List<String> passCreation = ContainerUtil.createLockFreeCopyOnWriteList();
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
@@ -194,7 +189,8 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
       final class TestFileStatusMapDirtyCachingWorksPass extends TextEditorHighlightingPass {
         private TestFileStatusMapDirtyCachingWorksPass(Project project) {
           super(project, getEditor().getDocument(), false);
-          creation.incrementAndGet();
+          passCreation.add(ExceptionUtil.getThrowableText(new Throwable()));
+          LOG.debug("pass creation");
         }
 
         @Override
@@ -209,23 +205,23 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
     registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    creation.set(0);
+    passCreation.clear();
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(1, creation.get());
+    assertOneElement(passCreation);
 
     //cached
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(1, creation.get());
+    assertOneElement(passCreation);
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(1, creation.get());
+    assertOneElement(passCreation);
 
     type(' ');
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(2, creation.get());
+    assertEquals(passCreation.toString(), 2, passCreation.size());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(2, creation.get());
+    assertEquals(passCreation.toString(), 2, passCreation.size());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-    assertEquals(2, creation.get());
+    assertEquals(passCreation.toString(), 2, passCreation.size());
   }
 
   public void testFileStatusMapDirtyDocumentRangeWorks() {
@@ -287,21 +283,29 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   }
 
 
-  public void testModificationInExcludedFileDoesNotCauseRehighlight() {
+  public void testModificationInExcludedFileDoesNotCauseRehighlight() throws TimeoutException {
     @Language("JAVA")
     String text = "class EEE { void f(){} }";
-    VirtualFile excluded = configureByText(JavaFileType.INSTANCE, text).getVirtualFile();
-    PsiTestUtil.addExcludedRoot(myModule, excluded.getParent());
-    assertTrue(ProjectFileIndex.getInstance(myProject).isExcluded(excluded));
+    VirtualFile excludedFile = configureByText(JavaFileType.INSTANCE, text).getVirtualFile();
+    Document excludedDocument = FileDocumentManager.getInstance().getDocument(excludedFile);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> excludedDocument.insertString(0, " "));
+    PsiTestUtil.addExcludedRoot(myModule, excludedFile.getParent());
+    assertTrue(ProjectFileIndex.getInstance(myProject).isExcluded(excludedFile));
 
-    configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
+    @Language("JAVA")
+    String text2 = "class X { <caret> }";
+    configureByText(JavaFileType.INSTANCE, text2);
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
     TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excluded)).getClasses()[0].getMethods()[0].delete());
+    assertTrue(myTestDaemonCodeAnalyzer.isMarkedExcluded(excludedDocument));
+    assertFalse(myTestDaemonCodeAnalyzer.isMarkedExcluded(myEditor.getDocument()));
 
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excludedFile)).getClasses()[0].getMethods()[0].delete());
+
+    myTestDaemonCodeAnalyzer.waitUpdateExpensiveFlags();
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
@@ -311,21 +315,29 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     @Language("JAVA")
     String text = "class X { <caret> }";
     configureByText(JavaFileType.INSTANCE, text);
+    RefreshQueue.getInstance().refresh(false, false, null); // otherwise during app save below refresh might start sudden write action and cancel save
+
     StoreUtilKt.runInAllowSaveMode(true, () -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
-      PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
-
+      PsiFile excludedPsiFile = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
+      Document excludedDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excludedPsiFile));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> excludedDocument.insertString(0, " "));
       assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
       TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
-        document.insertString(0, "<!-- dsfsd -->");
+        excludedDocument.insertString(0, "<!-- dsfsd -->");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
+      try {
+        myTestDaemonCodeAnalyzer.waitUpdateExpensiveFlags();
+      }
+      catch (TimeoutException e) {
+        throw new RuntimeException(e);
+      }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
@@ -396,7 +408,9 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testChangeDocumentFollowedByImmediateUndoMustDirtyTheInvolvedLinesBecauseRangeHighlightersMightBeDestroyedAndThenNotRestored() {
-    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "blah\nblah<caret>\nblah");
+    @Language("JAVA")
+    String text = "blah\nblah<caret>\nblah";
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
     Document document = psiFile.getFileDocument();
 
     myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
@@ -409,7 +423,9 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
   }
 
   public void testAfterNoPsiChangeTheWholeFileShouldBeDirty() {
-    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "@Deprecated<caret> class S { } ");
+    @Language("JAVA")
+    String text = "@Deprecated<caret> class S { } ";
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
     Document document = psiFile.getFileDocument();
     myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
     assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));

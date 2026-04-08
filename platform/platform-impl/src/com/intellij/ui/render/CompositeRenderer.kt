@@ -9,9 +9,6 @@ import javax.swing.ListCellRenderer
 
 /**
  * Combines multiple internal renderers into a single composite renderer.
- * The internal renderer is selected by [selectRenderer] based on the provided value.
- * For performance reasons, the internal renderers must be created once outside
- * this method.
  */
 @ApiStatus.Internal
 abstract class CompositeRenderer<T> : ListCellRenderer<T?>, ExperimentalUI.NewUIComboBoxRenderer {
@@ -28,5 +25,9 @@ abstract class CompositeRenderer<T> : ListCellRenderer<T?>, ExperimentalUI.NewUI
     return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
   }
 
+  /**
+   * Selects the internal renderer based on the provided value.
+   * For performance reasons, the internal renderers must be created once outside this method.
+   */
   abstract fun selectRenderer(value: T?): ListCellRenderer<*>
 }

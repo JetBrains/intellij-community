@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import com.intellij.tests.bazel.BazelJUnitOutputListener;
@@ -116,6 +116,17 @@ public final class JUnit5BazelRunner {
 
       // set intellij.test.jars.location as a temporary workaround for debugger-agent.jar downloading
       System.setProperty("intellij.test.jars.location", bazelTestTestSrcDir);
+
+      // Process properties with 'pass.' prefix and set them without the prefix
+      for (String key : System.getProperties().stringPropertyNames()) {
+        if (!key.startsWith("pass.")) continue;
+        String newKey = key.substring("pass.".length());
+        if (System.getProperty(newKey) == null) {
+          String value = System.getProperty(key);
+          System.err.println("Setting \"" + newKey + "\" from \"" + key + "\" with value \"" + value + "\"");
+          System.setProperty(newKey, value);
+        }
+      }
 
       System.setProperty("idea.is.unit.test", "true");
 

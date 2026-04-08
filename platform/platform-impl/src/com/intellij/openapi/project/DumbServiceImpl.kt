@@ -148,6 +148,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
 
     fun launch() {
+      LOG.debug { "DumbTaskLauncher is about to launch: $launched" }
       if (!launched) {
         launched = true
         guiDumbTaskRunner.startBackgroundProcess(onFinish = {
@@ -488,6 +489,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
     if (isDisposed) {
+      LOG.debug { "DumbServiceImpl is disposed, throwing an AlreadyDisposedException when trying to queue $task" }
       throw AlreadyDisposedException("Cannot queue task $task after disposal")
     }
 

@@ -24,6 +24,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/vcs-log/impl",
     "//plugins/git4idea:vcs-git",
     "//uast/uast-common:uast",
@@ -55,6 +56,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/vcs-api:vcs_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/vcs-log/impl:impl_test_lib",
     "//plugins/git4idea:vcs-git_test_lib",
     "//uast/uast-common:uast_test_lib",
@@ -124,6 +126,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/vcs-api:vcs_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",
     "//plugins/git4idea:vcs-git",
@@ -154,6 +157,7 @@ jvm_library(
     ":filePrediction-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
   ]
 )

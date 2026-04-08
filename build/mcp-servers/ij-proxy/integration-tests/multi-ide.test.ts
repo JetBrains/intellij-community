@@ -8,7 +8,7 @@ import {dirname, join} from 'node:path'
 import {env} from 'node:process'
 import {fileURLToPath} from 'node:url'
 import {describe, it} from 'bun:test'
-import {buildUpstreamTool, debug, defaultUpstreamTools, McpTestClient, startFakeMcpServer, SUITE_TIMEOUT_MS} from '../test-utils'
+import {buildUpstreamTool, defaultUpstreamTools, McpTestClient, startFakeMcpServer, SUITE_TIMEOUT_MS} from '../test-utils'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -20,6 +20,18 @@ interface ToolCall {
 async function withDualProxy(
   run: (context: {proxyClient: McpTestClient; ideaCalls: ToolCall[]; riderCalls: ToolCall[]}) => Promise<void>
 ): Promise<void> {
+  return await withConfiguredDualProxy({}, run)
+}
+
+async function withConfiguredDualProxy(
+  options: {
+    ideaTools?: ReturnType<typeof buildUpstreamTool>[]
+    riderTools?: ReturnType<typeof buildUpstreamTool>[]
+    ideaOnToolCall?: ({name, args}: {name: string | undefined; args: Record<string, unknown>}) => unknown
+    riderOnToolCall?: ({name, args}: {name: string | undefined; args: Record<string, unknown>}) => unknown
+  },
+  run: (context: {proxyClient: McpTestClient; ideaCalls: ToolCall[]; riderCalls: ToolCall[]}) => Promise<void>
+): Promise<void> {
   const ideaCalls: ToolCall[] = []
   const riderCalls: ToolCall[] = []
   let ideaServer, riderServer, proxyClient, testDir
@@ -27,18 +39,24 @@ async function withDualProxy(
   try {
     ideaServer = await startFakeMcpServer({
       serverName: 'IntelliJ IDEA MCP Server',
-      tools: defaultUpstreamTools,
+      tools: options.ideaTools ?? defaultUpstreamTools,
       onToolCall({name, args}) {
         ideaCalls.push({name, args})
+        if (options.ideaOnToolCall) {
+          return options.ideaOnToolCall({name, args})
+        }
         return {text: JSON.stringify({items: [{filePath: 'src/Main.kt', lineNumber: 1, lineText: 'idea result'}]})}
       }
     })
 
     riderServer = await startFakeMcpServer({
       serverName: 'JetBrains Rider MCP Server',
-      tools: defaultUpstreamTools,
+      tools: options.riderTools ?? defaultUpstreamTools,
       onToolCall({name, args}) {
         riderCalls.push({name, args})
+        if (options.riderOnToolCall) {
+          return options.riderOnToolCall({name, args})
+        }
         return {text: JSON.stringify({items: [{filePath: 'Psi/Foo.cs', lineNumber: 1, lineText: 'rider result'}]})}
       }
     })
@@ -138,6 +156,74 @@ describe('ij MCP proxy multi-IDE', {timeout: SUITE_TIMEOUT_MS}, () => {
 
       const ideaReadCalls = ideaCalls.filter((c) => c.name === 'get_file_text_by_path')
       ok(ideaReadCalls.length > 0, 'IDEA should have received read call')
+    })
+  })
+
+  it('falls back to get_file_problems when one upstream lacks lint_files', async () => {
+    const legacyLintTool = buildUpstreamTool('get_file_problems', {
+      filePath: {type: 'string'},
+      errorsOnly: {type: 'boolean'},
+      timeout: {type: 'number'}
+    }, ['filePath'])
+    const lintFilesTool = buildUpstreamTool('lint_files', {
+      file_paths: {type: 'array', items: {type: 'string'}},
+      min_severity: {type: 'string'},
+      timeout: {type: 'number'}
+    }, ['file_paths'])
+
+    await withConfiguredDualProxy({
+      ideaTools: [legacyLintTool],
+      riderTools: [lintFilesTool],
+      ideaOnToolCall({name, args}) {
+        ok(name === 'get_file_problems')
+        strictEqual(args.filePath, 'src/Main.kt')
+        strictEqual(args.errorsOnly, false)
+        return {
+          structuredContent: {
+            filePath: 'src/Main.kt',
+            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
+          },
+          text: JSON.stringify({
+            filePath: 'src/Main.kt',
+            errors: [{severity: 'WARNING', description: 'legacy warning', lineContent: 'idea line', line: 3, column: 2}]
+          })
+        }
+      },
+      riderOnToolCall({name, args}) {
+        ok(name === 'lint_files')
+        strictEqual(JSON.stringify(args.file_paths), JSON.stringify(['Psi/Foo.cs']))
+        strictEqual(args.min_severity ?? 'warning', 'warning')
+        return {
+          structuredContent: {
+            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
+          },
+          text: JSON.stringify({
+            items: [{filePath: 'Psi/Foo.cs', problems: [{severity: 'ERROR', description: 'native error', lineText: 'rider line', line: 5, column: 1}]}]
+          })
+        }
+      }
+    }, async ({proxyClient, ideaCalls, riderCalls}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+      ok(names.includes('lint_files'))
+      ok(!names.includes('get_file_problems'))
+
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {file_paths: ['src/Main.kt', 'dotnet/Psi/Foo.cs']}
+      })
+
+      const parsed = JSON.parse(response.result.content[0].text)
+      strictEqual(parsed.items.length, 2)
+      strictEqual(parsed.items[0].filePath, 'src/Main.kt')
+      strictEqual(parsed.items[0].problems[0].lineText, 'idea line')
+      strictEqual(parsed.items[1].filePath, 'dotnet/Psi/Foo.cs')
+      strictEqual(parsed.items[1].problems[0].lineText, 'rider line')
+
+      strictEqual(ideaCalls.length, 1)
+      strictEqual(ideaCalls[0].name, 'get_file_problems')
+      strictEqual(riderCalls.length, 1)
+      strictEqual(riderCalls[0].name, 'lint_files')
     })
   })
 })

@@ -57,12 +57,17 @@ class JSONWidget(Widget): ...
 _ModelT = TypeVar("_ModelT", bound=Model)
 
 class ForeignKeyWidget(Widget, Generic[_ModelT]):
-    model: _ModelT
+    model: type[_ModelT]
     field: str
     key_is_id: bool
     use_natural_foreign_keys: bool
     def __init__(
-        self, model: _ModelT, field: str = "pk", use_natural_foreign_keys: bool = False, key_is_id: bool = False, **kwargs: Any
+        self,
+        model: type[_ModelT],
+        field: str = "pk",
+        use_natural_foreign_keys: bool = False,
+        key_is_id: bool = False,
+        **kwargs: Any,
     ) -> None: ...
     def get_queryset(self, value: Any, row: Mapping[str, Any], *args: Any, **kwargs: Any) -> QuerySet[_ModelT]: ...
     def get_instance_by_natural_key(self, value: str | bytes | bytearray) -> _ModelT: ...

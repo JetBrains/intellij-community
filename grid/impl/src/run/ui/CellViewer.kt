@@ -10,8 +10,13 @@ import com.intellij.openapi.util.Key
 import javax.swing.JComponent
 
 /**
- * @author Liudmila Kornilova
- **/
+ * Content component shown by an Edit Maximized tab for the current grid selection.
+ *
+ * Separate from the grid's inline cell editing path, which uses `GridCellEditor`.
+ * The historical "viewer" name does not imply read-only behavior: implementations may be editable
+ * or read-only, and different [CellViewerFactory] implementations can provide specialized content
+ * such as text editors, image viewers, or array views.
+ */
 interface CellViewer : Disposable {
   val component: JComponent
   val preferedFocusComponent: JComponent?
@@ -25,8 +30,11 @@ interface CellViewer : Disposable {
   }
 }
 
+/**
+ * Chooses and creates the Value Editor [CellViewer] implementation for the current cell.
+ */
 interface CellViewerFactory {
-  fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability
+  fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability
   fun createViewer(grid: DataGrid): CellViewer
 
   companion object {

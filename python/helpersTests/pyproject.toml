@@ -3,7 +3,7 @@ name = "helpersTests"
 version = "0.1.0"
 description = "PyCharm helpers tests"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "behave",
     "pytest",

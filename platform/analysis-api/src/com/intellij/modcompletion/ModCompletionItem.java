@@ -57,7 +57,8 @@ public interface ModCompletionItem {
    * @param actionContext    action context where the completion is performed.
    *                         The selection range denotes the prefix text inserted during the current completion session.
    *                         The command must ignore it, as at the time it will be applied, the selection range will be deleted.
-   * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
+   * @param insertionContext an insertion context, which describes how exactly the user invoked the completion.
+   *                         If a completion character was used, this method must process it (e.g., insert to the document, if necessary).
    * @return the command to perform the completion (e.g., insert the lookup string). The command must assume that the
    * selection range is already deleted.
    */

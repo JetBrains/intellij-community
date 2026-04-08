@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.SourceProjectRouter
+import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +69,18 @@ class AgentWorkbenchSourceProjectRoutingTest {
       assertThat(project).isEqualTo("opened-project")
       assertThat(openedPath.get()).isEqualTo(Path.of("/repo/sample.sln"))
     }
+  }
+
+  @Test
+  fun normalizeOpenableSourceProjectPathRejectsBlankAndDedicatedPaths() {
+    assertThat(normalizeOpenableSourceProjectPath("   ")).isNull()
+    assertThat(normalizeOpenableSourceProjectPath(AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath())).isNull()
+  }
+
+  @Test
+  fun normalizeOpenableSourceProjectPathNormalizesOpenablePaths() {
+    assertThat(normalizeOpenableSourceProjectPath("/repo/child/..//sample"))
+      .isEqualTo("/repo/sample")
   }
 }
 

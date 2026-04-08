@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -169,7 +169,9 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
     if (watcher instanceof MultiRoutingWatchServiceDelegate delegated) {
-      return myDelegate.register(delegated.myDelegate, events, modifiers);
+      // Registration must happen against the backend watch service, but the wrapped API must return
+      // the same watch-key shape that poll()/take() expose to callers.
+      return delegated.wrapDelegateKey(myDelegate.register(delegated.myDelegate, events, modifiers));
     }
     return myDelegate.register(watcher, events, modifiers);
   }
@@ -177,7 +179,9 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
     if (watcher instanceof MultiRoutingWatchServiceDelegate delegated) {
-      return myDelegate.register(delegated.myDelegate, events);
+      // Callers may store the key returned by register() and later compare it with keys received from
+      // the watch service, so keep registration and delivery symmetric.
+      return delegated.wrapDelegateKey(myDelegate.register(delegated.myDelegate, events));
     }
     return myDelegate.register(watcher, events);
   }

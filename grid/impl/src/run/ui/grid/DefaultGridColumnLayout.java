@@ -177,8 +177,6 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
 
   private int computeHeaderWidth(ResultViewColumn column) {
     var tableHeader = myResultView.getTableHeader();
-    var cellRendererPane = new CellRendererPane();
-    tableHeader.add(cellRendererPane);
     TableCellRenderer cellRenderer = tableHeader.getDefaultRenderer();
     TableResultView.MyCellRenderer renderer = ObjectUtils.tryCast(cellRenderer, TableResultView.MyCellRenderer.class);
     Component headerComponent;
@@ -189,10 +187,12 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
       int viewIndex = myResultView.convertColumnIndexToView(column.getModelIndex());
       headerComponent = cellRenderer.getTableCellRendererComponent(myResultView, column.getHeaderValue(), false, false, -1, viewIndex);
     }
+    // Adding CellRendererPane to tableHeader triggers children removeNotify for every column
+    var cellRendererPane = new CellRendererPane();
     cellRendererPane.add(headerComponent);
     headerComponent.validate();
     var res = headerComponent.getPreferredSize().width + column.getAdditionalWidth();
-    tableHeader.remove(cellRendererPane);
+    cellRendererPane.removeAll();
     return res;
   }
 

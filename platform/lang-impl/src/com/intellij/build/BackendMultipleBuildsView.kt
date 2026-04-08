@@ -9,6 +9,7 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.execution.rpc.createProcessHandlerDto
 import com.intellij.ide.rpc.setupTransfer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.debug
@@ -21,8 +22,10 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.EdtExecutorService
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -123,6 +126,7 @@ class BackendMultipleBuildsView(
         val buildData = BuildData(activationCallback)
         val id = storeValueGlobally(buildData, BuildDataIdType)
         buildInfo.buildId = id
+        val buildScope = viewModel.scope.childScope("Build($id)")
 
         val buildView = BuildView(project, buildInfo, "build.toolwindow." + viewManager.viewName + ".selection.state", viewManager)
         buildData.view = buildView
@@ -132,6 +136,7 @@ class BackendMultipleBuildsView(
           LOG.debug { "$this build removed, buildId: $buildId" }
           deleteValueById(id, BuildDataIdType)
           viewModel.onBuildRemoved(this, id)
+          buildScope.cancel()
         }
         viewMap[buildInfo] = buildView
         if (contentDescriptor != null) {
@@ -143,10 +148,12 @@ class BackendMultipleBuildsView(
         val treeViewId = buildView.eventView?.buildViewId
         val consoleComponent = buildView.consoleComponent.setupTransfer(buildView)
 
+        val processHandler = buildInfo.processHandler?.let { createProcessHandlerDto(buildScope, it) }
+
         viewManager.onBuildStart(buildInfo)
         viewModel.onBuildStarted(this, id, buildInfo.title, buildInfo.startTime, event.message,
                                  buildInfo.isAutoFocusContent, buildInfo.isActivateToolWindowWhenAdded,
-                                 treeViewId, consoleComponent)
+                                 treeViewId, consoleComponent, processHandler)
       }
       else {
         if (!isFirstErrorShown &&

@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -532,16 +531,12 @@ public final class GenerateMembersUtil {
                                                                    @NotNull PsiTypeParameter typeParameter,
                                                                    @NotNull PsiSubstitutor substitutor,
                                                                    @NotNull PsiMethod sourceMethod) {
-    if (typeParameter instanceof LightElement) {
+    if (typeParameter instanceof LightElement || typeParameter instanceof PsiCompiledElement) {
       List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
       return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
     }
-    //todo fix IDEA-387050
-    final PsiElement copy =
-      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
-                                                                    ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement
-                                                                                        ? ((PsiCompiledElement)typeParameter).getMirror()
-                                                                                        : typeParameter, typeParameter).copy());
+
+    PsiTypeParameter copy = (PsiTypeParameter)typeParameter.copy();
     LOG.assertTrue(copy != null, typeParameter);
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {

@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/search-everywhere-ml/ranking/core",
     "//plugins/search-everywhere-ml/ranking/ext",
     "//platform/vcs-log/impl",
+    "//platform/statistics",
   ]
 )
 
@@ -41,6 +42,7 @@ jvm_library(
     "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
     "//plugins/search-everywhere-ml/ranking/ext:ext_test_lib",
     "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` end

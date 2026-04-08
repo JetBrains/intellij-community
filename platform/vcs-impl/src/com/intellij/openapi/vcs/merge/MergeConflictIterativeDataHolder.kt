@@ -20,11 +20,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class MergeConflictIterativeDataHolder(
+@org.jetbrains.annotations.ApiStatus.Internal
+class MergeConflictIterativeDataHolder(
   private val project: Project?,
   parentDisposable: Disposable,
 ) : Disposable {
@@ -44,6 +45,12 @@ internal class MergeConflictIterativeDataHolder(
   }
 
   @RequiresEdt
+  fun isFileReviewed(file: VirtualFile): Boolean {
+    val mergeConflictModel = mergeConflictModels[file] ?: return false
+    return mergeConflictModel.wasReviewed
+  }
+
+  @RequiresEdt
   fun getResolvedFiles(): Set<VirtualFile> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
   }
@@ -53,11 +60,12 @@ internal class MergeConflictIterativeDataHolder(
     val removedModels = files.mapNotNull { mergeConflictModels.remove(it) }
     runWriteAction {
       removedModels.forEach { model ->
-        val affected = model.getAllChanges().map { it.index }
-        model.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"), null,
-                                  UndoConfirmationPolicy.DEFAULT,
-                                  true,
-                                  IntList.of(*affected.toIntArray())) {
+        val affected = model.getAllChanges().mapTo(IntArrayList()) { it.index }
+        model.executeMergeCommand(commandName = DiffBundle.message("merge.dialog.reset.change.command"),
+                                  commandGroupId = null,
+                                  undoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT,
+                                  bulkUpdate = true,
+                                  affectedIndexes = affected) {
           model.resetAllChanges()
         }
       }
@@ -79,6 +87,28 @@ internal class MergeConflictIterativeDataHolder(
     }
 
   @RequiresEdt
+  fun getAiFileSnapshot(file: VirtualFile): MergeConflictAiFileSnapshot? {
+    val model = mergeConflictModels[file] ?: return null
+    val changes = model.getAllChanges()
+    return MergeConflictAiFileSnapshot(
+      totalConflicts = changes.size,
+      resolvedConflicts = changes.count { it.isResolved },
+      unresolvedConflicts = changes.count { !it.isResolved },
+    )
+  }
+
+  @RequiresEdt
+  fun resolveAutoResolvableConflicts(file: VirtualFile): Boolean {
+    val model = mergeConflictModels[file] ?: return false
+    if (model.getAutoResolvableChanges().isEmpty()) return false
+
+    runWriteAction {
+      model.resolveAllChangesAutomatically()
+    }
+    return true
+  }
+
+  @RequiresEdt
   override fun dispose() {
     mergeConflictModels.values.forEach {
       Disposer.dispose(it)
@@ -92,4 +122,12 @@ internal class MergeConflictIterativeDataHolder(
       is MergeRequestHandler.UserConfiguredExternalToolHandler, is MergeRequestHandler.ExtensionBasedHandler -> false
     }
   }
+
 }
+
+@org.jetbrains.annotations.ApiStatus.Internal
+data class MergeConflictAiFileSnapshot(
+  @JvmField val totalConflicts: Int,
+  @JvmField val resolvedConflicts: Int,
+  @JvmField val unresolvedConflicts: Int,
+)

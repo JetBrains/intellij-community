@@ -660,6 +660,9 @@
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP" dynamic="true"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier" dynamic="true"/>
     <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer" dynamic="true"/>
+    <extensionPoint name="gotoFileFuzzyMatcherFactory"
+                    interface="com.intellij.util.fuzzyMatching.GotoFileFuzzyMatcherFactory"
+                    dynamic="true"/>
 
     <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType" dynamic="true"/>
     <extensionPoint name="scratch.creationHelper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -774,7 +777,9 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.highlightingProjectOrWorkspaceFileOverride"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingProjectOrWorkspaceFileOverride"
                     dynamic="true"/>
-
+    <extensionPoint qualifiedName="com.intellij.codeInsight.documentation.render.itemUpdateProvider"
+                    interface="com.intellij.codeInsight.documentation.render.DocRenderItemUpdateProvider"
+                    dynamic="true"/>
     <extensionPoint name="saveAndSyncHandlerListener" interface="com.intellij.ide.SaveAndSyncHandlerListener" dynamic="true"/>
   </extensionPoints>
 

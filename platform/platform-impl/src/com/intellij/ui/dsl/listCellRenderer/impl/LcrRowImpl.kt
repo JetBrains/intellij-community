@@ -9,10 +9,11 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
-import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
+import java.awt.Font
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -50,6 +52,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
+import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
@@ -87,6 +90,8 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
   override var selectable: Boolean = true
+  override var font: Font? = UIManager.getFont("Label.font")
+  override var copyWholeRow: Boolean = false
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -105,13 +110,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParamsImpl(foreground)
+    val initParams = LcrTextInitParamsImpl(foreground, font)
     initParams.accessibleName = text
     if (init != null) {
       initParams.init()
     }
 
-    add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
+    add(LcrSimpleColoredTextImpl(initParams, true, gap, text, foreground))
   }
 
   override fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)?) {
@@ -194,6 +199,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     result.applySeparator(listSeparator, index == 0, list)
     result.setToolTipText(toolTipText)
     result.providerUiInspectorContext = uiInspectorContext
+    result.copyWholeRow = copyWholeRow
     result.selectable = selectable
 
     var minHeight = 0
@@ -322,6 +328,7 @@ private class RendererPanel(key: RowKey) :
   private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                                                else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
   var providerUiInspectorContext: List<PropertyBean>? = null
+  var copyWholeRow: Boolean = false
   var selectable: Boolean = true
 
   init {
@@ -331,9 +338,6 @@ private class RendererPanel(key: RowKey) :
     cellsPanel.isOpaque = false
     selectablePanel.layout = BorderLayout()
     selectablePanel.add(cellsPanel, BorderLayout.CENTER)
-    
-    selectablePanel.foreground = JBColor.PanelForeground
-    cellsPanel.foreground = JBColor.PanelForeground
 
     val builder = RowsGridBuilder(cellsPanel)
     builder.resizableRow()
@@ -352,12 +356,18 @@ private class RendererPanel(key: RowKey) :
 
   override var listSeparator: ListSeparator? = null
 
-  override fun getCopyText(): String? {
+  override fun getCopyText(): @NlsSafe String {
+    if (copyWholeRow) {
+      return getWholeRowAsText()
+    }
+
     // Find the first component with non-trivial text
     for (component in cellsPanel.components) {
       val result = when (component) {
         is SimpleColoredComponent -> component.getCharSequence(true).toString()
-        is JLabel -> component.text // todo dead code?
+        is JLabel,
+        is OnOffButton,
+          -> null
         else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
       }
 
@@ -366,7 +376,7 @@ private class RendererPanel(key: RowKey) :
       }
     }
 
-    return null
+    return ""
   }
 
   override fun getBaseline(width: Int, height: Int): Int {
@@ -520,6 +530,23 @@ private class RendererPanel(key: RowKey) :
       this.background = background
       selectionColor = null
     }
+  }
+
+  private fun getWholeRowAsText(): @NlsSafe String {
+    val result = mutableListOf<String?>()
+
+    for (component in cellsPanel.components) {
+      when (component) {
+        is SimpleColoredComponent -> result += component.getCharSequence(true).toString()
+        is JLabel -> {
+          // No text for icons, see [LcrCellBaseImpl.Type.ICON]
+        }
+        is OnOffButton -> result += if (component.isSelected) component.onText else component.offText
+        else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
+      }
+    }
+
+    return result.filter { !it.isNullOrBlank() }.joinToString(separator = " ")
   }
 }
 

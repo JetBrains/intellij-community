@@ -10,14 +10,17 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.CACHE_FILE
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Util.bindIsPassThrough
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Util.bindMergingTimeSpan
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.HIDDEN
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.UNKNOWN
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -27,10 +30,13 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.observable.properties.whenPropertyReset
 import com.intellij.openapi.observable.properties.whenPropertySet
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.setObservableProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
@@ -38,26 +44,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.trackActivityBlocking
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.queueTracked
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private val MERGING_TIME_SPAN = 300.milliseconds
-private val MERGING_TIME_SPAN_MS = MERGING_TIME_SPAN.inWholeMilliseconds
-
-private val DEFAULT_SMART_PROJECT_RELOAD_DELAY = 3.seconds
-
-@ApiStatus.Internal
+@Internal
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
 class AutoImportProjectTracker(
   private val project: Project
@@ -82,7 +87,7 @@ class AutoImportProjectTracker(
 
   private val dispatcher = MergingUpdateQueue(
     name = "AutoImportProjectTracker.dispatcher",
-    mergingTimeSpan = MERGING_TIME_SPAN_MS.toInt(),
+    mergingTimeSpan = mergingTimeSpan.inWholeMilliseconds.toInt(),
     isActive = true,
     modalityStateComponent = null,
     parent = serviceDisposable,
@@ -135,20 +140,22 @@ class AutoImportProjectTracker(
     }
   }
 
+  /**
+   * @see AutoImportProjectTracker.scheduleProjectRefresh
+   * @see AutoImportProjectTracker.scheduleChangeProcessing
+   */
   private fun scheduleDelayedProjectReload(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
     LOG.debug("Schedule delayed project reload")
 
-    // See AutoImportProjectTracker.scheduleChangeProcessing for details
-    val smartProjectReloadDelay = projectDataMap.values.maxOfOrNull {
-      it.projectAware.smartProjectReloadDelay ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
-    } ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
-    // We already dispatched processChanges with the MERGING_TIME_SPAN delay
-    // See AutoImportProjectTracker.scheduleChangeProcessing for details
-    val smartProjectReloadDispatcherIterations = ((smartProjectReloadDelay - MERGING_TIME_SPAN) / MERGING_TIME_SPAN).toInt()
-    // smartProjectReloadDispatcherIterations can be negative if smartProjectReloadDelay is less than MERGING_TIME_SPAN
-    val dispatchIterations = maxOf(smartProjectReloadDispatcherIterations, 1)
+    val smartProjectReloadDelay = projectDataMap.values.asSequence()
+      .mapNotNull { it.projectAware.smartProjectReloadDelay }
+      .maxOrNull() ?: autoReloadDelay
+    val dispatcherIterations = smartProjectReloadDelay / mergingTimeSpan
+    // We already dispatched `processChanges` with the `mergingTimeSpan` delay
+    // Therefore we need to reduce effective
+    val effectiveDispatchIterations = maxOf(dispatcherIterations.toInt() - 1, 1)
 
-    schedule(priority = 2, dispatchIterations = dispatchIterations) {
+    schedule(priority = 2, dispatchIterations = effectiveDispatchIterations) {
       reloadProject(projectsToReload)
     }
   }
@@ -312,9 +319,9 @@ class AutoImportProjectTracker(
     val projectId = projectAware.projectId
     val activationProperty = AtomicBooleanProperty(false)
     val reloadOperation = AtomicOperationTrace(name = "Reload $projectId")
-    val projectStatus = ProjectStatus(debugName = projectId.toString())
+    val projectStatus = AutoImportProjectStatus(debugName = projectId.toString())
     val parentDisposable = Disposer.newDisposable(serviceDisposable, projectId.toString())
-    val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
+    val settingsTracker = AutoImportProjectSettingsFilesTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, reloadOperation, projectAware, settingsTracker, parentDisposable)
 
     projectDataMap[projectId] = projectData
@@ -400,13 +407,22 @@ class AutoImportProjectTracker(
   private fun loadState(projectId: ExternalSystemProjectId, projectData: ProjectData) {
     val projectState = projectDataStates.remove(projectId)
     val settingsTrackerState = projectState?.settingsTracker
-    if (settingsTrackerState == null || projectState.isDirty) {
+    if (settingsTrackerState == null || projectState.isDirty || isWorkspaceModelCacheAbsentOrInvalid()) {
       projectData.status.markDirty(Stamp.nextStamp(), EXTERNAL)
       scheduleChangeProcessing()
       return
     }
     projectData.settingsTracker.loadState(settingsTrackerState)
     projectData.settingsTracker.refreshChanges()
+  }
+
+  private fun isWorkspaceModelCacheAbsentOrInvalid(): Boolean {
+    // Unknown WorkspaceModel implementation (e.g. in Rider) -> unknown state
+    val workspaceModel = project.workspaceModel as? WorkspaceModelImpl ?: return false
+    // Cache disabled (e.g. in tests) -> unknown state
+    if (!project.service<WorkspaceModelCache>().enabled) return false
+    // WorkspaceModel isn't loaded from cache if it was never saved or invalidated
+    return !workspaceModel.loadedFromCache
   }
 
   @TestOnly
@@ -416,11 +432,6 @@ class AutoImportProjectTracker(
       .filter { it.isActivated }
       .map { it.projectAware.projectId }
       .toSet()
-  }
-
-  @TestOnly
-  fun setDispatcherMergingSpan(delay: Int) {
-    dispatcher.setMergingTimeSpan(delay)
   }
 
   init {
@@ -447,8 +458,8 @@ class AutoImportProjectTracker(
       scheduleChangeProcessing()
     }
 
-    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
-    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
+    dispatcher.bindIsPassThrough(asyncChangesProcessingProperty.not(), serviceDisposable)
+    dispatcher.bindMergingTimeSpan(mergingTimeSpanProperty, serviceDisposable)
 
     dispatcher.setRestartTimerOnAdd(true)
 
@@ -459,11 +470,11 @@ class AutoImportProjectTracker(
   }
 
   private data class ProjectData(
-    @JvmField val status: ProjectStatus,
+    @JvmField val status: AutoImportProjectStatus,
     @JvmField val activationProperty: MutableBooleanProperty,
     @JvmField val reloadOperation: MutableOperationTrace,
     @JvmField val projectAware: ExternalSystemProjectAware,
-    @JvmField val settingsTracker: ProjectSettingsTracker,
+    @JvmField val settingsTracker: AutoImportProjectSettingsFilesTracker,
     @JvmField val parentDisposable: Disposable
   ) {
     var isActivated by activationProperty
@@ -471,7 +482,7 @@ class AutoImportProjectTracker(
     fun isUpToDate() = status.isUpToDate() && settingsTracker.isUpToDate()
 
     fun getModificationType(): ExternalSystemModificationType {
-      return ProjectStatus.merge(status.getModificationType(), settingsTracker.getModificationType())
+      return AutoImportProjectStatus.merge(status.getModificationType(), settingsTracker.getModificationType())
     }
   }
 
@@ -483,7 +494,7 @@ class AutoImportProjectTracker(
   @Serializable
   data class ProjectDataState(
     @JvmField val isDirty: Boolean = false,
-    @JvmField val settingsTracker: ProjectSettingsTracker.State? = null
+    @JvmField val settingsTracker: AutoImportProjectSettingsFilesTracker.State? = null
   )
 
   private data class ProjectReloadContext(
@@ -512,6 +523,10 @@ class AutoImportProjectTracker(
       || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
     )
 
+    private val mergingTimeSpanProperty = AtomicProperty(300.milliseconds)
+
+    private val autoReloadDelayProperty = AtomicProperty(3.seconds)
+
     private val isEnabledReload: Boolean
       get() = enableReloadProperty.get() &&
               (onceIgnoreDisableReloadRegistryProperty.getAndSet(false) ||
@@ -521,6 +536,11 @@ class AutoImportProjectTracker(
       get() = isEnabledReload && enableAutoReloadProperty.get()
 
     val isAsyncChangesProcessing: Boolean by asyncChangesProcessingProperty
+
+
+    private var mergingTimeSpan: Duration by mergingTimeSpanProperty
+
+    private var autoReloadDelay: Duration by autoReloadDelayProperty
 
     /**
      * In tests, enables only manual syncs executed using the [ExternalSystemProjectTracker] API.
@@ -555,9 +575,57 @@ class AutoImportProjectTracker(
      * Ignores once disable auto-reload registry.
      * Make sense only in a pair with registry key `external.system.auto.import.disabled`.
      */
-    @ApiStatus.Internal
+    @Internal
     fun onceIgnoreDisableAutoReloadRegistry() {
       onceIgnoreDisableReloadRegistryProperty.set(true)
     }
+
+    /**
+     * Defines the delay minimum project tracker delay.
+     *
+     * All project changes and sync requests that were made during this delay rescheduled it.
+     * So, it allows us to merge all project changes and sync requests into one bulk sync request.
+     * So, it allows us to start syncing automatically only once.
+     */
+    @TestOnly
+    fun setMergingTimeSpan(delay: Duration, parentDisposable: Disposable) {
+      setObservableProperty(mergingTimeSpanProperty, delay, parentDisposable)
+    }
+
+    /**
+     * Defines the delay from the detected project change to the start of auto-sync.
+     *
+     * @see setMergingTimeSpan
+     */
+    @TestOnly
+    fun setAutoReloadDelay(delay: Duration, parentDisposable: Disposable) {
+      setObservableProperty(autoReloadDelayProperty, delay, parentDisposable)
+    }
+  }
+
+  private object Util {
+
+    fun <Q : MergingUpdateQueue> Q.bindIsPassThrough(
+      property: ObservableProperty<Boolean>,
+      parentDisposable: Disposable? = null,
+    ): Q = apply {
+      isPassThrough = property.get()
+      property.whenPropertyChanged(parentDisposable) {
+        isPassThrough = it
+      }
+    }
+
+    fun <Q : MergingUpdateQueue> Q.bindMergingTimeSpan(
+      property: ObservableProperty<Duration>,
+      parentDisposable: Disposable? = null,
+    ): Q = apply {
+      setMergingTimeSpan(property.get())
+      property.whenPropertyChanged(parentDisposable) {
+        setMergingTimeSpan(property.get())
+      }
+    }
+
+    fun <Q : MergingUpdateQueue> Q.setMergingTimeSpan(span: Duration): Q =
+      apply { setMergingTimeSpan(span.inWholeMilliseconds.toInt()) }
   }
 }

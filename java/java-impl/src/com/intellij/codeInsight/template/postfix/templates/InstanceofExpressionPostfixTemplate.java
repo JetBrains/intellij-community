@@ -18,13 +18,18 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -35,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
@@ -68,6 +74,35 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate impleme
   }
 
   @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @Override
+  public PostfixModExpander createModExpander() {
+    return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) -> {
+      TextRange selection = actionContext.selection();
+      return ModCommand.psiUpdate(actionContext.withSelection(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()))
+                                    .withOffset(keyRange.getStartOffset()),
+                                  document -> document.deleteString(selection.getStartOffset(), selection.getEndOffset()),
+                                  updater -> {
+                                    updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), selection.getStartOffset());
+                                    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
+                                    PsiElement context =
+                                      CustomTemplateCallback.getContext(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
+                                    PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+                                    if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expr)) return;
+                                    Template template = getTemplate(updater.getProject(), expr);
+                                    if (!(template instanceof TemplateImpl templateImpl)) return;
+                                    TextRange range = expr.getTextRange();
+                                    updater.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+                                    updater.moveCaretTo(range.getStartOffset());
+                                    TemplateManagerImpl.updateTemplate(templateImpl, updater);
+                                  });
+    };
+  }
+
+  @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
     PsiExpression expression = JavaPostfixTemplatesUtils.getTopmostExpression(context);
     if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expression)) return;
@@ -77,12 +112,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate impleme
   private static void surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
     throws IncorrectOperationException {
     assert expr.isValid();
-    PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
-    final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
-                                      expr instanceof PsiConditionalExpression ||
-                                      expr instanceof PsiAssignmentExpression;
-    String exprText = parenthesesNeeded ? "(" + expr.getText() + ")" : expr.getText();
-    Template template = generateTemplate(project, exprText, types);
+    Template template = getTemplate(project, expr);
     TextRange range;
     if (expr.isPhysical()) {
       range = expr.getTextRange();
@@ -99,6 +129,16 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate impleme
     editor.getCaretModel().moveToOffset(range.getStartOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     TemplateManager.getInstance(project).startTemplate(editor, template);
+  }
+
+  private static @NotNull Template getTemplate(@NotNull Project project, @NotNull PsiExpression expr) {
+    PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
+    final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
+                                      expr instanceof PsiConditionalExpression ||
+                                      expr instanceof PsiAssignmentExpression;
+    String exprText = parenthesesNeeded ? "(" + expr.getText() + ")" : expr.getText();
+    Template template = generateTemplate(project, exprText, types);
+    return template;
   }
 
   private static Template generateTemplate(Project project, String exprText, PsiType[] suggestedTypes) {

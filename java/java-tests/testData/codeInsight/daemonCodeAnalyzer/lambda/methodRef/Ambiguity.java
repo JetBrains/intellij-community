@@ -22,7 +22,7 @@ class MyTest {
 
     {
         Bar1 b1 = MyTest :: foo;
-        bar(MyTest :: <error descr="Reference to 'foo' is ambiguous, both 'foo(String)' and 'foo(int)' match">foo</error>);
+        bar<error descr="Ambiguous method call: both 'MyTest.bar(Bar1)' and 'MyTest.bar(Bar2)' match">(MyTest :: foo)</error>;
     }
 }
 

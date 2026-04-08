@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -42,7 +41,13 @@ class PyOverloadsInspection : PyInspection() {
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
+  ): PsiElementVisitor {
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.typeEngine != null) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
+  }
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
     private val OVERLOADS_ANALYSIS_LIMIT = 30

@@ -48,7 +48,7 @@ object GitLabLoginUtil {
     }
 
     val dialogTitle = GitLabBundle.message("account.add.dialog.title")
-    val exitCode = showLoginDialog(project, parentComponent, model, dialogTitle, false)
+    val exitCode = showLoginDialog(project, parentComponent, model, dialogTitle, false, loginSource == GitLabLoginSource.GIT)
     return when (exitCode) {
       DialogWrapper.OK_EXIT_CODE -> {
         val loginResult = model.loginState.value.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
@@ -87,7 +87,7 @@ object GitLabLoginUtil {
       serverUri = account.server.uri
     }
     val title = GitLabBundle.message("account.update.dialog.title")
-    val exitState = showLoginDialog(project, parentComponent, model, title, true)
+    val exitState = showLoginDialog(project, parentComponent, model, title, true, loginSource == GitLabLoginSource.GIT)
     val loginState = model.loginState.value
     if (exitState == DialogWrapper.OK_EXIT_CODE && loginState is LoginModel.LoginState.Connected) {
       val loginData = GitLabLoginData(loginSource, isReLogin = true, isGitLabDotCom = model.getServerPath().isDefault)
@@ -107,7 +107,8 @@ object GitLabLoginUtil {
     parentComponent: JComponent?,
     model: GitLabTokenLoginPanelModel,
     title: @NlsContexts.DialogTitle String,
-    serverFieldDisabled: Boolean
+    serverFieldDisabled: Boolean,
+    canLogInWithGit: Boolean,
   ): Int {
     val scopeProvider = project.service<GitLabPluginProjectScopeProvider>()
     val dialog = scopeProvider.constructDialog("GitLab token login dialog") {
@@ -117,7 +118,7 @@ object GitLabLoginUtil {
           cs,
           serverFieldDisabled,
           tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
-          errorPresenter = GitLabLoginErrorStatusPresenter(cs, model)
+          errorPresenter = GitLabLoginErrorStatusPresenter(cs, model, canLogInWithGit)
         )
       }
     }

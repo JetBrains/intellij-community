@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.gradle.kotlin.tests.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "kotlin-tests-main",
+  module_name = "intellij.gradle.kotlin.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-tests-main_test_lib",
+  module_name = "intellij.gradle.kotlin.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":kotlin-tests-main_test_resources"],
+  runtime_deps = [
+    ":kotlin-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/gradle/completion/kotlin/tests",
+    "//plugins/gradle/completion/kotlin/tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.kotlin.tests.main` end
+
+### auto-generated section `iml intellij.gradle.kotlin.tests.main` start
+exports_files([
+  "intellij.gradle.kotlin.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.kotlin.tests.main` end

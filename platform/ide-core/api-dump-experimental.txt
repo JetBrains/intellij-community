@@ -99,6 +99,7 @@ f:com.intellij.util.ui.UiScopeKt
 f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - *f:forceNotifyIsShown(java.awt.Component):V
 *:com.intellij.util.ui.update.UpdateQueue
+- a:awaitAllExecuted(kotlin.coroutines.Continuation):java.lang.Object
 - a:cancelOnDispose(com.intellij.openapi.Disposable):com.intellij.util.ui.update.UpdateQueue
 - a:isAllExecuted():Z
 - a:queue(java.lang.Object):V

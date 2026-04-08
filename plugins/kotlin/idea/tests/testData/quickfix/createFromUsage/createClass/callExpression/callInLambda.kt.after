@@ -6,8 +6,11 @@
 // K2_ACTIONS_LIST: Create class 'Foo'
 // K2_ACTIONS_LIST: Create enum 'Foo'
 // K2_ACTIONS_LIST: Create interface 'Foo'
+// K2_ACTIONS_LIST: Create parameter 'Foo'
 // K2_ACTIONS_LIST: Remove invocation
+// K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Specify explicit lambda signature
+// K2_ACTIONS_LIST: Add 'return@run'
 // K2_ACTIONS_LIST: Create function 'Foo'
 // K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
 // K2_ACTIONS_LIST: Move lambda argument into parentheses

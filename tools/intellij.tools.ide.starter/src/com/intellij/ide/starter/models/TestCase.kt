@@ -79,4 +79,12 @@ data class TestCase<T : ProjectInfoSpec>(
    *  [useRelease] and make sure it does not meet your requirements
    *  E.g: "2022.1.2" */
   fun withVersion(version: String): TestCase<T> = copyWithPublicIdeDownloaderAndUpdatedInfo(version = version)
+
+  /**
+   * Defines additional modules for the dev build server (`ConfigurationStorage.useInstaller() = false`).
+   *
+   * @see com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
+   */
+  fun <T : ProjectInfoSpec> TestCase<T>.withAdditionalModulesForDevBuildServer(vararg additionalModules: String): TestCase<T> =
+    onIDE(ideInfo.copy(additionalModules = ideInfo.additionalModules + additionalModules))
 }

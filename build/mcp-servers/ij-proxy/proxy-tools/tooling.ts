@@ -2,7 +2,7 @@
 
 import {buildProxyToolingData} from './registry'
 import {shouldApplyWorkaround} from '../workarounds'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
+import type {AnalysisCapabilities, ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
 
 const DISABLE_NEW_SEARCH_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH'
 
@@ -64,16 +64,36 @@ export function resolveReadCapabilities(
   }
 }
 
+export function resolveAnalysisCapabilities(
+  upstreamTools: ToolSpecLike[] | undefined
+): {capabilities: AnalysisCapabilities} {
+  const names = new Set<string>()
+  for (const tool of upstreamTools ?? []) {
+    const name = typeof tool?.name === 'string' ? tool.name : ''
+    if (name) names.add(name)
+  }
+
+  const hasLintFiles = names.has('lint_files')
+  return {
+    capabilities: {
+      hasLintFiles,
+      supportsLintFiles: hasLintFiles || names.has('get_file_problems')
+    }
+  }
+}
+
 export function createProxyTooling({
   projectPath,
   callUpstreamTool,
   searchCapabilities,
+  analysisCapabilities,
   readCapabilities,
   ideVersion
 }: {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
+  analysisCapabilities: AnalysisCapabilities
   readCapabilities: ReadCapabilities
   ideVersion?: string | null
 }): {
@@ -86,6 +106,7 @@ export function createProxyTooling({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
+    analysisCapabilities,
     readCapabilities,
     shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
   })

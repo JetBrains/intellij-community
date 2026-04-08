@@ -47,7 +47,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
         }
     }
 
-    private inner class MyVisitor(groupId: String, libraryIds: List<String>) : VersionFinder(groupId, libraryIds) {
+    private class MyVisitor(groupId: String, libraryIds: List<String>) : VersionFinder(groupId, libraryIds) {
         override fun onFound(stdlibVersion: IdeKotlinVersion, stdlibStatement: GrCallExpression) {
             val gradlePluginVersion = findResolvedKotlinGradleVersion(stdlibStatement.containingFile)
 

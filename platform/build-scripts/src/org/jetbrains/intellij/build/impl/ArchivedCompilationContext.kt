@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.util.coroutines.mapConcurrent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
@@ -24,7 +26,7 @@ import kotlin.io.path.writeLines
 class ArchivedCompilationContext internal constructor(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputStorage = createArchivedStorage(delegate),
-  scope: CoroutineScope?,
+  private val outputProviderScope: CoroutineScope?,
 ) : CompilationContext by delegate {
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
@@ -33,16 +35,19 @@ class ArchivedCompilationContext internal constructor(
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 
-  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, scope = scope)
+  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, scope = outputProviderScope)
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
-    return delegate.getModuleRuntimeClasspath(module, forTests).mapConcurrent { storage.getArchived(it) }.filterNotNull()
+    return coroutineScope {
+      delegate.getModuleRuntimeClasspath(module, forTests).map { async { storage.getArchived(it) } }.awaitAll().filterNotNull()
+    }
   }
 
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths), storage = storage, scope = null)
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
+    val effectiveScope = scope ?: outputProviderScope
+    return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveScope), storage = storage, outputProviderScope = effectiveScope)
   }
 
   fun saveMapping(file: Path) {
@@ -123,11 +128,11 @@ internal fun CompilationContext.toArchivedIfNeeded(scope: CoroutineScope?): Comp
 val CompilationContext.asArchived: CompilationContext
   get() = toArchivedContext(scope = null)
 
-private fun CompilationContext.toArchivedContext(scope: CoroutineScope?): CompilationContext {
+internal fun CompilationContext.toArchivedContext(scope: CoroutineScope?): CompilationContext {
   return when (this) {
     is ArchivedCompilationContext -> this
     is BazelCompilationContext -> error("BazelCompilationContext must not be used as archived")
     is BuildContextImpl -> compilationContext.asArchived
-    else -> ArchivedCompilationContext(delegate = this, scope = scope)
+    else -> ArchivedCompilationContext(delegate = this, outputProviderScope = scope)
   }
 }

@@ -1,0 +1,5 @@
+// FIX: Convert to sealed interface
+sealed interface Result {
+    private fun helper() = println("private")
+}
+class Success : Result

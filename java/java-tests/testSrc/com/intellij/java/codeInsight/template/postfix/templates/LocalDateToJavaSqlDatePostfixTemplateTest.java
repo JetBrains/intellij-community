@@ -31,5 +31,12 @@ public class LocalDateToJavaSqlDatePostfixTemplateTest extends PostfixTemplateTe
                          """);
     doTestCompletion("toSqlDate");
   }
+
+  public static class ModLocalDateToJavaSqlDatePostfixTemplateTest extends LocalDateToJavaSqlDatePostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

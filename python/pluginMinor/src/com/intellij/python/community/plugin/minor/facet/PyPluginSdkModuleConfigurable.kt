@@ -23,7 +23,14 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
       }
 
       override fun getSdk(): Sdk? {
-        return PyModuleService.getInstance(module.project).findPythonSdk(module)
+        // Read from the Python facet, which is the authoritative SDK storage for CLion.
+        // PyModuleService.findPythonSdk() checks ModuleRootManager.sdk first, but that
+        // may hold a stale value if the Python SDK was previously set via a different
+        // path. setSdkToFacet() (our setSdk override) only writes to the facet, so
+        // getSdk() must also read from the facet to keep isModified() consistent.
+        val facet = FacetManager.getInstance(module).getFacetByType(MinorPythonFacet.ID)
+        return facet?.configuration?.sdk
+          ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
       }
     }
   }

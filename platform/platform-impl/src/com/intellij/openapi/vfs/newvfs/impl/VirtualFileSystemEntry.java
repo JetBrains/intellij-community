@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.core.CoreBundle;
@@ -138,9 +138,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsDataFlags.CHILDREN_CASE_SENSITIVE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
-  @interface Flags {
-  }
-
+  @interface Flags { }
 
   private final int id;
   private volatile VirtualDirectoryImpl parent;
@@ -150,8 +148,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType cachedFileType;
 
   static {
-    //noinspection ConstantValue
-    assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK : "ALL_FLAGS_MASK and MOD_COUNTER_MASK must combined into full int32";
+    assert ~ALL_FLAGS_MASK == LocalTimeCounter.MOD_COUNTER_MASK : "ALL_FLAGS_MASK and MOD_COUNTER_MASK must combined into full int32";
   }
 
   VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
@@ -250,11 +247,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
     }
     return pfs.getName(id);
-  }
-
-  @Override
-  public @NotNull CharSequence getNameSequence() {
-    return getName();
   }
 
   public final int getNameId() {

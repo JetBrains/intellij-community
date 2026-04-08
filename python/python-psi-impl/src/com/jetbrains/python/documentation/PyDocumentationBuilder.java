@@ -25,6 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.PythonDocumentationHighlightingService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
@@ -497,7 +498,10 @@ public final class PyDocumentationBuilder {
       StringUtil.notNullize(formatterInput), myFormatterFragments), List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
 
     if (output != null) {
-      myContent.appendRaw(output.getBody());
+      String htmlBody = output.getBody();
+      String highlightedHtmlBody = PythonDocumentationHighlightingService.getInstance().highlightCodeBlockInHtml(myElement.getProject(), htmlBody);
+
+      myContent.appendRaw(highlightedHtmlBody);
       fillFormattedSections(output.getFragments());
     }
     else {
@@ -622,16 +626,24 @@ public final class PyDocumentationBuilder {
 
   private @NotNull PsiElement resolveToDocStringOwner() {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
-    if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
-      final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
-      if (assignedValue instanceof PyReferenceExpression) {
-        final PsiElement resolved = resolve((PyReferenceExpression)assignedValue);
-        if (resolved instanceof PyDocStringOwner) {
-          String name = ((PyTargetExpression)myElement).getName();
-          if (name != null) {
-            mySectionsMap.get(PyPsiBundle.message("QDOC.assigned.to")).append(HtmlChunk.text(name).code());
+    if (myElement instanceof PyTargetExpression targetExpression) {
+      PsiElement docOwner = resolveDocStringOwnerForTargetExpression(targetExpression);
+      if (docOwner != null) {
+        return docOwner;
+      }
+      // We can end up with a .py element even when .pyi stubs are available,
+      // because, e.g., PyClassNameCompletionContributor explicitly excludes
+      // .pyi stubs from the importable name completion search scope.
+      if (!PyiUtil.isInsideStub(myElement)) {
+        PsiElement stubElement = PyiUtil.getPythonStub(targetExpression);
+        if (stubElement instanceof PyTargetExpression stubTarget) {
+          docOwner = resolveDocStringOwnerForTargetExpression(stubTarget);
+          if (docOwner != null) {
+            return docOwner;
           }
-          return resolved;
+        }
+        if (stubElement instanceof PyDocStringOwner) {
+          return stubElement;
         }
       }
     }
@@ -659,6 +671,24 @@ public final class PyDocumentationBuilder {
     final PyResolveContext resolveContext = PyResolveContext.implicitContext(myContext);
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.getElement();
+  }
+
+  private @Nullable PsiElement resolveDocStringOwnerForTargetExpression(@NotNull PyTargetExpression targetExpression) {
+    if (targetExpression.getDocStringValue() != null) {
+      return targetExpression;
+    }
+    final PyExpression assignedValue = targetExpression.findAssignedValue();
+    if (assignedValue instanceof PyReferenceExpression refExpr) {
+      PsiElement resolved = resolve(refExpr);
+      if (resolved instanceof PyDocStringOwner) {
+        String name = targetExpression.getName();
+        if (name != null) {
+          mySectionsMap.get(PyPsiBundle.message("QDOC.assigned.to")).append(HtmlChunk.text(name).code());
+        }
+        return resolved;
+      }
+    }
+    return null;
   }
 
   private @Nullable PyStringLiteralExpression addFunctionInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {

@@ -419,14 +419,17 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       // if there are no messages left, the dialog will be closed automatically, so there is no need to update controls in that case
       if (cluster != null) {
         cluster.messages.forEach { it.isRead = true }
-        updateLabels(cluster)
+        updateLabelsAsync(cluster)
         updateDetails(cluster)
       }
       updateCredentialsPanel(submitter)
-      isOKActionEnabled = cluster != null && cluster.canSubmit
-      setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
-      setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
-      myLoadingDecorator.stopLoading()
+
+      withContext(Dispatchers.EDT) {
+        isOKActionEnabled = cluster != null && cluster.canSubmit
+        setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
+        setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
+        myLoadingDecorator.stopLoading()
+      }
     }
     myUpdateControlsJob.invokeOnCompletion {
       enableOkButtonIfReady()
@@ -453,7 +456,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private suspend fun updateLabels(cluster: ErrorMessageCluster) {
+  @RequiresEdt
+  private fun updateLabels(cluster: ErrorMessageCluster): ErrorReportSubmitter? {
     val message = cluster.first
     myCountLabel.text = DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size)
     val t = message.throwable
@@ -547,45 +551,53 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       myForeignPluginWarningLabel.isVisible = false
     }
     myPrivacyNotice.panel.isVisible = false
+    return submitter
+  }
+
+  private suspend fun updateLabelsAsync(cluster: ErrorMessageCluster) {
+    val submitter = withContext(Dispatchers.EDT) {
+      updateLabels(cluster)
+    }
     if (submitter != null) {
       loadPrivacyNoticeText(submitter)
     }
   }
 
-  private fun isImplementationDetailPlugin(pluginId: PluginId): Boolean {
-    return PluginManagerCore.getPlugin(pluginId)?.isImplementationDetail ?: false
-  }
-
   private fun isValidUrl(url: String): Boolean = runCatching { URI(url).toURL() }.isSuccess
 
-  private fun updateDetails(cluster: ErrorMessageCluster) {
-    val message = cluster.first
-    val canReport = cluster.canSubmit
-    if (myLastIndex != myIndex) {
-      myCommentArea.text = message.additionalInfo
-      myAttachmentList.clear()
-      myAttachmentList.addItem(STACKTRACE_ATTACHMENT, true)
-      for (attachment in message.allAttachments) {
-        myAttachmentList.addItem(attachment.name, attachment.isIncluded)
+  private suspend fun updateDetails(cluster: ErrorMessageCluster) {
+    withContext(Dispatchers.EDT) {
+      val message = cluster.first
+      val canReport = cluster.canSubmit
+      if (myLastIndex != myIndex) {
+        myCommentArea.text = message.additionalInfo
+        myAttachmentList.clear()
+        myAttachmentList.addItem(STACKTRACE_ATTACHMENT, true)
+        for (attachment in message.allAttachments) {
+          myAttachmentList.addItem(attachment.name, attachment.isIncluded)
+        }
+        myAttachmentList.selectedIndex = 0
+        myLastIndex = myIndex
       }
-      myAttachmentList.selectedIndex = 0
-      myLastIndex = myIndex
+      myCommentArea.isEditable = canReport
+      myCommentArea.putClientProperty(
+        TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
+        if (canReport) null else Predicate<JBTextArea> { false }
+      )
+      myAttachmentList.setEditable(canReport)
     }
-    myCommentArea.isEditable = canReport
-    myCommentArea.putClientProperty(
-      TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-      if (canReport) null else Predicate<JBTextArea> { false }
-    )
-    myAttachmentList.setEditable(canReport)
   }
 
   private suspend fun updateCredentialsPanel(submitter: ErrorReportSubmitter?) {
-    myCredentialLabel.isVisible = false
+    withContext(Dispatchers.EDT) {
+      myCredentialLabel.isVisible = false
+    }
     if (submitter != null) {
       loadCredentialsPanel(submitter)
     }
   }
 
+  @RequiresEdt
   private fun reportMessage(cluster: ErrorMessageCluster, dialogClosed: Boolean): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
@@ -824,13 +836,19 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
           }
           return
         }
-        val reportAllStarted = reportAll(true)
-        if (reportAllStarted) {
-          notifySuccessReportAll(true)
-          super@IdeErrorsDialog.doOKAction()
-        }
-        else {
-          updateControls()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportAllStarted = reportAll(myMessageClusters, true)
+
+          withContext(Dispatchers.EDT) {
+            if (reportAllStarted) {
+              notifySuccessReportAll(true)
+              super@IdeErrorsDialog.doOKAction()
+            }
+            else {
+              updateControls()
+            }
+          }
         }
       }
     }
@@ -884,11 +902,16 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       if (isEnabled) {
         IdeErrorDialogUsageCollector.logReportAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name)
-        val reportingStarted = reportAll()
-        if (reportingStarted) {
-          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-          notifySuccessReportAll(autoReportEnabled)
-          super@IdeErrorsDialog.doOKAction()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportingStarted = reportAll(myMessageClusters)
+          if (reportingStarted) {
+            withContext(Dispatchers.EDT) {
+              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
+              notifySuccessReportAll(autoReportEnabled)
+              super@IdeErrorsDialog.doOKAction()
+            }
+          }
         }
       }
     }
@@ -899,20 +922,24 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       if (isEnabled) {
         IdeErrorDialogUsageCollector.logReportAndClearAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name)
-        val reportingStarted = reportAll()
-        if (reportingStarted) {
-          myMessagePool.clearErrors()
-          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-          notifySuccessReportAll(autoReportEnabled)
-          super@IdeErrorsDialog.doOKAction()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportingStarted = reportAll(myMessageClusters)
+          if (reportingStarted) {
+            withContext(Dispatchers.EDT) {
+              myMessagePool.clearErrors()
+              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
+              notifySuccessReportAll(autoReportEnabled)
+              super@IdeErrorsDialog.doOKAction()
+            }
+          }
         }
       }
     }
   }
 
-  private fun reportAll(onlyEligibleForAutoReport: Boolean = false): Boolean {
+  private suspend fun reportAll(messageClusters: List<ErrorMessageCluster>, onlyEligibleForAutoReport: Boolean = false): Boolean {
     var reportingStarted = true
-    val messageClusters = myMessageClusters
     for (i in messageClusters.indices) {
       val cluster = messageClusters[i]
       if (!cluster.canSubmit) {
@@ -925,9 +952,16 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
       NOTIFY_SUCCESS_EACH_REPORT.set(false)
 
-      if (!reportMessage(cluster, true).also { reportingStarted = it }) {
+      val reported = withContext(Dispatchers.EDT) {
+        reportMessage(cluster, true)
+      }
+      reportingStarted = reported
+
+      if (!reported) {
         myIndex = i
-        updateControls()
+        withContext(Dispatchers.EDT) {
+          updateControls()
+        }
         break
       }
     }

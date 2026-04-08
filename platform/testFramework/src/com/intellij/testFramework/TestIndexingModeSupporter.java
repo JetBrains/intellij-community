@@ -35,8 +35,9 @@ import static junit.framework.TestSuite.warning;
 /**
  * To run a test with needed {@link IndexingMode}, it's enough to make getIndexingMode return it and run the test with IDE's gutter action.
  * To run all dumb mode completion tests, check JavaDoc of
- * {@link com.intellij.java.codeInsight.completion.JavaCompletionTestSuite} or
- * {@link com.jetbrains.php.PhpDumbCompletionTest}
+ * {@link com.intellij.java.codeInsight.completion.JavaCompletionTestSuite}
+ *
+ * Please add indexing mode test cases to the same test suite to ensure they run in the same bucket on TC, for ex. {@link com.jetbrains.php.completion.PhpCompletionTest}.
  */
 public interface TestIndexingModeSupporter {
   enum IndexingMode {

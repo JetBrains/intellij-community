@@ -385,14 +385,16 @@ public final class ProgressIndicatorUtils {
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
     int rejectedExecutions = 0;
     while (true) {
-      checkCancelledEvenWithPCEDisabled(indicator);
+      if (!future.isDone()) {//short-circuit all the ProgressIndicator processing if future is already done
+        checkCancelledEvenWithPCEDisabled(indicator);
+      }
       try {
         return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
-      //TODO RC: in a non-cancellable section we could still (re-)throw a (P)CE if the _awaited_ code gets cancelled
-      //         (nowadays it is mistakenly considered an error) -- [Daniil et all, private conversation]
+      //BEWARE RC: in a non-cancellable section we _could_ still (re-)throw a (P)CE if the _awaited_ code gets cancelled.
+      //           It is sometimes mistakenly considered an error, but it is not -- [see Daniil Ovchinnikov, private conversation]
       catch (RejectedExecutionException ree) {
         //EA-225412: FJP throws REE (which propagates through futures) e.g. when FJP reaches max
         // threads while compensating for too many managedBlockers -- or when it is shutdown.

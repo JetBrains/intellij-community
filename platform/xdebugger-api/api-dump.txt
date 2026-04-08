@@ -105,6 +105,7 @@ com.intellij.xdebugger.XDebugSession
 - a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType,javax.swing.event.HyperlinkListener):V
 - a:resume():V
 - a:runToPosition(com.intellij.xdebugger.XSourcePosition,Z):V
+- runWhenUiReady(java.util.function.Consumer):V
 - a:sessionResumed():V
 - a:setBreakpointInvalid(com.intellij.xdebugger.breakpoints.XLineBreakpoint,java.lang.String):V
 - a:setBreakpointMuted(Z):V

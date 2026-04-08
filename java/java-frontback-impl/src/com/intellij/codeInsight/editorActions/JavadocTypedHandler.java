@@ -17,6 +17,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +179,8 @@ public final class JavadocTypedHandler extends TypedHandlerDelegate {
     }
 
     // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.
-    if (PsiTreeUtil.getParentOfType(element, PsiInlineDocTag.class, false) != null) {
+    // The same goes for the inside of Markdown links
+    if (PsiTreeUtil.getNonStrictParentOfType(element, PsiInlineDocTag.class, PsiMarkdownLink.class, PsiMarkdownReferenceLink.class) != null) {
       return false;
     }
 

@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" scope="PROVIDED" />

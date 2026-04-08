@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullComputable;
@@ -104,10 +103,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
         if (tempFile.getText().trim().equals(oldText)) return EmptyRunnable.getInstance();
       }
       return () -> {
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
-        final Document document = documentManager.getDocument(myFile);
-        if (document != null) documentManager.commitDocument(document);
-
+        PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myFile.getFileDocument());
         List<GrImportStatement> existingImports = PsiUtil.getValidImportStatements(myFile);
 
         for (GrImportStatement statement : tempFile.getImportStatements()) {

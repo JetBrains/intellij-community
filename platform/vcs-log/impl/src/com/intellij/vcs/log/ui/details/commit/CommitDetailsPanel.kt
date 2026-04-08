@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsContexts
@@ -109,7 +111,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     val maxHeight = 22 * 4
     add(statusesToolbar.component, CC().alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
-    updateStatusToolbar(false)
+    scheduleStatusToolbarUpdate()
   }
 
   fun setCommit(presentation: CommitPresentation) {
@@ -147,14 +149,16 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     statusesActionGroup.removeAll()
     statusesActionGroup.addAll(nonSignaturesStatuses.map(::statusToAction))
 
-    updateStatusToolbar(nonSignaturesStatuses.isNotEmpty())
+    scheduleStatusToolbarUpdate()
   }
 
   private fun statusToAction(status: VcsCommitExternalStatusPresentation) =
     object : DumbAwareAction(status.text, null, status.icon) {
-      override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.BGT
+      init {
+        templatePresentation.isRWLockRequired = false
       }
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
       override fun update(e: AnActionEvent) {
         e.presentation.apply {
@@ -172,10 +176,16 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
       }
     }
 
-  private fun updateStatusToolbar(hasStatuses: Boolean) {
-    border = if (hasStatuses) JBUI.Borders.empty() else JBUI.Borders.emptyRight(SIDE_BORDER)
-    statusesToolbar.updateActionsImmediately()
-    statusesToolbar.component.isVisible = hasStatuses
+  private fun scheduleStatusToolbarUpdate() {
+    val modality = ModalityState.stateForComponent(this)
+    // even async toolbar update may need a ReadAction and we might not be allowed to launch it here
+    ApplicationManager.getApplication().invokeLater(
+      {
+        val hasStatuses = statusesActionGroup.childrenCount > 0
+        border = if (hasStatuses) JBUI.Borders.empty() else JBUI.Borders.emptyRight(SIDE_BORDER)
+        statusesToolbar.updateActionsAsync()
+        statusesToolbar.component.isVisible = hasStatuses
+      }, modality)
   }
 
   fun update() {

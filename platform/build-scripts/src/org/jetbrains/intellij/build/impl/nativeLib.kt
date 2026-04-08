@@ -49,7 +49,7 @@ private val nonSignFiles = java.util.Set.of(
 
 @VisibleForTesting
 object OsFamilyDetector {
-  private val macosRegex = "(darwin|mac|macos)".toRegex(RegexOption.IGNORE_CASE)
+  private val macosRegex = "(darwin|mac|macos|osx)".toRegex(RegexOption.IGNORE_CASE)
   private val windowsRegex = "(windows|win32-|win)".toRegex(RegexOption.IGNORE_CASE)
   private val linuxRegex = "linux".toRegex(RegexOption.IGNORE_CASE)
 
@@ -61,7 +61,7 @@ object OsFamilyDetector {
       return when {
         macosRegex.containsMatchIn(path) -> OsFamily.MACOS to ""
         windowsRegex.containsMatchIn(path) -> OsFamily.WINDOWS to ""
-        linuxRegex.containsMatchIn(path) -> OsFamily.LINUX to ""
+        linuxRegex.containsMatchIn(path) -> if (path.contains("musl")) null else OsFamily.LINUX to ""
         path == "icudtl.dat" -> OsFamily.WINDOWS to ""
         else -> null
       }
@@ -301,7 +301,7 @@ private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitect
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
   if (!path.contains("/")) {
     return when {
-      path.contains("x64") -> X_64
+      path.contains("x64") || path.contains("x86_64") || path.contains("win64") -> X_64
       path.contains("aarch64") || path.contains("arm64") -> AARCH_64
       path == "icudtl.dat" -> UNIVERSAL
       else -> null
@@ -333,7 +333,7 @@ private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: S
   }
 }
 
-private fun getLibNameBySourceFile(sourceFile: Path): String {
+internal fun getLibNameBySourceFile(sourceFile: Path): String {
   val fileName = sourceFile.fileName.toString()
   return fileName.split('-').takeWhile { !it.contains('.') }.joinToString(separator = "-")
 }

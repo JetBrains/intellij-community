@@ -33,10 +33,13 @@ jvm_library(
     "//platform/util",
     "//platform/settings",
     "//platform/util/coroutines",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "//platform/workspace/storage",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/kernel/shared:kernel",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -65,10 +68,13 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/settings:settings_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/workspace/storage:storage_test_lib",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.core` end

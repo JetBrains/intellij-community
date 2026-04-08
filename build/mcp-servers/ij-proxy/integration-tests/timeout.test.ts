@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {ok} from 'node:assert/strict'
+import {ok, strictEqual} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
-import {SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
+import {buildUpstreamTool, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -30,6 +30,43 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
       await delay(1700)
       const matching = proxyClient.messages.filter((entry) => entry?.id === response.id)
       ok(matching.length === 1)
+    })
+  })
+
+  it('uses the build timeout for lint_files', async () => {
+    const lintFilesTool = buildUpstreamTool('lint_files', {
+      file_paths: {type: 'array', items: {type: 'string'}},
+      min_severity: {type: 'string'},
+      timeout: {type: 'number'}
+    }, ['file_paths'])
+
+    await withProxy({
+      tools: [lintFilesTool],
+      proxyEnv: {
+        JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S: '1',
+        JETBRAINS_MCP_BUILD_TIMEOUT_S: '2'
+      },
+      onToolCall: async ({name, args}) => {
+        strictEqual(name, 'lint_files')
+        await delay(1500)
+        return {
+          structuredContent: {
+            items: [{filePath: 'src/Main.kt', problems: []}]
+          },
+          text: JSON.stringify({items: [{filePath: 'src/Main.kt', problems: []}]})
+        }
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {file_paths: ['src/Main.kt'], timeout: 180000}
+      })
+
+      ok(!response.result?.isError)
+      const parsed = JSON.parse(response.result.content[0].text)
+      strictEqual(parsed.items.length, 1)
+      strictEqual(parsed.items[0].filePath, 'src/Main.kt')
     })
   })
 })

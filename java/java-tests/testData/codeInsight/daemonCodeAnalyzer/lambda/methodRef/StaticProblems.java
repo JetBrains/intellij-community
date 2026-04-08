@@ -116,7 +116,7 @@ class MyTest2 {
     static void call3(I2 s) {}
     static {
           call3(MyTest2::m1);
-          call3(MyTest2::<error descr="Reference to 'm2' is ambiguous, both 'm2(MyTest2, String)' and 'm2(String)' match">m2</error>);
+          call3<error descr="Ambiguous method call: both 'MyTest2.call3(I1)' and 'MyTest2.call3(I2)' match">(MyTest2::m2)</error>;
           call3(MyTest2::m3);
           call3(MyTest2::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>);
     }

@@ -13,6 +13,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/compiler/instrumentation-util",
     "//java/idea-ui:ui",
+    "//java/java-syntax:syntax",
     "//spellchecker",
     "//platform/core-ui",
     "//platform/workspace/jps",
@@ -38,6 +39,8 @@ jvm_library(
     "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
     "//java/idea-ui:ui",
     "//java/idea-ui:ui_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
@@ -48,6 +51,8 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/workspace/storage",
@@ -63,10 +68,14 @@ jvm_library(
     "@community//build:build-javac-rt_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/workspace/jps",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/backend/workspace",
@@ -80,10 +89,14 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//jps/jps-builders:build",
     "//jps/jps-builders:build_test_lib",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
   ],
   runtime_deps = [
     ":compiler-tests",
     "//spellchecker:spellchecker_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.compiler.tests` end
@@ -102,3 +115,63 @@ jps_test(
   runtime_deps = [":compiler-tests_test_lib"]
 )
 ### auto-generated section `test intellij.java.compiler.tests` end
+
+### auto-generated section `build intellij.java.compiler.tests.main` start
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
+
+resourcegroup(
+  name = "compiler-tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "compiler-tests-main",
+  module_name = "intellij.java.compiler.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "compiler-tests-main_test_lib",
+  module_name = "intellij.java.compiler.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":compiler-tests-main_test_resources"],
+  runtime_deps = [
+    ":compiler-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//plugins/ant/jps-plugin:jps-tests",
+    "//plugins/ant/jps-plugin:jps-tests_test_lib",
+    "//plugins/devkit/jps-plugin:jps-tests",
+    "//plugins/devkit/jps-plugin:jps-tests_test_lib",
+    "//plugins/gradle/jps-plugin:jps-tests",
+    "//plugins/gradle/jps-plugin:jps-tests_test_lib",
+    "//plugins/groovy/jps-plugin:jps-tests",
+    "//plugins/groovy/jps-plugin:jps-tests_test_lib",
+    "//java/compiler:compiler-tests",
+    "//java/compiler:compiler-tests_test_lib",
+    "//plugins/ui-designer/jps-plugin/tests",
+    "//plugins/ui-designer/jps-plugin/tests:tests_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//plugins/maven/jps:jps-tests",
+    "//plugins/maven/jps:jps-tests_test_lib",
+    "//jps/jps-builders:build-tests",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//jps/model-serialization:model-serialization-tests",
+    "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//jps/model-impl:model-tests",
+    "//jps/model-impl:model-tests_test_lib",
+    "//plugins/IntelliLang/tests",
+    "//plugins/IntelliLang/tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.compiler.tests.main` end
+
+### auto-generated section `iml intellij.java.compiler.tests.main` start
+exports_files([
+  "intellij.java.compiler.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.compiler.tests.main` end

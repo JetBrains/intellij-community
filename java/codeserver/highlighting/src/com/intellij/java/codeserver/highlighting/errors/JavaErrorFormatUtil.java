@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -30,6 +30,7 @@ import com.intellij.psi.PsiLabeledStatement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiSubstitutor;
@@ -147,7 +148,7 @@ final class JavaErrorFormatUtil {
         return nameElement.getTextRangeInParent();
       }
     }
-    if (element instanceof PsiJavaCodeReferenceElement ref) {
+    if (element instanceof PsiJavaCodeReferenceElement ref && !(element instanceof PsiMethodReferenceExpression)) {
       PsiElement nameElement = ref.getReferenceNameElement();
       if (nameElement != null) {
         return nameElement.getTextRangeInParent();

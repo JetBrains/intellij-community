@@ -31,6 +31,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/ide-core-impl",
     "//platform/platform-impl/rpc",
+    "//fleet/rhizomedb",
   ],
   exports = ["//plugins/markdown/core:markdown"],
   runtime_deps = ["//platform/backend"]
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.backend` end

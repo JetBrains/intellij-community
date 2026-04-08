@@ -207,6 +207,9 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.shareProjectAction"
                     interface="com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.merge.resolveActionProvider"
+                    interface="com.intellij.openapi.vcs.merge.MergeResolveActionProvider"
+                    dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"

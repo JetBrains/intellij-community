@@ -2473,7 +2473,6 @@ a:com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - a:getCanonicalFile():com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - a:getFileSystem():com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 - a:getId():I
-- a:getNameSequence():java.lang.CharSequence
 - a:getParent():com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - a:isDirty():Z
 - isValid():Z

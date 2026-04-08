@@ -10,10 +10,9 @@ import com.intellij.searchEverywhereLucene.frontend.SearchEverywhereLuceneFronte
 import org.jetbrains.annotations.Nls
 
 class SearchEverywhereLuceneFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
-  override val name: @Nls String get() = SearchEverywhereLuceneFrontendBundle.message("searchEverywhereLucene.files.tab.name")
+  override val name: @Nls String get() = NAME
   override val id: String get() = SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES
-  override val priority: Int
-    get() = 10
+  override val priority: Int get() = PRIORITY
 
   override suspend fun getFilterEditor(): SeFilterEditor? = null
   override suspend fun canBeShownInFindResults(): Boolean = false
@@ -21,4 +20,9 @@ class SearchEverywhereLuceneFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase
   override suspend fun isCommandsSupported(): Boolean = false
 
   override fun dispose() {}
+
+  companion object {
+    val NAME: @Nls String = SearchEverywhereLuceneFrontendBundle.message("searchEverywhereLucene.files.tab.name")
+    const val PRIORITY: Int = 10
+  }
 }

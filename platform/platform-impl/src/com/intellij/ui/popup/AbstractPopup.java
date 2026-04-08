@@ -1492,11 +1492,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
     }
 
-    // In some environments, e.g. native Wayland, the default root and/or window background (white)
-    // may be displayed briefly, causing very noticeable flickering in dark themes (IJPL-222913).
-    window.setBackground(myContent.getBackground());
-    root.setBackground(myContent.getBackground());
-
     window.setFocusableWindowState(myFocusable);
     window.setFocusable(myRequestFocus);
 

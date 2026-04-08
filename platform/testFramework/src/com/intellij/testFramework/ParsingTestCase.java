@@ -14,6 +14,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.lang.MetaLanguageProvider;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -174,6 +175,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
+    registerExtensionPoint(app.getExtensionArea(), MetaLanguage.PROVIDER_EP_NAME, MetaLanguageProvider.class);
 
     addExplicitExtensionForAnyLanguage(ElementTypeConverters.getInstance(), new CommonElementTypeConverterFactory());
 

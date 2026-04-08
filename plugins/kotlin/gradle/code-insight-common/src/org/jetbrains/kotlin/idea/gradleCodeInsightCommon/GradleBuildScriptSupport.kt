@@ -11,7 +11,9 @@ interface GradleBuildScriptSupport {
 
         fun findManipulator(file: PsiFile, preferNewSyntax: Boolean = true): GradleBuildScriptManipulator<*>? {
             for (extension in EP_NAME.extensionList) {
-                return extension.createManipulator(file, preferNewSyntax) ?: continue
+                extension.createManipulator(file, preferNewSyntax)?.let {
+                    return it
+                }
             }
 
             return null

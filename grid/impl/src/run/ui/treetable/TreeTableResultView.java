@@ -69,9 +69,19 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
                          @NotNull ModelIndex<GridColumn> column,
                          boolean allowImmediateUpdate,
                          @NotNull GridRequestSource source) {
+    setValueAt(v, row, column, allowImmediateUpdate, source, null);
+  }
+
+  @Override
+  public void setValueAt(@Nullable Object v,
+                         @NotNull ModelIndex<GridRow> row,
+                         @NotNull ModelIndex<GridColumn> column,
+                         boolean allowImmediateUpdate,
+                         @NotNull GridRequestSource source,
+                         @Nullable Object metadata) {
     ModelIndexSet<GridRow> rows = ModelIndexSet.forRows(myResultPanel, row.asInteger());
     ModelIndexSet<GridColumn> columns = ModelIndexSet.forColumns(myResultPanel, column.asInteger());
-    myResultPanel.setValueAt(rows, columns, v, allowImmediateUpdate, null, source);
+    myResultPanel.setValueAt(rows, columns, v, allowImmediateUpdate, null, source, metadata);
   }
 
   @Override
@@ -208,6 +218,11 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
 
   @Override
   public void editSelectedCell() {
+
+  }
+
+  @Override
+  public void editSelectedCellWithValue(Object value) {
 
   }
 

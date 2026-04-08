@@ -122,6 +122,7 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
    * This handler is called after the base copyAdditionalFiles logic.
    *
    * @param handler Lambda receiving targetDir, arch, and context
+   * @see [ProductProperties.copyAdditionalOsSpecificFiles]
    */
   fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     this.copyAdditionalFilesHandler = handler
@@ -206,6 +207,7 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
 
     override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
       super.copyAdditionalFiles(targetDir, arch, context)
+      context.productProperties.copyAdditionalOsSpecificFiles(targetDir, OsFamily.WINDOWS, arch, context)
       builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
     }
 

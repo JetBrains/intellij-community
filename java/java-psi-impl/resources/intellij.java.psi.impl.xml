@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
 
   <extensionPoints>
     <!--suppress PluginXmlValidity -->
@@ -96,7 +96,7 @@
     <syntax.syntaxDefinition language="JAVA" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension"/>
     <syntax.syntaxDefinition language="JShellLanguage" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JShellSyntaxDefinitionExtension"/>
 
-    <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
+    <metaLanguageProvider implementation="com.intellij.lang.jvm.JvmMetaLanguage$Provider"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"

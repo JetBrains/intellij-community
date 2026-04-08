@@ -119,17 +119,20 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
             val iteratedClassId = getIterableElementTypeClassId(rightExpression) ?: return false
             val leftElementClassId = getIterableElementTypeClassId(leftExpression)
 
-            fun isCollectionOrSequence(classId: ClassId?): Boolean {
-                return classId == StandardClassIds.Collection || classId == StandardClassIds.Sequence
-            }
-
             val rightType = rightExpression?.expressionType ?: return false
-            val isRightACollection = isCollectionOrSequence(typeClassId(rightType)) || rightType.allSupertypes.any {
-                isCollectionOrSequence(typeClassId(it))
-            }
+            val rightDirectClassId = typeClassId(rightType)
+
+            val isRightAKnownContainer =
+                rightDirectClassId == StandardClassIds.Iterable ||
+                rightDirectClassId == StandardClassIds.Sequence ||
+                rightDirectClassId == StandardClassIds.Collection ||
+                rightType.allSupertypes.any {
+                    val classId = typeClassId(it)
+                    classId == StandardClassIds.Collection || classId == StandardClassIds.Sequence
+                }
 
             return iteratedClassId == rightClassId ||
-                    (iteratedClassId == leftElementClassId && !isRightACollection)
+                    (iteratedClassId == leftElementClassId && !isRightAKnownContainer)
         }
 
         val isPlus = when (element) {

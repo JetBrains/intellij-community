@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
+import com.intellij.platform.ide.progress.withModalProgress
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,12 +35,18 @@ internal class NewIjModuleAction : AnAction(), DumbAware {
 
 private suspend fun actionPerformed(dc: DataContext) {
   val project = dc.getData(CommonDataKeys.PROJECT) ?: return
-  val root = dc.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-  val suggestedNamePrefix = withContext(Dispatchers.IO) { 
-    suggestModuleNamePrefix(root, project) 
+  val newModuleParentDirectory = dc.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+  val popupContext = withModalProgress(project, message("scaffolding.preparing.module")) {
+    collectNewIjModuleCreationContext(newModuleParentDirectory, project)
   }
-  val name = withContext(Dispatchers.EDT) {
-    askForModuleName(project, suggestedNamePrefix)
+  val request = withContext(Dispatchers.EDT) {
+    askForModule(project, popupContext)
   }
-  createIjModule(project, root, name)
+  val createdModule = withModalProgress(project, message("scaffolding.creating.module")) {
+    createIjModule(project, newModuleParentDirectory, request.moduleName, request.kind, popupContext.targetPlugin)
+  }
+  if (createdModule.existedBefore) {
+    notifyModuleAlreadyExists(project, createdModule)
+  }
+  openXmlDescriptorIfPresent(project, createdModule)
 }

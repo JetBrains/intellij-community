@@ -25,11 +25,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//platform/syntax/syntax-psi:psi",
+    "//java/java-syntax:syntax",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ],
-  exports = [
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//platform/core-impl",
   ]
 )
 
@@ -39,12 +36,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = [
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-  ],
   runtime_deps = [
     ":frontback-psi-impl",
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
@@ -56,6 +47,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/syntax/syntax-psi:psi_test_lib",
+    "//java/java-syntax:syntax_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )

@@ -31,15 +31,14 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
+    "//platform/util:util-ui",
     "//platform/execution",
     "//platform/code-style-api:codeStyle",
   ],
-  exports = [
-    "//platform/testRunner",
-    "@lib//:tc_service_messages",
-  ]
+  exports = ["@lib//:tc_service_messages"]
 )
 
 jvm_library(
@@ -47,11 +46,7 @@ jvm_library(
   module_name = "intellij.platform.smRunner",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/testRunner",
-    "//platform/testRunner:testRunner_test_lib",
-    "@lib//:tc_service_messages",
-  ],
+  exports = ["@lib//:tc_service_messages"],
   runtime_deps = [
     ":smRunner",
     "//platform/analysis-api:analysis_test_lib",
@@ -77,8 +72,10 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/diff-api:diff",
     "//platform/diff-api:diff_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
@@ -101,10 +98,7 @@ jvm_library(
   module_name = "intellij.platform.smRunner.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/testRunner",
-    "@lib//:tc_service_messages",
-  ]
+  exports = ["@lib//:tc_service_messages"]
 )
 
 jvm_library(
@@ -153,9 +147,12 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/diff-api:diff",
     "//platform/diff-api:diff_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
@@ -165,16 +162,13 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
   ],
-  exports = [
-    "//platform/testRunner",
-    "//platform/testRunner:testRunner_test_lib",
-    "@lib//:tc_service_messages",
-  ],
+  exports = ["@lib//:tc_service_messages"],
   runtime_deps = [
     ":smRunner-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )

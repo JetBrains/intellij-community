@@ -20,5 +20,12 @@ public class NewArrayListToListPostfixTemplateTest extends PostfixTemplateTestCa
   public void testSimple() {
     doTestCompletion(null);
   }
+
+  public static class ModNewArrayListToListPostfixTemplateTest extends NewArrayListToListPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

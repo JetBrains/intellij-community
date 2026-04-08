@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.util.Date
@@ -37,17 +38,17 @@ object CodeReviewTimelineUIUtil {
     }
   }
 
-  fun createTitleTextPane(authorName: @Nls String, authorUrl: String?, date: Date?): JComponent {
-    val titleText = getTitleHtml(authorName, authorUrl, date)
-    val titleTextPane = SimpleHtmlPane(titleText).apply {
-      foreground = UIUtil.getContextHelpForeground()
+  fun createTitleTextPane(authorName: @Nls String, authorUrl: String?, date: Date?): JComponent =
+    SimpleHtmlPane(additionalStyleSheetProvider = {
+      val color = ColorUtil.toHtmlColor(UIUtil.getLabelForeground())
+      StyleSheetUtil.loadStyleSheet(""".author-name { color: $color; }""")
+    }).apply {
+      text = getTitleHtml(authorName, authorUrl, date)
     }
-    return titleTextPane
-  }
 
   private fun getTitleHtml(authorName: @Nls String, authorUrl: String?, date: Date?): @NlsSafe String {
-    val userNameLink = (authorUrl?.let { HtmlChunk.link(it, authorName) } ?: HtmlChunk.text(authorName))
-      .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
+    val userNameLink = ((authorUrl?.let { HtmlChunk.link(it, authorName) } ?: HtmlChunk.text(authorName)))
+      .wrapWith(HtmlChunk.span().setClass("author-name"))
       .bold()
     val builder = HtmlBuilder()
       .append(userNameLink)

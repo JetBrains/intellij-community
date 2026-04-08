@@ -2,10 +2,13 @@ package com.intellij.ide.starter.models
 
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.path.IDEDataPaths
+import com.intellij.ide.starter.runner.targets.TargetResolver
+import com.intellij.ide.starter.runner.targets.isWsl
 import com.intellij.ide.starter.utils.FileSystem.cleanPathFromSlashes
 import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.LogLevel
+import com.intellij.openapi.vfs.impl.wsl.WslConstants.WSLENV
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.util.common.logOutput
@@ -128,10 +131,20 @@ data class VMOptions(
   }
 
   fun setJavaHome(sdkObject: SdkObject): VMOptions = apply {
-    withEnv("JAVA_HOME", sdkObject.sdkPath.toString())
+    withEnv("JAVA_HOME", sdkObject.sdkPath.toString(), wslenvParameters = "/p")
   }
 
-  fun withEnv(key: String, value: String) {
+  fun withEnv(key: String, value: String, wslenvParameters: String = "") {
+    if (TargetResolver.instance.current.isWsl()) {
+      // WSLENV + parameters for env sync, see  https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+      val keyToSync = "$key$wslenvParameters"
+      val currentWslEnv = env[WSLENV] ?: System.getenv(WSLENV)
+      env += WSLENV to when {
+        currentWslEnv.isNullOrEmpty() -> keyToSync
+        currentWslEnv.split(":").contains(keyToSync) -> currentWslEnv
+        else -> "$currentWslEnv:$keyToSync"
+      }
+    }
     env += key to value
   }
 

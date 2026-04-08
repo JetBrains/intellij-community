@@ -27,6 +27,7 @@ jvm_library(
     "//libraries/velocity",
     "//xml/impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/external-system-api:externalSystem",
@@ -36,6 +37,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -59,6 +61,7 @@ jvm_library(
     "//libraries/velocity:velocity_test_lib",
     "//xml/impl:impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/testFramework/extensions:testExtensions_test_lib",
@@ -79,6 +82,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.copyright` end
@@ -149,6 +153,8 @@ jvm_library(
     "//xml/xml-psi-api:psi_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/junit5.jimfs",

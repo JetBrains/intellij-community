@@ -459,7 +459,7 @@ public class UsageViewImpl implements UsageViewEx {
     //noinspection SSBasedInspection
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!isDisposed()) {
-        collapseAll();
+        collapseAll(-1);
       }
     });
 
@@ -1003,7 +1003,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     @Override
     public void collapseAll() {
-      UsageViewImpl.this.collapseAll();
+      UsageViewImpl.this.collapseAll(3);
       getUsageViewSettings().setExpanded(false);
     }
 
@@ -1277,9 +1277,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void collapseAll() {
+  private void collapseAll(int keepSelectionLevel) {
     doExpandingCollapsing(() -> {
-      TreeUtil.collapseAll(myTree, 3);
+      TreeUtil.collapseAll(myTree, keepSelectionLevel);
       myTree.expandRow(0);
     });
   }

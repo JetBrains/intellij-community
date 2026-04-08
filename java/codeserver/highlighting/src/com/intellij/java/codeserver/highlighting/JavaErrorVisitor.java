@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.UnhandledExceptions;
@@ -208,7 +208,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (ContainerUtil.exists(JavaErrorFilter.EP_NAME.getExtensionList(), ep -> ep.shouldSuppressError(myPsiFile, error))) return;
     myErrorConsumer.accept(error);
   }
-  
+
   @Contract(pure = true)
   boolean isApplicable(@NotNull JavaFeature feature) {
     return feature.isSufficient(myLanguageLevel);
@@ -242,7 +242,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   boolean hasErrorResults() {
     return myHasError;
   }
-  
+
   @Contract(pure = true)
   boolean isIncompleteModel() {
     return IncompleteModelUtil.isIncompleteModel(myPsiFile);
@@ -376,7 +376,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) checkFeature(annotation, JavaFeature.ANNOTATIONS);
     myAnnotationChecker.checkAnnotation(annotation);
   }
-  
+
   @Override
   public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
@@ -517,8 +517,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceQualifier(expression);
     if (!hasErrorResults()) {
       boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
-                                         !methodInfo.isApplicable() &&
-                                         functionalInterfaceType != null;
+                                         !methodInfo.isApplicable() && functionalInterfaceType != null;
       if (results.length != 1 || resolvedButNonApplicable) {
         if (expression.isConstructor()) {
           PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
@@ -548,17 +547,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
     }
     if (!hasErrorResults()) myFunctionChecker.checkRawConstructorReference(expression);
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(LambdaUtil.normalizeFunctionalType(functionalInterfaceType));
     if (functionalInterfaceType != null) {
       if (!hasErrorResults()) myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
-      boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
-      if (!hasErrorResults() && !isFunctional && 
+      if (!hasErrorResults() && (aClass != null || !(functionalInterfaceType instanceof PsiClassType)) && !LambdaUtil.isFunctionalClass(aClass) &&
           !(isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
         report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(expression, functionalInterfaceType));
       }
       if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceContext(expression, functionalInterfaceType);
       if (!hasErrorResults()) myFunctionChecker.checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
     }
-    if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceResolve(expression, results, functionalInterfaceType);
+    if (!hasErrorResults() && (aClass != null || results.length == 0)) {
+      myFunctionChecker.checkMethodReferenceResolve(expression, results, functionalInterfaceType);
+    }
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceReturnType(expression, result, functionalInterfaceType);
     if (!hasErrorResults() && method instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
@@ -918,7 +919,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myTypeChecker.checkVarTypeApplicability(variable);
     if (!hasErrorResults()) myTypeChecker.checkVariableInitializerType(variable);
   }
-  
+
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitElement(expression);
@@ -978,8 +979,6 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkClassReferenceAfterQualifier(expression, resolved);
     if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
-  
-  
 
   @Override
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {

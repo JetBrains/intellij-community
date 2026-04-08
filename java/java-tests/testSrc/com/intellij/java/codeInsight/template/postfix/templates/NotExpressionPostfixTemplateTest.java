@@ -87,4 +87,11 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   //  public void testNegation()          { doTest(); } // todo: test for chooser
+
+  public static class ModNotExpressionPostfixTemplateTest extends NotExpressionPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

@@ -17,10 +17,14 @@ jvm_library(
   deps = [
     "//java/java-psi-api:psi",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "//java/java-psi-impl:psi-impl",
+    "//java/java-syntax:syntax",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/util",
+    "//platform/util/base",
   ],
   exports = ["//uast/uast-common:uast"]
 )
@@ -39,9 +43,13 @@ jvm_library(
     ":java-uast",
     "//java/java-psi-api:psi_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//uast/uast-common:uast_test_lib",
     "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.uast` end

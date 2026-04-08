@@ -7,6 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.UNNAMED_PATTERN;
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class PatternParser {
   private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
   private final JavaParser myParser;

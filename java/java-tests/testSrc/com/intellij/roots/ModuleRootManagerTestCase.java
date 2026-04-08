@@ -73,7 +73,8 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   }
 
   protected static VirtualFile getFastUtilJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
+    return IntelliJProjectConfiguration.getVirtualFile(
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min"));
   }
 
   protected static Path getLibSources() {

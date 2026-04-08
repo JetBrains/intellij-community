@@ -34,13 +34,13 @@ interface i2 {
 class weak {
   void f1() {}
 }
-<error descr="'f1()' in 'weak' clashes with 'f1()' in 'i'; attempting to assign weaker access privileges ('package-private'); was 'public'">class a2 extends weak implements i</error> {
+<error descr="'f1()' in 'weak' clashes with 'f1()' in 'i'; cannot reduce visibility from 'public' to 'package-private'">class a2 extends weak implements i</error> {
 }
 
 class a3 {
   protected void f1() {}
 }
-<error descr="'f1()' in 'a3' clashes with 'f1()' in 'i'; attempting to assign weaker access privileges ('protected'); was 'public'">class a4 extends a3 implements i</error> {
+<error descr="'f1()' in 'a3' clashes with 'f1()' in 'i'; cannot reduce visibility from 'public' to 'protected'">class a4 extends a3 implements i</error> {
 //  public void f1() {}
 }
 class a5 extends a3 implements i {
@@ -104,7 +104,7 @@ class Foo {
     protected static void foo(String s) {}
 }
 class Bar extends Foo{
-    <error descr="'foo(String)' in 'Bar' clashes with 'foo(String)' in 'Foo'; attempting to assign weaker access privileges ('private'); was 'protected'">private</error> static void foo(String s) {}
+    <error descr="'foo(String)' in 'Bar' clashes with 'foo(String)' in 'Foo'; cannot reduce visibility from 'protected' to 'private'">private</error> static void foo(String s) {}
 }
 
 

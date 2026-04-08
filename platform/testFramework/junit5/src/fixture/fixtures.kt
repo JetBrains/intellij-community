@@ -165,6 +165,7 @@ fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Modul
 /**
  * Creates [Project] fixture. If the fixture is stored in a static variable, the [Project] will be created
  * only once. On the contrary, storing a fixture in the instance variable will create a new [Project] for each test.
+ * Optionally, it can copy the content of a specified resource path into the project directory before it is created or opened.
  *
  * <p>
  *
@@ -179,9 +180,13 @@ fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
   openAfterCreation: Boolean = false,
+  blueprintResourcePath: Path? = null,
 ): TestFixture<Project> = testFixture {
   // Background service preloading might trigger service loading after a project gets disposed leading to a test failure.
   val path = pathFixture.init()
+  blueprintResourcePath?.let {
+    copyBlueprintToDirectory(it, path)
+  }
   // if project already contains .idea folder we should open it instead of creating a new project
   val isValidIdeaProject = ProjectUtil.isValidProjectPath(path)
   // we should respect if user explicitly set isNewProject
@@ -206,6 +211,16 @@ fun projectFixture(
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
   }
+}
+
+@TestOnly
+@OptIn(ExperimentalPathApi::class)
+private fun copyBlueprintToDirectory(blueprintResourcePath: Path, targetDirectoryPath: Path) {
+  require(blueprintResourcePath.exists()) { "Blueprint resource path provided does not exist: $blueprintResourcePath" }
+  if (!targetDirectoryPath.exists()) {
+    targetDirectoryPath.createDirectories()
+  }
+  blueprintResourcePath.copyToRecursively(targetDirectoryPath, followLinks = false, overwrite = true)
 }
 
 @JvmOverloads
@@ -295,7 +310,6 @@ fun disposableFixture(): TestFixture<Disposable> = testFixture { context ->
  * @return A fixture providing a PsiDirectory instance representing the initialized source root.
  */
 @JvmOverloads
-@OptIn(ExperimentalPathApi::class)
 @TestOnly
 fun TestFixture<Module>.sourceRootFixture(
   isTestSource: Boolean = false,
@@ -308,8 +322,7 @@ fun TestFixture<Module>.sourceRootFixture(
     val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
 
     blueprintResourcePath?.let {
-      require(it.exists()) { "Blueprint resource path provided does not exist: $it" }
-      it.copyToRecursively(directoryPath, followLinks = false, overwrite = true)
+      copyBlueprintToDirectory(it, directoryPath)
     }
 
     ModuleRootModificationUtil.updateModel(module) { model ->

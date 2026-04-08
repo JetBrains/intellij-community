@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -32,7 +33,6 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.text.StringsKt;
 import one.util.streamex.IntStreamEx;
-import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
@@ -214,14 +214,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals(offset, content.textOffsetToFile("abc         ".length()));
   }
 
-  public void testNoExtractionInInjectedFragments() {
-    InjectedLanguageManager.getInstance(getProject()).registerMultiHostInjector(new MultiHostInjector() {
+  public void testNonEditableFragmentsAreExcluded() {
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(getProject());
+    injectedLanguageManager.registerMultiHostInjector(new MultiHostInjector() {
       @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         if (context.getText().contains("xxx")) {
+          PsiLiteralExpression literal = (PsiLiteralExpression) context;
+          String value = (String) literal.getValue();
+          TextRange injectedRange = TextRange.from(
+            StringLiteralManipulator.getValueRange(literal).getStartOffset() + value.indexOf("xxx"),
+            3
+          );
           registrar
-            .startInjecting(RegExpLanguage.INSTANCE)
-            .addPlace(null, null, (PsiLanguageInjectionHost) context, StringLiteralManipulator.getValueRange((PsiLiteralExpression) context))
+            .startInjecting(XMLLanguage.INSTANCE)
+            .addPlace("%prefix", "%suffix", (PsiLanguageInjectionHost)context, injectedRange)
             .doneInjecting();
         }
       }
@@ -234,7 +241,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     String text = "class C { String s = \" abc def xxx \"; }";
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE, text, 0, true);
-    assertNull(TextExtractor.findTextAt(file, text.indexOf("def"), TextContent.TextDomain.ALL));
+    assertEquals("abc def xxx", TextExtractor.findTextAt(file, text.indexOf("def"), TextContent.TextDomain.ALL).toString());
   }
 
   public void testSplitPlainTextByParagraphsForMoreGranularChecking() {

@@ -17,18 +17,9 @@ import kotlinx.serialization.json.buildJsonObject
 
 class UniversalToolset : McpToolset {
   @McpTool
-  @McpDescription("""
-        |Universal tool executor that can invoke any IDE MCP tool dynamically.
-        |Use this tool to execute IDE tools by passing the tool name and arguments as a command-line string.
-        |Format: "tool_name --param1 value1 --param2 value2"
-        |Example: "reformat_file --path ./myfile.kt"
-        |
-        |Help:
-        |  tool_name --help Show details for specific tool
-  """)
-  //         |  --help           Show list of all available tools
+  @McpDescription("""Universal tool executor that can invoke specific IDE MCP tool dynamically.""")
   suspend fun execute_tool(
-    @McpDescription("Command-line string with tool name and arguments, e.g., 'reformat_file --path ./myfile.kt', or '--help' for help")
+    @McpDescription("Command-line string with tool name and arguments")
     command: String,
   ): String {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.executing.universal.tool", command))
@@ -44,19 +35,8 @@ class UniversalToolset : McpToolset {
 
     val allTools = routerToolsProvider.mcpTools.value
 
-    // Check for --help flag
-    if (parts[0] == "--help") {
-      return formatAllToolsHelp(allTools)
-    }
-
     val toolName = parts[0]
     val args = parts.drop(1)
-
-    // Check for tool-specific help
-    if (args.isNotEmpty() && args[0] == "--help") {
-      return formatToolHelp(allTools, toolName)
-    }
-
 
     val tool = allTools.find { it.descriptor.name == toolName }
                 ?: mcpFail("Tool '$toolName' not found. Available tools: ${allTools.map { it.descriptor.name }.sorted().joinToString(", ")}")
@@ -79,85 +59,6 @@ class UniversalToolset : McpToolset {
     }
     
     return result.toString()
-  }
-
-  private fun formatAllToolsHelp(allTools: List<com.intellij.mcpserver.McpTool>): String {
-    val sortedTools = allTools.sortedBy { it.descriptor.name }
-    
-    val result = buildString {
-      appendLine("Available MCP Tools (${sortedTools.size} total):")
-      appendLine()
-      appendLine("Usage: execute_tool --command \"tool_name --param1 value1 --param2 value2\"")
-      appendLine("       execute_tool --command \"tool_name --help\"  (show tool details)")
-      appendLine()
-      appendLine("Tools:")
-      
-      for (tool in sortedTools) {
-        val name = tool.descriptor.name
-        val description = tool.descriptor.description.lines().firstOrNull()?.trim() ?: ""
-        val shortDesc = if (description.length > 80) description.take(77) + "..." else description
-        appendLine("  • $name")
-        if (shortDesc.isNotEmpty()) {
-          appendLine("    $shortDesc")
-        }
-      }
-    }
-    
-    return result
-  }
-
-  private fun formatToolHelp(allTools: List<com.intellij.mcpserver.McpTool>, toolName: String): String {
-    val tool = allTools.find { it.descriptor.name == toolName }
-                ?: mcpFail("Tool '$toolName' not found. Use '--help' to see all available tools.")
-    
-    val descriptor = tool.descriptor
-    val schema = descriptor.inputSchema
-    
-    val result = buildString {
-      appendLine("Tool: ${descriptor.name}")
-      appendLine()
-      appendLine("Description:")
-      val descLines = descriptor.description.lines().map { it.trim() }.filter { it.isNotEmpty() }
-      for (line in descLines) {
-        appendLine("  $line")
-      }
-      appendLine()
-      
-      if (schema.propertiesSchema.isEmpty()) {
-        appendLine("Parameters: none")
-      } else {
-        appendLine("Parameters:")
-        
-        for ((paramName, paramSchemaElement) in schema.propertiesSchema) {
-          val paramSchema = paramSchemaElement as? JsonObject ?: continue
-          val type = (paramSchema["type"] as? JsonPrimitive)?.content ?: "string"
-          val description = (paramSchema["description"] as? JsonPrimitive)?.content ?: ""
-          val isRequired = schema.requiredProperties.contains(paramName)
-          val requiredMark = if (isRequired) " [required]" else " [optional]"
-          
-          appendLine("  --$paramName <$type>$requiredMark")
-          if (description.isNotEmpty()) {
-            val descLines = description.lines().map { it.trim() }.filter { it.isNotEmpty() }
-            for (line in descLines) {
-              appendLine("      $line")
-            }
-          }
-          
-          // Show enum values if available
-          val enumValues = paramSchema["enum"]
-          if (enumValues != null) {
-            appendLine("      Allowed values: $enumValues")
-          }
-        }
-      }
-      
-      appendLine()
-      appendLine("Example:")
-      val exampleParams = schema.propertiesSchema.keys.take(2).joinToString(" ") { "--$it <value>" }
-      appendLine("  execute_tool --command \"${descriptor.name} $exampleParams\"")
-    }
-    
-    return result
   }
 
   private fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject {

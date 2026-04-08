@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
 import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
+import org.jetbrains.intellij.build.productionClassesOutputDirectory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
@@ -105,7 +106,7 @@ internal fun checkCompilationOptions(context: CompilationContext) {
 }
 
 internal fun isCompilationRequired(options: BuildOptions): Boolean {
-  // Compilation is never required with Bazel
+  // compilation is never required with Bazel
   if (isRunningFromBazelOut()) {
     return false
   }
@@ -147,7 +148,7 @@ internal suspend fun reuseOrCompile(
       check(isBazelTestRun() || context.classesOutputDirectory.exists() || ArchivedCompilationContextUtil.archivedCompiledClassesMapping != null || isRunningFromBazelOut()) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
       }
-      val production = context.classesOutputDirectory.resolve("production")
+      val production = context.productionClassesOutputDirectory
       if (!production.exists()) {
         val msg = "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $production doesn't exist " +
                   "which may cause issues like 'Error: Could not find or load main class'"
@@ -357,7 +358,7 @@ private suspend fun compile(
   canceledStatus: CanceledStatus = CanceledStatus.NULL
 ) {
   when {
-    moduleNames != null -> jpsCompilationRunner.buildModules(moduleNames.map(context::findRequiredModule), canceledStatus)
+    moduleNames != null -> jpsCompilationRunner.buildModules(moduleNames.map { context.outputProvider.findRequiredModule(it) }, canceledStatus)
     includingTestsInModules != null -> jpsCompilationRunner.buildProduction(canceledStatus)
     else -> {
       jpsCompilationRunner.buildAll(canceledStatus)

@@ -1,4 +1,4 @@
-// FIX: "Replace with '?: error(...)'"
+// FIX: "Replace with '?: error(…)'"
 // WITH_STDLIB
 
 class C {

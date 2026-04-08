@@ -67,29 +67,29 @@ data class KotlinGradleModelImpl(
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
     companion object {
-        val kotlinCompileJvmTaskClasses = listOf(
+        val kotlinCompileJvmTaskClasses: List<String> = listOf(
             "org.jetbrains.kotlin.gradle.tasks.KotlinCompile_Decorated",
             "org.jetbrains.kotlin.gradle.tasks.KotlinCompileWithWorkers_Decorated"
         )
 
-        val kotlinCompileTaskClasses = kotlinCompileJvmTaskClasses + listOf(
+        val kotlinCompileTaskClasses: List<String> = kotlinCompileJvmTaskClasses + listOf(
             "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile_Decorated",
             "org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon_Decorated",
             "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompileWithWorkers_Decorated",
             "org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommonWithWorkers_Decorated"
         )
-        val platformPluginIds = listOf("kotlin-platform-jvm", "kotlin-platform-js", "kotlin-platform-common")
-        val pluginToPlatform = linkedMapOf(
+        val platformPluginIds: List<String> = listOf("kotlin-platform-jvm", "kotlin-platform-js", "kotlin-platform-common")
+        val pluginToPlatform: LinkedHashMap<String, String> = linkedMapOf(
             "kotlin" to "kotlin-platform-jvm",
             "kotlin2js" to "kotlin-platform-js"
         )
-        val kotlinPluginIds = listOf("kotlin", "kotlin2js", "kotlin-android")
-        const val ABSTRACT_KOTLIN_COMPILE_CLASS = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile"
+        val kotlinPluginIds: List<String> = listOf("kotlin", "kotlin2js", "kotlin-android")
+        const val ABSTRACT_KOTLIN_COMPILE_CLASS: String = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile"
 
-        const val kotlinProjectExtensionClass = "org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension"
-        const val kotlinSourceSetClass = "org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet"
+        const val KOTLIN_PROJECT_EXTENSION_CLASS: String = "org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension"
+        const val KOTLIN_SOURCE_SET_CLASS: String = "org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet"
 
-        const val kotlinPluginWrapper = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
+        const val KOTLIN_PLUGIN_WRAPPER_CLASS: String = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
 
         fun Task.getSourceSetName(): String = try {
             val method = javaClass.methods.firstOrNull { it.name.startsWith("getSourceSetName") && it.parameterTypes.isEmpty() }
@@ -98,7 +98,7 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
                 is Property<*> -> sourceSetName.get() as? String
                 else -> null
             }
-        } catch (e: InvocationTargetException) {
+        } catch (_: InvocationTargetException) {
             null // can be thrown if property is not initialized yet
         } ?: "main"
     }
@@ -165,7 +165,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
 
     private fun getImplementedProjectNames(project: Project): List<String> {
         return listOf("expectedBy", "implement")
-            .flatMap { project.configurations.findByName(it)?.dependencies ?: emptySet<Dependency>() }
+            .flatMap { project.configurations.findByName(it)?.dependencies ?: emptySet() }
             .filterIsInstance<ProjectDependency>()
             .mapNotNull { dependency ->
                 if (GradleVersionUtil.isCurrentGradleOlderThan("9.0")) {
@@ -186,13 +186,13 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val kotlinExtension = project.extensions.findByName("kotlin") ?: return null
         val experimentalExtension = try {
             kotlinExtension::class.java.getMethod("getExperimental").invoke(kotlinExtension)
-        } catch (e: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
             return null
         }
 
         return try {
             experimentalExtension::class.java.getMethod("getCoroutines").invoke(experimentalExtension)?.toString()
-        } catch (e: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
             null
         }
     }
@@ -222,7 +222,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val interner = Interner()
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
-        // accidentally named starting with upper case.
+        // accidentally named starting with the upper case.
         val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, parameter?.value)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
         val kotlinPluginId = kotlinPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
@@ -341,12 +341,12 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         JavaPluginUtil.getSourceSetContainer(project)?.forEach {
             val compileClasspath = (it.compileClasspath as? Configuration)
             if (compileClasspath != null && compileClasspath.isCanBeResolved) {
-                downloadSourcesForCompileClasspathKoltinSdlibDependencies(context, project, compileClasspath)
+                downloadSourcesForCompileClasspathKotlinStdlibDependencies(context, project, compileClasspath)
             }
         }
     }
 
-    private fun downloadSourcesForCompileClasspathKoltinSdlibDependencies(
+    private fun downloadSourcesForCompileClasspathKotlinStdlibDependencies(
         context: ModelBuilderContext,
         project: Project,
         compileClassPathConfiguration: Configuration?
@@ -355,18 +355,6 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             setOf("org.jetbrains.kotlin", "org.jetbrains.kotlinx")
         GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
             .resolveDependencies(compileClassPathConfiguration, stdlibDependencyGroups)
-    }
-
-    private fun ConfigurationContainer.forEachUsedDependency(
-        configurationToExclude: Configuration,
-        dependencyConsumer: (Dependency) -> Unit
-    ) {
-        for (configuration in this) {
-            if (configuration == configurationToExclude) continue
-            for (dependency in configuration.dependencies) {
-                dependencyConsumer.invoke(dependency)
-            }
-        }
     }
 
     private fun Project.kotlinGradlePluginVersion(): KotlinGradlePluginVersion? {

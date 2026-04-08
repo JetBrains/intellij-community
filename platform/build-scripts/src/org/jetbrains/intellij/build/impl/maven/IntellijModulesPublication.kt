@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import org.jetbrains.intellij.build.BuildContext
@@ -76,8 +76,8 @@ class IntellijModulesPublication(
       modules.addAll(context.project.modules)
     }
     else {
-      options.modulesToPublish.forEach {
-        val module = context.findRequiredModule(it)
+      for (module in options.modulesToPublish) {
+        val module = context.outputProvider.findRequiredModule(module)
         modules.add(module)
         transitiveModuleDependencies(module, modules)
       }

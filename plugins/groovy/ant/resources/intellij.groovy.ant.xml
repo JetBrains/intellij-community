@@ -1,6 +1,11 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="AntSupport"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="com.intellij.groovy.ant.GantMemberContributor"/>

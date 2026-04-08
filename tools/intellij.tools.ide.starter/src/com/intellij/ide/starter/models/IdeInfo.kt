@@ -29,7 +29,7 @@ data class IdeInfo(
    */
   val baseIdePlatformPrefixForFrontend: String? = null,
   
-  val buildType: String = BuildType.EAP.type,
+  val buildType: String = "",
   val additionalModules: List<String> = emptyList(),
 
   /** E.g: "222.3244.1" */
@@ -77,7 +77,7 @@ data class IdeInfo(
         "RR" -> "RustRover"
         "AI" -> "AndroidStudio"
         "JBC" -> PlatformUtils.JETBRAINS_CLIENT_PREFIX
-        "RD" -> "rider"
+        "RD" -> "JetBrains.Rider"
         "WRS" -> "writerside"
         "GW" -> "gateway"
         else -> error("Unknown product code: $productCode")

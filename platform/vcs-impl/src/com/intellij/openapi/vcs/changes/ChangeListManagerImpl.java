@@ -10,6 +10,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -122,6 +123,8 @@ import static java.util.stream.Collectors.toSet;
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
+  private static final String DEADLOCK_ADVICE =
+    "A lock may not be taken while com.intellij.openapi.vcs.changes.ChangeListManagerImpl.myDataLock is held, as this might lead to a deadlock";
 
   @Topic.ProjectLevel
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
@@ -1480,11 +1483,11 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   public @Nullable String getSwitchedBranch(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return null;
-    return ReadAction.compute(() -> {
-      synchronized (myDataLock) {
+    synchronized (myDataLock) {
+      return ApplicationManagerEx.getApplicationEx().withLocksProhibited(DEADLOCK_ADVICE, () -> {
         return myComposite.getSwitchedFileHolder().getBranchForFile(file);
-      }
-    });
+      });
+    }
   }
 
   @TestOnly

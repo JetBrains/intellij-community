@@ -53,10 +53,12 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
     val appClassPath = ClasspathBootstrap.getBuildProcessApplicationClasspath() +
                        getAdditionalApplicationClasspath()
     val pluginClassPath = getBuildProcessPluginsClasspath(project)
-    val rawClasspath = appClassPath + pluginClassPath
+    val prependedPluginClasspath = getPrependedPluginsClasspath(project)
+    val rawClasspath = prependedPluginClasspath + appClassPath + pluginClassPath
     synchronized(lastClasspathLock) {
       if (rawClasspath != lastRawClasspath) {
         if (LOG.isDebugEnabled) {
+          LOG.debug("buildProcessPrependedPluginClasspath: $prependedPluginClasspath")
           LOG.debug("buildProcessAppClassPath: $appClassPath")
           LOG.debug("buildProcessPluginClassPath: $pluginClassPath")
         }
@@ -111,6 +113,18 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
     else {
       dynamicClasspath.addAll(staticClasspath)
       return dynamicClasspath
+    }
+  }
+
+  private fun getPrependedPluginsClasspath(project: Project): List<String> {
+    return BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMap { parametersProvider ->
+      val prependClassPath = parametersProvider.prependedClassPath
+      if (LOG.isTraceEnabled) {
+        prependClassPath.forEach { path ->
+          LOG.trace("$path prepended to classpath from ${parametersProvider.javaClass.name}")
+        }
+      }
+      prependClassPath
     }
   }
 

@@ -71,7 +71,10 @@ public final class PyRedeclarationInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, PyInspectionVisitor.getContext(session));
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    Visitor visitor = new Visitor(holder, context);
+    visitor.downgradeHighlightForTypeEngine = context.getTypeEngine() != null;
+    return visitor;
   }
 
   private static class Visitor extends PyInspectionVisitor {

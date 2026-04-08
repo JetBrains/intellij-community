@@ -14,9 +14,11 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/tasks-platform-api:tasks",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//platform/util-ex",
   ],
   exports = ["//platform/tasks-platform-api:tasks"]
@@ -40,9 +42,11 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/vcs-api:vcs_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/tasks-platform-api:tasks_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/util-ex:util-ex_test_lib",
   ]
 )

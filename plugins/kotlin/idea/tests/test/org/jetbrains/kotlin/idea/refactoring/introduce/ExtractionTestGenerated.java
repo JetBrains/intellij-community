@@ -954,6 +954,46 @@ public abstract class ExtractionTestGenerated extends AbstractK1ExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
             }
 
+            @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete.kt")
+            public void testIntroduceNameBasedDestructuringDeclarationComplete() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete.kt");
+            }
+
+            @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete2.kt")
+            public void testIntroduceNameBasedDestructuringDeclarationComplete2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete2.kt");
+            }
+
+            @TestMetadata("IntroduceNameBasedDestructuringDeclarationNameMismatch.kt")
+            public void testIntroduceNameBasedDestructuringDeclarationNameMismatch() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationNameMismatch.kt");
+            }
+
+            @TestMetadata("IntroduceNameBasedDestructuringDeclarationOnlySyntax.kt")
+            public void testIntroduceNameBasedDestructuringDeclarationOnlySyntax() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax.kt");
+            }
+
+            @TestMetadata("IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt")
+            public void testIntroduceNameBasedDestructuringDeclarationOnlySyntax2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt");
+            }
+
+            @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete.kt")
+            public void testIntroducePositionBasedDestructuringDeclarationComplete() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete.kt");
+            }
+
+            @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete2.kt")
+            public void testIntroducePositionBasedDestructuringDeclarationComplete2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete2.kt");
+            }
+
+            @TestMetadata("IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt")
+            public void testIntroducePositionBasedDestructuringDeclarationOnlySyntax() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt");
+            }
+
             @TestMetadata("introduceToClass.kt")
             public void testIntroduceToClass() throws Exception {
                 runTest("testData/refactoring/introduceVariable/introduceToClass.kt");
@@ -1117,6 +1157,11 @@ public abstract class ExtractionTestGenerated extends AbstractK1ExtractionTest {
             @TestMetadata("notNullAssertion.kt")
             public void testNotNullAssertion() throws Exception {
                 runTest("testData/refactoring/introduceVariable/notNullAssertion.kt");
+            }
+
+            @TestMetadata("nullableIndexValue.kt")
+            public void testNullableIndexValue() throws Exception {
+                runTest("testData/refactoring/introduceVariable/nullableIndexValue.kt");
             }
 
             @TestMetadata("OccurrencesInStringTemplate.kt")

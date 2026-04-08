@@ -110,8 +110,9 @@ Review the output. If API dumps are out of date, tell the user to run the approp
 cd platform/jewel && ./scripts/metalava-signatures.main.kts validate
 ```
 
-If Metalava reports new issues, tell the user they can update the baseline files with the `--update-baseline` parameter, then amend and
-re-validate.
+If Metalava reports an intentional API change, tell the user to update the API dumps and re-validate.
+If the finding should be suppressed instead, tell the user to update the baseline files with the `--update-baseline`
+parameter, then amend and re-validate.
 
 ### 4e. Bazel build/tests
 
@@ -181,17 +182,26 @@ You may also want to run:
 
 ## 5. Check for breaking API changes
 
-Changes may break source compat (although we should avoid it as much as possible!), but MUST NOT break binary compat. Look at the diff for
-`api-dump.txt` and `api-dump-experimental.txt` files:
+Check both IntelliJ Platform API dumps and Jewel's own Metalava API dumps. Both act as API surface checks now and can fail the build when
+the checked-in dump no longer matches the current API surface.
+
+For IntelliJ Platform API dump files such as `api-dump.txt` and `api-dump-experimental.txt`, follow the module's existing API
+compatibility rules and review any intentional dump updates carefully.
+
+For Jewel API dump files under module `metalava/` directories, stable Jewel API changes must preserve both binary and source
+compatibility. Experimental Jewel API changes **must** preserve binary compatibility, but may evolve in source-incompatible ways.
+Intentional changes still need updated API dumps and should be called out clearly when they affect users. Look at the diff for Jewel API
+dump files under module `metalava/` directories:
 
 ```bash
-git diff master -- '*.api-dump.txt' '*.api-dump-experimental.txt'
+git diff master -- 'platform/jewel/**/metalava/*.txt'
 ```
 
-- Removed/changed lines in `api-dump.txt` = potential breaking changes in stable API. Only acceptable if now annotated with a
-  `DeprecationLevel.HIDDEN` deprecation as it's still in the actual ABI, just marked as synthetic.
-- Removed/changed lines in `api-dump-experimental.txt` = experimental API changes. Can be allowed if and only if unavoidable and
-  documented in the release notes.
+- Removed or changed lines in `*-api-stable-*.txt` = potential breaking changes in stable API. Only acceptable if compatibility is
+  preserved, for example by keeping the old declaration as a deprecated `DeprecationLevel.HIDDEN` shim that remains in the ABI and
+  preserves the previous source entry point.
+- Removed or changed lines in `*-api-*.txt` = experimental API changes. These can be allowed when intentional, but they should preserve
+  binary compatibility, come with updated dumps, and be documented in the release notes when relevant.
 
 ## 6. Check for visual changes and screenshots
 

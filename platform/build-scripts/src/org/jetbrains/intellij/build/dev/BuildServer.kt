@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.dev
@@ -50,7 +50,7 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
     .filter { it.startsWith("-D") }
     .map { it.removePrefix("-D") }
     .associateByTo(result, { it.substringBefore('=') }, { it.substringAfter('=', "") })
-  
+
   return VmProperties(result)
 }
 
@@ -126,19 +126,10 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
     try {
-      buildProduct(
-        request = request,
-        createProductProperties = { compilationContext ->
-          val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
-          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
-          createProductProperties(
-            productConfiguration = productConfiguration,
-            outputProvider = compilationContext.outputProvider,
-            projectDir = request.projectDir,
-            platformPrefix = request.platformPrefix,
-          )
-        },
-      )
+      val buildOptionsTemplate = BuildOptions()
+      val configuration = createConfiguration(homePath = request.projectDir)
+      val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
+      buildProductFromProject(request = request, productConfiguration = productConfiguration, buildOptionsTemplate = buildOptionsTemplate)
     }
     finally {
       // otherwise, a thread leak in tests
@@ -151,12 +142,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
   }
 }
 
-private fun createConfiguration(productionClassOutput: Path, homePath: Path): ProductConfigurationRegistry {
-  // for compatibility with local runs and runs on CI
-  if (System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) == null) {
-    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
-  }
-
+private fun createConfiguration(homePath: Path): ProductConfigurationRegistry {
   val projectPropertiesPath = getProductPropertiesPath(homePath)
   return Json.decodeFromString(Files.readString(projectPropertiesPath))
 }

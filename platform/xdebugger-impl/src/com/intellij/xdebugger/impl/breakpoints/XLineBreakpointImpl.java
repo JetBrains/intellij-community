@@ -169,9 +169,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   private void setLine(long requestId, final int line, boolean visualLineMightBeChanged) {
-    if (getLine() != line && visualLineMightBeChanged && !myType.lineShouldBeChanged(this, line, getProject())) {
-      return;
-    }
 
     updateStateIfNeededAndNotify(requestId, line, this::getLine, (l) -> {
       var oldLine = getLine();

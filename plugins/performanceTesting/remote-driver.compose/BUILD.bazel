@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/compose",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//plugins/performanceTesting/remote-driver",
   ]
 )
@@ -36,6 +37,7 @@ jvm_library(
     "//platform/platform-api:ide_test_lib",
     "//platform/compose:compose_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//plugins/performanceTesting/remote-driver:remote-driver_test_lib",
   ]
 )

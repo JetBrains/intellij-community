@@ -48,7 +48,8 @@ import java.util.stream.Stream;
 
 public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   public void testInheritanceTransitivity() throws IOException {
-    final VirtualFile protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf");
+    VirtualFile protobufJar =
+      IntelliJProjectConfiguration.getVirtualFile(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.protobuf", "protobuf"));
     VirtualFile jarCopy = WriteAction.compute(() -> JarFileSystem.getInstance().getLocalByEntry(protobufJar)
       .copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar"));
 

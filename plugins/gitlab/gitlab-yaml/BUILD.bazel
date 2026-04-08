@@ -17,9 +17,14 @@ jvm_library(
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/yaml/backend",
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//platform/util/base",
+    "//platform/util/base/multiplatform",
     "//plugins/yaml",
     "//platform/analysis-impl",
+    "//platform/statistics",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 
@@ -30,19 +35,16 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":vcs-gitlab-yaml",
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend:backend_test_lib",
+    "//platform/util:util_test_lib",
     "//platform/util/base:base_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//plugins/yaml:yaml_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//json/backend/tests",
-    "//json/backend/tests:tests_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
@@ -89,6 +91,10 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend/tests",
     "//json/backend/tests:tests_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
   ],
   runtime_deps = [":vcs-gitlab-yaml-tests"]
 )

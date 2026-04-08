@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 
-private class KotlinNativeRunConfigurationProducer :
+internal class KotlinNativeRunConfigurationProducer :
     LazyRunConfigurationProducer<GradleRunConfiguration>(),
     KotlinNativeRunConfigurationProvider {
 

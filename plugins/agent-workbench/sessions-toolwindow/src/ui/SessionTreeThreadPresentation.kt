@@ -52,7 +52,7 @@ internal fun buildSessionTreeThreadRowPresentation(
   }.joinToString(separator = ", ")
   return SessionTreeThreadRowPresentation(
     statusColor = activityColor,
-    title = threadDisplayTitle(treeNode.thread),
+    title = threadDisplayTitle(threadId = treeNode.thread.id, title = treeNode.thread.title),
     timeLabel = timeLabel,
     statusLabel = statusLabel,
     branchMismatchMessage = branchMismatchMessage,

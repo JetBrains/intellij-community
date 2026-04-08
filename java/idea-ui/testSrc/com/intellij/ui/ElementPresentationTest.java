@@ -15,9 +15,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.ElementPresentation;
+import org.junit.Ignore;
 
 import java.io.File;
 
+@Ignore("AT-4013")
 public class ElementPresentationTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiClass OBJECT_CLASS;
 

@@ -33,6 +33,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -54,6 +56,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//uast/uast-common:uast",

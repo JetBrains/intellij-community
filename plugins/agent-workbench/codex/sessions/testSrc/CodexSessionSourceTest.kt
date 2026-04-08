@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emptyFlow
@@ -178,7 +179,7 @@ private fun createSource(
 
 private fun staticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>): CodexRefreshHintsProvider {
   return object : CodexRefreshHintsProvider {
-    override val updates = emptyFlow<Unit>()
+    override val updateEvents = emptyFlow<AgentSessionSourceUpdateEvent>()
 
     override suspend fun prefetchRefreshHints(
       paths: List<String>,

@@ -30,7 +30,7 @@ public class LineMover extends StatementUpDownMover {
   }
 
   public static boolean checkLineMoverAvailable(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) {
-    LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
+    LineRange range = getLineRangeFromSelection(editor);
 
     LogicalPosition maxLinePos = editor.offsetToLogicalPosition(editor.getDocument().getTextLength());
     int maxLine = maxLinePos.column == 0 ? maxLinePos.line : maxLinePos.line + 1;

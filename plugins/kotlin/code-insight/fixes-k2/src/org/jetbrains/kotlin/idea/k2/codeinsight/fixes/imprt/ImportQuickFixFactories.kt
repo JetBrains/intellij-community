@@ -27,6 +27,9 @@ object ImportQuickFixFactories {
     val noValueForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoValueForParameter> =
         ImportQuickFixProvider.upcast()
 
+    val notAnAnnotationClassFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NotAnAnnotationClass> =
+        ImportQuickFixProvider.upcast()
+
     val argumentTypeMismatchFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ArgumentTypeMismatch> =
         ImportQuickFixProvider.upcast()
 

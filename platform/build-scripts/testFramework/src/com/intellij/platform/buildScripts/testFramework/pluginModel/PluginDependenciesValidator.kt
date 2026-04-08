@@ -147,11 +147,7 @@ class PluginDependenciesValidator private constructor(
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
     for (descriptor in pluginSet.getEnabledModules()) {
       val jarFiles = descriptor.jarFiles ?: continue
-      if (!descriptor.isLoaded) {
-        //this indicates that actually the module is not enabled, because some of its dependencies were missing in ClassLoaderConfigurator.configureContentModule, so we cannot check it 
-        continue
-      }
-      jarFiles.groupByTo(jpsModuleToRuntimeDescriptors, { 
+      jarFiles.groupByTo(jpsModuleToRuntimeDescriptors, {
         getModuleName(it) ?: error("Cannot detect module name for $it in $descriptor")  
       }, { descriptor })
     }
@@ -166,6 +162,13 @@ class PluginDependenciesValidator private constructor(
       }
 
       for (descriptor in sourceDescriptors) {
+        if (descriptor.pluginClassLoader == null) {
+          errors.add(PluginModuleConfigurationError(
+            pluginModelModuleName = descriptor.contentModuleName ?: descriptor.pluginId.idString,
+            errorMessage = "Classloader is not set for $descriptor")
+          )
+          continue
+        }
         for (pluginDependency in descriptor.dependencies) {
           if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.")
               && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.isLoaded == false) {
@@ -219,9 +222,19 @@ class PluginDependenciesValidator private constructor(
 
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
-            //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
+            val errorMessage = """
+                |'${sourceModule.name}' has compile dependency on '$targetModuleName' in *.iml,
+                |and it's included in ${sourceDescriptors.joinToString { it.shortPresentation }}, but '$targetModuleName' isn't found in the distribution. 
+                |This may cause NoClassDefFoundError at runtime.
+                |Check if classes from '${sourceModule.name}' really use classes from '$targetModuleName' using 'Analyze This Dependency' action in the Project Structure dialog:
+                |If no, remove the dependency. 
+                |If the dependency is really used, ensure that '$targetModuleName' is included in the distribution.
+                |$messageDescribingHowToUpdateLayoutData 
+                |""".trimMargin()
+            errors.add(PluginModuleConfigurationError(pluginModelModuleName = sourceModule.name, errorMessage = errorMessage))
             return@processModules
           }
+
           val expectedTargets = allExpectedTargets.filter { it.contentModuleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
           val sourceDescriptorsString = if (sourceDescriptors.size == 1) {
             "${sourceDescriptors.first().shortPresentation} doesn't have dependency"

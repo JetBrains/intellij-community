@@ -2,12 +2,11 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -79,17 +78,8 @@ class AgentSessionArchiveServiceIntegrationTest {
       override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
       }
-      override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
-        return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
-      }
       override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
         return AgentInitialMessagePlan.composeDefault(request)
-      }
-      override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-        return AgentSessionLaunchSpec(
-          sessionId = null,
-          launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("claude")),
-        )
       }
     }
 
@@ -671,19 +661,8 @@ private fun testCodexBridge(
       return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
     }
 
-    override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
-      return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
-    }
-
     override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
       return AgentInitialMessagePlan.composeDefault(request)
-    }
-
-    override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-      return AgentSessionLaunchSpec(
-        sessionId = null,
-        launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
-      )
     }
 
     override suspend fun archiveThread(path: String, threadId: String): Boolean {

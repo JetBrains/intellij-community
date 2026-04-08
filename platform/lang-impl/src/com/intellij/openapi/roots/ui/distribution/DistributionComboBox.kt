@@ -17,17 +17,13 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.ExpandableItemsHandlerFactory
-import com.intellij.ui.ExpandedItemListCellRendererWrapper
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.util.ui.JBInsets
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.util.ui.NamedColorUtil
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
-import java.util.Optional
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.AbstractAction
-import javax.swing.JList
 import javax.swing.JTextField
 import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -40,9 +36,9 @@ class DistributionComboBox(
   private val info: FileChooserInfo
 ) : ComboBox<Item>(CollectionComboBoxModel()) {
 
-  var sdkListLoadingText: String = ProjectBundle.message("sdk.loading.item")
-  var noDistributionText: String = ProjectBundle.message("sdk.missing.item")
-  var specifyLocationActionName: String = ProjectBundle.message("sdk.specify.location")
+  var sdkListLoadingText: @Nls String = ProjectBundle.message("sdk.loading.item")
+  var noDistributionText: @Nls String = ProjectBundle.message("sdk.missing.item")
+  var specifyLocationActionName: @Nls String = ProjectBundle.message("sdk.specify.location")
 
   private var defaultDistributionLocation: String? = null
 
@@ -177,11 +173,7 @@ class DistributionComboBox(
   }
 
   init {
-    renderer = Optional.ofNullable(popup)
-      .map { it.list }
-      .map { ExpandableItemsHandlerFactory.install<Int>(it) }
-      .map<ListCellRenderer<Item>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
-      .orElseGet { Renderer() }
+    renderer = createRenderer()
   }
 
   init {
@@ -226,31 +218,24 @@ class DistributionComboBox(
     }
   }
 
-  private inner class Renderer : ColoredListCellRenderer<Item>() {
-    override fun customizeCellRenderer(
-      list: JList<out Item>,
-      value: Item?,
-      index: Int,
-      selected: Boolean,
-      hasFocus: Boolean
-    ) {
-      ipad = JBInsets.emptyInsets()
-      myBorder = null
+  private fun createRenderer(): ListCellRenderer<Item?> {
+    return listCellRenderer("") {
+      when (val value = value) {
+        is Item.ListLoading -> text(sdkListLoadingText)
+        is Item.NoDistribution -> text(noDistributionText) {
+          foreground = NamedColorUtil.getErrorForeground()
+        }
 
-      when (value) {
-        is Item.ListLoading -> append(sdkListLoadingText)
-        is Item.NoDistribution -> append(noDistributionText, SimpleTextAttributes.ERROR_ATTRIBUTES)
-        is Item.SpecifyDistributionAction -> append(specifyLocationActionName)
+        is Item.SpecifyDistributionAction -> text(specifyLocationActionName)
         is Item.Distribution -> {
-          val name = value.info.name
           val description = value.info.description
-          append(name)
+          text(value.info.name)
           if (description != null) {
-            append(" ")
-            append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            text(description) {
+              foreground = greyForeground
+            }
           }
         }
-        else -> {}
       }
     }
   }

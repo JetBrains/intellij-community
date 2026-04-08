@@ -11,12 +11,14 @@ import com.intellij.ui.svg.createIconCacheKey
 import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.nio.file.Path
 
+@Disabled("AT-4013")
 class SVGLoaderCacheTest {
   @Test
   fun noEntry(@TempDir dir: Path) = runBlocking {

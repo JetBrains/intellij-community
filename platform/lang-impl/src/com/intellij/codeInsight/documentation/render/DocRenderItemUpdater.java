@@ -42,11 +42,11 @@ public final class DocRenderItemUpdater implements Runnable {
     if (recreateContent) {
       DocRenderer.clearCachedLoadingPane(editor);
     }
-    Collection<? extends DocRenderItem> items = DocRenderItemManager.getInstance().getItems(editor);
-    if (items != null) updateRenderers(items, recreateContent);
+    Collection<? extends DocRenderItem> items = DocRenderItemUpdateProvider.getAllItems(editor);
+    updateRenderers(items, recreateContent);
   }
 
-  void updateFoldRegions(@NotNull Collection<? extends  CustomFoldRegion> foldRegions, boolean recreateContent, Runnable onAfterDone) {
+  void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent, Runnable onAfterDone) {
     if (foldRegions.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (CustomFoldRegion foldRegion : foldRegions) {

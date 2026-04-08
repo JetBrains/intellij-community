@@ -27,17 +27,17 @@ description: Guidelines for structuring and developing IntelliJ remote developme
 
 ## Documentation
 
-Detailed documentation in [docs/IntelliJ-Platform/4_man/Remote-Development/](../docs/IntelliJ-Platform/4_man/Remote-Development/):
+Detailed documentation in [docs/IntelliJ-Platform/4_man/Remote-Development/](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/):
 
-- [Directory Overview](../docs/IntelliJ-Platform/4_man/Remote-Development/directory.md) - Remote development architecture overview
-- [Module Split](../docs/IntelliJ-Platform/4_man/Remote-Development/0_Module-Split.md) - How to split modules for remote dev
-- [Plugin Directory Structure](../docs/IntelliJ-Platform/4_man/Remote-Development/1_Plugin-Directory-Structure.md) - Directory organization
-- [How to Split a Plugin](../docs/IntelliJ-Platform/4_man/Remote-Development/2_How-to-Split-a-Plugin.md) - Step-by-step guide
-- [RPC Guidelines](../docs/IntelliJ-Platform/4_man/Remote-Development/RPC-Guideline.md) - RPC implementation patterns
-- [How to Split Module to Frontend/Backend](../docs/IntelliJ-Platform/4_man/Remote-Development/How-to-split-module-to-frontend-and-backend.md) - Module separation
-- [Remote Dev Actions](../docs/IntelliJ-Platform/4_man/Remote-Development/Remote-Dev-Actions.md) - Action implementation
-- [Settings Synchronization](../docs/IntelliJ-Platform/4_man/Remote-Development/Settings-synchronisation-in-Remote-Development-and-CodeWithMe.md) - Settings sync
-- [Rhizome Guidelines](../docs/IntelliJ-Platform/4_man/Remote-Development/Rhizome-guidelines-(-shared-database-).md) - Shared database pattern
+- [Directory Overview](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/directory.md) - Remote development architecture overview
+- [Module Split](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/0_Module-Split.md) - How to split modules for remote dev
+- [Plugin Directory Structure](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/1_Plugin-Directory-Structure.md) - Directory organization
+- [How to Split a Plugin](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/2_How-to-Split-a-Plugin.md) - Step-by-step guide
+- [RPC Guidelines](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/RPC-Guideline.md) - RPC implementation patterns
+- [How to Split Module to Frontend/Backend](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/How-to-split-module-to-frontend-and-backend.md) - Module separation
+- [Remote Dev Actions](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/Remote-Dev-Actions.md) - Action implementation
+- [Settings Synchronization](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/Settings-synchronisation-in-Remote-Development-and-CodeWithMe.md) - Settings sync
+- [Rhizome Guidelines](../../../../docs/IntelliJ-Platform/4_man/Remote-Development/Rhizome-guidelines-(-shared-database-).md) - Shared database pattern
 
 **External:** [Remote Development Overview](https://www.jetbrains.com/help/idea/remote-development-overview.html) (user documentation)
 

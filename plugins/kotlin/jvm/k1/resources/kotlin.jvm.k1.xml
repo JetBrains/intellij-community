@@ -1,10 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k1">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="kotlin.base.scripting.k1"/>
     <module name="kotlin.jvm.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint

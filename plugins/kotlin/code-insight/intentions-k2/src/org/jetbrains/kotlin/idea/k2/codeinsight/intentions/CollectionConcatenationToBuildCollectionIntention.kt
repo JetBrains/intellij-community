@@ -23,8 +23,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsight.utils.ThisRebinderForAddingNewReceiver
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -51,23 +49,34 @@ class CollectionConcatenationToBuildCollectionIntention :
             // we only care about the topmost `KtParenthesizedExpression` expression
             return false
         }
-        val ktBinaryExpression = element.safeDeparenthesize() as? KtBinaryExpression ?: return false
-        if (!ktBinaryExpression.hasApplicableToken()) return false
-        if (ktBinaryExpression.parent is KtBinaryExpression) {
-            // we only care about the topmost `KtBinaryExpression` expression
-            return false
+        val expression = element.safeDeparenthesize()
+        val expressionToConvert = expression.expressionToConvert()
+        return when (expressionToConvert) {
+            is KtBinaryExpression -> {
+                if (expression is KtBinaryExpression && expressionToConvert != expression) {
+                    // we only care about the topmost `KtBinaryExpression` expression
+                    return false
+                }
+                expressionToConvert.hasApplicableToken() && isApplicablePossiblyNestedBinaryExpression(expressionToConvert)
+            }
+
+            else -> true
         }
-        if (!isApplicablePossiblyNestedBinaryExpression(ktBinaryExpression)) return false
-        return true
     }
 
     override fun getApplicableRanges(element: KtExpression): List<TextRange> {
-        val ktBinaryExpression = element.safeDeparenthesize() as? KtBinaryExpression ?: return emptyList()
-        // applicable only on the `+`/`-` operators
-        return nestedBinaryExpressionSequence(ktBinaryExpression)
-            .mapTo(mutableListOf()) { binaryExpression ->
-                binaryExpression.operationReference.textRange.relativeTo(element)
-            }
+        val expression = element.safeDeparenthesize()
+        val expressionToConvert = expression.expressionToConvert()
+        return when {
+            expressionToConvert is KtBinaryExpression && expressionToConvert == expression ->
+                // applicable only on the `+`/`-` operators
+                nestedBinaryExpressionSequence(expressionToConvert)
+                    .mapTo(mutableListOf()) { binaryExpression ->
+                        binaryExpression.operationReference.textRange.relativeTo(element)
+                    }
+
+            else -> listOf(TextRange(0, element.textLength))
+        }
     }
 
     private fun isApplicablePossiblyNestedBinaryExpression(element: KtBinaryExpression): Boolean {
@@ -93,25 +102,29 @@ class CollectionConcatenationToBuildCollectionIntention :
     }
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
-        val ktBinaryExpression = element.safeDeparenthesize() as? KtBinaryExpression ?: return null
-        val expressionType = ktBinaryExpression.expressionType ?: return null
+        val expressionToConvert = element.safeDeparenthesize().expressionToConvert()
+        val expressionType = expressionToConvert.expressionType ?: return null
         val collectionType = when {
             expressionType.isClassType(StandardClassIds.List) -> Context.CollectionType.List
             expressionType.isClassType(StandardClassIds.Set) -> Context.CollectionType.Set
             else -> return null
         }
 
-        val operations = buildList {
-            val initialOperation = createInitialOperation(ktBinaryExpression) ?: return null
-            add(initialOperation)
+        val operations = when (expressionToConvert) {
+            is KtBinaryExpression -> buildList {
+                val initialOperation = createInitialOperation(expressionToConvert) ?: return null
+                add(initialOperation)
 
-            for (binaryExpression in nestedBinaryExpressionSequence(ktBinaryExpression).toList().reversed()) {
-                val operation = binaryExpression.toOperation() ?: return null
-                add(operation)
+                for (binaryExpression in nestedBinaryExpressionSequence(expressionToConvert).toList().reversed()) {
+                    val operation = binaryExpression.toOperation() ?: return null
+                    add(operation)
+                }
             }
+
+            else -> listOf(expressionToConvert.toOperationForStandalone() ?: return null)
         }
 
-        val rebinderContext = ThisRebinderForAddingNewReceiver.createContext(ktBinaryExpression)
+        val rebinderContext = ThisRebinderForAddingNewReceiver.createContext(expressionToConvert)
         return Context(collectionType, operations, rebinderContext)
     }
 
@@ -120,6 +133,12 @@ class CollectionConcatenationToBuildCollectionIntention :
         val expression = nestedBinaryExpressionSequence(element).lastOrNull()?.left ?: return null
         val type = expression.expressionType ?: return null
         return expression.toOperationForPlus(isIterableOrSequence(type))
+    }
+
+    context(_: KaSession)
+    private fun KtExpression.toOperationForStandalone(): Context.Operation? {
+        val type = expressionType ?: return null
+        return toOperationForPlus(isIterableOrSequence(type))
     }
 
     context(_: KaSession)
@@ -150,7 +169,7 @@ class CollectionConcatenationToBuildCollectionIntention :
 
     context(_: KaSession)
     private fun isIterableOrSequence(rhsType: KaType): Boolean {
-        return rhsType.isSubtypeOf(StandardClassIds.Iterable) || rhsType.isSubtypeOf(sequenceClassId)
+        return rhsType.isSubtypeOf(StandardClassIds.Iterable) || rhsType.isSubtypeOf(StandardClassIds.Sequence)
     }
 
     context(_: KaSession)
@@ -191,12 +210,14 @@ class CollectionConcatenationToBuildCollectionIntention :
         elementContext: Context,
         updater: ModPsiUpdater,
     ) {
-        val ktBinaryExpression = element.safeDeparenthesize() as? KtBinaryExpression ?: return
+        val expression = element.safeDeparenthesize()
+        val expressionToConvert = expression.expressionToConvert()
+        val replacementTarget = if (expressionToConvert is KtBinaryExpression) expressionToConvert.topmostParenthesizedExpression() else element
         if (!elementContext.isValid()) return
         val replacements = ThisRebinderForAddingNewReceiver.apply(elementContext.rebinderContext)
 
         val ktPsiFactory = KtPsiFactory(actionContext.project)
-        val buildCall = createBuildCallExpression(ktPsiFactory, ktBinaryExpression, elementContext)
+        val buildCall = createBuildCallExpression(ktPsiFactory, expressionToConvert, elementContext)
         val bodyExpression = getSingleLambdaArgumentBody(buildCall)
 
         /**
@@ -248,7 +269,7 @@ class CollectionConcatenationToBuildCollectionIntention :
                 }
             }
         }
-        element.replace(buildCall) as KtExpression
+        replacementTarget.replace(buildCall) as KtExpression
     }
 
     private fun getSingleLambdaArgumentBody(buildCall: KtCallExpression): KtBlockExpression {
@@ -261,7 +282,7 @@ class CollectionConcatenationToBuildCollectionIntention :
 
     private fun createBuildCallExpression(
         ktPsiFactory: KtPsiFactory,
-        element: KtBinaryExpression,
+        element: KtExpression,
         elementContext: Context
     ): KtCallExpression {
         val shortName = elementContext.collectionType.buildCallShortName
@@ -294,6 +315,26 @@ class CollectionConcatenationToBuildCollectionIntention :
                     else -> null
                 }
             }
+    }
+
+    private fun KtExpression.expressionToConvert(): KtExpression {
+        var currentExpression: KtExpression = this
+        var topmostBinaryExpression: KtBinaryExpression? = null
+        while (true) {
+            currentExpression = when (val parent = currentExpression.parent) {
+                is KtParenthesizedExpression -> parent
+                is KtBinaryExpression -> {
+                    topmostBinaryExpression = parent
+                    parent
+                }
+                else -> break
+            }
+        }
+        return topmostBinaryExpression ?: this
+    }
+
+    private fun KtExpression.topmostParenthesizedExpression(): KtExpression {
+        return generateSequence(this) { it.parent as? KtParenthesizedExpression }.last()
     }
 
     private fun KtBlockExpression.addOperation(ktPsiFactory: KtPsiFactory, functionName: String, expression: KtExpression) {
@@ -404,14 +445,7 @@ class CollectionConcatenationToBuildCollectionIntention :
                         }
                     }
                 }
-
             }
         }
-
-
     }
 }
-
-private val sequenceClassId: ClassId =
-    ClassId(StandardClassIds.BASE_SEQUENCES_PACKAGE, Name.identifier("Sequence"))
-

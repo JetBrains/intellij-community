@@ -35,6 +35,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/core-ui",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/observable",
     "//platform/platform-util-io:ide-util-io",
     "//notebooks/notebook-ui:ui",
@@ -46,6 +47,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/jdom",
     "//jupyter:notebooks-jupyter-core",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -68,6 +70,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//notebooks/notebook-ui:ui_test_lib",
@@ -82,6 +85,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//jupyter:notebooks-jupyter-core_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.notebooks.visualization` end

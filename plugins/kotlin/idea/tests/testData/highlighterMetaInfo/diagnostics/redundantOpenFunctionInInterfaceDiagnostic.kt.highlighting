@@ -1,0 +1,7 @@
+// ALLOW_ERRORS
+// HIGHLIGHT_WARNINGS
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+interface Interface {
+    <!HIGHLIGHTING("severity='WARNING'; descr='[REDUNDANT_OPEN_IN_INTERFACE] Modifier 'open' is redundant for abstract interface members'; textAttributesKey='WARNING_ATTRIBUTES'; highlightingTextAttributesKey='WARNING_ATTRIBUTES'")!>open<!> fun foo()
+}

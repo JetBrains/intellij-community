@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {handleApplyPatchTool} from './handlers/apply-patch'
+import {handleLintFilesTool} from './handlers/lint-files'
 import {handleListDirTool} from './handlers/list-dir'
 import {handleReadTool} from './handlers/read'
 import {handleRenameTool} from './handlers/rename'
 import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {
   createApplyPatchSchema,
+  createLintFilesSchema,
   createListDirSchema,
   createReadSchema,
   createRenameSchema,
@@ -15,12 +17,22 @@ import {
   createSearchSymbolSchema,
   createSearchTextSchema
 } from './schemas'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller, WorkaroundChecker} from './types'
+import type {
+  AnalysisCapabilities,
+  ReadCapabilities,
+  SearchCapabilities,
+  ToolArgs,
+  ToolInputSchema,
+  ToolSpecLike,
+  UpstreamToolCaller,
+  WorkaroundChecker
+} from './types'
 
 interface ToolContext {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
+  analysisCapabilities: AnalysisCapabilities
   readCapabilities: ReadCapabilities
   shouldApplyWorkaround: WorkaroundChecker
 }
@@ -78,7 +90,7 @@ function buildToolSpec(
 const TOOL_VARIANTS: ToolVariant[] = [
   {
     name: 'read_file',
-    description: 'Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.',
+    description: 'Reads a local file and returns numbered lines (1-indexed) as text. Supports slice, lines, line_columns, offsets, and indentation modes.',
     schemaFactory: () => createReadSchema(true),
     handlerFactory: ({projectPath, callUpstreamTool, readCapabilities}) => (args) =>
       handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'}),
@@ -120,6 +132,15 @@ const TOOL_VARIANTS: ToolVariant[] = [
       handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
     upstreamNames: ['search_symbol'],
     expose: ({searchCapabilities}) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
+  },
+  {
+    name: 'lint_files',
+    description: 'Analyze several files and return per-file problems with severity, description, line text, and location.',
+    schemaFactory: () => createLintFilesSchema(),
+    handlerFactory: ({callUpstreamTool, analysisCapabilities}) => (args) =>
+      handleLintFilesTool(args, callUpstreamTool, analysisCapabilities),
+    upstreamNames: ['get_file_problems'],
+    expose: ({analysisCapabilities}) => !analysisCapabilities.hasLintFiles && analysisCapabilities.supportsLintFiles
   },
   {
     name: 'list_dir',

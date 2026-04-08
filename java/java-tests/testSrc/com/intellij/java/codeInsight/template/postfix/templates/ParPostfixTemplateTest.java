@@ -34,4 +34,11 @@ public class ParPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testExtra() {
     doTest();
   }
+
+  public static class ModParPostfixTemplateTest extends ParPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

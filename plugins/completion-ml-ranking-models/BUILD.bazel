@@ -82,6 +82,8 @@ jvm_library(
     "//plugins/completion-ml-ranking",
     "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
     "//platform/platform-impl/internal",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
   ],
   runtime_deps = [
     ":completionMlRankingModels-tests",

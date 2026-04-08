@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.projectStructure" visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <projectListeners>

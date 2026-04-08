@@ -198,7 +198,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
               }
             }
             else if (valueType.getVariance() == PyTypeVarType.Variance.INFER_VARIANCE) {
-              PyTypeVarType.Variance inferredVariance = PyInferredVarianceJudgment.getInferredVariance(refExpr, context);
+              PyTypeVarType.Variance inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
               if (inferredVariance != null) {
                 String varianceStr = inferredVariance.name().toLowerCase(Locale.ROOT); //NON-NLS
                 result.append(styledSpan(" # inferred as " + varianceStr, PyHighlighter.PY_LINE_COMMENT)); //NON-NLS
@@ -228,7 +228,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     boolean effectivelyInvariant = isEffectivelyInvariant(refExpr, context);
     PyTypeVarType.Variance variance = effectivelyInvariant
                                       ? PyTypeVarType.Variance.INVARIANT
-                                      : PyInferredVarianceJudgment.getInferredVariance(refExpr, context);
+                                      : PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
     String varianceStr = switch (variance) {
       case null -> null;
       case INFER_VARIANCE -> null;

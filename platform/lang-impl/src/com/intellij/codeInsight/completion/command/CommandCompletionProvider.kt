@@ -102,7 +102,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         !(ApplicationManager.getApplication().isUnitTestMode() && Registry.`is`("ide.completion.command.force.enabled", false))) return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
-    if (parameters.position is PsiComment) return
+    if (parameters.position is PsiComment && parameters.invocationCount == 0) return
     if (parameters.editor.caretModel.caretCount != 1) return
     val templateState = TemplateManagerImpl.getTemplateState(parameters.editor)
     if (templateState != null && !templateState.isFinished) return
@@ -170,6 +170,12 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     }
 
     val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isReadOnly, offset, parameters.editor) ?: return
+    if (parameters.position is PsiComment) {
+      // Allow command completion in comments only for explicit double-dot invocation (FullSuffix) at the end of the comment
+      if (commandCompletionType !is InvocationCommandType.FullSuffix) return
+      val originalComment = parameters.originalPosition
+      if (originalComment !is PsiComment || offset > originalComment.textRange.endOffset) return
+    }
     if (commandCompletionType !is InvocationCommandType.FullSuffix) {
       for (completionResult in postfixResults) {
         resultSet.passResult(completionResult)
@@ -710,7 +716,7 @@ internal class LimitedToleranceMatcher(
   }
 
   private fun matched(allLookupStrings: @Unmodifiable Collection<String>): Boolean {
-    for (lookupString in allLookupStrings) {
+    for (lookupString in extractMeaningfulWords(allLookupStrings)) {
       val indexOf = lookupString.indexOf(prefix, ignoreCase = true)
       if (indexOf != -1 && indexOf < 3) return true
       val fragments = matchingFragments(lookupString) ?: continue
@@ -718,7 +724,7 @@ internal class LimitedToleranceMatcher(
         if (prefix.length != range.length) continue
         if (range.startOffset >= range.endOffset ||
             range.startOffset < 0 || range.startOffset >= lookupString.length - 1 ||
-            range.endOffset < 0 || range.endOffset > lookupString.length) continue
+            range.endOffset > lookupString.length) continue
         val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
         var errors = 0
         for (i in matchedFragment.indices) {
@@ -731,6 +737,17 @@ internal class LimitedToleranceMatcher(
       }
     }
     return false
+  }
+
+  private fun extractMeaningfulWords(allLookupStrings: Collection<String>): Collection<String> {
+    val result = mutableSetOf<String>()
+    for (text in allLookupStrings) {
+      result.add(text.trim())
+      if (text.contains(" ")) {
+        result.addAll(text.trim().split(" ").filter { it.length >= 4 })
+      }
+    }
+    return result
   }
 
   override fun cloneWithPrefix(prefix: String): PrefixMatcher {

@@ -26,6 +26,9 @@ class NotebookSettings : PersistentStateComponent<NotebookSettings>, Cloneable {
   /** The top-right-cell-corner-toolbar will always be visible for the large cells and will stick to the editor top. */
   var cellToolbarStickyVisible: Boolean = true
 
+  /** When 'false', line numbers in notebook cell editors are hidden regardless of the global editor setting. */
+  var showLineNumbers: Boolean = true
+
   override fun getState(): NotebookSettings = this
 
   override fun loadState(state: NotebookSettings) {

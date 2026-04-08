@@ -38,6 +38,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//xml/xml-analysis-api:analysis",
@@ -52,6 +54,8 @@ jvm_library(
     "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
     "//platform/refactoring",
     "//platform/refactoring:refactoring_test_lib",
     "//platform/structure-view-impl:structureView-impl",
@@ -60,6 +64,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/workspace/storage",
     "//platform/workspace/storage:storage_test_lib",
     "//plugins/repository-search",
@@ -84,6 +90,7 @@ jvm_library(
     "//plugins/groovy/jps-plugin:jps",
     "//plugins/groovy/jps-plugin:jps_test_lib",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//jps/model-impl",
     "//jps/model-impl:model-impl_test_lib",
     "//platform/util/progress",
@@ -102,6 +109,10 @@ jvm_library(
     "//plugins/maven/maven3-server-common:server-m3-common_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/code-style-impl:codeStyle-impl",
@@ -122,6 +133,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/statistics/testFramework",
     "//platform/statistics/testFramework:testFramework_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-api:psi_test_lib",
     "//platform/xdebugger-api:debugger",
@@ -148,6 +161,7 @@ jvm_library(
   runtime_deps = [
     ":maven-tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.maven.tests` end
@@ -166,3 +180,45 @@ jps_test(
   runtime_deps = [":maven-tests_test_lib"]
 )
 ### auto-generated section `test intellij.maven.tests` end
+
+### auto-generated section `build intellij.maven.tests.main` start
+resourcegroup(
+  name = "maven-tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "maven-tests-main",
+  module_name = "intellij.maven.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "maven-tests-main_test_lib",
+  module_name = "intellij.maven.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":maven-tests-main_test_resources"],
+  runtime_deps = [
+    ":maven-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//aether-dependency-resolver:java-aetherDependencyResolver-tests",
+    "//aether-dependency-resolver:java-aetherDependencyResolver-tests_test_lib",
+    "//java/idea-ui:ui-tests",
+    "//java/idea-ui:ui-tests_test_lib",
+    "//plugins/maven-server-api/test:maven-server-tests",
+    "//plugins/maven-server-api/test:maven-server-tests_test_lib",
+    "//plugins/maven/src/test:maven-tests",
+    "//plugins/maven/src/test:maven-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.maven.tests.main` end
+
+### auto-generated section `iml intellij.maven.tests.main` start
+exports_files([
+  "intellij.maven.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.tests.main` end

@@ -12,3 +12,6 @@ com.intellij.util.concurrency.EdtScheduledExecutorService
 org.jetbrains.concurrency.ObsolescentFunction
 - com.intellij.util.Function
 - org.jetbrains.concurrency.Obsolescent
+f:org.jetbrains.concurrency.Promises
+- sf:toPromise(kotlinx.coroutines.Deferred,Z):org.jetbrains.concurrency.Promise
+- bs:toPromise$default(kotlinx.coroutines.Deferred,Z,I,java.lang.Object):org.jetbrains.concurrency.Promise

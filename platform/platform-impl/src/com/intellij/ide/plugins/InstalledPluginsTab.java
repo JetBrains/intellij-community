@@ -208,19 +208,6 @@ class InstalledPluginsTab extends PluginsTab {
           ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
         userInstalled.addModels(nonBundledPlugins);
 
-        if (!userInstalled.getModels().isEmpty()) {
-          userInstalled.sortByName();
-
-          long enabledNonBundledCount = nonBundledPlugins.stream()
-            .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
-            .count();
-          userInstalled.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-          if (userInstalled.ui == null) {
-            myInstalledPanel.addGroup(userInstalled);
-          }
-          myPluginModelFacade.getModel().addEnabledGroup(userInstalled);
-        }
-
         String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
 
         Map<String, Supplier<JComponent>> promotionPanelSuppliers = new HashMap<>();
@@ -230,7 +217,7 @@ class InstalledPluginsTab extends PluginsTab {
           }
         }
 
-        visibleBundledPlugins
+        List<ComparablePluginsGroup> sortedBundledGroups = visibleBundledPlugins
           .stream()
           .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
           .entrySet()
@@ -268,12 +255,42 @@ class InstalledPluginsTab extends PluginsTab {
             if (defaultCategory.equals(o2.title)) return -1;
             return o1.compareTo(o2);
           })
-          .forEachOrdered(group -> {
+          .toList();
+
+        if (Registry.is("ide.plugins.category.promotion.enabled")) {
+          // Add priority groups with promotion panel before userInstalled
+          for (ComparablePluginsGroup group : sortedBundledGroups) {
+            if (group.promotionPanel != null) {
+              group.getPreloadedModel().setErrors(model.getErrors());
+              group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+              myInstalledPanel.addGroup(group);
+              myPluginModelFacade.getModel().addEnabledGroup(group);
+            }
+          }
+        }
+
+        if (!userInstalled.getModels().isEmpty()) {
+          userInstalled.sortByName();
+
+          long enabledNonBundledCount = nonBundledPlugins.stream()
+            .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
+            .count();
+          userInstalled.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+          if (userInstalled.ui == null) {
+            myInstalledPanel.addGroup(userInstalled);
+          }
+          myPluginModelFacade.getModel().addEnabledGroup(userInstalled);
+        }
+
+        // Add remaining groups (without promotion panel when flag is enabled, or all groups when disabled)
+        for (ComparablePluginsGroup group : sortedBundledGroups) {
+          if (!Registry.is("ide.plugins.category.promotion.enabled") || group.promotionPanel == null) {
             group.getPreloadedModel().setErrors(model.getErrors());
             group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
             myInstalledPanel.addGroup(group);
             myPluginModelFacade.getModel().addEnabledGroup(group);
-          });
+          }
+        }
 
         myPluginUpdatesService.calculateUpdates(updates -> {
           List<PluginUiModel> updateModels = updates == null ? List.of() : updates.stream()
@@ -453,7 +470,17 @@ class InstalledPluginsTab extends PluginsTab {
         }
       }
       if (!myBundledUpdateGroup.getModels().isEmpty()) {
-        getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
+        int insertPosition = 0;
+        if (Registry.is("ide.plugins.category.promotion.enabled")) {
+          List<UIPluginGroup> groups = getInstalledPanel().getGroups();
+          for (int i = 0; i < groups.size(); i++) {
+            if (groups.get(i).promotionPanel != null) {
+              insertPosition = i + 1;
+              break;
+            }
+          }
+        }
+        getInstalledPanel().addGroup(myBundledUpdateGroup, insertPosition);
         myBundledUpdateGroup.ui.isBundledUpdatesGroup = true;
 
         for (PluginUiModel descriptor : updates) {

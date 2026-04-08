@@ -29,6 +29,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//xml/xml-parser:parser",
     "//RegExpSupport:regexp",
     "//platform/refactoring",
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/core-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -64,6 +66,7 @@ jvm_library(
     "//platform/usageView:usageView_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//xml/xml-parser:parser_test_lib",
     "//RegExpSupport:regexp_test_lib",
     "//platform/refactoring:refactoring_test_lib",
@@ -75,6 +78,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structuralSearch` end
@@ -131,8 +135,12 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
+    "//platform/ide-core",
   ],
-  runtime_deps = [":structuralSearch-tests"]
+  runtime_deps = [
+    ":structuralSearch-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.structuralSearch.tests` end
 

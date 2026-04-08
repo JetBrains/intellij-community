@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +54,8 @@ internal class AgentChatTabsService {
     subAgentId: String? = null,
   ): AgentChatThreadCleanupResult {
     val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
-    val closedTabs = withContext(Dispatchers.EDT) {
+    val closedTabs = withContext(Dispatchers.UiWithModelAccess) {
+      // FileEditorManager.closeFile() can initiate write-intent, which is disallowed on strict Dispatchers.UI.
       closeMatchingOpenTabs(normalizedProjectPath, threadIdentity, subAgentId)
     }
     val deleteResult = withContext(Dispatchers.IO) {

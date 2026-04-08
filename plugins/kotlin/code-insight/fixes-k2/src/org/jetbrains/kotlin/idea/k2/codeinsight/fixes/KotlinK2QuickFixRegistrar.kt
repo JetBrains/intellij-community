@@ -159,7 +159,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RemoveSupertypeFixFactory.removeSupertypeFixFactory)
         registerFactory(NumberConversionFixFactory.numberConversionFixFactory)
         registerFactory(ChangeToUseSpreadOperatorFixFactory.changeToUseSpreadOperatorFixFactory)
-        registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory.replacePrimitiveCastWithNumberConversionFixFactory)
+        registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory.replaceIncompatibleNumberCastWithNumberConversionFixFactory)
+        registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory.replaceRedundantNumberCastWithNumberConversionFixFactory)
         registerFactory(ChangeAccessorTypeFixFactory.wrongGetterReturnTypeFactory)
         registerFactory(ChangeAccessorTypeFixFactory.wrongSetterParameterTypeFactory)
         registerFactory(LiftAssignmentOutOfTryFixFactory.liftAssignmentOutOfTryFix)
@@ -332,6 +333,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
         registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
+        registerFactory(ImportQuickFixFactories.notAnAnnotationClassFactory)
         registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)
         registerFactory(ImportQuickFixFactories.namedParameterNotFoundFactory)
         registerFactory(ImportQuickFixFactories.noneApplicableFactory)

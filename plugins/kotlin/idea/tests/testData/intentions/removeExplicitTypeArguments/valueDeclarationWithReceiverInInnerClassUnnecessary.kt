@@ -1,0 +1,10 @@
+// FIX: Remove explicit type arguments
+
+fun <T> T.ext(): T = this
+
+class Outer {
+    inner class Inner {
+        val outer = ext<Outer>()
+        val inner = ext<caret><Inner>()
+    }
+}

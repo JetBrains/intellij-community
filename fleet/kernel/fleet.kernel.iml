@@ -37,5 +37,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="fleet.rhizomedb.transactor" exported="" />
     <orderEntry type="module" module-name="fleet.rhizomedb.transactor.rebase" exported="" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

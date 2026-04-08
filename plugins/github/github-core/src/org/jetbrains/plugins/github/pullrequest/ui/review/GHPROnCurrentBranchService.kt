@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
 import com.intellij.collaboration.async.launchNow
@@ -79,12 +79,14 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
 
+      val fullBranchName = GitBranchUtil.getDisplayableBranchText(repository)
+
       val syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository)
       if (vm.updateRequired.value) {
         return GitCurrentBranchPresenter.PresentationData(
           GithubIcons.GithubWarning,
           GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
-          GithubBundle.message("pull.request.on.branch.out.of.sync", vm.id.number, currentBranchName),
+          GithubBundle.message("pull.request.on.branch.out.of.sync", vm.id.number, fullBranchName),
           syncStatus
         )
       }
@@ -100,14 +102,14 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
             GitCurrentBranchPresenter.PresentationData(
               AllIcons.Vcs.Vendors.Github,
               GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
-              GithubBundle.message("pull.request.on.branch.description", vm.id.number, currentBranchName)
+              GithubBundle.message("pull.request.on.branch.description", vm.id.number, fullBranchName)
             )
           },
           onFailure = {
             GitCurrentBranchPresenter.PresentationData(
               AllIcons.Vcs.Vendors.Github,
               GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
-              GithubBundle.message("pull.request.on.branch.error", vm.id.number, currentBranchName)
+              GithubBundle.message("pull.request.on.branch.error", vm.id.number, fullBranchName)
             )
           }
         )

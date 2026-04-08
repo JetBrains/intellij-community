@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
@@ -25,6 +26,7 @@ class MoveToCaretStopTest : BasePlatformTestCase() {
     }
   }
 
+  @IJIgnore(issue = "AT-4013")
   fun `test Move to Next Word IDEA default`() {
     doTest(MOVE, FORWARD, """doTest^(^"^test^"^,^ Direction^.^FORWARD^)^""")
     doTest(MOVE, FORWARD, """
@@ -70,6 +72,7 @@ class MoveToCaretStopTest : BasePlatformTestCase() {
 """)
   }
 
+  @IJIgnore(issue = "AT-4013")
   fun `test Move to Previous Word IDEA default`() {
     doTest(MOVE, BACKWARD, """^doTest^(^"^test^"^, ^Direction^.^FORWARD^)""")
     doTest(MOVE, BACKWARD, """

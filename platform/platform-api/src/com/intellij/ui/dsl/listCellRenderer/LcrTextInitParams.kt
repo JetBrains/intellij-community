@@ -7,11 +7,10 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
-import javax.swing.UIManager
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
+abstract class LcrTextInitParams @ApiStatus.Internal constructor(foreground: Color, font: Font?) : LcrInitParams() {
 
   /**
    * A gray text that is usually used for non-primary information in renderers
@@ -32,7 +31,8 @@ abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
    */
   var attributes: SimpleTextAttributes? = null
 
-  var font: Font? = UIManager.getFont("Label.font")
+  @Suppress("CanBePrimaryConstructorProperty")
+  var font: Font? = font
 
   @ApiStatus.Internal
   @ApiStatus.Experimental

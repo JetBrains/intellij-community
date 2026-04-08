@@ -258,10 +258,10 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-build-tools-impl_http",
-  downloaded_file_path = "kotlin-build-tools-impl-%s.jar" % kotlin_compiler_version,
-  sha256 = "9681bc2164a8bd9f6ddf4c085cf4a836b92d27506667d73bab9f6d855336c910",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/%s/kotlin-build-tools-impl-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
+    name = "kotlin-build-tools-impl_http",
+    downloaded_file_path = "kotlin-build-tools-impl-%s.jar" % kotlin_compiler_version,
+    sha256 = "9681bc2164a8bd9f6ddf4c085cf4a836b92d27506667d73bab9f6d855336c910",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/%s/kotlin-build-tools-impl-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
 )
 
 http_file(

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -49,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
 
 final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = new ExtensionPointName<>("com.intellij.daemon.changeLocalityDetector");
@@ -56,13 +58,18 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private final Project myProject;
   private final Map<Document, List<Change>> changedElements = new WeakHashMap<>(); // guarded by changedElements
   private final FileStatusMap myFileStatusMap;
+  @NotNull private final Predicate<? super Document> myIsDocumentWorthBothering;
   private final Alarm myUpdateFileStatusAlarm;
 
   private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed) {}
 
-  PsiChangeHandler(@NotNull Project project, @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
+  PsiChangeHandler(@NotNull Project project,
+                   @NotNull FileStatusMap fileStatusMap,
+                   @NotNull Disposable parentDisposable,
+                   @NotNull Predicate<? super Document> isDocumentWorthBothering) {
     myProject = project;
-    myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
+    myFileStatusMap = fileStatusMap;
+    myIsDocumentWorthBothering = isDocumentWorthBothering;
     DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
@@ -112,7 +119,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     }
 
     synchronized (myUpdateFileStatusAlarm) {
-      myUpdateFileStatusAlarm.cancelAllRequests();
+      myUpdateFileStatusAlarm.cancelRequest(this);
       myUpdateFileStatusAlarm.addRequest(this, 0);
     }
   }
@@ -120,6 +127,19 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private PsiFile getRawCachedPsiFile(@NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     return virtualFile == null || !virtualFile.isValid() ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
+  }
+
+  @Override
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
+    // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
+    // mark file dirty just in case
+    PsiFile psiFile = event.getFile();
+    if (psiFile != null) {
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
+      if (document != null && myIsDocumentWorthBothering.test(document)) {
+        myFileStatusMap.markFileScopeDirtyDefensively(document, event);
+      }
+    }
   }
 
   @Override
@@ -156,26 +176,13 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   }
 
   @Override
-  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-    // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
-    // mark file dirty just in case
-    PsiFile psiFile = event.getFile();
-    if (psiFile != null) {
-      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
-      if (document != null) {
-        myFileStatusMap.markFileScopeDirtyDefensively(document, event);
-      }
-    }
-  }
-
-  @Override
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
       // ignore workspace.xml
       if (!(oldValue instanceof VirtualFile vf) || shouldHandle(vf)) {
-        myFileStatusMap.markAllFilesDirty(event);
+        DaemonCodeAnalyzer.getInstance(myProject).restart(event);
       }
     }
   }
@@ -185,7 +192,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       psiFile = child.getContainingFile();
     }
     if (psiFile == null) {
-      myFileStatusMap.markAllFilesDirty(child);
+      DaemonCodeAnalyzer.getInstance(myProject).restart(child);
       return;
     }
 
@@ -195,7 +202,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
 
     PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     Document document = pdm.getCachedDocument(psiFile);
-    if (document != null) {
+    if (document != null && myIsDocumentWorthBothering.test(document)) {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile)) {
         // ignore changes in excluded files
@@ -203,7 +210,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       }
       if (pdm.getSynchronizer().getTransaction(document) == null) {
         // content reload, language level change or some other big change
-        myFileStatusMap.markAllFilesDirty(child);
+        DaemonCodeAnalyzer.getInstance(myProject).restart(child);
         return;
       }
 
@@ -225,15 +232,32 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
 
     ReadAction.runBlocking(() -> {
       // assume changedElement won't change under read action
-      flushUpdateFileStatusQueue();
+      handleChangedElements();
+      boolean hasDirty = !myFileStatusMap.allDirtyScopesAreNull();
+      boolean hasUncommittedDocuments = PsiDocumentManager.getInstance(myProject).hasEventSystemEnabledUncommittedDocuments();
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("flushUpdateFileStatusQueue: hasDirty="+hasDirty+"; hasUncommittedDocuments="+hasUncommittedDocuments+"; myFileStatusMap="+myFileStatusMap);
+      }
+
+      // when hasUncommittedDocuments=true, daemon will restart again on commit anyway
+      if (hasDirty && !hasUncommittedDocuments) {
+        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+        codeAnalyzer.stopProcess(true, "flushUpdateFileStatusQueue");
+      }
     });
   }
 
   @RequiresBackgroundThread
   @RequiresReadLock
   void flushUpdateFileStatusQueue() {
-    ApplicationManager.getApplication().assertReadAccessAllowed(); // only inside read/write action we can modify changedUpdate
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    handleChangedElements();
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private void handleChangedElements() {
+    ThreadingAssertions.assertReadAccess(); // only inside read/write action we can modify changedUpdate
+    ThreadingAssertions.assertBackgroundThread();
     List<Map.Entry<Document, List<Change>>> entries;
     synchronized (changedElements) {
       entries = new ArrayList<>(changedElements.entrySet());
@@ -340,15 +364,19 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   void waitForUpdateFileStatusQueue() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     CountDownLatch s = new CountDownLatch(1);
-    // synchronized to avoid data race when myUpdateFileStatusAlarm.cancel() in updateChangesForDocument called, then (from interleaved thread) waitForUpdateFileStatusQueue() called, then myUpdateFileStatusAlarm.addRequest() called, resulting in immediate return from waitForUpdateFileStatusQueue method because alarm is temporarily empty
-    synchronized (myUpdateFileStatusAlarm) {
-      myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
-    }
+    runAfterUpdateFileStatusQueue(() -> s.countDown());
     try {
       s.await();
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  void runAfterUpdateFileStatusQueue(@NotNull Runnable runnable) {
+    // synchronized to avoid data race when myUpdateFileStatusAlarm.cancel() in updateChangesForDocument called, then (from interleaved thread) waitForUpdateFileStatusQueue() called, then myUpdateFileStatusAlarm.addRequest() called, resulting in immediate return from waitForUpdateFileStatusQueue method because alarm is temporarily empty
+    synchronized (myUpdateFileStatusAlarm) {
+      myUpdateFileStatusAlarm.addRequest(runnable, 0);
     }
   }
 }

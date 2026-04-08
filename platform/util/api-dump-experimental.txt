@@ -111,6 +111,8 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - build():com.intellij.openapi.util.text.MarkupText
 com.intellij.ui.IconManager
 - *:colorizedIcon(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.Icon
+f:com.intellij.util.CoroutineScopeKt
+- *sf:cancelOnDispose(kotlinx.coroutines.Job,com.intellij.openapi.Disposable):V
 *f:com.intellij.util.JavaCoroutines
 - sf:suspendJava(java.util.function.Consumer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.TimeoutUtil

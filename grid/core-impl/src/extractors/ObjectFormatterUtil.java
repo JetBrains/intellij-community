@@ -188,12 +188,12 @@ public class ObjectFormatterUtil {
             CommonClassNames.JAVA_LANG_BOOLEAN.equals(className)) && ((JdbcGridColumn)column).getSize() <= 1;
   }
 
-  public static boolean isBooleanCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return isBooleanColumn(Objects.requireNonNull(grid.getDataModel(DataAccessType.DATABASE_DATA).getColumn(column)), GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column));
+  public static boolean isBooleanCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return isBooleanColumn(Objects.requireNonNull(grid.getDataModel(DataAccessType.DATABASE_DATA).getColumn(column)), GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value));
   }
 
-  public static boolean isNumericCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return isNumericValue(GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column));
+  public static boolean isNumericCell(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return isNumericValue(GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value));
   }
 
   public static boolean isNumericValue(int type) {

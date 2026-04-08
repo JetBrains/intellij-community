@@ -113,7 +113,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.gradle.scripting.shared",
       "intellij.kotlin.gradle.codeInsight.groovy",
       "intellij.kotlin.gradle.codeInsight.toml",
-      "intellij.kotlin.gradle.codeInsight.toml.k2",
       "intellij.kotlin.native",
       "intellij.kotlin.grazie",
       "intellij.kotlin.runConfigurations.jvm",

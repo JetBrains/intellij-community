@@ -51,6 +51,10 @@ public class GridRequestSource {
     return myErrorMessage;
   }
 
+  /**
+   * Marks requests whose result should replace pending row-local mutation state instead of preserving it on equal-row reloads.
+   * This is used both for submit-driven reloads and for explicit user actions that discard local changes before reloading.
+   */
   public void setMutatedDataLocally(boolean value) {
     myMutatedDataLocally = value;
   }

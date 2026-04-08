@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":protobuf_resources"],
-  exports = ["@lib//:protobuf"],
-  runtime_deps = ["@lib//:protobuf"]
+  exports = ["@lib//:libraries-protobuf-protobuf"],
+  runtime_deps = ["@lib//:libraries-protobuf-protobuf"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:protobuf"],
+  exports = ["@lib//:libraries-protobuf-protobuf"],
   runtime_deps = [":protobuf"]
 )
 ### auto-generated section `build intellij.libraries.protobuf` end

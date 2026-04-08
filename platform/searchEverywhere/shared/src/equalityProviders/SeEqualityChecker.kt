@@ -2,15 +2,21 @@
 package com.intellij.platform.searchEverywhere.equalityProviders
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.withSafeCatch
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.withUuidToReplace
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.locks.ReentrantLock
+import javax.swing.ListCellRenderer
 import kotlin.concurrent.withLock
 
 /**
@@ -25,11 +31,12 @@ class SeEqualityChecker {
 
   suspend fun checkAndUpdateIfNeeded(newItemData: SeItemData): SeItemData? {
     val item = newItemData.fetchItemIfExists() ?: return newItemData
-    val itemObject = (item as? SeLegacyItem)?.rawObject ?: return newItemData
+    val itemObject = item.rawObject
+    val contributor = (item as? SeLegacyItem)?.contributor ?: dummyContributor
 
     return readAction {
       lock.withLock {
-        val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
+        val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, contributor)
         val action = {
           equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
         }.withSafeCatch {
@@ -77,4 +84,29 @@ class SeEqualityChecker {
     }
     return this
   }
+
+  companion object {
+    private val dummyContributor = DummySearchEverywhereContributor<Any>()
+  }
+}
+
+private class DummySearchEverywhereContributor<Any>: SearchEverywhereContributor<Any> {
+  override fun getSearchProviderId(): String = "Dummy"
+  override fun getGroupName(): @Nls String =
+    @Suppress("HardCodedStringLiteral")
+    "Dummy"
+
+  override fun getSortWeight(): Int = 0
+  override fun showInFindResults(): Boolean = false
+
+  override fun fetchElements(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in Any>,
+  ) { }
+
+  override fun processSelectedItem(selected: Any & kotlin.Any, modifiers: Int, searchText: String): Boolean = true
+
+  @Suppress("HardCodedStringLiteral")
+  override fun getElementsRenderer(): ListCellRenderer<in Any> = SimpleListCellRenderer.create("Dummy") { "Dummy" }
 }

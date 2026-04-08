@@ -7,7 +7,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
@@ -18,15 +21,59 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.asPromise
 import java.util.StringJoiner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+private object TestProjectActivityKey : ActivityKey {
+  override val presentableName: @Nls String
+    get() = "The test project activity"
+}
+
+
 object TestObservation {
 
   @Obsolete
   @JvmStatic
+  @JvmOverloads
+  fun waitForProjectActivity(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT_MS, action: Runnable): Unit =
+    waitForProjectActivity(project, timeout, action::run)
+
+  @Obsolete
+  @JvmStatic
+  @JvmOverloads
+  fun <R> waitForProjectActivity(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT_MS, action: () -> R): R {
+    try {
+      return project.trackActivityBlocking(TestProjectActivityKey, action)
+    }
+    finally {
+      waitForConfiguration(project, timeout)
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
+  }
+
+  suspend fun awaitOpenProjectActivity(timeout: Duration = DEFAULT_TEST_TIMEOUT, openProject: suspend () -> Project): Project {
+    return openProject().withProjectAsync { project ->
+      awaitConfiguration(project, timeout)
+      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    }
+  }
+
+  suspend fun <R> awaitProjectActivity(project: Project, timeout: Duration = DEFAULT_TEST_TIMEOUT, action: suspend () -> R): R {
+    try {
+      return project.trackActivity(TestProjectActivityKey, action)
+    }
+    finally {
+      awaitConfiguration(project, timeout)
+      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    }
+  }
+
+  @Obsolete
+  @JvmStatic
+  @JvmOverloads
   fun waitForConfiguration(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT_MS) {
     val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     val job = coroutineScope.launch {

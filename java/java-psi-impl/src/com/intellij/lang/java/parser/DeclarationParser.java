@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -97,6 +98,7 @@ import static com.intellij.psi.impl.source.tree.ElementType.VAR_KEYWORD;
  * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class DeclarationParser {
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
     IDENTIFIER, COMMA, EXTENDS_KEYWORD, IMPLEMENTS_KEYWORD, LPARENTH);

@@ -147,7 +147,6 @@
 + -JSR45Plugin-
 
 
-Plugin Concurrency Visualiser requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python SSH Interpreter requires plugin com.intellij.modules.pycharm.professional to be installed

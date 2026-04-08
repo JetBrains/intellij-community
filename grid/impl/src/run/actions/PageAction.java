@@ -60,9 +60,12 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
       dataGrid.cancelEditing();
     }
     GridMutator<GridRow, GridColumn> mutator = dataGrid.getDataHookup().getMutator();
-    if (mutator == null || !mutator.hasPendingChanges() || GridUtil.showIgnoreUnsubmittedChangesYesNoDialog(dataGrid)) {
-      actionPerformed(new GridRequestSource(new DataGridRequestPlace(dataGrid)), dataGrid.getDataHookup().getLoader());
+    GridRequestSource source = GridRequestSource.create(new DataGridRequestPlace(dataGrid));
+    if (mutator != null && mutator.hasPendingChanges()) {
+      if (!GridUtil.showIgnoreUnsubmittedChangesYesNoDialog(dataGrid)) return;
+      source.setMutatedDataLocally(true);
     }
+    actionPerformed(source, dataGrid.getDataHookup().getLoader());
   }
 
   public static class Reload extends PageAction {

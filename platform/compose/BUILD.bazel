@@ -22,6 +22,7 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "@lib//:jetbrains-annotations",
     "//libraries/kotlinx/coroutines/core",
@@ -63,6 +64,7 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
@@ -121,6 +123,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "@lib//:jetbrains-annotations",
@@ -151,6 +154,7 @@ jvm_library(
   runtime_deps = [
     ":compose-tests",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

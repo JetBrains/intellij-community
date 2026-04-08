@@ -61,7 +61,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
 
-    val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleId))
+    val rootModule = moduleRepository.getModule(RuntimeModuleId.legacyJpsModule(rootModuleId))
     val productModulesPath = "META-INF/$rootModuleId/product-modules.xml"
     val moduleGroupStream = rootModule.readFile(productModulesPath)
     if (moduleGroupStream == null) {
@@ -334,7 +334,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
               val moduleId = module.moduleId
-              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleId.name)).resourceRootPaths
+              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)).resourceRootPaths
             }
           }
         }
@@ -365,7 +365,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   override fun isOptionalProductModule(moduleId: String): Boolean {
-    return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.module(moduleId))
+    val optionalModuleIds = productModules.mainModuleGroup.optionalModuleIds
+    return optionalModuleIds.contains(RuntimeModuleId.contentModule(moduleId, PluginModuleId.JETBRAINS_NAMESPACE)) ||
+           optionalModuleIds.contains(RuntimeModuleId.legacyJpsModule(moduleId))
   }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
@@ -373,7 +375,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun findProductContentModuleClassesRoot(moduleId: PluginModuleId): Path? {
-    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
+    var resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)).resolvedModule
+    if (resolvedModule == null && moduleId.namespace == PluginModuleId.JETBRAINS_NAMESPACE) {
+      /* until IJPL-241655 is implemented, we may not detect proper namespace for some modules, e.g. `intellij.cwm.connection.frontend.split`,
+         so try searching with a different namespace */
+      resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.legacyJpsModule(moduleId.name)).resolvedModule
+    }
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280
       // we log here, as only for JetBrainsClient it is expected that some module is not resolved

@@ -4,26 +4,31 @@ package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
-import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
-import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.sourceRootFixture
-import com.intellij.testFramework.junit5.fixture.virtualFileFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
 import io.modelcontextprotocol.kotlin.sdk.client.Client
-import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
+import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.platform.commons.annotation.Testable
-import kotlin.io.path.Path
+import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
 
 @Testable
 @TestApplication
@@ -36,53 +41,100 @@ abstract class McpToolsetTestBase {
     }
   }
 
-  protected val projectFixture = projectFixture(openAfterCreation = true)
-  protected val project by projectFixture
-  protected val moduleFixture = projectFixture.moduleFixture("testModule")
-  protected val sourceRootFixture = moduleFixture.sourceRootFixture(pathFixture = projectFixture.pathInProjectFixture(Path("src")))
-  // TODO: no idea how to create a file in a subfolder
-  protected val mainJavaFileFixture = sourceRootFixture.virtualFileFixture("Main.java", "Main.java content")
-  protected val classJavaFileFixture = sourceRootFixture.virtualFileFixture("Class.java", "Class.java content")
-  protected val testJavaFileFixture = sourceRootFixture.virtualFileFixture("Test.java", "Test.java content")
-  protected val mainJavaFile by mainJavaFileFixture
-  protected val testJavaFile by testJavaFileFixture
+  /**
+   * Path to the immutable test data dir.
+   * If specified, its content will be copied into the opened temp project.
+   *
+   * Relative values are treated as regular filesystem paths relative to the repository root.
+   */
+  protected open fun projectTestData(): Path? = null
 
-
-
-  protected suspend fun withConnection(action: suspend (Client) -> Unit) {
-    McpServerService.getInstance().start()
-    // Get the port from McpServerService
-    val port = McpServerService.getInstance().port
-    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
-    val transportUrl = addressProvider?.httpUrl("/sse", portOverride = port)
-      ?: "http://localhost:$port/sse"
-
-    // Create HttpClient with SSE support
-    val httpClient = HttpClient {
-      install(SSE)
-    }
-
-    // Create SseClientTransport
-    val sseClientTransport = SseClientTransport(httpClient, transportUrl, requestBuilder = {
-      project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
-    })
-
-    // Create client
-    val client = Client(Implementation(name = "test client", version = "1.0"))
-
-    try { // Connect to the server
-      client.connect(sseClientTransport)
-
-      action(client)
-    }
-    finally { // Close the connection
-      sseClientTransport.close()
-      McpServerService.getInstance().stop()
-    }
+  @OptIn(ExperimentalPathApi::class)
+  private fun projectPathFixture(): TestFixture<Path> = testFixture {
+    val path = tempPathFixture().init()
+    projectTestData()?.let { resolveRelativelyToRoot(it).copyToRecursively(path, followLinks = false, overwrite = true) }
+    initialized(path) { }
   }
 
+  /**
+   * Opened temp project used by MCP tool tests.
+   */
+  protected val projectFixture: TestFixture<Project> = projectFixture(
+      pathFixture = projectPathFixture(),
+      openProjectTask = com.intellij.ide.impl.OpenProjectTask { createModule = false },
+      openAfterCreation = true,
+    )
+
+  /**
+   * Convenient access to the opened project instance.
+   */
+  protected val project by projectFixture
+
+  @BeforeEach
+  fun prepareProject() {
+    project.basePath?.let { Path.of(it).refreshAndFindVirtualFileOrDirectory()?.refresh(false, true) }
+    DumbService.getInstance(project).waitForSmartMode()
+  }
+
+
+
+  private fun resolveRelativelyToRoot(path: Path): Path {
+    if (path.isAbsolute) return path
+
+    val repoRoot = PathManager.getHomeDirFor(javaClass)
+                   ?: error("Cannot resolve repository root for ${javaClass.name}")
+    return repoRoot.resolve(path)
+  }
+
+  /**
+   * Runs the provided MCP client action inside an authorized MCP session bound to [project].
+   */
+  protected suspend fun <T> withConnection(action: suspend (Client) -> T) {
+    var result: Result<T>? = null
+    val projectBasePath = project.basePath
+
+    McpServerService.getInstance().authorizedSession(
+      McpServerService.McpSessionOptions(
+        commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+      ),
+    ) { port, authTokenName, authTokenValue ->
+      val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
+      val transportUrl = addressProvider?.httpUrl("/stream", portOverride = port)
+                         ?: "http://localhost:$port/stream"
+      val httpClient = HttpClient {
+        install(SSE)
+      }
+      val transport = StreamableHttpClientTransport(httpClient, transportUrl, requestBuilder = {
+        projectBasePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+        header(authTokenName, authTokenValue)
+      })
+      val client = Client(Implementation(name = "test client", version = "1.0"))
+
+      try {
+        client.connect(transport)
+        result = runCatching {
+          action(client)
+        }
+      }
+      finally {
+        transport.close()
+        httpClient.close()
+      }
+    }
+
+    result?.getOrThrow() ?: error("Authorized MCP session finished without producing a client result")
+  }
+
+  /**
+   * Extracts text payload from a tool response and fails fast when the tool returned a different
+   * content kind.
+   */
   protected val CallToolResult.textContent: TextContent get() = content.firstOrNull() as? TextContent
                                                                 ?: throw AssertionError("Tool call result should be TextContent")
+
+  /**
+   * Calls an MCP tool and checks that the textual result matches [output] exactly.
+   */
   protected suspend fun testMcpTool(
     toolName: String,
     input: kotlinx.serialization.json.JsonObject,
@@ -95,25 +147,19 @@ abstract class McpToolsetTestBase {
   }
 
 
+  /**
+   * Calls an MCP tool and delegates response validation to [resultChecker].
+   */
   protected suspend fun testMcpTool(
     toolName: String,
     input: kotlinx.serialization.json.JsonObject,
     resultChecker: (CallToolResult) -> Unit,
   ) {
     withConnection { client ->
-      // Call the tool with the provided input
-      try {
-        McpServerSettings.getInstance().state.enableBraveMode = true
-        val result = client.callTool(toolName, input)
-        resultChecker(result)
-        // Just verify that the call doesn't throw an exception
-        assertThat(result).isNotNull()
-        // Log the result for debugging
-        println("[DEBUG_LOG] Tool $toolName result: $result")
-      }
-      finally {
-        McpServerSettings.getInstance().state.enableBraveMode = false
-      }
+      val result = client.callTool(toolName, input)
+      resultChecker(result)
+      assertThat(result).isNotNull()
+      println("[DEBUG_LOG] Tool $toolName result: $result")
     }
   }
 }

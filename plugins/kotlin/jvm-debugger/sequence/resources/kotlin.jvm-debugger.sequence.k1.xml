@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.debugger.sequence">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.debugger.streams"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.platform.debugger.streams">

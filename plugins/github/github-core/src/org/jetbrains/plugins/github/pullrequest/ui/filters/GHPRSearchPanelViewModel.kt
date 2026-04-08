@@ -11,9 +11,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.AssignedToYou
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.Open
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.ReviewRequests
@@ -24,22 +26,22 @@ class GHPRSearchPanelViewModel internal constructor(
   scope: CoroutineScope,
   private val project: Project,
   private val repositoryDataService: GHPRRepositoryDataService,
+  private val securityService: GHPRSecurityService,
   historyViewModel: GHPRSearchHistoryModel,
-  currentUser: GHUser
 ) :
   ReviewListSearchPanelViewModelBase<GHPRListSearchValue, GHPRListQuickFilter>(
     scope, historyViewModel,
     emptySearch = GHPRListSearchValue.EMPTY,
-    defaultFilter = AssignedToYou(currentUser).filter
+    defaultFilter = AssignedToYou(securityService.currentUser).filter
   ) {
 
   override fun GHPRListSearchValue.withQuery(query: String?) = copy(searchQuery = query)
 
   override val quickFilters: List<GHPRListQuickFilter> = listOf(
-    Open(currentUser),
-    YourPullRequests(currentUser),
-    AssignedToYou(currentUser),
-    ReviewRequests(currentUser)
+    Open(securityService.currentUser),
+    YourPullRequests(securityService.currentUser),
+    AssignedToYou(securityService.currentUser),
+    ReviewRequests(securityService.currentUser)
   )
 
   val stateFilterState = searchState.partialState(GHPRListSearchValue::state) {
@@ -76,7 +78,12 @@ class GHPRSearchPanelViewModel internal constructor(
     }
   }
 
-  suspend fun getAuthors(): List<GHUser> = repositoryDataService.loadCollaborators()
+  suspend fun getAuthors(): List<GHUser> = if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) {
+    repositoryDataService.loadCollaborators()
+  }
+  else { // users without push access cannot query the collaborators API, so we fall back to fetching PR authors
+    repositoryDataService.loadPRsAuthors()
+  }
   suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadPotentialIssuesAssignees()
   suspend fun getLabels(): List<GHLabel> = repositoryDataService.loadLabels()
 }

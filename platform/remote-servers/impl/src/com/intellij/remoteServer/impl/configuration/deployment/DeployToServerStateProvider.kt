@@ -6,7 +6,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.remoteServer.configuration.RemoteServer
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource
@@ -24,7 +23,7 @@ interface DeployToServerStateProvider {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<DeployToServerStateProvider> = create(
+    val EP_NAME: ExtensionPointName<DeployToServerStateProvider> = ExtensionPointName(
       "com.intellij.remoteServer.deploymentConfiguration.stateProvider"
     )
 

@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.refactorings"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfixes.SerializationK2QuickFixContributor"/>

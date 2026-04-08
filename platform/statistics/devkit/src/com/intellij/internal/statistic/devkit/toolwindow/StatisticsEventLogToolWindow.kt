@@ -3,6 +3,8 @@ package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
 import com.intellij.icons.AllIcons.Actions.PrettyPrint
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.devkit.actions.CleanupEventsTestSchemeAction
 import com.intellij.internal.statistic.devkit.actions.ConfigureEventsSchemeFileAction
@@ -26,6 +28,7 @@ import com.jetbrains.fus.reporting.api.ValidationResultType.REQUIRED_FIELD_MISSE
 import com.jetbrains.fus.reporting.api.ValidationResultType.UNDEFINED_RULE
 import com.jetbrains.fus.reporting.api.ValidationResultType.UNREACHABLE_METADATA
 import com.jetbrains.fus.reporting.api.ValidationResultType.UNREACHABLE_METADATA_OBSOLETE
+import com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -42,6 +45,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.FilterComponent
 import com.intellij.ui.JBColor
+import com.intellij.util.application
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.awt.BorderLayout
 import java.awt.FlowLayout
@@ -51,7 +55,7 @@ import javax.swing.JPanel
 
 internal const val eventLogToolWindowsId = "Statistics Event Log"
 
-internal class StatisticsEventLogToolWindow(project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
+internal class StatisticsEventLogToolWindow(private val project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog: StatisticsEventLogConsole
   private val messageBuilder = StatisticsEventLogMessageBuilder()
   private val eventLogListener: StatisticsEventLogListener
@@ -87,6 +91,18 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
     Disposer.register(this, consoleLog)
     service<EventLogListenersManager>().subscribe(eventLogListener, recorderId)
+    StatisticsEventLogToolWindowEPLogProvider.EP_NAME.extensionList.forEach {
+      val epPlugin = PluginManager.getPluginByClass(it.javaClass) ?: return@forEach
+      if (!PluginManagerCore.isDevelopedExclusivelyByJetBrains(epPlugin)) {
+        return@forEach
+      }
+
+      it.init(project)
+      it.subscribe(recorderId) { message ->
+        application.invokeLater { consoleLog.addLogLine(message) }
+      }
+      Disposer.register(this, Disposable { it.unsubscribe(recorderId) })
+    }
   }
 
   private fun createActionToolbar(): JComponent {

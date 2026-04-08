@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +57,14 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
   }
 
   fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>) {
-    if (!isValid) reset()
+    var shouldFreezeImmediately = false
+
+    if (!isValid) {
+      reset()
+
+      // Fo non-all tab we should freeze the list immediately, because results flickers on every typed symbol otherwise
+      shouldFreezeImmediately = (searchContext.tabId != SeAllTab.ID)
+    }
 
     val wasEmpty = isEmpty
 
@@ -95,6 +103,11 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
           searchStatePublisher.elementsRemoved(searchContext.searchId, 1)
         })
       }
+    }
+
+    if (shouldFreezeImmediately) {
+      freezer.enable()
+      freezer.freezeIfEnabled(size)
     }
 
     if (!throttledEvent.isEndEvent()) { // isValidAndHasOnlySemantic does not change if it is an end event

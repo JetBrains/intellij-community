@@ -22,4 +22,8 @@
     <facetType implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Pythonid">
+    <consoleOptionsProvider implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonConsoleOptionsProvider"/>
+  </extensions>
+
 </idea-plugin>

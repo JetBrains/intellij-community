@@ -30,6 +30,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-ui",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/ide-core",
     "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
     "@lib//:jetbrains-mlapi-catboost",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
@@ -58,6 +59,7 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.ml.features` end

@@ -27,6 +27,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/analysis-impl",
     "//libraries/http-client",
     "//platform/diff-impl",
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/external-process-auth-helper",
     "//platform/vcs-impl/shared",
     "//platform/core-impl",
+    "//platform/util:util-ui",
   ],
   runtime_deps = [
     "@lib//:jaxb-runtime",
@@ -74,6 +76,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//libraries/http-client:http-client_test_lib",
     "//platform/diff-impl:diff-impl_test_lib",
@@ -93,6 +96,7 @@ jvm_library(
     "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.svn` end
@@ -148,6 +152,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
     "//platform/core-impl",
@@ -174,6 +179,7 @@ jvm_library(
     ":vcs-svn-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )

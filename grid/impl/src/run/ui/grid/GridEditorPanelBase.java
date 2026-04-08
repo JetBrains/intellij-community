@@ -281,8 +281,11 @@ public abstract class GridEditorPanelBase extends JPanel
   @Override
   public void apply() {
     GridFilteringModel model = myGrid.getDataHookup().getFilteringModel();
+    boolean shouldClearPendingChanges = myGrid.getDataHookup().getMutator() != null && myGrid.getDataHookup().getMutator().hasPendingChanges();
     if (model != null && myGrid.isSafeToReload()) {
-      myGrid.getDataHookup().getLoader().applyFilterAndSorting(new GridRequestSource(new GridEditorPanelRequestPlace(this, myGrid)));
+      GridRequestSource source = GridRequestSource.create(new GridEditorPanelRequestPlace(this, myGrid));
+      source.setMutatedDataLocally(shouldClearPendingChanges);
+      myGrid.getDataHookup().getLoader().applyFilterAndSorting(source);
     }
   }
 

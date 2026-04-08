@@ -109,7 +109,7 @@ internal suspend fun getProjectFile(args: OpenProjectArgs): VirtualFile {
 
   runTaskAndLogTime("refresh VFS") {
     WarmupLogger.logInfo("Refreshing VFS ${args.projectDir}...")
-    VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
+    VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir)
   }
   return vfsProject
 }

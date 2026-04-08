@@ -77,7 +77,8 @@ fun registerNewProjectId(project: Project): ProjectId? {
  */
 @ApiStatus.Internal
 fun unregisterProjectId(project: Project) {
-  ProjectIdsStorage.getInstance().unregisterProject(project)
+  // if the instance is not created then the project is never registered and unregister will do nothing
+  ProjectIdsStorage.getInstanceIfCreated()?.unregisterProject(project)
 }
 
 /**
@@ -110,7 +111,8 @@ fun setNewProjectId(project: Project, newProjectId: ProjectId) {
  *         or null if [Project]'s implementation didn't assign id to it
  */
 fun Project.projectIdOrNull(): ProjectId? {
-  return ProjectIdsStorage.getInstance().getProjectId(this)
+  // if the instance is not created then the project is never registered and "get" will return null anyway
+  return ProjectIdsStorage.getInstanceIfCreated()?.getProjectId(this)
 }
 
 /**
@@ -145,7 +147,8 @@ fun Project.projectId(): ProjectId {
  *         or null if there is no project with the given [ProjectId] and logs with debug level
  */
 fun ProjectId.findProjectOrNull(): Project? {
-  val project = ProjectIdsStorage.getInstance().findProject(this)
+  // if the instance is not created then the project is never registered and find will return null anyway
+  val project = ProjectIdsStorage.getInstanceIfCreated()?.findProject(this)
   if (project == null) {
     LOG.debug("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
   }

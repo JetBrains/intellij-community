@@ -7,6 +7,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="commons-compress" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="commons-compress" type="repository">
+        <properties maven-id="org.apache.commons:commons-compress:1.28.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar">
+              <sha256sum>e1522945218456f3649a39bc4afd70ce4bd466221519dba7d378f2141a4642ca</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="commons-codec:commons-codec" />
+            <dependency maven-id="commons-io:commons-io" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
   </component>
 </module>

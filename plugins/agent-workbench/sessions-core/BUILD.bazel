@@ -22,6 +22,7 @@ jvm_library(
     "//platform/util",
     "//platform/util:util-ui",
     "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/util:util-ui_test_lib",
     "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/prompt/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.sessions.core` end

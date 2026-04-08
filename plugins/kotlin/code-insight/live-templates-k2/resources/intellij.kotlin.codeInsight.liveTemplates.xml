@@ -1,7 +1,10 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.liveTemplates.k2">
   <dependencies>
-    <module name="kotlin.code-insight.live-templates.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.completion.impl"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedAnonymousSuperMacro"/>

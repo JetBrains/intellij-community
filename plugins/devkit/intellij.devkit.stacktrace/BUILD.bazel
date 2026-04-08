@@ -27,6 +27,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/unscramble",
     "//platform/util/coroutines",
+    "//platform/util:util-ui",
     "//platform/threadDumpParser",
     "//platform/diagnostic/freezeAnalyzer",
   ]
@@ -51,6 +52,7 @@ jvm_library(
     "//java/java-impl:impl_test_lib",
     "//java/unscramble:unscramble_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/threadDumpParser:threadDumpParser_test_lib",
     "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer_test_lib",
   ]

@@ -21,6 +21,12 @@ public class SoufPostfixTemplate extends JavaEditablePostfixTemplate implements 
           LanguageLevel.JDK_1_3, true, provider);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);

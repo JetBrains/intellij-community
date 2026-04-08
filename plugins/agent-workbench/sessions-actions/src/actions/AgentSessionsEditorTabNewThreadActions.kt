@@ -2,26 +2,28 @@
 package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
-import com.intellij.agent.workbench.chat.collectDistinctChatProjectPaths
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.providerIconWithMode
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
+import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import javax.swing.JComponent
@@ -101,27 +103,51 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
       )
     }
     return candidates.map { candidate ->
-      val group = DefaultActionGroup.createPopupGroup { candidate.displayName }
-      buildNewThreadMenuActions(
-        path = candidate.path,
+      buildProjectCandidatePopupGroup(
+        candidate = candidate,
         project = context.project,
         menuModel = menuModel,
         entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
         createNewSession = createNewSession,
-      ).forEach { group.add(it) }
-      group
+      )
     }.toTypedArray()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private fun collectProjectPathCandidates(
+internal fun buildProjectCandidatePopupGroup(
+  candidate: AgentPromptProjectPathCandidate,
+  project: Project,
+  menuModel: AgentSessionProviderMenuModel,
+  entryPoint: AgentWorkbenchEntryPoint,
+  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
+): ActionGroup {
+  val group = DumbAwareDefaultActionGroup(candidate.displayName, true)
+  buildNewThreadMenuActions(
+    path = candidate.path,
+    project = project,
+    menuModel = menuModel,
+    entryPoint = entryPoint,
+    createNewSession = createNewSession,
+  ).forEach(group::add)
+  return group
+}
+
+internal fun collectProjectPathCandidates(
   project: Project,
   isDedicatedProject: (Project) -> Boolean,
 ): List<AgentPromptProjectPathCandidate>? {
+  return collectProjectPathCandidates(project, isDedicatedProject, ::collectOpenAgentSessionProjectPaths)
+}
+
+internal fun collectProjectPathCandidates(
+  project: Project,
+  isDedicatedProject: (Project) -> Boolean,
+  openProjectPaths: () -> List<String>,
+): List<AgentPromptProjectPathCandidate>? {
   if (!isDedicatedProject(project)) return null
-  val candidates = buildAgentSessionProjectPathCandidates(collectDistinctChatProjectPaths(project))
+  val candidates = buildAgentSessionProjectPathCandidates(openProjectPaths())
   return candidates.takeIf { it.size > 1 }
 }
 
@@ -130,16 +156,7 @@ private fun showQuickStartProjectPopup(
   e: AnActionEvent,
   onResolved: (AgentPromptProjectPathCandidate) -> Unit,
 ) {
-  val group = DefaultActionGroup()
-  candidates.forEach { candidate ->
-    group.add(object : AnAction(candidate.displayName, candidate.path.takeUnless { it == candidate.displayName }, null) {
-      override fun actionPerformed(e: AnActionEvent) {
-        onResolved(candidate)
-      }
-
-      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-    })
-  }
+  val group = buildQuickStartProjectPopupGroup(candidates, onResolved)
   val popup = JBPopupFactory.getInstance()
     .createActionGroupPopup(
       null,
@@ -157,6 +174,23 @@ private fun showQuickStartProjectPopup(
   else {
     popup.showInBestPositionFor(e.dataContext)
   }
+}
+
+internal fun buildQuickStartProjectPopupGroup(
+  candidates: List<AgentPromptProjectPathCandidate>,
+  onResolved: (AgentPromptProjectPathCandidate) -> Unit,
+): ActionGroup {
+  val group = DumbAwareDefaultActionGroup()
+  candidates.forEach { candidate ->
+    group.add(object : DumbAwareAction(candidate.displayName, candidate.path.takeUnless { it == candidate.displayName }, null) {
+      override fun actionPerformed(e: AnActionEvent) {
+        onResolved(candidate)
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+    })
+  }
+  return group
 }
 
 internal fun resolveQuickStartProjectPopupAnchor(e: AnActionEvent): JComponent? {

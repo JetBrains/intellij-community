@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
@@ -6,8 +6,6 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
-import com.intellij.platform.runtime.product.serialization.RawProductModules
-import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -18,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
@@ -115,30 +114,25 @@ internal class RuntimeModuleRepositoryChecker private constructor(
 
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
-      val productModules = loadProductModules(productModulesModule)
+      val productModules = loadProductModules(productModulesModule, context.outputProvider, repository)
       val serviceModuleMapping = ServiceModuleMapping.buildMapping(productModules, includeDebugInfoInErrorMessage = true)
       val mainGroupModuleResourceRoots = 
         productModules.mainModuleGroup.includedModules
           .asSequence()
           .map { it.moduleDescriptor }
-          .filter { !it.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
+          .filter { it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
           .flatMap { moduleDescriptor -> moduleDescriptor.resourceRootPaths.map { it to moduleDescriptor.moduleId } }
           .groupBy({ it.first }, { it.second })
       
       productModules.bundledPluginModuleGroups.forEach { group ->
         val allPluginModules = group.includedModules.map { it.moduleDescriptor } + serviceModuleMapping.getAdditionalModules(group)
-        if (group.mainModule.moduleId == RuntimeModuleId.module("intellij.performanceTesting.async") && context.applicationInfo.productCode == "IC") {
+        if (group.mainModule.moduleId == RuntimeModuleId.legacyJpsModule("intellij.performanceTesting.async") && context.applicationInfo.productCode == "IC") {
           //'intellij.performanceTesting.async' bundled with IDEA Community includes modules which are included in the core plugin for IDEA Ultimate, 
           //so it won't be loaded in IDEA Community, see IJPL-186414 
           return@forEach
         }
         
         for (pluginModule in allPluginModules) {
-          if (pluginModule.moduleId == RuntimeModuleId.projectLibrary("commons-lang3")) {
-            //ignore this error until IJPL-671 is fixed
-            continue
-          }
-          
           for (resourcePath in pluginModule.resourceRootPaths) {
             val mainModules = mainGroupModuleResourceRoots[resourcePath]
             if (mainModules != null) {
@@ -168,13 +162,13 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
 
   private fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, softly: SoftAssertions) {
-    val productModules = loadProductModules(productModulesModule)
+    val productModules = loadProductModules(productModulesModule, context.outputProvider, repository)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
-    allProductModules[RuntimeModuleId.module("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
+    allProductModules[RuntimeModuleId.legacyJpsModule("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
     val mainModuleGroupPath = FList.singleton("main module group")
     productModules.mainModuleGroup.includedModules.forEach { mainModule ->
-      repository.collectDependencies(mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
+      collectDependencies(repository, mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
     }
     productModules.bundledPluginModuleGroups.forEach { group ->
       if (group.includedModules.isEmpty()) {
@@ -186,7 +180,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
       val pluginPath = FList.singleton("bundled plugin ${group.mainModule.moduleId.presentableName}")
       group.includedModules.forEach {
-        repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.presentableName), allProductModules)
+        collectDependencies(repository, it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.presentableName), allProductModules)
       }
     }
 
@@ -195,7 +189,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }.groupBy({ it.first }, { it.second })
     
     for (moduleId in moduleRepositoryData.allModuleIds) {
-      if (moduleId.name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+      if (moduleId.namespace == RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }
@@ -239,7 +233,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
 
   private fun checkBundledPluginsArePresent(productModulesModule: String, softly: SoftAssertions, isEmbeddedVariant: Boolean) {
-    val rawProductModules = loadRawProductModules(productModulesModule)
+    val rawProductModules = loadRawProductModulesFromOutput(productModulesModule, context.outputProvider)
     val productName = context.applicationInfo.productNameWithEdition
     val currentDistributionName = if (isEmbeddedVariant) productName else "'$productName Frontend'"
     for (mainModuleId in rawProductModules.bundledPluginMainModules) {
@@ -265,7 +259,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
                 append("If it should, make sure that all necessary modules are included in the distribution of $currentDistributionName.\n")
               }
               if (mainModule.failedDependencyPath.size > 1) {
-                append("If some dependencies in the chain ${mainModule.failedDependencyPath.joinToString(" <- ") { it.presentableName }}\n")
+                append("If some dependencies in the chain ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.presentableName }}\n")
                 append("are not actually needed, they can be removed from configuration of the corresponding JPS modules (*.iml) to fix this problem.\n")
               }
               append("Please refer to https://youtrack.jetbrains.com/articles/IJPL-A-268 to learn more how the frontend process starts.")
@@ -285,48 +279,33 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun loadProductModules(productModulesModule: String): ProductModules {
-    val relativePath = "META-INF/$productModulesModule/product-modules.xml"
-    val debugName = "($relativePath file in $productModulesModule)"
-    @Suppress("RAW_RUN_BLOCKING")
-    val content = runBlocking(Dispatchers.IO) {
-      context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
-    }
-                  ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
-    try {
-      return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
-    }
-    catch (e: IOException) {
-      throw MalformedRepositoryException("Failed to load module group from $debugName", e)
-    }
-  }
-
-  private fun loadRawProductModules(productModulesModule: String): RawProductModules {
-    val relativePath = "META-INF/$productModulesModule/product-modules.xml"
-    val debugName = "($relativePath file in $productModulesModule)"
-    @Suppress("RAW_RUN_BLOCKING")
-    val content = runBlocking(Dispatchers.IO) {
-      context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
-    }
-                  ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
-    try {
-      return ProductModulesSerialization.readProductModulesAndMergeIncluded(content.inputStream(), debugName, ResourceFileResolver.createDefault(repository))
-    }
-    catch (e: IOException) {
-      throw MalformedRepositoryException("Failed to load module group from $debugName", e)
-    }
-  }
-
   override fun close() {
     if (osSpecificDistPath != null) {
-      osSpecificFilePaths.forEach {
-        commonDistPath.resolve(it).moveTo(osSpecificDistPath.resolve(it))
+      for (file in osSpecificFilePaths) {
+        commonDistPath.resolve(file).moveTo(osSpecificDistPath.resolve(file))
       }
     }
   }
 }
 
-private fun RuntimeModuleRepository.collectDependencies(
+private fun loadProductModules(productModulesModule: String, outputProvider: ModuleOutputProvider, repository: RuntimeModuleRepository): ProductModules {
+  val relativePath = "META-INF/$productModulesModule/product-modules.xml"
+  val debugName = "($relativePath file in $productModulesModule)"
+
+  @Suppress("RAW_RUN_BLOCKING")
+  val content = runBlocking(Dispatchers.IO) {
+    outputProvider.readFileContentFromModuleOutput(outputProvider.findRequiredModule(productModulesModule), relativePath)
+  } ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
+  try {
+    return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
+  }
+  catch (e: IOException) {
+    throw MalformedRepositoryException("Failed to load module group from $debugName", e)
+  }
+}
+
+private fun collectDependencies(
+  repository: RuntimeModuleRepository,
   moduleDescriptor: RuntimeModuleDescriptor,
   path: FList<String>,
   result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap(),
@@ -334,7 +313,7 @@ private fun RuntimeModuleRepository.collectDependencies(
   if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
     val newPath = path.prepend(moduleDescriptor.moduleId.presentableName)
     for (dependency in moduleDescriptor.dependencies) {
-      collectDependencies(dependency, newPath, result)
+      collectDependencies(repository, dependency, newPath, result)
     }
   }
   return result

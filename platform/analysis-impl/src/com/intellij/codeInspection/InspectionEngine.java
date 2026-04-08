@@ -376,7 +376,7 @@ public final class InspectionEngine {
         if (holder.hasResults()) {
           for (ProblemDescriptor descriptor : holder.getResults()) {
             PsiElement element = descriptor.getPsiElement();
-            LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor);
+            LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor, toolWrappers);
             if (element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, wrapper.getTool())) {
               resultDescriptors.computeIfAbsent(wrapper, x -> new ArrayList<>()).add(descriptor);
             }
@@ -391,16 +391,21 @@ public final class InspectionEngine {
     return resultDescriptors;
   }
 
-  private static LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper toolWrapper, ProblemDescriptor descriptor) {
-    if (descriptor instanceof ProblemDescriptorWithReporterName name && toolWrapper.getTool() instanceof DynamicGroupTool groupTool) {
+  private static LocalInspectionToolWrapper getRedirectedToolWrapper(
+    LocalInspectionToolWrapper tool,
+    ProblemDescriptor descriptor,
+    List<? extends LocalInspectionToolWrapper> tools
+  ) {
+    if (descriptor instanceof ProblemDescriptorWithReporterName name) {
       String reportingToolName = name.getReportingToolShortName();
-      for (LocalInspectionToolWrapper child : groupTool.getChildren()) {
+      List<? extends LocalInspectionToolWrapper> toolWrappers = tool instanceof DynamicGroupTool groupTool ? groupTool.getChildren() : tools;
+      for (LocalInspectionToolWrapper child : toolWrappers) {
         if (child.getShortName().equals(reportingToolName)) {
           return child;
         }
       }
     }
-    return toolWrapper;
+    return tool;
   }
 
   public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,

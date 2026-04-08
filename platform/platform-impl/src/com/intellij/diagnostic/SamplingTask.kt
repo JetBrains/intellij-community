@@ -1,29 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.util.containers.UList
 import com.intellij.util.io.blockingDispatcher
 import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(DelicateCoroutinesApi::class)
-internal open class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
-  var threadInfos: UList<Array<ThreadInfo>> = UList()
-    private set
-
+internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
   protected val job: Job
+
   private val startTime: Long = System.nanoTime()
   private var currentTime: Long = startTime
   private val gcStartTime: Long = currentGcTime()
@@ -36,7 +32,8 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, priva
     get() = gcCurrentTime - gcStartTime
 
   init {
-    job = coroutineScope.launch(CoroutineName("freeze dumper") + blockingDispatcher) {
+    // lazy start to avoid race with inheritor's constructors
+    job = coroutineScope.launch(CoroutineName("freeze dumper") + blockingDispatcher, start = CoroutineStart.LAZY) {
       dumpThreadsLoop()
     }
   }
@@ -55,18 +52,13 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, priva
   private suspend fun dumpThreads() {
     currentTime = System.nanoTime()
     gcCurrentTime = currentGcTime()
-    val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
-    coroutineContext.ensureActive()
 
-    storeThreadInfos(infos)
+    val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
+
     processDumpedThreads(infos)
   }
 
-  protected open fun storeThreadInfos(infos: Array<ThreadInfo>) {
-    threadInfos = threadInfos.add(infos)
-  }
-
-  protected open suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {}
+  abstract suspend fun processDumpedThreads(infos: Array<ThreadInfo>)
 
   open fun stop() {
     job.cancel()

@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
 import com.intellij.grazie.ide.language.LanguageGrammarChecking;
 import com.intellij.grazie.utils.HighlightingUtil;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
@@ -13,6 +14,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
@@ -244,11 +246,31 @@ public abstract class TextExtractor {
       content.putUserData(IGNORED, shouldIgnore(content));
     }
 
+    contents = ContainerUtil.map(contents, content -> excludeNonEditableFragments(content));
+
     if (stamp.mayCacheNow()) {
       obtainQueryCache(psi).compareAndSet(null, contents);
       cacheOnSiblings(psi, contents);
     }
     return contents;
+  }
+
+  private static boolean hasIntersectingInjection(TextContent content) {
+    PsiFile file = content.getContainingFile();
+    return InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, content.textOffsetToFile(0)) != null;
+  }
+
+  private static TextContent excludeNonEditableFragments(TextContent content) {
+    if (Boolean.TRUE.equals(content.getUserData(IGNORED))) return content;
+    PsiFile file = content.getContainingFile();
+    Document document = file.getViewProvider().getDocument();
+    if (!(document instanceof DocumentWindow documentWindow)) return content;
+    List<TextRange> ranges = ContainerUtil.mapNotNull(
+      InjectedLanguageManager.getInstance(file.getProject()).getNonEditableFragments(documentWindow),
+      range -> content.fileRangeToText(range)
+    );
+    if (ranges.isEmpty()) return content;
+    return content.excludeRanges(ContainerUtil.map(ranges, range -> TextContent.Exclusion.exclude(range)));
   }
 
   private static void cacheOnSiblings(PsiElement psi, List<TextContent> contents) {
@@ -286,7 +308,7 @@ public abstract class TextExtractor {
     return isSuppressionComment(content) ||
            isCopyrightComment(content) ||
            isKeyLike(content) ||
-           hasIntersectingInjection(content, content.getContainingFile());
+           hasIntersectingInjection(content);
   }
 
   private static boolean isKeyLike(TextContent content) {
@@ -344,10 +366,6 @@ public abstract class TextExtractor {
       }
     }
     return allContents;
-  }
-
-  private static boolean hasIntersectingInjection(TextContent content, PsiFile file) {
-    return InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, content.textOffsetToFile(0)) != null;
   }
 
   @SuppressWarnings("deprecation")

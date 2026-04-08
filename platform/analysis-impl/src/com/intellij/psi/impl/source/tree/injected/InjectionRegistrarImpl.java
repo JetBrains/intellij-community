@@ -659,6 +659,11 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       if (hostInjectionRange == null) {
         return null;
       }
+      if (hostInjectionRange.getStartOffset() < newInjectionHostRange.getStartOffset()) {
+        // Injection range is before host element start — inconsistent state after document change.
+        // Return null to recreate the injection from scratch.
+        return null;
+      }
       TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
       PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);

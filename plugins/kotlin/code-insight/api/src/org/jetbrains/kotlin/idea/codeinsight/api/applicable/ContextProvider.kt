@@ -21,7 +21,7 @@ interface ContextProvider<E : KtElement, C : Any> {
      *
      * The context should not store:
      * - Everything that came from [org.jetbrains.kotlin.analysis.api.KaSession] like:
-     *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol], consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead.
+     *      - [org.jetbrains.kotlin.analysis.api.symbols.KaSymbol], consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer] instead.
      *      - [org.jetbrains.kotlin.analysis.api.types.KaType]
      *      - [org.jetbrains.kotlin.analysis.api.resolution.KaCall]
      * - The [org.jetbrains.kotlin.analysis.api.KaSession] instance itself.
@@ -44,5 +44,5 @@ fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     prepareContext(element)
 }
 
-inline val Boolean.asUnit: Unit?
-    get() = if (this) Unit else null
+inline val Boolean?.asUnit: Unit?
+    get() = if (this == true) Unit else null

@@ -703,10 +703,8 @@ public final class ConfigImportHelper {
     return null;
   }
 
-  /**
-   * Tries to map a user selection into a valid config directory.
-   * Returns a pair of a config directory and an IDE home (when a user pointed to it; {@code null} otherwise).
-   */
+  /// Tries to map a user selection into a valid config directory.
+  /// Returns a pair of a config directory and an IDE home (when a user pointed to it; `null` otherwise).
   public static @Nullable Pair<@NotNull Path, @Nullable Path> findConfigDirectoryByPath(Path selectedDir) {
     if (isConfigDirectory(selectedDir)) {
       return new Pair<>(selectedDir, null);
@@ -879,6 +877,7 @@ public final class ConfigImportHelper {
     return oldPluginsDir;
   }
 
+  /// **Note:** do not call directly; use [ConfigImportHelperBaseTest#doImport] instead.
   @VisibleForTesting
   public static void doImport(
     @NotNull Path oldConfigDir,
@@ -1031,11 +1030,9 @@ public final class ConfigImportHelper {
     }
   }
 
-  /**
-   * Collects plugins which should be migrated from the previous IDE's version, and stores plugins which should be copied in
-   * {@code pluginsToMigrate} and the plugins which should be downloaded from the plugin repository in {@code pluginsToDownload}.
-   * @return {@code false} if failed to collect plugins or {@code true} otherwise
-   */
+  /// Collects plugins which should be migrated from the previous IDE's version, and stores plugins which should be copied in
+  /// `pluginsToMigrate` and the plugins which should be downloaded from the plugin repository in `pluginsToDownload`.
+  /// @return `false` if failed to collect plugins or `true` otherwise
   public static boolean collectPluginsToMigrate(
     @NotNull Path oldPluginsDir,
     @NotNull ConfigImportOptions options,
@@ -1212,7 +1209,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param plugins elements for which updates are successfully processed are _removed_ from the list; broken plugins are removed too */
+  /// @param plugins elements for which updates are successfully processed are \_removed\_ from the list; broken plugins are removed too
   private static void downloadUpdatesForPlugins(
     Path newPluginsDir,
     ConfigImportOptions options,
@@ -1246,7 +1243,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param plugins elements for which updates are successfully processed are _removed_ from the list; broken plugins are removed too */
+  /// @param plugins elements for which updates are successfully processed are \_removed\_ from the list; broken plugins are removed too
   private static void downloadUpdatesForPlugins(
     Path newPluginsDir,
     ConfigImportOptions options,

@@ -13,4 +13,11 @@ public class SynchronizedPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testObject() {
     doTest();
   }
+
+  public static class ModSynchronizedPostfixTemplateTest extends SynchronizedPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

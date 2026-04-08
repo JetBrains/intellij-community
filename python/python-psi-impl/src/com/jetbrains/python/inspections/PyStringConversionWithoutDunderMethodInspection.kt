@@ -35,9 +35,9 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
   @JvmField
   val ignoredTypes: MutableList<String> = mutableListOf(
     "types.NoneType", "_io.TextIOWrapper",
-    // the definitions for these types don't include their `__str__~, so we have to explicitly ignore them
-    "int", "float", "complex", "set", "frozenset", "bytes", "bytearray", "memoryview",
-    "slice", "list", "dict", "bool", "range"
+    // the definitions for these types don't include their `__str__`/`__repr__`, so we have to explicitly ignore them
+    "str", "int", "float", "complex", "set", "frozenset", "bytes", "bytearray", "memoryview",
+    "slice", "list", "dict", "bool", "range", "tuple",
   )
 
   @JvmField
@@ -48,7 +48,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
       OptPane.stringList("ignoredTypes", PyPsiBundle.message("INSP.string.conversion.ignored.types")),
-      OptPane.stringList("reportedTypes", PyPsiBundle.message("INSP.string.conversion.ignored.types"))
+      OptPane.stringList("reportedTypes", PyPsiBundle.message("INSP.string.conversion.reported.types"))
     )
   }
 

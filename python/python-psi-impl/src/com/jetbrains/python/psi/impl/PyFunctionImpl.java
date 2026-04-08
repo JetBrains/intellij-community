@@ -296,11 +296,19 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         //
         // C(42)  # expected C[int], not just C
         if (getModifier() == CLASSMETHOD || PyUtil.isNewMethod(this)) {
-          PyClass containingClass = getContainingClass();
-          if (containingClass != null && type instanceof PySelfType) {
-            PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
-            if (genericType != null) {
-              type = genericType;
+          if (type instanceof PySelfType) {
+            PyClass targetClass;
+            if (substitutions.getQualifierType() instanceof PyClassType qualifierClassType) {
+              targetClass = qualifierClassType.getPyClass();
+            }
+            else {
+              targetClass = getContainingClass();
+            }
+            if (targetClass != null) {
+              PyType genericType = PyTypeChecker.findGenericDefinitionType(targetClass, context);
+              if (genericType != null) {
+                type = genericType;
+              }
             }
           }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.MapSerializerUtil;
@@ -43,8 +43,14 @@ public interface JUnitTestTreeNodeManager {
         return fqName.substring(classEnd + 1);
       }
 
-      int dotInClassFQNIdx = fqNameWithoutParams.lastIndexOf('.');
-      return dotInClassFQNIdx > -1 ? fqName.substring(dotInClassFQNIdx + 1) : fqName;
+      int dotIdx = fqNameWithoutParams.lastIndexOf('.');
+      int dollarIdx = fqNameWithoutParams.lastIndexOf('$');
+      // Strip at $ only for named inner classes (e.g. Outer$Inner), not anonymous ones (e.g. Outer$1)
+      boolean namedInnerClass = dollarIdx > -1
+                                && dollarIdx + 1 < fqNameWithoutParams.length()
+                                && Character.isLetter(fqNameWithoutParams.charAt(dollarIdx + 1));
+      int splitIdx = namedInnerClass ? Math.max(dotIdx, dollarIdx) : dotIdx;
+      return splitIdx > -1 ? fqName.substring(splitIdx + 1) : fqName;
     }
 
     @Override

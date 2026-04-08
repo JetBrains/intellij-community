@@ -31,6 +31,7 @@ jvm_library(
     "//platform/execution-impl",
     "//java/execution/impl",
     "//plugins/coverage",
+    "//java/java-psi-api:psi",
     "//platform/execution",
   ]
 )
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/execution-impl:execution-impl_test_lib",
     "//java/execution/impl:impl_test_lib",
     "//plugins/coverage:coverage_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/execution:execution_test_lib",
   ]
 )

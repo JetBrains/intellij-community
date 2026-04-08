@@ -17,6 +17,7 @@ jvm_library(
     "//java/remote-servers/api:java-remoteServers",
     "//java/compiler/impl",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//java/debugger/impl",
@@ -33,7 +34,10 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/util/jdom",
+    "//platform/util:util-ui",
     "//platform/execution",
   ]
 )
@@ -48,6 +52,7 @@ jvm_library(
     "//java/remote-servers/api:java-remoteServers_test_lib",
     "//java/compiler/impl:impl_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//java/debugger/impl:impl_test_lib",
@@ -64,7 +69,10 @@ jvm_library(
     "//java/idea-ui:ui_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/execution:execution_test_lib",
   ]
 )

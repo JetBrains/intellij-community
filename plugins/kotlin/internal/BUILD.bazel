@@ -26,6 +26,8 @@ jvm_library(
     "//plugins/kotlin/base/analysis",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/util:util-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/project-structure",
   ]
@@ -47,6 +49,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/analysis:analysis_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
   ]

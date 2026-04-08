@@ -31,9 +31,12 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//libraries/kotlinx/coroutines/core",
     "//platform/util/coroutines",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "//platform/kernel/shared:kernel",
     "//platform/eel",
     "//platform/eel-provider",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -61,9 +64,12 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution` end

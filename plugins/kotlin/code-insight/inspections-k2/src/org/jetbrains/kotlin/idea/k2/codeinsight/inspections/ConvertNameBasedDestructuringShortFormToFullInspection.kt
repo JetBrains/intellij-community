@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.buildNameBasedDestructuringText
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -68,34 +69,7 @@ internal class ConvertNameBasedDestructuringShortFormToFullFix : KotlinModComman
         element: KtDestructuringDeclaration,
         updater: ModPsiUpdater
     ) {
-        // For regular destructuring declarations with initializers
-        val initializerText = element.initializer?.text
-
-        // Determine if we're using 'val' or 'var'
-        val keyword = if (element.isVar) "var" else "val"
-
-        // Build the new destructuring declaration with explicit names
-        val newEntries = analyze(element) {
-            val constructorParameters = extractPrimaryParameters(element) ?: return@analyze ""
-
-            element.entries.zip(constructorParameters) { entry, param ->
-                val entryName = entry.nameAsName
-                val originalPropertyName = param.name
-
-                if (entryName == null || entryName != originalPropertyName) {
-                    "$keyword ${entry.text} = $originalPropertyName"
-                } else {
-                    "$keyword ${entry.name}"
-                }
-            }.joinToString(", ")
-        }
-
-        val newDestructuringText = if (initializerText != null) {
-            "($newEntries) = $initializerText"
-        } else {
-            // For lambda parameters
-            "($newEntries)"
-        }
+        val newDestructuringText = analyze(element) { element.buildNameBasedDestructuringText() } ?: return
 
         // Create the new destructuring declaration and replace the entire declaration
         val psiFactory = KtPsiFactory(project)

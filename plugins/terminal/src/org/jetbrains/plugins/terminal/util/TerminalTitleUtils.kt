@@ -71,9 +71,17 @@ object TerminalTitleUtils {
   }
 
   @ApiStatus.Internal
-  fun TerminalTitle.stateFlow(buildTitle: (TerminalTitle) -> String): Flow<TitleData> {
+  fun TerminalTitle.stateFlow(
+    buildCroppedTitle: (TerminalTitle) -> String,
+    buildFullTitle: (TerminalTitle) -> String,
+  ): Flow<TitleData> {
     fun titleData(title: TerminalTitle): TitleData {
-      return TitleData(buildTitle(title), title.defaultTitle, title.userDefinedTitle)
+      return TitleData(
+        croppedText = buildCroppedTitle(title),
+        fullText = buildFullTitle(title),
+        defaultName = title.defaultTitle,
+        userDefinedName = title.userDefinedTitle
+      )
     }
 
     val flow = channelFlow {
@@ -97,7 +105,8 @@ object TerminalTitleUtils {
 
   @ApiStatus.Internal
   data class TitleData(
-    @param:NlsSafe val text: String,
+    @param:NlsSafe val croppedText: String,
+    @param:NlsSafe val fullText: String,
     val defaultName: String?,
     val userDefinedName: String?,
   )

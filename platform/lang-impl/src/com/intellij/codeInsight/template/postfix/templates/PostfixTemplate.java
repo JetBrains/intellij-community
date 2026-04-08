@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,6 +158,26 @@ public abstract class PostfixTemplate implements PossiblyDumbAware {
    * @param editor  current editor
    */
   public abstract void expand(@NotNull PsiElement context, @NotNull Editor editor);
+
+  /**
+   * Creates a {@link PostfixModExpander} strategy for ModCommand-based expansion.
+   * Returns {@code null} if this template does not support ModCommand expansion.
+   * <p>
+   * Override this method to provide ModCommand-based expansion of the template.
+   * Use together with {@link #isApplicableForModCommand()} to control whether the expander is actually used.
+   *
+   * @return a {@link PostfixModExpander}, or {@code null} if not supported
+   */
+  @ApiStatus.Experimental
+  public @Nullable PostfixModExpander createModExpander() { return null; }
+
+  /**
+   * Determines whether this template is enabled for ModCommand-based expansion.
+   */
+  @ApiStatus.Experimental
+  public boolean isApplicableForModCommand() {
+    return false;
+  }
 
   /**
    * @return the {@link PostfixTemplateProvider} that provided this template

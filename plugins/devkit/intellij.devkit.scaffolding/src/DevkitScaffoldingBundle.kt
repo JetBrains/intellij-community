@@ -15,9 +15,9 @@ private const val BUNDLE: String = "messages.DevkitScaffoldingBundle"
 private val ourInstance: DynamicBundle = DynamicBundle(MethodHandles.lookup().lookupClass(), BUNDLE)
 
 fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: @NotNull Any?): @Nls String {
-  return ourInstance.getMessage(key, params)
+  return ourInstance.getMessage(key, *params)
 }
 
 fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: @NotNull Any?): Supplier<String> {
-  return ourInstance.getLazyMessage(key, params)
+  return ourInstance.getLazyMessage(key, *params)
 }

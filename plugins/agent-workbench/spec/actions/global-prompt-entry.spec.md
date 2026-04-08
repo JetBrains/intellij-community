@@ -6,6 +6,12 @@ targets:
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAutoSelectAction.kt
   - ../../prompt/src/actions/AgentWorkbenchPromptShortcutActionPromoter.kt
   - ../../prompt/src/ui/AgentPromptDraftPersistenceDecisions.kt
+  - ../../prompt/ui/src/AgentPromptClaudeSlashCompletionProvider.kt
+  - ../../prompt/ui/src/AgentPromptEnterHandlers.kt
+  - ../../prompt/ui/src/AgentPromptPalettePopup.kt
+  - ../../prompt/ui/src/AgentPromptPaletteSessionController.kt
+  - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
+  - ../../prompt/ui/src/AgentPromptTextField.kt
   - ../../prompt/src/ui/AgentPromptPalettePopup.kt
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
@@ -13,13 +19,17 @@ targets:
   - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
-  - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
-  - ../../sessions-core/src/prompt/AgentPromptPaletteExtension.kt
+  - ../../prompt/ui/resources/messages/AgentPromptBundle.properties
+  - ../../prompt/core/src/AgentPromptLauncherBridge.kt
+  - ../../prompt/core/src/AgentPromptPaletteExtension.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
   - ../../prompt/testSrc/ui/AgentPromptDraftPersistenceDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
@@ -59,6 +69,13 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 
 - Re-focusing an already visible popup must preserve its live state, including prompt text, selected tab, provider selection, and context chips.
   [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
+
+- When the IDE loses application focus because the user switches to another app, the main global prompt popup must remain open and preserve its live state until it is explicitly dismissed.
+
+- When the same project frame becomes active again while the main global prompt popup remains visible, whether after switching to another app or after switching to another IDE project frame, the popup must request focus again.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupActivationDecisionsTest.kt
+
+- Chooser popups opened from the main global prompt remain transient and may still close on application deactivation.
 
 - When both `AgentWorkbenchPrompt.OpenGlobalPalette` and `AIAssistant.Editor.AskAiAssistantInEditor` are applicable for `Cmd+\\` / `Ctrl+\\` in an editor context, `AgentWorkbenchPrompt.OpenGlobalPalette` must be executed first.
 
@@ -105,11 +122,25 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - If no working project path can be resolved automatically, submit must prompt user to choose from available non-dedicated project candidates; cancel keeps popup open and shows project-path validation error.
 
 - Keyboard behavior contract:
-  - `Enter` runs submit action,
+  - `Enter` runs submit action from the prompt editor and from the existing-task selector when it owns focus,
   - `Shift+Enter` inserts line break,
   - `Tab` submits only when tab-queue shortcut is enabled; otherwise it selects the next available prompt tab and wraps around,
-  - `Shift+Tab` selects the previous available prompt tab and wraps around.
+  - `Shift+Tab` selects the previous available prompt tab and wraps around,
+  - when a prompt-editor completion lookup is open, `Enter` must accept the selected lookup item instead of submitting,
+  - when a prompt-editor completion lookup is open, `Tab` must replace-complete the selected lookup item instead of triggering prompt tab navigation or submit behavior.
   [@test] ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
+
+- Claude-only slash completion contract:
+  - slash completion is available only when the selected provider is `CLAUDE`,
+  - slash completion operates only on the current whitespace-delimited token when that token starts with `/`,
+  - ordinary non-slash tokens and path fragments such as `/path/to/file.txt` must not trigger Claude menu completion unless the token is being completed explicitly,
+  - auto-popup is allowed only when `/` is typed as the first prompt character,
+  - completion entries merge three sources: a curated built-in Claude menu-command set, `.claude/commands/*.md` command names, and `.claude/skills/*/SKILL.md` skill names discovered from the effective working project path and its ancestors,
+  - completion entries must show source-kind type labels and any available argument hint; custom command and skill argument hints come from `argument-hint` frontmatter, and built-in menu commands may provide documented optional argument hints,
+  - for duplicate slash names from the same source kind, the nearest ancestor definition wins,
+  - when the same slash name exists as both a command and a skill, both lookup items must remain visible with type labels.
+  [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
 
 - Tab-queue shortcut must be enabled only when target mode is `EXISTING_TASK`, selected provider is `CODEX`, and there is no next prompt tab to select.
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
@@ -128,16 +159,23 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 
 - Submit flow must route through `AgentPromptLauncherBridge` using `AgentPromptLaunchRequest`; prompt popup must not directly call provider session sources.
 
+- When the selected provider is `CLAUDE` and the submitted prompt starts with a recognized Claude menu command, the prompt popup must submit only the raw slash command text and must omit prompt context packaging (`initialMessageRequest.contextItems` and any context summary envelope) for that launch request.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+
 - Successful prompt launch must update the shared preferred provider used by future prompt openings and new-thread affordances.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Plan mode toggle contract:
-  - Toggle is visible when selected provider's bridge has `supportsPlanMode == true`.
+  - Toggle is visible when selected provider's bridge exposes the `AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE` prompt option.
   - Toggle default is enabled and is persisted in per-project prompt draft state.
-  - When effective plan mode is enabled, submit must set `initialMessageRequest.planModeEnabled = true`.
+  - When effective plan mode is enabled, submit must include `AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE` in `initialMessageRequest.providerOptionIds`.
   - Effective plan mode must be forced off for `EXISTING_TASK` target when selected thread activity is `PROCESSING` or `REVIEWING`.
-  - Providers without `supportsPlanMode` must always submit with plan mode disabled.
+  - Manual prompts that resolve to effective plan mode (for example `/plan ...`) must obey the same `EXISTING_TASK` busy-task restriction as the toggle path.
+  - Existing-task prompt launch must reject effective plan-mode requests when the selected thread activity is `PROCESSING` or `REVIEWING`.
+  - Providers without the plan-mode prompt option must always submit with plan mode disabled.
   [@test] ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
 - Context block soft-cap limit is `12_000` characters. When exceeded, user must explicitly choose send-full, auto-trim, or cancel before launch.
 
@@ -193,11 +231,11 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptFooterHintDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPlanModeDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptEnterHandlersTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.actions.AgentWorkbenchPromptActionPromoterTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptActionPromoterTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptProjectPathsManualContextSourceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 

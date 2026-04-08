@@ -10,3 +10,6 @@
 - name: lib/modules/intellij.groovy.dev.jar
   contentModules:
   - name: intellij.groovy.dev
+- name: lib/modules/intellij.php.dev.jar
+  contentModules:
+  - name: intellij.php.dev

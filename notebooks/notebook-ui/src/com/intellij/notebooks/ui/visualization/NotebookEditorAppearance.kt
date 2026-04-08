@@ -16,6 +16,8 @@ interface NotebookEditorAppearance : NotebookEditorAppearanceSizes, NotebookEdit
   fun cellFrameSelectedColor(): Color
   fun cellFrameHoveredColor(): Color
   fun caretRowColor(): Color?
+  fun cellOutputForeground(): Color?
+  fun executionTimeForeground(): Color
 
   companion object {
     val NOTEBOOK_APPEARANCE_KEY: Key<NotebookEditorAppearance?> = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
@@ -28,5 +30,7 @@ interface NotebookEditorAppearance : NotebookEditorAppearanceSizes, NotebookEdit
     val CELL_STRIPE_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_SELECTED_COLOR")
     val CELL_FRAME_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_SELECTED_COLOR")
     val CELL_FRAME_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_BORDER_COLOR")
+    val CELL_OUTPUT_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_OUTPUT_COLOR")
+    val EXECUTION_TIME_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.EXECUTION_TIME_COLOR")
   }
 }

@@ -2560,6 +2560,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/branched/doubleBangToIfThen/localVar.kt");
             }
 
+            @TestMetadata("notApplicableToIncrement.kt")
+            public void testNotApplicableToIncrement() throws Exception {
+                runTest("testData/intentions/branched/doubleBangToIfThen/notApplicableToIncrement.kt");
+            }
+
             @TestMetadata("replaceParentExpression.kt")
             public void testReplaceParentExpression() throws Exception {
                 runTest("testData/intentions/branched/doubleBangToIfThen/replaceParentExpression.kt");
@@ -6241,6 +6246,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("backtickWithBuck.kt")
             public void testBacktickWithBuck() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
+            }
+
+            @TestMetadata("caretInsideBodyExplicitSignature.kt")
+            public void testCaretInsideBodyExplicitSignature() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyExplicitSignature.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithArrow.kt")
+            public void testCaretInsideBodyWithArrow() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyWithArrow.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithoutArrow.kt")
+            public void testCaretInsideBodyWithoutArrow() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyWithoutArrow.kt");
             }
 
             @TestMetadata("classReference.kt")
@@ -16166,6 +16186,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/returnCallWithUnnecessaryTypeArgs.kt");
         }
 
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/script.kts");
+        }
+
         @TestMetadata("twoArguments.kt")
         public void testTwoArguments() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/twoArguments.kt");
@@ -16191,14 +16216,39 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");
         }
 
-        @TestMetadata("valueDeclarationWithReceiver.kt")
-        public void testValueDeclarationWithReceiver() throws Exception {
-            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
-        }
-
         @TestMetadata("valueDeclarationWithReceiverInClasses.kt")
         public void testValueDeclarationWithReceiverInClasses() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInClasses.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverInInnerClassNecessary.kt")
+        public void testValueDeclarationWithReceiverInInnerClassNecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInInnerClassNecessary.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverInInnerClassUnnecessary.kt")
+        public void testValueDeclarationWithReceiverInInnerClassUnnecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInInnerClassUnnecessary.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverInMemberExtensionNecessary.kt")
+        public void testValueDeclarationWithReceiverInMemberExtensionNecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInMemberExtensionNecessary.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverInMemberExtensionUnnecessary.kt")
+        public void testValueDeclarationWithReceiverInMemberExtensionUnnecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInMemberExtensionUnnecessary.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverNecessary.kt")
+        public void testValueDeclarationWithReceiverNecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverNecessary.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverUnnecessary.kt")
+        public void testValueDeclarationWithReceiverUnnecessary() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverUnnecessary.kt");
         }
 
         @TestMetadata("variableString.kt")
@@ -17555,6 +17605,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("usedSameFunction.kt")
         public void testUsedSameFunction() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGeneric.kt")
+        public void testUsedSameFunctionGeneric() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGeneric.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericAlias.kt")
+        public void testUsedSameFunctionGenericAlias() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericAlias.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericNested.kt")
+        public void testUsedSameFunctionGenericNested() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericNested.kt");
         }
     }
 

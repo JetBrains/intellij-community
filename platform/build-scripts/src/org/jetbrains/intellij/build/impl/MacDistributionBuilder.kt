@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
-import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
@@ -47,6 +46,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -82,7 +82,7 @@ class MacDistributionBuilder(
     get() = "${context.productProperties.baseFileName}.icns"
 
   private val productInfoPathPrefix: String
-    get() = if (context.options.isLanguageServer) "" else "Resources/"
+    get() = if (context.isLanguageServer) "" else "Resources/"
 
   private fun getDocTypes(): String {
     val associations = mutableListOf<String>()
@@ -142,7 +142,7 @@ class MacDistributionBuilder(
       generateScripts(macBinDir, executable, context)
     }
 
-    val ideaPropertiesContent = if (context.options.isLanguageServer) {
+    val ideaPropertiesContent = if (context.isLanguageServer) {
       ideaProperties!!
     }
     else {
@@ -165,7 +165,7 @@ class MacDistributionBuilder(
       ideaPropertiesContent
     )
 
-    if (context.options.isLanguageServer) {
+    if (context.isLanguageServer) {
        layoutMacCli(macDistDir = targetPath, arch = arch)
     }
     else {
@@ -406,7 +406,7 @@ class MacDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private suspend fun generateProductJson(arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): String {
-    val toRoot = if (context.options.isLanguageServer) "" else "../"
+    val toRoot = if (context.isLanguageServer) "" else "../"
     return generateProductInfoJson(
       relativePathToBin = "${toRoot}bin",
       builtinModules = context.builtinModule,
@@ -414,23 +414,21 @@ class MacDistributionBuilder(
         ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
-          launcherPath = "${if (context.options.isLanguageServer) "bin" else "../MacOS"}/${context.productProperties.baseFileName}",
+          launcherPath = "${if (context.isLanguageServer) "bin" else "../MacOS"}/${context.productProperties.baseFileName}",
           javaExecutablePath = if (withRuntime) "${toRoot}jbr/Contents/Home/bin/java" else null,
           vmOptionsFilePath = "${toRoot}bin/${context.productProperties.baseFileName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
           mainClass = context.ideMainClassName,
-          customCommands = when {
-            context.options.isLanguageServer -> listOf(
-              generateLspServerLaunchData(context)
-            )
-            else -> listOfNotNull(
+          customCommands = run {
+            val base = listOfNotNull(
               generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
                 "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
               },
               generateQodanaLaunchData(context, arch, OsFamily.MACOS),
               generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
             )
+            context.productProperties.launcherCommandsCustomizer?.invoke(base, context) ?: base
           }
         )
       ),
@@ -480,7 +478,7 @@ class MacDistributionBuilder(
                   false
                 }
                 sourceFile.fileName.toString() == ".DS_Store" -> false
-                isContentDir && context.options.isLanguageServer && sourceFile.extension == "sh" -> true
+                isContentDir && context.isLanguageServer && sourceFile.extension == "sh" -> true
                 isContentDir && sourceFile.fileName.toString() != "Info.plist" -> {
                   error("Only Info.plist file is allowed in ${zipRoot} directory but found ${zipRoot}/${relativePath}")
                 }
@@ -600,7 +598,7 @@ class MacDistributionBuilder(
   }
 
   private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
-    return if (context.options.isLanguageServer) {
+    return if (context.isLanguageServer) {
       customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
     }
     else {

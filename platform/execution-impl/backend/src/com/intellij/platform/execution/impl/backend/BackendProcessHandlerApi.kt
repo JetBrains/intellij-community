@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.ProcessHandlerApi
 import com.intellij.execution.rpc.ProcessHandlerId
+import com.intellij.execution.rpc.findValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId

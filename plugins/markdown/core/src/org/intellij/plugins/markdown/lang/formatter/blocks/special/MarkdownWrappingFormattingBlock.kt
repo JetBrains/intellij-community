@@ -32,13 +32,24 @@ internal open class MarkdownWrappingFormattingBlock(
     get() = node.text.count { it == '\n' }
 
   override fun buildChildren(): List<Block> {
-    val filtered = MarkdownBlocks.filterFromWhitespaces(node.children())
+    val filtered = MarkdownBlocks.filterFromWhitespaces(node.children()).toList()
     val childWrap = createWrapForChildren()
-    val result = ArrayList<Block>()
-    for (node in filtered) {
-      when (node.elementType) {
-        MarkdownTokenTypes.TEXT -> processTextElement(result, node, childWrap, wrapFirstElement = true)
-        else -> result.add(MarkdownBlocks.create(node, settings, spacing) { alignment })
+    val result = ArrayList<Block>(filtered.size)
+
+    filtered.forEachIndexed { index, child ->
+      when (child.elementType) {
+        MarkdownTokenTypes.LPAREN -> {
+          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, childWrap))
+        }
+
+        MarkdownTokenTypes.TEXT -> {
+          val wrapFirstElement = filtered.getOrNull(index - 1)?.elementType != MarkdownTokenTypes.LPAREN
+          processTextElement(result, child, childWrap, wrapFirstElement)
+        }
+
+        else -> {
+          result.add(MarkdownBlocks.create(child, settings, spacing) { alignment })
+        }
       }
     }
     return result

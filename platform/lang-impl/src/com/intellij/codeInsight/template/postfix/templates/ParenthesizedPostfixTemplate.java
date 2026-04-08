@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,5 +31,12 @@ public class ParenthesizedPostfixTemplate extends PostfixTemplateWithExpressionS
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     expression.replace(myPsiInfo.createExpression(expression, "(", ")"));
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander((ctx, updater, elementInCopy) ->
+      elementInCopy.replace(myPsiInfo.createExpression(elementInCopy, "(", ")")));
   }
 }

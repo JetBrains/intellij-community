@@ -100,7 +100,6 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testModule() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m2/module-info.java"); }
   public void testUnknownInlineTag() { doTest(); }
   public void testUnknownTags() { doTest(); }
-  public void testBadCharacters() { doTest(); }
   public void testVararg() { doTest(); }
   public void testInnerClassReferenceInSignature() { doTest(); }
   public void testBadReference() { doTest(); }

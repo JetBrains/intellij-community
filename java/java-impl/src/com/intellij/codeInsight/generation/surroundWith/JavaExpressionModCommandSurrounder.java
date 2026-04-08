@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.lang.surroundWith.ModCommandSurrounder;
+import com.intellij.lang.surroundWith.PsiUpdateModCommandSurrounder;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
@@ -17,7 +16,7 @@ import java.util.Arrays;
 /**
  * Allows implementing conveniently surrounders (Surround With) when it was called on java expression.
  */
-public abstract class JavaExpressionModCommandSurrounder extends ModCommandSurrounder {
+public abstract class JavaExpressionModCommandSurrounder extends PsiUpdateModCommandSurrounder {
   public static final ExtensionPointName<JavaExpressionModCommandSurrounder> EP_NAME = ExtensionPointName.create("com.intellij.javaExpressionSurrounder");
 
   @Override
@@ -33,11 +32,18 @@ public abstract class JavaExpressionModCommandSurrounder extends ModCommandSurro
   public abstract boolean isApplicable(PsiExpression expr);
 
   @Override
-  public final @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
-    if (elements.length != 1 || !(elements[0] instanceof PsiExpression expr)) {
-      throw new IllegalArgumentException(Arrays.toString(elements));
+  public void surroundElements(@NotNull ActionContext context,
+                               @NotNull PsiElement @NotNull [] elementsInCopy,
+                               @NotNull ModPsiUpdater updater) {
+    if (elementsInCopy.length != 1 || !(elementsInCopy[0] instanceof PsiExpression expr)) {
+      throw new IllegalArgumentException(Arrays.toString(elementsInCopy));
     }
-    return ModCommand.psiUpdate(context, updater -> surroundExpression(context, ElementToWorkOn.getWritable(expr, updater), updater));
+    surroundExpression(context, expr, updater);
+  }
+
+  @Override
+  public @NotNull PsiElement getWritable(@NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
+    return ElementToWorkOn.getWritable(element, updater);
   }
 
   /**

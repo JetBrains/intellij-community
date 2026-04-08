@@ -50,6 +50,11 @@ public class K2ScratchRunActionTestGenerated extends AbstractK2ScratchRunActionT
         runTest("testData/scratch/generics.kts");
     }
 
+    @TestMetadata("hexFormat.kts")
+    public void testHexFormat() throws Exception {
+        runTest("testData/scratch/hexFormat.kts");
+    }
+
     @TestMetadata("klass.kts")
     public void testKlass() throws Exception {
         runTest("testData/scratch/klass.kts");

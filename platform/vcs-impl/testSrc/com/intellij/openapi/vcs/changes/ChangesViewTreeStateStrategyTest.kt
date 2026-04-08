@@ -26,7 +26,7 @@ class ChangesViewTreeStateStrategyTest {
 
     val shouldExpand = ChangesViewTreeStateStrategy().shouldExpandDefaultChangeList(
       newRoot = root,
-      oldFileCount = 0,
+      lastShownFileCount = 0,
       isNodeExpanded = { _ -> false }, // no non-default expanded
     )
 
@@ -40,7 +40,7 @@ class ChangesViewTreeStateStrategyTest {
 
     val shouldExpand = ChangesViewTreeStateStrategy().shouldExpandDefaultChangeList(
       newRoot = root,
-      oldFileCount = 0,
+      lastShownFileCount = 0,
       isNodeExpanded = { it === nonDefaultNode }, // non-default already expanded
     )
 
@@ -54,13 +54,13 @@ class ChangesViewTreeStateStrategyTest {
 
     val shouldExpandWhenNothingElseExpanded = ChangesViewTreeStateStrategy().shouldExpandDefaultChangeList(
       newRoot = root,
-      oldFileCount = 10,
+      lastShownFileCount = 10,
       isNodeExpanded = { _ -> false }, // no non-default expanded
     )
 
     val shouldExpandWhenSomethingElseExpanded = ChangesViewTreeStateStrategy().shouldExpandDefaultChangeList(
       newRoot = root,
-      oldFileCount = 10,
+      lastShownFileCount = 10,
       isNodeExpanded = { it == nonDefaultNode }, // no non-default expanded
     )
 

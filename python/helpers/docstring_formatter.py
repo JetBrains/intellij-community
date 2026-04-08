@@ -37,8 +37,34 @@ def format_rest(docstring):
     from docutils.nodes import Text, field_body, field_name, SkipNode
     from docutils.parsers.rst import directives
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+    from docutils.transforms import universal
+    from docutils.transforms.universal import FilterMessages
     from docutils.writers import Writer
     from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
+    from docutils.parsers.rst.directives.body import CodeBlock
+
+    SUPPORTED_LANGUAGES = frozenset([
+        'python', 'python3', 'py', 'java', 'javascript', 'js',
+        'xml', 'html', 'css', 'json', 'yaml', 'sql', 'shell',
+        'bash', 'c', 'cpp', 'csharp', 'ruby', 'go', 'rust',
+        'kotlin', 'scala', 'swift'
+    ])
+
+    class ExtendedCodeBlock(CodeBlock):
+        """CodeBlock with additional Sphinx options support."""
+        option_spec = CodeBlock.option_spec.copy()
+        option_spec.update({
+            'caption': directives.unchanged,
+            'linenos': directives.flag,
+            'lineno-start': directives.nonnegative_int,
+            'emphasize-lines': directives.unchanged,
+            'dedent': directives.nonnegative_int,
+            'force': directives.flag,
+        })
+
+    directives.register_directive('code-block', ExtendedCodeBlock)
+    directives.register_directive('code', ExtendedCodeBlock)
+    directives.register_directive('sourcecode', ExtendedCodeBlock)
 
     # Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
     class seealso(nodes.Admonition, nodes.Element):
@@ -220,20 +246,103 @@ def format_rest(docstring):
             self.body.append('</tt>')
             raise nodes.SkipNode
 
+        def visit_literal_block(self, node):
+            classes = node.get('classes', [])
+            language = None
+
+            for cls in classes:
+                if cls == 'code':
+                    continue
+
+                norm_language = cls.lower()
+                if norm_language in SUPPORTED_LANGUAGES:
+                    language = cls
+                    break
+
+            attrs = {}
+            if language:
+                class_str = 'code-block language-' + language
+                attrs['class'] = class_str
+                attrs['data-language'] = language
+            else:
+                attrs['class'] = 'literal-block'
+
+            self.body.append(self.starttag(node, 'pre', '', **attrs))
+
+            if language:
+                self.body.append('<code class="language-' + language + '">')
+
+            for child in node.traverse(condition=lambda n: isinstance(n, Text)):
+                text = child.astext()
+                encoded = self.encode(text)
+                self.body.append(encoded)
+
+            if language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
+
+            raise nodes.SkipNode
+
+        def depart_literal_block(self, node):
+            classes = node.get('classes', [])
+
+            norm_language = cls.lower()
+            has_language = any(norm_language in SUPPORTED_LANGUAGES for cls in classes)
+
+            if has_language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
+
+    class _FilterMessagesKeepProblematic(FilterMessages):
+        """Like `FilterMessages` but preserves `<problematic>` nodes.
+
+        The latest `docutils` converts problematic nodes to plain text.
+        `visit_problematic()` therefore is never called on them.
+        Unknown Sphinx roles (like `:obj:`) are left in the resulting render.
+
+        This subclass skips problematic nodes conversion to text, so they can
+        be processed later by `visit_problematic()`.
+        """
+
+        def apply(self):
+            for node in tuple(self.document.findall(nodes.system_message)):
+                if node['level'] < self.document.reporter.report_level:
+                    node.parent.remove(node)
+                    try:
+                        del self.document.ids[node['ids'][0]]
+                    except IndexError:
+                        pass
+            for node in self.document.findall(nodes.section):
+                if "system-messages" in node['classes'] and len(node) == 1:
+                    node.parent.remove(node)
+
     class _DocumentPseudoWriter(Writer):
         def __init__(self):
             self.document = None
             Writer.__init__(self)
+
+        def get_transforms(self):
+            return super(Writer, self).get_transforms() + [
+                universal.Messages,
+                _FilterMessagesKeepProblematic,  # Instead of `FilterMessages`
+                universal.StripClassesAndElements,
+            ]
 
         def translate(self):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
     docstring = add_blank_line_before_first_tag(docstring)
-    publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
-                                                                 'halt_level': 10000,
-                                                                 'warning_stream': None,
-                                                                 'docinfo_xform': False})
+    publish_string(
+        docstring,
+        writer=writer,
+        settings_overrides={
+            'report_level': 10000,
+            'halt_level': 10000,
+            'warning_stream': None,
+            'docinfo_xform': False,
+        },
+    )
     document = writer.document
     document.settings.xml_declaration = None
     visitor = RestHTMLTranslator(document)

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import path from 'node:path'
-import {normalizeLineEndings, readFileText, requireString, resolvePathInProject} from '../shared'
+import {normalizeLineEndings, readFileTextExact, requireString, resolvePathInProject} from '../shared'
 import {isTruncatedText} from '../truncation'
 import type {UpstreamToolCaller} from '../types'
 
@@ -29,7 +29,7 @@ export async function handleEditTool(
 
   const replaceAllFlag = Boolean(args.replace_all ?? false)
   const {relative} = resolvePathInProject(projectPath, filePath, 'file_path')
-  const originalRaw = await readFileText(relative, {truncateMode: 'NONE'}, callUpstreamTool)
+  const originalRaw = await readFileTextExact(relative, callUpstreamTool)
   if (isTruncatedText(originalRaw)) {
     throw new Error('file content truncated while reading')
   }

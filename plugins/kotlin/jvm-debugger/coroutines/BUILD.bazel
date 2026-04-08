@@ -54,11 +54,13 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/smRunner",
     "//platform/threadDumpParser",
     "//java/java-psi-api:psi",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//java/execution/impl",
     "//java/debugger/impl",
     "//plugins/kotlin/code-insight/utils",
@@ -70,6 +72,8 @@ jvm_library(
     "//java/debugger/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/execution",
+    "//platform/statistics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -107,11 +111,13 @@ jvm_library(
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/threadDumpParser:threadDumpParser_test_lib",
     "//java/java-psi-api:psi_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//java/execution/impl:impl_test_lib",
     "//java/debugger/impl:impl_test_lib",
     "//plugins/kotlin/code-insight/utils:utils_test_lib",
@@ -123,6 +129,8 @@ jvm_library(
     "//java/debugger/shared:shared_test_lib",
     "//platform/xdebugger-impl/rpc:rpc_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end

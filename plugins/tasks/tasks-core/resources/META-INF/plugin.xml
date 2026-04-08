@@ -131,6 +131,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.core.forgejo.ForgejoRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
     <!-- YouTrack support -->

@@ -34,6 +34,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val platform = KotlinPlatform.byId(platformId) ?: return null
         val disambiguationClassifier = origin.disambiguationClassifier
         val targetPresetName: String? = origin.presetName
+        val isManagedByComAndroidLibraryPlugin = origin.isKotlinAndroidTargetClass
 
         val reflectionsByCompilations = origin.compilations?.associate { compilationReflection ->
             KotlinCompilationBuilder(platform, disambiguationClassifier).buildComponent(
@@ -91,6 +92,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             targetPresetName,
             disambiguationClassifier,
             platform,
+            isManagedByComAndroidLibraryPlugin,
             compilations,
             testRunTasks,
             nativeMainRunTasks,
@@ -165,7 +167,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             val androidUnitTestClass = gradleTarget.testTaskClass("com.android.build.gradle.tasks.factory.AndroidUnitTest")
                 ?: return emptyList()
 
-            return project.tasks.filter { androidUnitTestClass.isInstance(it) }.mapNotNull { task -> task.name }
+            return project.tasks.filter { androidUnitTestClass.isInstance(it) }.map { task -> task.name }
                 .map { KotlinTestRunTaskImpl(it, KotlinCompilation.TEST_COMPILATION_NAME) }
         }
 

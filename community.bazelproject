@@ -13,3 +13,8 @@ java_source_root_optimization_patterns:
   *
 
 run_config_run_with_bazel: false
+
+import_run_configurations:
+  tools/bazelRunConfigurations/Run___build_android_studio.xml
+  tools/bazelRunConfigurations/Run___build_i_build_target.xml
+  tools/bazelRunConfigurations/Run___build_idea_community.xml

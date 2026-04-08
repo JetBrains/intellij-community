@@ -24,6 +24,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -80,6 +81,7 @@ object VisualizedTextPopupUtil {
     else {
       popup.showInBestPositionFor(editor)
     }
+    CodeFloatingToolbar.getToolbar(editor)?.hideWhilePopupVisible(popup)
     return popup
   }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -35,15 +36,14 @@ import kotlin.io.path.pathString
 class BazelCompilationContext(
   private val delegate: CompilationContext,
   private val scope: CoroutineScope?,
+  @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
+    modules = delegate.project.modules,
+    projectHome = delegate.paths.projectHome,
+    bazelOutputRoot = requireNotNull(bazelOutputRoot) { "Bazel output root is not available" },
+  ),
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    BazelModuleOutputProvider(
-      modules = delegate.project.modules,
-      projectHome = delegate.paths.projectHome,
-      bazelOutputRoot = bazelOutputRoot!!,
-      scope = scope,
-      useTestCompilationOutput = options.useTestCompilationOutput,
-    )
+    BazelModuleOutputProvider(state = outputProviderState, scope = scope, useTestCompilationOutput = options.useTestCompilationOutput)
   }
 
   override val options: BuildOptions
@@ -107,13 +107,18 @@ class BazelCompilationContext(
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(module, relativePath, forTests)
 
-  override fun notifyArtifactBuilt(artifactPath: Path): Unit = delegate.notifyArtifactBuilt(artifactPath)
-
-  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths), scope = scope)
+  override fun notifyArtifactBuilt(artifactPath: Path) {
+    delegate.notifyArtifactBuilt(artifactPath)
   }
 
-  override suspend fun prepareForBuild(): Unit = delegate.prepareForBuild()
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {
+    val effectiveScope = scope ?: this.scope
+    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveScope), scope = effectiveScope, outputProviderState = outputProviderState)
+  }
+
+  override suspend fun prepareForBuild() {
+    delegate.prepareForBuild()
+  }
 
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     // Be sure to call ./bazel-build-all.cmd
@@ -123,42 +128,42 @@ class BazelCompilationContext(
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
 }
 
-internal class BazelTargetsInfo {
+@Internal
+class BazelTargetsInfo {
   companion object {
     private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
 
-    fun bazelTargetsJsonFile(projectHome: Path): Path = projectHome.resolve("build").resolve("bazel-targets.json")
-
     @OptIn(ExperimentalSerializationApi::class)
     fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
-      val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
+      val targetsFilePath = ArchivedCompilationContextUtil.getBazelTargetsJsonPath(projectRoot)
+      val targetsFile = targetsFilePath.inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
       return targetsFile
     }
   }
 
   @Serializable
   data class TargetsFileModuleDescription(
-    val productionTargets: List<String>,
-    val productionJars: List<String>,
-    val testTargets: List<String>,
-    val testJars: List<String>,
-    val exports: List<String>,
-    val moduleLibraries: Map<String, LibraryDescription>,
+    @JvmField val productionTargets: List<String>,
+    @JvmField val productionJars: List<String>,
+    @JvmField val testTargets: List<String>,
+    @JvmField val testJars: List<String>,
+    @JvmField val exports: List<String>,
+    @JvmField val moduleLibraries: Map<String, LibraryDescription>,
   )
 
   @Serializable
   data class LibraryDescription(
-    val target: String,
-    val jars: List<String>,
-    val jarTargets: List<String>,
-    val sourceJars: List<String>,
+    @JvmField val target: String,
+    @JvmField val jars: List<String>,
+    @JvmField val jarTargets: List<String>,
+    @JvmField val sourceJars: List<String>,
   )
 
   @Serializable
   data class TargetsFile(
-    val modules: Map<String, TargetsFileModuleDescription>,
-    val imlTargets: List<String> = emptyList(),
-    val projectLibraries: Map<String, LibraryDescription>,
+    @JvmField val modules: Map<String, TargetsFileModuleDescription>,
+    @JvmField val imlTargets: List<String> = emptyList(),
+    @JvmField val projectLibraries: Map<String, LibraryDescription>,
   )
 }
 
@@ -195,7 +200,7 @@ internal val bazelOutputRoot: Path? by lazy {
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
   get() = toBazelIfNeeded(scope = null)
 
-internal fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
   return when {
     isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
     else -> this

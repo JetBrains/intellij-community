@@ -6,6 +6,7 @@ from typing import Any
 from django.core.management.color import Style
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import _StrOrPromise
+from typing_extensions import override
 
 request_logger: Logger
 DEFAULT_LOGGING: Any
@@ -28,12 +29,15 @@ class AdminEmailHandler(logging.Handler):
 class CallbackFilter(logging.Filter):
     callback: Callable[[str | LogRecord], bool]
     def __init__(self, callback: Callable[[str | LogRecord], bool]) -> None: ...
+    @override
     def filter(self, record: str | LogRecord) -> bool: ...
 
 class RequireDebugFalse(logging.Filter):
+    @override
     def filter(self, record: str | LogRecord) -> bool: ...
 
 class RequireDebugTrue(logging.Filter):
+    @override
     def filter(self, record: str | LogRecord) -> bool: ...
 
 class ServerFormatter(logging.Formatter):
@@ -42,9 +46,19 @@ class ServerFormatter(logging.Formatter):
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def uses_server_time(self) -> bool: ...
 
+def log_message(
+    logger: Logger,
+    message: str,
+    *args: object,
+    level: str | None = None,
+    status_code: int | None = None,
+    request: HttpRequest | None = None,
+    exception: BaseException | None = None,
+    **extra: object,
+) -> None: ...
 def log_response(
     message: str,
-    *args: Any,
+    *args: object,
     response: HttpResponse | None = None,
     request: HttpRequest | None = None,
     logger: Logger = ...,

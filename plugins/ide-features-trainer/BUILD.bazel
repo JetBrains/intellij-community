@@ -38,6 +38,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/projectModel-api:projectModel",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/usageView",
     "//platform/statistics",
     "//platform/refactoring",
@@ -48,6 +49,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/datetime",
     "//platform/util/jdom",
+    "//platform/util:util-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lvcs-impl",
     "//platform/tips-of-the-day:tips",
@@ -97,6 +99,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/usageView:usageView_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/refactoring:refactoring_test_lib",
@@ -107,6 +110,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/kotlinx/datetime:datetime_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/lvcs-impl:lvcs-impl_test_lib",
     "//platform/tips-of-the-day:tips_test_lib",
@@ -203,6 +207,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/usageView",
     "//platform/usageView:usageView_test_lib",
     "//platform/statistics",
@@ -249,6 +254,7 @@ jvm_library(
     ":featuresTrainer-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.featuresTrainer.tests` end

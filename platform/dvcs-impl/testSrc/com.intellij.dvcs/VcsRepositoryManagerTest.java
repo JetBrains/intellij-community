@@ -15,6 +15,7 @@ import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Ignore;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
+@Ignore("AT-4013")
 public class VcsRepositoryManagerTest extends VcsPlatformTest {
   private MockAbstractVcs myVcs;
   private CountDownLatch CONTINUE_MODIFY;

@@ -57,7 +57,7 @@ internal class ActionTracker(
   }
 
   private fun docStamp(): Long {
-    return myEditor.uiDocument.modificationStamp
+    return myEditor.elfDocument.modificationStamp
   }
 
   fun ignoreCurrentDocumentChange() {

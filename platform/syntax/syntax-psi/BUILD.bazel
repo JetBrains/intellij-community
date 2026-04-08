@@ -25,6 +25,8 @@ jvm_library(
   deps = [
     "//platform/util",
     "//platform/util-rt",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "//platform/syntax/syntax-api:syntax",
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
@@ -50,6 +52,8 @@ jvm_library(
     ":psi",
     "//platform/util:util_test_lib",
     "//platform/util-rt:util-rt_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/syntax/syntax-api:syntax_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",

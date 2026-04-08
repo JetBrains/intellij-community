@@ -146,6 +146,9 @@
 - name: lib/gradle-tooling-extension-impl.jar
   modules:
   - name: intellij.gradle.toolingExtension.impl
+- name: lib/gradle-tooling-proxy.jar
+  modules:
+  - name: intellij.gradle.toolingProxy
 - name: lib/modules/intellij.gradle.completion.jar
   contentModules:
   - name: intellij.gradle.completion
@@ -158,6 +161,3 @@
 - name: lib/modules/intellij.gradle.properties.jar
   contentModules:
   - name: intellij.gradle.properties
-- name: lib/modules/intellij.gradle.toolingProxy.jar
-  contentModules:
-  - name: intellij.gradle.toolingProxy

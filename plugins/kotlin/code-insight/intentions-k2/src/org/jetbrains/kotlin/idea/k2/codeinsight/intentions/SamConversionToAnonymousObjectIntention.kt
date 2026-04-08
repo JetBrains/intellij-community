@@ -7,10 +7,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
@@ -21,11 +19,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.ReturnTypeNullabilityUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -33,8 +29,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -75,17 +69,18 @@ internal class SamConversionToAnonymousObjectIntention :
 
         val lambdaSymbol = functionLiteral.symbol
         val samParameters = samMethod.valueParameters
-        if (samParameters.size != lambdaSymbol.valueParameters.size) return null
+        val lambdaParameters = lambdaSymbol.valueParameters
+        if (samParameters.size != lambdaParameters.size) return null
 
-        if (lambdaSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
+        if (lambdaParameters.any { it.returnType is KaErrorType }) return null
 
         val samName = samMethod.name.asString()
         val hasRecursiveCall = functionLiteral.anyDescendantOfType<KtCallExpression> { call ->
             if (call.calleeExpression?.text != samName) return@anyDescendantOfType false
             val callArguments = call.valueArguments
-            if (callArguments.size != samParameters.size) return@anyDescendantOfType false
+            if (callArguments.size != lambdaParameters.size) return@anyDescendantOfType false
 
-            callArguments.zip(samParameters).all { (arg, param) ->
+            callArguments.zip(lambdaParameters).all { (arg, param) ->
                 val argType = arg.getArgumentExpression()?.expressionType ?: return@all false
                 argType.isSubtypeOf(param.returnType)
             }
@@ -99,7 +94,12 @@ internal class SamConversionToAnonymousObjectIntention :
         val typeArgumentsText = computeTypeArguments(element, callType, classSymbol)
         val samParameterNames = samMethod.valueParameters.map { it.name.asString() }
 
-        val functionText = LambdaToAnonymousFunctionUtil.prepareFunctionText(lambda, samName, samParameterNames) ?: return null
+        val functionText = LambdaToAnonymousFunctionUtil.prepareFunctionText(
+            lambda = lambda,
+            functionName = samName,
+            parameterNames = samParameterNames,
+            forceNonNullReturnType = true,
+        ) ?: return null
 
         return Context(
             interfaceName,
@@ -127,25 +127,38 @@ internal class SamConversionToAnonymousObjectIntention :
         val replaced = parentOfCall.replaced(objectLiteral)
 
         shortenReferences(replaced)
-
-        val function = replaced.descendantsOfType<KtNamedFunction>().single()
-        removeRedundantReturnTypeNullability(function)
     }
-}
-
-private fun removeRedundantReturnTypeNullability(function: KtNamedFunction) {
-    val nullableReturnType = function.getReturnTypeReference()
-        ?.typeElement as? KtNullableType
-        ?: return
-    if (!analyze(function) { ReturnTypeNullabilityUtil.hasOnlyNonNullableReturns(function) }) return
-    val nonNullableType = nullableReturnType.innerType ?: return
-    nullableReturnType.replace(nonNullableType)
 }
 
 private fun getLambdaExpression(element: KtCallExpression): KtLambdaExpression? =
     element.lambdaArguments.firstOrNull()?.getLambdaExpression()
         ?: element.valueArguments.firstOrNull()?.getArgumentExpression() as? KtLambdaExpression
 
+/**
+ * Returns `true` if the callee resolves to a type alias whose expanded
+ * type contains a variance projection (`in`, `out`, or `*`).
+ *
+ * Converting such a SAM lambda to an anonymous object is invalid: the projected
+ * type cannot legally appear as a supertype, whether through the alias or with it
+ * inlined. The SAM constructor call form is accepted by the compiler even when the
+ * alias expands to a projected type, but neither `object : IInA<Int>` nor
+ * `object : I<in Int>` compiles.
+ *
+ * ```kotlin
+ * fun interface I<A> { fun foo(a: A): Int }
+ * typealias IInA<A> = I<in A>
+ *
+ * IInA<Int> { x -> x }       // OK: the projection is hidden inside the type alias — writing
+ *                             //     I<in Int> { x -> x } directly would be a compile error
+ *                             //     (PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT)
+ *
+ * object : IInA<Int> { ... }  // ERROR: CONSTRUCTOR_OR_SUPERTYPE_ON_TYPEALIAS_WITH_TYPE_PROJECTION_ERROR
+ * object : I<in Int> { ... }  // ERROR: PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE
+ *                             //     (rejected at type-checking: `in Int` means "some supertype of Int",
+ *                             //     so the type of the override parameter would be unknowable)
+ * ```
+ * @see: [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.SamConversionToAnonymousObject.testTypeArgument7]
+ */
 context(_: KaSession)
 private fun KtExpression.isAliasedWithVariance(): Boolean {
     val resolvedSymbol = mainReference?.resolveToSymbol() as? KaSamConstructorSymbol ?: return false

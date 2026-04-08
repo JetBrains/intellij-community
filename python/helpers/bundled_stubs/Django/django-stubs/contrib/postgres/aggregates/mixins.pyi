@@ -1,19 +1,18 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, ClassVar
 
-from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.models.expressions import BaseExpression, Combinable, Expression, OrderByList
-from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
+from django.db.models.expressions import BaseExpression, Combinable
+from django.db.models.query import _OrderByFieldName
+from typing_extensions import override
 
 class OrderableAggMixin:
-    order_by: OrderByList
+    allow_order_by: ClassVar[bool]
     def __init__(
         self,
         *expressions: BaseExpression | Combinable | str,
-        ordering: Sequence[str] = ...,
-        order_by: Sequence[str] = ...,
+        ordering: Sequence[_OrderByFieldName] = ...,
+        order_by: Sequence[_OrderByFieldName] = ...,
         **extra: Any,
     ) -> None: ...
-    def get_source_expressions(self) -> list[Expression]: ...
-    def set_source_expressions(self, exprs: Sequence[Combinable]) -> None: ...
-    def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
+    @override
+    def __init_subclass__(cls, *args: Any, **kwargs: Any) -> None: ...

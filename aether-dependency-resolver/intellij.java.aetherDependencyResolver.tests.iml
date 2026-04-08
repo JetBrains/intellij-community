@@ -93,6 +93,7 @@
     <orderEntry type="module" module-name="intellij.libraries.plexus.utils" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.commons.codec" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.aetherDependencyResolver" />

@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.ktor.network.tls" />
-    <orderEntry type="library" name="bouncy-castle-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
     <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />

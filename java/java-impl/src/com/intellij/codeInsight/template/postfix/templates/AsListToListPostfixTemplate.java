@@ -20,8 +20,13 @@ public class AsListToListPostfixTemplate extends JavaEditablePostfixTemplate imp
           LanguageLevel.JDK_1_3, false, provider);
   }
 
-@Override
+  @Override
   public boolean isBuiltin() {
+    return true;
+  }
+
+  @Override
+  public boolean isApplicableForModCommand() {
     return true;
   }
 }

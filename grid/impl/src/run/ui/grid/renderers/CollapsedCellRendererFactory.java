@@ -27,7 +27,7 @@ public class CollapsedCellRendererFactory implements GridCellRendererFactory {
   }
 
   @Override
-  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
     HierarchicalColumnsCollapseManager collapseManager =
       myGrid.getHierarchicalColumnsCollapseManager();
     return collapseManager != null && collapseManager.isColumnCollapsedSubtree(column);
@@ -56,7 +56,7 @@ public class CollapsedCellRendererFactory implements GridCellRendererFactory {
     }
 
     @Override
-    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
       HierarchicalColumnsCollapseManager collapseManager =
         myGrid.getHierarchicalColumnsCollapseManager();
       return collapseManager != null && collapseManager.isColumnCollapsedSubtree(column) ? SUITABILITY_MIN + 1 : SUITABILITY_UNSUITABLE;

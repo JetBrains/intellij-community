@@ -28,6 +28,7 @@ jvm_library(
     "//platform/util",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-api:lang",
     "//xml/xml-psi-api:psi",
     "//xml/xml-structure-view-api:structureView",
@@ -42,6 +43,7 @@ jvm_library(
     "//platform/core-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//jps/model-api:model",
+    "//platform/util:util-ui",
   ],
   exports = ["//xml/dom-openapi:dom"],
   runtime_deps = ["//platform/backend"]
@@ -72,6 +74,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//xml/xml-psi-api:psi_test_lib",
     "//xml/xml-structure-view-api:structureView_test_lib",
@@ -87,6 +90,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//jps/model-api:model_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.dom.impl` end

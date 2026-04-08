@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import kotlinx.coroutines.Dispatchers
@@ -93,7 +95,7 @@ class ClaudeSessionSourceRealCliIntegrationTest {
         .isNotNull
       assertThat(thread!!.id).isEqualTo(sessionId)
       assertThat(thread.title).isEqualTo(prompt)
-      assertThat(thread.provider).isEqualTo(com.intellij.agent.workbench.sessions.core.AgentSessionProvider.CLAUDE)
+      assertThat(thread.provider).isEqualTo(AgentSessionProvider.CLAUDE)
     }
   }
 }
@@ -108,8 +110,8 @@ private suspend fun awaitThread(
   source: ClaudeSessionSource,
   projectPath: String,
   sessionId: String,
-): com.intellij.agent.workbench.sessions.core.AgentSessionThread? {
-  var resolvedThread: com.intellij.agent.workbench.sessions.core.AgentSessionThread? = null
+): AgentSessionThread? {
+  var resolvedThread: AgentSessionThread? = null
   withTimeoutOrNull(30.seconds) {
     while (resolvedThread == null) {
       resolvedThread = source.listThreadsFromClosedProject(projectPath).firstOrNull { it.id == sessionId }

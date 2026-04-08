@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Font
 import javax.swing.Icon
 import javax.swing.JList
 
@@ -98,6 +99,25 @@ interface LcrRow<T> {
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
   var selectable: Boolean
+
+  /**
+   * Default font for all cells.
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var font: Font?
+
+  /**
+   * When set, the copy action copies the entire text from the row instead of just the first non-empty cell.
+   * Will be set as a default behavior later.
+   *
+   * Despite the experimental status, it's totally OK to use it already.
+   */
+  @get:ApiStatus.Internal
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Internal
+  @set:ApiStatus.Experimental
+  var copyWholeRow: Boolean
 
   /**
    * The gap between the previous cell and the next one. Not used for the first cell

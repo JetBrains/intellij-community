@@ -9,8 +9,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 
 internal class GithubMarkdownTypedHandler: TypedHandlerDelegate() {
-  override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (c == '@' && editor.getUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY) != null) {
+  override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
+    if (charTyped == '@' && editor.getUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY) != null) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
     }
     return Result.CONTINUE

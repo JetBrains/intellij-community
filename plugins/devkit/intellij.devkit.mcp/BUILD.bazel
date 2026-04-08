@@ -15,6 +15,7 @@ jvm_library(
   resources = [":mcp_resources"],
   deps = [
     "//plugins/devkit/devkit-core:core",
+    "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
     "@lib//:kotlin-stdlib",
     "//plugins/mcp-server:mcpserver",
     "//platform/core-api:core",
@@ -35,6 +36,7 @@ jvm_library(
   runtime_deps = [
     ":mcp",
     "//plugins/devkit/devkit-core:core_test_lib",
+    "//plugins/devkit/intellij.devkit.scaffolding:scaffolding_test_lib",
     "//plugins/mcp-server:mcpserver_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/lang-core:lang-core_test_lib",

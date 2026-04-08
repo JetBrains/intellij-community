@@ -1,17 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptExistingThreadsSnapshot
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.core.prompt.getAgentPromptProjectPathContext
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
+import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
@@ -42,7 +41,10 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     stateFlowProvider = { service<AgentSessionReadService>().stateFlow() },
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service<AgentSessionRefreshService>().refreshCatalogAndLoadNewlyOpened() },
-    refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path = path, provider = provider) },
+    refreshProviderForPath = { path, provider ->
+      service<AgentSessionRefreshService>().refreshProviderForPath(path = path,
+                                                                   provider = provider)
+    },
     preferredProviderProvider = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
     providerPreferencesLoader = { service<AgentSessionUiPreferencesStateService>().getProviderPreferences() },
     providerPreferencesSaver = { prefs -> service<AgentSessionUiPreferencesStateService>().setProviderPreferences(prefs) },
@@ -156,24 +158,15 @@ private fun buildWorkingProjectPathCandidates(invocationData: AgentPromptInvocat
   val candidatesByPath = LinkedHashMap<String, AgentPromptProjectPathCandidate>()
 
   fun addCandidate(path: String?, displayName: String?) {
-    val normalizedPath = path
-      ?.takeIf { it.isNotBlank() }
-      ?.let(::normalizeAgentWorkbenchPath)
-      ?: return
-    if (normalizedPath.isBlank()) {
-      return
-    }
-    if (AgentWorkbenchDedicatedFrameProjectManager.isDedicatedProjectPath(normalizedPath)) {
-      return
-    }
+    val normalizedPath = normalizeOpenableSourceProjectPath(path) ?: return
     if (normalizedPath in candidatesByPath) {
       return
     }
     candidatesByPath[normalizedPath] = AgentPromptProjectPathCandidate(
       path = normalizedPath,
       displayName = displayName
-        ?.takeIf { it.isNotBlank() }
-        ?: normalizedPath.substringAfterLast('/').ifBlank { normalizedPath },
+                      ?.takeIf { it.isNotBlank() }
+                    ?: normalizedPath.substringAfterLast('/').ifBlank { normalizedPath },
     )
   }
 
@@ -189,10 +182,7 @@ private fun buildWorkingProjectPathCandidates(invocationData: AgentPromptInvocat
   val promptProjectPathContext = getAgentPromptProjectPathContext(dataContext)
   addCandidate(path = promptProjectPathContext?.path, displayName = promptProjectPathContext?.displayName)
 
-  val selectedChatPath = runCatching {
-    project.service<AgentChatTabSelectionService>().selectedChatTab.value?.projectPath
-  }.getOrNull()
-  addCandidate(path = selectedChatPath, displayName = null)
+  addCandidate(path = selectedChatSourceProjectPath(project), displayName = null)
 
   val recentProjectsManager = RecentProjectsManager.getInstance() as? RecentProjectsManagerBase
   recentProjectsManager
@@ -200,8 +190,8 @@ private fun buildWorkingProjectPathCandidates(invocationData: AgentPromptInvocat
     ?.forEach { recentPath ->
       val normalizedPath = normalizeAgentWorkbenchPath(recentPath)
       val displayName = recentProjectsManager.getDisplayName(normalizedPath)
-        .takeIf { !it.isNullOrBlank() }
-        ?: recentProjectsManager.getProjectName(normalizedPath).takeIf { it.isNotBlank() }
+                          .takeIf { !it.isNullOrBlank() }
+                        ?: recentProjectsManager.getProjectName(normalizedPath).takeIf { it.isNotBlank() }
       addCandidate(path = normalizedPath, displayName = displayName)
     }
 

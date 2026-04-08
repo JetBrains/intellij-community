@@ -33,6 +33,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
+    "//platform/ide-core",
     "//platform/util/jdom",
     "//platform/execution",
   ]
@@ -65,6 +66,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/execution:execution_test_lib",
   ]

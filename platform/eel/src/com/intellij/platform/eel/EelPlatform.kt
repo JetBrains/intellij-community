@@ -120,7 +120,8 @@ sealed interface EelPlatform {
       }
     }
 
-    private fun resolveArch(arch: String): Arch? = when (arch.lowercase()) {
+    @ApiStatus.Internal
+    fun resolveArch(arch: String): Arch? = when (arch.lowercase()) {
       "amd64", "x86_64", "x86-64" -> Arch.X86_64
       "arm64", "aarch64" -> Arch.ARM_64
       "arm32", "arm" -> Arch.ARM_32

@@ -7,17 +7,23 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -38,7 +44,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
+import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -59,6 +68,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.stream.Collectors
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 class ProjectSynchronizerUtilTest {
   @Rule
@@ -232,6 +242,40 @@ class ProjectSynchronizerUtilTest {
   }
 
 
+  @Test
+  fun `test project sdk is not found after sdk removed from jdk table`() {
+    val jdkTableFile = PathManager.getOptionsDir().resolve("jdk.table.xml")
+    val oldText = jdkTableFile.readText()
+    try {
+      jdkTableFile.writeText(simpleJdkTable)
+      PlatformTestUtil.withSystemProperty<Exception>("ide.tests.permit.global.workspace.model.serialization", "true") {
+        JpsGlobalModelSynchronizerImpl.runWithGlobalEntitiesLoadingEnabled {
+          runBlocking {
+            val (projectDir, _) = copyProjectFiles(sampleDirBasedProjectFile)
+
+            getInstanceEx().openProjectAsync(projectDir.toPath(), OpenProjectTaskBuilder().build())!!.useProject(save = true) { project ->
+              val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+              assertThat(projectSdk).isNull()
+            }
+            GlobalWorkspaceModelCache.getInstance()!!.saveCacheNow()
+            ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().dropCaches() // drop WSM in memory
+
+            getInstanceEx().openProjectAsync(projectDir.toPath(), OpenProjectTaskBuilder().build())!!.useProject(save = true) { project ->
+              assertTrue(GlobalWorkspaceModel.getInstance(LocalEelMachine).loadedFromCache)
+              assertThat(ProjectRootManager.getInstance(project).projectSdk).isNull()
+              (project.workspaceModel as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
+              assertThat(ProjectRootManager.getInstance(project).projectSdk).isNotNull()
+            }
+          }
+        }
+      }
+    }
+    finally {
+      jdkTableFile.writeText(oldText)
+    }
+  }
+
+
   private fun saveToCache(projectData: LoadedProjectData) {
     val storage = projectData.storage
     val serializer = getSerializerForProjectData(projectData)
@@ -246,7 +290,7 @@ class ProjectSynchronizerUtilTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    ProjectSynchronizerUtil.backgroundPostStartupProjectLoading(project)
+    ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
     return project
   }
 
@@ -281,5 +325,17 @@ class ProjectSynchronizerUtilTest {
     private fun projectFile(path: String): File {
       return File(PathManagerEx.getCommunityHomePath(), "$dirBasedProject/$path")
     }
+
+    val simpleJdkTable = """<application>
+  <component name="ProjectJdkTable">
+    <jdk version="2">
+      <name value="1.6" />
+      <type value="JavaSDK" />
+      <homePath value="/Library/Java/JavaVirtualMachines/jdk-1.6/Contents/Home" />
+      <roots>
+      </roots>
+    </jdk>
+  </component>
+</application>"""
   }
 }

@@ -43,6 +43,13 @@
 <br/>]]></description>
   <category>JVM Frameworks</category>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.java</depends>
@@ -284,6 +291,8 @@
                  description="Lombok augment works in dumb mode"/>
     <registryKey key="lombok.incomplete.mode.enabled" defaultValue="true" restartRequired="true"
                  description="Lombok supports incomplete mode"/>
+    <registryKey key="lombok.slow.jar.detection.enabled" defaultValue="false" restartRequired="true"
+                 description="Enable slow detection of Lombok JARs attached directly from disk"/>
   </extensions>
 
   <projectListeners>

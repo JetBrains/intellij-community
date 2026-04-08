@@ -69,7 +69,6 @@ internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: 
 /**
  * Generates complete product plugin.xml file from programmatic specification.
  *
- * @param isUltimateBuild Whether this is an Ultimate build (vs. Community build)
  * @return Result containing file status and statistics
  */
 internal fun generateProductXml(
@@ -79,7 +78,6 @@ internal fun generateProductXml(
   productPropertiesClass: String,
   outputProvider: ModuleOutputProvider,
   projectRoot: Path,
-  isUltimateBuild: Boolean,
   strategy: FileUpdateStrategy,
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
@@ -100,7 +98,6 @@ internal fun generateProductXml(
     metadataBuilder = { sb ->
       appendDefaultProductPluginMetadata(sb = sb, spec = spec)
     },
-    isUltimateBuild = isUltimateBuild
   )
 
   val originalContent = Files.readString(pluginXmlPath)
@@ -187,7 +184,6 @@ internal fun generateTestPluginXml(
       }
       sb.append("\n")
     },
-    isUltimateBuild = true,
     moduleCommentProvider = moduleCommentProvider,
   )
 
@@ -250,7 +246,6 @@ private fun sortModuleSet(moduleSet: ModuleSet): ModuleSet {
  *                         - false (default): Use xi:include directives to reference module set XML files
  *                         - true: Inline all module set content directly into XML
  * @param metadataBuilder Lambda that generates the metadata after opening tag (comments, id/name/vendor)
- * @param isUltimateBuild Whether this is an Ultimate build
  * @return Build result containing generated XML and metadata
  */
 fun buildProductContentXml(
@@ -260,7 +255,6 @@ fun buildProductContentXml(
   inlineModuleSets: Boolean,
   headerBuilder: ((StringBuilder) -> Unit)? = null,
   metadataBuilder: (StringBuilder) -> Unit,
-  isUltimateBuild: Boolean,
   bodyBuilder: ((StringBuilder) -> Unit)? = null,
   moduleCommentProvider: ((ContentModuleName, List<String>?) -> String?)? = null,
 ): ProductContentBuildResult {
@@ -289,7 +283,7 @@ fun buildProductContentXml(
 
     // Generate xi:include directives or inline content
     if (outputProvider != null && spec.deprecatedXmlIncludes.isNotEmpty()) {
-      generateXIncludes(spec = spec, outputProvider = outputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this, isUltimateBuild = isUltimateBuild)
+      generateXIncludes(spec = spec, outputProvider = outputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this)
     }
 
     // Generate module sets as xi:includes or inline content blocks

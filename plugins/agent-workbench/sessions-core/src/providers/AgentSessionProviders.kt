@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.providers
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.OverridableValue
-import com.intellij.agent.workbench.sessions.core.SnapshotExtensionPointCache
+import com.intellij.agent.workbench.common.extensions.OverridableValue
+import com.intellij.agent.workbench.common.extensions.SnapshotExtensionPointCache
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 

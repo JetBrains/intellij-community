@@ -4,7 +4,7 @@ interface i {
 }
 
 public class a implements i {
- void <error descr="'ff()' in 'a' clashes with 'ff()' in 'i'; attempting to assign weaker access privileges ('package-private'); was 'public'">ff</error>() {}
+ void <error descr="'ff()' in 'a' clashes with 'ff()' in 'i'; cannot reduce visibility from 'public' to 'package-private'">ff</error>() {}
 }
 class ai implements i {
  public <error descr="'ff()' in 'ai' clashes with 'ff()' in 'i'; incompatible return type">int</error> ff() { return 0;}
@@ -25,7 +25,7 @@ class c3 extends c2 {
 
 class c4 extends c3 {
  private c4() {}
- <error descr="'g()' in 'c4' clashes with 'g()' in 'c2'; attempting to assign weaker access privileges ('private'); was 'protected'">private</error> void g() {}
+ <error descr="'g()' in 'c4' clashes with 'g()' in 'c2'; cannot reduce visibility from 'protected' to 'private'">private</error> void g() {}
  private String fff(String s) throws java.io.IOException { return null; }
 }
 class c4i extends c3 {
@@ -55,7 +55,7 @@ interface A {
 interface ConflictWithObject {
         Object clone() throws CloneNotSupportedException;
 }
-<error descr="'clone()' in 'java.lang.Object' clashes with 'clone()' in 'ConflictWithObject'; attempting to assign weaker access privileges ('protected'); was 'public'">class s implements ConflictWithObject</error> {
+<error descr="'clone()' in 'java.lang.Object' clashes with 'clone()' in 'ConflictWithObject'; cannot reduce visibility from 'public' to 'protected'">class s implements ConflictWithObject</error> {
 
 }
 
@@ -67,7 +67,7 @@ interface InderFace {
 interface SubInderFace extends InderFace {
 }
 
-<error descr="'clone()' in 'java.lang.Object' clashes with 'clone()' in 'InderFace'; attempting to assign weaker access privileges ('protected'); was 'public'">class Implementation implements SubInderFace</error> {
+<error descr="'clone()' in 'java.lang.Object' clashes with 'clone()' in 'InderFace'; cannot reduce visibility from 'public' to 'protected'">class Implementation implements SubInderFace</error> {
 }
 
 

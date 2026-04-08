@@ -28,6 +28,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/util/nanoxml",
@@ -40,6 +41,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
     "//jps/model-api:model",
+    "//platform/util:util-ui",
   ],
   exports = [
     "//plugins/properties/properties-psi-api:psi",
@@ -75,6 +77,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/indexing-impl:indexing-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util/nanoxml:nanoxml_test_lib",
@@ -88,6 +91,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//jps/model-api:model_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.properties.backend.psi` end

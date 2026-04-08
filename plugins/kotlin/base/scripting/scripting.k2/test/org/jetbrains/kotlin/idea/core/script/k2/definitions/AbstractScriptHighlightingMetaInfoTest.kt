@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
@@ -28,7 +28,7 @@ import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 abstract class AbstractScriptHighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         runBlocking {
-            KotlinScriptResolutionService.getInstance(project).process(files.map { it.virtualFile })
+            files.forEach { KotlinScriptService.getInstance(project).load(it.virtualFile) }
         }
 
         super.doMultiFileTest(files, globalDirectives)

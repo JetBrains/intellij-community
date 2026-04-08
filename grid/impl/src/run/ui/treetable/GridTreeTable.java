@@ -7,6 +7,7 @@ import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.database.run.ui.grid.GridColorsScheme;
@@ -325,9 +326,12 @@ public final class GridTreeTable extends JBTreeTable implements Disposable, Edit
     public @Nullable TableCellRenderer getRenderer(int viewRow, int viewColumn) {
       Pair<Integer, Integer> rowAndColumn = myGrid.getRawIndexConverter().rowAndColumn2Model().fun(viewRow, viewColumn);
       int modelColumnIdx = rowAndColumn.second;
+      ModelIndex<GridRow> row = ModelIndex.forRow(myGrid, rowAndColumn.first);
+      ModelIndex<GridColumn> column = ModelIndex.forColumn(myGrid, modelColumnIdx);
+      Object value = myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column);
       GridCellRenderer gridCellRenderer = myTreeTable.getTree().isExpanded(viewRow) ? myEmptyRenderer :
                                           modelColumnIdx == -1 ? myJsonRenderer :
-                                          GridCellRenderer.getRenderer(myGrid, ModelIndex.forRow(myGrid, rowAndColumn.first), ModelIndex.forColumn(myGrid, modelColumnIdx));
+                                          GridCellRenderer.getRenderer(myGrid, row, column, value);
 
       TableCellRenderer renderer = myTableCellRenderers.get(gridCellRenderer);
       if (renderer == null) {

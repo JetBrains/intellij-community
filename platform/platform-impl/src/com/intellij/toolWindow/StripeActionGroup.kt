@@ -105,11 +105,13 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   private fun getOrder(twm: ToolWindowManagerEx, twId: String): Int =
     (twm.getLayout().getInfo(twId) ?: (twm as? ToolWindowManagerImpl)?.getEntry(twId)?.readOnlyWindowInfo)?.run {
+      //tw that is not on the stripe would be added to the end
+      val o = if (order == -1) 10 else order
       when (anchor) {
-        ToolWindowAnchor.LEFT -> order
-        ToolWindowAnchor.TOP -> 100 + order
-        ToolWindowAnchor.BOTTOM -> if (isSplit) 250 + order else 200 - order
-        ToolWindowAnchor.RIGHT -> if (isSplit) 300 + order else 350 - order
+        ToolWindowAnchor.LEFT -> o
+        ToolWindowAnchor.TOP -> 100 + o
+        ToolWindowAnchor.BOTTOM -> if (isSplit) 250 + o else 200 - o
+        ToolWindowAnchor.RIGHT -> if (isSplit) 300 + o else 350 - o
         else -> -1
       }
     } ?: -1
@@ -309,7 +311,7 @@ internal class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWi
 @Service
 @State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml", roamingType = RoamingType.DISABLED)])
 private class ButtonsStateService: PersistentStateComponent<Element> {
-  private val pinnedIds = linkedSetOf("Database", "Project", "Services")
+  private val pinnedIds = linkedSetOf("Database", "Project", "Services", "AIAssistant")
 
   fun isPinned(id: String): Boolean = id in pinnedIds
   fun setPinned(id: String, pinned: Boolean) {
@@ -357,6 +359,11 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
     fun shouldSingleStripeBeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
 
     fun hasActionOnToolbar() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+
+    @ApiStatus.Internal
+    fun pinButton(toolWindowId: String, pinned: Boolean) {
+      buttonState.setPinned(toolWindowId, pinned)
+    }
 
     @Suppress("SameParameterValue")
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {

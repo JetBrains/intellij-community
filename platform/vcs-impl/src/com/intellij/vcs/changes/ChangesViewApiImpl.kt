@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -37,6 +36,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class ChangesViewApiImpl : ChangesViewApi {
+  companion object {
+    private val LOG = logger<ChangesViewApiImpl>()
+  }
+
   override suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent> =
     projectScopedCallbackFlow(projectId) { project, _ ->
       val changesViewModel = project.getRpcChangesView()
@@ -134,7 +137,4 @@ internal class ChangesViewApiImpl : ChangesViewApi {
     }
   }
 
-  companion object {
-    private val LOG = logger<ChangesViewApiImpl>()
-  }
 }

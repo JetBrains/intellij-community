@@ -1,25 +1,19 @@
 package com.intellij.terminal.backend.hyperlinks
 
-import com.intellij.execution.filters.HyperlinkInfoBase
-import com.intellij.execution.filters.navigate
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
-import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigator
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
@@ -67,21 +61,8 @@ class BackendTerminalHyperlinkFacade(
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
-    if (TerminalHyperlinkNavigationInterceptor.intercept(project, hyperlink, mouseEvent)) {
-      ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
-      return
-    }
-    withContext(Dispatchers.EDT) { // navigation might need the WIL
-      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-        if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
-          hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
-        }
-        else {
-          hyperlink.navigate(project)
-        }
-      }
-      ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
-    }
+    TerminalHyperlinkNavigator.navigate(project, hyperlink, mouseEvent)
+    ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
   }
 
   fun getHyperlink(hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? =

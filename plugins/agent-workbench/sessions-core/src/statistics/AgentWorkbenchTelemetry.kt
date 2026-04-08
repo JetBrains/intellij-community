@@ -3,11 +3,11 @@ package com.intellij.agent.workbench.sessions.core.statistics
 
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,11 +15,11 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
-@ApiStatus.Internal
+@Internal
 enum class AgentWorkbenchEntryPoint {
   PROMPT,
   TREE_ROW,
@@ -31,21 +31,21 @@ enum class AgentWorkbenchEntryPoint {
   WINDOW_MENU,
 }
 
-@ApiStatus.Internal
+@Internal
 enum class AgentWorkbenchTelemetryProvider {
   CODEX,
   CLAUDE,
   OTHER,
 }
 
-@ApiStatus.Internal
+@Internal
 enum class AgentWorkbenchTargetKind {
   NEW_THREAD,
   THREAD,
   SUB_AGENT,
 }
 
-@ApiStatus.Internal
+@Internal
 enum class AgentWorkbenchPromptBlockedReason {
   EMPTY_PROMPT,
   NO_PROVIDERS,
@@ -56,18 +56,19 @@ enum class AgentWorkbenchPromptBlockedReason {
   OTHER,
 }
 
-@ApiStatus.Internal
+@Internal
 enum class AgentWorkbenchPromptLaunchResultKind {
   SUCCESS,
   PROVIDER_UNAVAILABLE,
   UNSUPPORTED_LAUNCH_MODE,
   TARGET_THREAD_NOT_FOUND,
+  TARGET_THREAD_BUSY_FOR_PLAN_MODE,
   CANCELLED,
   DROPPED_DUPLICATE,
   INTERNAL_ERROR,
 }
 
-@ApiStatus.Internal
+@Internal
 data class AgentWorkbenchTelemetryEvent(
   @JvmField val id: String,
   @JvmField val entryPoint: AgentWorkbenchEntryPoint? = null,
@@ -78,7 +79,7 @@ data class AgentWorkbenchTelemetryEvent(
   @JvmField val launchResult: AgentWorkbenchPromptLaunchResultKind? = null,
 )
 
-@ApiStatus.Internal
+@Internal
 object AgentWorkbenchTelemetry {
   const val PROMPT_SUBMIT_BLOCKED_EVENT_ID: String = "prompt.submit_blocked"
   const val PROMPT_LAUNCH_RESOLVED_EVENT_ID: String = "prompt.launch_resolved"
@@ -227,6 +228,7 @@ object AgentWorkbenchTelemetry {
       AgentPromptLaunchError.PROVIDER_UNAVAILABLE -> AgentWorkbenchPromptLaunchResultKind.PROVIDER_UNAVAILABLE
       AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE -> AgentWorkbenchPromptLaunchResultKind.UNSUPPORTED_LAUNCH_MODE
       AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND -> AgentWorkbenchPromptLaunchResultKind.TARGET_THREAD_NOT_FOUND
+      AgentPromptLaunchError.TARGET_THREAD_BUSY_FOR_PLAN_MODE -> AgentWorkbenchPromptLaunchResultKind.TARGET_THREAD_BUSY_FOR_PLAN_MODE
       AgentPromptLaunchError.CANCELLED -> AgentWorkbenchPromptLaunchResultKind.CANCELLED
       AgentPromptLaunchError.DROPPED_DUPLICATE -> AgentWorkbenchPromptLaunchResultKind.DROPPED_DUPLICATE
       AgentPromptLaunchError.INTERNAL_ERROR,
@@ -238,7 +240,7 @@ object AgentWorkbenchTelemetry {
 internal object AgentWorkbenchFusCollector : CounterUsagesCollector() {
   private val LOG = logger<AgentWorkbenchFusCollector>()
 
-  private val group = EventLogGroup("agent.workbench", 1)
+  private val group = EventLogGroup("agent.workbench", 2)
 
   private val entryPointField: EnumEventField<AgentWorkbenchEntryPoint> = EventFields.Enum("entry_point", AgentWorkbenchEntryPoint::class.java)
   private val providerField: EnumEventField<AgentWorkbenchTelemetryProvider> =

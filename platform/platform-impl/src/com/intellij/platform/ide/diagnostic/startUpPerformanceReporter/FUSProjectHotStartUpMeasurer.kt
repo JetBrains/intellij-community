@@ -33,6 +33,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevTestWorkaround
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ComparatorUtil
@@ -40,15 +41,16 @@ import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -64,6 +66,7 @@ private var statsIsWritten = false
 object FUSProjectHotStartUpMeasurer {
   private val channel = Channel<Event>(Int.MAX_VALUE)
   private val counter = AtomicInteger(0)
+  private val handlingStarted = AtomicBoolean(false)
 
   private data class ProjectId(val projectOrder: Int) {
     constructor() : this(counter.incrementAndGet())
@@ -450,17 +453,21 @@ object FUSProjectHotStartUpMeasurer {
     return duration
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
   suspend fun startWritingStatistics() {
-    val counterContext = newSingleThreadContext("HandlingStartupEventsContext")
-    try {
-      withContext(counterContext) {
-        handleStatisticEvents()
+    // ensures that handling is started only once
+    if (!handlingStarted.compareAndSet(false, true)) return
+
+    withContext(Dispatchers.IO) {
+      try {
+        //ensures non-thread-safe structures work correctly on different threads
+        Mutex().withLock {
+          doHandleStatisticEvents()
+        }
       }
-    }
-    finally {
-      channel.cancel()
-      statsIsWritten = true
+      finally {
+        statsIsWritten = true
+        channel.close()
+      }
     }
   }
 
@@ -482,8 +489,9 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  // Runs on a single thread, see `startWritingStatistics`
-  private suspend fun handleStatisticEvents() {
+  // Is supposed to be invoked from [startWritingStatistics] only.
+  // Runs under mutex lock to ensure safe usage of non-thread-safe maps
+  private suspend fun doHandleStatisticEvents() {
     val markupResurrectedFileIds = MarkupResurrectedFileIds()
     var ideStarterStartedEvent: Event.IdeStarterStartedEvent? = null
     var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null

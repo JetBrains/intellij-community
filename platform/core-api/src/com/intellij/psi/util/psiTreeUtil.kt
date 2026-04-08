@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
@@ -23,6 +24,16 @@ val PsiElement.endOffset: Int
 fun PsiElement.validOrNull(): PsiElement? = if (isValid) this else null
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
+
+/**
+ * @return the parent stub's psi or null if [this] has an active stub, otherwise [PsiElement.getParent].
+ *
+ * @see StubElement.getParentStub
+ * @see PsiElement.getParent
+ */
+val PsiElement.stubOrPsiParent: PsiElement?
+  @ApiStatus.Experimental
+  get() = PsiTreeUtil.getStubOrPsiParent(this)
 
 inline fun PsiElement.findParentInFile(withSelf: Boolean = false, predicate: (PsiElement) -> Boolean): PsiElement? {
   var current = when {
@@ -88,16 +99,16 @@ fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>, withSelf: Boo
 
 /**
  * @param withSelf whether to include [this] element into the sequence
+ * @param preferStubParents whether to use stub hierarchy when stubs are available to avoid AST loading.
+ * Non-stubbed intermediate PSI elements may be skipped. See [stubOrPsiParent] for details.
  * @return a sequence of parents, starting with [this] (or parent, depending on [withSelf])
  * and walking up to and including the containing file
  */
-fun PsiElement.parents(withSelf: Boolean): Sequence<PsiElement> {
-  val seed = if (withSelf) this else parentWithoutWalkingDirectories(this)
-  return generateSequence(seed, ::parentWithoutWalkingDirectories)
-}
-
-private fun parentWithoutWalkingDirectories(element: PsiElement): PsiElement? {
-  return if (element is PsiFile) null else element.parent
+@JvmOverloads
+fun PsiElement.parents(withSelf: Boolean, preferStubParents: Boolean = false): Sequence<PsiElement> {
+  val nextFunction = if (preferStubParents) PsiElement::stubOrPsiParent else { e -> e.parent }
+  val parentsWithSelf = generateSequence(this, nextFunction).takeWhileInclusive { it !is PsiFile }
+  return if (withSelf) parentsWithSelf else parentsWithSelf.drop(1)
 }
 
 @ApiStatus.ScheduledForRemoval

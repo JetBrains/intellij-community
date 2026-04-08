@@ -75,12 +75,7 @@
       "borderWidth": 6,
       "borderWidth.compact": 4,
       "borderColor": "ToolWindowBackground",
-      "inactiveAlpha": 0.55,
-      "inactiveAlphaInStatusBar": {
-        "os.mac": 0.2,
-        "os.windows": 0.2,
-        "os.linux": 0.15
-      }
+      "inactiveAlpha": 0.55
     },
 
     "MainWindow.background": "#3C3F41",
@@ -192,10 +187,10 @@
       "inactiveUnderlinedTabBackground": "#35393B",
       "hoverBackground": "#35393B",
 
-      "tabInsets": "-7,8,-7,8",
+      "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
-      "verticalTabInsets": "-2,10,-2,10",
-      "verticalTabInsets.compact": "0,10,0,10",
+      "verticalTabInsets": "-6,8,-6,8",
+      "verticalTabInsets.compact": "-2,10,-2,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
@@ -377,14 +372,14 @@
       "disabledBackground": "#3c3f41",
       "disabledForeground": "#777777",
       "nonEditableBackground": "#3c3f41",
-      "minimumSize.compact": "70,24",
+      "minimumSize.compact": "49,24",
       "padding.compact": "1,6,1,6",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
     "TextField": {
       "background": "InputBackground",
-      "minimumSize.compact": "70,24"
+      "minimumSize.compact": "49,24"
     },
 
     "ComboBox": {

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,9 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPattern;
 import com.intellij.psi.PsiPatternVariable;
@@ -38,11 +41,22 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
+  public boolean suggestForLiteralsAndNewExpressions = false;
     @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.LVTI);
   }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("suggestForLiteralsAndNewExpressions",
+               InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.only.simple.option")));
+    }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -58,7 +72,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
           if (initializer instanceof PsiFunctionalExpression || initializer instanceof PsiArrayInitializerExpression) {
             return;
           }
-          doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
+          doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement, initializer);
         }
       }
 
@@ -69,7 +83,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null && !typeElement.isInferredType()) {
           PsiForeachStatement copy = (PsiForeachStatement)statement.copy();
-          doCheck(parameter, Objects.requireNonNull(copy.getIterationParameter()), typeElement);
+          doCheck(parameter, Objects.requireNonNull(copy.getIterationParameter()), typeElement, statement.getIteratedValue());
         }
       }
 
@@ -89,12 +103,12 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
             // the deconstruction component variable when calling the 'getNormalizedType' method.
             PsiDeconstructionPattern deconstructionCopy = (PsiDeconstructionPattern)deconstruction.copy();
             PsiPattern componentCopy = deconstructionCopy.getDeconstructionList().getDeconstructionComponents()[index];
-            doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement);
+            doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement, null);
           }
         }
       }
 
-      private void doCheck(PsiVariable variable, PsiVariable copyVariable, PsiTypeElement element2Highlight) {
+      private void doCheck(PsiVariable variable, PsiVariable copyVariable, PsiTypeElement element2Highlight, PsiExpression initializer) {
         ArrayList<PsiAnnotation> typeUseAnnotations = new ArrayList<>();
         AnnotationTargetUtil.collectStrictlyTypeUseAnnotations(copyVariable.getModifierList(), typeUseAnnotations);
         if (!typeUseAnnotations.isEmpty()) return;
@@ -103,8 +117,14 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
         if (typeElementCopy != null) {
           IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
+            initializer = PsiUtil.skipParenthesizedExprDown(initializer);
+            ProblemHighlightType highlightType =
+              !suggestForLiteralsAndNewExpressions || initializer instanceof PsiNewExpression || initializer instanceof PsiLiteralExpression
+              ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+              : ProblemHighlightType.INFORMATION;
             holder.problem(element2Highlight, InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"))
               .fix(new ReplaceWithVarFix())
+              .highlight(highlightType)
               .register();
           }
         }

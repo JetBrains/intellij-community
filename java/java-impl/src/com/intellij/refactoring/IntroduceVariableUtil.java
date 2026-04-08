@@ -610,9 +610,13 @@ public final class IntroduceVariableUtil {
     final PsiExpression expr2 = expr1 instanceof PsiArrayInitializerExpression && expr1.getParent() instanceof PsiNewExpression
                                 ? (PsiNewExpression)expr1.getParent()
                                 : CommonJavaRefactoringUtil.outermostParenthesizedExpression(expr1);
-    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null 
+    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null
         || IntentionPreviewUtils.isPreviewElement(expr2)) {
-      return expr2.replace(ref);
+      PsiElement replaced = expr2.replace(ref);
+      if (expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null) {
+        ElementToWorkOn.REPLACE_NON_PHYSICAL.set(replaced, expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL));
+      }
+      return replaced;
     }
     else {
       final String prefix  = expr1.getUserData(ElementToWorkOn.PREFIX);

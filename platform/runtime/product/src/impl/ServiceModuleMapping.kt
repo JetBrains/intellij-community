@@ -36,7 +36,7 @@ interface ServiceModuleMapping {
             if (previousGroup == null) {
               /* if a runtime module corresponds to a library in the source code, it's safe to include it in the classpath of multiple 
                  plugins */
-              if (!dependency.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+              if (dependency.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE) {
                 moduleOutsideGroupsToPlugin[dependency] = pluginGroup
                 if (dependencyPathToModule != null && dependencyPath != null) {
                   dependencyPathToModule[dependency] = dependencyPath

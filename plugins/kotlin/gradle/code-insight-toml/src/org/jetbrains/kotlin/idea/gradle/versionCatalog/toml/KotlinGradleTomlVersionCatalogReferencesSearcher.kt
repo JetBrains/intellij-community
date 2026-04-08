@@ -41,7 +41,7 @@ class KotlinGradleTomlVersionCatalogReferencesSearcher :
             if (element !is KtDotQualifiedExpression || element.hasWrappingVersionCatalogExpression()) {
                 return true
             }
-            val handler = KotlinGradleTomlVersionCatalogGotoDeclarationHandler()
+            val handler = KotlinGradleVersionCatalogGotoDeclarationHandler()
             // The handler doesn't work with KtDotQualifiedExpression directly, it expects its grandchild (LeafPsiElement)
             val grandChild = element.lastChild?.lastChild as? LeafPsiElement ?: return true
             val foundTargets = handler.getGotoDeclarationTargets(grandChild, 0, null)

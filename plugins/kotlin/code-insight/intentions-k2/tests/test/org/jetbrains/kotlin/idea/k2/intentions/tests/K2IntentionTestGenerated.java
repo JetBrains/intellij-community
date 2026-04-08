@@ -1968,6 +1968,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
             }
 
+            @TestMetadata("caretInsideBodyExplicitSignature.kt")
+            public void testCaretInsideBodyExplicitSignature() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/caretInsideBodyExplicitSignature.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithArrow.kt")
+            public void testCaretInsideBodyWithArrow() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/caretInsideBodyWithArrow.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithoutArrow.kt")
+            public void testCaretInsideBodyWithoutArrow() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/caretInsideBodyWithoutArrow.kt");
+            }
+
             @TestMetadata("classReference.kt")
             public void testClassReference() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/classReference.kt");
@@ -10485,8 +10500,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget")
     public abstract static class AddAnnotationUseSiteTarget extends AbstractK2IntentionTest {
@@ -11357,6 +11370,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("usedSameFunction.kt")
         public void testUsedSameFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGeneric.kt")
+        public void testUsedSameFunctionGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunctionGeneric.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericAlias.kt")
+        public void testUsedSameFunctionGenericAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericAlias.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericNested.kt")
+        public void testUsedSameFunctionGenericNested() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericNested.kt");
         }
     }
 
@@ -12303,100 +12331,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen")
-    public static class DoubleBangToIfThen extends AbstractK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("callExpression.kt")
-        public void testCallExpression() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/callExpression.kt");
-        }
-
-        @TestMetadata("callExpressionParens.kt")
-        public void testCallExpressionParens() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/callExpressionParens.kt");
-        }
-
-        @TestMetadata("exceptionTextEscapesQuotes.kt")
-        public void testExceptionTextEscapesQuotes() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/exceptionTextEscapesQuotes.kt");
-        }
-
-        @TestMetadata("exceptionTextHandlesMultiline.kt")
-        public void testExceptionTextHandlesMultiline() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/exceptionTextHandlesMultiline.kt");
-        }
-
-        @TestMetadata("localVal.kt")
-        public void testLocalVal() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/localVal.kt");
-        }
-
-        @TestMetadata("localVar.kt")
-        public void testLocalVar() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/localVar.kt");
-        }
-
-        @TestMetadata("replaceParentExpression.kt")
-        public void testReplaceParentExpression() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression.kt");
-        }
-
-        @TestMetadata("replaceParentExpression2.kt")
-        public void testReplaceParentExpression2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression2.kt");
-        }
-
-        @TestMetadata("replaceParentExpression3.kt")
-        public void testReplaceParentExpression3() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression3.kt");
-        }
-
-        @TestMetadata("simpleNameExpressionInParens.kt")
-        public void testSimpleNameExpressionInParens() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/simpleNameExpressionInParens.kt");
-        }
-
-        @TestMetadata("topLevelVal.kt")
-        public void testTopLevelVal() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVal.kt");
-        }
-
-        @TestMetadata("topLevelValCustomGetter.kt")
-        public void testTopLevelValCustomGetter() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelValCustomGetter.kt");
-        }
-
-        @TestMetadata("topLevelVar.kt")
-        public void testTopLevelVar() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVar.kt");
-        }
-
-        @TestMetadata("topLevelVarCustomGetter.kt")
-        public void testTopLevelVarCustomGetter() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVarCustomGetter.kt");
-        }
-
-        @TestMetadata("usedInAssignment.kt")
-        public void testUsedInAssignment() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/usedInAssignment.kt");
-        }
-
-        @TestMetadata("withAnnotation.kt")
-        public void testWithAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/withAnnotation.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/introduceVariable")
     public static class IntroduceVariable extends AbstractK2IntentionTest {
         @java.lang.Override
@@ -12990,11 +12924,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("caretAtCall.kt")
-            public void testCaretAtCall() throws Exception {
-                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/caretAtCall.kt");
-            }
-
             @TestMetadata("contextReceiver.kt")
             public void testContextReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/contextReceiver.kt");
@@ -13034,6 +12963,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("caretAtCall.kt")
+            public void testCaretAtCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/caretAtCall.kt");
+            }
+
             @TestMetadata("complexExpressions.kt")
             public void testComplexExpressions() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/complexExpressions.kt");
@@ -13057,6 +12991,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("parenthesis.kt")
             public void testParenthesis() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/parenthesis.kt");
+            }
+
+            @TestMetadata("singleExpression.kt")
+            public void testSingleExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/singleExpression.kt");
             }
 
             @TestMetadata("transformingOperations.kt")
@@ -13106,6 +13045,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("parenthesis.kt")
             public void testParenthesis() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/parenthesis.kt");
+            }
+
+            @TestMetadata("singleExpression.kt")
+            public void testSingleExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/singleExpression.kt");
             }
 
             @TestMetadata("transformingOperations.kt")

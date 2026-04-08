@@ -52,20 +52,6 @@ java_binary(
     visibility = ["//visibility:public"],
 )
 
-# Backend selection flag for jvm_library
-# Usage: bazel build //... --@rules_jvm//:use_rules_kotlin=true
-bool_flag(
-    name = "use_rules_kotlin",
-    build_setting_default = False,
-    visibility = ["//visibility:public"],
-)
-
-config_setting(
-    name = "rules_kotlin_enabled",
-    flag_values = {":use_rules_kotlin": "True"},
-    visibility = ["//visibility:public"],
-)
-
 # --@rules_jvm//:trace
 bool_flag(
     name = "trace",

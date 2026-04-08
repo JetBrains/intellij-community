@@ -230,8 +230,12 @@ public final class FileAttributes {
     return new FileAttributes(newFlags, length, lastModified);
   }
 
-  public @NotNull FileAttributes withTimeStamp(long timestamp) {
+  public @NotNull FileAttributes withLastModified(long timestamp) {
     return new FileAttributes(flags, length, timestamp);
+  }
+
+  public @NotNull FileAttributes withLength(long length) {
+    return new FileAttributes(flags, length, lastModified);
   }
 
   @Override

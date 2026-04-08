@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixModExpander;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
@@ -17,12 +18,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -73,7 +75,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     }
 
     if (expressions.size() == 1) {
-      prepareAndExpandForChooseExpression(expressions.get(0), editor);
+      prepareAndExpandForChooseExpression(expressions.getFirst(), editor);
       return;
     }
 
@@ -117,6 +119,12 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     return !getExpressions(context, copyDocument, newOffset).isEmpty();
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return new EditableTemplateModExpander(this);
+  }
+
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
   }
 
@@ -153,7 +161,8 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   private void prepareAndExpandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {
     ApplicationManager.getApplication().runWriteAction(
       () -> CommandProcessor.getInstance().executeCommand(
-        element.getProject(), () -> expandForChooseExpression(element, editor), CodeInsightBundle.message("command.expand.postfix.template"),
+        element.getProject(), () -> expandForChooseExpression(element, editor),
+        CodeInsightBundle.message("command.expand.postfix.template"),
         PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
   }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
-import com.intellij.terminal.frontend.toolwindow.impl.getTitleText
+import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -39,7 +39,7 @@ internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
 
   private fun getReworkedTerminalTitle(content: Content, project: Project): String? {
     val view = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)?.view ?: return null
-    return view.getTitleText()
+    return view.getFullTitleText()
   }
 
   private fun getClassicTerminalTitle(content: Content): String? {

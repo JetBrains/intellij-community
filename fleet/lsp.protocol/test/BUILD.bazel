@@ -30,11 +30,12 @@ jvm_library(
   name = "test_test_lib",
   module_name = "fleet.lsp.protocol.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["srcCommonTest/**/*.kt", "srcCommonTest/**/*.java", "srcCommonTest/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-test",
     "@lib//:kotlinx-io-core",
     "//fleet/ktor/client/cio",
     "//fleet/ktor/client/cio:cio_test_lib",

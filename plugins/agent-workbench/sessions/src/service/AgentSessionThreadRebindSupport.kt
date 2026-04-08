@@ -12,9 +12,15 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_MATCH_PRE_WINDOW_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -26,14 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private val LOG = logger<AgentSessionThreadRebindSupport>()
-private const val PENDING_THREAD_MATCH_PRE_WINDOW_MS = 20_000L
-private const val PENDING_THREAD_MATCH_POST_WINDOW_MS = 120_000L
-private const val PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS = PENDING_THREAD_MATCH_POST_WINDOW_MS
 private const val PENDING_THREAD_AMBIGUITY_NOTIFY_AFTER_POLLS = 2
 private const val PENDING_THREAD_AMBIGUITY_NOTIFY_COOLDOWN_MS = 5 * 60 * 1000L
-private const val CONCRETE_CODEX_NEW_THREAD_MATCH_PRE_WINDOW_MS = 5_000L
-private const val CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS = 30_000L
-private const val CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS = CONCRETE_CODEX_NEW_THREAD_MATCH_POST_WINDOW_MS
 private const val PROVIDER_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH = 200
 
 internal data class PendingTabBindOutcome(

@@ -76,7 +76,14 @@ type CreateJvmCall<'lib> = libloading::Symbol<
     unsafe extern "C" fn(*mut *mut jni::sys::JavaVM, *mut *mut c_void, *mut c_void) -> jint
 >;
 
-pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>, debug_mode: bool) -> Result<()> {
+pub fn run_jvm_and_event_loop(
+    jre_home: &Path,
+    vm_options: Vec<String>,
+    main_class: &str,
+    args: Vec<String>,
+    debug_mode: bool,
+    is_musl: bool
+) -> Result<()> {
     debug!("Preparing a JVM environment");
     DEBUG_MODE.store(debug_mode, Ordering::Release);
 
@@ -107,7 +114,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         });
         vm_options.push(jvm_property!("sun.java.command", java_command));
 
-        let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
+        let jni_env_result = load_and_start_jvm(&jre_home, vm_options, is_musl);
         let jni_env = match jni_env_result {
             Ok(jni_env) => {
                 tx.send(None).unwrap();
@@ -159,10 +166,10 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
     }
 }
 
-fn load_and_start_jvm<'a>(jre_home: &Path, vm_options: Vec<String>) -> Result<EnvUnowned<'a>> {
+fn load_and_start_jvm<'a>(jre_home: &Path, vm_options: Vec<String>, is_musl: bool) -> Result<EnvUnowned<'a>> {
     let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
-    let libjvm = load_libjvm(&libjvm_path)?;
+    let libjvm = load_libjvm(&libjvm_path, is_musl)?;
 
     debug!("[JVM] Looking for 'JNI_CreateJavaVM' symbol");
     let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM\0")? };
@@ -202,14 +209,14 @@ fn load_and_start_jvm<'a>(jre_home: &Path, vm_options: Vec<String>) -> Result<En
 }
 
 #[cfg(target_os = "windows")]
-fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
+fn load_libjvm(libjvm_path: &Path, _: bool) -> Result<libloading::Library> {
     unsafe { libloading::Library::new(libjvm_path) }
         .context("Failed to load 'jvm.dll'")
 }
 
 #[cfg(target_family = "unix")]
-fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
-    let path_ref = Some(libjvm_path.as_os_str());
+fn load_libjvm(libjvm_path: &Path, is_musl: bool) -> Result<libloading::Library> {
+    let path_ref = if is_musl { libjvm_path.file_name() } else { Some(libjvm_path.as_os_str()) };
     let flags = libloading::os::unix::RTLD_LAZY;
     unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
         .with_context(|| format!("Failed to load '{}'", Path::new(libjvm_path.file_name().unwrap()).display()))

@@ -60,6 +60,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
 
+        @TestMetadata("redundantOpenFunctionInInterfaceDiagnostic.kt")
+        public void testRedundantOpenFunctionInInterfaceDiagnostic() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/redundantOpenFunctionInInterfaceDiagnostic.kt");
+        }
+
         @TestMetadata("uselessCast.kt")
         public void testUselessCast() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/uselessCast.kt");
@@ -289,6 +294,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
         @TestMetadata("ContextArgumentsWithoutValue.kt")
         public void testContextArgumentsWithoutValue() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/ContextArgumentsWithoutValue.kt");
+        }
+
+        @TestMetadata("ContextArgumentsWrongName.kt")
+        public void testContextArgumentsWrongName() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/ContextArgumentsWrongName.kt");
         }
 
         @TestMetadata("DefinitelyNotNullType.kt")

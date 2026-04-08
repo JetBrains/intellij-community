@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.psi.impl
 
 import com.intellij.lang.ASTFactory
@@ -216,6 +216,7 @@ internal class PsiSyntaxBuilderImpl(
 
     val compositeOptionalData = CompositeOptionalData()
 
+    @Suppress("UNCHECKED_CAST")
     val nodeData = NodeData(
       lexStarts = starts,
       offset = startOffset,
@@ -296,8 +297,8 @@ internal class PsiSyntaxBuilderImpl(
     lexTypes: Array<IElementType?>,
     originalLexTypes: Array<SyntaxElementType>,
   ) {
-    for (i in 0..<lexTypes.size) {
-      if (lexTypes[i] == null) {
+    for ((i, element) in lexTypes.withIndex()) {
+      if (element == null) {
         throw IllegalStateException("IElementType for token ${originalLexTypes[i]} is missing. TokenConverter = $tokenConverter")
       }
     }
@@ -367,9 +368,9 @@ internal fun extractCachedLexemes(parentCachingNode: ASTNode): TokenList? {
     return null
   }
 
-  val parentElement = parentCachingNode
-  parentElement.putUserData(LAZY_PARSEABLE_TOKENS, null)
-  return parentElement.getUserData(LAZY_PARSEABLE_TOKENS)
+  val cachedTokens = parentCachingNode.getUserData(LAZY_PARSEABLE_TOKENS)
+  parentCachingNode.putUserData(LAZY_PARSEABLE_TOKENS, null)
+  return cachedTokens
 }
 
 internal fun shouldReuseCollapsedTokens(collapsed: IElementType?): Boolean {

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -52,7 +53,7 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
         assertThat(initialThreads.single().title).isEqualTo("Initial title")
         assertThat(initialThreads.single().activity).isEqualTo(ClaudeSessionActivity.READY)
 
-        primeWatcher(updates, projectDir)
+        primeWatcher(updates, jsonl)
 
         writeJsonl(
           jsonl,
@@ -74,6 +75,111 @@ class ClaudeStoreSessionBackendFileWatchIntegrationTest {
       }
     }
   }
+
+  @Test
+  fun backendWatcherTracksAppendDrivenBackgroundTaskLifecycle() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-watch-append"
+      val sessionId = "session-watch-append"
+      val gitBranch = "feature/claude-status"
+      val backgroundTaskId = "task-123"
+      val encodedPath = "-work-project-watch-append"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("$sessionId.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine(
+            timestamp = "2026-02-19T11:00:00.000Z",
+            sessionId = sessionId,
+            cwd = projectPath,
+            content = "Initial title",
+            gitBranch = gitBranch,
+          ),
+        ),
+      )
+
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThread = backend.listThreads(path = projectPath, openProject = null).single()
+        assertThat(initialThread.activity).isEqualTo(ClaudeSessionActivity.READY)
+        assertThat(initialThread.gitBranch).isEqualTo(gitBranch)
+
+        primeWatcher(updates, jsonl)
+
+        appendJsonl(
+          jsonl,
+          listOf(claudeAssistantPartialLine("2026-02-19T11:00:01.000Z", sessionId, projectPath, "Thinking")),
+        )
+
+        assertThat(awaitWatcherUpdate(updates)).isTrue()
+
+        val partialThread = awaitThread(
+          backend = backend,
+          projectPath = projectPath,
+          threadId = sessionId,
+        ) { thread ->
+          thread.activity == ClaudeSessionActivity.PROCESSING &&
+          thread.updatedAt == Instant.parse("2026-02-19T11:00:01.000Z").toEpochMilli()
+        }
+        assertThat(partialThread).isNotNull
+        assertThat(partialThread!!.gitBranch).isEqualTo(gitBranch)
+
+        appendJsonl(
+          jsonl,
+          listOf(
+            claudeAssistantToolUseLine("2026-02-19T11:00:02.000Z", sessionId, projectPath, "Running"),
+            claudeBackgroundToolResultLine("2026-02-19T11:00:03.000Z", sessionId, projectPath, backgroundTaskId),
+            claudeQueueOperationLine("2026-02-19T11:00:04.000Z", sessionId, projectPath, backgroundTaskId),
+            claudeTaskNotificationLine("2026-02-19T11:00:05.000Z", sessionId, projectPath, backgroundTaskId),
+          ),
+        )
+
+        assertThat(awaitWatcherUpdate(updates)).isTrue()
+
+        val backgroundThread = awaitThread(
+          backend = backend,
+          projectPath = projectPath,
+          threadId = sessionId,
+        ) { thread ->
+          thread.activity == ClaudeSessionActivity.PROCESSING &&
+          thread.updatedAt == Instant.parse("2026-02-19T11:00:05.000Z").toEpochMilli()
+        }
+        assertThat(backgroundThread).isNotNull
+        assertThat(backgroundThread!!.gitBranch).isEqualTo(gitBranch)
+
+        appendJsonl(
+          jsonl,
+          listOf(claudeAssistantLine("2026-02-19T11:00:06.000Z", sessionId, projectPath, "Done")),
+        )
+
+        assertThat(awaitWatcherUpdate(updates)).isTrue()
+
+        val completedThread = awaitThread(
+          backend = backend,
+          projectPath = projectPath,
+          threadId = sessionId,
+        ) { thread ->
+          thread.activity == ClaudeSessionActivity.READY &&
+          thread.updatedAt == Instant.parse("2026-02-19T11:00:06.000Z").toEpochMilli()
+        }
+        assertThat(completedThread).isNotNull
+        assertThat(completedThread!!.gitBranch).isEqualTo(gitBranch)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
 }
 
 private val FILE_WATCH_UPDATE_TIMEOUT = 8.seconds
@@ -84,13 +190,14 @@ private suspend fun awaitThread(
   backend: ClaudeStoreSessionBackend,
   projectPath: String,
   threadId: String,
+  predicate: (ClaudeBackendThread) -> Boolean = { true },
 ): ClaudeBackendThread? {
   var resolved: ClaudeBackendThread? = null
   withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
     while (true) {
       val threads = backend.listThreads(path = projectPath, openProject = null)
       val thread = threads.firstOrNull { it.id == threadId }
-      if (thread != null) {
+      if (thread != null && predicate(thread)) {
         resolved = thread
         break
       }
@@ -100,25 +207,28 @@ private suspend fun awaitThread(
   return resolved
 }
 
-private suspend fun primeWatcher(updates: Channel<Unit>, projectDirectory: Path) {
+private suspend fun primeWatcher(updates: Channel<Unit>, watchedFile: Path) {
   drainUpdateChannel(updates)
-  Files.createDirectories(projectDirectory)
 
   var attempt = 0
   val primed = withTimeoutOrNull(FILE_WATCH_UPDATE_TIMEOUT) {
     while (true) {
       attempt++
-      val marker = projectDirectory.resolve("watcher-prime-${System.nanoTime()}-$attempt.tmp")
-      Files.write(marker, listOf("prime-$attempt"))
+      writeWatcherPrimeFile(watchedFile, attempt)
       if (awaitWatcherUpdate(updates, timeout = WATCHER_PRIME_ATTEMPT_TIMEOUT)) {
         return@withTimeoutOrNull true
       }
       delay(WATCHER_PRIME_RETRY_DELAY)
     }
   } == true
-  if (!primed) {
-    drainUpdateChannel(updates)
-    return
-  }
+
+  assertThat(primed)
+    .withFailMessage("Timed out waiting for watcher startup refresh ping under %s", watchedFile.parent)
+    .isTrue()
   drainUpdateChannel(updates)
+}
+
+private fun writeWatcherPrimeFile(watchedFile: Path, attempt: Int) {
+  val primeFile = watchedFile.resolveSibling("${watchedFile.fileName}.watcher-prime-$attempt.tmp")
+  Files.writeString(primeFile, "prime-$attempt")
 }

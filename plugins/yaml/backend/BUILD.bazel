@@ -32,6 +32,8 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/stream",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//libraries/fastutil",
     "//platform/refactoring",
     "//platform/core-ui",
@@ -42,6 +44,7 @@ jvm_library(
     "//platform/searchEverywhere/backend",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//jps/model-api:model",
+    "//platform/util:util-ui",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -80,6 +83,8 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//libraries/stream:stream_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/refactoring:refactoring_test_lib",
     "//platform/core-ui:core-ui_test_lib",
@@ -99,6 +104,7 @@ jvm_library(
     "@lib//:jet_check",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//jps/model-api:model_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.yaml.backend` end
@@ -176,6 +182,7 @@ jvm_library(
     "//libraries/stream",
     "//libraries/stream:stream_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/refactoring",
@@ -205,12 +212,15 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
   ],
   runtime_deps = [
     ":backend-tests",
     "//platform/backend:backend_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.yaml.backend.tests` end

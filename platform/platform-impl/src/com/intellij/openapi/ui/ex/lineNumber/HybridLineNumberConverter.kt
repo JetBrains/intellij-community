@@ -17,6 +17,6 @@ object HybridLineNumberConverter : LineNumberConverter {
   }
 
   override fun getMaxLineNumber(editor: Editor): Int {
-    return editor.uiDocument.lineCount
+    return editor.elfDocument.lineCount
   }
 }

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/vcs-log/impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/vcs-api:vcs",
     "//platform/observable",
     "//platform/core-api:core",
@@ -42,6 +43,7 @@ jvm_library(
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/vcs-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/progress/shared:ide-progress",
     "//platform/vcs-log/api:vcs-log",
     "//libraries/caffeine",
     "//libraries/kotlinx/coroutines/core",
@@ -52,6 +54,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//libraries/http-client",
     "//platform/vcs-impl/shared",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -76,6 +79,7 @@ jvm_library(
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/vcs-api:vcs_test_lib",
     "//platform/observable:observable_test_lib",
     "//platform/core-api:core_test_lib",
@@ -92,6 +96,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/vcs-log/api:vcs-log_test_lib",
     "//libraries/caffeine:caffeine_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -112,6 +117,7 @@ jvm_library(
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
     "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

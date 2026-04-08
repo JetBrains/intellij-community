@@ -19,9 +19,10 @@ public final class DecompilerTestDataUtil {
     }
     roots.addAll(List.of(
       "testData",
+      "../testData",
       "community/plugins/java-decompiler/engine/testData",
-      "plugins/java-decompiler/engine/testData",
       "../community/plugins/java-decompiler/engine/testData",
+      "plugins/java-decompiler/engine/testData",
       "../plugins/java-decompiler/engine/testData"
     ));
     for (String rel : roots) {

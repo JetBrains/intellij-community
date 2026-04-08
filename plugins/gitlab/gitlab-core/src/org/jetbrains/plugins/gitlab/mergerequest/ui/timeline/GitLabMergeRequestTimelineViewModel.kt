@@ -34,6 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
@@ -62,6 +63,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  private val textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
@@ -95,7 +97,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      GitLabNoteEditingViewModel.forNewNote(cs, project, projectData, mergeRequest, currentUser).apply {
+      GitLabNoteEditingViewModel.forNewNote(cs, project, projectData, mergeRequest, currentUser, textCompletionViewModel).apply {
         onDoneIn(cs) {
           text.value = ""
         }
@@ -170,11 +172,11 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(item, htmlConverter)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion, htmlConverter).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion, htmlConverter, textCompletionViewModel).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, projectData, item.note, htmlConverter).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, projectData, item.note, htmlConverter, textCompletionViewModel).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

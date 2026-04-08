@@ -524,6 +524,13 @@
 
     <intentionAction>
       <language>Python</language>
+      <className>com.jetbrains.python.codeInsight.intentions.PyCopyStringLiteralToClipboardIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>Python</language>
       <className>com.jetbrains.python.codeInsight.intentions.convertToFString.PyConvertToFStringIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
@@ -546,6 +553,20 @@
     <intentionAction>
       <language>Python</language>
       <className>com.jetbrains.python.codeInsight.intentions.PyInvertIfConditionIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>Python</language>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAddKeywordArgumentNamesIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>Python</language>
+      <className>com.jetbrains.python.codeInsight.intentions.PyRemoveKeywordArgumentNamesIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>

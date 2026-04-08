@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":io_resources"],
-  exports = ["@lib//:commons-io"],
-  runtime_deps = ["@lib//:commons-io"]
+  exports = ["@lib//:libraries-commons-io-commons-io"],
+  runtime_deps = ["@lib//:libraries-commons-io-commons-io"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:commons-io"],
+  exports = ["@lib//:libraries-commons-io-commons-io"],
   runtime_deps = [":io"]
 )
 ### auto-generated section `build intellij.libraries.commons.io` end

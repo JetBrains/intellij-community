@@ -2,13 +2,13 @@
 name: Prompt Context Contracts
 description: Canonical contracts for prompt-context contributor, manual context source, and renderer extension points, resolver ordering, and envelope/chip formatting behavior.
 targets:
-  - ../../sessions-core/src/prompt/AgentPromptContextContributorBridge.kt
-  - ../../sessions-core/src/prompt/AgentPromptContextRendererBridge.kt
-  - ../../sessions-core/src/prompt/AgentPromptContextEnvelopeFormatter.kt
-  - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
-  - ../../sessions-core/src/prompt/AgentPromptContextPayloads.kt
-  - ../../sessions-core/src/prompt/AgentPromptManualContextSourceBridge.kt
-  - ../../sessions-core/src/prompt/AgentPromptModels.kt
+  - ../../prompt/core/src/AgentPromptContextContributorBridge.kt
+  - ../../prompt/core/src/AgentPromptContextRendererBridge.kt
+  - ../../prompt/core/src/AgentPromptContextEnvelopeFormatter.kt
+  - ../../prompt/core/src/AgentPromptBuiltinContextRenderers.kt
+  - ../../prompt/core/src/AgentPromptContextPayloads.kt
+  - ../../prompt/core/src/AgentPromptManualContextSourceBridge.kt
+  - ../../prompt/core/src/AgentPromptModels.kt
   - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../../prompt/src/context/AgentPromptContextResolverService.kt
   - ../../prompt/src/ui/AgentPromptContextNormalizationDecisions.kt
@@ -61,7 +61,8 @@ Provider/source-specific context rules are defined in separate specs under `spec
 
 - `AgentPromptContextResolverService.collectDefaultContext(...)` returns auto context only; manual context items are merged later by popup UI state.
 
-- In invocation phase, lower contributor order wins precedence for mutually exclusive sources (for example test-runner before VCS before project-view).
+- In invocation phase, extension registration order wins precedence for mutually exclusive sources.
+  - Contributors must use stable extension ids plus `order="before ..."` / `order="after ..."` metadata to declare precedence across modules.
   [@test] ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
 
 - Envelope formatting contract:
@@ -124,7 +125,7 @@ Provider/source-specific context rules are defined in separate specs under `spec
 - Manual source picker failures degrade to inline popup error feedback and do not mutate existing context state.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextSoftCapPolicyTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextNormalizationDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextEntryPathRenderingTest'`

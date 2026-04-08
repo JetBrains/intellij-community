@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
     }
 
     if (expressions.size() == 1) {
-      prepareAndExpandForChooseExpression(expressions.get(0), editor);
+      prepareAndExpandForChooseExpression(expressions.getFirst(), editor);
       return;
     }
 
@@ -100,6 +101,20 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
       mySelector.getRenderer(),
       CodeInsightBundle.message("dialog.title.expressions"), 0, ScopeHighlighter.NATURAL_RANGER
     );
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander((ctx, updater, element) -> {});
+  }
+
+  /**
+   * Creates a {@link PostfixModExpander} with expression selector logic and the given expand action.
+   */
+  @ApiStatus.Experimental
+  protected final @NotNull PostfixModExpander createModExpander(@NotNull ExpressionSelectorModExpander.ModExpandAction expandAction) {
+    return new ExpressionSelectorModExpander(mySelector, expandAction);
   }
 
   protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {

@@ -62,9 +62,46 @@ class BuilderTest {
   }
 
   @Test
-  fun testGetCopyText() {
+  fun testCopyWholeRow() {
     val copyText = "Copy Text"
 
+    assertEquals("", getCopyText {
+      copyWholeRow = true
+      icon(AllIcons.General.Add)
+    })
+    assertEquals(copyText, getCopyText {
+      copyWholeRow = true
+      text(copyText)
+    })
+    assertEquals(copyText, getCopyText {
+      copyWholeRow = true
+      icon(AllIcons.General.Add)
+      text(copyText)
+    })
+    assertEquals("$copyText ON", getCopyText {
+      copyWholeRow = true
+      icon(AllIcons.General.Add)
+      text("")
+      text(copyText)
+      switch(true)
+    })
+    assertEquals("OFF $copyText", getCopyText {
+      copyWholeRow = true
+      switch(false)
+      text(copyText)
+      icon(AllIcons.General.Add)
+      text("")
+    })
+  }
+
+  @Test
+  fun testFirstNonEmptyTextGetCopyText() {
+    val copyText = "Copy Text"
+
+    assertEquals("", getCopyText {
+      icon(AllIcons.General.Add)
+      switch(true)
+    })
     assertEquals(copyText, getCopyText {
       text(copyText)
     })
@@ -80,6 +117,10 @@ class BuilderTest {
     assertEquals(copyText, getCopyText {
       text(copyText)
       text("Secondary text")
+    })
+    assertEquals(copyText, getCopyText {
+      switch(true)
+      text(copyText)
     })
   }
 
@@ -99,7 +140,7 @@ class BuilderTest {
     assertTrue(PropertyBean.compare(component.uiInspectorContext[1], PropertyBean("text", "Item 1")))
   }
 
-  private fun getCopyText(init: LcrRow<Unit>.() -> Unit): String? {
+  private fun getCopyText(init: LcrRow<Unit>.() -> Unit): String {
     val renderer = listCellRenderer(init)
     val list = JBList<Unit>()
     return (renderer.getListCellRendererComponent(list, null, 0, true, false) as KotlinUIDslRendererComponent).getCopyText()

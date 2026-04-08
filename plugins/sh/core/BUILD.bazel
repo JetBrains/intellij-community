@@ -26,9 +26,11 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/util:util-ui",
     "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/util/jdom",
     "//platform/eel",
     "//platform/eel-provider",
@@ -60,9 +62,11 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
@@ -155,8 +159,12 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/ide-core",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.sh.tests` end
 

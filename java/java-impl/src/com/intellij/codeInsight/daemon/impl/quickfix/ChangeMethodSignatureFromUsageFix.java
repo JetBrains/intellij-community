@@ -13,7 +13,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.FindManagerBase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
@@ -276,7 +276,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                        int minUsagesNumber,
                                                        ParameterInfoImpl[] newParametersInfo) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    final FindUsagesManager findUsagesManager = ((FindManagerBase)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
     if (handler == null) return null;//on failure or cancel (e.g. cancel of super methods dialog)
 

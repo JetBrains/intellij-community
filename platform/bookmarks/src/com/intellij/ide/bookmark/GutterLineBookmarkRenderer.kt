@@ -105,12 +105,19 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
   }
 
   fun refreshHighlighter(release: () -> Boolean): Unit = invokeLaterIfProjectAlive(bookmark.provider.project) {
-    when (release()) {
-      true -> releaseHighlighter()
-      else -> highlighter?.also {
-        it.gutterIconRenderer = null
-        it.gutterIconRenderer = this
-      } ?: createHighlighter()
+    if (release()) {
+      releaseHighlighter()
+      return@invokeLaterIfProjectAlive
+    }
+    
+    val existingHighlighter = highlighter
+    if (existingHighlighter == null || !existingHighlighter.isValid) {
+      reference = null
+      createHighlighter()
+    }
+    else {
+      existingHighlighter.gutterIconRenderer = null
+      existingHighlighter.gutterIconRenderer = this
     }
   }
 }

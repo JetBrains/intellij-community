@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
@@ -24,6 +24,12 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 final class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
+
+  @Override
+  public @NotNull Priority getPriority() {
+    return Priority.HIGH;
+  }
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (PlatformUtils.isPyCharmEducational()) {

@@ -22,6 +22,8 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/util:util-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",
     "//platform/lang-api:lang",
@@ -43,6 +45,8 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
   ]
