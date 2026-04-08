@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -8,6 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+// The class is used by the Groovy Grails plugin
+// todo dts: move to the obsolete repo
+@SuppressWarnings("unused")
 public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider {
   @Override
   public abstract @NotNull PerspectiveFileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file);
