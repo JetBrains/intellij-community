@@ -660,6 +660,7 @@ private class LoadingDomainModel : TreeNodeDomainModel {
     mainText = LoadingNode.getText(),
     fullText = listOf(TreeNodeTextFragment(LoadingNode.getText(), SimpleTextAttributes.GRAY_ATTRIBUTES)),
     toolTip = null,
+    textAttributesKey = null,
   )
 
   override suspend fun computeIsLeaf(): Boolean = true

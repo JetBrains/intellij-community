@@ -21,9 +21,11 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
@@ -55,18 +57,22 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.stripe.ErrorStripe
+import com.intellij.ui.stripe.ErrorStripePainter
+import com.intellij.ui.stripe.TreeUpdater
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -85,6 +91,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 import javax.swing.JTree
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
@@ -170,9 +177,15 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
 
   override suspend fun manage() {
-    coroutineScope { 
+    coroutineScope {
       launch(CoroutineName("autoscrollToSourceHandler")) {
         autoscrollToSourceHandler.manage()
+      }
+      if (Registry.`is`("error.stripe.enabled", defaultValue = true)) {
+        launch(CoroutineName("error stripe") + Dispatchers.UI) {
+          Disposer.register(asDisposable(), MyTreeUpdater(ErrorStripePainter(true), scrollPane, tree))
+          awaitCancellation()
+        }
       }
     }
   }
@@ -578,14 +591,14 @@ private class Node(
   val id: Long
     get() = projectViewNode.id
 
-  override val presentation: TreeNodePresentation
+  override val presentation: TreeNodePresentationImpl
     get() = projectViewNode.presentation
 
   override fun isLeaf(): Boolean {
     return projectViewNode.presentation.isLeaf
   }
 
-  override fun getPathElementId(): String = (presentation as TreeNodePresentationImpl).mainText
+  override fun getPathElementId(): String = presentation.mainText
 
   override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
@@ -631,6 +644,25 @@ private class MyAutoscrollToSourceHandler(private val project: Project) : AutoSc
       .collectLatest { 
         UISettings.getInstance().openInPreviewTabIfPossible = it
       }
+  }
+}
+
+private class MyTreeUpdater(
+  errorStripePainter: ErrorStripePainter,
+  scrollPane: JScrollPane,
+  private val tree: Tree,
+) : TreeUpdater<ErrorStripePainter>(errorStripePainter, scrollPane, tree) {
+  override fun update(painter: ErrorStripePainter?, index: Int, node: Any?) {
+    super.update(painter, index, getErrorStripe(node, index))
+  }
+
+  private fun getErrorStripe(node: Any?, index: Int): ErrorStripe? {
+    if (node !is Node) return null
+    if (node.projectViewNode.isDirectory() && tree.isExpanded(index)) return null
+    val textAttributesKey = node.presentation.textAttributesKey ?: return null
+    val textAttributes = EditorColorsManager.getInstance().schemeForCurrentUITheme.getAttributes(textAttributesKey) ?: return null
+    val errorStripeColor = textAttributes.errorStripeColor ?: return null
+    return ErrorStripe.create(errorStripeColor, 1)
   }
 }
 

@@ -17,10 +17,11 @@ data class ProjectViewNodeModel(
     canNavigate: Boolean,
     canNavigateToSource: Boolean,
     isIncludedInExpandAll: Boolean,
+    isDirectory: Boolean,
   ) : this(
     id,
     presentation,
-    flags(canNavigate, canNavigateToSource, isIncludedInExpandAll),
+    flags(canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory),
   )
 
   fun canNavigate(): Boolean = (flags and FLAG_CAN_NAVIGATE) != 0
@@ -28,16 +29,20 @@ data class ProjectViewNodeModel(
   fun canNavigateToSource(): Boolean = (flags and FLAG_CAN_NAVIGATE_TO_SOURCE) != 0
   
   fun isIncludedInExpandAll(): Boolean = (flags and FLAG_INCLUDED_IN_EXPAND_ALL) != 0
+
+  fun isDirectory(): Boolean = (flags and FLAG_IS_DIRECTORY) != 0
 }
 
 private const val FLAG_CAN_NAVIGATE = (1 shl 0)
 private const val FLAG_CAN_NAVIGATE_TO_SOURCE = (1 shl 1)
 private const val FLAG_INCLUDED_IN_EXPAND_ALL = (1 shl 2)
+private const val FLAG_IS_DIRECTORY = (1 shl 3)
 
-private fun flags(canNavigate: Boolean, canNavigateToSource: Boolean, isIncludedInExpandAll: Boolean): Int =
+private fun flags(canNavigate: Boolean, canNavigateToSource: Boolean, isIncludedInExpandAll: Boolean, isDirectory: Boolean): Int =
   (if (canNavigate) FLAG_CAN_NAVIGATE else 0) or
   (if (canNavigateToSource) FLAG_CAN_NAVIGATE_TO_SOURCE else 0) or 
-  (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0)
+  (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0) or
+  (if (isDirectory) FLAG_IS_DIRECTORY else 0)
 
 @ApiStatus.Internal
 const val SUPER_ROOT_ID: Long = 0L

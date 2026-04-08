@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.ide.vfs.virtualFile
@@ -458,7 +459,8 @@ private class AbstractProjectViewPaneStateManager(
       val canNavigate = canNavigate(node)
       val canNavigateToSource = canNavigateToSource(node)
       val isIncludedInExpandAll = isIncludedInExpandAll(node)
-      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll)
+      val isDirectory = isDirectory(node)
+      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory)
     }
   }
 
@@ -483,6 +485,8 @@ private class AbstractProjectViewPaneStateManager(
   private fun canNavigateToSource(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigateToSource() == true
   
   private fun isIncludedInExpandAll(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
+
+  private fun isDirectory(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>) is PsiDirectoryNode
 
   private suspend fun navigate(id: Long, requestFocus: Boolean) {
     val node = nodeById[id] ?: return

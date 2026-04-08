@@ -2,7 +2,9 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.ui.colors.ColorId
+import com.intellij.ide.ui.colors.TextAttributeKeyId
 import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.colors.key
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.icon
@@ -24,6 +26,7 @@ fun TreeNodePresentationImpl.toDTO(): TreeNodePresentationDTO = TreeNodePresenta
   mainText = mainText,
   fullText = fullText.map { it.toDTO() },
   toolTip = toolTip,
+  textAttributeKeyId = textAttributesKey?.rpcId(),
 )
 
 @ApiStatus.Internal
@@ -33,6 +36,7 @@ fun TreeNodePresentationDTO.toPresentation(): TreeNodePresentation = TreeNodePre
   mainText = mainText,
   fullText = fullText.map { it.toTextFragment() },
   toolTip = toolTip,
+  textAttributesKey = textAttributeKeyId?.key(),
 )
 
 @ApiStatus.Internal
@@ -43,6 +47,7 @@ data class TreeNodePresentationDTO(
   val mainText: String,
   val fullText: List<TreeNodeTextFragmentDTO>,
   val toolTip: String?,
+  val textAttributeKeyId: TextAttributeKeyId?,
 )
 
 @ApiStatus.Internal

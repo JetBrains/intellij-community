@@ -172,6 +172,7 @@ fun buildPresentation(
       appendTextFragment(prefix + location + suffix, locationAttributes)
     }
     setToolTipText(presentation.tooltip)
+    setTextAttributesKey(presentation.textAttributesKey)
     build() as TreeNodePresentationImpl
   }
 }

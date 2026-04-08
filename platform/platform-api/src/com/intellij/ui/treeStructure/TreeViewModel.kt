@@ -2,6 +2,7 @@
 package com.intellij.ui.treeStructure
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
@@ -74,6 +75,7 @@ data class TreeNodePresentationImpl(
   val mainText: String,
   val fullText: List<TreeNodeTextFragment>,
   val toolTip: String?,
+  val textAttributesKey: TextAttributesKey?,
 ) : TreeNodePresentation
 
 @ApiStatus.Internal

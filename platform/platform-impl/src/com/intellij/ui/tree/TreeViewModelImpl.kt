@@ -6,6 +6,7 @@ package com.intellij.ui.tree
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.TreeDomainModel
@@ -480,6 +481,7 @@ class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentatio
   private var mainTextValue: String? = null
   private var fullTextValue: MutableList<TreeNodeTextFragment>? = null
   private var toolTipValue: String? = null
+  private var textAttributesKeyValue: TextAttributesKey? = null
 
   override fun setIcon(icon: Icon?) {
     this.iconValue = icon
@@ -497,6 +499,10 @@ class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentatio
 
   override fun setToolTipText(toolTip: String?) {
     this.toolTipValue = toolTip
+  }
+
+  override fun setTextAttributesKey(textAttributesKey: TextAttributesKey?) {
+    this.textAttributesKeyValue = textAttributesKey
   }
 
   override fun build(): TreeNodePresentationImpl {
@@ -529,6 +535,7 @@ class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentatio
       mainText = mainText,
       fullText = fullText,
       toolTip = toolTipValue,
+      textAttributesKey = textAttributesKeyValue,
     )
   }
 
