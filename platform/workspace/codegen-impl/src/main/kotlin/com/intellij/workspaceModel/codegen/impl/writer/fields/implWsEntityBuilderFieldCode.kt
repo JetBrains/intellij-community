@@ -23,6 +23,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 import com.intellij.workspaceModel.codegen.impl.writer.lines
+import com.intellij.workspaceModel.codegen.impl.writer.referenceNameToSyntheticSymbolicIdFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdField
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdReferenceCode
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
@@ -84,6 +88,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
             line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
           }
           line("changedProperty.add(\"${field.javaName}\")")
+          symbolicIdReferenceCode(field)
         }
       }
     }

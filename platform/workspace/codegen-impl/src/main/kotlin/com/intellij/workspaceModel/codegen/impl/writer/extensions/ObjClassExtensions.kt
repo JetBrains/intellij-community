@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.fqn
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
 
 internal val ObjClass<*>.requiresCompatibility: Boolean
   get() = name in compatibilityEntities[module.name].orEmpty()
@@ -84,7 +85,7 @@ private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String
   for (field in objClass.fields) {
     if (withComputable
         || field.valueKind !is ObjProperty.ValueKind.Computable
-        || field.name == "symbolicId" // symbolicId is a computable field, but still we'd like to know it's type
+        || field.name == symbolicIdFieldName // symbolicId is a computable field, but still we'd like to know its type
     ) {
       fieldsByName.remove(field.name)
       fieldsByName[field.name] = field

@@ -3,50 +3,84 @@ package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 
-internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean) {
-  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId}<*>>") {
+// TODO:
+// objClass.allFields.noSymbolicId().noRefs().noEntitySource() should be a list that also has references as synthetic properties
+internal fun LinesBuilder.softLinksCode(objClass: ObjClass<*>, hasSoftLinks: Boolean, referencesInSymbolicId: Set<OwnProperty<*, *>>) {
+  if (!hasSoftLinks) return
+  
+  section("override fun getLinks(): Set<${SymbolicEntityId}<*>>") {
     line("val result = HashSet<${SymbolicEntityId}<*>>()")
-    operate(this) { line("result.add($it)") }
+    objClass.allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
+      field.valueType.operate(field.name, this, true) { line("result.add($it)") }
+    }
+    for (reference in referencesInSymbolicId) {
+      val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+      line("result.add($syntheticName)")
+    }
     line("return result")
   }
-
-  context.conditionalLine(
-    { hasSoftLinks },
-    "override fun index(index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)"
-  ) {
-    operate(this) { line("index.index(this, $it)") }
+  
+  section("override fun index(index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)") {
+    objClass.allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
+      field.valueType.operate(field.name, this, true) { line("index.index(this, $it)") }
+    }
+    for (reference in referencesInSymbolicId) {
+      val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+      line("index.index(this, $syntheticName)")
+    }
   }
-
-  context.conditionalLine(
-    { hasSoftLinks },
-    "override fun updateLinksIndex(prev: Set<${SymbolicEntityId}<*>>, index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)"
-  ) {
+  
+  section("override fun updateLinksIndex(prev: Set<${SymbolicEntityId}<*>>, index: ${WorkspaceMutableIndex}<${SymbolicEntityId}<*>>)") {
     line("// TODO verify logic")
     line("val mutablePreviousSet = HashSet(prev)")
-    operate(this) {
-      line("val removedItem_${it.clean()} = mutablePreviousSet.remove($it)")
-      section("if (!removedItem_${it.clean()})") {
-        line("index.index(this, $it)")
+    objClass.allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
+      field.valueType.operate(field.name, this, true) {
+        line("val removedItem_${it.clean()} = mutablePreviousSet.remove($it)")
+        section("if (!removedItem_${it.clean()})") {
+          line("index.index(this, $it)")
+        }
+      }
+    }
+    for (reference in referencesInSymbolicId) {
+      val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+      line("val removedItem_${syntheticName.clean()} = mutablePreviousSet.remove($syntheticName)")
+      section("if (!removedItem_${syntheticName.clean()})") {
+        line("index.index(this, $syntheticName)")
       }
     }
     section("for (removed in mutablePreviousSet)") {
       line("index.remove(this, removed)")
     }
   }
-
-  context.conditionalLine(
-    { hasSoftLinks },
-    "override fun updateLink(oldLink: ${SymbolicEntityId}<*>, newLink: ${SymbolicEntityId}<*>): Boolean"
-  ) {
+  
+  section("override fun updateLink(oldLink: ${SymbolicEntityId}<*>, newLink: ${SymbolicEntityId}<*>): Boolean") {
     line("var changed = false")
-    operateUpdateLink(this)
+    objClass.operateUpdateLink(this)
+    referencesInSymbolicId.forEach { reference ->
+      val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+      val refSymbolicId = reference.valueType.getRefType().getRefType().target.symbolicIdField!!
+      val retType = refSymbolicId.valueType.processType(this, syntheticName)
+      if (retType != null) {
+        `if`("$retType != null") {
+          if (refSymbolicId.valueType is ValueType.Set<*> && !refSymbolicId.valueType.isRefType()) {
+            line("$syntheticName = $retType as ${refSymbolicId.valueType.javaMutableType}")
+          } else if (refSymbolicId.valueType is ValueType.List<*> && !refSymbolicId.valueType.isRefType()) {
+            line("$syntheticName = $retType as ${refSymbolicId.valueType.javaMutableType}")
+          } else {
+            line("$syntheticName = $retType")
+          }
+        }
+      }
+    }
     line("return changed")
   }
 }
@@ -58,8 +92,7 @@ internal fun ObjClass<*>.hasSoftLinks(): Boolean {
 }
 
 internal fun ObjProperty<*, *>.hasSoftLinks(): Boolean {
-  if (name == "symbolicId") return false
-  return valueType.hasSoftLinks()
+  return name != symbolicIdFieldName && valueType.hasSoftLinks()
 }
 
 internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
@@ -79,15 +112,15 @@ private fun ObjClass<*>.operate(
   operation: LinesBuilder.(String) -> Unit
 ) {
   allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
-    field.valueType.operate(field.name, context, operation)
+    field.valueType.operate(field.name, context, true, operation)
   }
 }
 
 private fun ValueType<*>.operate(
   varName: String,
   context: LinesBuilder,
+  generateNewName: Boolean,
   operation: LinesBuilder.(String) -> Unit,
-  generateNewName: Boolean = true,
 ) {
   when (this) {
     is ValueType.JvmClass -> {
@@ -101,14 +134,14 @@ private fun ValueType<*>.operate(
       val elementType = elementType
 
       context.section("for (item in ${varName})") {
-        elementType.operate("item", this@section, operation, false)
+        elementType.operate("item", this@section, false, operation)
       }
     }
     is ValueType.Optional<*> -> {
       if (type is ValueType.JvmClass && (type as ValueType.JvmClass<*>).isSymbolicId) {
         context.line("val optionalLink_${varName.clean()} = $varName")
         context.`if`("optionalLink_${varName.clean()} != null") label@{
-          type.operate("optionalLink_${varName.clean()}", this@label, operation)
+          type.operate("optionalLink_${varName.clean()}", this@label, true, operation)
         }
       }
     }
@@ -121,7 +154,7 @@ private fun processFinalClassProperties(varName: String,
                                        classProperties: List<ValueType.ClassProperty<*>>,
                                        operation: LinesBuilder.(String) -> Unit) {
   for (property in classProperties) {
-    property.valueType.operate("$varName.${property.name}", context, operation)
+    property.valueType.operate("$varName.${property.name}", context, true, operation)
   }
 }
 

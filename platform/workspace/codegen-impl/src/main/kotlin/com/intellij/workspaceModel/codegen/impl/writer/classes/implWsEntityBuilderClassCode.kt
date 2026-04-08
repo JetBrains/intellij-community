@@ -53,6 +53,7 @@ ${
         list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
+        symbolicIdIsInitializedCode(this@implWsEntityBuilderCode)
       }
 
       section("override fun connectionIdList(): List<${ConnectionId}>") { 
@@ -122,7 +123,7 @@ ${
     }
 }
         
-${allFields.filter { it.name != "symbolicId" }.lines { implWsBuilderFieldCode }.trimEnd()}
+${allFields.filter { it.name != symbolicIdFieldName }.lines { implWsBuilderFieldCode }.trimEnd()}
 
 override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java
 }

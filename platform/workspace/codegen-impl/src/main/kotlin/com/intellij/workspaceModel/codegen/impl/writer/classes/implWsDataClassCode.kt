@@ -20,19 +20,37 @@ val ObjClass<*>.isEntityWithSymbolicId: Boolean
     it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithSymbolicId.decoded || it.isEntityWithSymbolicId)
   }
 
+fun Regex.getFirstMatch(input: String): String? {
+  return matchEntire(input)?.groupValues?.getOrNull(1)
+}
+
 fun ObjClass<*>.implWsDataClassCode(): String {
   val entityDataBaseClass = "${WorkspaceEntityData}<$javaFullName>()"
-  val hasSoftLinks = hasSoftLinks()
+  val referencesInSymbolicId = referencesInSymbolicId() ?: emptySet()
+  val hasSoftLinks = hasSoftLinks() || referencesInSymbolicId.isNotEmpty()
   val softLinkable = if (hasSoftLinks) SoftLinkable else null
+
+
   return lines {
     line("@OptIn($WorkspaceEntityInternalApi::class)")
     section("internal class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
 
       listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
 
+      for (reference in referencesInSymbolicId) {
+        val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+        line("lateinit var $syntheticName: ${reference.valueType.getRefType().target.symbolicIdField!!.valueType.javaType}\n")
+      }
+
       listNl(allFields.noRefs().noEntitySource().noSymbolicId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
-      this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
+      for (reference in referencesInSymbolicId) {
+        val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+        val capitalizedSyntheticName = syntheticName.replaceFirstChar { it.titlecaseChar() }
+        line("internal fun is${capitalizedSyntheticName}Initialized(): Boolean = ::$syntheticName.isInitialized\n")
+      }
+
+      this.softLinksCode(this@implWsDataClassCode, hasSoftLinks, referencesInSymbolicId)
 
       sectionNl(
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage}): ${WorkspaceEntity.Builder}<$javaFullName>") {
@@ -198,6 +216,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
 fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
 fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
-fun List<ObjProperty<*, *>>.noSymbolicId() = this.filter { it.name != "symbolicId" }
+fun List<ObjProperty<*, *>>.noSymbolicId() = this.filter { it.name != symbolicIdFieldName }
 fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is ValueType.Optional<*> }
 fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }
