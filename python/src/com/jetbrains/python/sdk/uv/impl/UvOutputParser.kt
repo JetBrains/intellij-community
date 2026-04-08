@@ -11,7 +11,7 @@ import kotlin.io.path.exists
 
 object UvOutputParser {
   private val WHITESPACE_REGEX = Regex("\\s+")
-  private val GROUP_REGEX = Regex("""\((?:group|extra):\s*(\w+)\)""")
+  private val GROUP_REGEX = Regex("""\((?:group|extra):\s*([\w.-]+)\)""")
   private const val REQUIRES_LINE_PREFIX = "Requires:"
 
   fun parseUvPackageList(input: String): List<PythonPackage> {
