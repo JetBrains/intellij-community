@@ -164,12 +164,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
 
-    val addedFileUrls = change.addedFileUrls.flatMap {
-      val file = JpsPathUtil.urlToFile(it)
+    val addedFileUrls = change.addedFileUrls.flatMap { (url, _) ->
+      val file = JpsPathUtil.urlToFile(url)
       if (file.isDirectory) {
-        file.list()?.map { fileName -> "$it/$fileName" } ?: emptyList()
+        file.list()?.map { fileName -> "$url/$fileName" } ?: emptyList()
       }
-      else listOf(it)
+      else listOf(url)
     }.toSet()
 
     val affectedFileLoaders: LinkedHashSet<JpsFileEntitiesSerializer<*>>
@@ -188,7 +188,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
       }
 
-      for (changedUrl in change.changedFileUrls) {
+      for ((changedUrl, _) in change.changedFileUrls) {
         val serializerFactory = moduleListSerializersByUrl[changedUrl]
         if (serializerFactory != null) {
           val newFileUrls = serializerFactory.loadFileList(reader, virtualFileManager)
@@ -220,10 +220,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
       affectedFileLoaders = LinkedHashSet(newFileSerializers)
       addedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
-      change.changedFileUrls.flatMapTo(affectedFileLoaders) { fileSerializersByUrl.getValues(it) }
+      change.changedFileUrls.flatMapTo(affectedFileLoaders) { (url, _) -> fileSerializersByUrl.getValues(url) }
 
       affectedFileLoaders.mapTo(changedSources) { it.internalEntitySource }
-      for (fileUrl in change.removedFileUrls) {
+      for ((fileUrl, _) in change.removedFileUrls) {
 
         val directorySerializer = directorySerializerFactoriesByUrl[fileUrl]
         if (directorySerializer != null) {
