@@ -294,8 +294,8 @@ internal class TerminalCursorPainter private constructor(
       // Enforce default contrast, but take into account user-defined value if it is higher.
       val userDefinedContrast = TerminalOptionsProvider.instance.minContrastRatio
       val defaultContrast = TerminalContrastRatio.DEFAULT_VALUE
-      val effectiveContrast = if (userDefinedContrast.value > defaultContrast.value) userDefinedContrast else defaultContrast
-      return textStyleAdapter.style.toTextAttributes(textStyleAdapter.colorPalette, effectiveContrast).foregroundColor
+      val requiredContrast = if (userDefinedContrast.value > defaultContrast.value) userDefinedContrast else defaultContrast
+      return textStyleAdapter.style.toTextAttributes(textStyleAdapter.colorPalette, requiredContrast).foregroundColor
     }
   }
 
