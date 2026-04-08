@@ -149,10 +149,15 @@ object EventsSchemeBuilder {
 
     //add event log system collectors for all recorders
     val systemCollectors = ArrayList<FeatureUsageCollectorInfo>()
-    if (recorder != null) systemCollectors.add(calculateEventLogSystemCollector(recorder))
-    else {
-      recorders.forEach { systemCollectors.add(calculateEventLogSystemCollector(it)) }
+    val allRecorders = recorder?.let { listOf(it) } ?: recorders
+
+    for (recorder in allRecorders) {
+      val systemCollector = calculateEventLogSystemCollector(recorder)
+      if (pluginId == null || systemCollector.plugin.id == pluginId) {
+        systemCollectors.add(systemCollector)
+      }
     }
+
     result.addAll(collectGroupsFromExtensions("counter", systemCollectors, descriptions, recorder))
 
     result.sortBy(GroupDescriptor::id)

@@ -142,6 +142,12 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
   }
 
+  fun `test system collector is not included when filtering by specific plugin id`() {
+    val descriptors = buildEventsScheme(recorder = "FUS", pluginId = "org.jetbrains.hexana")
+    assertFalse("System collector 'fus.event.log' should not be included when filtering by a specific plugin id",
+                descriptors.any { it.id == "fus.event.log" })
+  }
+
   fun `test generate fileName`() {
     val group = buildGroupDescription()
     assertEquals("EventSchemeBuilderTest.kt", group.fileName)
