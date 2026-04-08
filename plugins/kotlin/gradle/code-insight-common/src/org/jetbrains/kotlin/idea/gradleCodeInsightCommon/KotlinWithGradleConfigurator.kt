@@ -149,7 +149,10 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
         val moduleNode = hierarchy?.getNodeForModule(baseModule) ?: return null
         if (moduleNode.definedKotlinVersion != null || moduleNode.hasKotlinVersionConflict()) return null
 
-        val forcedKotlinVersion = moduleNode.getForcedKotlinVersion()
+        val forcedKotlinVersion =
+            moduleNode.getForcedKotlinVersion()
+                ?: getPluginManagementVersion(module)?.parsedVersion
+                ?: module.getBuildScriptPsiFile()?.let { GradleBuildScriptSupport.getManipulator(it).getKotlinVersion() }
         val allConfigurableKotlinVersions = getAllConfigurableKotlinVersions()
         if (forcedKotlinVersion != null && !allConfigurableKotlinVersions.contains(forcedKotlinVersion)) {
             return null
@@ -579,12 +582,8 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
          * Returns null if the version is not defined in the settings.gradle file.
          * Returns a non-null value, but null version inside the object, if the version was defined but could not be parsed.
          */
-        fun getPluginManagementVersion(module: Module): DefinedKotlinPluginManagementVersion? {
-            return module.getBuildScriptSettingsPsiFile()?.let {
-                GradleBuildScriptSupport.getManipulator(it)
-                    .findKotlinPluginManagementVersion()
-            }
-        }
+        fun getPluginManagementVersion(module: Module): DefinedKotlinPluginManagementVersion? =
+            GradleBuildScriptSupport.findKotlinPluginManagementVersion(module)
 
         fun getGroovyDependencySnippet(
             artifactName: String,

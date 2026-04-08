@@ -44,7 +44,10 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCom
         val manipulator = GradleBuildScriptSupport.getManipulator(this)
 
         val version =
-            manipulator.getKotlinVersion() ?: detectKotlinStdlibVersion(sourceModule) ?: defaultKotlinVersion
+            manipulator.getKotlinVersion()
+                ?: GradleBuildScriptSupport.findKotlinPluginManagementVersion(sourceModule)?.parsedVersion
+                ?: detectKotlinStdlibVersion(sourceModule)
+                ?: defaultKotlinVersion
         manipulator.configureBuildScripts(
             "kotlin.$kotlinCompilerPluginId",
             getKotlinPluginExpression(this is KtFile),
