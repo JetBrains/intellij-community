@@ -178,7 +178,7 @@ private fun resolveArchiveEntryFile(archiveEntryPath: String): VirtualFile? {
   return if (entryPath.isEmpty()) archiveRoot else archiveRoot.findFileByRelativePath(entryPath)
 }
 
-private fun looksLikeVfsUrl(filePath: String): Boolean {
+fun looksLikeVfsUrl(filePath: String): Boolean {
   val schemeSeparator = filePath.indexOf("://")
   if (schemeSeparator <= 0) return false
   return filePath.substring(0, schemeSeparator).all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }
