@@ -317,11 +317,12 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .spanBuilder("GradleCall")
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      if (GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.2")) {
-        var scriptModel = GradleExecutionHelper.getModel(connection, resolverContext, GradleDslBaseScriptModel.class);
-        models.addRootModel(GradleDslBaseScriptModel.class, scriptModel);
-        GradleSyncProjectConfigurator.runScriptBasePhase(resolverContext);
-      }
+      // TODO Avoid requesting GradleDslBaseScriptModel due to performance regression b/500768963
+      //if (GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.2")) {
+      //  var scriptModel = GradleExecutionHelper.getModel(connection, resolverContext, GradleDslBaseScriptModel.class);
+      //  models.addRootModel(GradleDslBaseScriptModel.class, scriptModel);
+      //  GradleSyncProjectConfigurator.runScriptBasePhase(resolverContext);
+      //}
 
       var modelFetchActionResultHandler = GradleSyncProjectConfigurator.createModelFetchResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
