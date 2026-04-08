@@ -7,11 +7,12 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -27,6 +28,11 @@ internal class BadgePanel : UISandboxPanel {
       group("Predefined Badges") {
         row {
           for (badge in listOf(Badge.new, Badge.alpha, Badge.beta, Badge.trial)) {
+            cell(JLabel(badge))
+          }
+        }
+        row {
+          for (badge in listOf(Badge.newDisabled, Badge.alphaDisabled, Badge.betaDisabled, Badge.trialDisabled)) {
             cell(JLabel(badge))
           }
         }
@@ -53,23 +59,18 @@ internal class BadgePanel : UISandboxPanel {
         }
       }
 
-      group("Tab with Badge") {
+      group("Tab with Badges") {
         row {
           val tabs = JBTabsImpl(project = null, disposable)
 
           tabs.addTab(TabInfo(createTabContent("Regular tab content")).setText("Settings"))
-
-          val featureTab = TabInfo(createTabContent("Beta feature content")).setText("Feature")
-          tabs.addTab(featureTab)
-          tabs.getTabLabel(featureTab)?.add(JLabel(Badge.beta), BorderLayout.EAST)
-
-          val newFeatureTab = TabInfo(createTabContent("New feature content")).setText("New Feature")
-          tabs.addTab(newFeatureTab)
-          tabs.getTabLabel(newFeatureTab)?.add(JLabel(Badge.new), BorderLayout.EAST)
+          tabs.addTab(TabInfo(createTabContent("Beta feature content")).setText("Feature").setIcon(Badge.beta))
+          tabs.addTab(TabInfo(createTabContent("New feature content")).setText("New Feature").setIcon(Badge.new))
 
           val wrapper = Wrapper(tabs)
           wrapper.border = JBUI.Borders.customLine(JBColor.border())
-          cell(wrapper).align(Align.FILL)
+          wrapper.preferredSize = JBDimension(100, 100)
+          cell(wrapper).align(AlignX.FILL)
         }
       }
     }
@@ -89,5 +90,5 @@ private val allColorTypeBadges = listOf(
   Badge("Green secondary", Badge.ColorType.GREEN_SECONDARY),
   Badge("Purple secondary", Badge.ColorType.PURPLE_SECONDARY),
   Badge("Gray secondary", Badge.ColorType.GRAY_SECONDARY),
-  Badge("Disabled").apply { disabled = true },
+  Badge("Disabled").apply { enabled = false },
 )

@@ -15,8 +15,7 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
-import java.awt.font.FontRenderContext
-import java.awt.geom.AffineTransform
+import java.awt.Toolkit
 import javax.swing.Icon
 
 
@@ -27,7 +26,7 @@ import javax.swing.Icon
  * for common badge types, or construct directly with a custom [text] and [colorType].
  *
  * Colors are resolved from `Badge.*` theme keys (see `IntelliJPlatform.themeMetadata.json`).
- * When [disabled] is `true`, the badge uses `Badge.disabledBackground` / `Badge.disabledForeground`
+ * When [enabled] is `false`, the badge uses `Badge.disabledBackground` / `Badge.disabledForeground`
  * regardless of [colorType].
  *
  * @param text the localized label displayed inside the badge
@@ -41,16 +40,28 @@ class Badge(
 
   companion object {
     @JvmStatic
-    val new: Icon = Badge(IdeBundle.message("badge.text.new"), ColorType.BLUE)
+    val new: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE)
 
     @JvmStatic
-    val alpha: Icon = Badge(IdeBundle.message("badge.text.alpha"), ColorType.GREEN_SECONDARY)
+    val newDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.new"), ColorType.BLUE, false)
 
     @JvmStatic
-    val beta: Icon = Badge(IdeBundle.message("badge.text.beta"), ColorType.PURPLE_SECONDARY)
+    val alpha: Icon = ImmutableBadge(IdeBundle.message("badge.text.alpha"), ColorType.GREEN_SECONDARY)
 
     @JvmStatic
-    val trial: Icon = Badge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY)
+    val alphaDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.alpha"), ColorType.GREEN_SECONDARY, false)
+
+    @JvmStatic
+    val beta: Icon = ImmutableBadge(IdeBundle.message("badge.text.beta"), ColorType.PURPLE_SECONDARY)
+
+    @JvmStatic
+    val betaDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.beta"), ColorType.PURPLE_SECONDARY, false)
+
+    @JvmStatic
+    val trial: Icon = ImmutableBadge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY)
+
+    @JvmStatic
+    val trialDisabled: Icon = ImmutableBadge(IdeBundle.message("badge.text.trial"), ColorType.GREEN_SECONDARY, false)
   }
 
   /**
@@ -69,10 +80,7 @@ class Badge(
     GRAY_SECONDARY,
   }
 
-  /**
-   * Whether to render the badge in its disabled (gray) appearance
-   */
-  var disabled: Boolean = false
+  var enabled: Boolean = true
 
   private val hPad: Int
     get() = JBUIScale.scale(6)
@@ -87,7 +95,7 @@ class Badge(
       val height = iconHeight
       val arc = height / 2f
 
-      val colorPair = if (disabled) disabledColorPair() else enabledColorPair(colorType)
+      val colorPair = if (enabled) enabledColorPair(colorType) else disabledColorPair()
 
       DarculaNewUIUtil.fillRoundedRectangle(g2, Rectangle(0, 0, width, height), colorPair.background, arc * 2)
 
@@ -113,9 +121,9 @@ class Badge(
   }
 
   override fun getIconWidth(): Int {
-    val frc = FontRenderContext(AffineTransform(), true, true)
-    val textBounds = getTextFont().getStringBounds(text, frc)
-    return textBounds.width.toInt() + hPad * 2
+    @Suppress("DEPRECATION")
+    val fm = Toolkit.getDefaultToolkit().getFontMetrics(getTextFont())
+    return fm.stringWidth(text) + hPad * 2
   }
 
   override fun getIconHeight(): Int = JBUIScale.scale(16)
@@ -165,4 +173,27 @@ private fun disabledColorPair(): ColorPair {
     JBColor.namedColor("Badge.disabledForeground", JBColor(0xB5B7BD, 0x8B8E94)),
     JBColor.namedColor("Badge.disabledBackground", JBColor(Color(0x73767C1F, true), Color(0xB5B7BD33.toInt(), true)))
   )
+}
+
+private class ImmutableBadge(
+  text: @NlsContexts.Label String,
+  colorType: ColorType = ColorType.BLUE_SECONDARY,
+  enabled: Boolean = true,
+) : Icon {
+
+  private val delegate = Badge(text, colorType).apply {
+    this.enabled = enabled
+  }
+
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    delegate.paintIcon(c, g, x, y)
+  }
+
+  override fun getIconWidth(): Int {
+    return delegate.iconWidth
+  }
+
+  override fun getIconHeight(): Int {
+    return delegate.iconHeight
+  }
 }
