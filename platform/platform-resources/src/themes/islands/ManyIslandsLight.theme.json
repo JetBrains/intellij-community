@@ -289,9 +289,15 @@
     "inlay-bg": "transparent-black-20",
     "inlay-border": "transparent-black-50",
 
-    "toggle-off-bg": "gray-160",
-    "toggle-button-bg": "gray-120",
+    "toggle-on-bg": "accent-brand-bg",
+    "toggle-on-disabled-bg": "#DFE1E5",
+    "toggle-off-bg": "transparent-black-50",
+    "toggle-off-disabled-bg": "#EBECF0",
+    "toggle-button-bg": "white",
     "toggle-border": "gray-120",
+    "toggle-disabled-track-fill": "transparent",
+    "toggle-disabled-border": "control-border-disabled",
+    "toggle-disabled-button-color": "icon-disabled",
 
     "editor-floating-toolbar-bg": "layer-0-bg",
     "popup-completion-match-text": "blue-70",
@@ -300,6 +306,7 @@
     "tree-indent-guide-border": "tool-window-border",
 
     "icon-default-stroke": "gray-80",
+    "icon-disabled": "gray-120",
     "icon-over-accent": "white",
     "icon-green-stroke": "green-80",
 
@@ -1098,13 +1105,20 @@
       "warningForeground": "text-default"
     },
 
+    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
+
     "ToggleButton": {
-      "onBackground": "control-success-bg",
+      "onBackground": "toggle-on-bg",
+      "onDisabledBackground": "toggle-on-disabled-bg",
       "onForeground": "text-over-accent",
       "offBackground": "toggle-off-bg",
+      "offDisabledBackground": "toggle-off-disabled-bg",
       "offForeground": "text-secondary",
       "buttonColor": "toggle-button-bg",
-      "borderColor": "toggle-border"
+      "borderColor": "toggle-border",
+      "disabledTrackFill": "toggle-disabled-track-fill",
+      "disabledBorderColor": "toggle-disabled-border",
+      "disabledButtonColor": "toggle-disabled-button-color"
     },
 
     "ToolWindow": {

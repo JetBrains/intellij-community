@@ -2588,6 +2588,31 @@
       "key": "ToggleButton.onForeground"
     },
     {
+      "key": "ToggleButton.onDisabledBackground",
+      "description": "Toggle track background when selected and disabled",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.offDisabledBackground",
+      "description": "Toggle track background when unselected and disabled",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.disabledTrackFill",
+      "description": "Toggle track fill when disabled (Islands pill toggle; typically transparent with disabledBorderColor stroke)",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.disabledBorderColor",
+      "description": "Toggle track border color when disabled (Islands pill toggle)",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.disabledButtonColor",
+      "description": "Toggle notch color when disabled (Islands pill toggle)",
+      "since": "2026.2"
+    },
+    {
       "key": "SegmentedButton.selectedStartBorderColor",
       "description": "Gradient top color of a selected button border in segmented button",
       "since": "2022.1"
