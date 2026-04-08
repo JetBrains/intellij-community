@@ -52,12 +52,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jdom.Element
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
 
 @State(name = "FrontendProjectView", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -282,6 +284,27 @@ internal class ProjectViewToolWindowServiceImpl(
   @RequiresEdt
   private fun removeContent(toolWindow: ToolWindow, content: Content) {
     toolWindow.contentManager.removeContent(content, true)
+  }
+
+  override suspend fun show(requestFocus: Boolean) {
+    withContext(Dispatchers.UI) {
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+      if (toolWindow == null) {
+        LOG.error("Can't show the Project View tool window because it doesn't exist")
+        return@withContext
+      }
+      suspendCancellableCoroutine { continuation ->
+        val onShown: Runnable = {
+          continuation.resume(Unit)
+        }
+        if (requestFocus) {
+          toolWindow.activate(onShown, true)
+        }
+        else {
+          toolWindow.show(onShown)
+        }
+      }
+    }
   }
 
   override suspend fun selectNode(nodePath: ProjectViewNodePath) {

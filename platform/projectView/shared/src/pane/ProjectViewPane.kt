@@ -48,7 +48,6 @@ data class SelectInTargetDescriptor(
 data class SelectInRequest(
   val targetId: @NonNls String,
   val contextDescriptor: SelectInContextDescriptor,
-  val requestFocus: Boolean,
   @Transient val context: SelectInContext? = null,
 )
 

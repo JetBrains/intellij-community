@@ -219,7 +219,7 @@ private class LegacyBackendProjectViewPane(
     val context = selectInRequest.context ?: restoreSerializedContext(selectInRequest.contextDescriptor) ?: return null
     if (!readAction { target.canSelect(context) }) return null
     return selectAndGetPath {
-      target.selectIn(context, selectInRequest.requestFocus)
+      target.selectIn(context, false) // requestFocus doesn't matter because it's backend code
     }
   }
 

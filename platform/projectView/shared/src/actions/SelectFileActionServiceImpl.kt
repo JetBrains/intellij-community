@@ -150,11 +150,11 @@ private class SplitView(private val impl: SelectInSplitProjectViewImpl): View {
     get() = impl.isSelectOpenedFileEnabled()
 
   override fun selectOpenedFileUsingLastFocusedEditor() {
-    impl.selectOpenedFile(EditorChoice.LAST_FOCUSED_ONLY)
+    impl.selectOpenedFile(EditorChoice.LAST_FOCUSED_ONLY, invokedManually = true)
   }
 
   override fun selectOpenedFile() {
-    impl.selectOpenedFile(EditorChoice.ALL_SELECTED)
+    impl.selectOpenedFile(EditorChoice.ALL_SELECTED, invokedManually = true)
   }
 }
 

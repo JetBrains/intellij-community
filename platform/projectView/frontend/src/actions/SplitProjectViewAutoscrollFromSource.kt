@@ -49,7 +49,7 @@ internal class SplitProjectViewAutoscrollFromSource(
         if (optionService.getActionState()?.isAutoscrollFromSourceEnabled != true) {
           return@runLatest
         }
-        SelectInSplitProjectViewImpl.getInstance(project).selectOpenedFile(EditorChoice.ALL_SELECTED)
+        SelectInSplitProjectViewImpl.getInstance(project).selectOpenedFile(EditorChoice.ALL_SELECTED, invokedManually = false)
       }
 
       fun autoscroll() {

@@ -25,5 +25,7 @@ interface ProjectViewToolWindowService {
 
   fun getActionSupport(): ProjectViewActionSupport
 
+  suspend fun show(requestFocus: Boolean)
+
   suspend fun selectNode(nodePath: ProjectViewNodePath)
 }

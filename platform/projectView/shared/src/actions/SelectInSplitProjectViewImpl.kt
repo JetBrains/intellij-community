@@ -64,9 +64,9 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
     return true
   }
 
-  fun selectOpenedFile(editorChoice: EditorChoice) {
+  fun selectOpenedFile(editorChoice: EditorChoice, invokedManually: Boolean) {
     LOG.debug { "Scheduling selection, editor choice = $editorChoice" }
-    check(tasks.trySend(SelectOpenedFileTask(project, editorChoice)).isSuccess)
+    check(tasks.trySend(SelectOpenedFileTask(project, editorChoice, invokedManually)).isSuccess)
   }
 
   fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean) {
@@ -92,11 +92,13 @@ private sealed class SelectTask {
   protected abstract val project: Project
   abstract suspend fun select()
 
-  protected suspend fun selectNodePath(nodePath: ProjectViewNodePath) {
+  protected suspend fun selectNodePath(nodePath: ProjectViewNodePath, requestFocus: Boolean) {
     // The nodes should be already loaded at this moment.
     // But due to the world being completely async, they might take a few instants to actually arrive to the tree.
     // Or it might not even arrive at all, for example, if it was removed at a very unlucky moment.
     withTimeoutOrNull(5.seconds) {
+      LOG.debug { "${if (requestFocus) "Activating" else "Showing"} the Project View tool window" }
+      ProjectViewToolWindowService.getInstance(project).show(requestFocus = requestFocus)
       LOG.debug { "Selecting the node $nodePath" }
       ProjectViewToolWindowService.getInstance(project).selectNode(nodePath)
       LOG.debug { "Selected the node $nodePath" }
@@ -104,7 +106,11 @@ private sealed class SelectTask {
   }
 }
 
-private data class SelectOpenedFileTask(override val project: Project, val editorChoice: EditorChoice) : SelectTask() {
+private data class SelectOpenedFileTask(
+  override val project: Project,
+  private val editorChoice: EditorChoice,
+  private val invokedManually: Boolean,
+) : SelectTask() {
   override suspend fun select() {
     val paneId = ProjectViewToolWindowService.getInstance(project).currentPaneId ?: return
     val rpc = ProjectViewRpc.getInstance()
@@ -127,7 +133,7 @@ private data class SelectOpenedFileTask(override val project: Project, val edito
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {
-          selectNodePath(nodePath)
+          selectNodePath(nodePath, requestFocus = invokedManually)
           break
         }
       }
@@ -172,13 +178,12 @@ private data class SelectInTask(
       rpc.findNodeForSelectIn(project.projectId(), SelectInRequest(
         targetId = target.minorViewId,
         contextDescriptor = serialize(context),
-        requestFocus = requestFocus,
         context = context,
       ))
     }
     LOG.debug { "Found the node to select: $nodePath" }
     if (nodePath != null) {
-      selectNodePath(nodePath)
+      selectNodePath(nodePath, requestFocus = requestFocus)
     }
   }
 
