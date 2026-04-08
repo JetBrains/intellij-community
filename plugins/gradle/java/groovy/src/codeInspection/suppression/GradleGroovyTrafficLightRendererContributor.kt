@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.markup.AnalyzingType
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuspendTypecheckingService
-import org.jetbrains.plugins.gradle.config.isGradleFile
+import com.intellij.gradle.java.groovy.config.isGradleFile
 
 internal class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContributor {
   override fun createRenderer(editor: Editor, psiFile: PsiFile?): TrafficLightRenderer? {
