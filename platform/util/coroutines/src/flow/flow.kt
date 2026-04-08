@@ -31,6 +31,8 @@ import kotlin.time.Duration
 /**
  * Returns a cold flow, which emits values of [this] flow not more often than the given [timeout][timeMs].
  *
+ * Unlike [throttleLatest], the first value is always emitted without any delay.
+ *
  * Example:
  * ```kotlin
  * flow {
