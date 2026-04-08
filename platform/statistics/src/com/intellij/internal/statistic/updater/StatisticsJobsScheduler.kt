@@ -20,12 +20,14 @@ import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
@@ -43,9 +45,9 @@ internal class StatisticsJobsScheduler : ApplicationActivity {
   }
 
   override suspend fun execute() {
-    coroutineScope {
+    withContext(Dispatchers.IO) {
       if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(StatisticsEventLoggerProvider.EP_NAME)) {
-        StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(this@coroutineScope, object : ExtensionPointListener<StatisticsEventLoggerProvider> {
+        StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(this@withContext, object : ExtensionPointListener<StatisticsEventLoggerProvider> {
           override fun extensionAdded(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
             launch {
               launchStatisticsSendJob(extension, this)
