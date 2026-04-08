@@ -1,6 +1,11 @@
+@file:Suppress("DuplicatedCode")
+
 package com.intellij.mcpserver.toolsets.general
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.util.EditSourceUtil
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel
@@ -17,20 +22,25 @@ import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.Processor
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.FindSymbolParameters
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -43,6 +53,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal suspend fun searchSymbols(
   q: String,
   paths: List<String>?,
+  includeExternal: Boolean,
   limit: Int,
 ): SearchResult {
   val effectiveLimit = normalizeLimit(limit)
@@ -52,7 +63,8 @@ internal suspend fun searchSymbols(
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
   val directoryFilterFile = directoryFilterPath?.let { LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it) }
   val searchScope = directoryFilterFile?.let { GlobalSearchScopes.directoryScope(project, it, true) }
-                   ?: GlobalSearchScope.projectScope(project)
+                    ?: if (includeExternal) GlobalSearchScope.allScope(project)
+                    else GlobalSearchScope.projectScope(project)
 
   val fileDocumentManager = serviceAsync<FileDocumentManager>()
   val provider = DefaultChooseByNameItemProvider(null)
@@ -87,6 +99,7 @@ internal suspend fun searchSymbols(
               seenCount++
               val navigationItem = descriptor.item as? NavigationItem ?: return@Processor seenCount < requestedCount
               val searchItem = mapNavigationItem(
+                project = project,
                 item = navigationItem,
                 projectDir = projectDir,
                 fileDocumentManager = fileDocumentManager,
@@ -148,6 +161,7 @@ private fun computeLocalPattern(model: ChooseByNameModel, pattern: String): Stri
 }
 
 private fun mapNavigationItem(
+  project: Project,
   item: NavigationItem,
   projectDir: Path,
   fileDocumentManager: FileDocumentManager,
@@ -159,12 +173,12 @@ private fun mapNavigationItem(
     else -> null
   } ?: return null
 
-  val virtualFile = psiElement.containingFile?.virtualFile ?: return null
-  val filePath = projectDir.relativizeIfPossible(virtualFile)
+  val anchor = resolveNavigationAnchor(psiElement) ?: return null
+  val filePath = projectDir.relativizeIfPossible(anchor.file)
   if (filePath.isBlank()) return null
   if (!matchesPathScope(pathScope, projectDir, filePath)) return null
 
-  val snippet = buildPsiSnippet(projectDir, fileDocumentManager, psiElement)
+  val snippet = buildPsiSnippet(project, projectDir, fileDocumentManager, anchor)
   return SearchItem(
     filePath = filePath,
     startLine = snippet?.startLine,
@@ -192,28 +206,32 @@ private fun toRelativePath(projectDir: Path, filePath: String): Path? {
   return nioPath
 }
 
+@RequiresReadLock
 private fun buildPsiSnippet(
+  project: Project,
   projectDir: Path,
   fileDocumentManager: FileDocumentManager,
-  element: PsiElement,
+  anchor: NavigationAnchor,
 ): UsageSnippet? {
-  val navigationElement = element.navigationElement ?: element
-  val file = navigationElement.containingFile?.virtualFile ?: return null
-  val textRange = navigationElement.textRange
-  return buildSnippet(projectDir, fileDocumentManager, file, textRange)
+  return buildSnippet(project, projectDir, fileDocumentManager, anchor)
 }
 
+@RequiresReadLock
 private fun buildSnippet(
+  project: Project,
   projectDir: Path,
   fileDocumentManager: FileDocumentManager,
-  file: VirtualFile,
-  textRange: Segment,
+  anchor: NavigationAnchor,
 ): UsageSnippet? {
-  val document = fileDocumentManager.getDocument(file) ?: return null
+  if (anchor.file.fileType.isBinary) {
+    return buildCompiledSnippet(projectDir, anchor)
+  }
+  val document = fileDocumentManager.getDocument(anchor.file, project) ?: return null
+  val textRange = resolveSnippetRange(anchor, document)
   val snippet = buildSearchSnippet(document = document, textRange = textRange, maxTextChars = Constants.MAX_USAGE_TEXT_CHARS)
   return UsageSnippet(
-    file = file,
-    filePath = projectDir.relativizeIfPossible(file),
+    file = anchor.file,
+    filePath = projectDir.relativizeIfPossible(anchor.file),
     lineText = snippet.lineText,
     startLine = snippet.startLine,
     startColumn = snippet.startColumn,
@@ -224,14 +242,82 @@ private fun buildSnippet(
   )
 }
 
+@RequiresReadLock
+private fun buildCompiledSnippet(projectDir: Path, anchor: NavigationAnchor): UsageSnippet? {
+  val rendered = UsageViewUtil.createNodeText(anchor.element).trim()
+  if (rendered.isEmpty()) return null
+
+  val prefix = "compiled/binary code: "
+  val maxSnippetLength = (Constants.MAX_USAGE_TEXT_CHARS - prefix.length).coerceAtLeast(1)
+  val truncated = if (rendered.length > maxSnippetLength) {
+    rendered.take(maxSnippetLength - 1).trimEnd() + "…"
+  }
+  else {
+    rendered
+  }
+
+  return UsageSnippet(
+    file = anchor.file,
+    filePath = projectDir.relativizeIfPossible(anchor.file),
+    lineText = prefix + truncated,
+    startLine = null,
+    startColumn = null,
+    endLine = null,
+    endColumn = null,
+    startOffset = null,
+    endOffset = null,
+  )
+}
+
 private data class UsageSnippet(
   @JvmField val file: VirtualFile,
   @JvmField val filePath: String,
   @JvmField val lineText: String,
-  @JvmField val startLine: Int,
-  @JvmField val startColumn: Int,
-  @JvmField val endLine: Int,
-  @JvmField val endColumn: Int,
-  @JvmField val startOffset: Int,
-  @JvmField val endOffset: Int,
+  @JvmField val startLine: Int?,
+  @JvmField val startColumn: Int?,
+  @JvmField val endLine: Int?,
+  @JvmField val endColumn: Int?,
+  @JvmField val startOffset: Int?,
+  @JvmField val endOffset: Int?,
 )
+
+private data class NavigationAnchor(
+  @JvmField val element: PsiElement,
+  @JvmField val file: VirtualFile,
+  @JvmField val offset: Int,
+)
+
+@RequiresReadLock
+private fun resolveNavigationAnchor(element: PsiElement): NavigationAnchor? {
+  val originalElement = EditSourceUtil.getNavigatableOriginalElement(element) ?: element
+  val navigationElement = originalElement.navigationElement ?: originalElement
+  val gotoTarget = TargetElementUtil.getInstance().getGotoDeclarationTarget(originalElement, navigationElement) ?: navigationElement
+  val descriptor = PsiNavigationSupport.getInstance().getDescriptor(gotoTarget)
+  if (descriptor is OpenFileDescriptor) {
+    val file = descriptor.file
+    if (file.isValid) {
+      return NavigationAnchor(gotoTarget, file, descriptor.offset)
+    }
+  }
+  val file = PsiUtilCore.getVirtualFile(gotoTarget) ?: return null
+  if (!file.isValid) return null
+  return NavigationAnchor(gotoTarget, file, gotoTarget.textOffset)
+}
+
+private fun resolveSnippetRange(anchor: NavigationAnchor, document: com.intellij.openapi.editor.Document): Segment {
+  val anchorElementFile = anchor.element.containingFile?.virtualFile
+  val elementRange = anchor.element.textRange
+  if (anchorElementFile == anchor.file && elementRange != null && elementRange.endOffset <= document.textLength) {
+    return elementRange
+  }
+  if (document.textLength == 0) {
+    return TextRange(0, 0)
+  }
+  val startOffset = when {
+    anchor.offset < 0 -> 0
+    anchor.offset >= document.textLength -> document.textLength - 1
+    else -> anchor.offset
+  }
+  val endOffset = minOf(document.textLength, startOffset + 1)
+  return TextRange(startOffset, endOffset)
+}

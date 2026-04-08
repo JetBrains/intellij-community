@@ -120,16 +120,20 @@ internal class SearchToolset : McpToolset {
         |Results include match coordinates when available (1-based line/column, 0-based offsets).
         |
         |Paths are glob patterns relative to the project root.
+        |By default this searches project symbols only.
+        |If you don't find a suitable result, try again with include_external=true to search SDK and library symbols too.
     """)
   suspend fun search_symbol(
     @McpDescription("Symbol query text") q: String,
     @McpDescription(PATHS_DESCRIPTION) paths: List<String>? = null,
+    @McpDescription("Whether to include SDK and library symbols. Disabled by default; if nothing suitable is found, try again with include_external=true.")
+    include_external: Boolean = false,
     @McpDescription("Maximum number of results to return") limit: Int = 1000,
   ): SearchResult {
     if (q.isBlank()) mcpFail("Search query is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", q))
     return try {
-      searchSymbols(q, paths, limit)
+      searchSymbols(q, paths, include_external, limit)
     }
     catch (e: LinkageError) {
       mcpFail("search_symbol is not supported by this IDE version")
