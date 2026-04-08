@@ -136,8 +136,8 @@ private object JunieTerminalAgent : BundledTerminalAgent(
     get() = true
 
   override val installCommandUnix: List<String> = listOf(
-    "/bin/sh", "-c",
-    $$"curl -fsSL https://junie.jetbrains.com/install.sh | /bin/sh && exec \"$HOME/.local/bin/junie\"",
+    "/bin/bash", "-c",
+    $$"curl -fsSL https://junie.jetbrains.com/install.sh | /bin/bash && exec \"$HOME/.local/bin/junie\"",
   )
 
   override val installCommandWindows: List<String> = listOf(
