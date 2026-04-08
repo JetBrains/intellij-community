@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.LoadingNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +19,15 @@ import static java.awt.EventQueue.invokeLater;
  * It should be integrated into TreeUI to process path removing more accurately.
  */
 public final class RestoreSelectionListener implements TreeSelectionListener {
+  /**
+   * If set on a tree to true as a client property, disables this listener entirely.
+   * <p>
+   * Intended to be used in cases when the listener is installed by 3rd party code,
+   * and there are use cases when it's behavior is undesirable.
+   * </p>
+   */
+  public static final @NotNull Key<Boolean> DISABLED = Key.create("RestoreSelectionListener.DISABLED");
+
   @Override
   public void valueChanged(TreeSelectionEvent event) {
     if (null == event.getNewLeadSelectionPath()) {
@@ -24,6 +35,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
       if (path != null && null != path.getParentPath()) {
         Object source = event.getSource();
         if (source instanceof JTree tree) {
+          if (ClientProperty.isTrue(tree, DISABLED)) return;
           if (tree.getSelectionModel().isSelectionEmpty()) {
             invokeLater(() -> {
               // restore selection later, because nodes are removed before they are inserted

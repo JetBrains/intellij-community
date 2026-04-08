@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.projectView.impl.ProjectViewPane.canBeSelectedInProjectView;
+import static com.intellij.ide.projectView.impl.SplitProjectViewUtilKt.isProjectViewSplit;
 import static com.intellij.psi.SmartPointerManager.createPointer;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
@@ -92,21 +93,26 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       return ActionCallback.REJECTED;
     }
 
+    var isSplit = isProjectViewSplit();
     ActionCallback result = new ActionCallback();
     Runnable runnable = () -> {
       if (LOG.isDebugEnabled()) {
         LOG.debug(
-          (requestFocus ? "Activated" : "Shown") +
-          ". Changing project view to " + id + " / " + subviewId + ", will continue once changed"
+          (isSplit ? "" : requestFocus ? "Activated. " : "Shown. ") +
+          "Changing project view to " + id + " / " + subviewId + ", will continue once changed"
         );
       }
       projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
         LOG.debug("Changed. Delegating to SelectInProjectViewImpl to continue");
-        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, true, result);
+        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus && !isSplit, true, result);
       });
     };
 
-    if (requestFocus) {
+    if (isSplit) {
+      LOG.debug("Not touching the project view tool window because it's handled by the frontend code");
+      runnable.run();
+    }
+    else if (requestFocus) {
       LOG.debug("Activating the project view tool window, will continue once activated");
       projectViewToolWindow.activate(runnable, true);
     }

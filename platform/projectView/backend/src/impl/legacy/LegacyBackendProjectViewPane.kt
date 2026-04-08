@@ -75,6 +75,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.tree.AsyncTreeModel
+import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
@@ -204,11 +205,11 @@ private class LegacyBackendProjectViewPane(
     return selectAndGetPath {
       val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
       if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
-        LOG.debug { "Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        LOG.debug { "[${descriptor.id}] Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
         impl.selectOpenedFileUsingLastFocusedEditor()
       }
       else {
-        LOG.debug { "Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        LOG.debug { "[${descriptor.id}] Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
         impl.selectOpenedFile()
       }
     }
@@ -219,6 +220,7 @@ private class LegacyBackendProjectViewPane(
     val context = selectInRequest.context ?: restoreSerializedContext(selectInRequest.contextDescriptor) ?: return null
     if (!readAction { target.canSelect(context) }) return null
     return selectAndGetPath {
+      LOG.debug { "[${descriptor.id}] Selecting using the context $context" }
       target.selectIn(context, false) // requestFocus doesn't matter because it's backend code
     }
   }
@@ -231,6 +233,13 @@ private class LegacyBackendProjectViewPane(
   private suspend fun selectAndGetPath(select: () -> Unit): ProjectViewNodePath? {
     return withContext(Dispatchers.EDT) {
       val tree = legacyPaneManager.legacyPane.tree
+      // Even with the REAL_SELECTION_IN_PROGRESS hack,
+      // there's a case when this listener prevents us from detecting the "real" selection:
+      // 1. We set the selection to null.
+      // 2. The listener resets it back to what it was (isReal = false).
+      // 3. The "real" selection by chance matches the existing one.
+      // => no callback with isReal = true, because there's no change. The frontend keeps waiting until it times out.
+      ClientProperty.put(tree, RestoreSelectionListener.DISABLED, true)
       tree.selectionPath = null
       // suspendCancellableCoroutine makes listener deregistration incredibly tricky, so let's put it outside it
       val captureSelection = AtomicReference<((TreePath?) -> Unit)?>(null)
