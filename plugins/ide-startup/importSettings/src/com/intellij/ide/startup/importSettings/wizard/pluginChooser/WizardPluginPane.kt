@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
+import com.intellij.ide.plugins.newui.TagComponent
 import com.intellij.ide.startup.importSettings.data.WizardPlugin
-import com.intellij.ui.components.Badge
-import com.intellij.ui.components.Badge.ColorType
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -94,7 +92,7 @@ class WizardPluginPane(val plugin: WizardPlugin, changeHandler: () -> Unit) {
     panel.add(createLabel().apply { text = name })
     if (badge != null) {
       panel.add(Box.createHorizontalStrut(JBUI.scale(6)))
-      panel.add(JBLabel(Badge(badge, ColorType.PURPLE_SECONDARY)))
+      panel.add(TagComponent(badge))
     }
     return panel
   }
