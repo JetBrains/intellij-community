@@ -10,6 +10,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class PsiClassUtil {
   private PsiClassUtil() { }
@@ -47,6 +49,7 @@ public final class PsiClassUtil {
     if (psiClass instanceof PsiAnonymousClass) {
       psiClass = ((PsiAnonymousClass)psiClass).getBaseClassType().resolve();
     }
+    Set<PsiClass> checked = null;
     while (true) {
       if (psiClass == null) return false;
       if (psiClass.isInterface()) return false;
@@ -56,7 +59,12 @@ public final class PsiClassUtil {
       if (types.length == 0) return false;
       PsiClassType type = types[0];
       if (type.getParameterCount() != 0) return false;
+      if (checked == null) {
+        checked = new HashSet<>();
+        checked.add(psiClass);
+      }
       psiClass = type.resolve();
+      if (!checked.add(psiClass)) return false;
     }
   }
 }
