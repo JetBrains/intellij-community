@@ -36,17 +36,20 @@ internal class TerminalAgentTest : BasePlatformTestCase() {
     assertThat(codex.installActionText).isNull()
     assertThat(codex.secondaryText).isNull()
     assertThat(codex.showsNewBadge).isFalse()
-    assertThat(codex.unixHomeBinaryPath).isNull()
-    assertThat(codex.windowsHomeBinaryPath).isNull()
+    assertThat(codex.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin", "/usr/local/bin")
+    assertThat(codex.windowsKnownLocationCandidates).containsExactly("\$HOME\\AppData\\Roaming\\npm")
+    assertThat(codex.windowsExecutableExtensions).containsExactly("exe", "bat", "cmd", "ps1")
 
     assertThat(claude.installActionText).isNull()
     assertThat(claude.secondaryText).isNull()
     assertThat(claude.showsNewBadge).isFalse()
-    assertThat(claude.unixHomeBinaryPath).isNull()
-    assertThat(claude.windowsHomeBinaryPath).isNull()
+    assertThat(claude.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin", "/usr/local/bin")
+    assertThat(claude.windowsKnownLocationCandidates).containsExactly("\$HOME\\AppData\\Roaming\\npm", "\$HOME\\.local\\bin")
+    assertThat(claude.windowsExecutableExtensions).containsExactly("exe", "bat", "cmd", "ps1")
 
-    assertThat(junie.unixHomeBinaryPath).isEqualTo(".local/bin/junie")
-    assertThat(junie.windowsHomeBinaryPath).isEqualTo(".local\\bin\\junie.bat")
+    assertThat(junie.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin")
+    assertThat(junie.windowsKnownLocationCandidates).containsExactly("\$HOME\\.local\\bin")
+    assertThat(junie.windowsExecutableExtensions).containsExactly("bat")
   }
 
   @Test
@@ -96,7 +99,5 @@ private class TestTerminalAgent(
   override val agentKey = TerminalAgent.AgentKey(key)
   override val displayName: String = agentKey.key
   override val binaryName: String = agentKey.key
-  override val unixHomeBinaryPath: String? = null
-  override val windowsHomeBinaryPath: String? = null
   override val icon: Icon = EmptyIcon.ICON_16
 }
