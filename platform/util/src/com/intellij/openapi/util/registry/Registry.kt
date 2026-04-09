@@ -43,12 +43,13 @@ class Registry {
   private var loadFuture = CompletableFuture<Void?>()  // cannot use `CompletableDeferred` - the coroutines lib may be not on the classpath
 
   @Volatile
-  var valueChangeListener: RegistryValueListener = EMPTY_VALUE_LISTENER
+  internal var valueChangeListener: RegistryValueListener = EMPTY_VALUE_LISTENER
     private set
 
   companion object {
     private var bundledRegistry: Reference<Map<String, String>>? = null
 
+    @Internal
     const val REGISTRY_BUNDLE: String = "misc.registry"
 
     private val EMPTY_VALUE_LISTENER: RegistryValueListener = object : RegistryValueListener { }
@@ -146,6 +147,21 @@ class Registry {
     @Throws(MissingResourceException::class)
     @JvmStatic
     fun stringValue(key: String): String = getInstance().resolveValue(key).asString()
+
+    @JvmStatic
+    fun stringValue(key: String, defaultValue: String): String {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+        LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+        return defaultValue
+      }
+
+      try {
+        return registry.resolveValue(key).asString()
+      }
+      catch (_: MissingResourceException) {
+        return defaultValue
+      }
+    }
 
     @Throws(MissingResourceException::class)
     @JvmStatic
@@ -350,6 +366,7 @@ class Registry {
   private fun resolveValue(key: String): RegistryValue = values.computeIfAbsent(key, valueProducer)
 
   @TestOnly
+  @Internal
   fun reset() {
     userProperties.clear()
     values.clear()
@@ -358,6 +375,7 @@ class Registry {
     loadFuture = CompletableFuture()
   }
 
+  @Internal
   fun getBundleValueOrNull(key: String): @NlsSafe String? =
     contributedKeys[key]?.defaultValue ?: loadFromBundledConfig()?.get(key)
 
@@ -414,9 +432,11 @@ class Registry {
     }
   }
 
+  @get:Internal
   val isInDefaultState: Boolean
     get() = userProperties.isEmpty()
 
+  @get:Internal
   val isRestartNeeded: Boolean
     get() = isRestartNeeded(userProperties)
 }
