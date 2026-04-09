@@ -1115,6 +1115,8 @@ jvm_library(
     "//plugins/xpath:xpath-tests_test_lib",
     "//java/compiler:compiler-tests-main",
     "//java/compiler:compiler-tests-main_test_lib",
+    "//plugins/repository-search/completion:repository-search-completion-tests",
+    "//plugins/repository-search/completion:repository-search-completion-tests_test_lib",
     "//plugins/gradle:gradle-tests-main",
     "//plugins/gradle:gradle-tests-main_test_lib",
     "//plugins/maven/src/test:maven-tests-main",

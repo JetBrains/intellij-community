@@ -76,7 +76,8 @@ private fun PsiElement.isOnTheTopLevelOfScriptBlockSimple(blockName: String): Bo
 private fun PsiElement.isOnTheTopLevelOfScriptBlockDash(blockName: String): Boolean {
     val pattern = psiElement().withSuperParent(
         2, psiElement<KtBinaryExpression>() // spring-boot-starter-mail
-    ).withAncestor(10, scriptBlockElementPattern(blockName))
+        .withParent(scriptBlockElementPattern(blockName))
+    )
 
     return pattern.accepts(this)
 }
@@ -84,7 +85,8 @@ private fun PsiElement.isOnTheTopLevelOfScriptBlockDash(blockName: String): Bool
 private fun PsiElement.isOnTheTopLevelOfScriptBlockDot(blockName: String): Boolean {
     val pattern = psiElement().withSuperParent(
         2, psiElement<KtDotQualifiedExpression>() // org.springframework.boot
-    ).withAncestor(10, scriptBlockElementPattern(blockName))
+        .withParent(scriptBlockElementPattern(blockName))
+    )
 
     return pattern.accepts(this)
 }
