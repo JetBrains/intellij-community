@@ -146,6 +146,19 @@ cp -r "syntaxes" "$ROOT/lib/bundles/cmake"
 
 cd ..
 
+# vue
+git clone https://github.com/vuejs/language-tools
+pushd language-tools/extensions/vscode
+
+echo "adding vue"
+mkdir -p "$ROOT/lib/bundles/vue"
+cp -r "LICENSE" "$ROOT/lib/bundles/vue"
+cp -r "package.json" "$ROOT/lib/bundles/vue"
+cp -r "README.md" "$ROOT/lib/bundles/vue"
+cp -r "syntaxes" "$ROOT/lib/bundles/vue"
+
+popd
+
 mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/hcl.tmGrammar.json"
