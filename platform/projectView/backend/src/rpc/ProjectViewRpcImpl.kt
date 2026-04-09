@@ -6,7 +6,7 @@ import com.intellij.platform.project.findProject
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
@@ -36,7 +36,7 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
 
   override suspend fun getPaneDescriptors(
     projectId: ProjectId,
-  ): List<ProjectViewPaneDescriptor> {
+  ): List<ProjectViewPaneDescriptorImpl> {
     return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneDescriptors()
   }
 

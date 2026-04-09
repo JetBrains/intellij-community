@@ -42,7 +42,6 @@ import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.actions.toNestingRuleState
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
-import com.intellij.platform.projectView.backend.pane.id
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
@@ -57,6 +56,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRe
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
@@ -161,26 +161,34 @@ private class LegacyBackendProjectViewPane(
   private val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
-  selectInTargetDescriptors: List<SelectInTargetDescriptor>,
+  private val selectInTargetDescriptors: List<SelectInTargetDescriptor>,
 ) : BackendProjectViewPane {
   private val managerRequestChannel = legacyPaneManager.getRequestChannel()
 
-  override val descriptor: ProjectViewPaneDescriptor = ProjectViewPaneDescriptor(
-    id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId"),
-    presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
-    order = legacyPaneManager.legacyPane.weight,
-    isDefault = legacyPaneManager.legacyPane.isDefaultPane(project),
-    selectInTargetDescriptors = selectInTargetDescriptors,
-  )
-
   private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.UNLIMITED)
+
+  private val id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId")
+
+  override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor = builder.run {
+    if (legacyPaneManager.legacyPane.isDefaultPane(project)) {
+      setDefault(true)
+    }
+    for (selectInTargetDescriptor in selectInTargetDescriptors) {
+      addSelectInTarget(selectInTargetDescriptor)
+    }
+    build(
+      id = id,
+      presentableName = if (subId == null) legacyPaneManager.legacyPane.title else legacyPaneManager.legacyPane.getPresentableSubIdName(subId),
+      order = legacyPaneManager.legacyPane.weight,
+    )
+  }
 
   override suspend fun manage() {
     coroutineScope {
-      launch(CoroutineName("Manage pane ${descriptor.id}")) {
-        legacyPaneManager.managePane(descriptor.id)
+      launch(CoroutineName("Manage pane $id")) {
+        legacyPaneManager.managePane(id)
       }
-      launch(CoroutineName("Manage request channel ${descriptor.id}")) {
+      launch(CoroutineName("Manage request channel $id")) {
         for (request in requestChannel) {
           managerRequestChannel.send(request)
         }
@@ -206,11 +214,11 @@ private class LegacyBackendProjectViewPane(
     return selectAndGetPath {
       val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
       if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
-        LOG.debug { "[${descriptor.id}] Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        LOG.debug { "[$id] Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
         impl.selectOpenedFileUsingLastFocusedEditor()
       }
       else {
-        LOG.debug { "[${descriptor.id}] Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
+        LOG.debug { "[$id] Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
         impl.selectOpenedFile()
       }
     }
@@ -221,7 +229,7 @@ private class LegacyBackendProjectViewPane(
     val context = selectInRequest.context ?: restoreSerializedContext(selectInRequest.contextDescriptor) ?: return null
     if (!readAction { target.canSelect(context) }) return null
     return selectAndGetPath {
-      LOG.debug { "[${descriptor.id}] Selecting using the context $context" }
+      LOG.debug { "[$id] Selecting using the context $context" }
       target.selectIn(context, false) // requestFocus doesn't matter because it's backend code
     }
   }

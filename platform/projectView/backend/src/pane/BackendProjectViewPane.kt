@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
-import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequest
@@ -26,7 +26,7 @@ interface BackendProjectViewPaneProvider {
 @ApiStatus.Internal
 interface BackendProjectViewPane {
 
-  val descriptor: ProjectViewPaneDescriptor
+  suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
 
   suspend fun manage()
 
@@ -40,7 +40,3 @@ interface BackendProjectViewPane {
 
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
 }
-
-@get:ApiStatus.Internal
-val BackendProjectViewPane.id: ProjectViewPaneId
-  get() = descriptor.id

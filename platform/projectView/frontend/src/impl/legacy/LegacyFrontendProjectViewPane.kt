@@ -8,18 +8,17 @@ import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import org.jetbrains.annotations.NonNls
 
 internal class LegacyFrontendProjectViewPaneProvider : FrontendProjectViewPaneProvider {
   override fun createPane(
     project: Project,
-    descriptor: ProjectViewPaneDescriptor
+    descriptor: ProjectViewPaneDescriptorImpl
   ): FrontendProjectViewPane = LegacyFrontendProjectViewPane(project, descriptor)
 }
 
-internal class LegacyFrontendProjectViewPane(project: Project, descriptor: ProjectViewPaneDescriptor) : TreeBasedFrontendProjectViewPane(project) {
+internal class LegacyFrontendProjectViewPane(project: Project, descriptor: ProjectViewPaneDescriptorImpl) : TreeBasedFrontendProjectViewPane(project) {
   override val id: ProjectViewPaneId = descriptor.id
 
   override val displayName: @NlsSafe String = descriptor.presentableName
