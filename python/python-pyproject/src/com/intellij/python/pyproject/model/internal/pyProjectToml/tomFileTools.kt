@@ -29,8 +29,8 @@ import kotlin.io.path.visitFileTree
 /**
  * Walks down the [root]. Like [walkFileSystemNoTomlContent] but with TOML files content
  */
-internal suspend fun walkFileSystemWithTomlContent(root: Directory): Result<FSWalkInfoWithToml, IOException> {
-  val rawTomlFiles = walkFileSystemNoTomlContent(root).getOr { return it }.rawTomlFiles
+internal suspend fun walkFileSystemWithTomlContent(root: Directory, excludedPaths: Set<Path> = emptySet()): Result<FSWalkInfoWithToml, IOException> {
+  val rawTomlFiles = walkFileSystemNoTomlContent(root, excludedPaths).getOr { return it }.rawTomlFiles
 
   // TODO: with a big number of files, use `chunk` to parse them concurrently
   val tomlFiles = rawTomlFiles.map { file ->
@@ -46,6 +46,7 @@ internal suspend fun walkFileSystemWithTomlContent(root: Directory): Result<FSWa
  */
 suspend fun walkFileSystemNoTomlContent(
   root: Directory,
+  excludedPaths: Set<Path> = emptySet(),
 ): Result<FsWalkInfoNoToml, IOException> {
   val rawTomlFiles = ArrayList<Path>(10)
   try {
@@ -68,6 +69,10 @@ suspend fun walkFileSystemNoTomlContent(
           }
           else if (dirName.startsWith(".")) {
             // Dot: just skip
+            FileVisitResult.SKIP_SUBTREE
+          }
+          else if (directory in excludedPaths) {
+            // Excluded folder: skip (pyproject.toml inside excluded folders should not become modules)
             FileVisitResult.SKIP_SUBTREE
           }
           else {

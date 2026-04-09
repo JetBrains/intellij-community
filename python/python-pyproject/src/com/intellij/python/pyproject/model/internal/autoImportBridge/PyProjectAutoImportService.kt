@@ -6,6 +6,12 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -14,7 +20,7 @@ import org.jetbrains.annotations.TestOnly
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class PyProjectAutoImportService(private val project: Project) : Disposable {
+class PyProjectAutoImportService(private val project: Project, private val scope: CoroutineScope) : Disposable {
   private val m = Any()
 
   init {
@@ -22,6 +28,7 @@ class PyProjectAutoImportService(private val project: Project) : Disposable {
   }
 
   private var projectId: ExternalSystemProjectId? = null
+  private var excludeWatcherJob: Job? = null
 
   @get:TestOnly
   internal val initialized: Boolean get() = synchronized(m) { projectId != null }
@@ -45,6 +52,16 @@ class PyProjectAutoImportService(private val project: Project) : Disposable {
       tracker.activate(projectId)
       tracker.markDirty(projectId)
       tracker.scheduleProjectRefresh()
+      // Trigger rebuild when excluded folders change — pyproject.toml inside excluded folders should be ignored.
+      excludeWatcherJob = scope.launch {
+        project.workspaceModel.eventLog.collect { event ->
+          val hasExcludeChanges = event.getChanges(ExcludeUrlEntity::class.java).any { it !is EntityChange.Replaced }
+          if (hasExcludeChanges) {
+            tracker.markDirty(projectId)
+            tracker.scheduleProjectRefresh()
+          }
+        }
+      }
       log.info("PyProject started")
     }
   }
@@ -54,6 +71,8 @@ class PyProjectAutoImportService(private val project: Project) : Disposable {
    */
   fun stop(): Unit = synchronized(m) {
     log.info("PyProject stopped")
+    excludeWatcherJob?.cancel()
+    excludeWatcherJob = null
     projectId?.let {
       getTracker().remove(it)
       projectId = null
