@@ -11,6 +11,7 @@ import org.jetbrains.plugins.terminal.TerminalIcons
 import javax.swing.Icon
 
 const val TERMINAL_AI_AGENTS_REGISTRY_KEY: String = "terminal.agent.predefined.actions.enabled"
+private val DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS: List<String> = listOf("exe", "bat", "cmd", "ps1")
 
 @ApiStatus.Internal
 interface TerminalAgent {
@@ -29,8 +30,27 @@ interface TerminalAgent {
     get() = false
 
   val binaryName: String
-  val unixHomeBinaryPath: String?
-  val windowsHomeBinaryPath: String?
+  /**
+   * Ordered directories to probe after PATH lookup.
+   * Use the `$HOME` marker for home-relative entries (for example, `$HOME/.local/bin`
+   * or `$HOME\AppData\Roaming\npm`). Entries without `$HOME` are treated as absolute paths.
+   */
+  val posixKnownLocationCandidates: List<String>
+    get() = emptyList()
+
+  /**
+   * Ordered directories to probe after PATH lookup.
+   * Use the `$HOME` marker for home-relative entries (for example, `$HOME/.local/bin`
+   * or `$HOME\AppData\Roaming\npm`). Entries without `$HOME` are treated as absolute paths.
+   */
+  val windowsKnownLocationCandidates: List<String>
+    get() = emptyList()
+
+  /**
+   * Ordered executable extensions to probe on Windows for both PATH lookup and known-location lookup.
+   */
+  val windowsExecutableExtensions: List<String>
+    get() = DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS
   val installCommandUnix: List<String>?
     get() = null
   val installCommandWindows: List<String>?
@@ -93,8 +113,9 @@ private abstract class BundledTerminalAgent(
   override val agentKey: TerminalAgent.AgentKey,
   override val displayName: @NlsActions.ActionText String,
   override val binaryName: String,
-  override val unixHomeBinaryPath: String?,
-  override val windowsHomeBinaryPath: String?,
+  override val posixKnownLocationCandidates: List<String>,
+  override val windowsKnownLocationCandidates: List<String>,
+  override val windowsExecutableExtensions: List<String> = DEFAULT_WINDOWS_EXECUTABLE_EXTENSIONS,
   override val icon: Icon,
 ) : TerminalAgent
 
@@ -102,8 +123,14 @@ private object ClaudeCodeTerminalAgent : BundledTerminalAgent(
   agentKey = TerminalAgent.AgentKey("claude_code"),
   displayName = TerminalBundle.message("terminal.aiAgents.claudeCode.displayName"),
   binaryName = "claude",
-  unixHomeBinaryPath = null,
-  windowsHomeBinaryPath = null,
+  posixKnownLocationCandidates = listOf(
+    $$"$HOME/.local/bin",
+    "/usr/local/bin"
+  ),
+  windowsKnownLocationCandidates = listOf(
+    $$"$HOME\\AppData\\Roaming\\npm",
+    $$"$HOME\\.local\\bin"
+  ),
   icon = TerminalIcons.Agents.ClaudeCode,
 ) {
   override val showIconInTab: Boolean = false // Claude Code shows its own icon as a text symbol
@@ -113,8 +140,13 @@ private object CodexTerminalAgent : BundledTerminalAgent(
   agentKey = TerminalAgent.AgentKey("codex"),
   displayName = TerminalBundle.message("terminal.aiAgents.codex.displayName"),
   binaryName = "codex",
-  unixHomeBinaryPath = null,
-  windowsHomeBinaryPath = null,
+  posixKnownLocationCandidates = listOf(
+    $$"$HOME/.local/bin",
+    "/usr/local/bin"
+  ),
+  windowsKnownLocationCandidates = listOf(
+    $$"$HOME\\AppData\\Roaming\\npm"
+  ),
   icon = TerminalIcons.Agents.Codex,
 )
 
@@ -122,8 +154,9 @@ private object JunieTerminalAgent : BundledTerminalAgent(
   agentKey = TerminalAgent.AgentKey("junie"),
   displayName = TerminalBundle.message("terminal.aiAgents.junie.displayName"),
   binaryName = "junie",
-  unixHomeBinaryPath = ".local/bin/junie",
-  windowsHomeBinaryPath = ".local\\bin\\junie.bat",
+  posixKnownLocationCandidates = listOf($$"$HOME/.local/bin"),
+  windowsKnownLocationCandidates = listOf($$"$HOME\\.local\\bin"),
+  windowsExecutableExtensions = listOf("bat"),
   icon = TerminalIcons.Agents.Junie,
 ) {
   override val installActionText: String
