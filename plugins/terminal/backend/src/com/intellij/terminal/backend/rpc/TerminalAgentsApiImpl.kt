@@ -16,9 +16,9 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.where
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentsApi
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
+import java.util.Locale
 
 internal class TerminalAgentsApiImpl : TerminalAgentsApi {
   override suspend fun listAvailableAgents(projectId: ProjectId): List<TerminalAvailableAgentDto> {
@@ -101,16 +102,30 @@ private object TerminalAgentResolver {
       }
     }
 
-    val binaryName = when (context.osFamily) {
-      EelOsFamily.Windows -> if (terminalAgent.binaryName.endsWith(".exe", ignoreCase = true)) terminalAgent.binaryName else "${terminalAgent.binaryName}.exe"
-      EelOsFamily.Posix -> terminalAgent.binaryName
+    val candidates = context.eelApi.exec.findExeFilesInPath(terminalAgent.binaryName)
+    val path = when (context.osFamily) {
+      EelOsFamily.Posix -> candidates.firstOrNull()
+      EelOsFamily.Windows -> {
+        // Prioritize executables with specific extensions on Windows
+        val sortedCandidates = candidates.sortedBy {
+          val extension = PathUtil.getFileExtension(it.fileName)?.lowercase(Locale.ENGLISH)
+          if (extension != null) {
+            val index = WINDOWS_EXECUTABLE_EXTENSIONS.indexOf(extension)
+            if (index != -1) index else Int.MAX_VALUE
+          }
+          else Int.MAX_VALUE
+        }
+        sortedCandidates.firstOrNull()
+      }
     }
-    return context.eelApi.exec.where(binaryName)?.toString()
+    return path?.toString()
   }
 
   private suspend fun EelFileSystemApi.isRegularFile(path: EelPath): Boolean {
     return stat(path).justResolve().eelIt().getOrNull()?.type is EelFileInfo.Type.Regular
   }
+
+  private val WINDOWS_EXECUTABLE_EXTENSIONS = setOf("exe", "bat", "cmd", "ps1")
 }
 
 @ApiStatus.Internal
