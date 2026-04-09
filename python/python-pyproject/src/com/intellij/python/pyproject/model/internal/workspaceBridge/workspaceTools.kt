@@ -1,5 +1,7 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
+import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.java.workspace.entities.modifyJavaSourceRootPropertiesEntity
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
@@ -8,6 +10,8 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.DependencyScope
@@ -202,11 +206,21 @@ private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectSt
           projectStorage.modifyContentRootEntity(projectRootEntity) {
             entitySource = pythonEntitySource
           }
-          // Source roots and exclude URLs must also get the Python entity source,
+          // Source roots (and their children) and exclude URLs must also get the Python entity source,
           // so that replaceBySource relabels them instead of treating them as mismatched (PY-87499).
           for (sourceRoot in projectRootEntity.sourceRoots) {
             projectStorage.modifySourceRootEntity(sourceRoot) {
               entitySource = pythonEntitySource
+            }
+            for (javaSourceRoot in sourceRoot.javaSourceRoots) {
+              projectStorage.modifyJavaSourceRootPropertiesEntity(javaSourceRoot) {
+                entitySource = pythonEntitySource
+              }
+            }
+            sourceRoot.customSourceRootProperties?.let {
+              projectStorage.modifyCustomSourceRootPropertiesEntity(it) {
+                entitySource = pythonEntitySource
+              }
             }
           }
           for (excludeUrl in projectRootEntity.excludedUrls) {
@@ -282,6 +296,14 @@ private object SourceRootFixer : RootFixer<SourceRootEntity, SourceRootEntityBui
 
   override fun setEntitySource(entity: SourceRootEntityBuilder, entitySource: EntitySource) {
     entity.entitySource = entitySource
+    // Child property entities must also match, otherwise the JPS serializer
+    // sees a mismatched FileInDirectory source and drops the .iml association (PY-87499).
+    for (javaSourceRoot in entity.javaSourceRoots) {
+      javaSourceRoot.entitySource = entitySource
+    }
+    entity.customSourceRootProperties?.let {
+      it.entitySource = entitySource
+    }
   }
 }
 
