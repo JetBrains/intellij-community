@@ -113,7 +113,7 @@ internal class ModulesSdkConfigurator private constructor(
       withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
         val tools = PyProjectSdkConfigurationExtension.createMap()
         val now = System.currentTimeMillis()
-        val resultDef = project.modules.filter { it.findPythonSdk() != null }.map { module ->
+        val resultDef = project.modules.filter { it.findPythonSdk() == null }.map { module ->
           async {
             val moduleInfo = module.getModuleInfo(tools) ?: return@async null
             Pair(module, moduleInfo)
