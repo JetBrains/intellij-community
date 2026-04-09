@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 object ExceptionAutoReportUtil {
@@ -48,12 +49,12 @@ object ExceptionAutoReportUtil {
     }
 
   fun getAutoReportTag(): String? {
-    return Registry.stringValue("ea.auto.report.forced.tag").nullize()
+    return Registry.stringValue("ea.auto.report.forced.tag", "").nullize()
   }
 
   internal fun getForcedAutoReportLevel(): ForcedReportLevel {
     return try {
-      ForcedReportLevel.valueOf(Registry.stringValue("ea.auto.report.forced").uppercase())
+      ForcedReportLevel.valueOf(Registry.stringValue("ea.auto.report.forced", ForcedReportLevel.NONE.name).uppercase())
     }
     catch (_: IllegalArgumentException) {
       return ForcedReportLevel.NONE
@@ -130,11 +131,6 @@ object ExceptionAutoReportUtil {
    * Checks only [message], not the state of functionality
    */
   suspend fun isAutoReportableException(message: AbstractMessage): Boolean {
-    val level = getForcedAutoReportLevel()
-    if (level == ForcedReportLevel.FREEZES && message.throwable !is Freeze) return false // limited to freezes only
-
-    // if level is ALL or NONE, then we report exceptions based on regular rules
-    // ALL flips consent forcibly
     return getRelevantData(message) != null
   }
 
@@ -142,9 +138,16 @@ object ExceptionAutoReportUtil {
     val throwable = message.throwable
     if (throwable is JBRCrash) return null
 
-    val pluginId = PluginUtil.getInstance().findPluginId(message.throwable)
+    // if level is ALL or NONE, then we report exceptions based on regular rules
+    val level = getForcedAutoReportLevel()
+    if (level == ForcedReportLevel.FREEZES && !isFreeze(throwable)) {
+      thisLogger().debug("Ignoring it as not a freeze: ${throwable.javaClass}. Only freezes are allowed to be auto-reported.")
+      return null
+    }
+
+    val pluginId = PluginUtil.getInstance().findPluginId(throwable)
     val pluginInfo = ErrorMessageClustering.getInstance().createPluginInfo(pluginId)
-    val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(message.throwable, pluginInfo)
+    val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(throwable, pluginInfo)
     val itnReporter = submitter as? ITNReporter ?: return null
 
     val isErrorSendable = if (pluginInfo == null || PluginManagerCore.isDevelopedByJetBrains(pluginInfo.vendor)) {
@@ -168,6 +171,11 @@ object ExceptionAutoReportUtil {
            || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
            && ApplicationManager.getApplication().isEAP
   }
+
+  fun isFreeze(throwable: Throwable): Boolean = throwable is Freeze
+
+  @TestOnly
+  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(emptyList()), null, emptyList())
 }
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
