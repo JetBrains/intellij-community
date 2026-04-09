@@ -6,11 +6,17 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
-import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -140,28 +146,35 @@ internal fun PsiElement.isPositionalOrNamedDependencyArgument(): Boolean {
     return argumentName in namedArgumentNamesOfCoordinates || (argumentName.isEmpty() && this.argumentIndex in 0..2)
 }
 
-internal fun PsiElement.isDependencyArgument(dependencyConfigurations: Collection<String>): Boolean {
-    val patternForRegularStringPart = psiElement<LeafPsiElement>()
-        .withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
-        .withSuperParent(2, KtStringTemplateExpression::class.java)
-        .withSuperParent(3, KtValueArgument::class.java)
-        .withSuperParent(4, psiElement<KtValueArgumentList>())
-        .withSuperParent(
-            5, psiElement<KtCallExpression>().withChild(
-            psiElement<KtNameReferenceExpression>().withText(string().oneOf(dependencyConfigurations))
-        ))
+internal fun PsiElement.isExcludeArgument(): Boolean {
+  val leaf = this.asSafely<LeafPsiElement>() ?: return false
+  val stringTemplateExpr =
+    // exclude("leaf<caret>) - open quote only
+    leaf.parent.asSafely<KtStringTemplateExpression>() ?:
+    // exclude("leaf<caret>") - both quotes
+    leaf.parent.asSafely<KtLiteralStringTemplateEntry>()
+        ?.parent.asSafely<KtStringTemplateExpression>() ?: return false
 
-    val patternForOpenQuote = psiElement<LeafPsiElement>()
-        .withSuperParent(1, KtStringTemplateExpression::class.java)
-        .withSuperParent(2, KtValueArgument::class.java)
-        .withSuperParent(3, psiElement<KtValueArgumentList>())
-        .withSuperParent(
-            4, psiElement<KtCallExpression>().withChild(
-                psiElement<KtNameReferenceExpression>().withText(string().oneOf(dependencyConfigurations))
-            )
-        )
+  val callExpression = stringTemplateExpr.parent.asSafely<KtValueArgument>()
+                           ?.parent.asSafely<KtValueArgumentList>()
+                           ?.parent.asSafely<KtCallExpression>() ?: return false
+  if (callExpression.calleeExpression?.text != "exclude") return false
 
-    return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
+  return analyze(callExpression) {
+      val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+      val receiverType = determineReceiverType(functionCall) ?: return false
+      val moduleDependencyType = buildClassType(ClassId.topLevel(FqName("org.gradle.api.artifacts.ModuleDependency")))
+      receiverType.isSubtypeOf(moduleDependencyType)
+  }
+}
+
+// TODO Based on code from kotlinGradleTaskUtils.kt. Extract to a separate module in Gradle plugin for Kotlin resolution.
+private fun determineReceiverType(functionCall: KaFunctionCall<*>): KaType? {
+    val type = functionCall.extensionReceiver?.type
+               ?: functionCall.dispatchReceiver?.type
+               ?: return null
+    val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
+    return unwrappedType
 }
 
 internal fun PsiElement.isDependencyArgument(): Boolean {

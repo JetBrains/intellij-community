@@ -85,7 +85,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       }
 
       // dependencies { implementation(...) { exclude("<caret>") } }
-      positionElement.isDependencyArgument(exclude) -> {
+      positionElement.isExcludeArgument() -> {
         suggestCoordinateCompletions(
           result,
           parameters,

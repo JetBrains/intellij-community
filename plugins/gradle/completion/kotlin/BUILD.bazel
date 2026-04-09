@@ -10,6 +10,7 @@ jvm_library(
   resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api-provided",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util",
@@ -40,6 +41,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":kotlin",
+    "@lib//:kotlinc-analysis-api-provided",
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/util:util_test_lib",
