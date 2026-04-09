@@ -27,7 +27,7 @@ internal class PooledFreezeAction : DumbAwareAction("Freeze pooled threads") {
     var ioDispatcher = false
     val ui = panel {
       row("Duration in seconds:") {
-        intTextField(IntRange(1, 300))
+        intTextField(IntRange(1, 100000))
           .bindIntText({ seconds }, { seconds = it })
       }
       buttonsGroup("Dispatcher:") {
