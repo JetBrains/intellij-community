@@ -25,8 +25,10 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
   val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context = context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
+  val productModuleAliases = context.productProperties.getProductContentDescriptor()?.productModuleAliases?.map { it.value } ?: emptyList()
   val bundledPluginIds = descriptorMapWithBundled.values
     .asSequence().map { it.id }
+    .plus(productModuleAliases)
     .minus(descriptorMap.values.asSequence().map { it.id }.toSet())
     .toSet()
   for (descriptor in descriptorMap.values) {
