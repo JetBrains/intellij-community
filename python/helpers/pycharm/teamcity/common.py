@@ -44,10 +44,12 @@ class FlushingStringIO(StringIO, object):
         self.truncate()
 
     def write(self, str):
-        super(FlushingStringIO, self).write(str)
+        number_of_written_chars = super(FlushingStringIO, self).write(str)
 
         if '\n' in str:
             self._flush_to_flush_function()
+
+        return number_of_written_chars
 
     def flush(self, *args, **kwargs):
         self._flush_to_flush_function()
