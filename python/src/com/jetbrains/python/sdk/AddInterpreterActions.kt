@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -68,12 +69,14 @@ abstract class DialogAction(
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    e.presentation.isEnabled = !project.isSdkConfigurationInProgress.value
+    if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true) {
+      e.presentation.isEnabled = !project.isSdkConfigurationInProgress.value
+    }
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (project.isSdkConfigurationInProgress.value) return
+    if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true && project.isSdkConfigurationInProgress.value) return
     FileDocumentManager.getInstance().saveAllDocuments()
     createDialog()?.show()
   }
