@@ -21,6 +21,7 @@ import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
+import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
@@ -85,7 +86,8 @@ class PyExternalSystemProjectAware private constructor(
           "Reload project called"
         }
         this.onProjectReloadStart()
-        val files = walkFileSystemWithTomlContent(projectRootDir).getOr {
+        val excludedPaths = collectExcludedPaths(project)
+        val files = walkFileSystemWithTomlContent(projectRootDir, excludedPaths).getOr {
           if (log.isTraceEnabled) {
             log.warn("Can't access $projectRootDir", it.error)
           }
