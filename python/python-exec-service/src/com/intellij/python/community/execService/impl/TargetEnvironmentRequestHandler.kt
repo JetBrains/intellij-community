@@ -4,6 +4,7 @@ package com.intellij.python.community.execService.impl
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler.Companion.mapUploadRoots
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import kotlinx.coroutines.Dispatchers
@@ -69,8 +70,10 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
       val uploadInfo = EP_NAME.extensionList.firstNotNullOfOrNull { it.mapUploadRootsIfValid(request, localDirs, workingDirToDownload) }
                        ?: error("No implementation of [${TargetEnvironmentRequestHandler::class.java}] is found for $request, broken bundle? " +
                                 "If you are in tests, set `@TestApplicationWithEel(useLegacyTargets=true)`")
-      val localToRemoteHelpersRoots =
-        uploadInfo.helpersAware.preparePyCharmHelpers().helpers.associate { it.localPath to it.targetPathFun.value }
+      val localToRemoteHelpersRoots = coroutineToIndicator {
+        // coroutineToIndicator bridges coroutine cancellation to ProgressManager.checkCanceled()
+        uploadInfo.helpersAware.preparePyCharmHelpers()
+      }.helpers.associate { it.localPath to it.targetPathFun.value }
 
       fun localPathToTarget(localPath: Path): LocalPathToTargetResult {
         val mightBeHelperRemoteRoot = localToRemoteHelpersRoots.entries.firstOrNull { localPath.startsWith(it.key) }?.value
