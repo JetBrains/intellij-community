@@ -10,7 +10,6 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
-import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyContentEntriesEditor
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -23,8 +22,6 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
   private val topPanel = JPanel(BorderLayout())
   private var modifiableModel: ModifiableRootModel? = null
   private var editor: PyContentEntriesEditor? = null
-  private val isPyProjectTomlManaged: Boolean
-    get() = PyProjectModelSettings.getInstance(module.project).usePyprojectToml
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyContentEntriesModuleConfigurable.display.name")
 
@@ -55,7 +52,7 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
   private fun createEditor(module: Module, state: ModuleConfigurationStateImpl): PyContentEntriesEditor =
     PyContentEntriesEditor(module, state, true, JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE)
 
-  override fun isModified(): Boolean = !isPyProjectTomlManaged && editor?.isModified == true
+  override fun isModified(): Boolean = editor?.isModified == true
 
   override fun apply() {
     val currentEditor = editor ?: return
@@ -68,7 +65,6 @@ internal class PyContentEntriesModuleConfigurable(private val module: Module) : 
   }
 
   override fun reset() {
-    if (isPyProjectTomlManaged) return
     editor ?: return
     modifiableModel?.dispose()
     resetEditor()
