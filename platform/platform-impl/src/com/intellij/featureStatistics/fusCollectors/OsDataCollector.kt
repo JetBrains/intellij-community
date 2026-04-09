@@ -1,13 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexpReference
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.util.system.OS
 import java.nio.file.Path
@@ -16,7 +16,7 @@ import java.util.Locale
 import kotlin.io.path.name
 
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.os", 20)
+  private val GROUP = EventLogGroup("system.os", 21)
 
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Other")
 
@@ -42,10 +42,12 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val DISTRO = String("distro", DISTROS)
   private val RELEASE = StringValidatedByRegexpReference("release", "version")
   private val UNDER_WSL = EventFields.Boolean("wsl")
+  private val HAS_GDBUS = EventFields.Boolean("gdbus")
+  private val HAS_XDG_OPEN = EventFields.Boolean("xdg_open")
   private val GLIBC = StringValidatedByRegexpReference("glibc", "version")
 
   private val OS_EVENT = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
-  private val LINUX = GROUP.registerVarargEvent("linux", DISTRO, RELEASE, UNDER_WSL, GLIBC)
+  private val LINUX = GROUP.registerVarargEvent("linux", DISTRO, RELEASE, UNDER_WSL, HAS_GDBUS, HAS_XDG_OPEN, GLIBC)
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -57,10 +59,12 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     )
     if (OS.CURRENT == OS.Linux) {
       val osInfo = OS.CURRENT.osInfo as OS.LinuxInfo
-      val linuxMetrics = mutableListOf<EventPair<*>>(
+      val linuxMetrics = mutableListOf(
         DISTRO.with(DISTROS.coerce(osInfo.distro)),
         RELEASE.with(osInfo.release),
-        UNDER_WSL.with(osInfo.isUnderWsl())
+        UNDER_WSL.with(osInfo.isUnderWsl()),
+        HAS_GDBUS.with(PathEnvironmentVariableUtil.isOnPath("gdbus")),
+        HAS_XDG_OPEN.with(PathEnvironmentVariableUtil.isOnPath("xdg-open")),
       )
       osInfo.glibcVersion?.let {
         linuxMetrics.add(GLIBC.with(it))

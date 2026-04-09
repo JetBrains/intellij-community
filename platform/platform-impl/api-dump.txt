@@ -974,6 +974,7 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - java.lang.Enum
 - sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:BREW:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:FLATPAK:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:SNAP:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:TOOLBOX:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:UNKNOWN:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
