@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -30,7 +31,7 @@ private data class ProjectViewPaneIdImpl(
 @Serializable
 data class ProjectViewPaneDescriptor(
   val id: ProjectViewPaneId,
-  val presentableName: @NonNls String,
+  val presentableName: @NlsSafe String,
   val order: Int,
   val isDefault: Boolean,
   val selectInTargetDescriptors: List<SelectInTargetDescriptor>,

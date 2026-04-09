@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.frontend.pane
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -27,7 +28,7 @@ interface FrontendProjectViewPaneProvider {
 interface FrontendProjectViewPane {
   val id: ProjectViewPaneId
 
-  val displayName: @NonNls String
+  val displayName: @NlsSafe String
 
   val component: JComponent
 

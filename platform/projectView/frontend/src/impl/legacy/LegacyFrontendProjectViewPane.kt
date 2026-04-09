@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.frontend.impl.legacy
 
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
@@ -21,7 +22,7 @@ internal class LegacyFrontendProjectViewPaneProvider : FrontendProjectViewPanePr
 internal class LegacyFrontendProjectViewPane(project: Project, descriptor: ProjectViewPaneDescriptor) : TreeBasedFrontendProjectViewPane(project) {
   override val id: ProjectViewPaneId = descriptor.id
 
-  override val displayName: @NonNls String = descriptor.presentableName
+  override val displayName: @NlsSafe String = descriptor.presentableName
 
   override val order: Int = descriptor.order
 
