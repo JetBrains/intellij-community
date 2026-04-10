@@ -289,16 +289,6 @@
     "inlay-bg": "transparent-black-20",
     "inlay-border": "transparent-black-50",
 
-    "toggle-on-bg": "accent-brand-bg",
-    "toggle-on-disabled-bg": "#DFE1E5",
-    "toggle-off-bg": "transparent-black-50",
-    "toggle-off-disabled-bg": "#EBECF0",
-    "toggle-button-bg": "white",
-    "toggle-border": "gray-120",
-    "toggle-disabled-track-fill": "transparent",
-    "toggle-disabled-border": "control-border-disabled",
-    "toggle-disabled-button-color": "icon-disabled",
-
     "editor-floating-toolbar-bg": "layer-0-bg",
     "popup-completion-match-text": "blue-70",
     "presentation-assistant-bg": "gray-30",
@@ -1108,17 +1098,16 @@
     "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
 
     "ToggleButton": {
-      "onBackground": "toggle-on-bg",
-      "onDisabledBackground": "toggle-on-disabled-bg",
-      "onForeground": "text-over-accent",
-      "offBackground": "toggle-off-bg",
-      "offDisabledBackground": "toggle-off-disabled-bg",
-      "offForeground": "text-secondary",
-      "buttonColor": "toggle-button-bg",
-      "borderColor": "toggle-border",
-      "disabledTrackFill": "toggle-disabled-track-fill",
-      "disabledBorderColor": "toggle-disabled-border",
-      "disabledButtonColor": "toggle-disabled-button-color"
+      "onBackground": "control-brand-bg",
+      "offBackground": "transparent-black-50",
+
+      "onDisabledBackground": "control-bg-disabled",
+      "onDisabledBorderColor": "control-border-disabled",
+
+      "offDisabledBackground": "control-bg-disabled",
+      "offDisabledBorderColor": "control-border-disabled",
+
+      "focusBorderColor": "control-brand-border"
     },
 
     "ToolWindow": {
@@ -1740,6 +1729,11 @@
     "/com/intellij/ide/ui/laf/icons/intellij/radioSelected.svg": "/themes/expUI/icons/dark/radioSelected.svg",
     "/com/intellij/ide/ui/laf/icons/intellij/radioSelectedDisabled.svg": "/themes/expUI/icons/dark/radioSelectedDisabled.svg",
     "/com/intellij/ide/ui/laf/icons/intellij/radioSelectedFocused.svg": "/themes/expUI/icons/dark/radioSelectedFocused.svg",
+
+    "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOff.svg": "/themes/expUI/icons/toggleNotchOff.svg",
+    "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOn.svg": "/themes/expUI/icons/toggleNotchOn.svg",
+    "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOffDisabled.svg": "/themes/expUI/icons/toggleNotchOffDisabled.svg",
+    "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOnDisabled.svg": "/themes/expUI/icons/toggleNotchOnDisabled.svg",
 
     "ColorPalette": {
       "Checkbox.Background.Default": "#FFFFFF",

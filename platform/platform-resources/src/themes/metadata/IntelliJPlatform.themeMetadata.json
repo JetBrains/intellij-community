@@ -2573,10 +2573,27 @@
       "key": "ToggleButton.borderColor"
     },
     {
-      "key": "ToggleButton.buttonColor"
+      "key": "ToggleButton.buttonColor",
+      "description": "Legacy sliding knob fill (DefaultOnOffButtonUI). Islands pill uses onForeground/offForeground for notches per Component-specs",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.focusBorderColor",
+      "description": "Focus ring stroke for Islands pill toggle (IslandsOnOffButtonUI; Component-specs Figma control-focus-border-brand). ManyIslands themes map to control-brand-border",
+      "since": "2026.2"
     },
     {
       "key": "ToggleButton.offBackground"
+    },
+    {
+      "key": "ToggleButton.offDisabledBackground",
+      "description": "Toggle track fill when unselected and disabled (Islands pill)",
+      "since": "2026.2"
+    },
+    {
+      "key": "ToggleButton.offDisabledBorderColor",
+      "description": "Toggle track border when unselected and disabled (Islands pill)",
+      "since": "2026.2"
     },
     {
       "key": "ToggleButton.offForeground"
@@ -2585,32 +2602,17 @@
       "key": "ToggleButton.onBackground"
     },
     {
-      "key": "ToggleButton.onForeground"
-    },
-    {
       "key": "ToggleButton.onDisabledBackground",
-      "description": "Toggle track background when selected and disabled",
+      "description": "Toggle track fill when selected and disabled (Islands pill)",
       "since": "2026.2"
     },
     {
-      "key": "ToggleButton.offDisabledBackground",
-      "description": "Toggle track background when unselected and disabled",
+      "key": "ToggleButton.onDisabledBorderColor",
+      "description": "Toggle track border when selected and disabled (Islands pill)",
       "since": "2026.2"
     },
     {
-      "key": "ToggleButton.disabledTrackFill",
-      "description": "Toggle track fill when disabled (Islands pill toggle; typically transparent with disabledBorderColor stroke)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.disabledBorderColor",
-      "description": "Toggle track border color when disabled (Islands pill toggle)",
-      "since": "2026.2"
-    },
-    {
-      "key": "ToggleButton.disabledButtonColor",
-      "description": "Toggle notch color when disabled (Islands pill toggle)",
-      "since": "2026.2"
+      "key": "ToggleButton.onForeground"
     },
     {
       "key": "SegmentedButton.selectedStartBorderColor",
