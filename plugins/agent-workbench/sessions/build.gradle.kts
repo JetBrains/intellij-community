@@ -15,6 +15,7 @@ repositories {
   intellijPlatform {
     defaultRepositories()
     snapshots()
+    nightly()
   }
 }
 

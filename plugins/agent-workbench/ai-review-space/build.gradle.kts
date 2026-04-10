@@ -6,6 +6,7 @@ plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm")
   id("org.jetbrains.intellij.platform.module")
+  kotlin("plugin.serialization")
 }
 
 repositories {
@@ -22,15 +23,21 @@ intellijPlatform {
   instrumentCode = false
 }
 
+val ultimateModuleDir = rootProject.file("../../../plugins/agent-workbench/ai-review-space")
+
 sourceSets {
   main {
-    java { setSrcDirs(listOf("src")) }
-    resources { setSrcDirs(listOf("resources")) }
+    java { setSrcDirs(listOf(ultimateModuleDir.resolve("src"))) }
+    resources { setSrcDirs(listOf(ultimateModuleDir.resolve("resources"))) }
   }
 }
 
 val platformLocalPath = rootProject.extra["platformLocalPath"] as? String
 val platformVersion = rootProject.extra["platformVersion"] as String
+
+val spacePluginDir: File? = rootProject.findProperty("spacePluginPath")?.toString()?.let { rootProject.file(it) }
+  ?: platformLocalPath?.let { rootProject.file(it).resolve("plugins/space") }?.takeIf { it.isDirectory }
+  ?: rootProject.file("../../../out/deploy/dist/plugins/space").takeIf { it.isDirectory }
 
 dependencies {
   intellijPlatform {
@@ -38,27 +45,34 @@ dependencies {
       local(platformLocalPath)
     } else {
       intellijIdeaUltimate(platformVersion) { useInstaller = false }
-    }
-    jetbrainsRuntime()
-    if (platformLocalPath == null) {
       bundledModules(
         "intellij.platform.vcs",
+        "intellij.platform.vcs.impl",
+        "intellij.platform.collaborationTools",
+        "intellij.platform.diff",
       )
       bundledPlugins(
-        "org.intellij.plugins.markdown",
+        "Git4Idea",
       )
     }
+    jetbrainsRuntime()
   }
 
   if (platformLocalPath != null) {
     val ideDir = rootProject.file(platformLocalPath)
     compileOnly(fileTree(ideDir.resolve("lib")) {
       include("intellij.platform.vcs*.jar")
+      include("intellij.platform.collaborationTools*.jar")
+      include("intellij.platform.diff*.jar")
     })
-    compileOnly(fileTree(ideDir.resolve("plugins/markdown/lib")) { include("**/*.jar") })
+    compileOnly(fileTree(ideDir.resolve("plugins/vcs-git/lib")) { include("**/*.jar") })
   }
 
-  implementation(project(":prompt-core"))
+  if (spacePluginDir != null) {
+    compileOnly(fileTree(spacePluginDir.resolve("lib")) { include("**/*.jar") })
+  }
+
+  implementation(project(":ai-review"))
 }
 
 kotlin {

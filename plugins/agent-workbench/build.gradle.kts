@@ -28,11 +28,19 @@ val localProperties = Properties().also { props ->
 fun localProperty(name: String): String? = localProperties.getProperty(name)
 
 val platformLocalPath: String? = localProperty("platformLocalPath")
-val platformVersion = localProperty("platformVersion") ?: "LATEST-EAP-SNAPSHOT"
+val platformVersion = localProperty("platformVersion") ?: "261-SNAPSHOT"
 
 // Export for subprojects
 extra["platformLocalPath"] = platformLocalPath
 extra["platformVersion"] = platformVersion
+
+// Space plugin is required by ai-review-space at runtime. It's not in the Gradle-transformed IDE,
+// so resolve it manually and add via localPlugin() to include it in the sandbox.
+val spacePluginDir: File? = localProperty("spacePluginPath")?.let { file(it) }
+  ?: platformLocalPath?.let { file(it).resolve("plugins/space") }?.takeIf { it.isDirectory }
+  ?: file("../../../out/deploy/dist/plugins/space").takeIf { it.isDirectory }
+
+extra["spacePluginDir"] = spacePluginDir
 
 repositories {
   mavenCentral()
@@ -40,6 +48,7 @@ repositories {
   intellijPlatform {
     defaultRepositories()
     snapshots()
+    nightly()
   }
 }
 
@@ -82,6 +91,10 @@ dependencies {
     }
     jetbrainsRuntime()
 
+    if (spacePluginDir != null) {
+      localPlugin(spacePluginDir)
+    }
+
     pluginModule(implementation(project(":common")))
     pluginModule(implementation(project(":json")))
     pluginModule(implementation(project(":filewatch")))
@@ -100,6 +113,8 @@ dependencies {
     pluginModule(implementation(project(":codex-common")))
     pluginModule(implementation(project(":codex-sessions")))
     pluginModule(implementation(project(":ai-review")))
+    pluginModule(implementation(project(":ai-review-agents")))
+    pluginModule(implementation(project(":ai-review-space")))
   }
 
   // When using local IDE, add bundled plugin JARs directly (bundledPlugins() has a bug with local builds)
@@ -120,23 +135,6 @@ kotlin {
 }
 
 tasks {
-  // Content modules that exist only in the monorepo (Ultimate-side) and are not part of this Gradle build.
-  // Strip them from plugin.xml so the sandbox IDE doesn't fail trying to resolve their descriptors.
-  val monorepoOnlyModules = listOf(
-    "intellij.agent.workbench.ai.review.agents",
-    "intellij.agent.workbench.ai.review.space",
-  )
-  named("patchPluginXml") {
-    doLast {
-      outputs.files.asFileTree.matching { include("**/plugin.xml") }.forEach { file ->
-        file.writeText(
-          file.readLines().filterNot { line ->
-            monorepoOnlyModules.any { mod -> line.contains("\"$mod\"") }
-          }.joinToString("\n")
-        )
-      }
-    }
-  }
   java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
