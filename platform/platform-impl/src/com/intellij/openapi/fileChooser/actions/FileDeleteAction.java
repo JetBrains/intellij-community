@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
@@ -29,6 +30,7 @@ import javax.swing.JTextField;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 
 public final class FileDeleteAction extends FileChooserAction {
   @SuppressWarnings("unused")
@@ -54,7 +56,7 @@ public final class FileDeleteAction extends FileChooserAction {
     var project = e.getProject();
     var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-    if (!(toBin && ContainerUtil.all(paths, TrashBin::canMoveToTrash))) {
+    if (!(toBin && canTrashAll(paths, project))) {
       var ok = MessageDialogBuilder.yesNo(UIBundle.message("file.chooser.delete.title"), UIBundle.message("file.chooser.delete.confirm"))
         .yesText(ApplicationBundle.message("button.delete"))
         .noText(CommonBundle.getCancelButtonText())
@@ -91,6 +93,20 @@ public final class FileDeleteAction extends FileChooserAction {
     catch (IOException ex) {
       Messages.showErrorDialog(panel.getComponent(), IoErrorText.message(ex), CommonBundle.getErrorTitle());
     }
+  }
+
+  @SuppressWarnings({"UsagesOfObsoleteApi", "DuplicatedCode"})
+  private static boolean canTrashAll(Collection<Path> paths, Project project) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(project, IdeBundle.message("progress.preparing.delete"), true) {
+      @Override
+      protected Boolean compute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        return ContainerUtil.all(paths, path -> {
+          indicator.checkCanceled();
+          return TrashBin.canMoveToTrash(path);
+        });
+      }
+    });
   }
 
   private static boolean isVisible(AnActionEvent e) {
