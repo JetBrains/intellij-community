@@ -13,6 +13,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.HighlightedRegion
 import com.intellij.usageView.UsageTreeColors
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import java.awt.Font
 
 @ApiStatus.Internal
@@ -29,6 +30,17 @@ class TodoRemoteItemNode(
     val line: Int,
     val presentation: List<SerializableTextChunk>,
   )
+
+  override fun canRepresent(element: Any?): Boolean {
+    if (element !is TodoRemoteItemNode) return false
+    val v = value ?: return false
+    val otherValue = element.value ?: return false
+    return v.file == otherValue.file && v.navigationOffset == otherValue.navigationOffset
+  }
+
+  override fun contains(element: Any?): Boolean {
+    return false
+  }
 
   override fun createPresentation(): PresentationData = TodoItemNodePresentationData()
 

@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.todo.rpc.TodoHelperKt;
 import com.intellij.ide.todo.rpc.TodoResult;
@@ -40,6 +41,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -558,7 +560,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   public void select(Object obj) {
-    TodoNodeVisitor visitor = getVisitorFor(obj);
+    TreeVisitor visitor = getVisitorFor(obj);
 
     if (visitor == null) {
       TreeUtil.promiseSelectFirst(myTree);
@@ -572,16 +574,16 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   @ApiStatus.Internal
-  protected static @Nullable TodoNodeVisitor getVisitorFor(@NotNull Object obj) {
-    if (obj instanceof TodoItemNode) {
-      SmartTodoItemPointer value = ((TodoItemNode)obj).getValue();
+  protected static @Nullable TreeVisitor getVisitorFor(@NotNull Object obj) {
+    if (obj instanceof TodoItemNode localLeaf) {
+      SmartTodoItemPointer value = localLeaf.getValue();
       if (value != null) {
-        return new TodoNodeVisitor(value::getTodoItem,
-                                   value.getTodoItem().getFile().getVirtualFile());
+        return new TodoNodeVisitor(() -> value.getTodoItem(), value.getTodoItem().getFile().getVirtualFile());
       }
-      else {
-        return null;
-      }
+    }
+    if (obj instanceof TodoRemoteItemNode remoteLeaf) {
+      VirtualFile file = remoteLeaf.getVirtualFile();
+      return new TodoNodeVisitor(() -> remoteLeaf, file);
     }
     else {
       Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode<?>)obj).getValue() : null;

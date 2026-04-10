@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,6 +43,11 @@ public final class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   public boolean contains(Object element) {
     if (element instanceof TodoItem) {
       return super.canRepresent(((TodoItem)element).getFile());
+    }
+    else if (element instanceof TodoRemoteItemNode remoteNode) {
+      VirtualFile file = remoteNode.getVirtualFile();
+      PsiFile value = getValue();
+      return value != null && file.equals(value.getVirtualFile());
     }
     return super.canRepresent(element);
   }
