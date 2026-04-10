@@ -146,7 +146,7 @@ class WarModelBuilderImpl : AbstractModelBuilderService() {
     if (manifest !is ManifestInternal) return null
     val outputStream = ByteArrayOutputStream()
     manifest.writeTo(outputStream)
-    val contentCharset = manifest.contentCharset
+    val contentCharset = task.manifestContentCharset
     return outputStream.toString(contentCharset)
   }
 }
