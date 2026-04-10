@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.project.dependencies.ReferenceN
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.api.artifacts.Dependency
 import org.gradle.util.GradleVersion
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
@@ -25,10 +24,7 @@ import org.jeasy.random.api.RandomizerContext
 import org.jeasy.random.util.CollectionUtils
 import org.jeasy.random.util.ReflectionUtils
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel
-import org.jetbrains.plugins.gradle.model.DefaultExternalProject
-import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
-import org.jetbrains.plugins.gradle.model.ExternalTask
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
 import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
@@ -50,7 +46,6 @@ import java.io.File
 import java.io.IOException
 import java.util.Collections
 import java.util.IdentityHashMap
-import java.util.TreeMap
 import java.util.function.Consumer
 import java.util.stream.Collectors
 import kotlin.random.Random
@@ -74,22 +69,6 @@ class ToolingSerializerTest {
     myRandom = EasyRandom(myRandomParameters)
     myRandomParameters
       .randomize(File::class.java) { File(myRandom.nextObject(String::class.java)) }
-  }
-
-
-  @Test
-  @Throws(Exception::class)
-  fun `external project serialization test`() {
-    myRandomParameters
-      .randomize(
-        named("externalSystemId").and(ofType(String::class.java)).and(inClass(DefaultExternalProject::class.java)),
-        Randomizer { "GRADLE" }
-      )
-      .randomize(
-        named("configurationName").and(ofType(String::class.java)).and(inClass(DefaultExternalProjectDependency::class.java)),
-        Randomizer { Dependency.DEFAULT_CONFIGURATION }
-      )
-    doTest(DefaultExternalProject::class.java, Consumer { fixMapsKeys(it) })
   }
 
   @Test
@@ -253,33 +232,6 @@ class ToolingSerializerTest {
         gradleProject.parent = parentGradleProject
         gradleProject.setChildren(emptyList())
       }
-    }
-
-    private fun fixChildProjectsMapsKeys(externalProject: DefaultExternalProject, processed: MutableSet<DefaultExternalProject>) {
-      if (!processed.add(externalProject)) return
-      val sourceSets = externalProject.sourceSets
-      for (setsKey in sourceSets.keys.toList()) {
-        val sourceSet = sourceSets.remove(setsKey)
-        sourceSets[sourceSet!!.name] = sourceSet
-      }
-
-      @Suppress("UNCHECKED_CAST")
-      val tasks = externalProject.tasks as HashMap<String, ExternalTask>
-      for (key in tasks.keys.toList()) {
-        val task = tasks.remove(key) as ExternalTask
-        tasks[task.name] = task
-      }
-
-      val projectMap = externalProject.childProjects as TreeMap<String, DefaultExternalProject>
-      for (key in projectMap.keys.toList()) {
-        val childProject = projectMap.remove(key)
-        projectMap[childProject!!.name] = childProject
-        fixChildProjectsMapsKeys(childProject, processed)
-      }
-    }
-
-    private fun fixMapsKeys(externalProject: DefaultExternalProject) {
-      fixChildProjectsMapsKeys(externalProject, Collections.newSetFromMap(IdentityHashMap()))
     }
 
     private class MyObjectFactory : ObjectFactory {

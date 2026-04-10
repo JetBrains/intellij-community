@@ -10,9 +10,9 @@ import org.jetbrains.plugins.gradle.tooling.Message
 
 object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 19)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 20)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
@@ -48,6 +48,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.EAR_CONFIGURATION_MODEL_GROUP,
     Messages.WAR_CONFIGURATION_MODEL_GROUP,
 
+    Messages.DEPENDENCY_RESOLUTION_GROUP,
     Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
     Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
     Messages.DEPENDENCY_GRAPH_MODEL_GROUP,
