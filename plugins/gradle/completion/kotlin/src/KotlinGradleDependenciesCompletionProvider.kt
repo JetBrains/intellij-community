@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
@@ -189,7 +190,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             invokePosition
           )
 
-          resultSet.addElement(lookupElement)
+          resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
         }
     }
   }
@@ -252,7 +253,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
         lookupElement.putUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY, invokePosition)
 
-        result.addElement(lookupElement)
+        result.addElement(MLRankingIgnorable.wrap(lookupElement))
       }
     }
   }
@@ -303,4 +304,3 @@ private object DependencyConfigurationInsertHandler : InsertHandler<LookupElemen
     context.document.deleteString(startOffset, context.startOffset)
   }
 }
-
