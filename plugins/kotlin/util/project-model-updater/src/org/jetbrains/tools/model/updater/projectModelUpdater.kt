@@ -19,14 +19,12 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
-    val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-    kotlinDependenciesBazelFile.writeText(
-        kotlinDependenciesBazelFile.readText()
-            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincArtifactVersion}\"")
-            .replace(kotlincKotlinJpsPluginTestsVersionRegex, "kotlincKotlinJpsPluginTestsVersion = \"${preferences.jpsArtifactVersion}\"")
+    BazelKotlinDependencyFacade.update(
+        newKotlinCompilerCliVersion = preferences.kotlincArtifactVersion,
+        newKotlinJpsPluginTestsVersion = preferences.jpsArtifactVersion
     )
 
-    KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
+    KotlinTestsDependenciesUtil.updateChecksums(isUpToDateCheck = false)
 
     fun processRoot(root: Path, libraries: List<JpsLibrary>) {
         println("Processing kotlinc libraries in '$root'...")
@@ -86,9 +84,6 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
         redundantLibrary.deleteExisting()
     }
 }
-
-internal val kotlinCompilerCliVersionRegex: Regex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
-internal val kotlincKotlinJpsPluginTestsVersionRegex: Regex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
 
 /**
  * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]

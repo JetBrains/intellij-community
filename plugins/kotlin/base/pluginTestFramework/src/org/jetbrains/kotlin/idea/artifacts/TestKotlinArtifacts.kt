@@ -21,6 +21,7 @@ import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
+import org.jetbrains.tools.model.updater.BazelKotlinDependencyFacade
 import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import java.net.URI
 import java.nio.file.Files
@@ -96,11 +97,15 @@ object TestKotlinArtifacts {
         listOf(getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-jps-plugin-classpath.jar"))
     }
 
-    private fun findDownloadFile(label: BazelLabel): KotlinTestsDependenciesUtil.DownloadFile {
+    private val kotlinDependencyFacade by lazy {
+        BazelKotlinDependencyFacade(communityRoot.communityRoot)
+    }
+
+    private fun findDownloadFile(label: BazelLabel): BazelKotlinDependencyFacade.Dependency {
         if (label.repo != KOTLIN_DEPS_REPO) {
             error("Only $KOTLIN_DEPS_REPO repo is supported, but got '${label.repo}' from: ${label.asLabel}")
         }
-        return KotlinTestsDependenciesUtil.kotlinTestDependenciesHttpFiles.find { it.fileName == label.target }
+        return kotlinDependencyFacade.dependencies.find { it.name == label.target }
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 

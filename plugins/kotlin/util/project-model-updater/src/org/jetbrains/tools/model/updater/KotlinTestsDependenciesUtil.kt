@@ -8,7 +8,6 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpTimeoutException
-import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -19,7 +18,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
-import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.jvm.optionals.getOrNull
 
@@ -106,136 +104,35 @@ object KotlinTestsDependenciesUtil {
         .connectTimeout(Duration.ofSeconds(CONNECT_TIMEOUT_SECONDS))
         .build()
 
-    /**
-     * TODO: IJI-3408 remove duplicated code
-     * @see com.intellij.testFramework.common.bazel.BazelTestDependencyHttpFileDownloader
-     * it was agreed to leave it ‘as is’ for a while,
-     * until a more elegant solution for working with bazel labels in project-model-updater is found
-     * and so as not to add dependencies on com.intellij.testFramework.common
-     */
-    data class DownloadFile(
-        val fileName: String,
-        val url: String,
-        val sha256: String,
-    )
-
-    val kotlinTestDependenciesHttpFiles: List<DownloadFile> by lazy {
-        val kotlinDepsFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-        if (!Files.isRegularFile(kotlinDepsFile)) {
-            error("Unable to find test dependency file '$kotlinDepsFile'")
-        }
-        val content = kotlinDepsFile.readText()
-        val versions = loadVersions(content)
-        val nameRegex = Regex("""name\s*=\s*["']([^"']+)["']""")
-        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
-        val errors = mutableListOf<String>()
-        val result =  findDownloadFileBlocks(content).mapNotNull { block ->
-            val name = nameRegex.find(block)?.groupValues?.get(1)
-            val url = findUrl(block, versions)
-            val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
-
-            if (name != null && sha256 != null) {
-                DownloadFile(
-                    fileName = name,
-                    url = url,
-                    sha256 = sha256,
-                )
-            } else {
-                errors += buildString {
-                    appendLine("Unable to parse http_file block:\n$block")
-                    appendLine(block.trim())
-                }
-                null
-            }
-        }.toList()
-        if (errors.isNotEmpty()) {
-            error("${errors.size} download_file blocks were not parsed correctly:\n${errors.joinToString("\n\n")}")
-        }
-        return@lazy result
-    }
-
-    private fun findUrl(string: String, versions: Map<String, String>): String {
-        val urlRegex = Regex("""url\s*=\s*["'](.+)["']""")
-        val formatedUrlRegex = Regex("""url\s*=\s*["'](.+)["']\.format\((.+)\),""")
-        val url = urlRegex.find(string)?.groupValues?.get(1)
-        val matchResult = formatedUrlRegex.find(string)
-        val formattedUrl = matchResult?.groupValues?.get(1)
-        return if (formattedUrl != null) {
-            val version = matchResult.groupValues[2]
-            formattedUrl.replace("{0}", versions[version] ?: error("cannot find version $version in $versions"))
-        } else {
-            url ?: error("cannot find url in '$string'")
-        }
-    }
-
-    private fun findDownloadFileBlocks(content: String): List<String> {
-        val blocks = mutableListOf<String>()
-        val regex = Regex("""download_file\s*\(""")
-
-        regex.findAll(content).forEach { match ->
-            val startPos = match.range.last + 1
-            var depth = 1
-            var pos = startPos
-
-            while (pos < content.length && depth > 0) {
-                when (content[pos]) {
-                    '(' -> depth++
-                    ')' -> depth--
-                }
-                pos++
-            }
-
-            if (depth == 0) {
-                blocks.add(content.substring(startPos, pos - 1))
-            }
-        }
-
-        return blocks.filter { it.contains("=") }
-    }
-
-    private fun loadVersions(content: String): Map<String, String> {
-        val kotlinCompilerCliVersion = kotlinCompilerCliVersionRegex.find(content)?.groupValues[1]
-            ?: error("cannot find kotlinCompilerCliVersion in content:\n$content")
-
-        val kotlincKotlinJpsPluginTestsVersion = kotlincKotlinJpsPluginTestsVersionRegex.find(content)?.groupValues[1]
-            ?: error("cannot find kotlincKotlinJpsPluginTestsVersion in content:\n$content")
-        return mapOf(
-            "kotlinCompilerCliVersion" to kotlinCompilerCliVersion,
-            "kotlincKotlinJpsPluginTestsVersion" to kotlincKotlinJpsPluginTestsVersion
-        )
-    }
-
-    fun updateChecksum(isUpToDateCheck: Boolean = false) {
+    fun updateChecksums(isUpToDateCheck: Boolean = false) {
         val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-        val content = kotlinDependenciesBazelFile.readText()
-        val versions = loadVersions(content)
+
+        val dependencyFacade = BazelKotlinDependencyFacade(communityRoot)
 
         var result: String? = null
-        val sha256Regex = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         val errors = mutableListOf<String>()
-        for (block in findDownloadFileBlocks(content)) {
-            val sha256 = sha256Regex.find(block)?.groupValues?.get(1)
-            val url = findUrl(block, versions)
-            // We should not update checksum for a special compiler version which used for Kotlin cooperative development.
-            // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
-            if (url.contains("255-dev-255")) {
+
+        for (dependency in dependencyFacade.dependencies) {
+            if ("255-dev-255" in dependency.substitutedVersion.orEmpty()) {
+                // We should not update checksum for a special compiler version which used for Kotlin cooperative development.
+                // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
                 continue
             }
-            if (sha256 == null) {
-                error("cannot find sha256 in '$block'")
-            }
-            val checksum = sha256SumForUrl(url)
+
+            val oldChecksum = dependency.sha256
+            val newChecksum = sha256SumForUrl(dependency.url)
             if (isUpToDateCheck) {
-                if (checksum != sha256) {
-                    errors.add("sha256 mismatch for '$url' expected '$sha256' but got '$checksum'")
+                if (newChecksum != oldChecksum) {
+                    errors.add("sha256 mismatch for '${dependency.url}' expected '$oldChecksum' but got '$newChecksum'")
                 }
             } else {
                 if (result == null) {
-                    result = content
+                    result = dependencyFacade.content
                 }
-                result = result.replace(sha256, checksum)
+                result = result.replace(oldChecksum, newChecksum)
             }
         }
+
         if (isUpToDateCheck) {
             if (errors.isNotEmpty()) {
                 error("Found ${errors.size} errors:\n${errors.joinToString("\n")}")
