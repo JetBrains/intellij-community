@@ -38,7 +38,7 @@ class AIReviewSessionManager(private val project: Project, val cs: CoroutineScop
     val session = AIReviewSession(project, cs, sessionId, request, agent)
     sessions[sessionId] = session
 
-    val tabName = AIReviewBundle.message("aiReview.problems.tab.name.numbered", counter.get(), session.agentDisplayName)
+    val tabName = AIReviewBundle.message("aiReview.problems.tab.name.numbered", counter.get())
     val provider = AIReviewDynamicPanelProvider(project, session, tabName)
     ProblemsViewToolWindowUtils.addTab(project, provider)
     ensureCloseListenerInstalled()
