@@ -13,13 +13,13 @@ import java.util.Optional
 /**
  * Decides where a [PyMockWithSpecType] is assignable.
  *
- * A mock with a spec (`spec=` or `spec_set=`) stands in for its spec, so it is assignable where the spec is.
+ * A mock with a spec (`spec=`, `spec_set=` or `wraps=`) stands in for its spec, so it is assignable where the spec is.
  * It is also an instance of its mock class. A callable mock with a class spec can stand in for that class object.
  *
  * ```python
  * a: A
  * a = MagicMock(spec=A())   # OK: the spec matches A
- * a = MagicMock(spec=1)     # Error: the spec int does not match A
+ * a = MagicMock(wraps=1)    # Error: the spec int does not match A
  * ```
  *
  * The extension decides only for a class or a callable as the expected type.

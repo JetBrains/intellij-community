@@ -65,6 +65,58 @@ class PyMockSpecTypeTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-89004"])
+  fun `attribute outside the mock and the spec is unresolved`() = test("""
+    from unittest.mock import Mock
+
+    class A:
+        a: int
+
+    a = Mock(spec=A())
+    _ = a.a
+    _ = a.b # WARNING Unresolved attribute reference 'b' for class 'Mock (A)'
+    a.assert_called()
+
+    w = Mock(wraps=A())
+    _ = w.a
+    _ = w.b # WARNING Unresolved attribute reference 'b' for class 'Mock (A)'
+    w.assert_called()
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-89004"])
+  fun `mock is assignable where its spec is`() = test("""
+    from unittest.mock import MagicMock, Mock, NonCallableMock
+
+    class A:
+        a: int
+
+    class B: ...
+
+    a: A
+    a = MagicMock(spec=A())
+    a = MagicMock(wraps=A())
+    a = MagicMock(wraps=1) # WARNING Expected type 'A', got 'MagicMock (int)' instead
+    m: Mock = MagicMock(spec=A)
+    n: NonCallableMock = MagicMock(spec=A)
+    o: object = MagicMock(spec=A)
+    b: B = MagicMock(spec=A) # WARNING Expected type 'B', got 'MagicMock (A)' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-89004"])
+  fun `call on an attribute of a wraps mock returns the real result`() = test("""
+    from unittest.mock import Mock
+
+    class A:
+        def foo(self) -> int: ...
+
+    w = Mock(wraps=A())
+    r = w.foo()
+    #\ TYPE int
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-32282"])
   fun `assignment to a mock with a frozen dataclass spec`() = test("""
     from dataclasses import dataclass

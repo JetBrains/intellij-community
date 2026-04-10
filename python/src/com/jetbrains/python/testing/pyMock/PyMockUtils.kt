@@ -103,9 +103,9 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
  *
  * Detection strategy:
  * 1. The callee must be `<qualifier>.<methodName>`.
- * 2. The qualifier is identified as a MockerFixture by either:
- *    - Type: its type is `pytest_mock.plugin.MockerFixture`
- *    - Name: it resolves to a parameter named `mocker` (a reserved pytest fixture)
+ * 2. The qualifier's type resolves to `pytest_mock.plugin.MockerFixture`.
+ *    The `mocker` (and related) fixture parameters receive this type from
+ *    [PyMockerFixtureTypeProvider], so a name-based fallback is not needed here.
  */
 internal fun isMockerFixtureMethodCall(callExpr: PyCallExpression, methodName: String, context: TypeEvalContext): Boolean {
   val callee = callExpr.callee as? PyQualifiedExpression ?: return false

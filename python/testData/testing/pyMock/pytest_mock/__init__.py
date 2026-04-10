@@ -2,3 +2,4 @@
 
 # pytest-mock stub for testing
 from pytest_mock.plugin import MockerFixture
+from pytest_mock.plugin import class_mocker, mocker, module_mocker, package_mocker, session_mocker

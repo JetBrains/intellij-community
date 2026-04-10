@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.types.isNoneType
 /**
  * The type of a mock that imitates [specType].
  *
- * A mock gets a spec from `spec=` or `spec_set=`. An attribute of the mock resolves to a member of [mockType]
+ * A mock gets a spec from `spec=`, `spec_set=` or `wraps=`. An attribute of the mock resolves to a member of [mockType]
  * or of [specType]. Other attributes are unresolved, because at runtime they raise `AttributeError`.
  *
  * This type is not a [PyClassType], so checks that need a real class instance do not apply to it.
@@ -123,11 +123,13 @@ internal class PyMockWithSpecType(
    * The type of the return value of a call on the mock.
    *
    * For an attribute that imitates a spec method, the return value imitates the return type of that method.
+   * For an attribute of a [PyMockSpecKind.WRAPS] mock, the return value is the result of the wrapped method.
    * For other mocks, the return value is a mock without a spec.
    */
   override fun getReturnType(context: TypeEvalContext): PyType? {
     if (!isCallable()) return null
     val specCallable = (specType as? PyCallableType)?.takeIf { it !is PyClassLikeType }
+    if (kind == PyMockSpecKind.WRAPS && specCallable != null) return specCallable.getReturnType(context)
     // A call on an `AsyncMock` returns a coroutine.
     val returnValueMock = getReturnValueMockType(mockType)
                           ?: return specCallable?.getReturnType(context) ?: mockType.getReturnType(context)
@@ -184,6 +186,16 @@ internal enum class PyMockSpecKind {
   /** A mock with `spec=` or `spec_set=`. An attribute outside the mock and the spec is unresolved. */
   SPEC,
 
+  /**
+   * A mock with `wraps=`, or an attribute of it. An attribute outside the mock and the spec is unresolved.
+   * A call on an attribute returns the result of the wrapped method.
+   */
+  WRAPS,
+
   /** An attribute or a return value of a [SPEC] mock. CPython creates it without a spec, so every attribute of it is valid. */
-  CHILD,
+  CHILD;
+
+  /** The kind of an attribute of a mock of this kind. */
+  val childKind: PyMockSpecKind
+    get() = if (this == WRAPS) WRAPS else CHILD
 }

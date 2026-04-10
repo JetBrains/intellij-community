@@ -45,6 +45,7 @@ class PyMockTest : PyTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
+
   // --- Completion ---
 
   fun testCompletionFirstSegment() {
@@ -597,10 +598,33 @@ class PyMockTest : PyTestCase() {
   }
 
   @TestFor(issues = ["PY-63257"])
+  fun `test scoped mocker fixture type`() {
+    assertEquals("MockerFixture", getParameterTypeName("test_pytest_mock/test.py", "test_class_mocker_fixture_type", "class_mocker"))
+  }
+
+  @TestFor(issues = ["PY-63257"])
   fun `test mocker fixture type in class method`() {
     val file = myFixture.configureByFile("test_pytest_mock/test.py") as PyFile
     val method = file.findTopLevelClass("TestMockerFixture")!!.findMethodByName("test_mocker_type_in_method", false, null)!!
     assertEquals("MockerFixture", getParameterTypeName(method, "mocker"))
+  }
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test mocker fixture type not applied to non-test function`() {
+    val typeName = getParameterTypeName("test_pytest_mock/test.py", "helper_function", "mocker")
+    assertFalse("A helper function must not get the mocker fixture type", typeName == "MockerFixture")
+  }
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test mocker fixture type not applied without pytest runner`() {
+    TestRunnerService.getInstance(myFixture.module).selectedFactory = PythonTestConfigurationType.getInstance().unitTestFactory
+    val typeName = getParameterTypeName("test_pytest_mock/test.py", "test_mocker_fixture_type", "mocker")
+    assertFalse("Without the pytest runner, mocker must not get the mocker fixture type", typeName == "MockerFixture")
+  }
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test annotated mocker parameter keeps its annotation`() {
+    assertEquals("int", getParameterTypeName("test_pytest_mock/test.py", "test_annotated_mocker", "mocker"))
   }
 
   @TestFor(issues = ["PY-63257"])

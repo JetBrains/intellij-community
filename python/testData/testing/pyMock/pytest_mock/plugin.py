@@ -1,8 +1,9 @@
 #  Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # pytest-mock plugin stub for testing. It follows the structure of pytest_mock/plugin.py.
+import pytest
 from unittest.mock import DEFAULT, MagicMock
-from typing import Any
+from typing import Any, Generator
 
 
 class MockerFixture:
@@ -40,3 +41,20 @@ class MockerFixture:
     def stub(self, name=None):
         """Create a stub."""
         pass
+
+
+def _mocker(pytestconfig: Any) -> Generator[MockerFixture, None, None]:
+    """
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+    """
+    result = MockerFixture(pytestconfig)
+    yield result
+    result.stopall()
+
+
+mocker = pytest.fixture()(_mocker)  # default scope is function
+class_mocker = pytest.fixture(scope="class")(_mocker)
+module_mocker = pytest.fixture(scope="module")(_mocker)
+package_mocker = pytest.fixture(scope="package")(_mocker)
+session_mocker = pytest.fixture(scope="session")(_mocker)

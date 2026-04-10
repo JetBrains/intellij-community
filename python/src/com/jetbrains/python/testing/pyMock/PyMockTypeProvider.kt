@@ -65,7 +65,7 @@ internal class PyMockTypeProvider : PyTypeProviderBase() {
     val specMember = getInstanceMember(specClassType, memberName, context) ?: return null
     val specMemberType = PyLiteralType.upcastLiteralToClass(specMember.type) ?: return null
     val childMockType = getChildMockType(qualifierType.mockType, specMember.isAsyncFunction)
-    return PyMockWithSpecType(childMockType, specMemberType, PyMockSpecKind.CHILD)
+    return PyMockWithSpecType(childMockType, specMemberType, qualifierType.kind.childKind)
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType?>? {
@@ -96,7 +96,7 @@ internal class PyMockTypeProvider : PyTypeProviderBase() {
     // If new_callable= is specified, return an instance of that class
     val newCallableExpr = dec.getKeywordArgument("new_callable")
     if (newCallableExpr != null) {
-      val callableType = context.getType(newCallableExpr)
+      val callableType = newCallableExpr.getType(context)
       val classType = callableType as? PyClassType
       if (classType != null && classType.isDefinition) {
         return Ref(classType.toInstance())
@@ -127,28 +127,32 @@ private class MockConstructorType(
 ) : PyCallableTypeImpl(parameters, mockType) {
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteOwner?, arguments: List<PyCallableArgument>): PyType {
     val call = callSite as? PyCallExpression ?: return mockType
-    val specType = getSpecType(call, context) ?: return mockType
-    return PyMockWithSpecType(mockType, specType)
+    val (specType, kind) = getSpecType(call, context) ?: return mockType
+    return PyMockWithSpecType(mockType, specType, kind)
   }
 }
 
 /**
- * Returns the instance type that the mock created by [call] imitates, or `null` if the mock has no spec.
+ * Returns the instance type that the mock created by [call] imitates and the kind of the spec,
+ * or `null` if the mock has no spec.
  *
  * `spec=None` gives no spec. A list or a tuple spec gives only attribute names, so this function ignores it.
  */
-private fun getSpecType(call: PyCallExpression, context: TypeEvalContext): PyType? {
+private fun getSpecType(call: PyCallExpression, context: TypeEvalContext): Pair<PyType, PyMockSpecKind>? {
   // `spec` is also the first positional parameter of every mock class.
   val firstPositional = call.arguments.firstOrNull()?.takeIf { it !is PyKeywordArgument && it !is PyStarArgument }
+  val wrapsExpr = call.getKeywordArgument("wraps")
   val specExpr = call.getKeywordArgument("spec")
                  ?: firstPositional
                  ?: call.getKeywordArgument("spec_set")
+                 ?: wrapsExpr
                  ?: return null
   val specClassType = context.getType(specExpr) as? PyClassType ?: return null
   if (specClassType.isNoneType) return null
   if (!specClassType.isDefinition && isNameList(specClassType, specExpr)) return null
   // A spec gives the shape of an object, so a literal type such as `Literal[1]` becomes its class.
-  return PyLiteralType.upcastLiteralToClass(specClassType.toInstance())
+  val specType = PyLiteralType.upcastLiteralToClass(specClassType.toInstance()) ?: return null
+  return specType to if (specExpr === wrapsExpr) PyMockSpecKind.WRAPS else PyMockSpecKind.SPEC
 }
 
 /** Returns `true` if [type] is exactly `list` or `tuple`. CPython reads such a spec as a list of attribute names. */
