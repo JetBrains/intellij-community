@@ -43,6 +43,7 @@ import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
@@ -177,7 +178,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             .withInsertHandler(insertHandler)
           lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
           lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
-          lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, index++)
+          lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
           lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
           lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
