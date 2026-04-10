@@ -4,12 +4,13 @@ package com.intellij.platform.whatsNew.collectors
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.WhatsNewMultipageIdsCache
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 
 internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
   private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 4, description = "What's New usage statistics")
@@ -77,16 +78,21 @@ internal enum class ActionFailedReason { Not_Allowed, Not_Found }
 @Suppress("UnstableApiUsage")
 internal class WhatsNewMultipageIdValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "whats_new_multipage_id"
+
   override fun doValidate(
     id: String,
-    context: EventContext,
+    context: IEventContext,
   ): ValidationResultType {
-    return if (WhatsNewMultipageIdsCache.getInstance().isValidId(id) || id == DEFAULT_ID) {
-      ValidationResultType.ACCEPTED
+    if (id == DEFAULT_ID) return ValidationResultType.ACCEPTED
+
+    val cache = WhatsNewMultipageIdsCache.getInstance()
+    if (!cache.isValidId(id)) {
+      runBlockingCancellable {
+        cache.waitUntilLoaded(5000)
+      }
     }
-    else {
-      ValidationResultType.REJECTED
-    }
+
+    return if (cache.isValidId(id)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
 }
 

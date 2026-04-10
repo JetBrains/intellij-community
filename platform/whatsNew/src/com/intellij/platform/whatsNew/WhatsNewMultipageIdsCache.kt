@@ -4,18 +4,27 @@ package com.intellij.platform.whatsNew
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service
 internal class WhatsNewMultipageIdsCache(coroutineScope: CoroutineScope) {
   internal val cachedIds = ConcurrentHashMap.newKeySet<String>()
+  private val isLoaded = CompletableDeferred<Unit>()
 
   init {
     coroutineScope.launch(Dispatchers.IO) {
-      loadMultipageIds()
+      try {
+        loadMultipageIds()
+      }
+      finally {
+        isLoaded.complete(Unit)
+      }
     }
   }
 
@@ -29,12 +38,19 @@ internal class WhatsNewMultipageIdsCache(coroutineScope: CoroutineScope) {
         }
         cachedIds.addAll(ids)
       }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       logger.warn("Failed to load multipage IDs", e)
     }
   }
 
   fun isValidId(id: String): Boolean = id in cachedIds
+
+  suspend fun waitUntilLoaded(timeoutMs: Long) {
+    withTimeoutOrNull(timeoutMs.milliseconds) {
+      isLoaded.await()
+    }
+  }
 
   companion object {
     fun getInstance(): WhatsNewMultipageIdsCache = service()
