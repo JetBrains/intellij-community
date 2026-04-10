@@ -685,7 +685,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
 @ApiStatus.Internal
 fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val languageElement = languageVersion?.let {
         changeConfigurationOrProperty(kotlinPlugin, "languageVersion", "kotlin.compiler.languageVersion", it)
     }
@@ -697,7 +697,7 @@ fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?)
 
 @ApiStatus.Internal
 fun PomFile.addKotlinCompilerPlugin(name: String): MavenDomPlugin? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
     val compilerPluginsTag = configurationTag.findSubTagOrCreate("compilerPlugins")
     compilerPluginsTag.findSubTags("plugin").firstOrNull { it.value.trimmedText == name } ?: run {
@@ -754,7 +754,7 @@ private fun PomFile.changeConfigurationOrProperty(
 }
 
 fun PomFile.changeCoroutineConfiguration(value: String): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     return changeConfigurationOrProperty(kotlinPlugin, "experimentalCoroutines", "kotlin.compiler.experimental.coroutines", value)
 }
 
@@ -762,7 +762,7 @@ fun PomFile.changeFeatureConfiguration(
     feature: LanguageFeature,
     state: LanguageFeature.State
 ): PsiElement? {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
+    val kotlinPlugin = findPlugin(kotlinPluginId) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
     val argsSubTag = configurationTag.findSubTagOrCreate("args")
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }

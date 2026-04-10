@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.PsiElement
@@ -146,7 +147,7 @@ abstract class KotlinMavenConfigurator protected constructor(
     }
 
     protected fun hasKotlinPlugin(pom: PomFile): Boolean {
-        val plugin = pom.findPlugin(kotlinPluginId()) ?: return false
+        val plugin = pom.findPlugin(kotlinPluginId) ?: return false
 
         return plugin.executions.executions.any { execution ->
             execution.goals.goals.any { isRelevantGoal(it.stringValue ?: "") }
@@ -430,25 +431,34 @@ abstract class KotlinMavenConfigurator protected constructor(
         const val MAVEN_PLUGIN_ID: String = "kotlin-maven-plugin"
         const val KOTLIN_VERSION_PROPERTY: String = "kotlin.version"
 
+        val kotlinPluginId: MavenId
+            get() = kotlinPluginId(version = null)
+
         fun kotlinPluginId(version: String? = null): MavenId =
             MavenId(GROUP_ID, MAVEN_PLUGIN_ID, version)
 
         fun findModulePomFile(module: Module): PsiFile? {
-            val files = MavenProjectsManager.getInstance(module.project).projectsFiles
-            for (file in files) {
-                val fileModule = ModuleUtilCore.findModuleForFile(file, module.project)
-                if (module != fileModule) continue
-                val psiFile = PsiManager.getInstance(module.project).findFile(file) ?: continue
-                if (!MavenDomUtil.isProjectFile(psiFile)) continue
-                if (!canConfigureFile(psiFile)) continue
-                return psiFile
-            }
+            val project = module.project
+            val files = MavenProjectsManager.getInstance(project).projectsFiles
+            files
+                .firstNotNullOfOrNull {
+                    val fileModule = ModuleUtilCore.findModuleForFile(it, project)
+                    if (fileModule != module) return@firstNotNullOfOrNull null
+                    module.findPomXmlByFile(it)
+                }
+                ?.let { return it }
             return null
         }
 
-        private fun canConfigureFile(file: PsiFile): Boolean {
-            return WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
+        fun Module.findPomXmlByFile(file: VirtualFile): XmlFile? {
+            if (!project.canConfigureFile(file)) return null
+            val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
+            if (!MavenDomUtil.isProjectFile(psiFile)) return null
+            return psiFile as? XmlFile
         }
+
+        private fun Project.canConfigureFile(file: VirtualFile): Boolean =
+            WritingAccessProvider.isPotentiallyWritable(file, this)
 
         private fun showErrorMessage(project: Project) {
             val cantConfigureAutomatically = KotlinMavenBundle.message("error.cant.configure.maven.automatically")
