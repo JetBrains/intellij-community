@@ -141,7 +141,15 @@ internal class UvTool : Tool {
 
 private data class WorkspaceInfo(val members: List<PathMatcher>, val exclude: List<PathMatcher>) {
   fun match(path: Path): Boolean =
-    members.any { it.matches(path) } && exclude.none { it.matches(path) }
+    members.any { it.matchPath(path) } && exclude.none { it.matchPath(path) }
+
+  /**
+   * uv workspace members/exclude may use "./" prefixes in glob patterns (e.g., "./&#42;" or "./packages/&#42;"),
+   * but Java's PathMatcher treats "./packages" and "packages" as different patterns.
+   * Since member paths from relativeTo().normalize() never have "./" prefix,
+   * we try both forms to handle either pattern style.
+   */
+  private fun PathMatcher.matchPath(path: Path): Boolean = matches(path) || matches(Path.of(".").resolve(path))
 }
 
 private val TomlArray.asMatchers: List<PathMatcher> get() = toList().filterIsInstance<String>().map { getPathMatcher(it) }
