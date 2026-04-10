@@ -27,6 +27,7 @@ import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -114,6 +115,12 @@ private fun runOnProjectInit(project: Project) {
     val coroutineScope = project.service<CoreUiCoroutineScopeHolder>().coroutineScope
     (ProjectLoadedService.registerScreenshotTaking(System.getProperty("ide.performance.screenshot"), coroutineScope))
     LOG.info("Option ide.performance.screenshot is initialized, screenshots will be captured")
+  }
+
+  if (System.getProperty("ide.performance.run.on.welcome.screen.project") == null
+     && WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    LOG.info("Option ide.performance.run.on.welcome.screen.project is not initialized, script will not be executed on welcome screen")
+    return
   }
 
   if (ProjectLoaded.TEST_SCRIPT_FILE_PATH == null || ProjectLoadedService.scriptStarted) {
