@@ -95,6 +95,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
+import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
@@ -110,6 +111,7 @@ import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNarrowedType
 import com.jetbrains.python.psi.types.PyNarrowedType.Companion.create
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PyPositionalVariadicType
 import com.jetbrains.python.psi.types.PySelfType
@@ -245,7 +247,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     if (functionReturningCallSiteAsAType(function)) {
-      return getAsClassObjectType(callSite, context)
+      return callSite.getAsClassObjectType(context)
     }
 
     return null
@@ -1422,6 +1424,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (moduleType != null) {
           return moduleType
         }
+        val overloadType = getOverloadType(typeHint, context)
+        if (overloadType != null) {
+          return overloadType
+        }
       }
       if (typeHint is PyBinaryExpression && typeHint.operator === PyTokenTypes.AT) {
         val name: String = typeHint.leftExpression.text
@@ -1464,6 +1470,16 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         ?: return null
 
       return Ref(PyModuleType(firstModuleInitFile))
+    }
+
+    private fun getOverloadType(overloadDefinition: PySubscriptionExpression, context: Context): Ref<PyType?>? {
+      if (overloadDefinition.operand.text != PyNames.OVERLOAD_TYPE) return null
+      val items = PyPsiUtils.flattenParens(overloadDefinition.indexExpression)
+      if (items !is PyTupleExpression) return null
+      val signatures = items.map {
+        getType(it, context)?.get() as? PyCallableType
+      }
+      return Ref(PyOverloadType(signatures, null))
     }
 
     private fun getIntersectionType(resolved: PsiElement, context: Context): Ref<PyType?>? {
@@ -1586,7 +1602,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             if (resolvesToQualifiedNames(indexExpr, context.typeContext, ANY)) {
               return Ref(getInstance(resolved).typeType)
             }
-            return getAsClassObjectType(indexExpr, context)
+            return indexExpr.getAsClassObjectType(context)
           }
           // Map Type[Something] with unsupported type parameter to Any, instead of a generic type for the class "type"
           return Ref(PyAnyType.unknown)
@@ -1598,8 +1614,25 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return null
     }
 
-    private fun getAsClassObjectType(expression: PyExpression, context: Context): Ref<PyType?> {
-      val type = Ref.deref<PyType?>(getType(expression, context))
+    private fun PyExpression.getAsClassObjectType(context: Context): Ref<PyType?> {
+      if (context.typeRepresentationMode && this is PyReferenceExpression) {
+        // handle "builtins.type[Generic]" until pyrefly is updated to return fully qualified version
+        val type = PyTypingTypeProvider().getReferenceExpressionType(this, context)
+        if (type != null) {
+          return Ref(type)
+        }
+
+        // pyrefly currently sends special forms as "builtins.type[Literal]"
+        when (this.name) {
+          "Callable" -> createTypingCallableType(this)
+          "Literal" -> PyPsiFacade.getInstance(project).createClassByQName(SPECIAL_FORM, this)?.let { PyClassTypeImpl(it, false) }
+          "TypedDict" -> PyCustomType(TYPED_DICT, null, false, true, getInstance(this).dictType)
+          "Protocol" -> createTypingProtocolType(this)
+          "Generic" -> createTypingGenericType(this)
+          else -> null
+        }?.let { return Ref(it) }
+      }
+      val type = getType(this, context)?.get()
       val classType = type as? PyClassType
       if (classType != null && !classType.isDefinition) {
         return Ref(classType.toClass())

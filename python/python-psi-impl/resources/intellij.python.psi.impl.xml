@@ -662,6 +662,8 @@
     <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider" id="pythonDocstringTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor"/>
 
+    <!-- PyTypeRepresentation -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationTokenSetContributor"/>
 
     <!-- Type from ancestors -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
