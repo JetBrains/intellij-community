@@ -11,4 +11,12 @@ class ProxyShortcutSet internal constructor(val actionId: String) : ShortcutSet 
   override fun getShortcuts(): Array<Shortcut> {
     return KeymapManager.getInstance()?.getActiveKeymap()?.getShortcuts(actionId) ?: Shortcut.EMPTY_ARRAY
   }
+
+  override fun equals(other: Any?): Boolean {
+    return other is ProxyShortcutSet && actionId == other.actionId
+  }
+
+  override fun hashCode(): Int {
+    return actionId.hashCode()
+  }
 }

@@ -434,6 +434,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   @ApiStatus.Internal
   public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
+        !myShortcutSet.equals(shortcutSet) &&
         myShortcutSet != CustomShortcutSet.EMPTY &&
         LoadingState.PROJECT_OPENED.isOccurred()) {
       ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
