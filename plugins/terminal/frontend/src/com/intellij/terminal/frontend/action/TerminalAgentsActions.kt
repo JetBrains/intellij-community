@@ -98,7 +98,7 @@ internal class LaunchSelectedAgentAction : DumbAwareAction(), ActionRemoteBehavi
     else {
       e.presentation.isEnabledAndVisible = toolbarState.canShowSelector
       e.presentation.description = TerminalBundle.message(
-        "action.Terminal.AiAgents.LaunchSelectedAgent.description", lastLaunchedAgent.terminalAgent.displayName
+        "terminal.AiAgents.LaunchSelectedAgent.description.template", lastLaunchedAgent.terminalAgent.displayName
       )
       e.presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
       e.presentation.text = lastLaunchedAgent.terminalAgent.displayName
