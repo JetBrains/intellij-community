@@ -323,7 +323,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator implements Ord
         continue;
       }
       if (action.type == ProcessEntryActionType.RECURSE) {
-        doProcessEntries(getRootModel(action.recurseOnModule), processed, false, customHandlers, processor);
+        doProcessEntries(getRootModel(action.recurseOnModule), processed, false, getCustomHandlers(action.recurseOnModule), processor);
         continue;
       }
       assert action.type == ProcessEntryActionType.PROCESS;
