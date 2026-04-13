@@ -141,6 +141,19 @@ internal class InstalledPluginsTabSearchResultPanel(
       }
     }
 
+    if (parser.searchQuery != null) {
+      val searchQuery = parser.searchQuery!!
+      descriptors.sortBy {
+        val matchInName = it.name?.contains(searchQuery, ignoreCase = true) ?: false
+        if (matchInName) return@sortBy 0
+
+        val matchInDescription = it.description?.contains(searchQuery, ignoreCase = true) ?: false
+        if (matchInDescription) return@sortBy 1
+
+        return@sortBy 100
+      }
+    }
+
     result.addModels(descriptors)
     val errors = getInstance()
       .loadErrors(
