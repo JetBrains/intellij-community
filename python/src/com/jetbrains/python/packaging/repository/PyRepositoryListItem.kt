@@ -23,8 +23,8 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 internal class PyRepositoryListItem(val repository: PyPackageRepository, private val project: Project) : NamedConfigurable<PyPackageRepository>(true, null) {
   @NlsSafe
-  private var currentName = repository.name!!
-  private var password = repository.getPassword()
+  private var currentName = repository.name
+  private val password = repository.getPassword()
 
   private val propertyGraph = PropertyGraph()
   private val urlProperty = propertyGraph.lazyProperty { repository.repositoryUrl ?: "" }

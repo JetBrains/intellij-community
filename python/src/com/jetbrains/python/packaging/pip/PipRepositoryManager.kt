@@ -15,6 +15,8 @@ import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.time.Duration
@@ -38,8 +40,8 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
   }
 
 
-  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
-    return packageDetailsCache.get(packageName to (repository ?: PyPIPackageRepository))
+  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?) = withContext(Dispatchers.IO) {
+    packageDetailsCache.get(packageName to (repository ?: PyPIPackageRepository))
   }
 
   @Throws(IOException::class)
@@ -64,8 +66,7 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
   }
 
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>? {
-    val details = packageDetailsCache.get(packageName to (repository ?: PyPIPackageRepository)).getOrNull() ?: return null
-    return details.availableVersions
+    return getPackageDetails(packageName, repository).getOrNull()?.availableVersions
   }
 
   companion object {
