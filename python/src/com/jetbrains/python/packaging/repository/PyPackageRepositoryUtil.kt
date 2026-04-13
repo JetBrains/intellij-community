@@ -23,11 +23,10 @@ import java.util.Base64
 @ApiStatus.Experimental
 internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository?): RequestBuilder {
   if (repository == null) return this
-  val password = repository.getPassword()
-  if (repository.login != null && password != null) {
-    val credentials = Base64.getEncoder().encode("${repository.login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)
-    this.tuner { connection -> connection.setRequestProperty("Authorization", "Basic $credentials") }
-  }
+  val login = repository.login ?: return this
+  val password = repository.getPassword() ?: return this
+  val credentials = Base64.getEncoder().encode("${login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)
+  this.tuner { connection -> connection.setRequestProperty("Authorization", "Basic $credentials") }
   return this
 }
 
