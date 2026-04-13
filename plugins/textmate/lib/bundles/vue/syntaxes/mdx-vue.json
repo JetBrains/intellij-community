@@ -1,0 +1,64 @@
+{
+	"fileTypes": [],
+	"scopeName": "mdx.vue.codeblock",
+	"injectionSelector": "L:source.mdx",
+	"patterns": [
+		{
+			"include": "#vue-code-block"
+		}
+	],
+	"repository": {
+		"vue-code-block": {
+			"patterns": [
+				{
+					"begin": "(?:^|\\G)[\\t ]*(`{3,})(?:[\\t ]*((?i:(?:.*\\.)?vue))(?:[\\t ]+((?:[^\\n\\r`])+))?)(?:[\\t ]*$)",
+					"beginCaptures": {
+						"1": {
+							"name": "string.other.begin.code.fenced.mdx"
+						},
+						"2": {
+							"name": "entity.name.function.mdx"
+						}
+					},
+					"contentName": "meta.embedded.vue",
+					"end": "(\\1)(?:[\\t ]*$)",
+					"endCaptures": {
+						"1": {
+							"name": "string.other.end.code.fenced.mdx"
+						}
+					},
+					"name": "markup.code.vue.mdx",
+					"patterns": [
+						{
+							"include": "text.html.vue"
+						}
+					]
+				},
+				{
+					"begin": "(?:^|\\G)[\\t ]*(~{3,})(?:[\\t ]*((?i:(?:.*\\.)?vue))(?:[\\t ]+((?:[^\\n\\r])+))?)(?:[\\t ]*$)",
+					"beginCaptures": {
+						"1": {
+							"name": "string.other.begin.code.fenced.mdx"
+						},
+						"2": {
+							"name": "entity.name.function.mdx"
+						}
+					},
+					"contentName": "meta.embedded.vue",
+					"end": "(\\1)(?:[\\t ]*$)",
+					"endCaptures": {
+						"1": {
+							"name": "string.other.end.code.fenced.mdx"
+						}
+					},
+					"name": "markup.code.vue.mdx",
+					"patterns": [
+						{
+							"include": "text.html.vue"
+						}
+					]
+				}
+			]
+		}
+	}
+}

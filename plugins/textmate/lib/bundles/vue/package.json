@@ -1,0 +1,450 @@
+{
+  "name": "volar",
+  "version": "3.2.6",
+  "description": "Language Support for Vue",
+  "license": null,
+  "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "tsconfig.json",
+          "tsconfig.*.json",
+          "tsconfig-*.json",
+          "jsconfig.json",
+          "jsconfig.*.json",
+          "jsconfig-*.json"
+        ],
+        "url": "./schemas/vue-tsconfig.schema.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "vue",
+        "extensions": [
+          ".vue"
+        ],
+        "configuration": "./languages/vue-language-configuration.json"
+      },
+      {
+        "id": "markdown",
+        "configuration": "./languages/markdown-language-configuration.json"
+      },
+      {
+        "id": "html",
+        "configuration": "./languages/sfc-template-language-configuration.json"
+      },
+      {
+        "id": "jade",
+        "configuration": "./languages/sfc-template-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vue",
+        "scopeName": "text.html.vue",
+        "path": "./syntaxes/vue.tmLanguage.json",
+        "embeddedLanguages": {
+          "text.html.vue": "vue",
+          "text": "plaintext",
+          "text.html.derivative": "html",
+          "text.html.markdown": "markdown",
+          "text.pug": "jade",
+          "source.css": "css",
+          "source.css.scss": "scss",
+          "source.css.less": "less",
+          "source.sass": "sass",
+          "source.stylus": "stylus",
+          "source.postcss": "postcss",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.coffee": "coffeescript",
+          "meta.tag.js": "jsx-tags",
+          "meta.tag.tsx": "jsx-tags",
+          "meta.tag.without-attributes.js": "jsx-tags",
+          "meta.tag.without-attributes.tsx": "jsx-tags",
+          "source.json": "json",
+          "source.json.comments": "jsonc",
+          "source.json5": "json5",
+          "source.yaml": "yaml",
+          "source.toml": "toml",
+          "source.graphql": "graphql"
+        },
+        "unbalancedBracketScopes": [
+          "keyword.operator.relational",
+          "storage.type.function.arrow",
+          "keyword.operator.bitwise.shift",
+          "meta.brace.angle",
+          "punctuation.definition.tag"
+        ]
+      },
+      {
+        "scopeName": "markdown.vue.codeblock",
+        "path": "./syntaxes/markdown-vue.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.vue": "vue",
+          "text.html.vue": "vue",
+          "text": "plaintext",
+          "text.html.derivative": "html",
+          "text.html.markdown": "markdown",
+          "text.pug": "jade",
+          "source.css": "css",
+          "source.css.scss": "scss",
+          "source.css.less": "less",
+          "source.sass": "sass",
+          "source.stylus": "stylus",
+          "source.postcss": "postcss",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.coffee": "coffeescript",
+          "meta.tag.js": "jsx-tags",
+          "meta.tag.tsx": "jsx-tags",
+          "meta.tag.without-attributes.js": "jsx-tags",
+          "meta.tag.without-attributes.tsx": "jsx-tags",
+          "source.json": "json",
+          "source.json.comments": "jsonc",
+          "source.json5": "json5",
+          "source.yaml": "yaml",
+          "source.toml": "toml",
+          "source.graphql": "graphql"
+        }
+      },
+      {
+        "scopeName": "mdx.vue.codeblock",
+        "path": "./syntaxes/mdx-vue.json",
+        "injectTo": [
+          "source.mdx"
+        ],
+        "embeddedLanguages": {
+          "mdx.embedded.vue": "vue",
+          "text.html.vue": "vue",
+          "text": "plaintext",
+          "text.html.derivative": "html",
+          "text.html.markdown": "markdown",
+          "text.pug": "jade",
+          "source.css": "css",
+          "source.css.scss": "scss",
+          "source.css.less": "less",
+          "source.sass": "sass",
+          "source.stylus": "stylus",
+          "source.postcss": "postcss",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "source.js.jsx": "javascriptreact",
+          "source.tsx": "typescriptreact",
+          "source.coffee": "coffeescript",
+          "meta.tag.js": "jsx-tags",
+          "meta.tag.tsx": "jsx-tags",
+          "meta.tag.without-attributes.js": "jsx-tags",
+          "meta.tag.without-attributes.tsx": "jsx-tags",
+          "source.json": "json",
+          "source.json.comments": "jsonc",
+          "source.json5": "json5",
+          "source.yaml": "yaml",
+          "source.toml": "toml",
+          "source.graphql": "graphql"
+        }
+      },
+      {
+        "scopeName": "vue.directives",
+        "path": "./syntaxes/vue-directives.json",
+        "injectTo": [
+          "text.html.vue",
+          "text.html.markdown",
+          "text.html.derivative",
+          "text.pug"
+        ]
+      },
+      {
+        "scopeName": "vue.interpolations",
+        "path": "./syntaxes/vue-interpolations.json",
+        "injectTo": [
+          "text.html.vue",
+          "text.html.markdown",
+          "text.html.derivative",
+          "text.pug"
+        ]
+      },
+      {
+        "scopeName": "vue.sfc.script.leading-operator-fix",
+        "path": "./syntaxes/vue-sfc-script-leading-operator-fix.json",
+        "injectTo": [
+          "text.html.vue"
+        ]
+      },
+      {
+        "scopeName": "vue.sfc.style.variable.injection",
+        "path": "./syntaxes/vue-sfc-style-variable-injection.json",
+        "injectTo": [
+          "text.html.vue"
+        ]
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "vue",
+        "scopes": {
+          "component": [
+            "support.class.component.vue",
+            "entity.name.type.class.vue"
+          ]
+        }
+      },
+      {
+        "language": "markdown",
+        "scopes": {
+          "component": [
+            "support.class.component.vue",
+            "entity.name.type.class.vue"
+          ]
+        }
+      },
+      {
+        "language": "html",
+        "scopes": {
+          "component": [
+            "support.class.component.vue",
+            "entity.name.type.class.vue"
+          ]
+        }
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "vue"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Vue",
+      "properties": {
+        "vue.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "markdownDescription": "%configuration.trace.server%"
+        },
+        "vue.editor.focusMode": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.editor.focusMode%"
+        },
+        "vue.editor.reactivityVisualization": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.editor.reactivityVisualization%"
+        },
+        "vue.editor.templateInterpolationDecorators": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.editor.templateInterpolationDecorators%"
+        },
+        "vue.server.path": {
+          "type": "string",
+          "markdownDescription": "%configuration.server.path%"
+        },
+        "vue.server.includeLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "vue"
+          ],
+          "markdownDescription": "%configuration.server.includeLanguages%"
+        },
+        "vue.codeActions.askNewComponentName": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.codeActions.askNewComponentName%"
+        },
+        "vue.hover.rich": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.hover.rich%"
+        },
+        "vue.suggest.componentNameCasing": {
+          "type": "string",
+          "enum": [
+            "preferKebabCase",
+            "preferPascalCase",
+            "alwaysKebabCase",
+            "alwaysPascalCase"
+          ],
+          "enumDescriptions": [
+            "Prefer kebab-case (lowercase with hyphens, e.g. my-component)",
+            "Prefer PascalCase (UpperCamelCase, e.g. MyComponent)",
+            "Always kebab-case (enforce kebab-case, e.g. my-component)",
+            "Always PascalCase (enforce PascalCase, e.g. MyComponent)"
+          ],
+          "default": "preferPascalCase",
+          "markdownDescription": "%configuration.suggest.componentNameCasing%"
+        },
+        "vue.suggest.propNameCasing": {
+          "type": "string",
+          "enum": [
+            "preferKebabCase",
+            "preferCamelCase",
+            "alwaysKebabCase",
+            "alwaysCamelCase"
+          ],
+          "enumDescriptions": [
+            "Prefer kebab-case (lowercase with hyphens, e.g. my-prop)",
+            "Prefer camelCase (lowerCamelCase, e.g. myProp)",
+            "Always kebab-case (enforce kebab-case, e.g. my-prop)",
+            "Always camelCase (enforce camelCase, e.g. myProp)"
+          ],
+          "default": "preferKebabCase",
+          "markdownDescription": "%configuration.suggest.propNameCasing%"
+        },
+        "vue.suggest.defineAssignment": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.suggest.defineAssignment%"
+        },
+        "vue.autoInsert.dotValue": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.autoInsert.dotValue%"
+        },
+        "vue.autoInsert.bracketSpacing": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.autoInsert.bracketSpacing%"
+        },
+        "vue.inlayHints.destructuredProps": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.inlayHints.destructuredProps%"
+        },
+        "vue.inlayHints.missingProps": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.inlayHints.missingProps%"
+        },
+        "vue.inlayHints.inlineHandlerLeading": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.inlayHints.inlineHandlerLeading%"
+        },
+        "vue.inlayHints.optionsWrapper": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.inlayHints.optionsWrapper%"
+        },
+        "vue.inlayHints.vBindShorthand": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.inlayHints.vBindShorthand%"
+        },
+        "vue.format.template.initialIndent": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.format.template.initialIndent%"
+        },
+        "vue.format.script.initialIndent": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.format.script.initialIndent%"
+        },
+        "vue.format.style.initialIndent": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%configuration.format.style.initialIndent%"
+        },
+        "vue.format.script.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.format.script.enabled%"
+        },
+        "vue.format.template.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.format.template.enabled%"
+        },
+        "vue.format.style.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%configuration.format.style.enabled%"
+        },
+        "vue.format.wrapAttributes": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "force",
+            "force-aligned",
+            "force-expand-multiline",
+            "aligned-multiple",
+            "preserve",
+            "preserve-aligned"
+          ],
+          "markdownDescription": "%configuration.format.wrapAttributes%"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "vue.welcome",
+        "title": "%command.welcome%",
+        "category": "Vue"
+      },
+      {
+        "command": "vue.action.restartServer",
+        "title": "%command.action.restartServer%",
+        "category": "Vue"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "typescript.goToSourceDefinition",
+          "when": "tsSupportsSourceDefinition && resourceLangId == vue",
+          "group": "navigation@9"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "typescript.findAllFileReferences",
+          "when": "tsSupportsFileReferences && resourceLangId == vue",
+          "group": "4_search"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "typescript.findAllFileReferences",
+          "when": "tsSupportsFileReferences && resourceLangId == vue"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "typescript.reloadProjects",
+          "when": "editorLangId == vue && typescript.isManagedFile"
+        },
+        {
+          "command": "typescript.goToProjectConfig",
+          "when": "editorLangId == vue && typescript.isManagedFile"
+        },
+        {
+          "command": "typescript.sortImports",
+          "when": "supportedCodeAction =~ /(\\s|^)source\\.sortImports\\b/ && editorLangId =~ /^vue$/"
+        },
+        {
+          "command": "typescript.removeUnusedImports",
+          "when": "supportedCodeAction =~ /(\\s|^)source\\.removeUnusedImports\\b/ && editorLangId =~ /^vue$/"
+        }
+      ]
+    }
+  }
+}

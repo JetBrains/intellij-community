@@ -1,0 +1,16 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"fileTypes": [],
+	"injectionSelector": "L:text.html.vue source.js, L:text.html.vue source.js.jsx, L:text.html.vue source.tsx",
+	"patterns": [
+		{
+			"match": "^\\s*(<)(?=\\s+[_$[:alpha:]])",
+			"captures": {
+				"1": {
+					"name": "keyword.operator.relational.js"
+				}
+			}
+		}
+	],
+	"scopeName": "vue.sfc.script.leading-operator-fix"
+}
