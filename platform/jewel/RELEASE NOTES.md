@@ -19,9 +19,9 @@
 
 ## v0.34 (2026-02-17)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3.3, 2026.1 EAP       | 1.10.0                        |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version   |
+|----------------------------|-------------------------------|----------------------|
+| 2025.3.3, 2026.1 EAP       | 1.10.0                        | 0.34.0-253.31033.149 |
 
 ### ⚠️ Important Changes
 
@@ -52,9 +52,9 @@
 
 ## v0.33 (2025-12-19)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3.2, 2026.1 EAP       | 1.10.0-rc01                   |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version |
+|----------------------------|-------------------------------|--------------------|
+| 2025.3.2, 2026.1 EAP       | 1.10.0-rc01                   | 0.33.0-253.29795   |
 
 Last release of 2025, with plenty of fixes and new features. See you in 2026! 👋
 
@@ -124,9 +124,9 @@ Last release of 2025, with plenty of fixes and new features. See you in 2026! �
 
 ## v0.32.1 (2025-12-01)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3, (2026.1)           | 1.10.0-alpha01                |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version   |
+|----------------------------|-------------------------------|----------------------|
+| 2025.3, (2026.1)           | 1.10.0-alpha01                | 0.32.1-253.28294.285 |
 
 Hotfix release for an issue introduced by CMP 1.10.0-alpha01.
 
@@ -149,9 +149,9 @@ Hotfix release for an issue introduced by CMP 1.10.0-alpha01.
 
 ## v0.32 (2025-11-25)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.3, (2026.1)           | 1.10.0-alpha01                |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version   |
+|----------------------------|-------------------------------|----------------------|
+| 2025.3, (2026.1)           | 1.10.0-alpha01                | 0.32.0-253.28294.205 |
 
 This is a small release, not too much going on. But we still shipped a big improvement to Markdown rendering, which now supports some basic HTML too!
 
@@ -182,9 +182,9 @@ This is a small release, not too much going on. But we still shipped a big impro
 
 ## v0.31 (2025-10-14)
 
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| 2025.2.4, 2025.3 EAP       | 1.9.0                         |
+| Min supported IJP versions | Compose Multiplatform version | Standalone Version                    |
+|----------------------------|-------------------------------|---------------------------------------|
+| 2025.2.4, 2025.3 EAP       | 1.9.0                         | 0.31.0-253.28086.58, 0.31.0-252.27409 |
 
 ### ⚠️ Important Changes
 
@@ -233,9 +233,9 @@ This is a small release, not too much going on. But we still shipped a big impro
 
 ## v0.30 (2025-09-04)
 
-| Supported IJP versions | Compose Multiplatform version |
-|------------------------|-------------------------------|
-| 2025.2.2+, 2025.1.5+   | 1.9.0-beta03                  |
+| Supported IJP versions | Compose Multiplatform version | Standalone Version                 |
+|------------------------|-------------------------------|------------------------------------|
+| 2025.2.2+, 2025.1.5+   | 1.9.0-beta03                  | 0.30.0-252.26252, 0.30.0-251.28458 |
 
 ### ⚠️ Important Changes
 
@@ -340,9 +340,9 @@ This is a small release, not too much going on. But we still shipped a big impro
 
 ## v0.29 (2025-07-22)
 
-| Supported IJP versions | Compose Multiplatform version |
-|------------------------|-------------------------------|
-| 2025.2.1+, 2025.1.4.1+ | 1.8.2                         |
+| Supported IJP versions | Compose Multiplatform version | Standalone Version                 |
+|------------------------|-------------------------------|------------------------------------|
+| 2025.2.1+, 2025.1.4.1+ | 1.8.2                         | 0.29.0-252.24604, 0.29.0-251.27828 |
 
 ### ⚠️ Important Changes
 
@@ -442,9 +442,9 @@ This is a small release, not too much going on. But we still shipped a big impro
 
 ## v0.28 (2025-05-16)
 
-| Supported IJP versions             | Compose Multiplatform version |
-|------------------------------------|-------------------------------|
-| 2025.2 EAP1+, 2025.1.1+, 2024.3.6+ | 1.8.0-alpha04                 |
+| Supported IJP versions             | Compose Multiplatform version | Standalone Version                                                     |
+|------------------------------------|-------------------------------|------------------------------------------------------------------------|
+| 2025.2 EAP1+, 2025.1.1+, 2024.3.6+ | 1.8.0-alpha04                 | 0.28.0-243.27100, 0.28.0-251.26137, 0.28.0-252.12274, 0.28.0-252.15920 |
 
 > [!IMPORTANT]
 > Jewel 0.28 is the first Jewel version to be published since the migration into the IJP codebase.
