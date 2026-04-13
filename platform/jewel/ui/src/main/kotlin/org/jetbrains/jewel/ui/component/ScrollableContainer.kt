@@ -96,6 +96,10 @@ internal enum class ScrollbarPosition {
  * @param content The main content of the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */
+@Deprecated(
+    "Use the overload that takes a ScrollState with userScrollEnabled parameter",
+    level = DeprecationLevel.HIDDEN,
+)
 @Composable
 public fun VerticallyScrollableContainer(
     modifier: Modifier = Modifier,
@@ -450,6 +454,10 @@ public fun VerticallyScrollableContainer(
  * @param content The content to be displayed in the scrollable container
  * @see com.intellij.ui.components.JBScrollBar
  */
+@Deprecated(
+    "Use the overload that takes a ScrollState with userScrollEnabled parameter",
+    level = DeprecationLevel.HIDDEN,
+)
 @Composable
 public fun HorizontallyScrollableContainer(
     modifier: Modifier = Modifier,
