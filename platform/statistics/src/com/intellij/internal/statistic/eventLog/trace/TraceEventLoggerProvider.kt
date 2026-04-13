@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.trace
 
 import com.intellij.ide.ConsentOptionsProvider
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
@@ -22,6 +23,16 @@ internal class TraceEventLoggerProvider : StatisticsEventLoggerProvider(
   companion object {
     const val RECORDER_ID: String = "TRACE"
   }
+
+  private val piiFilteringLogger: StatisticsEventLogger by lazy {
+    TracePiiFilteringEventLogger(
+      delegateProvider = { super.logger },
+      recorderOptionsProvider = recorderOptionsProvider,
+    )
+  }
+
+  override val logger: StatisticsEventLogger
+    get() = piiFilteringLogger
 
   override fun isRecordEnabled(): Boolean =
     !ApplicationManager.getApplication().isUnitTestMode &&
