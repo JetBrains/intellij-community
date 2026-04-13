@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ex.modifyAndCommitProjectProfile
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.lastLeaf
@@ -37,12 +42,12 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
     "types.NoneType", "_io.TextIOWrapper",
     // the definitions for these types don't include their `__str__`/`__repr__`, so we have to explicitly ignore them
     "str", "int", "float", "complex", "set", "frozenset", "bytes", "bytearray", "memoryview",
-    "slice", "list", "dict", "bool", "range", "tuple",
+    "slice", "list", "dict", "bool", "range", "tuple", "pathlib.PurePath"
   )
 
   @JvmField
   val reportedTypes: MutableList<String> = mutableListOf(
-    "types.FunctionType", "type"
+    "object", "types.FunctionType", "type"
   )
 
   override fun getOptionsPane(): OptPane {
@@ -127,14 +132,19 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
           type.members.forEach { handleType(it, requiredMethod) }
         }
         type is PyFunctionType && "types.FunctionType" in inspection.reportedTypes -> {
-          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "FunctionType"))
+          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "FunctionType"),
+                          RemoveFromReportedTypesQuickFix("types.FunctionType", "FunctionType"))
         }
         type !is PyClassType -> return
         type.classQName in inspection.reportedTypes -> {
-          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", type.name))
+          val classQName = type.classQName ?: return
+          val typeName = type.name ?: return
+          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", typeName),
+                          RemoveFromReportedTypesQuickFix(classQName, typeName))
         }
         type.isDefinition && "type" in inspection.reportedTypes -> {
-          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "type"))
+          registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "type"),
+                          RemoveFromReportedTypesQuickFix("type", "type"))
         }
         type.shouldWarnForType(requiredMethod) -> {
           val typeName = if (type.isDefinition) "type[${type.name}]" else type.name
@@ -144,7 +154,8 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
             DUNDER_FORMAT -> PyPsiBundle.message("INSP.string.conversion.without.dunder.format", typeName)
             else -> return
           }
-          registerProblem(this, message)
+          val classQName = type.classQName ?: return
+          registerProblem(this, message, AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()))
         }
       }
     }
@@ -188,3 +199,43 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
 private const val DUNDER_STR = "__str__"
 private const val DUNDER_REPR = "__repr__"
 private const val DUNDER_FORMAT = "__format__"
+
+private class RemoveFromReportedTypesQuickFix(private val key: String, private val displayName: String) : LocalQuickFix {
+  override fun getFamilyName(): String =
+    PyPsiBundle.message("INSP.string.conversion.remove.from.reported.types", displayName)
+
+  override fun startInWriteAction(): Boolean = false
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    modifyAndCommitProjectProfile(project) {
+      val inspection = it.getUnwrappedTool(
+        PyStringConversionWithoutDunderMethodInspection::class.java.simpleName,
+        descriptor.psiElement
+      ) as? PyStringConversionWithoutDunderMethodInspection ?: return@modifyAndCommitProjectProfile
+      inspection.reportedTypes.remove(key)
+    }
+  }
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
+    IntentionPreviewInfo.EMPTY
+}
+
+private class AddToIgnoredTypesQuickFix(private val key: String, private val displayName: String) : LocalQuickFix {
+  override fun getFamilyName(): String =
+    PyPsiBundle.message("INSP.string.conversion.add.to.ignored.types", displayName)
+
+  override fun startInWriteAction(): Boolean = false
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    modifyAndCommitProjectProfile(project) {
+      val inspection = it.getUnwrappedTool(
+        PyStringConversionWithoutDunderMethodInspection::class.java.simpleName,
+        descriptor.psiElement
+      ) as? PyStringConversionWithoutDunderMethodInspection ?: return@modifyAndCommitProjectProfile
+      inspection.ignoredTypes.add(key)
+    }
+  }
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
+    IntentionPreviewInfo.EMPTY
+}
