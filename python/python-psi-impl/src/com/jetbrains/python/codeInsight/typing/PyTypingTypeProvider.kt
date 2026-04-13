@@ -22,7 +22,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.Function
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -66,6 +65,7 @@ import com.jetbrains.python.psi.PyNoneLiteralExpression
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
@@ -149,19 +149,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
   public override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: Context): PyType? {
     // Check for the exact name in advance for performance reasons
     if ("Generic" == referenceExpression.name) {
-      if (resolvesToQualifiedNames(referenceExpression, context.typeContext, GENERIC)) {
+      if (referenceExpression.resolvesToQualifiedNames(context.typeContext, GENERIC)) {
         return createTypingGenericType(referenceExpression)
       }
     }
     // Check for the exact name in advance for performance reasons
     if ("Protocol" == referenceExpression.name) {
-      if (resolvesToQualifiedNames(referenceExpression, context.typeContext, PROTOCOL, PROTOCOL_EXT)) {
+      if (referenceExpression.resolvesToQualifiedNames(context.typeContext, PROTOCOL, PROTOCOL_EXT)) {
         return createTypingProtocolType(referenceExpression)
       }
     }
     // Check for the exact name in advance for performance reasons
     if ("Callable" == referenceExpression.name) {
-      if (resolvesToQualifiedNames(referenceExpression, context.typeContext, CALLABLE, CALLABLE_EXT)) {
+      if (referenceExpression.resolvesToQualifiedNames(context.typeContext, CALLABLE, CALLABLE_EXT)) {
         return createTypingCallableType(referenceExpression)
       }
     }
@@ -1063,7 +1063,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       // See https://mypy.readthedocs.io/en/stable/generics.html#defining-sub-classes-of-generic-classes
       val parameterizedSuperClassExpressions = getSuperClassExpressions(cls).filterIsInstance<PySubscriptionExpression>()
       val genericAsSuperClass = parameterizedSuperClassExpressions.find {
-        resolvesToQualifiedNames(it.operand,
+        it.operand.resolvesToQualifiedNames(
                                  context.typeContext,
                                  GENERIC)
       }
@@ -1150,21 +1150,12 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return false
     }
 
-    @ApiStatus.Internal
     @JvmStatic
-    fun getType(expression: PyExpression, context: TypeEvalContext, useFqn: Boolean): Ref<PyType?>? {
-      return staticWithCustomContext(
-        context,
-        useFqn
-      ) { customContext: Context? -> getType(expression, customContext!!) }
-    }
-
-    @JvmStatic
-    fun getType(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
-      return staticWithCustomContext(
-        context
-      ) { customContext: Context? -> getType(expression, customContext!!) }
-    }
+    @JvmOverloads
+    fun getType(expression: PyExpression, context: TypeEvalContext, typeRepresentation: Boolean = false): Ref<PyType?>? =
+      staticWithCustomContext(context, typeRepresentationMode = typeRepresentation) {
+        getType(expression, it)
+      }
 
     @JvmStatic
     fun getTypeForTypeHint(expression: PyExpression, context: TypeEvalContext): Ref<PyType?>? {
@@ -1179,7 +1170,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (knownType != null) {
         return Ref(knownType)
       }
-      for (pair in tryResolvingWithAliases(expression, context.typeContext)) {
+      for (pair in tryResolvingWithAliases(expression, context.typeContext, context.typeRepresentationMode)) {
         val typeRef = getTypeForResolvedElement(expression, pair.first, pair.second!!, context)
         if (typeRef != null) {
           if (typeRef.get() != null) {
@@ -1420,7 +1411,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
       }
       if (typeHint is PySubscriptionExpression) {
-        val moduleType: Ref<PyType?>? = getModuleType(typeHint)
+        val moduleType = getModuleType(typeHint)
         if (moduleType != null) {
           return moduleType
         }
@@ -1592,14 +1583,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private fun getClassObjectType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
         val operand = resolved.operand
-        if (resolvesToQualifiedNames(
-            operand,
-            context.typeContext, TYPE, PyNames.TYPE
-          )
+        if (operand.resolvesToQualifiedNames(context, TYPE, PyNames.TYPE)
+            || (operand is PyReferenceExpression
+                && operand.asQualifiedName() == QualifiedName.fromDottedString("builtins.type"))
         ) {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null) {
-            if (resolvesToQualifiedNames(indexExpr, context.typeContext, ANY)) {
+            if (indexExpr.resolvesToQualifiedNames(context.typeContext, ANY)) {
               return Ref(getInstance(resolved).typeType)
             }
             return indexExpr.getAsClassObjectType(context)
@@ -1608,7 +1598,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           return Ref(PyAnyType.unknown)
         }
       }
-      else if (TYPE == getQualifiedName(resolved)) {
+      else if (TYPE == resolved.getQualifiedName()) {
         return Ref(getInstance(resolved).typeType)
       }
       return null
@@ -1655,7 +1645,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getAnyType(element: PsiElement, context: Context): Ref<PyType?>? {
-      if (ANY == getQualifiedName(element)) {
+      if (ANY == element.getQualifiedName()) {
         return Ref(PyAnyType.any)
       }
       if (context.typeRepresentationMode && ANY == element.text) {
@@ -1712,7 +1702,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getOptionalType(element: PsiElement, context: Context): Ref<PyType?>? {
       if (element is PySubscriptionExpression) {
-        if (resolvesToQualifiedNames(element.operand, context.typeContext, OPTIONAL)) {
+        if (element.operand.resolvesToQualifiedNames(context.typeContext, OPTIONAL)) {
           val indexExpr = PyPsiUtils.flattenParens(element.indexExpression)
           val argExpr: PyExpression? = when (indexExpr) {
             is PyTupleExpression -> indexExpr.elements.singleOrNull() ?: indexExpr
@@ -1733,11 +1723,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getLiteralStringType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PyTargetExpression) {
-        if (resolvesToQualifiedNames(
-            resolved,
-            context.typeContext, LITERALSTRING, LITERALSTRING_EXT
-          )
-        ) {
+        if (resolved.resolvesToQualifiedNames(context.typeContext, LITERALSTRING, LITERALSTRING_EXT)) {
           return Ref(create(resolved))
         }
       }
@@ -1747,17 +1733,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getLiteralType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
-        if (resolvesToQualifiedNames(resolved.operand, context, LITERAL, LITERAL_EXT)) {
-          return Optional
-            .ofNullable<PyExpression?>(resolved.indexExpression)
-            .map<PyType?>(Function { index: PyExpression? ->
-              PyLiteralType.fromLiteralParameter(
-                index!!,
-                context.typeContext
-              )
-            })
-            .map(Function { value: PyType? -> Ref.create(value) })
-            .orElse(null)
+        if (resolved.operand.resolvesToQualifiedNames(context, LITERAL, LITERAL_EXT)) {
+          return resolved.indexExpression
+            ?.let { PyLiteralType.fromLiteralParameter(it, context.typeContext) }
+            ?.let { Ref.create(it) }
         }
       }
 
@@ -1767,9 +1746,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private fun getAnnotatedType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
         val operand = resolved.operand
-        if (resolvesToQualifiedNames(
-            operand,
-            context.typeContext, ANNOTATED, ANNOTATED_EXT
+        if (operand.resolvesToQualifiedNames(
+            context.typeContext,
+            ANNOTATED,
+            ANNOTATED_EXT
           )
         ) {
           val indexExpr = resolved.indexExpression
@@ -1786,11 +1766,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private fun getTypedDictSpecialItemType(resolved: PsiElement, context: Context): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
         val operand = resolved.operand
-        if (resolvesToQualifiedNames(
-            operand, context.typeContext,
+        if (operand.resolvesToQualifiedNames(
+            context.typeContext,
             REQUIRED, REQUIRED_EXT,
             NOT_REQUIRED, NOT_REQUIRED_EXT,
-            READONLY, READONLY_EXT
+            READONLY, READONLY_EXT,
           )
         ) {
           val indexExpr = resolved.indexExpression
@@ -1806,7 +1786,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun unwrapTypeModifier(resolved: PsiElement, context: Context, vararg type: String?): Ref<PyType?>? {
       if (resolved is PySubscriptionExpression) {
-        if (resolvesToQualifiedNames(resolved.operand, context.typeContext, *type)) {
+        if (resolved.operand.resolvesToQualifiedNames(context.typeContext, *type)) {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null) {
             return getType(indexExpr, context)
@@ -1882,16 +1862,16 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
     }
 
-    private fun resolvesToQualifiedNames(expression: PyExpression, context: Context, vararg names: String?): Boolean {
-      if (!context.typeRepresentationMode) return resolvesToQualifiedNames(expression, context.typeContext, *names)
-      if (expression !is PyReferenceExpression) return false
-      val qualifier = expression.qualifier ?: return false
-      val qName = qualifier.name + "." + expression.name
+    private fun PyExpression.resolvesToQualifiedNames(context: Context, vararg names: String?): Boolean {
+      if (!context.typeRepresentationMode) return resolvesToQualifiedNames(context.typeContext, *names)
+      if (this !is PyReferenceExpression) return false
+      val qualifier = this.qualifier ?: return false
+      val qName = qualifier.name + "." + this.name
       return names.any { it == qName }
     }
 
-    private fun resolvesToQualifiedNames(expression: PyExpression, context: TypeEvalContext, vararg names: String?): Boolean {
-      val qualifiedNames = resolveToQualifiedNames(expression, context)
+    private fun PyExpression.resolvesToQualifiedNames(context: TypeEvalContext, vararg names: String?): Boolean {
+      val qualifiedNames = resolveToQualifiedNames(this, context)
       return names.any { it in qualifiedNames }
     }
 
@@ -2064,9 +2044,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getCallableType(resolved: PsiElement, context: Context): PyType? {
       if (resolved is PySubscriptionExpression) {
-        if (resolvesToQualifiedNames(
-            resolved.operand,
-            context.typeContext, CALLABLE, CALLABLE_EXT
+        if (resolved.operand.resolvesToQualifiedNames(
+            context.typeContext,
+            CALLABLE,
+            CALLABLE_EXT
           )
         ) {
           val indexExpr = resolved.indexExpression
@@ -2094,9 +2075,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
       }
       else if (resolved is PyTargetExpression) {
-        if (resolvesToQualifiedNames(
-            resolved,
-            context.typeContext, CALLABLE, CALLABLE_EXT
+        if (resolved.resolvesToQualifiedNames(
+            context.typeContext,
+            CALLABLE,
+            CALLABLE_EXT,
           )
         ) {
           return PyCallableTypeImpl(null as PyCallableParameterListType?, null)
@@ -2106,7 +2088,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getNeverType(element: PsiElement): PyType? {
-      val qName: String? = getQualifiedName(element)
+      val qName: String? = element.getQualifiedName()
       if (qName == null) return null
       if (qName in listOf(NEVER, NEVER_EXT)) {
         return PyNeverType.NEVER
@@ -2119,7 +2101,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getUnionType(element: PsiElement, context: Context): Ref<PyType?>? {
       if (element is PySubscriptionExpression) {
-        if (resolvesToQualifiedNames(element.operand, context.typeContext, UNION)) {
+        if (element.operand.resolvesToQualifiedNames(context.typeContext, UNION)) {
           val union = PyUnionType.unionOrNever(getIndexTypes(element, context))
           return if (union != null) Ref(union) else null
         }
@@ -2146,7 +2128,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getConcatenateType(element: PsiElement, context: Context): PyType? {
       if (element !is PySubscriptionExpression) return null
-      if (!resolvesToQualifiedNames(element.operand, context.typeContext, CONCATENATE, CONCATENATE_EXT)) return null
+      if (!element.operand.resolvesToQualifiedNames(context.typeContext, CONCATENATE, CONCATENATE_EXT)) return null
       val tupleExpression = (element.indexExpression as? PyTupleExpression) ?: return null
 
       val arguments = tupleExpression.elements.toList()
@@ -2506,7 +2488,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun getTypeFromUnpackOperator(element: PsiElement, context: TypeEvalContext): Ref<PyType?>? {
       if (element !is PySubscriptionExpression ||
-          !resolvesToQualifiedNames(element.operand, context, UNPACK, UNPACK_EXT)
+          !element.operand.resolvesToQualifiedNames(context, UNPACK, UNPACK_EXT)
       ) {
         return null
       }
@@ -2701,7 +2683,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getCollection(element: PsiElement, context: TypeEvalContext): PyType? {
-      val typingName: String? = getQualifiedName(element)
+      val typingName: String? = element.getQualifiedName()
 
       val builtinName: String? = BUILTIN_COLLECTION_CLASSES[typingName]
       if (builtinName != null) return PyTypeParser.getTypeByName(element, builtinName, context)
@@ -2713,16 +2695,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun tryResolving(expression: PyExpression, context: TypeEvalContext): List<PsiElement> {
-      return tryResolvingWithAliases(expression, context).map { it.second!! }
+      return tryResolvingWithAliases(expression, context, false).map { it.second!! }
     }
 
     private fun tryResolvingWithAliases(
       expression: PyExpression,
       context: TypeEvalContext,
+      typeRepresentation: Boolean,
     ): List<Pair<PyQualifiedNameOwner?, PsiElement?>> {
       val elements: MutableList<Pair<PyQualifiedNameOwner?, PsiElement?>> = ArrayList()
       if (expression is PyReferenceExpression) {
-        val results: MutableList<PsiElement?>
+        val results: List<PsiElement?>
         if (context.maySwitchToAST(expression)) {
           val resolveContext = PyResolveContext.defaultContext(context)
           results = PyUtil.multiResolveTopPriority(expression, resolveContext)
@@ -2736,7 +2719,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             elements.add(null to cls)
             continue
           }
-          val name: String? = if (element != null) getQualifiedName(element) else null
+          val name: String? = if (element != null) element.getQualifiedName() else null
           if (name != null && name in OPAQUE_NAMES) {
             elements.add(null to element)
             continue
@@ -2772,7 +2755,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (expression is PySubscriptionExpression) {
         // Possibly a parameterized type alias
         val operandExpression = expression.operand
-        val results = tryResolvingWithAliases(operandExpression, context)
+        val results = tryResolvingWithAliases(operandExpression, context, typeRepresentation)
         for (pair in results) {
           // If the parameterized type is a type alias
           if (pair.first != null && pair.second != null) {
@@ -2811,22 +2794,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return mutableListOf(expression)
     }
 
-    fun resolveToQualifiedNames(expression: PyExpression, context: TypeEvalContext): Collection<String> {
-      return buildSet {
-        for (resolved in tryResolving(expression, context)) {
-          val name: String? = getQualifiedName(resolved)
-          if (name != null) {
-            add(name)
-          }
-        }
-      }
-    }
+    fun resolveToQualifiedNames(expression: PyExpression, context: TypeEvalContext): Collection<String> =
+      tryResolving(expression, context).mapNotNullTo(mutableSetOf()) { it.getQualifiedName() }
 
-    private fun getQualifiedName(element: PsiElement): String? {
-      if (element is PyQualifiedNameOwner) {
-        return element.qualifiedName
-      }
-      return null
+    private fun PsiElement.getQualifiedName(): String? = when (this) {
+      is PyQualifiedNameOwner -> this.qualifiedName
+      is PyQualifiedExpression -> this.asQualifiedName().toString()
+      else -> null
     }
 
     @JvmStatic
@@ -2934,13 +2908,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     fun isExplicitTypeAlias(targetExpression: PyTargetExpression, context: TypeEvalContext): Boolean {
       val annotationValue: PyExpression? = getAnnotationValue(targetExpression, context)
       if (annotationValue is PyReferenceExpression) {
-        return resolvesToQualifiedNames(annotationValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT)
+        return annotationValue.resolvesToQualifiedNames(context, TYPE_ALIAS, TYPE_ALIAS_EXT)
       }
       val typeCommentAnnotation = targetExpression.typeCommentAnnotation
       if (typeCommentAnnotation != null) {
         val commentValue = PyUtil.createExpressionFromFragment(typeCommentAnnotation, targetExpression)
         if (commentValue is PyReferenceExpression) {
-          return resolvesToQualifiedNames(commentValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT)
+          return commentValue.resolvesToQualifiedNames(context, TYPE_ALIAS, TYPE_ALIAS_EXT)
         }
       }
       return false
@@ -2996,13 +2970,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
     private fun <T> staticWithCustomContext(
       context: TypeEvalContext,
-      useFqn: Boolean,
+      typeRepresentationMode: Boolean,
       delegate: (Context) -> T,
     ): T {
       var customContext = context.processingContext.get(TYPE_HINT_EVAL_CONTEXT)
       val firstEntrance = customContext == null
       if (firstEntrance) {
-        customContext = Context(context, useFqn)
+        customContext = Context(context, typeRepresentationMode)
         context.processingContext.put(TYPE_HINT_EVAL_CONTEXT, customContext)
       }
       try {
