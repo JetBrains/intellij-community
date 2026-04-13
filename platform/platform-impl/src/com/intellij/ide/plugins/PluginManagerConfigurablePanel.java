@@ -392,14 +392,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
   }
 
-  static boolean containsQuery(PluginUiModel descriptor, String searchQuery) {
-    if (descriptor.getName() == null) return false;
-    if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
-
-    String description = descriptor.getDescription();
-    return description != null && StringUtil.containsIgnoreCase(description, searchQuery);
-  }
-
   static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
       for (ListPluginComponent plugin : group.plugins) {

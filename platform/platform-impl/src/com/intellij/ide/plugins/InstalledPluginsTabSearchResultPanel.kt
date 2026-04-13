@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ContainerUtil
@@ -136,22 +137,15 @@ internal class InstalledPluginsTabSearchResultPanel(
           continue
         }
       }
-      if (parser.searchQuery != null && !PluginManagerConfigurablePanel.containsQuery(descriptor, parser.searchQuery)) {
-        I.remove()
-      }
     }
 
     if (parser.searchQuery != null) {
-      val searchQuery = parser.searchQuery!!
-      descriptors.sortBy {
-        val matchInName = it.name?.contains(searchQuery, ignoreCase = true) ?: false
-        if (matchInName) return@sortBy 0
-
-        val matchInDescription = it.description?.contains(searchQuery, ignoreCase = true) ?: false
-        if (matchInDescription) return@sortBy 1
-
-        return@sortBy 100
-      }
+      val sortedByRelevance = descriptors.mapNotNull { plugin ->
+        val score = computeSearchQueryRelevance(plugin, parser.searchQuery!!)
+        score?.let { score to plugin }
+      }.sortedByDescending { it.first }
+      descriptors.clear()
+      descriptors.addAll(sortedByRelevance.map { it.second })
     }
 
     result.addModels(descriptors)
@@ -216,5 +210,27 @@ internal class InstalledPluginsTabSearchResultPanel(
       }
     }
     updatePanel()
+  }
+
+
+  companion object {
+    /**
+     * @return `null` if the given plugin is irrelevant, otherwise a higher score means higher relevance.
+     */
+    fun computeSearchQueryRelevance(descriptor: PluginUiModel, searchQuery: String): Double? {
+      if (descriptor.name == null) {
+        return null
+      }
+      if (StringUtil.containsIgnoreCase(descriptor.name!!, searchQuery)) {
+        return 100.0
+      }
+
+      val description = descriptor.description
+      if (description != null && StringUtil.containsIgnoreCase(description, searchQuery)) {
+        return 50.0
+      }
+
+      return null
+    }
   }
 }
