@@ -22,6 +22,7 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.ConfigurationCreationListener
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.OngoingRunConfigurationProvider
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RuntimeConfigurationError
@@ -1272,6 +1273,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
           ExecutionUtil.withLiveIndicator(icon)
         runningDescriptors.size > 1 -> icon =
           if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else IconUtil.addText(icon, runningDescriptors.size.toString())
+        OngoingRunConfigurationProvider.EP_NAME.extensionList.any { it.hasRunConfigurationRunning(project, settings) } -> icon =
+          ExecutionUtil.withLiveIndicator(icon)
       }
     }
     return icon
