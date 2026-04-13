@@ -1,6 +1,6 @@
 version = "3.0.*"
-upstream_repository = "https://github.com/google/atheris"
-partial_stub = true
+upstream-repository = "https://github.com/google/atheris"
+partial-stub = true
 
 [tool.stubtest]
-ignore_missing_stub = true
+ignore-missing-stub = true

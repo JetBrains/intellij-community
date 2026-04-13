@@ -1,2 +1,2 @@
 version = "0.5.*"
-upstream_repository = "https://github.com/architest/pymeeus"
+upstream-repository = "https://github.com/architest/pymeeus"

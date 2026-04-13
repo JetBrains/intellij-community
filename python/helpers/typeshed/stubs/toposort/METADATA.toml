@@ -1,2 +1,2 @@
 version = "1.10"
-upstream_repository = "https://gitlab.com/ericvsmith/toposort"
+upstream-repository = "https://gitlab.com/ericvsmith/toposort"

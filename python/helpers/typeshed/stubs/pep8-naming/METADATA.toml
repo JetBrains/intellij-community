@@ -1,2 +1,2 @@
 version = "0.15.*"
-upstream_repository = "https://github.com/PyCQA/pep8-naming"
+upstream-repository = "https://github.com/PyCQA/pep8-naming"

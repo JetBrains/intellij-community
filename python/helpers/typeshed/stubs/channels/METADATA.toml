@@ -1,8 +1,8 @@
 version = "4.3.*"
-upstream_repository = "https://github.com/django/channels"
+upstream-repository = "https://github.com/django/channels"
 dependencies = ["django-stubs>=4.2", "asgiref"]
 
 [tool.stubtest]
-mypy_plugins = ['mypy_django_plugin.main']
-mypy_plugins_config = {"django-stubs" = {"django_settings_module" = "@tests.django_settings"}}
-stubtest_dependencies = ["daphne"]
+mypy-plugins = ['mypy_django_plugin.main']
+mypy-plugins-config = {"django-stubs" = {"django_settings_module" = "@tests.django_settings"}}
+stubtest-dependencies = ["daphne"]

@@ -1,4 +1,4 @@
 version = "0.4.*"
-upstream_repository = "https://github.com/bmcfee/resampy"
+upstream-repository = "https://github.com/bmcfee/resampy"
 # Requires a version of numpy with a `py.typed` file
 dependencies = ["numpy>=1.20"]

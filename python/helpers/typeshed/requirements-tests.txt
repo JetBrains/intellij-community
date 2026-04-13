@@ -17,7 +17,7 @@ termcolor>=2.3
 tomli==2.4.1; python_version < "3.11"
 tomlkit==0.14.0
 typing_extensions>=4.15.0rc1
-uv==0.11.3
+uv==0.11.6
 
 # Utilities for typeshed infrastructure scripts.
 ts_utils @ file:lib

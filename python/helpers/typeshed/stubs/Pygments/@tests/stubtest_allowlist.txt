@@ -13,9 +13,6 @@ pygments.__main__
 pygments.lexer.Lexer.name
 pygments.lexer.Lexer.url
 pygments.lexer.Lexer.version_added
-
-# Class attributes that are set to None in the base class, but are
-# always overridden with a non-None value in subclasses.
 pygments.formatter.Formatter.name
 
 # Individual lexers and styles submodules are not stubbed at this time.

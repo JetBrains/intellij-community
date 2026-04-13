@@ -1,10 +1,10 @@
 version = "2.9.*"
-upstream_repository = "https://github.com/cannatag/ldap3"
+upstream-repository = "https://github.com/cannatag/ldap3"
 dependencies = ["types-pyasn1"]
 
 [tool.stubtest]
-apt_dependencies = ["libkrb5-dev"]
+apt-dependencies = ["libkrb5-dev"]
 # No need to install on the CI. Leaving here as information for MacOs/Windows contributors.
-# brew_dependencies = ["krb5"]
-# choco_dependencies = ["mitkerberos"]
-stubtest_dependencies = ["gssapi"]
+# brew-dependencies = ["krb5"]
+# choco-dependencies = ["mitkerberos"]
+stubtest-dependencies = ["gssapi"]

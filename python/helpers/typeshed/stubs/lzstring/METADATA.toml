@@ -1,2 +1,2 @@
 version = "1.0.*"
-upstream_repository = "https://github.com/gkovacs/lz-string-python"
+upstream-repository = "https://github.com/gkovacs/lz-string-python"

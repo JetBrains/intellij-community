@@ -7,9 +7,3 @@
 # and earlier. For compatibility reasons, we don't allow None in the stubs.
 os.posix_spawn
 os.posix_spawnp
-
-# =======
-# >= 3.13
-# =======
-
-(mmap.MAP_32BIT)?  # Exists locally on MacOS but not on GitHub

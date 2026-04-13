@@ -1,2 +1,2 @@
 version = "2026.4.4"
-upstream_repository = "https://github.com/mrabarnett/mrab-regex"
+upstream-repository = "https://github.com/mrabarnett/mrab-regex"

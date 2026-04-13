@@ -1,2 +1,2 @@
 version = "3.0.*"
-upstream_repository = "https://gitlab.com/deliberist-group/xdgenvpy"
+upstream-repository = "https://gitlab.com/deliberist-group/xdgenvpy"

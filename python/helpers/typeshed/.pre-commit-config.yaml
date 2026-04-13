@@ -11,7 +11,7 @@ repos:
         args: [--fix=lf]
       - id: check-case-conflict
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.8 # must match requirements-tests.txt
+    rev: v0.15.9 # must match requirements-tests.txt
     hooks:
       - id: ruff
         name: Run ruff on stubs, tests and scripts

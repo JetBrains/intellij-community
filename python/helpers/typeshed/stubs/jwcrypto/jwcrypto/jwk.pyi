@@ -2,7 +2,7 @@ from _typeshed import Unused
 from collections.abc import Callable, Sequence
 from enum import Enum
 from typing import Any, Literal, NamedTuple, TypeVar, overload
-from typing_extensions import Self, TypeAlias, deprecated
+from typing_extensions import LiteralString, Self, TypeAlias, deprecated
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
@@ -62,18 +62,18 @@ class JWKParameter(NamedTuple):
     required: bool | None
     type: ParmType | None
 
-JWKValuesRegistry: dict[str, dict[str, JWKParameter]]
-JWKParamsRegistry: dict[str, JWKParameter]
-JWKEllipticCurveRegistry: dict[str, str]
+JWKValuesRegistry: dict[LiteralString, dict[LiteralString, JWKParameter]]
+JWKParamsRegistry: dict[LiteralString, JWKParameter]
+JWKEllipticCurveRegistry: dict[LiteralString, str]
 _JWKUseSupported: TypeAlias = Literal["sig", "enc"]
 JWKUseRegistry: dict[_JWKUseSupported, str]
 _JWKOperationSupported: TypeAlias = Literal[
     "sign", "verify", "encrypt", "decrypt", "wrapKey", "unwrapKey", "deriveKey", "deriveBits"
 ]
 JWKOperationsRegistry: dict[_JWKOperationSupported, str]
-JWKpycaCurveMap: dict[str, str]
+JWKpycaCurveMap: dict[LiteralString, LiteralString]
 IANANamedInformationHashAlgorithmRegistry: dict[
-    str,
+    LiteralString,
     hashes.SHA256
     | hashes.SHA384
     | hashes.SHA512
@@ -103,6 +103,7 @@ class InvalidJWKOperation(JWException):
 class InvalidJWKValue(JWException): ...
 
 class JWK(dict[str, Any]):
+    unsafe_skip_rsa_key_validation: bool
     def __init__(self, **kwargs) -> None: ...
     # `kty` and the other keyword arguments are passed as `params` to the called generator
     # function. The possible arguments depend on the value of `kty`.

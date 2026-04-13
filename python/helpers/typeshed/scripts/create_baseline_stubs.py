@@ -134,11 +134,11 @@ def create_metadata(project: str, stub_dir: Path, version: str) -> None:
     if upstream_repo_url is None:
         warning = (
             f"\nCould not find a URL pointing to the source code for {project!r}.\n"
-            f"Please add it as `upstream_repository` to `stubs/{project}/METADATA.toml`, if possible!\n"
+            f"Please add it as `upstream-repository` to `stubs/{project}/METADATA.toml`, if possible!\n"
         )
         print(termcolor.colored(warning, "red"))
     else:
-        metadata += f'upstream_repository = "{upstream_repo_url}"\n'
+        metadata += f'upstream-repository = "{upstream_repo_url}"\n'
     print(f"Writing {filename}")
     filename.write_text(metadata, encoding="UTF-8")
 

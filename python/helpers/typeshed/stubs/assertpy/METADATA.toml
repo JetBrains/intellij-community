@@ -1,2 +1,2 @@
 version = "1.1.*"
-upstream_repository = "https://github.com/assertpy/assertpy"
+upstream-repository = "https://github.com/assertpy/assertpy"

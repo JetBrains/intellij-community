@@ -1,11 +1,11 @@
 version = "82.0.*"
-upstream_repository = "https://github.com/pypa/setuptools"
-extra_description = """\
+upstream-repository = "https://github.com/pypa/setuptools"
+extra-description = """\
 Given that `pkg_resources` is typed since `setuptools >= 71.1`, \
 it is no longer included with `types-setuptools`.
 """
 
 [tool.stubtest]
 # darwin is equivalent to linux for OS-specific methods
-ci_platforms = ["linux", "win32"]
-stubtest_dependencies = ["tomli"]
+ci-platforms = ["linux", "win32"]
+stubtest-dependencies = ["tomli"]

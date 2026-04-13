@@ -1,9 +1,11 @@
+from typing import Any, Final
+
 from docutils.parsers.rst import Directive
 
-MODULEDOC: str
-LEXERDOC: str
-FMTERDOC: str
-FILTERDOC: str
+MODULEDOC: Final[str]
+LEXERDOC: Final[str]
+FMTERDOC: Final[str]
+FILTERDOC: Final[str]
 
 class PygmentsDoc(Directive):
     filenames: set[str]
@@ -12,4 +14,4 @@ class PygmentsDoc(Directive):
     def document_formatters(self) -> str: ...
     def document_filters(self) -> str: ...
 
-def setup(app) -> None: ...
+def setup(app: Any) -> None: ...  # Actual type of 'app' is sphinx.application.Sphinx

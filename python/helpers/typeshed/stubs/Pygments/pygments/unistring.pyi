@@ -1,38 +1,71 @@
-from _typeshed import Incomplete
+from typing import Final, Literal, TypeAlias
 
-Cc: str
-Cf: str
-Cn: str
-Co: str
-Cs: str
-Ll: str
-Lm: str
-Lo: str
-Lt: str
-Lu: str
-Mc: str
-Me: str
-Mn: str
-Nd: str
-Nl: str
-No: str
-Pc: str
-Pd: str
-Pe: str
-Pf: str
-Pi: str
-Po: str
-Ps: str
-Sc: str
-Sk: str
-Sm: str
-So: str
-Zl: str
-Zp: str
-Zs: str
-xid_continue: str
-xid_start: str
-cats: Incomplete
+_Cats: TypeAlias = Literal[
+    "Cc",
+    "Cf",
+    "Cn",
+    "Co",
+    "Cs",
+    "Ll",
+    "Lm",
+    "Lo",
+    "Lt",
+    "Lu",
+    "Mc",
+    "Me",
+    "Mn",
+    "Nd",
+    "Nl",
+    "No",
+    "Pc",
+    "Pd",
+    "Pe",
+    "Pf",
+    "Pi",
+    "Po",
+    "Ps",
+    "Sc",
+    "Sk",
+    "Sm",
+    "So",
+    "Zl",
+    "Zp",
+    "Zs",
+]
 
-def combine(*args): ...
-def allexcept(*args): ...
+Cc: Final[str]
+Cf: Final[str]
+Cn: Final[str]
+Co: Final[str]
+Cs: Final[str]
+Ll: Final[str]
+Lm: Final[str]
+Lo: Final[str]
+Lt: Final[str]
+Lu: Final[str]
+Mc: Final[str]
+Me: Final[str]
+Mn: Final[str]
+Nd: Final[str]
+Nl: Final[str]
+No: Final[str]
+Pc: Final[str]
+Pd: Final[str]
+Pe: Final[str]
+Pf: Final[str]
+Pi: Final[str]
+Po: Final[str]
+Ps: Final[str]
+Sc: Final[str]
+Sk: Final[str]
+Sm: Final[str]
+So: Final[str]
+Zl: Final[str]
+Zp: Final[str]
+Zs: Final[str]
+xid_continue: Final[str]
+xid_start: Final[str]
+cats: Final[list[_Cats]]
+
+def combine(*args: _Cats) -> str: ...
+def allexcept(*args: _Cats) -> str: ...

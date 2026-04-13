@@ -1,3 +1,3 @@
 version = "2.0.*"
-upstream_repository = "https://github.com/ppwwyyxx/cocoapi"
+upstream-repository = "https://github.com/ppwwyyxx/cocoapi"
 dependencies = ["numpy>=2.0.0rc1"]

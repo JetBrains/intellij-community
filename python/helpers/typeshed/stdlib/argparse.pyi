@@ -168,7 +168,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             usage: str | None = None,
             description: str | None = None,
             epilog: str | None = None,
-            parents: Sequence[ArgumentParser] = [],
+            parents: Iterable[ArgumentParser] = [],
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = "-",
             fromfile_prefix_chars: str | None = None,
@@ -188,7 +188,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             usage: str | None = None,
             description: str | None = None,
             epilog: str | None = None,
-            parents: Sequence[ArgumentParser] = [],
+            parents: Iterable[ArgumentParser] = [],
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = "-",
             fromfile_prefix_chars: str | None = None,
@@ -200,9 +200,9 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         ) -> None: ...
 
     @overload
-    def parse_args(self, args: Sequence[str] | None = None, namespace: None = None) -> Namespace: ...
+    def parse_args(self, args: Iterable[str] | None = None, namespace: None = None) -> Namespace: ...
     @overload
-    def parse_args(self, args: Sequence[str] | None, namespace: _N) -> _N: ...
+    def parse_args(self, args: Iterable[str] | None, namespace: _N) -> _N: ...
     @overload
     def parse_args(self, *, namespace: _N) -> _N: ...
     @overload
@@ -239,26 +239,26 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
     def format_usage(self) -> str: ...
     def format_help(self) -> str: ...
     @overload
-    def parse_known_args(self, args: Sequence[str] | None = None, namespace: None = None) -> tuple[Namespace, list[str]]: ...
+    def parse_known_args(self, args: Iterable[str] | None = None, namespace: None = None) -> tuple[Namespace, list[str]]: ...
     @overload
-    def parse_known_args(self, args: Sequence[str] | None, namespace: _N) -> tuple[_N, list[str]]: ...
+    def parse_known_args(self, args: Iterable[str] | None, namespace: _N) -> tuple[_N, list[str]]: ...
     @overload
     def parse_known_args(self, *, namespace: _N) -> tuple[_N, list[str]]: ...
     def convert_arg_line_to_args(self, arg_line: str) -> list[str]: ...
     def exit(self, status: int = 0, message: str | None = None) -> NoReturn: ...
     def error(self, message: str) -> NoReturn: ...
     @overload
-    def parse_intermixed_args(self, args: Sequence[str] | None = None, namespace: None = None) -> Namespace: ...
+    def parse_intermixed_args(self, args: Iterable[str] | None = None, namespace: None = None) -> Namespace: ...
     @overload
-    def parse_intermixed_args(self, args: Sequence[str] | None, namespace: _N) -> _N: ...
+    def parse_intermixed_args(self, args: Iterable[str] | None, namespace: _N) -> _N: ...
     @overload
     def parse_intermixed_args(self, *, namespace: _N) -> _N: ...
     @overload
     def parse_known_intermixed_args(
-        self, args: Sequence[str] | None = None, namespace: None = None
+        self, args: Iterable[str] | None = None, namespace: None = None
     ) -> tuple[Namespace, list[str]]: ...
     @overload
-    def parse_known_intermixed_args(self, args: Sequence[str] | None, namespace: _N) -> tuple[_N, list[str]]: ...
+    def parse_known_intermixed_args(self, args: Iterable[str] | None, namespace: _N) -> tuple[_N, list[str]]: ...
     @overload
     def parse_known_intermixed_args(self, *, namespace: _N) -> tuple[_N, list[str]]: ...
     # undocumented
@@ -783,13 +783,13 @@ class _SubParsersAction(Action, Generic[_ArgumentParserT]):
             *,
             deprecated: bool = False,
             help: str | None = ...,
-            aliases: Sequence[str] = ...,
+            aliases: Iterable[str] = ...,
             # Kwargs from ArgumentParser constructor
             prog: str | None = ...,
             usage: str | None = ...,
             description: str | None = ...,
             epilog: str | None = ...,
-            parents: Sequence[_ArgumentParserT] = ...,
+            parents: Iterable[_ArgumentParserT] = ...,
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = ...,
             fromfile_prefix_chars: str | None = ...,
@@ -809,13 +809,13 @@ class _SubParsersAction(Action, Generic[_ArgumentParserT]):
             *,
             deprecated: bool = False,
             help: str | None = ...,
-            aliases: Sequence[str] = ...,
+            aliases: Iterable[str] = ...,
             # Kwargs from ArgumentParser constructor
             prog: str | None = ...,
             usage: str | None = ...,
             description: str | None = ...,
             epilog: str | None = ...,
-            parents: Sequence[_ArgumentParserT] = ...,
+            parents: Iterable[_ArgumentParserT] = ...,
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = ...,
             fromfile_prefix_chars: str | None = ...,
@@ -832,13 +832,13 @@ class _SubParsersAction(Action, Generic[_ArgumentParserT]):
             name: str,
             *,
             help: str | None = ...,
-            aliases: Sequence[str] = ...,
+            aliases: Iterable[str] = ...,
             # Kwargs from ArgumentParser constructor
             prog: str | None = ...,
             usage: str | None = ...,
             description: str | None = ...,
             epilog: str | None = ...,
-            parents: Sequence[_ArgumentParserT] = ...,
+            parents: Iterable[_ArgumentParserT] = ...,
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = ...,
             fromfile_prefix_chars: str | None = ...,

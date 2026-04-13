@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import ClassVar
 
 default_max_pbkdf2_iterations: int
+default_enforce_hmac_key_length: bool
 
 class JWAAlgorithm(metaclass=ABCMeta):
     @property

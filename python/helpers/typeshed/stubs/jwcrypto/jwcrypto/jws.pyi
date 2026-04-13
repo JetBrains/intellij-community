@@ -1,14 +1,13 @@
 from _typeshed import Incomplete
-from collections.abc import Mapping
 from typing import Any, Literal
-from typing_extensions import Self
+from typing_extensions import LiteralString, Self
 
 from jwcrypto.common import JWException, JWSEHeaderParameter
 from jwcrypto.jwa import JWAAlgorithm
 from jwcrypto.jwk import JWK, JWKSet
 
-JWSHeaderRegistry: Mapping[str, JWSEHeaderParameter]
-default_allowed_algs: list[str]
+JWSHeaderRegistry: dict[LiteralString, JWSEHeaderParameter]
+default_allowed_algs: list[LiteralString]
 
 class InvalidJWSSignature(JWException):
     def __init__(self, message: str | None = None, exception: BaseException | None = None) -> None: ...
@@ -38,7 +37,7 @@ class JWSCore:
     def verify(self, signature: bytes) -> Literal[True]: ...
 
 class JWS:
-    objects: Incomplete
+    objects: dict[str, Incomplete]
     verifylog: list[str] | None
     header_registry: Incomplete
     def __init__(self, payload=None, header_registry=None) -> None: ...

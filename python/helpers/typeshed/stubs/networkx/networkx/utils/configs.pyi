@@ -7,7 +7,7 @@ from typing_extensions import Self
 
 __all__ = ["Config"]
 
-# TODO: Our pyright test doesn't understand `requires_python` in METADATA.toml
+# TODO: Our pyright test doesn't understand `requires-python` in METADATA.toml
 # https://github.com/python/typeshed/issues/14025
 if sys.version_info >= (3, 10):
     @dataclass(init=False, eq=False, slots=True, kw_only=True, match_args=False)

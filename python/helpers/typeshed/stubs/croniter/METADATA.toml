@@ -1,2 +1,2 @@
 version = "6.2.2"
-upstream_repository = "https://github.com/pallets-eco/croniter"
+upstream-repository = "https://github.com/pallets-eco/croniter"

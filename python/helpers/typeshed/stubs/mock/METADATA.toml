@@ -1,2 +1,2 @@
 version = "5.2.*"
-upstream_repository = "https://github.com/testing-cabal/mock"
+upstream-repository = "https://github.com/testing-cabal/mock"

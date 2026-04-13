@@ -1,2 +1,2 @@
 version = "0.5.*"
-upstream_repository = "https://github.com/gsnedders/python-webencodings"
+upstream-repository = "https://github.com/gsnedders/python-webencodings"

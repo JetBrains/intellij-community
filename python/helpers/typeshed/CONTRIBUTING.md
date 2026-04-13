@@ -169,27 +169,27 @@ supported:
   be listed here, for security reasons. See
   [this issue](https://github.com/typeshed-internal/stub_uploader/issues/90)
   for more information about what external dependencies are allowed.
-* `extra_description` (optional): Can be used to add a custom description to
+* `extra-description` (optional): Can be used to add a custom description to
   the package's long description. It should be a multi-line string in
   Markdown format.
-* `stub_distribution` (optional): Distribution name to be uploaded to PyPI.
+* `stub-distribution` (optional): Distribution name to be uploaded to PyPI.
   This defaults to `types-<distribution>` and should only be set in special
   cases.
-* `upstream_repository` (recommended): The URL of the upstream repository.
-* `obsolete_since` (optional): This field is part of our process for
+* `upstream-repository` (recommended): The URL of the upstream repository.
+* `obsolete-since` (optional): This field is part of our process for
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
-* `no_longer_updated` (optional): This field is set to `true` before removing
+* `no-longer-updated` (optional): This field is set to `true` before removing
   stubs for other reasons than the upstream library shipping with type
   information.
 * `upload` (optional): This field is set to `false` to prevent automatic
   uploads to PyPI. This should only be used in special cases, e.g. when the stubs
   break the upload.
-* `partial_stub` (optional): This field marks the type stub package as
+* `partial-stub` (optional): This field marks the type stub package as
   [partial](https://peps.python.org/pep-0561/#partial-stub-packages). This is for
   3rd-party stubs that don't cover the entirety of the package's public API.
-* `requires_python` (optional): The minimum version of Python required to install
+* `requires-python` (optional): The minimum version of Python required to install
   the type stub package. It must be in the form `>=3.*`. If omitted, the oldest
   Python version supported by typeshed is used.
 
@@ -198,36 +198,36 @@ This has the following keys:
 * `skip` (default: `false`): Whether stubtest should be run against this
   package. Please avoid setting this to `true`, and add a comment if you have
   to.
-* `ignore_missing_stub`: When set to `true`, this will add the
-  `--ignore_missing_stub` option to the stubtest call. See
+* `ignore-missing-stub`: When set to `true`, this will add the
+  `--ignore-missing-stub` option to the stubtest call. See
   [tests/README.md](./tests/README.md) for more information. In most cases,
-  this field should be identical to `partial_stub`.
-* `stubtest_dependencies` (default: `[]`): A list of Python packages that need
+  this field should be identical to `partial-stub`.
+* `stubtest-dependencies` (default: `[]`): A list of Python packages that need
   to be installed for stubtest to run successfully. These packages are installed
   in addition to the dependencies in the `dependencies` field.
-* `apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+* `apt-dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully.
-* `brew_dependencies` (default: `[]`): A list of MacOS Homebrew packages
+* `brew-dependencies` (default: `[]`): A list of MacOS Homebrew packages
   that need to be installed for stubtest to run successfully
-* `choco_dependencies` (default: `[]`): A list of Windows Chocolatey packages
+* `choco-dependencies` (default: `[]`): A list of Windows Chocolatey packages
   that need to be installed for stubtest to run successfully
-* `supported_platforms` (default: all platforms): A list of OSes on which
+* `supported-platforms` (default: all platforms): A list of OSes on which
   stubtest can be run. When a package is not platform-specific, this should
   not be set. If the package is platform-specific, this should usually be set
   to the supported platforms, unless stubtest is known to fail on a
   specific platform.
-* `ci_platforms` (default: `["linux"]`): A list of OSes on which to run
+* `ci-platforms` (default: `["linux"]`): A list of OSes on which to run
   stubtest as part of our continuous integration (CI) tests. Can contain
   `win32`, `linux`, and `darwin` values. If not specified, stubtest is run
   only on `linux`. Only add extra OSes to the test if there are
   platform-specific branches in a stubs package.
-* `mypy_plugins` (default: `[]`): A list of Python modules to use as mypy plugins
-when running stubtest. For example: `mypy_plugins = ["mypy_django_plugin.main"]`
-* `mypy_plugins_config` (default: `{}`): A dictionary mapping plugin names to their
+* `mypy-plugins` (default: `[]`): A list of Python modules to use as mypy plugins
+when running stubtest. For example: `mypy-plugins = ["mypy_django_plugin.main"]`
+* `mypy-plugins-config` (default: `{}`): A dictionary mapping plugin names to their
 configuration dictionaries for use by mypy plugins. For example:
-`mypy_plugins_config = {"django-stubs" = {"django_settings_module" = "@tests.django_settings"}}`
+`mypy-plugins-config = {"django-stubs" = {"django_settings_module" = "@tests.django_settings"}}`
 
-`*_dependencies` are usually packages needed to `pip install` the implementation
+`*-dependencies` are usually packages needed to `pip install` the implementation
 distribution.
 
 The format of all `METADATA.toml` files can be checked by running
@@ -436,7 +436,7 @@ following criteria is met:
 
 Case 1: If a package ships its own `py.typed` file, please follow these steps:
 
-1. Make sure **stubsabot** open a PR that sets the `obsolete_since` field in the
+1. Make sure **stubsabot** open a PR that sets the `obsolete-since` field in the
    `METADATA.toml` file to the first version of the package that shipped `py.typed`.
 2. After at least six months, make sure **stubsabot** open a PR to remove the stubs.
 
@@ -446,7 +446,7 @@ these steps:
 1. Open an issue explaining why the stubs should be removed.
 2. A maintainer will add the
    ["stubs: removal" label](https://github.com/python/typeshed/labels/%22stubs%3A%20removal%22).
-3. Open a PR that sets the `no_longer_updated` field in the `METADATA.toml`
+3. Open a PR that sets the `no-longer-updated` field in the `METADATA.toml`
    file to `true`.
 4. When a new version of the package was automatically uploaded to PyPI (which
    can take up to a day), make sure **stubsabot** open a PR to remove the stubs.

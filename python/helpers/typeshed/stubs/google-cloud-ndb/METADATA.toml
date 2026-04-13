@@ -1,6 +1,6 @@
 version = "2.4.*"
-upstream_repository = "https://github.com/googleapis/python-ndb"
-partial_stub = true
+upstream-repository = "https://github.com/googleapis/python-ndb"
+partial-stub = true
 
 [tool.stubtest]
-ignore_missing_stub = true
+ignore-missing-stub = true

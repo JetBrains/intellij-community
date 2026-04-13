@@ -1,5 +1,5 @@
 version = "4.4.*"
-upstream_repository = "https://github.com/django-import-export/django-import-export"
+upstream-repository = "https://github.com/django-import-export/django-import-export"
 dependencies = ["django-stubs"]  # Add tablib when typed, and update _Incomplete aliases in stubs
 
 [tool.stubtest]

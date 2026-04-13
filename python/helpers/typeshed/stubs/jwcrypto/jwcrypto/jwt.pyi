@@ -1,11 +1,10 @@
-from collections.abc import Mapping
 from typing import Any, SupportsInt
-from typing_extensions import deprecated
+from typing_extensions import LiteralString, deprecated
 
 from jwcrypto.common import JWException, JWKeyNotFound
 from jwcrypto.jwk import JWK, JWKSet
 
-JWTClaimsRegistry: Mapping[str, str]
+JWTClaimsRegistry: dict[LiteralString, str]
 JWT_expect_type: bool
 
 class JWTExpired(JWException):

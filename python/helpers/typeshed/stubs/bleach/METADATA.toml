@@ -1,6 +1,6 @@
 version = "6.3.*"
 dependencies = ["types-html5lib"]
-upstream_repository = "https://github.com/mozilla/bleach"
+upstream-repository = "https://github.com/mozilla/bleach"
 
 [tool.stubtest]
 extras = ["css"]
