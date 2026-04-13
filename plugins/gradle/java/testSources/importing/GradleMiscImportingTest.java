@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
@@ -461,6 +462,34 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
     var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
     assertEquals("my.module.name", automaticModuleName);
+  }
+
+  @Test
+  public void testJAnsiPropertyNotModified() throws Exception {
+    String oldValue = System.getProperty("library.jansi.path");
+    importProject(script(it -> it.withJavaPlugin()));
+    String newValue = System.getProperty("library.jansi.path");
+    assertEquals("The [library.jansi.path] should be preserved, but it has changed", oldValue, newValue);
+  }
+
+  @Test
+  public void testJAnsiPropertyNotModifiedWhenSet() throws Exception {
+    String sentinel = "/some/test/path";
+    String previousValue = System.getProperty("library.jansi.path");
+    System.setProperty("library.jansi.path", sentinel);
+    try {
+      importProject(script(it -> it.withJavaPlugin()));
+      assertEquals("The [library.jansi.path] should be preserved, but it has changed",
+                   sentinel, System.getProperty("library.jansi.path"));
+    }
+    finally {
+      if (previousValue != null) {
+        System.setProperty("library.jansi.path", previousValue);
+      }
+      else {
+        System.clearProperty("library.jansi.path");
+      }
+    }
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {
