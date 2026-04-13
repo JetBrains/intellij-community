@@ -43,7 +43,7 @@ T = TypeVar("T")
 
 class Meta3(type):
     def __call__(cls: type[T], *args, **kwargs) -> T:
-        return super().__call__(cls, *args, **kwargs)
+        return type.__call__(cls, *args, **kwargs)
 
 
 class Class3(metaclass=Meta3):
@@ -57,7 +57,7 @@ assert_type(Class3(1), Class3)
 
 class Meta4(type):
     def __call__(cls, *args, **kwargs):
-        return super().__call__(cls, *args, **kwargs)
+        return type.__call__(cls, *args, **kwargs)
 
 
 class Class4(metaclass=Meta4):
