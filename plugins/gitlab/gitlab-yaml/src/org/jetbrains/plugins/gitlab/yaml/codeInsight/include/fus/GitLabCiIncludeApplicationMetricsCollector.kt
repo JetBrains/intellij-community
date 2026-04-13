@@ -416,7 +416,7 @@ private val TIMEOUT_HAPPENED = EventFields.Boolean("timeout_happened", "Whether 
 
 private val GROUP = EventLogGroup(
   id = "gitlab.ci.include",
-  version = 1
+  version = 2
 )
 
 private val EXPLICIT_LOCAL_TYPE_EVENT = GROUP.registerVarargEvent(
