@@ -73,7 +73,7 @@ public final class JsonColorsPage implements RainbowColorSettingsPage, DisplayPr
         /* As well as block comments. */
         <propertyKey>"the only keywords are"</propertyKey>: [true, false, null],
         <propertyKey>"strings with"</propertyKey>: {
-          <propertyKey>"no escapes"</propertyKey>: "pseudopolinomiality"
+          <propertyKey>"no escapes"</propertyKey>: "pseudopolinomiality",
           <propertyKey>"valid escapes"</propertyKey>: "C-style\\r\\n and unicode\\u0021",
           <propertyKey>"illegal escapes"</propertyKey>: "\\0377\\x\\"
         },
