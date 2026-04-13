@@ -2,8 +2,10 @@
 package com.intellij.platform.eel
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -141,3 +143,19 @@ inline fun <A, B> SafeDeferred<A>.map(crossinline block: (A) -> B): SafeDeferred
   }
   return SafeDeferred(result)
 }
+
+@ApiStatus.Experimental
+fun <K, V> MutableMap<K, SafeDeferred<V>>.computeDeferred(
+  coroutineScope: CoroutineScope,
+  key: K,
+  factory: suspend (key: K) -> V,
+): SafeDeferred<V> =
+  compute(key) { key, old ->
+    when (old?.state) {
+      SafeDeferred.State.Active, is SafeDeferred.State.Completed -> old
+
+      null, is SafeDeferred.State.FinishedUnsuccessfully -> SafeDeferred(coroutineScope.async {
+        factory(key)
+      })
+    }
+  }!!

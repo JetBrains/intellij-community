@@ -62,7 +62,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
     GlobalScope.launch {
       LOG.runAndLogException {
         try {
-          val (title, deployingStrategy, descriptor) = deployingStrategy(ParentOfIjentScopes(this))
+          val (title, deployingStrategy, descriptor) = deployingStrategy(ParentOfIjentScopes(this)) ?: return@launch
           withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
             deployingStrategy.createIjentSession().getIjentInstance(descriptor).use { ijent ->
               coroutineScope {
@@ -116,7 +116,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
     }
   }
 
-  protected abstract suspend fun deployingStrategy(ijentProcessScope: ParentOfIjentScopes): Triple<String, IjentDeployingStrategy, EelDescriptor>
+  protected abstract suspend fun deployingStrategy(ijentProcessScope: ParentOfIjentScopes): Triple<String, IjentDeployingStrategy, EelDescriptor>?
 
   companion object {
     protected val LOG = logger<AbstractIjentVerificationAction>()
