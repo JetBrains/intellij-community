@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.EmptyProjectMarker
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevTestWorkaround
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
@@ -376,7 +378,13 @@ object FUSProjectHotStartUpMeasurer {
    * Here are some heuristics that may save us from bugs, but that is not guaranteed.
    */
   private fun checkEditorHasBasicHighlight(file: VirtualFile, project: Project, fileEditorManager: FileEditorManager) {
-    val textEditor: TextEditor = fileEditorManager.getEditors(file)[0] as TextEditor
+    val textEditor = fileEditorManager.getEditors(file)[0]
+
+    if (textEditor !is TextEditor) {
+      thisLogger().warn("The editor is not a TextEditor, but ${textEditor.javaClass.name}. Skipping checkEditorHasBasicHighlight")
+      return
+    }
+
     // It's marked @NotNull, but before initialization it is actually null.
     // So this is a valid check that highlighter is initialized. It is used for syntax highlighting
     // via HighlighterIterator from LexerEditorHighlighter.createIterator & IterationState.
