@@ -109,7 +109,6 @@ import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.psi.types.engine.PyTypeEngine;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -449,7 +448,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     else {
       hlType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
     }
-    if (myTypeEvalContext.getTypeEngine() != null) {
+    if (myTypeEvalContext.getUsesExternalTypeEngine()) {
       hlType = ProblemHighlightType.INFORMATION;
     }
 

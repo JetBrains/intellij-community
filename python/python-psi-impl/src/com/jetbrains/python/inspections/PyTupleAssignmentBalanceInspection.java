@@ -48,7 +48,7 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    if (context.getTypeEngine() != null) {
+    if (context.getUsesExternalTypeEngine()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new Visitor(holder, context);

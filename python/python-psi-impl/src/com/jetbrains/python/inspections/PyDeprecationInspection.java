@@ -46,7 +46,7 @@ public final class PyDeprecationInspection extends PyInspection {
                                                  final boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    if (context.getTypeEngine() != null) {
+    if (context.getUsesExternalTypeEngine()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new Visitor(holder, context);
