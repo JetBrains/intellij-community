@@ -784,7 +784,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
             val parent = c.parent
             if (parent != null) {
               val index = parent.components.indexOf(c)
-              val top = if (index == 0) 1 else 4
+              val top = if (index == 0) {
+                if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP) 1 else 7
+              }
+              else {
+                4
+              }
               val bottom = if (index == parent.componentCount - 1) 1 else 4
               val leftRight = if (UISettings.getInstance().compactMode) 11 else 13
               return JBInsets(top, leftRight, bottom, leftRight)
