@@ -1,0 +1,14 @@
+[project]
+name = "uv1"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "build>=1.4.2",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["my_src", "my_src2"]

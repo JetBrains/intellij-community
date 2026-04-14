@@ -1,0 +1,22 @@
+[tool.pytest.ini_options]
+# Minimum version of pytest required
+minversion = "7.0"
+
+# Command line arguments (e.g., show local variables on failure, verbose output)
+addopts = "-ra -q --showlocals"
+
+# Where pytest should look for tests
+testpaths = [
+    "tests",
+    "integration",
+]
+
+# Patterns for file discovery
+python_files = "test_*.py"
+python_functions = "test_*"
+
+# Define custom markers to avoid warnings
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "serial",
+]

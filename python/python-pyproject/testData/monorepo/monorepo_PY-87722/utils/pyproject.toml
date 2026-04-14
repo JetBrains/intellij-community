@@ -1,0 +1,29 @@
+[build-system]
+requires = [
+  "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "utils"
+requires-python = ">=3.14.2"
+version = "0.1.0"
+description = "Shared internal utilities"
+authors = [
+  { name = "Philipp Kretzschmar", email = "philipp.kretzschmar@mst-solutions.de" },
+]
+dependencies = [
+  "pytest",
+  "pytest-xdist",
+  "parameterized",
+  "dotenv",
+]
+
+[tool.pytest.ini_options]
+addopts = "--tb=short -n 0"
+pythonpath = [
+  "src",
+]
+testpaths = [
+  "tests",
+]

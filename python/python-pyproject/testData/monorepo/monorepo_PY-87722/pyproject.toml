@@ -1,0 +1,28 @@
+[project]
+name = "sentinel"
+version = "0.1.0"
+requires-python = ">=3.14.2"
+
+
+dependencies = [
+  "python-dotenv>=1.2.1",
+  "ruff>=0.15.0",
+  "ty>=0.0.15",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "utils",
+  "portal/api",
+]
+
+[dependency-groups]
+dev = [
+  "jello>=1.6.1",
+  "ruff>=0.15.0",
+  "taplo>=0.9.3",
+  "ty>=0.0.15",
+]

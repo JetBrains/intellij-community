@@ -27,7 +27,6 @@ import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
-import com.intellij.workspaceModel.ide.toPath
 import com.intellij.testFramework.utils.vfs.createFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -68,7 +67,7 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
 
     // Exclude the sub directory on the root module's content root
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
@@ -83,7 +82,7 @@ internal class PyProjectTomlLifecycleTest {
 
     // Reload — child module should be removed (pyproject.toml is inside excluded folder)
     f.reloadProject()
-    f.assertModuleNames(f.project, "root" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("root", contentRoot = ".", excludedFolders = listOf("sub")))
 
     // Un-exclude by removing the ExcludeUrlEntity
     f.project.workspaceModel.update("un-exclude sub") { storage ->
@@ -135,14 +134,10 @@ internal class PyProjectTomlLifecycleTest {
 
     f.reloadProject()
     // assertModuleNames verifies entity source consistency on all children (PY-87499)
-    f.assertModuleNames(f.project, "lib" to PYPROJECT, "root" to PYPROJECT)
-
-    // Verify the module is now pyproject-based and pre-existing roots survived
-    val snapshot = f.project.workspaceModel.currentSnapshot
-    val libModule = snapshot.resolve(ModuleId("lib"))!!
-    assertThat(libModule.contentRoots.single().url.toPath().fileName.toString()).isEqualTo("lib")
-    assertThat(f.excludeNames("lib")).contains("node_modules")
-    assertThat(f.sourceRootNames("lib")).contains("src")
+    f.assertProjectStructure(
+      ExpectedModule("lib", contentRoot = "lib", sourceRoots = listOf("lib/src"), excludedFolders = listOf("lib/node_modules")),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   /**
@@ -163,7 +158,11 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to PYPROJECT, "old-app" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("lib", contentRoot = "lib"),
+      ExpectedModule("old-app", contentRoot = "app"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Verify facet survived adoption
     val snapshot1 = f.project.workspaceModel.currentSnapshot
@@ -185,7 +184,11 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to PYPROJECT, "new-app" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("lib", contentRoot = "lib"),
+      ExpectedModule("new-app", contentRoot = "app"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Verify facets survived rename
     val snapshot2 = f.project.workspaceModel.currentSnapshot
@@ -219,10 +222,11 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "A" to PYPROJECT, "B" to PYPROJECT, "root" to PYPROJECT)
-
-    assertThat(f.moduleDeps("A")).describedAs("A should depend on B").containsExactly("B")
-    assertThat(f.moduleDeps("B")).describedAs("B should have no module deps").isEmpty()
+    f.assertProjectStructure(
+      ExpectedModule("A", contentRoot = "a", deps = listOf("B")),
+      ExpectedModule("B", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Simulate user configuring an SDK on module A
     val fakeSdkId = SdkId("Python 3.12", "Python SDK")
@@ -240,10 +244,11 @@ internal class PyProjectTomlLifecycleTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "A" to PYPROJECT, "B" to PYPROJECT, "root" to PYPROJECT)
-
-    assertThat(f.moduleDeps("A")).describedAs("A should no longer depend on B").isEmpty()
-    assertThat(f.moduleDeps("B")).describedAs("B should now depend on A").containsExactly("A")
+    f.assertProjectStructure(
+      ExpectedModule("A", contentRoot = "a"),
+      ExpectedModule("B", contentRoot = "b", deps = listOf("A")),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Verify SDK is preserved on module A
     val moduleA2 = f.project.workspaceModel.currentSnapshot.resolve(ModuleId("A"))!!

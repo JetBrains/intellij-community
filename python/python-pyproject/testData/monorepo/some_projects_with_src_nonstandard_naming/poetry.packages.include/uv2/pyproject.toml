@@ -1,0 +1,11 @@
+[project]
+name = "uv2"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "poetry1"
+]
+
+[tool.uv.sources]
+poetry1 = { path = "../poetry1", editable = true }
+
