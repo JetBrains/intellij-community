@@ -6,13 +6,13 @@ import com.intellij.diagnostic.logging.LogFilesManager
 import com.intellij.execution.Executor
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.impl.RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC
 import com.intellij.execution.impl.RunContentDescriptorLifecycleListener
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
@@ -631,7 +631,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
         val disposable = localTabScope.asDisposable()
-        addAdditionalTabsAndConsolesToManager(runTab.consoleManger, disposable)
 
         val layoutBridge = RunnerLayoutUiBridge(project, disposable)
         // This is a mock descriptor used in backend only
@@ -648,6 +647,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
+
+        initializeConsole(runTab.consoleManger, mockDescriptor.processHandler, disposable)
 
         val tabLayouter = debugProcess.createTabLayouter()
         val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
@@ -691,20 +692,20 @@ class XDebugSessionImpl @JvmOverloads constructor(
         if (shouldShowTab) {
           tab.showTab()
         }
+        val consoleManager = tab.createLogConsoleManager(null) { debugProcess.processHandler }
+        initializeConsole(consoleManager, debugProcess.processHandler, tab)
       }
     }
   }
 
-  private fun addAdditionalTabsAndConsolesToManager(
+  private fun initializeConsole(
     consoleManager: LogConsoleManager,
+    processHandler: ProcessHandler?,
     disposable: Disposable,
   ) {
-    val runConfiguration = executionEnvironment?.runProfile
-    if (runConfiguration is RunConfigurationBase<*>) {
-      val logFilesManager = LogFilesManager(project, consoleManager, disposable)
-      // Triggers additional tabs creation along with consoles via createAdditionalTabComponents
-      logFilesManager.addLogConsoles(runConfiguration, debugProcess.processHandler)
-    }
+    val runConfiguration = executionEnvironment?.runProfile ?: return
+    val logFilesManager = LogFilesManager(project, consoleManager, disposable)
+    RunTab.configureLogConsoles(runConfiguration, logFilesManager, processHandler, consoleView)
   }
 
   @ApiStatus.Internal

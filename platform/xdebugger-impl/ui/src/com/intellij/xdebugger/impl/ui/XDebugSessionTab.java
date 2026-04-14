@@ -459,10 +459,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     initToolbars(session);
-
-    if (myEnvironment != null && myConsole != null) { // TODO should be non-null
-      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
-    }
   }
 
   protected void initToolbars(@NotNull XDebugSessionProxy session) {
