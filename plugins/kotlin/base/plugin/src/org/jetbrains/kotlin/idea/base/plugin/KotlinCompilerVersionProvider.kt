@@ -39,7 +39,7 @@ interface KotlinCompilerVersionProvider {
 /**
  * Provides the JPS version used in the corresponding module.
  */
-private class DefaultKotlinCompilerVersionProvider : KotlinCompilerVersionProvider {
+internal class DefaultKotlinCompilerVersionProvider : KotlinCompilerVersionProvider {
     override fun getKotlinCompilerVersion(module: Module): IdeKotlinVersion? {
         return IdeKotlinVersion.opt(KotlinJpsPluginSettings.getInstance(module.project).settings.versionWithFallback)
     }

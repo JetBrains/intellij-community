@@ -235,9 +235,13 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
                         val resultBuilder = configureAction()
                         val configurationResult = resultBuilder.build()
                         if (configurationResult.error == null) {
+                            // have to make an actual snapshot of modules to avoid concurrent modification
+                            val configuredModules =
+                                configurationResult.configuredModules.toCollection(linkedSetOf())
+
                             // attempt to configure compiler plugin during the same step as kotlin configuration
                             // when module dependency is known
-                            configurationResult.configuredModules.forEach { module ->
+                            configuredModules.forEach { module ->
                                 configureCompilerPluginsForModule(module, resultBuilder)
                             }
                         }
