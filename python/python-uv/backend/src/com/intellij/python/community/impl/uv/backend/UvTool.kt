@@ -7,6 +7,7 @@ import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -115,7 +116,7 @@ internal class UvTool : Tool {
   @RequiresBackgroundThread
   private fun getUvDependencies(pyProject: PyProjectTomlProject): DependencyInfo? {
     val sources = pyProject.pyProjectToml.toml.getTable("tool.uv.sources") ?: return null
-    val deps = pyProject.pyProjectToml.project?.dependencies?.project?.toSet() ?: return null
+    val deps = extractDependencyNamesWithoutExtras(pyProject.pyProjectToml) ?: return null
     val workspaceDeps = mutableListOf<ProjectName>()
     val pathDeps = hashSetOf<Path>()
     for ((depName, depTable) in sources.toMap().entries) {
@@ -138,6 +139,16 @@ internal class UvTool : Tool {
     return DependencyInfo(workspaceDeps = workspaceDeps.toSet(), pathDeps = pathDeps)
   }
 }
+
+// Slightly more permissive than PEP 508 IDENTIFIER (allows leading underscores & consecutive separators),
+// but sufficient here since dependency names are already validated by uv.
+private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
+
+private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String>? =
+  toml.project?.dependencies?.project?.mapNotNull {
+    val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
+    dependencyName
+  }?.toSet()
 
 private data class WorkspaceInfo(val members: List<PathMatcher>, val exclude: List<PathMatcher>) {
   fun match(path: Path): Boolean =
