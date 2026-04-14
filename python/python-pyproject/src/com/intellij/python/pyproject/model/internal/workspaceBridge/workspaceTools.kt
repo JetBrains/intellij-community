@@ -122,8 +122,7 @@ private fun applyProjectModel(
   logIfNeeded(projectStorage, "before apply")
 
   for (module in orphanModules) {
-    logger.debug { "Removing orphan Python module: ${module.name}" }
-    projectStorage.removeEntity(module)
+    deleteModule(module, projectStorage)
   }
   for ((entry, module) in matched) {
     updateModule(entry, module, project, projectStorage, virtualFileUrlManager)
@@ -186,6 +185,36 @@ private fun matchEntriesToModules(
   }
 
   return matched
+}
+
+private fun deleteModule(
+  module: ModuleEntity,
+  projectStorage: MutableEntityStorage,
+) {
+  logger.debug { "Removing orphan Python module: ${module.name}" }
+
+  // Preserve excluded folders by relocating them to the parent module.
+  // When the module's content root itself is marked as excluded, that exclusion must not be lost on deletion.
+  val relocations = module.contentRoots
+    .filter { cr -> cr.excludedUrls.any { it.url == cr.url } }
+    .mapNotNull { cr ->
+      val moduleRootPath = cr.url.toPath()
+      val parentContentRoot = projectStorage.entities<ContentRootEntity>()
+        .filter { it.module != module && moduleRootPath.startsWith(it.url.toPath()) }
+        .maxByOrNull { it.url.url.length }
+      parentContentRoot
+        ?.takeIf { p -> p.excludedUrls.none { it.url == cr.url } }
+        ?.let { cr.url to it }
+    }
+
+  for ((excludeUrl, parentContentRoot) in relocations) {
+    logger.debug { "Relocating excluded root '$excludeUrl' from '${module.name}' to '${parentContentRoot.module.name}'" }
+    projectStorage.modifyContentRootEntity(parentContentRoot) {
+      this.excludedUrls += ExcludeUrlEntity(excludeUrl, this.entitySource)
+    }
+  }
+
+  projectStorage.removeEntity(module)
 }
 
 /** Update a matched module: rename + update properties + update/create child entities. */
@@ -290,7 +319,7 @@ private fun updateModule(
   }
 
   existingExModuleOptions?.takeIf {
-     it.externalSystem != PY_PROJECT_SYSTEM_ID.id || it.entitySource != entitySource
+    it.externalSystem != PY_PROJECT_SYSTEM_ID.id || it.entitySource != entitySource
   }?.let {
     projectStorage.modifyExternalSystemModuleOptionsEntity(it) {
       this.externalSystem = PY_PROJECT_SYSTEM_ID.id
@@ -689,6 +718,8 @@ private val EntitySource.isPythonEntity: Boolean get() = (this as? JpsImportedEn
 private class ModuleAnchor(moduleEntity: ModuleEntity) {
   private val dirWithToml = moduleEntity.pyProjectTomlEntity?.dirWithToml
   private val theOnlyContentRoot = moduleEntity.contentRoots.let { if (it.size == 1) it[0] else null }
+
+  fun getLocation(): VirtualFileUrl? = dirWithToml ?: theOnlyContentRoot?.url
 
   fun sameLocation(entryTomlDirUrl: VirtualFileUrl, entryRootUrl: VirtualFileUrl): Boolean =
     dirWithToml == entryTomlDirUrl || theOnlyContentRoot?.url == entryRootUrl
