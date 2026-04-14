@@ -1,0 +1,8 @@
+// IS_APPLICABLE: false
+// WITH_STDLIB
+fun foo() {
+    val xs = mapOf(1 to "a")
+    xs.<caret>forEach { (k, v) ->
+        println("$k $v")
+    }
+}

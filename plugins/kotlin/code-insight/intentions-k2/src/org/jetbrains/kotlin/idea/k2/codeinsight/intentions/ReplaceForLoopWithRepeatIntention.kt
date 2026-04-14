@@ -5,15 +5,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -24,24 +19,13 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.ContinuesToReplace
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.isParameterUsedInBody
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.isZeroBasedRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 
 private val REPEAT_KEYWORD: Name = Name.identifier("repeat")
-private val RANGE_UNTIL_KEYWORD: Name = Name.identifier("rangeUntil")
-private val VALID_RANGE_CALLABLE_IDS: Set<CallableId> = setOf(
-    // Int.rangeUntil, Long.rangeUntil, etc. (the ..< operator)
-    CallableId(StandardClassIds.Int, RANGE_UNTIL_KEYWORD),
-    CallableId(StandardClassIds.Long, RANGE_UNTIL_KEYWORD),
-    CallableId(StandardClassIds.Short, RANGE_UNTIL_KEYWORD),
-    CallableId(StandardClassIds.Byte, RANGE_UNTIL_KEYWORD),
-    CallableId(StandardClassIds.Char, RANGE_UNTIL_KEYWORD),
-    CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("ranges")), Name.identifier("until")),
-)
 private val IMPLICIT_LAMBDA: String = StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 
 internal class ReplaceForLoopWithRepeatIntention :
@@ -65,12 +49,12 @@ internal class ReplaceForLoopWithRepeatIntention :
     override fun KaSession.prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange as? KtBinaryExpression ?: return null
 
-        if (!loopRange.isValidRangeByAnalysis()) return null
+        if (!loopRange.isZeroBasedRange()) return null
 
         val times = loopRange.right?.text ?: return null
         val continuesToReplace = element.computeContinuesToReplace()
 
-        val loopParameterName = element.loopParameter?.name.takeIf { isParameterUsedInBody(element) }
+        val loopParameterName = element.loopParameter?.name.takeIf { element.isParameterUsedInBody() }
 
         return Context(times, continuesToReplace, loopParameterName)
     }
@@ -101,6 +85,7 @@ internal class ReplaceForLoopWithRepeatIntention :
                     bodyContent
                 )
             }
+
             else -> {
                 factory.createExpressionByPattern(
                     "${labelPrefix}repeat($0) { $paramPart$1 }",
@@ -116,25 +101,5 @@ internal class ReplaceForLoopWithRepeatIntention :
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.for.loop.with.repeat")
 
-    private fun isParameterUsedInBody(forExpression: KtForExpression): Boolean {
-        val loopParameter = forExpression.loopParameter ?: return false
-        val body = forExpression.body ?: return false
-
-        return body.collectDescendantsOfType<KtNameReferenceExpression>().any {
-            it.mainReference.resolve() == loopParameter
-        }
-    }
-
-    context(_: KaSession)
-    private fun KtBinaryExpression.isValidRangeByAnalysis(): Boolean {
-        val left = left ?: return false
-        val leftValue = left.evaluate()?.value
-        if (leftValue != 0 && leftValue != 0L) return false
-
-        val call = resolveToCall()?.singleFunctionCallOrNull() ?: return false
-        val callableId = call.symbol.callableId
-
-        return callableId in VALID_RANGE_CALLABLE_IDS
-    }
 
 }

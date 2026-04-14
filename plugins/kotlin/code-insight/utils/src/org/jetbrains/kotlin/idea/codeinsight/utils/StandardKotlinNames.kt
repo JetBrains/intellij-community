@@ -110,6 +110,10 @@ object StandardKotlinNames {
         @JvmField val emitAll: CallableId = CallableId(BASE_FLOW_PACKAGE, Name.identifier("emitAll"))
     }
 
+    object For {
+        @JvmField val forEachName: Name = Name.identifier("forEach")
+    }
+
     object BuildScope {
         @JvmField val buildList: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("buildList"))
         @JvmField val buildSet: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("buildSet"))

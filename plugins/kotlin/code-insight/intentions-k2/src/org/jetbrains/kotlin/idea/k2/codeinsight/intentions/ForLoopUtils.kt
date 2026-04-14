@@ -5,9 +5,16 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.evaluate
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.targetSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -22,9 +29,15 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 @ApiStatus.Internal
@@ -90,7 +103,8 @@ object ForLoopUtils {
 
         body.forEachDescendantOfType<KtNameReferenceExpression> { reference ->
             if (reference.getReferencedName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
-                reference.mainReference.resolveToSymbol() == parameterSymbol) {
+                reference.mainReference.resolveToSymbol() == parameterSymbol
+            ) {
                 reference.replace(factory.createExpression(newName))
             }
         }
@@ -130,5 +144,69 @@ object ForLoopUtils {
             }
         }
         return needsLabel
+    }
+
+    context(_: KaSession)
+    internal fun KtForExpression.isParameterUsedInBody(): Boolean {
+        val loopParameter = loopParameter ?: return false
+        val body = body ?: return false
+        return body.referencesSymbol(loopParameter.symbol)
+    }
+
+    context(_: KaSession)
+    private fun KtExpression.referencesSymbol(symbol: KaSymbol): Boolean =
+        anyDescendantOfType<KtNameReferenceExpression> { ref ->
+            ref.mainReference.resolveToSymbol() == symbol
+        }
+
+    internal fun relabelReturns(
+        returnsToRelabel: ReturnsToReplace,
+        ownerLambda: KtLambdaExpression,
+        newLabel: String,
+        factory: KtPsiFactory,
+    ): Boolean {
+        var needLabel = false
+        for (ret in returnsToRelabel.dereferenceValidPointers()) {
+            if (ret.isInsideNestedLambdaOf(ownerLambda)) needLabel = true
+            val returnedValue = ret.returnedExpression
+            val replacement = if (returnedValue != null) {
+                factory.createExpressionByPattern("return@$newLabel $0", returnedValue)
+            } else {
+                factory.createExpression("return@$newLabel")
+            }
+            ret.replace(replacement)
+        }
+        return needLabel
+    }
+
+    private fun KtReturnExpression.isInsideNestedLambdaOf(owner: KtLambdaExpression): Boolean {
+        var parent = this.parent
+        while (parent != null && parent != owner) {
+            if (parent is KtLambdaExpression) return true
+            parent = parent.parent
+        }
+        return false
+    }
+
+
+    private val RANGE_UNTIL_KEYWORD: Name = Name.identifier("rangeUntil")
+    internal val ZERO_BASED_INT_RANGE_CALLABLE_IDS: Set<CallableId> = setOf(
+        CallableId(StandardClassIds.Int, RANGE_UNTIL_KEYWORD),
+        CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("ranges")), Name.identifier("until")),
+    )
+
+    /**
+     * Whether this binary expression is an `Int`-typed range starting from 0,
+     * built via either `..<` (`Int.rangeUntil`) or the `until` infix extension.
+     *
+     * Returns false for `Long`/`Short`/`Byte`/`Char` ranges — those don't fit `repeat(Int, …)`.
+     */
+    context(_: KaSession)
+    internal fun KtBinaryExpression.isZeroBasedRange(): Boolean {
+        val left = left ?: return false
+        if (left.evaluate()?.value != 0) return false
+
+        val call = resolveToCall()?.singleFunctionCallOrNull() ?: return false
+        return call.symbol.callableId in ZERO_BASED_INT_RANGE_CALLABLE_IDS && expressionType?.symbol?.classId == StandardClassIds.IntRange
     }
 }
