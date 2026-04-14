@@ -1,0 +1,15 @@
+[project]
+name = "subuv2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "requests",
+    "numpy",
+    "subuv1",
+]
+
+
+[tool.uv.sources]
+subuv1 = { path = "../subuv1" }

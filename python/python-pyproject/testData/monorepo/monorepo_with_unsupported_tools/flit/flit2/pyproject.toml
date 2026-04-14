@@ -1,0 +1,8 @@
+[build-system]
+requires = ["flit_core >=3.11,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "name2"
+authors = []
+dynamic = ["version", "description"]

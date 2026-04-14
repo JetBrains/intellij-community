@@ -492,7 +492,7 @@ private data class RawEntry(
 /** Parse pyproject.toml files into raw entries with natural names (no dedup). */
 private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, tools: List<Tool>): List<RawEntry> {
   val rawEntries = ArrayList<RawEntry>()
-  for ((tomlFile, toml) in fsInfo.tomlFiles.entries) {
+  for ((tomlFile, toml) in fsInfo.tomlFiles.entries.sortedBy { it.key }) {
     val participatedTools = mutableSetOf<ToolId>()
     val root = tomlFile.parent
     var projectNameAsString = toml.project?.name

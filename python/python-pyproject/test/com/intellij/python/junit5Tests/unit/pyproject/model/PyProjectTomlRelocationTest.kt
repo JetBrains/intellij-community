@@ -17,9 +17,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
-import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -84,14 +82,11 @@ internal class PyProjectTomlRelocationTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib-a" to PYPROJECT, "lib-b" to PYPROJECT, "root-py" to PYTHON)
-
-    assertThat(f.sourceRootNames("lib-a")).describedAs("lib-a should have 'src' source root").contains("src")
-    assertThat(f.excludeNames("lib-a")).describedAs("lib-a should have '.venv' exclude").contains(".venv")
-    assertThat(f.sourceRootNames("lib-b")).describedAs("lib-b should have 'tests' source root").contains("tests")
-    assertThat(f.excludeNames("lib-b")).describedAs("lib-b should have '.cache' exclude").contains(".cache")
-    assertThat(f.sourceRootNames("root-py")).describedAs("root-py should not have 'src' or 'tests'").doesNotContain("src", "tests")
-    assertThat(f.excludeNames("root-py")).describedAs("root-py should not have '.venv' or '.cache'").doesNotContain(".venv", ".cache")
+    f.assertProjectStructure(
+      ExpectedModule("lib-a", contentRoot = "lib-a", sourceRoots = listOf("lib-a/src"), excludedFolders = listOf("lib-a/.venv")),
+      ExpectedModule("lib-b", contentRoot = "lib-b", sourceRoots = listOf("lib-b/tests"), excludedFolders = listOf("lib-b/.cache")),
+      ExpectedModule("root-py", type = PYTHON, contentRoot = "."),
+    )
   }
 
   /**
@@ -108,10 +103,10 @@ internal class PyProjectTomlRelocationTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "parent" to PYPROJECT)
-
-    assertThat(f.sourceRootNames("child")).contains("src")
-    f.assertNoRootsInsideChild("parent", "child")
+    f.assertProjectStructure(
+      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub/src")),
+      ExpectedModule("parent", contentRoot = "."),
+    )
   }
 
   /**
@@ -130,7 +125,10 @@ internal class PyProjectTomlRelocationTest {
 
     // First sync creates the modules
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "parent" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("child", contentRoot = "sub"),
+      ExpectedModule("parent", contentRoot = "."),
+    )
 
     // Add template and resource roots on the parent module inside the child's directory
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
@@ -151,20 +149,10 @@ internal class PyProjectTomlRelocationTest {
 
     // Second sync should relocate the roots to the child module
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "parent" to PYPROJECT)
-
-    assertThat(f.sourceRootNames("child"))
-      .describedAs("Child module should have relocated template and resource roots")
-      .contains("templates", "resources")
-
-    // Verify root types are preserved
-    val snapshot = f.project.workspaceModel.currentSnapshot
-    val childSourceRoots = snapshot.resolve(ModuleId("child"))!!.contentRoots.flatMap { it.sourceRoots }
-    val childRootTypes = childSourceRoots.associate { it.url.toPath().fileName.toString() to it.rootTypeId.name }
-    assertThat(childRootTypes["templates"]).isEqualTo("python-template")
-    assertThat(childRootTypes["resources"]).isEqualTo("java-resource")
-
-    f.assertNoRootsInsideChild("parent", "child")
+    f.assertProjectStructure(
+      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub/templates", "sub/resources")),
+      ExpectedModule("parent", contentRoot = "."),
+    )
   }
 
   /**
@@ -181,7 +169,10 @@ internal class PyProjectTomlRelocationTest {
 
     // First sync creates the modules
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "parent" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("child", contentRoot = "sub"),
+      ExpectedModule("parent", contentRoot = "."),
+    )
 
     // Mark .venv as excluded on the parent module inside the child's directory
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
@@ -198,9 +189,9 @@ internal class PyProjectTomlRelocationTest {
 
     // Second sync should relocate the exclude to the child module
     f.reloadProject()
-    f.assertModuleNames(f.project, "child" to PYPROJECT, "parent" to PYPROJECT)
-
-    assertThat(f.excludeNames("child")).contains(".venv")
-    f.assertNoRootsInsideChild("parent", "child")
+    f.assertProjectStructure(
+      ExpectedModule("child", contentRoot = "sub", excludedFolders = listOf("sub/.venv")),
+      ExpectedModule("parent", contentRoot = "."),
+    )
   }
 }

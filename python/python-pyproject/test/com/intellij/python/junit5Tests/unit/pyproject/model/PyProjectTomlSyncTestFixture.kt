@@ -33,12 +33,27 @@ import com.intellij.workspaceModel.ide.toPath
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
 
-/** Expected module type marker for pyproject-based modules in [PyProjectTomlSyncTestFixture.assertModuleNames]. */
+/** Expected module type marker for pyproject-based modules in [PyProjectTomlSyncTestFixture.assertProjectStructure]. */
 internal const val PYPROJECT = "PYPROJECT"
 /** Standard Python module type ID. */
 internal const val PYTHON = "PYTHON_MODULE"
 /** Standard Java module type ID. */
 internal const val JAVA = "JAVA_MODULE"
+
+/**
+ * Describes the expected state of a module after sync.
+ *
+ * All fields except [name] have sensible defaults for the most common case (pyproject module with no deps).
+ */
+internal data class ExpectedModule(
+  val name: String,
+  val type: String = PYPROJECT,
+  val contentRoot: String,
+  val deps: List<String> = emptyList(),
+  val sourceRoots: List<String> = emptyList(),
+  val excludedFolders: List<String> = emptyList(),
+)
+
 /** Name of the bystander Java module created by the fixture to verify it is never modified by sync. */
 internal const val BYSTANDER_JAVA = "_bystander_java"
 /** Name of the bystander Python module created by the fixture to verify it is never modified by sync. */
@@ -58,10 +73,10 @@ internal fun VirtualFile.writePyprojectToml(name: String) {
 internal fun pyProjectTomlSyncFixture(
   projectFixture: TestFixture<Project>,
   tempDirFixture: TestFixture<Path>,
-): TestFixture<PyProjectTomlSyncTestFixture> = testFixture {
+): TestFixture<PyProjectTomlSyncTestFixture> = testFixture { context ->
   val project = projectFixture.init()
   val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.init())!!
-  val fixture = PyProjectTomlSyncTestFixture(project, root)
+  val fixture = PyProjectTomlSyncTestFixture(project, root, context.extensionContext.requiredTestClass.simpleName)
   fixture.setUp()
   initialized(fixture) {
     fixture.tearDown()
@@ -74,8 +89,11 @@ internal fun pyProjectTomlSyncFixture(
  * Provides access to the [project] and its temp [root] directory, along with
  * utilities for creating modules, triggering sync, and asserting workspace model state.
  * Not a base class — test classes obtain an instance via [pyProjectTomlSyncFixture].
+ *
+ * @param implicitModuleName the name of the implicit Python module created by [PyDefaultTestApplication]
+ *        (derived from the test class simple name), used to include it in [assertProjectStructure] expectations.
  */
-internal class PyProjectTomlSyncTestFixture(val project: Project, val root: VirtualFile) {
+internal class PyProjectTomlSyncTestFixture(val project: Project, val root: VirtualFile, val implicitModuleName: String = "") {
 
   lateinit var sut: PyExternalSystemProjectAware
 
@@ -146,16 +164,18 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
     return dir
   }
 
-  /** Returns the file names of all source roots for the given module. */
+  /** Returns paths of all source roots for the given module, relative to the project [root]. */
   fun sourceRootNames(moduleName: String): List<String> {
     val module = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
-    return module.contentRoots.flatMap { it.sourceRoots }.map { it.url.toPath().fileName.toString() }
+    val rootPath = root.toNioPath()
+    return module.contentRoots.flatMap { it.sourceRoots }.map { rootPath.relativize(it.url.toPath()).toString().ifEmpty { "." } }
   }
 
-  /** Returns the file names of all excluded URLs for the given module. */
+  /** Returns paths of all excluded URLs for the given module, relative to the project [root]. */
   fun excludeNames(moduleName: String): List<String> {
     val module = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
-    return module.contentRoots.flatMap { it.excludedUrls }.map { it.url.toPath().fileName.toString() }
+    val rootPath = root.toNioPath()
+    return module.contentRoots.flatMap { it.excludedUrls }.map { rootPath.relativize(it.url.toPath()).toString().ifEmpty { "." } }
   }
 
   /** Returns the names of all module dependencies for the given module. */
@@ -183,12 +203,12 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
   }
 
   /**
-   * Asserts module names match expectations AND verifies workspace model consistency:
-   * every module entity must be resolvable by its symbolic ID (no orphaned/broken references).
+   * Asserts the full project structure: module names, types, dependencies, and workspace model consistency.
+   * Every module entity must be resolvable by its symbolic ID (no orphaned/broken references).
    */
-  suspend fun assertModuleNames(project: Project, vararg expectedModules: Pair<String, String>) {
-    val moduleNames = project.modules.map { it.name }.filter { it != BYSTANDER_JAVA && it != BYSTANDER_PYTHON }.sorted()
-    assertThat(moduleNames).containsExactly(*expectedModules.map { it.first }.sorted().toTypedArray())
+  suspend fun assertProjectStructure(vararg expectedModules: ExpectedModule) {
+    val actualNames = project.modules.map { it.name }.filter { it != BYSTANDER_JAVA && it != BYSTANDER_PYTHON }.sorted()
+    assertThat(actualNames).containsExactly(*expectedModules.map { it.name }.sorted().toTypedArray())
 
     // Verify workspace model consistency: every ModuleEntity must be resolvable by its symbolic ID.
     val snapshot = project.workspaceModel.currentSnapshot
@@ -204,15 +224,15 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
     }
 
     // Verify module type and pyproject entity consistency per expected module.
-    val expectedMap = expectedModules.toMap()
+    val expectedMap = expectedModules.associateBy { it.name }
     for (entity in moduleEntities) {
       if (entity.name == BYSTANDER_JAVA || entity.name == BYSTANDER_PYTHON) continue
       val isPyProjectBased = (entity.entitySource as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
-      val expectedType = expectedMap[entity.name]
-      assertThat(expectedType)
+      val expected = expectedMap[entity.name]
+      assertThat(expected)
         .describedAs("Module '${entity.name}' must be in expected list")
         .isNotNull
-      when (expectedType) {
+      when (expected!!.type) {
         PYPROJECT -> {
           assertThat(entity.type)
             .describedAs("PyProject module '${entity.name}' must have PYTHON_MODULE type")
@@ -250,10 +270,34 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
         }
         else -> {
           assertThat(entity.type)
-            .describedAs("Module '${entity.name}' must have type '$expectedType'")
-            .isEqualTo(ModuleTypeId(expectedType!!))
+            .describedAs("Module '${entity.name}' must have type '${expected.type}'")
+            .isEqualTo(ModuleTypeId(expected.type))
         }
       }
+    }
+
+    // Verify module dependencies.
+    for (expected in expectedModules) {
+      val actualDeps = moduleDeps(expected.name)
+      assertThat(actualDeps)
+        .describedAs("Module '${expected.name}' dependencies")
+        .containsExactlyInAnyOrderElementsOf(expected.deps)
+    }
+
+    // Verify content root, source roots, and excluded folders.
+    val rootPath = root.toNioPath()
+    for (expected in expectedModules) {
+      val entity = snapshot.resolve(ModuleId(expected.name))!!
+      val relativePath = rootPath.relativize(entity.contentRoots.single().url.toPath()).toString().ifEmpty { "." }
+      assertThat(relativePath)
+        .describedAs("Module '${expected.name}' content root")
+        .isEqualTo(expected.contentRoot)
+      assertThat(sourceRootNames(expected.name))
+        .describedAs("Module '${expected.name}' source roots")
+        .containsExactlyInAnyOrderElementsOf(expected.sourceRoots)
+      assertThat(excludeNames(expected.name))
+        .describedAs("Module '${expected.name}' excluded folders")
+        .containsExactlyInAnyOrderElementsOf(expected.excludedFolders)
     }
 
     // No duplicate symbolic IDs

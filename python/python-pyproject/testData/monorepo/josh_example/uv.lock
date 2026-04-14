@@ -1,0 +1,33 @@
+version = 1
+revision = 3
+requires-python = "==3.11.14"
+resolution-markers = [
+    "sys_platform == 'darwin'",
+    "sys_platform == 'linux'",
+]
+supported-markers = [
+    "sys_platform == 'darwin'",
+    "sys_platform == 'linux'",
+]
+
+[manifest]
+members = [
+    "josh-example",
+    "josh-example-bar",
+    "josh-example-foo",
+]
+
+[[package]]
+name = "josh-example"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "josh-example-bar"
+version = "0.1.0"
+source = { editable = "packages/josh_example_bar" }
+
+[[package]]
+name = "josh-example-foo"
+version = "0.1.0"
+source = { editable = "packages/josh_example_foo" }

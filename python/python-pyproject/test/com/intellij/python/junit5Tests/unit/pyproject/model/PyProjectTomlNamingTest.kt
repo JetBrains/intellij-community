@@ -38,7 +38,12 @@ internal class PyProjectTomlNamingTest {
 
     f.reloadProject()
 
-    f.assertModuleNames(f.project, "dup" to PYPROJECT, "dup@1" to PYPROJECT, "dup@2" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("dup", contentRoot = "a"),
+      ExpectedModule("dup@1", contentRoot = "b"),
+      ExpectedModule("dup@2", contentRoot = "c"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   @Test
@@ -50,7 +55,7 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("lib", contentRoot = "first"), ExpectedModule("root", contentRoot = "."))
 
     // Add two more modules with the same name as the existing one
     writeAction {
@@ -59,7 +64,12 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to PYPROJECT, "lib@1" to PYPROJECT, "lib@2" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("lib", contentRoot = "first"),
+      ExpectedModule("lib@1", contentRoot = "second"),
+      ExpectedModule("lib@2", contentRoot = "third"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   @Test
@@ -70,7 +80,7 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "old-name" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("old-name", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
 
     // Rename the sub-module via pyproject.toml
     writeAction {
@@ -78,7 +88,7 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "new-name" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("new-name", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
   }
 
   @Test
@@ -90,7 +100,11 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "alpha" to PYPROJECT, "beta" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("alpha", contentRoot = "a"),
+      ExpectedModule("beta", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Change beta's name to "alpha" — "alpha" is taken, so dir b gets "alpha@1"
     writeAction {
@@ -98,7 +112,11 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "alpha" to PYPROJECT, "alpha@1" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("alpha", contentRoot = "a"),
+      ExpectedModule("alpha@1", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   @Test
@@ -109,7 +127,7 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "pythonproject13" to PYPROJECT, "pythonproject13x" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."), ExpectedModule("pythonproject13x", contentRoot = "second"))
 
     // Change sub-module to same name as root — "pythonproject13" is taken, gets suffix
     writeAction {
@@ -117,7 +135,7 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "pythonproject13" to PYPROJECT, "pythonproject13@1" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."), ExpectedModule("pythonproject13@1", contentRoot = "second"))
   }
 
   /**
@@ -133,7 +151,11 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "alpha" to PYPROJECT, "beta" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("alpha", contentRoot = "a"),
+      ExpectedModule("beta", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Swap names — each target is taken, both get @1 suffix
     writeAction {
@@ -142,7 +164,11 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "alpha@1" to PYPROJECT, "beta@1" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("alpha@1", contentRoot = "b"),
+      ExpectedModule("beta@1", contentRoot = "a"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   /**
@@ -162,7 +188,11 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "dup" to PYPROJECT, "dup@1" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("dup", contentRoot = "a"),
+      ExpectedModule("dup@1", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Rename whichever entry got the clean "dup" name to "other"
     val snapshot = f.project.workspaceModel.currentSnapshot
@@ -175,11 +205,19 @@ internal class PyProjectTomlNamingTest {
 
     // First re-sync: suffix kept because "dup" is still in allModuleNames (from old snapshot)
     f.reloadProject()
-    f.assertModuleNames(f.project, "dup@1" to PYPROJECT, "other" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("dup@1", contentRoot = "b"),
+      ExpectedModule("other", contentRoot = "a"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Second re-sync: suffix dropped — "dup" no longer in allModuleNames
     f.reloadProject()
-    f.assertModuleNames(f.project, "dup" to PYPROJECT, "other" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("dup", contentRoot = "b"),
+      ExpectedModule("other", contentRoot = "a"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 
   /**
@@ -198,7 +236,7 @@ internal class PyProjectTomlNamingTest {
     f.reloadProject()
 
     // Java module keeps "lib", Python module gets "lib@1"
-    f.assertModuleNames(f.project, "lib" to JAVA, "lib@1" to PYPROJECT)
+    f.assertProjectStructure(ExpectedModule("lib", type = JAVA, contentRoot = "javalib"), ExpectedModule("lib@1", contentRoot = "."))
   }
 
   /**
@@ -217,7 +255,12 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to JAVA, "lib@1" to PYPROJECT, "lib@2" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("lib", type = JAVA, contentRoot = "javalib"),
+      ExpectedModule("lib@1", contentRoot = "a"),
+      ExpectedModule("lib@2", contentRoot = "b"),
+      ExpectedModule("root", contentRoot = "."),
+    )
 
     // Remove one pyproject.toml
     writeAction {
@@ -227,6 +270,10 @@ internal class PyProjectTomlNamingTest {
     // Re-sync: suffix preserved on remaining Python module because "lib" is still
     // taken by the Java module (in usedNames from allModuleNames)
     f.reloadProject()
-    f.assertModuleNames(f.project, "lib" to JAVA, "lib@1" to PYPROJECT, "root" to PYPROJECT)
+    f.assertProjectStructure(
+      ExpectedModule("lib", type = JAVA, contentRoot = "javalib"),
+      ExpectedModule("lib@1", contentRoot = "a"),
+      ExpectedModule("root", contentRoot = "."),
+    )
   }
 }
