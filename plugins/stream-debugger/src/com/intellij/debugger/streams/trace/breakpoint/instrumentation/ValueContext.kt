@@ -51,6 +51,12 @@ interface ValueContext {
     args: List<Value?> = emptyList(),
   ): ObjectReference
 
+  fun instance(
+    cls: String,
+    constructorSignature: String = EMPTY_CTOR_SIGNATURE,
+    args: List<Value?> = emptyList(),
+  ): ObjectReference
+
   /**
    * Creates an array in the target VM.
    */

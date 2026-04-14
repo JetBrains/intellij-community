@@ -97,6 +97,15 @@ private class ValueContextImpl(
 
   override fun instance(cls: Class<*>, constructorSignature: String, args: List<Value?>): ObjectReference {
     val classType = clazz(cls)
+    return doInstantiate(classType, constructorSignature, args)
+  }
+
+  override fun instance(cls: String, constructorSignature: String, args: List<Value?>): ObjectReference {
+    val classType = clazz(cls)
+    return doInstantiate(classType, constructorSignature, args)
+  }
+
+  private fun doInstantiate(classType: ClassType, constructorSignature: String, args: List<Value?>): ObjectReference {
     val constructor = classType.concreteMethodByName("<init>", constructorSignature)
     val instance = evaluationContext.debugProcess.newInstance(
       evaluationContext,
