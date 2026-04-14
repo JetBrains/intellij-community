@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
@@ -46,10 +47,6 @@ internal fun readLinesFromFile(path: String): List<String> {
         return emptyList()
     }
 }
-
-internal val exclude = setOf(
-    "exclude",
-)
 
 internal const val PLUGINS = "plugins"
 internal const val DEPENDENCIES = "dependencies"
@@ -127,15 +124,17 @@ private fun Char.isAllowedInDependencyCompletion(): Boolean {
  * Checks whether the current [PsiElement] is a string literal used as an argument
  * in a Gradle dependency configuration call (e.g., `implementation("...")`, `api("...")`, etc.)
  */
-internal fun PsiElement.isSingleDependencyArgument(): Boolean =
-    this.isDependencyArgument() && this.surroundingArgumentsSize == 1 && (this.argumentName.isEmpty() || this.argumentName == "dependencyNotation")
+internal fun PsiElement.isSingleDependencyArgumentInsideQuotes(): Boolean =
+    this.isDependencyArgumentInsideQuotes()
+    && this.surroundingArgumentsSize == 1
+    && (this.argumentName.isEmpty() || this.argumentName == "dependencyNotation")
 
 /**
  * Checks whether the current [PsiElement] is a string literal used as an argument
  * in a Gradle dependency configuration call (e.g., `implementation("g", "a", "v")`)
  */
 internal fun PsiElement.isPositionalOrNamedDependencyArgument(): Boolean {
-    if (!this.isDependencyArgument()) return false
+    if (!this.isDependencyArgumentInsideQuotes()) return false
 
     val argumentsSize = this.surroundingArgumentsSize
     val argumentName = this.argumentName
@@ -158,13 +157,25 @@ internal fun PsiElement.isExcludeArgument(): Boolean {
   val callExpression = stringTemplateExpr.parent.asSafely<KtValueArgument>()
                            ?.parent.asSafely<KtValueArgumentList>()
                            ?.parent.asSafely<KtCallExpression>() ?: return false
-  if (callExpression.calleeExpression?.text != "exclude") return false
+  return callExpression.isCallWithReceiverSubtype(
+    FqName("org.gradle.api.artifacts.ModuleDependency"),
+    setOf("exclude")
+  )
+}
 
-  return analyze(callExpression) {
-      val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
-      val receiverType = determineReceiverType(functionCall) ?: return false
-      val moduleDependencyType = buildClassType(ClassId.topLevel(FqName("org.gradle.api.artifacts.ModuleDependency")))
-      receiverType.isSubtypeOf(moduleDependencyType)
+private fun KtCallExpression.isCallWithReceiverSubtype(receiverFqn: FqName, callNames: Set<String>): Boolean {
+  val callName = this.calleeExpression?.text ?: return false
+  if (callName !in callNames) return false
+  return this.isReceiverSubtypeOf(receiverFqn)
+}
+
+private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean {
+  val callExpression = this
+  analyze(callExpression) {
+    val supertype = buildClassType(ClassId.topLevel(supertypeFqn))
+    val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+    val receiverType = determineReceiverType(functionCall) ?: return false
+    return receiverType.isSubtypeOf(supertype)
   }
 }
 
@@ -177,23 +188,21 @@ private fun determineReceiverType(functionCall: KaFunctionCall<*>): KaType? {
     return unwrappedType
 }
 
-internal fun PsiElement.isDependencyArgument(): Boolean {
-    val patternForRegularStringPart = psiElement<LeafPsiElement>()
-        .withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
-        .withSuperParent(2, KtStringTemplateExpression::class.java)
-        .withSuperParent(3, KtValueArgument::class.java)
-        .withSuperParent(4, psiElement<KtValueArgumentList>())
-        .withSuperParent(5, psiElement<KtCallExpression>())
+internal fun PsiElement.isDependencyArgumentInsideQuotes(): Boolean {
+   val leaf = this.asSafely<LeafPsiElement>() ?: return false
+    val stringTemplateExpr =
+        // exclude("leaf<caret>) - open quote only
+        leaf.parent.asSafely<KtStringTemplateExpression>() ?:
+        // exclude("leaf<caret>") - both quotes
+        leaf.parent.asSafely<KtLiteralStringTemplateEntry>()
+            ?.parent.asSafely<KtStringTemplateExpression>() ?: return false
 
-    val patternForOpenQuote = psiElement<LeafPsiElement>()
-        .withSuperParent(1, KtStringTemplateExpression::class.java)
-        .withSuperParent(2, KtValueArgument::class.java)
-        .withSuperParent(3, psiElement<KtValueArgumentList>())
-        .withSuperParent(4, psiElement<KtCallExpression>())
-
-    return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
+    val callExpr = stringTemplateExpr.parent.asSafely<KtValueArgument>()
+                             ?.parent.asSafely<KtValueArgumentList>()
+                             ?.parent.asSafely<KtCallExpression>() ?: return false
+    return callExpr.isDependencyConfiguration()
+           || callExpr.acceptsStringCoordinatesArgument()
 }
-
 
 internal fun PsiElement.isDependencyArgumentWithoutQuotes(): Boolean {
     val refExpr = this.asSafely<LeafPsiElement>()
@@ -206,17 +215,30 @@ internal fun PsiElement.isDependencyArgumentWithoutQuotes(): Boolean {
         // implementation(lib<caret>)
         refExpr.parent.asSafely<KtValueArgument>() ?: return false
     }
-    return valueArgument.isDependencyArgument()
+    val valueArgumentList = valueArgument.parent.asSafely<KtValueArgumentList>() ?: return false
+    if (valueArgumentList.arguments.size > 1) return false
+
+    val callExpr = valueArgumentList.parent.asSafely<KtCallExpression>() ?: return false
+    return callExpr.isDependencyConfiguration()
 }
 
-internal fun KtValueArgument.isDependencyArgument(): Boolean {
-    val callExpression = this
-        .parent.asSafely<KtValueArgumentList>()
-        ?.parent.asSafely<KtCallExpression>() ?: return false
-    val callName = callExpression.calleeExpression?.text
+private fun KtCallExpression.isDependencyConfiguration(): Boolean {
+    val callName = when (calleeExpression) {
+        // implementation(input<caret>)
+        is KtNameReferenceExpression -> calleeExpression?.text
+        // "implementation"(input<caret>)
+        is KtStringTemplateExpression -> calleeExpression?.getChildOfType<KtLiteralStringTemplateEntry>()?.text
+        else -> null
+    } ?: return false
+
     return getConfigurationsForDependencies(this)
         .contains(callName)
 }
+
+private val DEPENDENCY_HANDLER_FQN = FqName("org.gradle.api.artifacts.dsl.DependencyHandler")
+
+private fun KtCallExpression.acceptsStringCoordinatesArgument(): Boolean =
+    isCallWithReceiverSubtype(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures"))
 
 /**
  * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)

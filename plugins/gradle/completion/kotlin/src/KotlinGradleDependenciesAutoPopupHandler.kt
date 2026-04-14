@@ -22,7 +22,7 @@ internal class KotlinGradleDependenciesAutoPopupHandler : TypedHandlerDelegate()
 
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { psiFile ->
       val element = psiFile.findElementAt(offset) ?: return@scheduleAutoPopup false
-      element.isSingleDependencyArgument()
+      element.isSingleDependencyArgumentInsideQuotes()
       || element.isExcludeArgument()
       || element.isPositionalOrNamedDependencyArgument()
     }

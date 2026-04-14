@@ -392,13 +392,13 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             api,
             implementation,
             compileOnly,
-            compileOnlyApi,
             runtimeOnly,
             testImplementation,
             testCompileOnly,
             testRuntimeOnly,
             implementation<colon>platform,
-            implementation<colon>enforcedPlatform
+            implementation<colon>enforcedPlatform,
+            implementation<colon>testFixtures
         """
 
         val KOTLIN_JVM_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-jvm-project") { gradleVersion ->

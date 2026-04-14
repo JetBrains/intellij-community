@@ -108,14 +108,15 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         )
       }
 
-      // dependencies { implementation("juni<caret>") }
-      positionElement.isSingleDependencyArgument() -> suggestDependencyCompletions(
-        result,
-        parameters,
-        FullStringInsertHandler,
-        SimpleLookupStringProvider,
-        invokePosition = GAV
-      )
+      // dependencies { implementation("juni<caret>") }, dependencies { implementation(platform("juni<caret>")) }
+      positionElement.isSingleDependencyArgumentInsideQuotes() ->
+        suggestDependencyCompletions(
+          result,
+          parameters,
+          FullStringInsertHandler,
+          SimpleLookupStringProvider,
+          invokePosition = GAV
+        )
     }
   }
 
