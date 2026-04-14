@@ -131,14 +131,15 @@ fun PythonExecution.buildTargetedCommandLine(
 }
 
 
-private fun applyRunToolAsync(
+@ApiStatus.Internal
+fun applyRunToolAsync(
   commandLineBuilder: TargetedCommandLineBuilder,
   runTool: PyRunToolParameters,
 ) = commandLineBuilder.exePath.localValue
   .onSuccess { originalExe: String? ->
     commandLineBuilder.exePath = TargetValue.fixed(runTool.exe)
     commandLineBuilder.addFixedParametersAt(0, runTool.args)
-    if (originalExe != null) {
+    if (originalExe != null && runTool.includeOriginalExe) {
       commandLineBuilder.addParameterAt(runTool.args.size, originalExe)
     }
   }
