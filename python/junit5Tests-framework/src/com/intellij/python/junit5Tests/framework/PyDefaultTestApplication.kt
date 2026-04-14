@@ -72,7 +72,7 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
     }
 
     val module = manager.getOrDefault {
-      project.moduleFixture(name = context.requiredTestClass.simpleName, moduleType = PyNames.PYTHON_MODULE_ID).also {
+      project.moduleFixture(project.pathInProjectFixture(Path.of(".")), moduleTypeId = PyNames.PYTHON_MODULE_ID).also {
         implicitFixtures += LookupFixture(DEFAULT_PY_MODULE, it, true)
       }
     }

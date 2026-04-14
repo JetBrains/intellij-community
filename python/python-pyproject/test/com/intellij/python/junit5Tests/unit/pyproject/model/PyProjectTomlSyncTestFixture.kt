@@ -76,7 +76,8 @@ internal fun pyProjectTomlSyncFixture(
 ): TestFixture<PyProjectTomlSyncTestFixture> = testFixture { context ->
   val project = projectFixture.init()
   val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.init())!!
-  val fixture = PyProjectTomlSyncTestFixture(project, root, context.extensionContext.requiredTestClass.simpleName)
+  val implicitModuleName = project.modules.singleOrNull()?.name ?: ""
+  val fixture = PyProjectTomlSyncTestFixture(project, root, implicitModuleName)
   fixture.setUp()
   initialized(fixture) {
     fixture.tearDown()
