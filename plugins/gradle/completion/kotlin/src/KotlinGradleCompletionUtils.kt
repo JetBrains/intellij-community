@@ -10,8 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -169,23 +171,32 @@ private fun KtCallExpression.isCallWithReceiverSubtype(receiverFqn: FqName, call
   return this.isReceiverSubtypeOf(receiverFqn)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean {
-  val callExpression = this
-  analyze(callExpression) {
-    val supertype = buildClassType(ClassId.topLevel(supertypeFqn))
-    val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
-    val receiverType = determineReceiverType(functionCall) ?: return false
-    return receiverType.isSubtypeOf(supertype)
-  }
+    val callExpression = this
+    analyze(callExpression) {
+        val supertype = buildClassType(ClassId.topLevel(supertypeFqn))
+        val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull()
+        if (functionCall == null) {
+            // An expression might not be resolved to a single call due to ambiguity - e.g. when inputting arguments is not finished yet.
+            return callExpression.resolveToCallCandidates().any { candidateInfo ->
+                val candidateCall = candidateInfo.candidate.asSafely<KaSingleCall<*,*>>() ?: return@any false
+                isReceiverForCallASubtypeOf(candidateCall, supertype)
+            }
+        } else {
+            return isReceiverForCallASubtypeOf(functionCall, supertype)
+        }
+    }
 }
 
 // TODO Based on code from kotlinGradleTaskUtils.kt. Extract to a separate module in Gradle plugin for Kotlin resolution.
-private fun determineReceiverType(functionCall: KaFunctionCall<*>): KaType? {
-    val type = functionCall.extensionReceiver?.type
-               ?: functionCall.dispatchReceiver?.type
-               ?: return null
-    val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
-    return unwrappedType
+@OptIn(KaExperimentalApi::class)
+private fun KaSession.isReceiverForCallASubtypeOf(call: KaSingleCall<*,*>, supertype: KaType): Boolean {
+    val receiverType = call.extensionReceiver?.type
+        ?: call.dispatchReceiver?.type
+        ?: return false
+    val unwrappedType = if (receiverType is KaFlexibleType) receiverType.lowerBound else receiverType
+    return unwrappedType.isSubtypeOf(supertype)
 }
 
 internal fun PsiElement.isDependencyArgumentInsideQuotes(): Boolean {
@@ -220,6 +231,7 @@ internal fun PsiElement.isDependencyArgumentWithoutQuotes(): Boolean {
 
     val callExpr = valueArgumentList.parent.asSafely<KtCallExpression>() ?: return false
     return callExpr.isDependencyConfiguration()
+            || callExpr.acceptsVersionCatalogDependencyArgument()
 }
 
 private fun KtCallExpression.isDependencyConfiguration(): Boolean {
@@ -236,6 +248,10 @@ private fun KtCallExpression.isDependencyConfiguration(): Boolean {
 }
 
 private val DEPENDENCY_HANDLER_FQN = FqName("org.gradle.api.artifacts.dsl.DependencyHandler")
+
+private fun KtCallExpression.acceptsVersionCatalogDependencyArgument(): Boolean {
+    return isCallWithReceiverSubtype(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures", "variantOf"))
+}
 
 private fun KtCallExpression.acceptsStringCoordinatesArgument(): Boolean =
     isCallWithReceiverSubtype(DEPENDENCY_HANDLER_FQN, setOf("platform", "enforcedPlatform", "testFixtures"))

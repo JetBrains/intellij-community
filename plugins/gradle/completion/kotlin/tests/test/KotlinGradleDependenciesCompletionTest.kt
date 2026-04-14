@@ -132,6 +132,74 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
+    @BaseGradleVersionSource(
+        """
+        implementation(platform(li<caret>)),
+        implementation(enforcedPlatform(li<caret>)),
+        testImplementation(testFixtures(li<caret>)),
+        implementation(variantOf(li<caret>))
+        """
+    )
+    fun `test version catalog completion in allowed DependencyHandler methods`(gradleVersion: GradleVersion, expression: String) {
+        test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
+            val buildScript = writeTextAndCommit("build.gradle.kts", "dependencies { $expression }")
+            writeTextAndCommit(
+                "gradle/libs.versions.toml", """
+                [versions]
+                my-version = "1.0.0"
+                [plugins]
+                my-plugin = "my.plugin:1.0.0"
+                [libraries]
+                my-library-aaa = "com.example:my-library-aaa:1.0.0"
+                [bundles]
+                my-bundle-aaa = ["my-library-aaa"]
+            """.trimIndent()
+            )
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(buildScript)
+                codeInsightFixture.completeBasic()
+                codeInsightFixture.assertPreferredCompletionItems(
+                    0,
+                    "libs",
+                    "libs.bundles.my.bundle.aaa",
+                    "libs.my.library.aaa"
+                )
+                codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+                codeInsightFixture.checkResult("dependencies { ${expression.replace("li<caret>", "libs")} }")
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource(
+        """ 
+        implementation(project(li<caret>)),
+        implementation(files(li<caret>)) 
+        """
+    )
+    fun `test version catalogs are not suggested in inapplicable methods`(gradleVersion: GradleVersion, expression: String) {
+        test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
+            val buildScript = writeTextAndCommit("build.gradle.kts", "dependencies { $expression }")
+            writeTextAndCommit(
+                "gradle/libs.versions.toml", """
+                [libraries]
+                my-library-aaa = "com.example:my-library-aaa:1.0.0"
+                [bundles]
+                my-bundle-aaa = ["my-library-aaa"]
+            """.trimIndent()
+            )
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(buildScript)
+                codeInsightFixture.completeBasic()
+                assertTrue("No completion suggestions expected") {
+                    codeInsightFixture.lookupElements.isNullOrEmpty()
+                }
+                codeInsightFixture.checkResult("dependencies { $expression }")
+            }
+        }
+    }
+
+    @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/pluginsAndVersionsAreNotCompletedWhenNoSection")
     fun `test plugins and versions are not completed in when the section is not specified`(gradleVersion: GradleVersion) =
