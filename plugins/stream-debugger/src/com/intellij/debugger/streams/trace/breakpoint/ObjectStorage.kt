@@ -40,7 +40,14 @@ interface ObjectStorage {
    */
   fun <T> watch(evaluationContext: EvaluationContextImpl, block: ValueContext.() -> T): T {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    return ValueContextImpl(this, evaluationContext).block()
+    val valueBefore = evaluationContext.isAutoLoadClasses
+    try {
+      evaluationContext.isAutoLoadClasses = true
+      return ValueContextImpl(this, evaluationContext).block()
+    }
+    finally {
+      evaluationContext.setAutoLoadClasses(valueBefore)
+    }
   }
 }
 
@@ -76,7 +83,7 @@ internal class DisableCollectionObjectStorage : ObjectStorage {
 
 private class ValueContextImpl(
   private val objectStorage: ObjectStorage,
-  private val evaluationContext: EvaluationContextImpl
+  private val evaluationContext: EvaluationContextImpl,
 ) : ValueContext {
 
   private val vm = evaluationContext.virtualMachineProxy.virtualMachine
