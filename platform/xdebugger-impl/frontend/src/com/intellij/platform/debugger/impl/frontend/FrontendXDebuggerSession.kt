@@ -442,6 +442,9 @@ class FrontendXDebuggerSession(
     val executionEnvDto = tabInfo.executionEnvironmentProxyDto
     if (executionEnvDto != null) {
       runContentDescriptor.executionId = executionEnvDto.executionId
+      // Set actual content in monolith.
+      // see com.intellij.execution.impl.ExecutionManagerImpl.doStartRunProfile
+      executionEnvDto.executionEnvironment?.contentToReuse = runContentDescriptor
     }
 
     tabScope.launch(Dispatchers.EDT) {
