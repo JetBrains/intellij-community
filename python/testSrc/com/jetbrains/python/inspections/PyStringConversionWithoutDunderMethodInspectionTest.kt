@@ -303,4 +303,22 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
 
     myFixture.checkHighlighting(true, false, true)
   }
+
+  fun `test dataclass reports`() = doTestByText("""
+    from dataclasses import dataclass
+
+    @dataclass(repr=False)
+    class ReprFalse: ...
+
+    print(<weak_warning descr="Type 'ReprFalse' doesn't define '__str__' or '__repr__', so the result might not be useful">ReprFalse()</weak_warning>)
+    """.trimIndent())
+
+  fun `test dataclass doesn't report`() = doTestByText("""
+    from dataclasses import dataclass
+
+    @dataclass
+    class ReprTrue: ...
+
+    print(ReprTrue())
+    """.trimIndent())
 }

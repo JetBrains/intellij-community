@@ -16,6 +16,7 @@ import com.intellij.psi.util.prevLeafs
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFormattedStringElement
@@ -190,7 +191,9 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
         return false
       }
 
-      val hasRepr = hasCustomStringMethod(DUNDER_REPR)
+      val hasSyntheticRepr = parseDataclassParameters(pyClass, myTypeEvalContext)?.repr == true
+
+      val hasRepr = hasSyntheticRepr || hasCustomStringMethod(DUNDER_REPR)
       val hasStr by lazy { hasCustomStringMethod(DUNDER_STR) }
       val hasFormat by lazy { hasCustomStringMethod(DUNDER_FORMAT) }
 
