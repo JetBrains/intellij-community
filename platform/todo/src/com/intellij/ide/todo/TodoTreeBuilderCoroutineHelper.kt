@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.todo.rpc.TodoQuerySettings
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.rpc.TodoResult
+import com.intellij.ide.todo.rpc.fileMatchesFilter
 import com.intellij.ide.todo.rpc.getFilesWithTodos
 import com.intellij.ide.todo.rpc.toConfig
 import com.intellij.ide.vfs.rpcId
@@ -15,6 +16,7 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -41,6 +43,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 private val ASYNC_BATCH_SIZE by lazy { RegistryManager.getInstance().get("ide.tree.ui.async.batch.size") }
+
+private val LOG = logger<TodoTreeBuilderCoroutineHelper>()
 
 internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBuilder) : Disposable {
   private val scope = CoroutineScope(SupervisorJob())
@@ -112,6 +116,32 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
           .forEach { treeBuilder.markFileAsDirty(it) }
 
         treeBuilder.updateVisibleTree()
+      }
+    }
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  fun collectCurrentFileWithCachedTodos(
+    psiFile: PsiFile,
+    filter: TodoFilter?,
+    consumer: Consumer<in PsiFile>,
+  ) {
+    runBlockingCancellable {
+      val virtualFile = psiFile.virtualFile ?: return@runBlockingCancellable
+
+      runCatching {
+        if (!fileMatchesFilter(treeBuilder.project, virtualFile, filter)) {
+          treeBuilder.clearRemoteTodosCache(virtualFile)
+          return@runBlockingCancellable
+        }
+
+        val todos = findAllTodosSuspend(treeBuilder.project, virtualFile, filter)
+        treeBuilder.cacheRemoteTodos(virtualFile, todos)
+        consumer.accept(psiFile)
+      }.onFailure { e ->
+        LOG.warn("Failed to collect todos for file ${virtualFile?.path}", e)
+        treeBuilder.clearRemoteTodosCache(virtualFile)
       }
     }
   }
