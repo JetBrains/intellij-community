@@ -46,5 +46,6 @@ private fun isProducedByK2Contributor(lookupElement: LookupElement): Boolean {
 }
 
 private val ignoredContributors = setOf(
-    "com.intellij.codeInsight.completion.LegacyCompletionContributor"
+    "com.intellij.codeInsight.completion.LegacyCompletionContributor",
+    "com.intellij.lang.properties.references.PropertiesCompletionContributor",
 )
