@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.WhatsNewMultipageIdsCache
 import com.jetbrains.fus.reporting.api.IEventContext
@@ -86,12 +85,6 @@ internal class WhatsNewMultipageIdValidationRule : CustomValidationRule() {
     if (id == DEFAULT_ID) return ValidationResultType.ACCEPTED
 
     val cache = WhatsNewMultipageIdsCache.getInstance()
-    if (!cache.isValidId(id)) {
-      runBlockingCancellable {
-        cache.waitUntilLoaded(5000)
-      }
-    }
-
     return if (cache.isValidId(id)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
 }
