@@ -8,7 +8,6 @@ import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
-import com.intellij.ide.todo.rpc.TodoHelperKt;
 import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -98,7 +97,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
 
-  protected final Map<VirtualFile, List<TodoResult>> remoteTodosCache = new ConcurrentHashMap<>();
+  private final Map<VirtualFile, List<TodoResult>> remoteTodosCache = new ConcurrentHashMap<>();
 
   private final @NotNull JTree myTree;
   /**
@@ -432,7 +431,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
       else { // file is valid and contains T.O.D.O items
         if (shouldUseSplitTodo()) {
-          List<TodoResult> todoItems = TodoHelperKt.findAllTodos(myProject, file, treeStructure.getTodoFilter());
+          List<TodoResult> todoItems = getCachedRemoteTodos(file);
           if (todoItems.isEmpty()) {
             if (myFileTree.contains(file)) {
               myFileTree.removeFile(file);
