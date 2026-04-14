@@ -51,6 +51,7 @@ data class PyRunToolParameters(
   val exe: String,
   val args: List<String>,
   val envs: Map<String, String>,
+  val includeOriginalExe: Boolean = true,
 )
 
 /**
