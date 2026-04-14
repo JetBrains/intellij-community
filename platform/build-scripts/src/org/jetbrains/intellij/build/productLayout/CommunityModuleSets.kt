@@ -132,11 +132,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.scopes")
     module("intellij.platform.scopes.backend")
 
-    // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
-    // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
-    // the find module must also be marked as embedded to maintain proper dependency loading order.
-    // This attribute can be removed once ThinClientFindAndReplaceExecutor is removed.
-    embeddedModule("intellij.platform.find")
+    module("intellij.platform.find")
     module("intellij.platform.find.backend")
     module("intellij.platform.editor.frontend")
     module("intellij.platform.managed.cache")
