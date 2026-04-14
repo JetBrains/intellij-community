@@ -77,6 +77,7 @@ class OutputSchemaTest {
             "description": "Field description b1"
         },
         "c": {
+            "type": "string",
             "enum": [
                 "K1",
                 "K2",
@@ -234,6 +235,7 @@ class OutputSchemaTest {
             "description": "Nested nullable"
         },
         "enumField": {
+            "type": "string",
             "enum": [
                 "K1",
                 "K2",
@@ -242,6 +244,10 @@ class OutputSchemaTest {
             "description": "Enum field"
         },
         "enumNullable": {
+            "type": [
+                "string",
+                "null"
+            ],
             "enum": [
                 "K1",
                 "K2",
