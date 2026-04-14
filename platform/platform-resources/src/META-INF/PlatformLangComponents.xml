@@ -126,7 +126,7 @@
       defaultValue="false"
     />
 
-    <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy"/>
+    <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy" order="last"/>
     <registryKey
       key="editor.skeleton.enabled"
       defaultValue="false"

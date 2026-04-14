@@ -3,9 +3,15 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ThreeState
 
 internal class DefaultEditorSkeletonPolicy : EditorSkeletonPolicy {
-  override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean {
-    return Registry.`is`("editor.skeleton.enabled", false)
+  override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState {
+    val isEnabled = Registry.`is`("editor.skeleton.enabled", false)
+    return ThreeState.fromBoolean(isEnabled)
+  }
+
+  override fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long {
+    return Registry.intValue("editor.skeleton.delay.ms", 50).toLong()
   }
 }

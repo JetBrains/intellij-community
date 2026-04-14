@@ -3,7 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorComposite
-import com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy.Companion.shouldShowSkeleton
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -26,13 +26,28 @@ interface EditorSkeletonPolicy {
    *
    * @see EditorSkeleton
    */
-  fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean
+  fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState
+
+  fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long? = null
 
   companion object {
     private val EP_NAME: ExtensionPointName<EditorSkeletonPolicy> = ExtensionPointName("com.intellij.editorSkeletonPolicy")
 
     internal fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean {
-      return EP_NAME.extensionList.isNotEmpty() && EP_NAME.extensionList.all { it.shouldShowSkeleton(fileEditorComposite) }
+      for (policy in EP_NAME.extensionList) {
+        val shouldShow = policy.shouldShowSkeleton(fileEditorComposite)
+        if (shouldShow == ThreeState.UNSURE) continue
+        return shouldShow.toBoolean()
+      }
+      return false
+    }
+
+    internal fun getSkeletonDelayMs(fileEditorComposite: FileEditorComposite): Long {
+      for (policy in EP_NAME.extensionList) {
+        val delay = policy.getSkeletonDelayMs(fileEditorComposite) ?: continue
+        return delay
+      }
+      return 300
     }
   }
 }

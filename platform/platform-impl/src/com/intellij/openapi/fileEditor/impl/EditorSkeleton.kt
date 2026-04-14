@@ -44,7 +44,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Animation lasts while [cs] is active.
  */
-internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) : JComponent() {
+internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong, val skeletonDelayMs: Long) : JComponent() {
   private val withAnimation = Registry.`is`("editor.skeleton.animation.enabled", true)
   private val currentTime = AtomicLong(System.currentTimeMillis())
 

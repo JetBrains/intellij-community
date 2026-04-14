@@ -316,8 +316,8 @@ open class EditorComposite internal constructor(
         span("Artificially wait if the skeleton has been set recently to avoid flickering") {
           compositePanel.skeleton?.let { editorSkeleton ->
             val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime.get()
-            if (hasBeenShownFor < SKELETON_DELAY) {
-              delay(SKELETON_DELAY - hasBeenShownFor)
+            if (hasBeenShownFor < editorSkeleton.skeletonDelayMs) {
+              delay(editorSkeleton.skeletonDelayMs - hasBeenShownFor)
             }
           }
         }
@@ -1079,8 +1079,9 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
+      val skeletonDelay = EditorSkeletonPolicy.getSkeletonDelayMs(composite)
       skeletonScope.launch(Dispatchers.UI) {
-        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope))
+        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope, skeletonDelay))
       }
     }
     else {

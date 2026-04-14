@@ -5,8 +5,14 @@ import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
+import com.intellij.util.ThreeState
 
 internal class WelcomeScreenEditorSkeletonPolicy : EditorSkeletonPolicy {
-  override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean =
-    (fileEditorComposite as? EditorComposite)?.file !is WelcomeScreenRightTabVirtualFile
+  override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): ThreeState {
+    val isWelcomeTab = (fileEditorComposite as? EditorComposite)?.file is WelcomeScreenRightTabVirtualFile
+    if (isWelcomeTab) {
+      return ThreeState.NO
+    }
+    return ThreeState.UNSURE
+  }
 }

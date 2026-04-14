@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * This service is responsible for creating and maintaining skeleton components for editor tabs
@@ -28,34 +29,30 @@ internal class EditorCompositeSkeletonFactory(project: Project, private val scop
   companion object {
     fun getInstance(project: Project): EditorCompositeSkeletonFactory = project.service()
   }
-  suspend fun createSkeleton(skeletonScope: CoroutineScope): EditorSkeleton? {
+  suspend fun createSkeleton(skeletonScope: CoroutineScope, skeletonDelayMs: Long): EditorSkeleton? {
     if (!Registry.`is`("editor.skeleton.animation.enabled")) return null
     // if [currentlyShownSkeleton] equals 0, then there's no skeleton shown at the moment. We need to delay the skeleton creation to avoid flickering
     if (currentlyShownSkeleton.get() == 0) {
-      delay(SKELETON_DELAY)
+      delay(skeletonDelayMs.milliseconds)
     }
 
     currentlyShownSkeleton.incrementAndGet()
     initialTime.compareAndSet(-1, System.currentTimeMillis())
-    return doCreateSkeleton(skeletonScope)
+    return doCreateSkeleton(skeletonScope, skeletonDelayMs)
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
-  private fun doCreateSkeleton(skeletonScope: CoroutineScope): EditorSkeleton {
+  private fun doCreateSkeleton(skeletonScope: CoroutineScope, skeletonDelayMs: Long): EditorSkeleton {
     skeletonScope.awaitCancellationAndInvoke {
       scope.launch {
         // delay actual deletion for skeleton to avoid flickering
-        delay(SKELETON_DELAY)
+        delay(skeletonDelayMs.milliseconds)
         // If the last skeleton is removed, the process of tab jumping is completed and the phase could be moved to show an initial animation
         if (currentlyShownSkeleton.decrementAndGet() == 0) {
           initialTime.set(-1)
         }
       }
     }
-    return EditorSkeleton(skeletonScope, initialTime)
+    return EditorSkeleton(skeletonScope, initialTime, skeletonDelayMs)
   }
 }
-
-
-internal val SKELETON_DELAY: Long
-  get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
