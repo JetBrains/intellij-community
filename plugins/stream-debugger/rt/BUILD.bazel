@@ -23,3 +23,9 @@ jvm_library(
   runtime_deps = [":rt"]
 )
 ### auto-generated section `build intellij.java.debugger.streams.rt` end
+
+### auto-generated section `iml intellij.java.debugger.streams.rt` start
+exports_files([
+  "intellij.java.debugger.streams.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.debugger.streams.rt` end
