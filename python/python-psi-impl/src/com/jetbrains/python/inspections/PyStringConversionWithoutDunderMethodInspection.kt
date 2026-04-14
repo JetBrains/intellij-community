@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyFunctionType
+import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
@@ -75,6 +76,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
 
       val callee = node.callee as? PyReferenceExpression ?: return
 
+      // TODO: use `calleeType?.declarationElement?.qualifiedName` when overloads aren't union types PY-83781
       val resolvedCallee =
         PyResolveUtil.resolveDeclaration(callee.reference, PyResolveContext.defaultContext(myTypeEvalContext))
         ?: return
@@ -128,8 +130,20 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
       if (type == null) return
 
       when {
-        type is PyUnionType || type is PyUnsafeUnionType -> {
+        type is PyUnionType -> {
           type.members.forEach { handleType(it, requiredMethod) }
+        }
+        type is PyIntersectionType || type is PyUnsafeUnionType -> {
+          val members = type.members
+          val anyMemberHasMethod = members.any { memberType ->
+            when (memberType) {
+              is PyClassType -> !memberType.shouldWarnForType(requiredMethod)
+              else -> true
+            }
+          }
+          if (!anyMemberHasMethod) {
+            registerProblem(type, requiredMethod)
+          }
         }
         type is PyFunctionType && "types.FunctionType" in inspection.reportedTypes -> {
           registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "FunctionType"),
@@ -146,18 +160,24 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
           registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", "type"),
                           RemoveFromReportedTypesQuickFix("type", "type"))
         }
-        type.shouldWarnForType(requiredMethod) -> {
-          val typeName = if (type.isDefinition) "type[${type.name}]" else type.name
-          val message = when (requiredMethod) {
-            DUNDER_REPR -> PyPsiBundle.message("INSP.string.conversion.without.dunder.repr", typeName)
-            DUNDER_STR -> PyPsiBundle.message("INSP.string.conversion.without.dunder.str", typeName)
-            DUNDER_FORMAT -> PyPsiBundle.message("INSP.string.conversion.without.dunder.format", typeName)
-            else -> return
-          }
-          val classQName = type.classQName ?: return
-          registerProblem(this, message, AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()))
-        }
+        type.shouldWarnForType(requiredMethod) -> registerProblem(type, requiredMethod)
       }
+    }
+
+    private fun PyExpression.registerProblem(type: PyType, requiredMethod: String) {
+      val typeName = if (type is PyClassType && type.isDefinition) "type[${type.name}]" else type.name
+      val message = when (requiredMethod) {
+        DUNDER_REPR -> PyPsiBundle.message("INSP.string.conversion.without.dunder.repr", typeName)
+        DUNDER_STR -> PyPsiBundle.message("INSP.string.conversion.without.dunder.str", typeName)
+        DUNDER_FORMAT -> PyPsiBundle.message("INSP.string.conversion.without.dunder.format", typeName)
+        else -> return
+      }
+      if (type is PyClassType) {
+        val classQName = type.classQName ?: return
+        registerProblem(this, message,
+                        AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()))
+      }
+      else registerProblem(this, message)
     }
 
     private fun PyClassType.shouldWarnForType(requiredMethod: String): Boolean {
