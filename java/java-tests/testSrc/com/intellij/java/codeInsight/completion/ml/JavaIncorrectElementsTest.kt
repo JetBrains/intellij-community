@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiType
 
 class JavaIncorrectElementsTest : LightCompletionTestCase() {
   fun `test class extends position`() {
@@ -249,6 +250,7 @@ class JavaIncorrectElementsTest : LightCompletionTestCase() {
         val actual = (elementFeatures["incorrect_element"]?.value ?: false) as Boolean
         val obj = element.`object`
         val keyName = when {
+          obj is PsiType -> obj.canonicalText
           obj is PsiKeyword -> obj.text!!
           obj is PsiClass && obj.qualifiedName != null -> obj.qualifiedName!!
           else -> return elementFeatures

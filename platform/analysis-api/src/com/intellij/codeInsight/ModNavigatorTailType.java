@@ -14,13 +14,20 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public abstract class ModNavigatorTailType extends TailType {
   /**
-   * @return true. {@link ModNavigatorTailType} should be always applicable. 
-   * @deprecated If you want to make it non-applicable, simply do nothing inside {@link #processTail(ModNavigator, int)}.
-   * May become final in future.
+   * @deprecated Override {@link #isApplicableForCompletionCharacter(char)} to disable tail type for a particular completion character. 
+   * If you want to make this tail-type non-applicable in other cases, simply do nothing inside {@link #processTail(ModNavigator, int)}.
    */
   @Deprecated
   @Override
-  public boolean isApplicable(@NotNull InsertionContext context) {
+  public final boolean isApplicable(@NotNull InsertionContext context) {
+    return !context.shouldAddCompletionChar() || isApplicableForCompletionCharacter(context.getCompletionChar());
+  }
+
+  /**
+   * @param c completion character to test
+   * @return true if this tail type should be applied for the given completion character 
+   */
+  public boolean isApplicableForCompletionCharacter(char c) {
     return true;
   }
 

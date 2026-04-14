@@ -133,8 +133,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
       JavaCompletionUtil.shortenReference(file, genericsStart - 1);
     }
 
-    int curOffset = updater.getCaretOffset();
-    int targetOffset = curOffset;
+    int targetOffset = updater.getCaretOffset();
     String braces = StringUtil.repeat("[]", getType().getArrayDimensions());
     if (!braces.isEmpty()) {
       if (myAddArrayInitializer) {
@@ -145,7 +144,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
         document.insertString(targetOffset, braces);
         targetOffset += insideTypeElement ? braces.length() : 1;
       }
-      updater.registerTabOut(TextRange.create(curOffset, curOffset), targetOffset);
+      updater.registerTabOut(TextRange.create(targetOffset, targetOffset), targetOffset + 1);
     }
     updater.moveCaretTo(targetOffset);
   }

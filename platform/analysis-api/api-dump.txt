@@ -97,7 +97,7 @@ c:com.intellij.codeInsight.CharTailType
 - <init>(C,Z):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z
+- isApplicableForCompletionCharacter(C):Z
 - processTail(com.intellij.openapi.editor.ModNavigator,I):I
 a:com.intellij.codeInsight.TailType
 - s:insertChar(com.intellij.openapi.editor.ModNavigator,I,C):I

@@ -43,23 +43,30 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassLevelDeclarationStatement;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -73,12 +80,16 @@ import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -89,12 +100,15 @@ import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiRecordHeader;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeMapper;
 import com.intellij.psi.PsiTypeParameter;
@@ -109,15 +123,20 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -151,13 +170,54 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
+import static com.intellij.patterns.PsiJavaPatterns.elementType;
+import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import static com.intellij.patterns.PsiJavaPatterns.psiReferenceExpression;
 import static com.intellij.patterns.StandardPatterns.not;
+import static com.intellij.patterns.StandardPatterns.or;
+import static com.intellij.patterns.StandardPatterns.string;
+import static com.intellij.psi.SyntaxTraverser.psiApi;
 import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.inapplicable;
 
+/**
+ * Helper methods to support Java code completion functionality.
+ */
 public final class JavaCompletionUtil {
+  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
+    // dot at the statement beginning
+    psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
+    //example: class A{ .something }
+    psiElement().afterLeaf(".")
+      .insideStarting(psiElement(JavaElementType.TYPE))
+      .afterLeafSkipping(psiElement().andOr(
+                           psiElement().whitespace(),
+                           psiElement().withText("")),
+                         psiElement().withParent(PsiErrorElement.class))
+      .withParent(PsiJavaCodeReferenceElement.class)
+      .withSuperParent(2, PsiTypeElement.class)
+      .withSuperParent(3, PsiClass.class),
+    //example: void test(String p.<caret>)
+    psiElement().afterLeaf(".")
+      .afterLeafSkipping(psiElement().andOr(
+                           psiElement().whitespace(),
+                           psiElement().withText("")),
+                         psiElement().withParent(PsiErrorElement.class))
+      .afterLeafSkipping(psiElement().withParent(PsiErrorElement.class),
+                         psiElement().withElementType(JavaTokenType.IDENTIFIER)
+                           .withParent(PsiParameter.class)
+                           .withSuperParent(2, PsiParameterList.class)),
+    // like `call(Cls::methodRef.<caret>`
+    psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
+      psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),
+    // dot after primitive type `int.<caret>` or dot after dot `Object..<caret>`
+    psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(
+      psiElement(PsiErrorElement.class).afterSibling(psiElement(PsiErrorElement.class)))));
+  private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
+    psiElement().inside(PsiTypeElement.class).afterLeaf(
+      psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
   public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
@@ -184,6 +244,9 @@ public final class JavaCompletionUtil {
       psiElement(PsiClassObjectAccessExpression.class).withLastChild(not(psiElement().withText(JavaKeywords.CLASS)))));
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
+  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
+    psiElement().afterLeaf(psiElement().withElementType(
+      elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
 
   public static @Nullable Set<PsiType> getExpectedTypes(@NotNull BaseCompletionParameters parameters) {
     PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
@@ -293,6 +356,9 @@ public final class JavaCompletionUtil {
 
   static @Nullable PsiType getLookupElementType(@NotNull LookupElement element) {
     TypedLookupItem typed = element.as(TypedLookupItem.CLASS_CONDITION_KEY);
+    if (typed == null && element.getObject() instanceof PsiKeyword keyword) {
+      return FilterUtil.getKeywordItemType(keyword, keyword.getText());
+    }
     return typed != null ? typed.getType() : null;
   }
 
@@ -529,32 +595,6 @@ public final class JavaCompletionUtil {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
-  public static boolean isInsideParameterList(PsiElement position) {
-    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
-    PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prev, PsiModifierList.class);
-    if (modifierList != null) {
-      if (PsiTreeUtil.isAncestor(modifierList, position, false)) {
-        return false;
-      }
-      PsiElement parent = modifierList.getParent();
-      return parent instanceof PsiParameterList || parent instanceof PsiParameter && parent.getParent() instanceof PsiParameterList;
-    }
-    return INSIDE_PARAMETER_LIST.accepts(position);
-  }
-
-  public static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
-    return AFTER_PRIMITIVE_OR_ARRAY.accepts(element);
-  }
-
-  public static boolean isAfterTypeDot(PsiElement position) {
-    if (isInsideParameterList(position) || position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment) {
-      return false;
-    }
-
-    return psiElement().afterLeaf(psiElement().withText(".").afterLeaf(CLASS_REFERENCE)).accepts(position) ||
-           isAfterPrimitiveOrArrayType(position);
-  }
-
   public static boolean isInstanceofPlace(PsiElement position) {
     PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
     if (prev == null) return false;
@@ -581,6 +621,119 @@ public final class JavaCompletionUtil {
     }
 
     return false;
+  }
+
+  public static boolean isInsideParameterList(PsiElement position) {
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prev, PsiModifierList.class);
+    if (modifierList != null) {
+      if (PsiTreeUtil.isAncestor(modifierList, position, false)) {
+        return false;
+      }
+      PsiElement parent = modifierList.getParent();
+      return parent instanceof PsiParameterList || parent instanceof PsiParameter && parent.getParent() instanceof PsiParameterList;
+    }
+    return INSIDE_PARAMETER_LIST.accepts(position);
+  }
+
+  public static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
+    return AFTER_PRIMITIVE_OR_ARRAY.accepts(element);
+  }
+
+  public static boolean isAfterTypeDot(PsiElement position) {
+    if (isInsideParameterList(position) || position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment) {
+      return false;
+    }
+
+    return psiElement().afterLeaf(psiElement().withText(".").afterLeaf(CLASS_REFERENCE)).accepts(position) ||
+           isAfterPrimitiveOrArrayType(position);
+  }
+
+  private static boolean isStatementCodeFragment(PsiFile file) {
+    return file instanceof JavaCodeFragment &&
+           !(file instanceof PsiExpressionCodeFragment ||
+             file instanceof PsiJavaCodeReferenceCodeFragment ||
+             file instanceof PsiTypeCodeFragment);
+  }
+
+  public static boolean isEndOfBlock(@NotNull PsiElement element) {
+    PsiElement prev = prevSignificantLeaf(element);
+    if (prev == null) {
+      PsiFile file = element.getContainingFile();
+      return !(file instanceof PsiCodeFragment) || isStatementCodeFragment(file);
+    }
+
+    if (psiElement().inside(psiAnnotation()).accepts(prev)) return false;
+
+    if (prev instanceof OuterLanguageElement) return true;
+    if (psiElement().withText(string().oneOf("{", "}", ";", ":", "else")).accepts(prev)) return true;
+    if (prev.textMatches(")")) {
+      PsiElement parent = prev.getParent();
+      if (parent instanceof PsiParameterList) {
+        return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(element), PsiDocComment.class) != null;
+      }
+
+      return !(parent instanceof PsiExpressionList || parent instanceof PsiTypeCastExpression
+               || parent instanceof PsiRecordHeader);
+    }
+
+    return false;
+  }
+
+  private static PsiElement prevSignificantLeaf(PsiElement position) {
+    return FilterPositionUtil.searchNonSpaceNonCommentBack(position);
+  }
+
+  public static boolean isSuitableForClass(PsiElement position) {
+    if (psiElement().afterLeaf("@").accepts(position) ||
+        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class, PsiExpressionCodeFragment.class) !=
+        null) {
+      return false;
+    }
+
+    PsiElement prev = prevSignificantLeaf(position);
+    if (prev == null) {
+      return true;
+    }
+    if (psiElement().withoutText(".").inside(
+      psiElement(PsiModifierList.class).withParent(
+        not(psiElement(PsiParameter.class)).andNot(psiElement(PsiParameterList.class)))).accepts(prev) &&
+        (!psiElement().inside(PsiAnnotationParameterList.class).accepts(prev) || prev.textMatches(")"))) {
+      return true;
+    }
+
+    if (psiElement().withParents(PsiErrorElement.class, PsiFile.class).accepts(position)) {
+      return true;
+    }
+
+    return isEndOfBlock(position);
+  }
+
+  public static boolean isDeclarationStart(@NotNull PsiElement position) {
+    if (psiElement().afterLeaf("@", ".").accepts(position)) return false;
+
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
+      PsiElement typeHolder = psiApi().parents(parent.getParent()).skipWhile(Conditions.instanceOf(PsiTypeElement.class)).first();
+      return typeHolder instanceof PsiMember || typeHolder instanceof PsiClassLevelDeclarationStatement ||
+             (typeHolder instanceof PsiJavaFile javaFile &&
+              PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position) &&
+              javaFile.getPackageStatement() == null);
+    }
+
+    return false;
+  }
+
+  public static boolean isUnexpectedReferenceAfterDot(PsiElement position) {
+    return UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position);
+  }
+
+  /**
+   * @param position position to check
+   * @return true if it's located after a number literal
+   */
+  public static boolean isAfterNumberLiteral(PsiElement position) {
+    return AFTER_NUMBER_LITERAL.accepts(position);
   }
 
   static class JavaLookupElementHighlighter {
@@ -1089,5 +1242,13 @@ public final class JavaCompletionUtil {
                                   }
                                   return false;
                                 });
+  }
+
+  /**
+   * @param element element to test
+   * @return true if the element is right after an enum constant
+   */
+  public static boolean isAfterEnumConstant(@NotNull PsiElement element) {
+    return AFTER_ENUM_CONSTANT.accepts(element);
   }
 }

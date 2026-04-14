@@ -24,7 +24,6 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
@@ -105,9 +104,6 @@ final class NonImportedClassProvider extends JavaModCompletionItemProvider {
     // dot after primitive type `int.<caret>` or dot after dot `Object..<caret>`
     psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(
       psiElement(PsiErrorElement.class).afterSibling(psiElement(PsiErrorElement.class)))));
-  private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
-    psiElement().inside(PsiTypeElement.class).afterLeaf(
-      psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
   private static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class)
       .withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
@@ -242,7 +238,7 @@ final class NonImportedClassProvider extends JavaModCompletionItemProvider {
     PsiElement position = context.getPosition();
     if (JavaCompletionUtil.isInstanceofPlace(position) ||
         JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position) ||
-        AFTER_ENUM_CONSTANT.accepts(position)) {
+        JavaCompletionUtil.isAfterEnumConstant(position)) {
       return false;
     }
 

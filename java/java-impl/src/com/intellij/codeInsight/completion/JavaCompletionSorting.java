@@ -244,7 +244,7 @@ public final class JavaCompletionSorting {
         JavaConstructorCallElement call = element.as(JavaConstructorCallElement.class);
         Object o = call != null ? call.getConstructedClass() : element.getObject();
 
-        if (o instanceof PsiKeyword) return -3;
+        if (o instanceof PsiKeyword || o instanceof PsiPrimitiveType) return -3;
         if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
           return 0;
         }

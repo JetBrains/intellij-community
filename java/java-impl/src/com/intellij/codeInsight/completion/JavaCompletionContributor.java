@@ -46,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.JavaFeature;
@@ -91,15 +92,12 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiProvidesStatement;
@@ -140,7 +138,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -174,12 +171,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
-import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
 import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
@@ -190,35 +185,12 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
-  static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
-      // dot at the statement beginning
-      psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
-      //example: class A{ .something }
-      psiElement().afterLeaf(".")
-        .insideStarting(psiElement(JavaElementType.TYPE))
-        .afterLeafSkipping(psiElement().andOr(
-                             psiElement().whitespace(),
-                             psiElement().withText("")),
-                           psiElement().withParent(PsiErrorElement.class))
-        .withParent(PsiJavaCodeReferenceElement.class)
-        .withSuperParent(2, PsiTypeElement.class)
-        .withSuperParent(3, PsiClass.class),
-      //example: void test(String p.<caret>)
-      psiElement().afterLeaf(".")
-        .afterLeafSkipping(psiElement().andOr(
-                             psiElement().whitespace(),
-                             psiElement().withText("")),
-                           psiElement().withParent(PsiErrorElement.class))
-        .afterLeafSkipping(psiElement().withParent(PsiErrorElement.class),
-                           psiElement().withElementType(JavaTokenType.IDENTIFIER)
-                             .withParent(PsiParameter.class)
-                             .withSuperParent(2, PsiParameterList.class)),
-      // like `call(Cls::methodRef.<caret>`
-      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
-        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),
-      // dot after primitive type `int.<caret>` or dot after dot `Object..<caret>`
-      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(
-        psiElement(PsiErrorElement.class).afterSibling(psiElement(PsiErrorElement.class)))));
+  private static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(
+    psiElement().withText("(").afterLeaf(PsiKeyword.FOR));
+  private static final ElementPattern<PsiElement> START_SWITCH =
+    psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchBlock.class));
+  private static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =
+    psiElement().afterLeaf(JavaKeywords.FINAL).inside(PsiDeclarationStatement.class);
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
@@ -245,18 +217,12 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
     psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class));
 
-  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
-    psiElement().afterLeaf(psiElement().withElementType(
-      elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
   private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
   private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
     psiElement().withText("}").withParent(
       psiElement(PsiCodeBlock.class).afterLeaf(JavaKeywords.TRY)));
   private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
-  private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
-    psiElement().inside(PsiTypeElement.class).afterLeaf(
-      psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
   static final ElementPattern<PsiElement> IN_EXTENDS_OR_IMPLEMENTS = psiElement().afterLeaf(
     psiElement()
       .withText(string().oneOf(JavaKeywords.EXTENDS, JavaKeywords.IMPLEMENTS, ",", "&"))
@@ -302,7 +268,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(ElementClassFilter.PACKAGE, new AnnotationTypeFilter());
     }
 
-    if (JavaKeywordCompletion.isDeclarationStart(position) ||
+    if (JavaCompletionUtil.isDeclarationStart(position) ||
         JavaCompletionUtil.isInsideParameterList(position) ||
         isInsideAnnotationName(position) ||
         PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class, false, PsiAnnotation.class) != null ||
@@ -328,18 +294,18 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       };
     }
 
-    if (JavaKeywordCompletion.VARIABLE_AFTER_FINAL.accepts(position)) {
+    if (VARIABLE_AFTER_FINAL.accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 
     if (CATCH_OR_FINALLY.accepts(position) ||
-        JavaKeywordCompletion.START_SWITCH.accepts(position) ||
+        START_SWITCH.accepts(position) ||
         JavaCompletionUtil.isInstanceofPlace(position) ||
         JavaCompletionUtil.isAfterPrimitiveOrArrayType(position)) {
       return null;
     }
 
-    if (JavaKeywordCompletion.START_FOR.withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
+    if (START_FOR.withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
     }
 
@@ -542,9 +508,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return;
     }
 
-    if (AFTER_NUMBER_LITERAL.accepts(position) ||
-        UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position) ||
-        AFTER_ENUM_CONSTANT.accepts(position)) {
+    if (JavaCompletionUtil.isAfterNumberLiteral(position) ||
+        JavaCompletionUtil.isUnexpectedReferenceAfterDot(position) ||
+        JavaCompletionUtil.isAfterEnumConstant(position)) {
       _result.stopHere();
       return;
     }
@@ -580,9 +546,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         if (anno != null) {
           PsiClass annoClass = anno.resolveAnnotationType();
           mayCompleteReference = mayCompleteValueExpression(position, annoClass);
-          if (annoClass != null) {
-            JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
-          }
         }
       }
 
@@ -831,8 +794,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.add(LookupElementBuilder.create("*"));
     }
 
-    items.addAll(new JavaKeywordCompletion(parameters, session, smart).getResults());
-
     addExpressionVariants(parameters, position, items::add);
 
     return items;
@@ -1059,7 +1020,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     PsiElement position = parameters.getPosition();
     if (JavaCompletionUtil.isInstanceofPlace(position) ||
         JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position) ||
-        AFTER_ENUM_CONSTANT.accepts(position)) {
+        JavaCompletionUtil.isAfterEnumConstant(position)) {
       return false;
     }
 

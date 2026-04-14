@@ -16,9 +16,8 @@ internal data class FrontendFriendlyCharTailType(
     return insertChar(navigator, tailOffset, char, overwrite)
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun isApplicable(context: InsertionContext): Boolean {
-    return !context.shouldAddCompletionChar() || context.completionChar != char
+  override fun isApplicableForCompletionCharacter(c: Char): Boolean {
+    return c != char
   }
 }
 
@@ -29,9 +28,8 @@ internal object NoneTailType : ModNavigatorTailType(), FrontendFriendlyTailType 
 
 @Serializable
 internal object HumbleSpaceBeforeWordTailType : ModNavigatorTailType(), FrontendFriendlyTailType {
-  @Deprecated("Deprecated in Java")
-  override fun isApplicable(context: InsertionContext): Boolean {
-    return !context.shouldAddCompletionChar() || context.completionChar != ' '
+  override fun isApplicableForCompletionCharacter(c: Char): Boolean {
+    return c != ' '
   }
 
   override fun processTail(navigator: ModNavigator, tailOffset: Int): Int {

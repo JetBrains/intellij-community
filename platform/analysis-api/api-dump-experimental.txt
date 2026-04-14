@@ -4,7 +4,8 @@
 - s:dotType():com.intellij.codeInsight.ModNavigatorTailType
 - s:humbleSpaceBeforeWordType():com.intellij.codeInsight.ModNavigatorTailType
 - s:insertSpaceType():com.intellij.codeInsight.ModNavigatorTailType
-- isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z
+- f:isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z
+- isApplicableForCompletionCharacter(C):Z
 - s:noneType():com.intellij.codeInsight.ModNavigatorTailType
 - processTail(com.intellij.openapi.editor.Editor,I):I
 - a:processTail(com.intellij.openapi.editor.ModNavigator,I):I
@@ -291,6 +292,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - withAdditionalUpdater(com.intellij.modcompletion.CommonCompletionItem$UpdateHandler):com.intellij.modcompletion.CommonCompletionItem
 - withAutoCompletionPolicy(com.intellij.codeInsight.lookup.AutoCompletionPolicy):com.intellij.modcompletion.CommonCompletionItem
 - withInsertCharacterSuppressed(java.util.function.Predicate):com.intellij.modcompletion.CommonCompletionItem
+- withInsertCharacterSuppressed(C[]):com.intellij.modcompletion.CommonCompletionItem
 - withObject(java.lang.Object):com.intellij.modcompletion.CommonCompletionItem
 - withPresentation(com.intellij.modcompletion.ModCompletionItemPresentation):com.intellij.modcompletion.CommonCompletionItem
 - withPresentation(com.intellij.openapi.util.text.MarkupText):com.intellij.modcompletion.CommonCompletionItem

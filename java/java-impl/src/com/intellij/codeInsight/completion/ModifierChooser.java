@@ -165,6 +165,6 @@ public final class ModifierChooser {
     if (parent == null) return false;
 
     return (parent instanceof PsiJavaFile || parent instanceof PsiClass) &&
-           JavaKeywordCompletion.isEndOfBlock(element);
+           JavaCompletionUtil.isEndOfBlock(element);
   }
 }

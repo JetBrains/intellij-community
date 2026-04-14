@@ -718,9 +718,7 @@ public class CodeCompletionHandlerBase {
     if (item instanceof CompletionItemLookupElement) {
       // No additional special handling should be performed; 
       // everything is already done inside LookupImpl::insertItem
-      if (completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        context.setAddCompletionChar(false);
-      }
+      context.setAddCompletionChar(false);
       return context;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {

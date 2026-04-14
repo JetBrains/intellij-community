@@ -17,6 +17,8 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -40,6 +42,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -91,6 +94,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ComponentUtil;
@@ -786,9 +790,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     myFinishingCompletionATM = true;
+    PsiFile file = getPsiFile();
     if (fireBeforeItemSelected(item, completionChar)) {
       if (item instanceof CompletionItemLookupElement wrapper) {
-        PsiFile file = Objects.requireNonNull(getPsiFile(), "PsiFile must be known for ModCommand completion");
+        Objects.requireNonNull(file, "PsiFile must be known for ModCommand completion");
         editor.getCaretModel().runForEachCaret(_ -> {
           insertItem(completionChar, editor, editor.getCaretModel().getOffset() - getPrefixLength(item), file, wrapper);
         });
@@ -812,6 +817,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     doHide(false, true);
 
     fireItemSelected(item, completionChar);
+
+    if (completionChar == COMPLETE_STATEMENT_SELECT_CHAR && item instanceof CompletionItemLookupElement && file != null) {
+      processSmartEnter(file);
+    }
+  }
+
+  private void processSmartEnter(@NotNull PsiFile file) {
+    Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
+    if (language != null) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.allForLanguage(language)) {
+          if (processor.processAfterCompletion(editor, file)) break;
+        }
+      });
+    }
   }
 
   @ApiStatus.Internal

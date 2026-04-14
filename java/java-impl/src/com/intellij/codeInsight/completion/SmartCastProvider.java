@@ -110,6 +110,10 @@ final class SmartCastProvider {
             type = boxedType;
           }
         }
+        if (type instanceof PsiPrimitiveType && parameters.getCompletionType() != CompletionType.SMART) {
+          // Will be added as a keyword
+          continue;
+        }
       }
       result.consume(createSmartCastElement(parameters, insideCast, type));
     }

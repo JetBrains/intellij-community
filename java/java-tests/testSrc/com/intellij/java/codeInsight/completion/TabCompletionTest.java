@@ -35,6 +35,11 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     checkResultJava();
   }
 
+  public void testReplaceThisWithSuper2() {
+    configureByTestName();
+    checkResultJava();
+  }
+
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testTabInXml() {
     configureByFile("TabInXml.xml");

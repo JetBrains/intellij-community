@@ -788,8 +788,8 @@ final class PsiUpdateImpl {
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
       }
       myTabOutCommands.replaceAll(command -> {
-        int left = updateOffset(event, command.rangeStart(), true);
-        int right = updateOffset(event, command.rangeEnd(), false);
+        int left = updateOffset(event, command.rangeStart(), false);
+        int right = updateOffset(event, command.rangeEnd(), true);
         int target = updateOffset(event, command.target(), false);
         return new ModRegisterTabOut(command.file(), left, right, target);
       });

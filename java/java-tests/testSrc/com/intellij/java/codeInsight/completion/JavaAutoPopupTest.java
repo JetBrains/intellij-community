@@ -17,7 +17,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.Template;
@@ -62,6 +61,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
@@ -1000,6 +1000,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   public void testEveryPossibleWayToTypeIf() {
     String src = "class Foo { { int ifa; <caret> } }";
     String result = "class Foo { { int ifa; if <caret> } }";
+    String result2 = "class Foo { { int ifa; if ( <caret>)} }";
     int actions = 4;
 
     for (int a1 = 0; a1 <= actions; a1++) {
@@ -1022,7 +1023,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
         joinAutopopup();
         joinCompletion();
         try {
-          myFixture.checkResult(result);
+          myFixture.checkResult(a1 == 4 || a2 == 4 ? result2 : result);
         }
         catch (Exception e) {
           throw new RuntimeException("actions: " + a1 + " " + a2, e);
@@ -1041,7 +1042,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       joinAutopopup();
       joinCompletion();
       try {
-        myFixture.checkResult(result);
+        myFixture.checkResult(a1 == 4 ? result2 : result);
       }
       catch (Exception e) {
         throw new RuntimeException("actions: " + a1, e);
@@ -1061,7 +1062,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       joinAutopopup();
       joinCompletion();
       try {
-        myFixture.checkResult(result);
+        myFixture.checkResult(a1 == 4 ? result2 : result);
       }
       catch (Exception e) {
         throw new RuntimeException("actions: " + a1, e);
@@ -1561,7 +1562,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "\nclass Foo {\n  void foo() {\n    Object o = new <caret>\n  }\n}\n");
     type("int");
     myFixture.assertPreferredCompletionItems(0, "int", "Integer");
-    assertEquals(1, ((PsiTypeLookupItem)myFixture.getLookupElements()[0]).getBracketsCount());
+    assertEquals(PsiTypes.intType().createArrayType(), myFixture.getLookupElements()[0].getObject());
     type("[");
     myFixture.checkResult("\nclass Foo {\n  void foo() {\n    Object o = new int[<caret>]\n  }\n}\n");
   }

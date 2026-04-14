@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.java.JavaBundle;
@@ -270,7 +269,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       }
 
       return isInRecordHeader(element) ||
-             JavaKeywordCompletion.isSuitableForClass(element) ||
+             JavaCompletionUtil.isSuitableForClass(element) ||
              JavaCompletionUtil.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
     }
@@ -337,7 +336,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
 
   private static boolean isMethodDeclarationPlace(@NotNull PsiElement element) {
-    return JavaKeywordCompletion.isSuitableForClass(element) &&
+    return JavaCompletionUtil.isSuitableForClass(element) &&
            !Statement.isStatementContext(element) &&
            !Expression.isExpressionContext(element);
   }

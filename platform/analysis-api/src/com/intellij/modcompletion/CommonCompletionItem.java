@@ -156,10 +156,30 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority,
                                     myAdditionalUpdater, policy, mySuppressCharacterPredicate);
   }
-  
+
+  /**
+   * @param condition predicate to determine if character insertion should be suppressed.
+   *                  If this method was called several times, the predicates are combined using logical OR.
+   * @return new CommonCompletionItem with the given character suppression condition
+   */
   public CommonCompletionItem withInsertCharacterSuppressed(Predicate<InsertionContext> condition) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail,
-                                    myPriority, myAdditionalUpdater, myPolicy, condition);
+                                    myPriority, myAdditionalUpdater, myPolicy, 
+                                    mySuppressCharacterPredicate == null ? condition : mySuppressCharacterPredicate.or(condition));
+  }
+
+  /**
+   * @param charsToSuppress insertion characters that should not be inserted.
+   * @return new CommonCompletionItem that suppresses the insertion of given characters
+   */
+  public CommonCompletionItem withInsertCharacterSuppressed(char... charsToSuppress) {
+    return withInsertCharacterSuppressed(ic -> {
+      char character = ic.insertionCharacter();
+      for (char c : charsToSuppress) {
+        if (c == character) return true;
+      }
+      return false;
+    });
   }
 
   @Override
@@ -191,7 +211,9 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater, insertionContext);
     manager.commitDocument(document);
     manager.doPostponedOperationsAndUnblockDocument(document);
-    myTail.processTail(updater, updater.getCaretOffset());
+    if (myTail.isApplicableForCompletionCharacter(insertionContext.insertionCharacter())) {
+      myTail.processTail(updater, updater.getCaretOffset());
+    }
   }
 
   @Override

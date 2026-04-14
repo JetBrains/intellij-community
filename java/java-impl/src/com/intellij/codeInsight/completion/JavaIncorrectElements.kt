@@ -17,9 +17,9 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiKeyword
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTryStatement
 import com.intellij.psi.PsiTypeElement
-import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -86,7 +86,7 @@ private object TypeParameterPositionMatcher: LookupPositionMatcher {
     val bounds = PreferByKindWeigher.getTypeBounds(typeElement)
     return l@ { element ->
       val obj = element.`object`
-      if (obj is PsiKeyword) return@l true
+      if (obj is PsiKeyword || obj is PsiPrimitiveType) return@l true
       val psiClass = obj as? PsiClass ?: return@l false
       return@l bounds.all { !InheritanceUtil.isInheritorOrSelf(psiClass, it, true) }
     }
@@ -104,7 +104,7 @@ private object TryWithResourcesPositionMatcher: LookupPositionMatcher {
 
   private fun match(lookupElement: LookupElement): Boolean {
     val obj = lookupElement.`object`
-    if (obj is PsiKeyword && obj.text in PsiTypes.primitiveTypeNames()) {
+    if (obj is PsiPrimitiveType) {
       return true
     }
     val psiClass = obj as? PsiClass ?: return false

@@ -1122,7 +1122,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testPrimitiveCastOverwrite() { doTest(); }
+  public void testPrimitiveCastOverwrite() { doTest("\t"); }
 
   public void testClassReferenceInFor() { doTest(" "); }
 
@@ -2726,12 +2726,12 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testLookupUpDownActions() {
     myFixture.configureByText("Test.java", "class Test {<caret>}");
     myFixture.completeBasic(); // 'abstract' selected
-    myFixture.assertPreferredCompletionItems(0, "abstract", "boolean", "byte", "char", "class");
-    myFixture.performEditorAction("EditorLookupSelectionDown"); // 'boolean' selected
-    myFixture.performEditorAction("EditorLookupSelectionDown"); // 'byte' selected
-    myFixture.performEditorAction("EditorLookupSelectionUp"); // 'boolean' selected
+    myFixture.assertPreferredCompletionItems(0, "abstract", "class", "enum", "final", "interface");
+    myFixture.performEditorAction("EditorLookupSelectionDown"); // 'class' selected
+    myFixture.performEditorAction("EditorLookupSelectionDown"); // 'enum' selected
+    myFixture.performEditorAction("EditorLookupSelectionUp"); // 'class' selected
     myFixture.type('\n');
-    myFixture.checkResult("class Test {boolean}");
+    myFixture.checkResult("class Test {class }");
   }
 
   @SuppressWarnings("UnnecessaryUnicodeEscape")

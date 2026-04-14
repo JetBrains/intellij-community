@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiKeyword
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Locale
 
@@ -63,6 +64,13 @@ public class JavaElementFeaturesProvider : ElementFeatureProvider {
       is PsiKeyword -> {
         JavaCompletionFeatures.asKeyword(element.lookupString)?.let {
           features["keyword_name"] = MLFeatureValue.categorical(it)
+        }
+      }
+      null -> {
+        if (element.`object` is PsiPrimitiveType) {
+          JavaCompletionFeatures.asKeyword(element.lookupString)?.let {
+            features["keyword_name"] = MLFeatureValue.categorical(it)
+          }
         }
       }
     }

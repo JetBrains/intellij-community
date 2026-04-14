@@ -1006,7 +1006,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.completeBasic();
-      assertPreferredItems(0, "case null", "case", "case null, default", "case A", "case B");
+      assertPreferredItems(0, "casecase", "case", "case A", "case B", "case null", "case null, default");
     });
   }
 
@@ -1015,7 +1015,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.completeBasic();
-      assertPreferredItems(0, "case A", "case", "case B", "casecase", "case null", "case null, default");
+      assertPreferredItems(0, "casecase", "case", "case null", "case null, default", "case A", "case B");
     });
   }
 
