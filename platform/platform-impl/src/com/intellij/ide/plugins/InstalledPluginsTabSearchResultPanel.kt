@@ -218,16 +218,15 @@ internal class InstalledPluginsTabSearchResultPanel(
      * @return `null` if the given plugin is irrelevant, otherwise a higher score means higher relevance.
      */
     fun computeSearchQueryRelevance(descriptor: PluginUiModel, searchQuery: String): Double? {
-      if (descriptor.name == null) {
-        return null
-      }
-      if (StringUtil.containsIgnoreCase(descriptor.name!!, searchQuery)) {
-        return 100.0
+      val name = descriptor.name
+                 ?: return null
+      if (StringUtil.containsIgnoreCase(name, searchQuery)) {
+        return 100.0 + (searchQuery.length / name.length.coerceAtLeast(1).toDouble())
       }
 
       val description = descriptor.description
       if (description != null && StringUtil.containsIgnoreCase(description, searchQuery)) {
-        return 50.0
+        return 50.0 + (searchQuery.length / description.length.coerceAtLeast(1).toDouble())
       }
 
       return null
