@@ -247,6 +247,28 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
         str(ab)
     """.trimIndent())
 
+  fun `test intersection reports`() = doTestByText("""
+    class A:
+        pass
+    
+    class B:
+        pass
+    
+    def f(ab: A & B):
+        str(<weak_warning descr="Type 'A & B' doesn't define '__str__' or '__repr__', so the result might not be useful">ab</weak_warning>)
+    """.trimIndent())
+
+  fun `test intersection doesn't report`() = doTestByText("""
+    class A:
+        def __str__(self): pass
+    
+    class B:
+        pass
+    
+    def f(ab: A & B):
+        str(ab)
+    """.trimIndent())
+
   fun `test derived from ignored`() = doTestByText("""
     class A(int): ...
     
