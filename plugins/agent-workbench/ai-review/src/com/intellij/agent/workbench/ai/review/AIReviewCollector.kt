@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 
 internal object AIReviewCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("agent.workbench.ai.review", 1)
+  private val group = EventLogGroup("agent.workbench.ai.review", 2)
 
   private val REQUEST_ID = EventFields.Long("request_id", "ID of the review request.")
   private val RATING = EventFields.Enum("rating", ReviewRating::class.java)
@@ -32,17 +32,17 @@ internal object AIReviewCollector : CounterUsagesCollector() {
   private val LANGUAGE3 = EventFields.Language("language3")
   private val LANGUAGE_PERCENTAGE3 = EventFields.Int("lang_percentage3")
 
-  private val CHANGES_COUNT = EventFields.Int("changes_count")
-  private val NEW_FILES = EventFields.Int("new_files")
-  private val DELETED_FILES = EventFields.Int("deleted_files")
-  private val MODIFIED_FILES = EventFields.Int("modified_files")
-  private val MOVED_FILES = EventFields.Int("moved_files")
-  private val RENAMED_FILES = EventFields.Int("renamed_files")
+  private val CHANGES_COUNT = EventFields.RoundedInt("changes_count")
+  private val NEW_FILES = EventFields.RoundedInt("new_files")
+  private val DELETED_FILES = EventFields.RoundedInt("deleted_files")
+  private val MODIFIED_FILES = EventFields.RoundedInt("modified_files")
+  private val MOVED_FILES = EventFields.RoundedInt("moved_files")
+  private val RENAMED_FILES = EventFields.RoundedInt("renamed_files")
 
-  private val LINES_ADDED = EventFields.Int("lines_added")
-  private val LINES_REMOVED = EventFields.Int("lines_removed")
-  private val CHARS_ADDED = EventFields.Int("chars_added")
-  private val CHARS_REMOVED = EventFields.Int("chars_removed")
+  private val LINES_ADDED = EventFields.RoundedInt("lines_added")
+  private val LINES_REMOVED = EventFields.RoundedInt("lines_removed")
+  private val CHARS_ADDED = EventFields.RoundedInt("chars_added")
+  private val CHARS_REMOVED = EventFields.RoundedInt("chars_removed")
 
   private val SUCCESS = EventFields.Boolean("success")
 
