@@ -34,7 +34,6 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -49,6 +48,7 @@ import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startLocalProcess;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
+import static org.jetbrains.plugins.terminal.util.TerminalUtilKt.toExistentNioDirectory;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -216,19 +216,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
   }
 
-  @ApiStatus.Internal
-  public static boolean isDirectory(@NotNull String directory) {
-    try {
-      boolean ok = Files.isDirectory(Path.of(directory));
-      if (!ok) {
-        LOG.info("Cannot start local terminal in " + directory + ": no such directory");
-      }
-      return ok;
-    }
-    catch (InvalidPathException e) {
-      LOG.info("Cannot start local terminal in " + directory + ": invalid path", e);
-      return false;
-    }
+  private static boolean isDirectory(@NotNull String directory) {
+    return toExistentNioDirectory(directory, null) != null;
   }
 
   @Override

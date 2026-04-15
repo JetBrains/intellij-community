@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -22,6 +23,9 @@ import kotlinx.coroutines.time.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.time.Duration
 
 internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
@@ -129,4 +133,38 @@ private fun getKeymapToModify(): Keymap? {
     newKeymap
   }
   else keymapToModify
+}
+
+internal fun toExistentNioDirectory(directory: String?, labelToLogOnFailure: String? = null): Path? {
+  directory ?: return null
+  if (directory.isBlank()) {
+    if (labelToLogOnFailure != null) {
+      val type = if (directory.isEmpty()) "empty" else "blank"
+      fileLogger().warn("$labelToLogOnFailure: $type directory")
+    }
+    return null
+  }
+  val path: Path
+  try {
+    path = Path.of(directory)
+  }
+  catch (e: InvalidPathException) {
+    if (labelToLogOnFailure != null) {
+      fileLogger().warn("$labelToLogOnFailure: invalid directory $directory", e)
+    }
+    return null
+  }
+  if (!path.isAbsolute) {
+    if (labelToLogOnFailure != null) {
+      fileLogger().warn("$labelToLogOnFailure: non-absolute directory: $directory")
+    }
+    return null
+  }
+  if (Files.isDirectory(path)) {
+    return path
+  }
+  if (labelToLogOnFailure != null) {
+    fileLogger().warn("$labelToLogOnFailure: non-existent directory: $directory")
+  }
+  return null
 }

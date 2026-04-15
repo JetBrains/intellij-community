@@ -27,9 +27,9 @@ public final class LocalTerminalStartCommandBuilder {
     return convertShellPathToCommand(shellPath, shellCommand -> LocalEelDescriptor.INSTANCE);
   }
 
-  public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath, @NotNull String workingDirectory) {
+  public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath, @NotNull Path workingDirectory) {
     return convertShellPathToCommand(shellPath, shellCommand -> {
-      return TerminalStartupKt.findEelDescriptor(workingDirectory, shellCommand);
+      return TerminalStartupKt.findEelDescriptor(workingDirectory.toString(), shellCommand);
     });
   }
 
