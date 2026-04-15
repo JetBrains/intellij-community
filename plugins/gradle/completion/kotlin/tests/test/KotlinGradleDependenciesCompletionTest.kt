@@ -2,6 +2,7 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -85,6 +86,35 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
         assertTrue { codeInsightFixture.lookupElementStrings!!.contains("class") }
       }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun `test dependency configurations are shown above live templates`(gradleVersion: GradleVersion) {
+        LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
+        testJavaProject(gradleVersion) {
+            val buildGradleKts = writeTextAndCommit("build.gradle.kts", "dependencies { i<caret> }")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(buildGradleKts)
+                codeInsightFixture.completeBasic()
+                codeInsightFixture.assertPreferredCompletionItems(
+                    0,
+                    "implementation",
+                    "testImplementation",
+                    "annotationProcessor",
+                    "compileOnly",
+                    "runtimeOnly",
+                    "testAnnotationProcessor",
+                    "testCompileOnly",
+                    "testRuntimeOnly",
+                    // live templates are below
+                    "ifn",
+                    "inn",
+                    "interface",
+                    "iter",
+                )
+            }
+        }
     }
 
     @ParameterizedTest
