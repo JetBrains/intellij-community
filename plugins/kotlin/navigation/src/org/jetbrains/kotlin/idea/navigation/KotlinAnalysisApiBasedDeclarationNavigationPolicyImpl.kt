@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -53,7 +54,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.types.Variance
 
 @ApiStatus.Internal
@@ -126,9 +126,9 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
             allowAnalysisFromWriteAction {
                 analyze(declaration) {
                     val symbol = declaration.symbol
-                    val deprecationStatus = symbol.deprecationStatus ?: return false
-                    val deprecationLevel = deprecationStatus.deprecationLevel
-                    !allowWarning || deprecationLevel != DeprecationLevelValue.WARNING
+                    val deprecationStatus = symbol.deprecation ?: return false
+                    val deprecationLevel = deprecationStatus.level
+                    !allowWarning || deprecationLevel != KaDeprecationLevel.WARNING
                 }
             }
         }

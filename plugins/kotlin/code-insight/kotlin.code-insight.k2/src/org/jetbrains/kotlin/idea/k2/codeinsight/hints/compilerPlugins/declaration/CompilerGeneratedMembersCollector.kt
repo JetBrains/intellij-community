@@ -3,16 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declarati
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.components.asCompositeScope
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.deprecation
 import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
 internal object CompilerGeneratedMembersCollector {
@@ -59,7 +59,7 @@ internal object CompilerGeneratedMembersCollector {
             else -> {}
         }
         if (!settings.showHiddenMembers) {
-            if (deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
+            if (deprecation?.level == KaDeprecationLevel.HIDDEN) return false
         }
         return true
     }

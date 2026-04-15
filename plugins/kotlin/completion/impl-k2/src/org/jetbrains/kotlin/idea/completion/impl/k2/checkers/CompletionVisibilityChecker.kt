@@ -10,9 +10,10 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
-import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.deprecation
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
 internal class CompletionVisibilityChecker(
@@ -122,7 +122,7 @@ internal class CompletionVisibilityChecker(
         if (positionContext is KDocNameReferencePositionContext) return true
 
         // Don't offer any deprecated items that could lead to compile errors.
-        if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
+        if (symbol.deprecation?.level == KaDeprecationLevel.HIDDEN) return false
 
         if (parameters.invocationCount > 1) return true
 

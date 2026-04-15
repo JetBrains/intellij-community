@@ -244,7 +244,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             declaration = candidate.psi,
             // TODO consider passing whole candidate to avoid loosing information 
             statisticsInfo = K2StatisticsInfoProvider.forDeclarationSymbol(candidate.symbol),
-            isDeprecated = candidate.deprecationStatus != null,
+            isDeprecated = candidate.isDeprecated,
             fqName = candidate.getFqName(),
             // TODO consider passing whole candidate to avoid loosing information 
             expressionWeight = expressionImportWeigher.weigh(candidate.symbol),

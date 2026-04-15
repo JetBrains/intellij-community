@@ -16,6 +16,7 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.components.type
@@ -43,7 +44,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
 class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<KtProperty, Boolean>() {
@@ -58,7 +58,7 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         ApplicabilityRanges.declarationName(element)
 
     override fun KaSession.prepareContext(element: KtProperty): Boolean? {
-        if (element.symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return null
+        if (element.symbol.deprecation?.level == KaDeprecationLevel.HIDDEN) return null
         val conflictingExtension = element.conflictingSyntheticExtension() ?: return null
         return element.isSameAsSynthetic(conflictingExtension)
     }
