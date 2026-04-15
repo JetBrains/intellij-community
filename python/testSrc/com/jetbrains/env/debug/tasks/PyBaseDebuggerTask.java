@@ -482,11 +482,24 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * @return text range that will be highlighted on hover and evaluated on click
    */
   protected TextRange getQuickEvaluationTextRange(int offset) {
+    return getEvaluationTextRange(offset, true);
+  }
+
+  /**
+   * Calculates text range that will be shown on plain mouse hover (no Alt).
+   * @param offset The document offset under a mouse cursor
+   * @return text range that will be highlighted and evaluated on hover
+   */
+  protected TextRange getHoverEvaluationTextRange(int offset) {
+    return getEvaluationTextRange(offset, false);
+  }
+
+  private TextRange getEvaluationTextRange(int offset, boolean sideEffectsAllowed) {
     var file = getFileByPath(getFilePath(getScriptName()));
     var document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     var project = getProject();
     var evaluator = new PyDebuggerEvaluator(project, myDebugProcess);
-    return evaluator.getExpressionRangeAtOffset(project, document, offset, true);
+    return evaluator.getExpressionRangeAtOffset(project, document, offset, sideEffectsAllowed);
   }
 
   /**
