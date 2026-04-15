@@ -600,7 +600,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     }
     boolean parallelModelFetch = executionSettings.isParallelModelFetch();
     if (!parallelModelFetch) {
-      executionSettings.withVmOption("-Dorg.gradle.tooling.parallel.ignore-legacy-default=true");
+      executionSettings.withArgument("-Dorg.gradle.tooling.parallel.ignore-legacy-default=true");
     }
     if (parallelModelFetch || GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.4")) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
