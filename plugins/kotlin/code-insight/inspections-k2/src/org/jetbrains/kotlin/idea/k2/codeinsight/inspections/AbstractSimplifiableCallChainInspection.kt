@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
+import org.jetbrains.kotlin.analysis.api.components.functionTypeFamily
 import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.components.isDoubleType
 import org.jetbrains.kotlin.analysis.api.components.isIntType
@@ -244,7 +244,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaCallableSignature<*>.isFunctionalTypeOfAnyKind(): Boolean =
-        returnType.functionTypeKind != null
+        returnType.functionTypeFamily != null
 
     context(_: KaSession)
     private fun KaCallInfo.containsFunctionalArgumentsOfAnyKind(): Boolean {
