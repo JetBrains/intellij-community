@@ -3,18 +3,19 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.components.KaWhenMissingCase
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultCallableShortenStrategyForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 object AddRemainingWhenBranchesUtils {
     class ElementContext(
-        val whenMissingCases: List<WhenMissingCase>,
+        val whenMissingCases: List<KaWhenMissingCase>,
         val enumToStarImport: ClassId?,
     )
 
@@ -41,7 +42,7 @@ object AddRemainingWhenBranchesUtils {
         )
     }
 
-    fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissingCase>) {
+    fun generateWhenBranches(element: KtWhenExpression, missingCases: List<KaWhenMissingCase>) {
         val psiFactory = KtPsiFactory(element.project)
         val whenCloseBrace = element.closeBrace ?: run {
             val craftingMaterials = psiFactory.createExpression("when(1){}") as KtWhenExpression
@@ -70,3 +71,19 @@ object AddRemainingWhenBranchesUtils {
         }
     }
 }
+
+private val KaWhenMissingCase.branchConditionText: String
+    get() = when (this) {
+        is KaWhenMissingCase.TypeCase -> buildString {
+            if (!isObject) append("is ")
+            append(classId.asSingleFqName().render())
+            if (ownTypeParameterCount > 0) {
+                (0..<ownTypeParameterCount).joinTo(this, prefix = "<", postfix = ">") { "*" }
+            }
+        }
+        KaWhenMissingCase.NullCase -> "null"
+        is KaWhenMissingCase.BooleanCase -> value.toString()
+        is KaWhenMissingCase.EnumEntryCase -> callableId.asSingleFqName().render()
+        is KaWhenMissingCase.ExpectTypeCase -> "else"
+        KaWhenMissingCase.UnknownCase -> "else"
+    }

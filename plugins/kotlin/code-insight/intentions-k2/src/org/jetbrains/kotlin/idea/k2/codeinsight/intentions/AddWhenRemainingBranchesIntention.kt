@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.analysis.api.components.KaWhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
@@ -20,7 +20,7 @@ internal class AddWhenRemainingBranchesIntention :
 
     override fun KaSession.prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.ElementContext? {
         val whenMissingCases = element.computeMissingCases().takeIf {
-            it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
+            it.isNotEmpty() && it.singleOrNull() != KaWhenMissingCase.UnknownCase
         } ?: return null
         return AddRemainingWhenBranchesUtils.ElementContext(whenMissingCases, enumToStarImport = null)
     }

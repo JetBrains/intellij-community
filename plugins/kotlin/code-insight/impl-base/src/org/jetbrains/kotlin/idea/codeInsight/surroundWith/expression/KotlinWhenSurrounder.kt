@@ -8,9 +8,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaWhenMissingCase
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
@@ -37,7 +37,7 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
         val remainingBranches = allowAnalysisOnEdt {
             analyze(whenExpression) {
                 whenExpression.computeMissingCases().takeIf {
-                    it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
+                    it.isNotEmpty() && it.singleOrNull() != KaWhenMissingCase.UnknownCase
                 }
             }
         }
