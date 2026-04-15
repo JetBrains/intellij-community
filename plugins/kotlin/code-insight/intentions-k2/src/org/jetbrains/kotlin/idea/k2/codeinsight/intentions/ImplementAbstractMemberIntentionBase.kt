@@ -26,6 +26,7 @@ import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -52,8 +53,6 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.util.ImplementationStatus.ALREADY_IMPLEMENTED
-import org.jetbrains.kotlin.util.ImplementationStatus.INHERITED_OR_SYNTHESIZED
 
 private val LOG = Logger.getInstance(ImplementAbstractMemberIntentionBase::class.java.canonicalName)
 
@@ -235,8 +234,11 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     val substitutor = createInheritanceTypeSubstitutor(targetClass, superClass) ?: return null
                     val signatureInSubClass = superMember.substitute(substitutor)
                     return targetClass.memberScope.findCallableMemberBySignature(signatureInSubClass)?.takeIf {
-                        val implementationStatus = it.getImplementationStatus(targetClass)
-                        implementationStatus == ALREADY_IMPLEMENTED || implementationStatus == INHERITED_OR_SYNTHESIZED
+                        when (val implementationState = it.implementationState(targetClass)) {
+                            is KaCallableImplementationState.Explicit -> implementationState.isComplete
+                            is KaCallableImplementationState.Inherited -> implementationState.isOverridable && !implementationState.isAmbiguous
+                            else -> false
+                        }
                     }
                 }
 

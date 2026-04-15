@@ -11,9 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.getImplementationStatus
+import org.jetbrains.kotlin.analysis.api.components.implementationState
 import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.memberScope
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
-import org.jetbrains.kotlin.util.ImplementationStatus
 
 @ApiStatus.Internal
 open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
@@ -55,13 +55,16 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
             val classSymbol = classOrObject.classSymbol
             return classSymbol?.memberScope?.callables?.toList()?.mapNotNull { symbol ->
                 (symbol.psi as? KtCallableDeclaration)?.takeIf {
-                    symbol.getImplementationStatus(classSymbol) == ImplementationStatus.CANNOT_BE_IMPLEMENTED &&
-                            symbol.directlyOverriddenSymbols.any()
+                    when (val implementationState = symbol.implementationState(classSymbol)) {
+                        is KaCallableImplementationState.Inherited -> {
+                            !implementationState.isOverridable && symbol.directlyOverriddenSymbols.any()
+                        }
+                        else -> false
+                    }
                 }
             } ?: emptyList()
         }
     }
-
 }
 
 internal class KtImplementMembersQuickfix(private val members: Collection<KtClassMemberInfo>) : KtImplementMembersHandler(),
@@ -207,10 +210,12 @@ internal fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClas
     return buildList {
         classWithUnimplementedMembers.memberScope.callables.forEach { symbol ->
             if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
-            when (symbol.getImplementationStatus(classWithUnimplementedMembers)) {
-                ImplementationStatus.NOT_IMPLEMENTED -> add(symbol)
-                ImplementationStatus.AMBIGUOUSLY_INHERITED,
-                ImplementationStatus.INHERITED_OR_SYNTHESIZED -> {
+            when (val implementationState = symbol.implementationState(classWithUnimplementedMembers)) {
+                is KaCallableImplementationState.Missing -> {
+                    add(symbol)
+                }
+
+                is KaCallableImplementationState.Inherited if implementationState.isOverridable -> {
                     val intersectionOverriddenSymbols = symbol.intersectionOverriddenSymbols
                     val (abstractSymbols, nonAbstractSymbols) = intersectionOverriddenSymbols.partition {
                         it.modality == KaSymbolModality.ABSTRACT
@@ -223,8 +228,7 @@ internal fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClas
                     }
                 }
 
-                else -> {
-                }
+                else -> {}
             }
         }
     }
