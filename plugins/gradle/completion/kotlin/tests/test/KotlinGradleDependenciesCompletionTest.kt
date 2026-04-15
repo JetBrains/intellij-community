@@ -91,14 +91,12 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/scopeArgumentEmptyInput")
     fun `test completion in a scope argument for an empty input`(gradleVersion: GradleVersion) =
-        // TODO IDEA-384698 adjust sorting: catalog names should be on top
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/scopeArgumentCatalogNames")
     fun `test catalog name completion in a scope argument`(gradleVersion: GradleVersion) =
-        // TODO IDEA-384698 adjust sorting: catalog names should be on top
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
@@ -161,6 +159,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                 codeInsightFixture.assertPreferredCompletionItems(
                     0,
                     "libs",
+                    "customLibs",
                     "libs.bundles.my.bundle.aaa",
                     "libs.my.library.aaa"
                 )

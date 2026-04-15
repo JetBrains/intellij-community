@@ -5,8 +5,13 @@ import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -27,13 +32,16 @@ internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider
                 doAddCompletions(result, input, element, defaultSectionsFilter = setOf(VersionCatalogSection.PLUGINS))
 
             insideScriptBlockPattern(DEPENDENCIES).accepts(element) -> {
+                val sortedResult = result.withRelevanceSorter(CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
+                    .weighBefore("middleMatching", GradleVersionCatalogWeigher)
+                )
                 when {
                     element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> return
 
                     // dependencies { implementation(<caret>) }
                     element.isDependencyArgumentWithoutQuotes() -> {
                         val defaultSections = setOf(VersionCatalogSection.LIBRARIES, VersionCatalogSection.BUNDLES)
-                        doAddCompletions(result, input, element, defaultSectionsFilter = defaultSections)
+                        doAddCompletions(sortedResult, input, element, defaultSectionsFilter = defaultSections)
                     }
                 }
             }
@@ -90,9 +98,14 @@ private fun addLookupForCatalogNames(
         catalogName.contains(input, ignoreCase = true)
     }
     val lookup = catalogs.map { (catalogName, _) ->
-        LookupElementBuilder.create(catalogName)
+        val catalogNameLookup = LookupElementBuilder.create(catalogName)
             .withTypeText("Gradle version catalog")
             .withIcon(GradleIcons.GradleFile)
+            .also {
+                it.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                it.putUserData(GRADLE_LOOKUP_TYPE_KEY, GradleLookupType.VERSION_CATALOG_NAME)
+            }
+        MLRankingIgnorable.wrap(catalogNameLookup)
     }
     result.addAllElements(lookup)
 }
@@ -115,7 +128,10 @@ private fun addLookupForCatalogEntries(
             .withIcon(GradleIcons.GradleFile)
             .withTypeText("Entry in `$catalogName` version catalog")
             .withInsertHandler(GradleVersionCatalogExpressionInsertHandler)
-            .also { it.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any()) }
+            .also {
+                it.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                it.putUserData(GRADLE_LOOKUP_TYPE_KEY, GradleLookupType.VERSION_CATALOG_ALIAS)
+            }
     }
     result.addAllElements(lookup)
 }
@@ -124,3 +140,21 @@ private fun String.substringBeforeLastOrNull(delimiter: String): String? {
     val index = lastIndexOf(delimiter)
     return if (index == -1) null else substring(0, index)
 }
+
+private object GradleVersionCatalogWeigher : LookupElementWeigher("gradle.completion.versionCatalog.weigher") {
+    override fun weigh(element: LookupElement): Comparable<*> {
+        val completionType = element.getUserData(GRADLE_LOOKUP_TYPE_KEY)
+        return when (completionType) {
+            GradleLookupType.VERSION_CATALOG_NAME -> 0
+            GradleLookupType.VERSION_CATALOG_ALIAS -> 1
+            else -> Int.MAX_VALUE
+        }
+    }
+}
+
+private enum class GradleLookupType {
+    VERSION_CATALOG_NAME,
+    VERSION_CATALOG_ALIAS,
+}
+
+private val GRADLE_LOOKUP_TYPE_KEY = Key.create<GradleLookupType>("gradle.completion.lookup.type")

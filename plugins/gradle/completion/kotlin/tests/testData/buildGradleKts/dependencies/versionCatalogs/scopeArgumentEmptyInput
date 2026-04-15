@@ -1,4 +1,4 @@
-// "EXPECTED-SUGGESTION": customLibs, customLibs.my.library.bbb, libs, libs.bundles.my.bundle.aaa, libs.my.library.aaa
+// "EXPECTED-SUGGESTION": customLibs, libs, customLibs.my.library.bbb, libs.bundles.my.bundle.aaa, libs.my.library.aaa
 // FILE: build.gradle.kts
 dependencies {
     implementation(<caret>)

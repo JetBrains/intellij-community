@@ -1,5 +1,5 @@
-// "EXPECTED-SUGGESTION": libs, libs.my.library.aaa, customLibs, customLibs.my.library.bbb
-// "SUGGESTION-INDEX-TO-APPLY": 2
+// "EXPECTED-SUGGESTION": libs, customLibs, libs.my.library.aaa, customLibs.my.library.bbb
+// "SUGGESTION-INDEX-TO-APPLY": 1
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 dependencies {
