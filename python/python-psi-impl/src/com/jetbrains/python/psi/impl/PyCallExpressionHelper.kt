@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.flattenToCallables
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -788,7 +789,16 @@ object PyCallExpressionHelper {
 
   @JvmStatic
   fun mapArguments(expression: PyCallSiteOwner, callableType: PyCallableType, context: TypeEvalContext): PyArgumentsMapping {
-    val arguments = expression.getArguments(callableType.callable)
+    return mapArguments(expression, expression.getArguments(callableType.callable), callableType, context)
+  }
+
+  @JvmStatic
+  fun mapArguments(
+    expression: PyCallSiteOwner,
+    arguments: List<PyExpression>,
+    callableType: PyCallableType,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
     val parameters = callableType.getParameters(context)
         ?.let { unpackParametersIfNeeded(it, arguments, context) }
 

@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
-
-import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -943,5 +942,46 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
           f(*lst, 0)
           """)
     );
+  }
+
+  // PY-37275
+  public void testFunctoolsPartialMissingArg() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello")
+                   a_pos_bound(<warning descr="Parameter 'b' unfilled">)</warning>
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello")
+                   b_kw_bound(<warning descr="Parameter 'a' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-37275
+  public void testFunctoolsPartialAlreadyBoundArgNotExpectedAgain() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello", <warning descr="Unexpected argument">a=5</warning>)
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello", <warning descr="Unexpected argument">b=5</warning>)
+                   """);
+  }
+
+  // PY-37275
+  public void testFunctoolsPartialExtraPosArg() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello", <warning descr="Unexpected argument">3.0</warning>)
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello", <warning descr="Unexpected argument">3.0</warning>)
+                   """);
   }
 }

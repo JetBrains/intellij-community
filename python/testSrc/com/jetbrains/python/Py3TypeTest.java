@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -407,6 +408,246 @@ public class Py3TypeTest extends PyTestCase {
                   expr = x
                   """;
     doTest("Literal[0]", code);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialPositionalBinding() {
+    doTest("(b: str, c: float | int) -> bool", """
+      import functools
+      def foo(a: int, b: str, c: float) -> bool: ...
+      expr = functools.partial(foo, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialKeywordBinding() {
+    doTest("(a: int, b: str) -> bool", """
+      import functools
+      def foo(a: int, b: str, c: float) -> bool: ...
+      expr = functools.partial(foo, c=3.0)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialMixedBinding() {
+    doTest("(b: str) -> bool", """
+      import functools
+      def foo(a: int, b: str, c: float) -> bool: ...
+      expr = functools.partial(foo, 1, c=3.0)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialNoBoundArgs() {
+    doTest("(a: int, b: str) -> bool", """
+      import functools
+      def foo(a: int, b: str) -> bool: ...
+      expr = functools.partial(foo)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialAllBound() {
+    doTest("() -> bool", """
+      import functools
+      def foo(a: int, b: str) -> bool: ...
+      expr = functools.partial(foo, 1, "x")
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialArgsPreservedAfterExplicitPositionalBinding() {
+    doTest("(*args: int) -> None", """
+      import functools
+      def foo(*args: int) -> None: ...
+      expr = functools.partial(foo, 1, 2)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialKwargsPreservedAfterExplicitKeywordBinding() {
+    doTest("(**kwargs: str) -> None", """
+      import functools
+      def foo(**kwargs: str) -> None: ...
+      expr = functools.partial(foo, a=1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialOverBoundPositional() {
+    doTest("() -> bool", """
+      import functools
+      def foo(a: int, b: str) -> bool: ...
+      expr = functools.partial(foo, 1, "x", 99)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialExtraKeywordBound() {
+    doTest("() -> bool", """
+      import functools
+      def foo(a: int, b: str) -> bool: ...
+      expr = functools.partial(foo, a=1, b="x", extra="y")
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialDoubleBinding() {
+    doTest("(b: str) -> bool", """
+      import functools
+      def foo(a: int, b: str) -> bool: ...
+      expr = functools.partial(foo, 1, a=5)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialKeywordOnly() {
+    doTest("(*, k: bytes) -> None", """
+      import functools
+      def foo(s: str, *, k: bytes) -> None: ...
+      expr = functools.partial(foo, "hello")
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialKeywordOnlySeparatorCleanup() {
+    doTest("() -> None", """
+      import functools
+      def foo(s: str, *, k: bytes) -> None: ...
+      expr = functools.partial(foo, "hello", k=b"x")
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialKwargsKeywordOnlySeparatorCleanup() {
+    doTest("(**opts: str) -> None", """
+      import functools
+      def foo(*, k: bytes, **opts: str) -> None: ...
+      expr = functools.partial(foo, k=b"x")
+      """);
+  }
+
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialPositionOnlySeparatorCleanup() {
+    doTest("(s: str) -> None", """
+      import functools
+      def foo(x: int, /, s: str) -> None: ...
+      expr = functools.partial(foo, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialArgumentUnpackingDoesNotChangeSignature() {
+    doTest("(x: int, /, s: str) -> None", """
+      import functools
+      def foo(x: int, /, s: str) -> None: ...
+      def g(*args, **kwargs):
+          expr = functools.partial(foo, *args, **kwargs)
+      """);
+  }
+
+  // PY-37275 PY-89166
+  public void testFunctoolsPartialBindingImportedFromAnotherFile() {
+    fixme("PY-89166 functools.partial is not supported in PSI stubs",
+          ComparisonFailure.class,
+          "Failed in TypeEvalContext(false, false, PyFile:aaa.py) context", () ->
+            doMultiFileTest("(b: str) -> bool", """
+              from mod import bound
+              
+              expr = bound
+              """)
+    );
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialBoundMethod() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          def bar(self, x: int, y: str) -> bool: ...
+      foo = Foo()
+      expr = functools.partial(foo.bar, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialUnboundMethod() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          def bar(self, x: int, y: str) -> bool: ...
+      foo = Foo()
+      expr = functools.partial(Foo.bar, foo, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialClassMethod() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          @classmethod
+          def bar(cls, x: int, y: str) -> bool: ...
+      expr = functools.partial(Foo.bar, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialClassMethodOnInstance() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          @classmethod
+          def bar(cls, x: int, y: str) -> bool: ...
+      foo = Foo()
+      expr = functools.partial(foo.bar, 1)
+      """);
+  }
+
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialStaticMethod() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          @staticmethod
+          def bar(x: int, y: str) -> bool: ...
+      expr = functools.partial(Foo.bar, 1)
+      """);
+  }
+
+  // PY-37275
+  @TestFor(issues = "PY-37275")
+  public void testFunctoolsPartialStaticMethodOnInstance() {
+    doTest("(y: str) -> bool", """
+      import functools
+      class Foo:
+          @staticmethod
+          def bar(x: int, y: str) -> bool: ...
+      foo = Foo()
+      expr = functools.partial(foo.bar, 1)
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

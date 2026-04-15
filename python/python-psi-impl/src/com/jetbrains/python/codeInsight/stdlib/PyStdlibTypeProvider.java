@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
@@ -31,6 +32,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType;
@@ -40,6 +42,8 @@ import com.jetbrains.python.psi.stubs.PyEnumAttributeStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -57,8 +61,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -578,6 +584,9 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClassLikeType classLikeType = as(firstArgument != null ? context.getType(firstArgument) : null, PyClassLikeType.class);
         return classLikeType != null ? Ref.create(classLikeType.toInstance()) : null;
       }
+      else if ("functools.partial.__new__".equals(qname) && callSite instanceof PyCallExpression callExpression) {
+        return getFunctoolsPartialType(callExpression, context);
+      }
     }
 
     return null;
@@ -658,6 +667,54 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
+  }
+
+  private static @Nullable Ref<PyType> getFunctoolsPartialType(@NotNull PyCallExpression call,
+                                                               @NotNull TypeEvalContext context) {
+    PyExpression[] callArgs = call.getArguments();
+    if (callArgs.length == 0) return null;
+
+    if (!(context.getType(callArgs[0]) instanceof PyCallableType callableType)) return null;
+
+    List<PyCallableParameter> originalParams = callableType.getParameters(context);
+    if (originalParams == null) return null;
+
+    List<PyExpression> providedArguments = List.of(callArgs).subList(1, callArgs.length);
+    PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(call, providedArguments, callableType, context);
+    Set<PyCallableParameter> boundParameters = new HashSet<>(mapping.getMappedParameters().values());
+    List<PyCallableParameter> remaining = new ArrayList<>();
+    for (PyCallableParameter param : originalParams) {
+      if (mapping.getImplicitParameters().contains(param)) {
+        continue;
+      }
+
+      if (!(param.isPositionalContainer() || param.isKeywordContainer()) && boundParameters.contains(param)) {
+        continue;
+      }
+      remaining.add(param);
+    }
+
+    return Ref.create(new PyCallableTypeImpl(cleanupSeparators(remaining), callableType.getReturnType(context)));
+  }
+
+  private static @NotNull List<PyCallableParameter> cleanupSeparators(@NotNull List<PyCallableParameter> params) {
+    List<PyCallableParameter> result = new ArrayList<>(params);
+
+    // Remove '/' if it's the first parameter (no positional-only params precede it)
+    if (!result.isEmpty() && result.getFirst().isPositionOnlySeparator()) {
+      result.removeFirst();
+    }
+
+    // Remove '*' if it's the last parameter, or second-to-last when '**kwargs' is last
+    int starIdx = result.size() - 1;
+    if (starIdx >= 0 && result.get(starIdx).isKeywordContainer()) {
+      starIdx--;
+    }
+    if (starIdx >= 0 && result.get(starIdx).isKeywordOnlySeparator()) {
+      result.remove(starIdx);
+    }
+
+    return result;
   }
 
   @Override
