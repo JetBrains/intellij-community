@@ -257,11 +257,11 @@ internal class PyProjectTomlLifecycleTest {
   }
 
   /**
-   * When a module has its own content root marked as excluded and the module is removed during sync,
-   * that exclusion must be relocated to the parent module so the folder stays excluded.
+   * When a module is removed during sync, its source roots and excluded folders
+   * that still physically exist on disk must be relocated to the parent module.
    */
   @Test
-  fun `excluded content root relocated to parent on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `source roots and excluded folders relocated to parent on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
     writeAction {
       f.root.writePyprojectToml("root")
       f.root.createDirectory("sub").writePyprojectToml("child")
@@ -270,21 +270,79 @@ internal class PyProjectTomlLifecycleTest {
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
 
-    // Mark the child module's content root as excluded on the child module itself
+    // Create physical directories for a source root and an excluded folder inside the child module
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
     val subUrl = f.root.findChild("sub")!!.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
-    f.project.workspaceModel.update("exclude child root on child module") { storage ->
+    val srcDir = writeAction { f.root.findChild("sub")!!.createDirectory("src") }
+    val cacheDir = writeAction { f.root.findChild("sub")!!.createDirectory("__pycache__") }
+
+    f.project.workspaceModel.update("add source root, exclude, and self-exclude on child module") { storage ->
       val childModule = storage.entities<ModuleEntity>().first { it.name == "child" }
       val contentRoot = childModule.contentRoots.first()
       storage.modifyContentRootEntity(contentRoot) {
-        excludedUrls = excludedUrls + ExcludeUrlEntity(subUrl, this.entitySource)
+        sourceRoots = sourceRoots + SourceRootEntity(
+          srcDir.toNioPath().toVirtualFileUrl(virtualFileUrlManager), SourceRootTypeId("java-source"), this.entitySource)
+        excludedUrls = excludedUrls + listOf(
+          ExcludeUrlEntity(cacheDir.toNioPath().toVirtualFileUrl(virtualFileUrlManager), this.entitySource),
+          ExcludeUrlEntity(subUrl, this.entitySource),
+        )
       }
     }
 
     // Reload — the excluded content root makes the FS walker skip sub/, so child becomes an orphan
     f.reloadProject()
 
-    // The child module should be gone, and root should have inherited the "sub" exclusion
+    // The child module should be gone, and root should have inherited:
+    // - source root: sub/src
+    // - excluded folders: sub and sub/__pycache__
+    f.assertProjectStructure(ExpectedModule(
+      "root", contentRoot = ".",
+      sourceRoots = listOf("sub/src"),
+      excludedFolders = listOf("sub", "sub/__pycache__"),
+    ))
+  }
+
+  /**
+   * Source roots and excluded folders pointing to directories that no longer exist on disk
+   * must NOT be relocated to the parent module when the child module is deleted.
+   */
+  @Test
+  fun `non-existing source roots and excludes are not relocated on module deletion`(): Unit = timeoutRunBlocking(30.seconds) {
+    writeAction {
+      f.root.writePyprojectToml("root")
+      f.root.createDirectory("sub").writePyprojectToml("child")
+    }
+
+    f.reloadProject()
+    f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
+
+    val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
+    val subUrl = f.root.findChild("sub")!!.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
+    // Create directories, capture their URLs, then delete them
+    val vanishedSrc = writeAction { f.root.findChild("sub")!!.createDirectory("vanished_src") }
+    val vanishedCache = writeAction { f.root.findChild("sub")!!.createDirectory("vanished_cache") }
+    val vanishedSrcUrl = vanishedSrc.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
+    val vanishedCacheUrl = vanishedCache.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
+    writeAction {
+      vanishedSrc.delete(this)
+      vanishedCache.delete(this)
+    }
+
+    f.project.workspaceModel.update("add stale roots and self-exclude on child module") { storage ->
+      val childModule = storage.entities<ModuleEntity>().first { it.name == "child" }
+      val contentRoot = childModule.contentRoots.first()
+      storage.modifyContentRootEntity(contentRoot) {
+        sourceRoots = sourceRoots + SourceRootEntity(vanishedSrcUrl, SourceRootTypeId("java-source"), this.entitySource)
+        excludedUrls = excludedUrls + listOf(
+          ExcludeUrlEntity(vanishedCacheUrl, this.entitySource),
+          ExcludeUrlEntity(subUrl, this.entitySource),
+        )
+      }
+    }
+
+    f.reloadProject()
+
+    // Only "sub" exclusion should be relocated (it exists); vanished roots should be dropped
     f.assertProjectStructure(ExpectedModule("root", contentRoot = ".", excludedFolders = listOf("sub")))
   }
 }
