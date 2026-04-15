@@ -71,18 +71,21 @@ internal class UvTool : Tool {
     for ((name, projectToml) in entries) {
       val siblings = memberToWorkspace[name]?.mapNotNull { workspaceToMembers[it] }?.flatten()?.toSet() ?: continue
       val (workspaceDeps, pathDeps) = getUvDependencies(projectToml) ?: continue
-      val brokenDeps = workspaceDeps - siblings
+      // Workspace deps use natural package names from pyproject.toml (e.g. "lib"),
+      // but siblings use deduped module names (e.g. "lib@1"). Match by base name.
+      val siblingsByBaseName = siblings.associateBy { ProjectName(it.name.substringBefore('@')) }
+      val resolvedWorkspaceDeps = workspaceDeps.mapNotNull { siblingsByBaseName[it] }.toSet()
+      val brokenDeps = workspaceDeps.filter { it !in siblingsByBaseName }.toSet()
       if (brokenDeps.isNotEmpty()) {
         logger.info("Deps are broken: ${brokenDeps.joinToString(", ")}")
       }
       val pathDepsWithName = pathDeps.mapNotNull {
-        val name = rootIndex[it]
-        if (name == null) {
+        rootIndex[it] ?: run {
           logger.info("No module at ${it}")
+          null
         }
-        name
       }
-      dependencies[name] = (workspaceDeps intersect siblings) + pathDepsWithName
+      dependencies[name] = resolvedWorkspaceDeps + pathDepsWithName
 
     }
     return@withContext ProjectStructureInfo(
