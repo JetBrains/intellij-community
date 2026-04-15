@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelProvider;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController.GradleModelFetchRequest.GradleExecutionMode;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController.GradleModelFetchRequest.GradleModelLevel;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
@@ -45,16 +47,14 @@ public class GradleClassBuildModelProvider<T> implements ProjectImportModelProvi
 
   @Override
   public void populateModels(
-    @NotNull BuildController controller,
+    @NotNull GradleModelController modelController,
     @NotNull Collection<? extends @NotNull GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    for (GradleBuild buildModel : buildModels) {
-      T instance = controller.findModel(buildModel, modelClass);
-      if (instance != null) {
-        modelConsumer.consumeBuildModel(buildModel, instance, modelClass);
-      }
-    }
+    modelController.fetchRequest(buildModels, modelClass)
+      .executionMode(GradleExecutionMode.SEQUENTIAL)
+      .modelLevel(GradleModelLevel.BUILD)
+      .execute(modelConsumer);
   }
 
   @Override

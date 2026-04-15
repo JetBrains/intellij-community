@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSeria
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelController;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -23,6 +24,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DefaultBuildController;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
@@ -117,7 +119,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private @NotNull GradleModelHolderState doExecute(
-    @NotNull BuildController controller,
+    @NotNull BuildController buildController,
     @NotNull ExecutorService converterExecutor
   ) {
     myProjectLoadedAction = myModels == null && myUseProjectsLoadedPhase;
@@ -125,11 +127,11 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     if (myProjectLoadedAction || !myUseProjectsLoadedPhase) {
       if (myUseStreamedValues && GradleVersionSpecificsUtil.isBaseScriptModelSupported(getGradleVersion())) {
         GradleOpenTelemetry.runWithSpan("SendBaseScriptModelState", __ ->
-          sendBaseScriptModelState(controller)
+          sendBaseScriptModelState(buildController)
         );
       }
       myModels = GradleOpenTelemetry.callWithSpan("InitAction", __ ->
-        initAction(controller, converterExecutor, getGradleVersion())
+        initAction(buildController, converterExecutor, getGradleVersion())
       );
     }
 
@@ -137,12 +139,15 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     assert models != null;
 
     GradleOpenTelemetry.runWithSpan("ExecuteAction", __ ->
-      executeAction(controller, converterExecutor, models)
+      executeAction(buildController, converterExecutor, models)
     );
 
     if (myProjectLoadedAction) {
+      GradleModelControllerImpl modelController = GradleOpenTelemetry.callWithSpan("CreateGradleModelController", __ ->
+        new GradleModelControllerImpl(buildController, getGradleVersion())
+      );
       GradleOpenTelemetry.runWithSpan("TurnOffDefaultTasks", __ ->
-        controller.getModel(TurnOffDefaultTasks.class)
+        modelController.fetchModel(TurnOffDefaultTasks.class)
       );
     }
 
@@ -170,27 +175,32 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     }
   }
 
-  private static void sendBaseScriptModelState(@NotNull BuildController controller) {
-    GradleDslBaseScriptModel model = GradleOpenTelemetry.callWithSpan("GetBaseScriptModelState", ___ ->
-      controller.findModel(GradleDslBaseScriptModel.class)
+  private static void sendBaseScriptModelState(@NotNull BuildController buildController) {
+    GradleModelControllerImpl modelController = GradleOpenTelemetry.callWithSpan("CreateGradleModelController", __ ->
+      new GradleModelControllerImpl(buildController)
     );
-    GradleDslBaseScriptModelHolder holder = GradleDslBaseScriptModelHolder.wrap(model);
-    controller.send(holder);
+    GradleDslBaseScriptModel model = GradleOpenTelemetry.callWithSpan("GetBaseScriptModelState", ___ ->
+      modelController.fetchModelOrNull(GradleDslBaseScriptModel.class)
+    );
+    buildController.send(GradleDslBaseScriptModelHolder.wrap(model));
   }
 
   private static @NotNull GradleDaemonModelHolder initAction(
-    @NotNull BuildController controller,
+    @NotNull BuildController buildController,
     @NotNull ExecutorService converterExecutor,
     @NotNull GradleVersion gradleVersion
   ) {
+    GradleModelControllerImpl modelController = GradleOpenTelemetry.callWithSpan("CreateGradleModelController", __ ->
+      new GradleModelControllerImpl(buildController)
+    );
     GradleBuild mainGradleBuild = GradleOpenTelemetry.callWithSpan("GetMainGradleBuild", __ ->
-      controller.getBuildModel()
+      modelController.fetchModel(GradleBuild.class)
     );
     Collection<? extends GradleBuild> nestedGradleBuilds = GradleOpenTelemetry.callWithSpan("GetNestedGradleBuilds", __ ->
       getNestedBuilds(mainGradleBuild, gradleVersion)
     );
     ToolingSerializerConverter serializer = GradleOpenTelemetry.callWithSpan("GetToolingModelConverter", __ ->
-      new ToolingSerializerConverter(controller)
+      new ToolingSerializerConverter(buildController)
     );
     return GradleOpenTelemetry.callWithSpan("InitModelConsumer", __ ->
       new GradleDaemonModelHolder(converterExecutor, serializer, mainGradleBuild, nestedGradleBuilds, gradleVersion)
@@ -234,20 +244,20 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private void executeAction(
-    @NotNull BuildController controller,
+    @NotNull BuildController buildController,
     @NotNull ExecutorService converterExecutor,
     @NotNull GradleDaemonModelHolder models
   ) {
-    BuildController buildController = models.createBuildController(controller);
+    BuildController childBuildController = new DefaultBuildController(buildController, models.getRootGradleBuild(), getGradleVersion());
+    GradleModelController childModelController = new GradleModelControllerImpl(buildController);
     GradleModelConsumer modelConsumer = models.createModelConsumer(converterExecutor);
-    Collection<? extends GradleBuild> gradleBuilds = models.getGradleBuilds();
 
     try {
       getModelFetchPhases().forEach(phase -> {
         GradleOpenTelemetry.runWithSpan(phase.getName() + "-gradle", __ -> {
           Set<ProjectImportModelProvider> modelProviders = myModelProviders.getOrDefault(phase, Collections.emptySet());
-          populateModels(buildController, modelConsumer, gradleBuilds, modelProviders);
-          sendPendingState(buildController, models, phase);
+          populateModels(childBuildController, childModelController, modelProviders, models.getGradleBuilds(), modelConsumer);
+          sendPendingState(childBuildController, models, phase);
         });
       });
     }
@@ -257,20 +267,22 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private static void populateModels(
-    @NotNull BuildController controller,
-    @NotNull GradleModelConsumer modelConsumer,
+    @NotNull BuildController buildController,
+    @NotNull GradleModelController modelController,
+    @NotNull Collection<ProjectImportModelProvider> modelProviders,
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
-    @NotNull Collection<ProjectImportModelProvider> modelProviders
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     for (ProjectImportModelProvider modelProvider : modelProviders) {
       GradleOpenTelemetry.runWithSpan(modelProvider.getName(), __ -> {
-        modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
+        modelProvider.populateModels(buildController, gradleBuilds, modelConsumer);
+        modelProvider.populateModels(modelController, gradleBuilds, modelConsumer);
       });
     }
   }
 
   private void sendPendingState(
-    @NotNull BuildController controller,
+    @NotNull BuildController buildController,
     @NotNull GradleDaemonModelHolder models,
     @NotNull GradleModelFetchPhase phase
   ) {
@@ -279,7 +291,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
       if (myUseStreamedValues) {
         GradleModelHolderState state = models.pollPendingState();
         GradleModelHolderState phasedState = state.withPhase(phase);
-        controller.send(phasedState);
+        buildController.send(phasedState);
       }
     });
   }

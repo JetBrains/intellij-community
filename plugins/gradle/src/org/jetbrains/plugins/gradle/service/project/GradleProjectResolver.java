@@ -102,6 +102,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.intellij.gradle.toolingExtension.GradleToolingExtensionProperties.USE_RESILIENT_MODEL_FETCH_SYSTEM_PROPERTY_KEY;
+import static com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isResilientModelFetchApiSupported;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAllRecursively;
@@ -605,6 +607,9 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     }
     if (Registry.is("gradle.daemon.legacy.dependency.resolver", false)) {
       executionSettings.withArgument("-Didea.gradle.daemon.legacy.dependency.resolver=true");
+    }
+    if (Registry.is("gradle.use.resilient.model.fetch") && isResilientModelFetchApiSupported(resolverContext.getGradleVersion())) {
+      executionSettings.withVmOption("-D" + USE_RESILIENT_MODEL_FETCH_SYSTEM_PROPERTY_KEY + "=true");
     }
 
     GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();

@@ -48,4 +48,8 @@ object GradleVersionSpecificsUtil {
   @JvmStatic
   fun isBaseScriptModelSupported(gradleVersion: GradleVersion): Boolean =
     GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.2")
+
+  @JvmStatic
+  fun isResilientModelFetchApiSupported(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.3")
 }
