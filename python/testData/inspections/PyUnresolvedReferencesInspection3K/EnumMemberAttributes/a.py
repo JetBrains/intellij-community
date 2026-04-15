@@ -9,7 +9,7 @@ class Color(Enum):
 
 print(Color.red.name, Color.red.name.upper())
 print(Color.red.name.<warning descr="Unresolved attribute reference 'foo' for class 'Literal[\"red\"]'">foo</warning>)
-print(Color.red.value.<warning descr="Unresolved attribute reference 'foo' for class 'int'">foo</warning>)
+print(Color.red.value.<warning descr="Unresolved attribute reference 'foo' for class 'Literal[1]'">foo</warning>)
 print(Color.red.<warning descr="Unresolved attribute reference 'foo' for class 'Literal[Color.red]'">foo</warning>)
 
 

@@ -495,6 +495,15 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
 
       if (!matchesExpectedType(expected, actual, assignedValue, null)) {
+        // `tryPromotingType` may preserve element literals in a collection value (e.g. `list[Literal[1]]`),
+        // which spuriously fails the invariant match against the value's own widened type (`list[int]`),
+        // for instance for an un-annotated `x = [1, [1]]`. If the value's natural (un-promoted) type already
+        // matches the expected type, the fresh literal is assignable and there is no real mismatch.
+        // temporary special casing to avoid Literal problems PY-90366
+        val naturalType = myTypeEvalContext.getType(assignedValue)
+        if (naturalType != actual && matchesExpectedType(expected, naturalType, assignedValue, null)) {
+          return
+        }
         val isAugAssignment = node.parent is PyAugAssignmentStatement
         val message =
           if (isDescriptor)

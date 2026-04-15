@@ -53,7 +53,7 @@ public class Py3TypeTest extends PyTestCase {
 
   @TestFor(issues = "PY-21655")
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
-    doMultiFileTest("int",
+    doMultiFileTest("Literal[3]",
                     """
                       import asyncio
                       @asyncio.coroutine
@@ -67,7 +67,7 @@ public class Py3TypeTest extends PyTestCase {
 
   @TestFor(issues = "PY-21655")
   public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
-    doMultiFileTest("int",
+    doMultiFileTest("Literal[3]",
                     """
                       import asyncio
                       import types
@@ -267,7 +267,7 @@ public class Py3TypeTest extends PyTestCase {
 
   @TestFor(issues = "PY-88477")
   public void testHeterogeneousEnumValues() {
-    doTest("tuple[int | str, int, str]",
+    doTest("tuple[Literal[1, \"\"], Literal[1], Literal[\"\"]]",
            """
              from enum import Enum
 
@@ -401,7 +401,7 @@ public class Py3TypeTest extends PyTestCase {
                   """ + "x = x\n".repeat(3000) + """
                   expr = x
                   """;
-    doTest("int", code);
+    doTest("Literal[0]", code);
   }
 
   private void doTest(final String expectedType, final String text) {

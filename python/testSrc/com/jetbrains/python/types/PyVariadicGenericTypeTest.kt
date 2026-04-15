@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -1276,15 +1276,15 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       foo('', True, 42, c=True, b='')
 
       foo('', b='', c=True) # WARNING Parameter 'args' unfilled, expected '*tuple[*Ts, int]'
-      foo('', '', b='', c=True) # WARNING Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str]' instead
+      foo('', '', b='', c=True) # WARNING Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""]]' instead
       foo('', '', [False], b='', c=True)
-      #       │   ^^^^^^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list[bool]]' instead
-      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list[bool]]' instead
+      #       │   ^^^^^^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], list[bool]]' instead
+      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], list[bool]]' instead
       foo('', '', '', '', 1.1, b='', c=True)
-      #       │   │   │   ^^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead
-      #       │   │   ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead
-      #       │   ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead
-      #       ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead
+      #       │   │   │   ^^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], float]' instead
+      #       │   │   ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], float]' instead
+      #       │   ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], float]' instead
+      #       ^^ WARNING Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], float]' instead
       """)
 
     @Test
@@ -1306,28 +1306,28 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       foo(('', 1), b='') # WARNING Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'
       foo(('', 1), '', '', '', 1, b='')
-      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
+      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
       foo((1,1), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       foo(('',), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       x: Any
       #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
-      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
+      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
       """)
 
     @Test
@@ -1363,28 +1363,28 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       foo(('', 1), b='') # WARNING Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'
       foo(('', 1), '', '', '', 1, b='')
-      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
+      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
       foo((1,1), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       foo(('',), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       x: Any
       #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
-      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
+      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
       """)
 
     @Test
@@ -1406,45 +1406,45 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       foo(('', 1), b='') # WARNING Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'
       foo(('', 1), '', '', '', 1, b='')
-      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
-      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead
+      #            │   │   │   └ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            │   ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
+      #            ^^ WARNING Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[""], Literal[""], Literal[1]]' instead
       foo((1,1), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       foo(('',), '', 1, 1, b='')
-      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
-      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead
+      #          │   │  └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          │   └ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
+      #          ^^ WARNING Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[1], Literal[1]]' instead
       x: Any
       #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
-      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
-      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead
+      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
       """)
 
     @Test
     @TestFor(issues = ["PY-53105"])
     fun `variadic generic star args unbound tuple`() = test("""
       from typing import Tuple
-      
-      
+
+
       def foo(*args: *Tuple[int, ...]) -> None: ...
-      
-      
+
+
       foo()
       foo(1)
       foo(1, 2, 3)
-      
-      foo('') # WARNING Expected type 'int', got 'str' instead
-      foo(1, '') # WARNING Expected type 'int', got 'str' instead
+
+      foo('') # WARNING Expected type 'int', got 'Literal[""]' instead
+      foo(1, '') # WARNING Expected type 'int', got 'Literal[""]' instead
       """)
 
     @Test
@@ -1556,7 +1556,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       
       IntTuple = tuple[int, *Ts]
       
-      c: IntTuple[()] = (1, "") # WARNING Expected type 'tuple[int]', got 'tuple[int, str]' instead
+      c: IntTuple[()] = (1, "") # WARNING Expected type 'tuple[int]', got 'tuple[Literal[1], Literal[""]]' instead
       """)
 
     @Test

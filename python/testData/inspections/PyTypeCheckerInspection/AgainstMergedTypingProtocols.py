@@ -26,4 +26,4 @@ def close(sized_and_closeable: SizedAndClosable) -> None:
 r = Resource()
 close(r)
 
-close(<warning descr="Expected type 'SizedAndClosable', got 'int' instead">1</warning>)
+close(<warning descr="Expected type 'SizedAndClosable', got 'Literal[1]' instead">1</warning>)

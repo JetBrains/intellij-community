@@ -46,7 +46,7 @@ public class PyTypeTest extends PyTestCase {
       """;
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
-    doTest("UnsafeUnion[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("UnsafeUnion[Union[Literal[3], str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   // TODO: enable this test when properties will be calculated with TypeEvalContext
@@ -277,7 +277,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorNextType() {
-    doTest("int", """
+    doTest("Literal[10]", """
       def f():
           yield 10
       expr = f().next()

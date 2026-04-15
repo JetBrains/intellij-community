@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -30,7 +30,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       dd = spam if random.randint != 42 else Eggs2()
       var = dd if random.randint != 42 else dd
       expr = var()
-      # └ TYPE str
+      # └ TYPE Literal["D"]
       """)
 
     @Test
@@ -43,7 +43,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       c = C()
       expr = c.foo
-      #└ TYPE () -> int
+      #└ TYPE () -> Literal[0]
       """)
 
     @Test
@@ -140,7 +140,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     fun `walrus callable narrowing`() = test("""
       if callable(a := 42):
           expr = a
-      #   └ TYPE int
+      #   └ TYPE Literal[42]
       """)
 
     @Test
@@ -1604,8 +1604,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       cllbl_c = baz()
       cllbl_c(1, "2")
-      cllbl_c(1, 2) # WARNING Expected type 'str', got 'int' instead
-      cllbl_c("1", "2") # WARNING Expected type 'int', got 'str' instead
+      cllbl_c(1, 2) # WARNING Expected type 'str', got 'Literal[2]' instead
+      cllbl_c("1", "2") # WARNING Expected type 'int', got 'Literal["1"]' instead
       cllbl_c([], [])
       #       │   ^^ WARNING Expected type 'str', got 'list[Any]' instead
       #       ^^ WARNING Expected type 'int', got 'list[Any]' instead
@@ -2060,7 +2060,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       call(42)
       call(42, True)
-      call("foo") # WARNING Expected type 'int', got 'str' instead
+      call("foo") # WARNING Expected type 'int', got 'Literal["foo"]' instead
       call()
 
       def single_int(x: int) -> str:
@@ -2104,7 +2104,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return 42
 
 
-      changes_return_type_to_str(returns_int)("42", 42) # WARNING Expected type 'bool', got 'int' instead
+      changes_return_type_to_str(returns_int)("42", 42) # WARNING Expected type 'bool', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2128,7 +2128,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def a(q: int) -> str: ...
 
 
-      expr = Y(a, '1').f("42") # WARNING Expected type 'int', got 'str' instead
+      expr = Y(a, '1').f("42") # WARNING Expected type 'int', got 'Literal["42"]' instead
       """)
 
     @Test
@@ -2152,7 +2152,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def a(q: int, s: str) -> str: ...
 
 
-      expr = Y(a, '1').f(42, 42) # WARNING Expected type 'str', got 'int' instead
+      expr = Y(a, '1').f(42, 42) # WARNING Expected type 'str', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2177,8 +2177,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       expr = Y(a, '1').f(42, 42, 42)
-      #                      │   ^^ WARNING Expected type 'bool', got 'int' instead
-      #                      ^^ WARNING Expected type 'str', got 'int' instead
+      #                      │   ^^ WARNING Expected type 'bool', got 'Literal[42]' instead
+      #                      ^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2195,7 +2195,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
 
 
-      add(bar)("42", 42, 42) # WARNING Expected type 'bool', got 'int' instead
+      add(bar)("42", 42, 42) # WARNING Expected type 'bool', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2212,7 +2212,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
 
 
-      add(bar)("42", "42", True) # WARNING Expected type 'int', got 'str' instead
+      add(bar)("42", "42", True) # WARNING Expected type 'int', got 'Literal["42"]' instead
       """)
 
     @Test
@@ -2229,7 +2229,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
 
 
-      add(bar)(42, 42, True) # WARNING Expected type 'str', got 'int' instead
+      add(bar)(42, 42, True) # WARNING Expected type 'str', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2247,8 +2247,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
 
       add(bar)(42, [42], 3, True)
-      #        │   ^^^^ WARNING Expected type 'list[str]', got 'list[int]' instead
-      #        ^^ WARNING Expected type 'str', got 'int' instead
+      #        │   ^^^^ WARNING Expected type 'list[str]', got 'list[Literal[42]]' instead
+      #        ^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2282,7 +2282,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...
 
 
-      remove(bar)(42) # WARNING Expected type 'bool', got 'int' instead
+      remove(bar)(42) # WARNING Expected type 'bool', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2355,7 +2355,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           return inner
 
 
-      transform(bar)(42) # WARNING Expected type 'str', got 'int' instead
+      transform(bar)(42) # WARNING Expected type 'str', got 'Literal[42]' instead
       """)
 
     @Test
@@ -2426,12 +2426,12 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       res2 = twice(a_int_b_str, b="A", a=1)
 
       res3 = twice(a_int_b_str, "A", 1)
-      #                         │    └ WARNING Expected type 'str', got 'int' instead
-      #                         ^^^ WARNING Expected type 'int', got 'str' instead
+      #                         │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #                         ^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
 
       res4 = twice(a_int_b_str, b=1, a="A")
-      #                         │    ^^^^^ WARNING Expected type 'int', got 'str' instead
-      #                         ^^^ WARNING Expected type 'str', got 'int' instead
+      #                         │    ^^^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
+      #                         ^^^ WARNING Expected type 'str', got 'Literal[1]' instead
       """)
 
     @Test
@@ -2626,11 +2626,11 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       twice(a_int_b_str, 1, "A")  # OK
       twice(a_int_b_str, b="A", a=1)  # OK
       twice(a_int_b_str, b=1, a="A")
-      #                  │    ^^^^^ WARNING Expected type 'int', got 'str' instead
-      #                  ^^^ WARNING Expected type 'str', got 'int' instead
+      #                  │    ^^^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
+      #                  ^^^ WARNING Expected type 'str', got 'Literal[1]' instead
       twice(a_int_b_str, "A", 1)
-      #                  │    └ WARNING Expected type 'str', got 'int' instead
-      #                  ^^^ WARNING Expected type 'int', got 'str' instead
+      #                  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #                  ^^^ WARNING Expected type 'int', got 'Literal["A"]' instead
       """)
   }
 
@@ -2657,7 +2657,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       router = Router()
       router.route(-2)
-      router.route("") # WARNING Expected type 'int', got 'str' instead
+      router.route("") # WARNING Expected type 'int', got 'Literal[""]' instead
       """)
 
     @Test
@@ -2668,7 +2668,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       router = Router()
       router.route(-2)
-      router.route("") # WARNING Expected type 'int', got 'str' instead
+      router.route("") # WARNING Expected type 'int', got 'Literal[""]' instead
       """,
       "m.py" to """
         import functools

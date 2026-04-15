@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
+import com.jetbrains.python.psi.types.PyTypeUtil.widenLiteralAndNumeric
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -424,9 +425,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       }
 
       if (type == null && dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-        methodDecoratedAsAttributeDefault(cls, field.name)
-          ?.let { context.getReturnType(it) }
-          ?.let { return PyUnionType.createWeakType(it) }
+        methodDecoratedAsAttributeDefault(cls, field.name)?.getReturnType(context)
+          ?.let { return PyUnionType.createWeakType(widenLiteralAndNumeric(it)) }
       }
 
       return type

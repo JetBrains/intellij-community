@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,7 +23,8 @@ public final class PyTypeCachingTest extends PyTestCase {
     // Here can be any action using TypeEvalContext with myAllowStubToAST==true
     PyTargetExpression argument = myFixture.findElementByText("x", PyTargetExpression.class);
     String argumentQuickDoc = new PythonDocumentationProvider().generateDoc(argument, argument);
-    assertTrue(argumentQuickDoc.contains("<a href=\"psi_element://#typename#str\">str</a>"));
+    assertTrue(argumentQuickDoc.contains("<span style=\"color:#000000;\">Literal[\"foo\"]</span>"));
+
 
     myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting();
@@ -38,7 +39,7 @@ public final class PyTypeCachingTest extends PyTestCase {
 
     PyTargetExpression argument = myFixture.findElementByText("x", PyTargetExpression.class);
     String argumentQuickDoc = new PythonDocumentationProvider().generateDoc(argument, argument);
-    assertTrue(argumentQuickDoc.contains("<a href=\"psi_element://#typename#str\">str</a>"));
+    assertTrue(argumentQuickDoc.contains("</span><span style=\"color:#000000;\">Literal[\"foo\"]</span>"));
   }
 
   public void testProjectPyiStubChangesLibraryType() {

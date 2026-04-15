@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyBoolLiteralExpression;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
@@ -49,11 +50,14 @@ import com.jetbrains.python.psi.PyGlobalStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.PyPlainStringElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -90,10 +94,12 @@ import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -164,6 +170,15 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (!context.maySwitchToAST(this)) {
       PyLiteralKind literalKind = getAssignedLiteralKind(this);
       if (literalKind != null) {
+        if (PyLiteralType.inferLiteralTypeForLiteralExpressions()) {
+          final String literalValue = getAssignedLiteralValue(this);
+          if (literalValue != null) {
+            final PyType literalType = PyLiteralType.fromLiteralKind(this, literalKind, literalValue);
+            if (literalType != null) {
+              return literalType;
+            }
+          }
+        }
         return PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(this));
       }
 
@@ -205,7 +220,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
             return literalType;
           }
         }
-        return context.getType(assignedValue);
+        var resultType = assignedValue.getType(context);
+        if (ScopeUtil.getScopeOwner(this) instanceof PyClass) {
+          return PyLiteralType.upcastLiteralToClass(resultType);
+        }
+        return resultType;
       }
       return PyAnyType.getUnknown();
     }
@@ -812,5 +831,41 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PyExpression value = psi.findAssignedValue();
     return PyLiteralKind.fromExpression(value);
+  }
+
+  private static @Nullable String getAssignedLiteralValue(@NotNull PyTargetExpression psi) {
+    final PyTargetExpressionStub stub = psi.getStub();
+    if (stub != null) {
+      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.Other) {
+        return stub.getAssignedLiteralValue();
+      }
+      return null;
+    }
+    return getAssignedLiteralValueText(psi.findAssignedValue());
+  }
+
+  /**
+   * The textual value of a literal assignment used to rebuild a {@link PyLiteralType} without AST, paired with
+   * {@link PyLiteralKind#fromExpression}. Returns {@code null} for kinds that don't carry a literal type
+   * ({@code FLOAT}/{@code NONE}) and for non-plain strings (bytes, f-strings, Python 2), so the stub-based and
+   * AST-based type inference stay consistent.
+   */
+  @ApiStatus.Internal
+  public static @Nullable String getAssignedLiteralValueText(@Nullable PyExpression value) {
+    if (value instanceof PyNumericLiteralExpression numeric && numeric.isIntegerLiteral()) {
+      final BigInteger bigInt = numeric.getBigIntegerValue();
+      return bigInt.toString();
+    }
+    if (value instanceof PyBoolLiteralExpression bool) {
+      return String.valueOf(bool.getValue());
+    }
+    if (value instanceof PyStringLiteralExpression string
+        && !string.isInterpolated()
+        && !LanguageLevel.forElement(string).isPython2()
+        && !string.getStringElements().isEmpty()
+        && ContainerUtil.and(string.getStringElements(), element -> element instanceof PyPlainStringElement && !element.isBytes())) {
+      return string.getStringValue();
+    }
+    return null;
   }
 }

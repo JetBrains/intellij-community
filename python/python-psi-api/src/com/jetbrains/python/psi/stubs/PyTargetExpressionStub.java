@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
@@ -44,6 +44,15 @@ public interface PyTargetExpressionStub
   @ApiStatus.Internal
   @Nullable
   PyLiteralKind getAssignedLiteralKind();
+
+  /**
+   * The textual value of the assigned literal (e.g. {@code "42"}, the decoded string, or {@code "true"}/{@code "false"}),
+   * interpreted according to {@link #getAssignedLiteralKind()}. {@code null} when no literal value is stored
+   * (e.g. for {@code FLOAT}/{@code NONE}, non-plain strings, or non-literal initializers).
+   */
+  @ApiStatus.Internal
+  @Nullable
+  String getAssignedLiteralValue();
 
   boolean isQualified();
 

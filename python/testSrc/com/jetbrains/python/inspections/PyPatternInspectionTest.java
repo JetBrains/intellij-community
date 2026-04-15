@@ -55,7 +55,7 @@ def f(p):
   public void testInvalidMatchArgsType() {
     doTestByText("""
 class D:
-    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'int' instead">42</warning>
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'Literal[42]' instead">42</warning>
         """);
   }
 
@@ -340,7 +340,7 @@ def f(c):
     doTestByText("""
                    x = 1
                    match 1:
-                       case <warning descr="Class pattern requires a class, but 'x' can be 'int'">x</warning>():
+                       case <warning descr="Class pattern requires a class, but 'x' can be 'Literal[1]'">x</warning>():
                            pass
                    """);
   }

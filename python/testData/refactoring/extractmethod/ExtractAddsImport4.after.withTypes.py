@@ -1,6 +1,4 @@
 from enum import Enum
-from typing import Literal
-
 
 class Color(Enum):
     RED = 1
@@ -12,6 +10,6 @@ def f(color):
         body(color)
 
 
-def body(color_new: Literal[Color.RED]):
+def body(color_new: Color):
     1
     color_new

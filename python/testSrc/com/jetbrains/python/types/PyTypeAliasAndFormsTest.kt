@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -138,7 +138,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       expects_myclass_or_str1(MyClass)
       expects_myclass_or_str1(str)
       expects_myclass_or_str1(int) # WARNING Expected type 'type[MyClass | str]', got 'type[int]' instead
-      expects_myclass_or_str1(42) # WARNING Expected type 'type[MyClass | str]', got 'int' instead
+      expects_myclass_or_str1(42) # WARNING Expected type 'type[MyClass | str]', got 'Literal[42]' instead
 
 
       def expects_myclass_or_str2(x: Union[Type[MyClass], Type[str]]):
@@ -147,7 +147,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       expects_myclass_or_str2(MyClass)
       expects_myclass_or_str2(str)
       expects_myclass_or_str2(int) # WARNING Expected type 'type[MyClass | str]', got 'type[int]' instead
-      expects_myclass_or_str2(42) # WARNING Expected type 'type[MyClass | str]', got 'int' instead
+      expects_myclass_or_str2(42) # WARNING Expected type 'type[MyClass | str]', got 'Literal[42]' instead
       """)
 
     @Test
@@ -978,7 +978,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
       """
       [expr := 1]
-      # └ TYPE int
+      # └ TYPE Literal[1]
       """,
     )
 
@@ -988,7 +988,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
       """
       [expr := (1)]
-      # └ TYPE int
+      # └ TYPE Literal[1]
       """,
     )
 
@@ -998,7 +998,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
       """
       expr = (e := 1)
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """,
     )
 
@@ -1008,7 +1008,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
       """
       foo(expr := 1)
-      #│  └ TYPE int
+      #│  └ TYPE Literal[1]
       #^^ ERROR Unresolved reference 'foo'
       """,
     )
@@ -1250,7 +1250,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               ...
 
       b: Box[int]
-      expr = b.create("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'str' instead
+      expr = b.create("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
       #└ TYPE Any
       """)
 
@@ -1263,7 +1263,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               ...
 
       b: Box[int]
-      expr = b.m("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'str' instead
+      expr = b.m("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
       #└ TYPE Any
       """)
 
@@ -1554,13 +1554,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       myClass.foo(subClass)
       myClass.foo(42)
       myClass.foo(None)
-      myClass.foo("") # WARNING Expected type 'MyClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'str' instead
+      myClass.foo("") # WARNING Expected type 'MyClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'Literal[""]' instead
 
       subClass.foo(myClass) # WARNING Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'MyClass' instead
       subClass.foo(subClass)
       subClass.foo(42)
       subClass.foo(None)
-      subClass.foo("") # WARNING Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'str' instead
+      subClass.foo("") # WARNING Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'Literal[""]' instead
       """)
 
     @Test
@@ -1766,9 +1766,9 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               y4: Self | int = 3
               y5: Self | int | list[Self] = [self]
               y6: Self | int | list[Self] = [3] # E
-      #                                     ^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[int]' instead
+      #                                     ^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[Literal[3]]' instead
               y7: Self | int | list[Self] = "str" # E
-      #                                     ^^^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'str' instead
+      #                                     ^^^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'Literal["str"]' instead
       """)
 
     @Test

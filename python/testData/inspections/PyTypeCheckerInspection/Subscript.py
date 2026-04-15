@@ -13,5 +13,5 @@ def test():
     x = xs[0]
     f(<warning descr="Expected type 'str', got 'int' instead">x</warning>)
     c = C()
-    c_0 = c[<warning descr="Expected type 'str', got 'int' instead">0</warning>]
+    c_0 = c[<warning descr="Expected type 'str', got 'Literal[0]' instead">0</warning>]
     f(<warning descr="Expected type 'str', got 'int' instead">c_0</warning>)

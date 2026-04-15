@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -122,7 +122,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           x: int
       a: A = {'x': 42}
       expr = a.get('x', 42)
-      #└ TYPE int
+      #└ TYPE int | Literal[42]
       """,
     )
 
@@ -136,7 +136,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           x: int
       a: A = {'x': 42}
       expr = a.get('x', '')
-      #└ TYPE int | str
+      #└ TYPE int | Literal[""]
       """,
     )
   }
@@ -547,22 +547,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-79733"])
     fun `TypedDict type inferred for comprehensions`() = test("""
       from typing import TypedDict
-      
-      
+
+
       class Foo(TypedDict):
           foo: str
-      
-      
+
+
       foo: Foo = {"foo": "bar"}
       foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
       foo_list2: list[Foo] = [{"foo": bar, "buz": "qux"} for bar in ["bar"]]
-      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[str, _T_co | str]]' instead
+      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
       foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
       foo_set2: set[Foo] = {{"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[str, _T_co | str]]' instead
+      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
       foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
       foo_dict2: dict[str, Foo] = {bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[_T_co, dict[str, _T_co | str]]' instead
+      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[_T_co, dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
       """)
   }
 
@@ -603,10 +603,10 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       ExtraMovie(name="No Country for Old Men", year=2007)
 
       ExtraMovie(name="No Country for Old Men", language="English")
-      #                                         ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #                                         ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["English"]' instead
 
       ExtraMovie(name="Inception", year=2010, rating=8, budget="160M")
-      #                                                 ^^^^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #                                                 ^^^^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["160M"]' instead
 
       ExtraMovie(name="Dune", year=None)
       #                       ^^^^^^^^^ WARNING Expected type 'int', got 'None' instead
@@ -616,16 +616,16 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-85421"])
     fun `extra_items inherited through subclassing`() = test("""
       from typing_extensions import TypedDict
-      
+
       class MovieBase(TypedDict, extra_items=int | None):
           name: str
-      
+
       class InheritedMovie(MovieBase):
           year: int
       #   ^^^^ WARNING Required key 'year' is not known to 'MovieBase'
-      
+
       InheritedMovie(name="Blade Runner", year=1982, budget="100M")
-      #                                              ^^^^^^^^^^^^^ WARNING Expected type 'int | None', got 'str' instead
+      #                                              ^^^^^^^^^^^^^ WARNING Expected type 'int | None', got 'Literal["100M"]' instead
       """)
 
     @Test
@@ -719,15 +719,15 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-55044"])
     fun `Unpack kwargs argument type mismatch`() = test("""
       from typing import TypedDict, Unpack
-      
+
       class Movie(TypedDict):
           name: str
-      
+
       def foo(**x: Unpack[Movie]):
           pass
-      
+
       foo(name=1)
-      #   ^^^^^^ WARNING Expected type 'str', got 'int' instead
+      #   ^^^^^^ WARNING Expected type 'str', got 'Literal[1]' instead
       """)
 
     @Test
@@ -798,37 +798,37 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-76847"])
     fun `kwargs with not-unpacked TypedDict accepts TypedDict`() = test("""
       from typing import TypedDict, NotRequired, Required
-      
+
       class TD1(TypedDict):
           v1: Required[int]
           v2: NotRequired[str]
-      
+
       def func1(**kwargs: TD1) -> None: ...
       td1 = TD1(v1=1, v2="abc")
       td2 = TD1(v1=2, v2="def")
       func1(a=td1, b=td2, c="wrong")
-      #                   ^^^^^^^^^ WARNING Expected type 'TD1', got 'str' instead
+      #                   ^^^^^^^^^ WARNING Expected type 'TD1', got 'Literal["wrong"]' instead
       """)
 
     @Test
     @TestFor(issues = ["PY-76847"])
     fun `ParamSpec substituted with Unpack TypedDict kwargs`() = test("""
       from typing import Callable, TypedDict, Unpack
-      
+
       def g[**P](fn: Callable[P, None]) -> Callable[P, None]:
           return fn
-      
+
       class Person(TypedDict):
           name: str
           age: int
-      
+
       def create_person(**kwargs: Unpack[Person]):
           pass
-      
+
       g(create_person)(**{"name": ""})
       #                  ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       g(create_person)(name="John", age="30")
-      #                             ^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #                             ^^^^^^^^ WARNING Expected type 'int', got 'Literal["30"]' instead
       """)
 
     @Test
@@ -898,9 +898,9 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       foo(1, "hello", name="test")
       foo("wrong", "hello", name="test")
-      #   ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #   ^^^^^^^ WARNING Expected type 'int', got 'Literal["wrong"]' instead
       foo(1, "hello", name=42)
-      #               ^^^^^^^ WARNING Expected type 'str', got 'int' instead
+      #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """)
   }
 

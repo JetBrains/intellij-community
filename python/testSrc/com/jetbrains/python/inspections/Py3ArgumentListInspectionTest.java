@@ -786,7 +786,7 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    a: str = Field(alias="b")
 
                _ = Model(a="value")
-               _ = Model<warning descr="No signature matches the arguments. Argument types: (str). Expected one of: (b: str), (a: str)">("value"<warning descr="No signature matches the arguments. Argument types: (str). Expected one of: (b: str), (a: str)">)</warning></warning>
+               _ = Model<warning descr="No signature matches the arguments. Argument types: (Literal[\\"value\\"]). Expected one of: (b: str), (a: str)">("value"<warning descr="No signature matches the arguments. Argument types: (Literal[\\"value\\"]). Expected one of: (b: str), (a: str)">)</warning></warning>
                """);
   }
 

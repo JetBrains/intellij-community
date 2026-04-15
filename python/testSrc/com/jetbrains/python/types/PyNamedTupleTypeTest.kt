@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -34,7 +34,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       from collections import namedtuple
       User = namedtuple("User", "name age")
       expr = User("name", 13).age
-      #└ TYPE int
+      #└ TYPE Literal[13]
       """)
 
     @Test
@@ -52,7 +52,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       Point = namedtuple('Point', ['x', 'y'])
       p1 = Point(1, '1')
       expr, y1 = p1
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """)
 
     @Test
@@ -118,7 +118,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       from collections import namedtuple
       Cat = namedtuple("Cat", "name age")
       expr = Cat("name", 5)._replace(age="five").age
-      #└ TYPE str
+      #└ TYPE Literal["five"]
       """)
 
     @Test
@@ -313,7 +313,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       from typing import NamedTuple
       Cat = NamedTuple("Cat", name=str, age=int)
       expr = Cat("name", 5)._replace(age="give").age
-      #│                             ^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #│                             ^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["give"]' instead
       #└ TYPE int
       """)
 
@@ -357,7 +357,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
           pass
 
 
-      foo(5) # WARNING Expected type 'name', got 'int' instead
+      foo(5) # WARNING Expected type 'name', got 'Literal[5]' instead
       foo(nt(field = "f"))
       """)
 
@@ -393,9 +393,9 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
 
       # fail
-      MyTup2('', '') # WARNING Expected type 'int', got 'str' instead
-      MyTup2(bar='', baz='') # WARNING Expected type 'int', got 'str' instead
-      MyTup2(baz='', bar='') # WARNING Expected type 'int', got 'str' instead
+      MyTup2('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup2(bar='', baz='') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup2(baz='', bar='') # WARNING Expected type 'int', got 'Literal[""]' instead
 
 
       # ok
@@ -405,9 +405,9 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
 
       # fail
-      MyTup3('', '') # WARNING Expected type 'int', got 'str' instead
-      MyTup3(bar='', baz='') # WARNING Expected type 'int', got 'str' instead
-      MyTup3(baz='', bar='') # WARNING Expected type 'int', got 'str' instead
+      MyTup3('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup3(bar='', baz='') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup3(baz='', bar='') # WARNING Expected type 'int', got 'Literal[""]' instead
 
 
       # ok
@@ -417,9 +417,9 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
 
       # fail
-      MyTup4('', '') # WARNING Expected type 'int', got 'str' instead
-      MyTup4(bar='', baz='') # WARNING Expected type 'int', got 'str' instead
-      MyTup4(baz='', bar='') # WARNING Expected type 'int', got 'str' instead
+      MyTup4('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup4(bar='', baz='') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup4(baz='', bar='') # WARNING Expected type 'int', got 'Literal[""]' instead
 
 
       # ok
@@ -429,9 +429,9 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
 
       # fail
-      MyTup5('', '') # WARNING Expected type 'int', got 'str' instead
-      MyTup5(bar='', baz='') # WARNING Expected type 'int', got 'str' instead
-      MyTup5(baz='', bar='') # WARNING Expected type 'int', got 'str' instead
+      MyTup5('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup5(bar='', baz='') # WARNING Expected type 'int', got 'Literal[""]' instead
+      MyTup5(baz='', bar='') # WARNING Expected type 'int', got 'Literal[""]' instead
 
 
       # ok
@@ -442,11 +442,11 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
       # fail
       MyTup6(bar='', baz='', foo='')
-      #      │               ^^^^^^ WARNING Expected type 'int', got 'str' instead
-      #      ^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #      │               ^^^^^^ WARNING Expected type 'int', got 'Literal[""]' instead
+      #      ^^^^^^ WARNING Expected type 'int', got 'Literal[""]' instead
       MyTup6('', '', '')
-      #      │       ^^ WARNING Expected type 'int', got 'str' instead
-      #      ^^ WARNING Expected type 'int', got 'str' instead
+      #      │       ^^ WARNING Expected type 'int', got 'Literal[""]' instead
+      #      ^^ WARNING Expected type 'int', got 'Literal[""]' instead
 
 
       # ok
@@ -456,11 +456,11 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
       # fail
       MyTup7(names="A", ages=5)
-      #      │          ^^^^^^ WARNING Expected type 'list[int]', got 'int' instead
-      #      ^^^^^^^^^ WARNING Expected type 'list[str]', got 'str' instead
+      #      │          ^^^^^^ WARNING Expected type 'list[int]', got 'Literal[5]' instead
+      #      ^^^^^^^^^ WARNING Expected type 'list[str]', got 'Literal["A"]' instead
       MyTup7("A", 5)
-      #      │    └ WARNING Expected type 'list[int]', got 'int' instead
-      #      ^^^ WARNING Expected type 'list[str]', got 'str' instead
+      #      │    └ WARNING Expected type 'list[int]', got 'Literal[5]' instead
+      #      ^^^ WARNING Expected type 'list[str]', got 'Literal["A"]' instead
 
 
       # ok

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -46,7 +46,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           return x
       expr = f(1, g())
       # │         └ ERROR Unresolved reference 'g'
-      # └ TYPE int | Any
+      # └ TYPE Literal[1] | Any
       """)
 
     @Test
@@ -161,7 +161,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     fun `undefined property of union type`() = test("""
       x = 42 if True else 'spam'
       expr = x.foo
-      #│       ^^^ WEAK-WARNING Member 'int' of 'int | str' does not have attribute 'foo'
+      #│       ^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
       #└ TYPE Any
       """)
   }
@@ -179,7 +179,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     fun `None return type`() = test("""
       def f() -> None:
           return 0
-      #          └ WARNING Expected type 'None', got 'int' instead
+      #          └ WARNING Expected type 'None', got 'Literal[0]' instead
       expr = f()
       # └ TYPE None
       """)
@@ -432,7 +432,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
   inner class TypeCheckerInspectionsOnUnions {
     @Test
     fun `assigning list to None-int-str bitwise-or union is reported`() = test("""
-      bar: None | int | str = [42] # WARNING Expected type 'None | int | str', got 'list[int]' instead
+      bar: None | int | str = [42] # WARNING Expected type 'None | int | str', got 'list[Literal[42]]' instead
       """)
 
     @Test
@@ -454,53 +454,53 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-44974"])
     fun `bitwise-or unions and old-style unions are equivalent`() = test("""
       from typing import Union, Optional
-      
-      
+
+
       def expect_old_union(u: Union[int, str]):
           expect_new_union(u)
           expect_new_union(42)
           expect_new_union("42")
-          expect_new_union([42]) # WARNING Expected type 'int | str', got 'list[int]' instead
-      
-      
+          expect_new_union([42]) # WARNING Expected type 'int | str', got 'list[Literal[42]]' instead
+
+
       def expect_new_union(u: int | str):
           expect_old_union(u)
           expect_old_union(42)
           expect_old_union("42")
-          expect_old_union([42]) # WARNING Expected type 'int | str', got 'list[int]' instead
-      
-      
+          expect_old_union([42]) # WARNING Expected type 'int | str', got 'list[Literal[42]]' instead
+
+
       def expect_old_optional(u: Optional[int]):
           expect_new_optional_none_first(u)
           expect_new_optional_none_first(42)
           expect_new_optional_none_first(None)
-          expect_new_optional_none_first([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
+          expect_new_optional_none_first([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
           expect_new_optional_none_last(u)
           expect_new_optional_none_last(42)
           expect_new_optional_none_last(None)
-          expect_new_optional_none_last([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
-      
-      
+          expect_new_optional_none_last([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
+
+
       def expect_new_optional_none_first(u: None | int):
           expect_old_optional(u)
           expect_old_optional(42)
           expect_old_optional(None)
-          expect_old_optional([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
+          expect_old_optional([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
           expect_new_optional_none_last(u)
           expect_new_optional_none_last(42)
           expect_new_optional_none_last(None)
-          expect_new_optional_none_last([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
-      
-      
+          expect_new_optional_none_last([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
+
+
       def expect_new_optional_none_last(u: int | None):
           expect_old_optional(u)
           expect_old_optional(42)
           expect_old_optional(None)
-          expect_old_optional([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
+          expect_old_optional([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
           expect_new_optional_none_first(u)
           expect_new_optional_none_first(42)
           expect_new_optional_none_first(None)
-          expect_new_optional_none_first([42]) # WARNING Expected type 'int | None', got 'list[int]' instead
+          expect_new_optional_none_first([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
       """)
 
     @Test

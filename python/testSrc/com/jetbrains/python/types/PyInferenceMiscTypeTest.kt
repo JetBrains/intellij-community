@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -31,7 +31,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           foo = 0
 
       expr = foo
-      # └ TYPE str | int
+      # └ TYPE Literal["foo", 0]
       """)
 
     @Test
@@ -44,7 +44,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f():
           expr = foo
-      #   └ TYPE str | int
+      #   └ TYPE Literal["foo", 0]
       """)
 
     @Test
@@ -56,7 +56,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           else:
               var = 'foo'
           expr = var
-      #   └ TYPE str | Any
+      #   └ TYPE Literal["foo"] | Any
       """)
 
     @Test
@@ -64,7 +64,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `nonlocal type from enclosing function`() = test("""
       def fun():
           expr = True
-      #   └ TYPE bool
+      #   └ TYPE Literal[True]
 
           def nuf():
               nonlocal expr
@@ -82,7 +82,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def nuf():
               nonlocal a
               expr = a
-      #       └ TYPE bool
+      #       └ TYPE Literal[True]
       """)
 
     @Test
@@ -99,7 +99,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def nuf():
               nonlocal a
               expr = a
-      #       └ TYPE bool | int
+      #       └ TYPE Literal[True, 5]
       """)
 
     @Test
@@ -112,7 +112,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               def inner1():
                   nonlocal s
                   expr = s
-      #           └ TYPE str
+      #           └ TYPE Literal["aba"]
 
               def inner2():
                   global s
@@ -168,7 +168,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def nuf():
               global a
               expr = a
-      #       └ TYPE bool | int
+      #       └ TYPE Literal[True, 5]
       """)
 
     @Test
@@ -196,7 +196,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def inner2():
               global s
               expr = s
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -253,7 +253,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       while x:
           x = x + 1
       expr = x
-      #└ TYPE int
+      #└ TYPE Literal[42] | int
       """)
 
     @Test
@@ -468,7 +468,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f(self: C, x: float):
           self.t = "foo"
           expr = self.t
-      #   └ TYPE str
+      #   └ TYPE Literal["foo"]
       """)
 
     @Test
@@ -479,7 +479,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(self: C, x: float):
           self.t = "foo"
-      #            ^^^^^ WARNING Expected type 'int', got 'str' instead
+      #            ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
           expr = self.t
       #   └ TYPE int
       """)
@@ -492,7 +492,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(self: C, x: float):
           self.t = "foo"
-      #            ^^^^^ WARNING Expected type 'int', got 'str' instead
+      #            ^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
           expr = self.t
       #   └ TYPE int
       """)
@@ -1031,7 +1031,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           return True
 
       expr = test()
-      #└ TYPE str
+      #└ TYPE Literal["str"]
       """)
 
     @Test
@@ -1043,7 +1043,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               return "foo"
       #       ^^^^^^^^^^^^ ERROR Python version 3.15 does not support 'return' inside 'finally' clause
       expr = f()
-      #└ TYPE str
+      #└ TYPE Literal["foo"]
       """)
 
     @Test
@@ -1057,7 +1057,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #           ^^^^^^^^^^^^ ERROR Python version 3.15 does not support 'return' inside 'finally' clause
       expr = f()
       #│       └ WARNING Parameter 'p' unfilled
-      #└ TYPE str | int
+      #└ TYPE Literal["foo", 42]
       """)
 
     @Test
@@ -1074,7 +1074,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               pass
       expr = f()
       #│       └ WARNING Parameter 'p' unfilled
-      #└ TYPE str | bool
+      #└ TYPE Literal["foo", True]
       """)
 
     @Test
@@ -1270,7 +1270,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       expr = func(foo)
       #│          ^^^ ERROR Unresolved reference 'foo'
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """)
 
     @Test
@@ -1478,7 +1478,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `or expression with optional left side`() = test("""
       def foo(x: int | None):
           expr = x or "foo"
-      #   └ TYPE int | str
+      #   └ TYPE int | Literal["foo"]
       """)
 
     @Test
@@ -1486,7 +1486,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `or expression with None left side`() = test("""
       def foo(x: None):
           expr = x or "foo"
-      #   └ TYPE str
+      #   └ TYPE Literal["foo"]
       """)
 
     @Test
@@ -1524,7 +1524,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               return AIter()
       a = A()
       for expr in a:
-      #   └ TYPE int
+      #   └ TYPE Literal[5]
           print(expr)
       """)
 
@@ -1580,7 +1580,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       expr = func(foo)
       #│          ^^^ ERROR Unresolved reference 'foo'
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """)
 
     @Test
@@ -1750,7 +1750,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `typing Annotated inline`() = test("""
       from typing_extensions import Annotated
       expr: Annotated[int, 'Some constraint'] = '5'
-      #│                                        ^^^ WARNING Expected type 'int', got 'str' instead
+      #│                                        ^^^ WARNING Expected type 'int', got 'Literal["5"]' instead
       #└ TYPE int
       """)
 
@@ -1760,7 +1760,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """
       from annotated import A
       expr: A = 'str'
-      #│        ^^^^^ WARNING Expected type 'int', got 'str' instead
+      #│        ^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
       #└ TYPE int
       """,
       "annotated.py" to """
@@ -2401,8 +2401,8 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       replace(A(1))
       replace(A(1), a=1, b="abc")
       replace(A(1), a="str", b=1)
-      #             │        ^^^ WARNING Expected type 'str', got 'int' instead
-      #             ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #             │        ^^^ WARNING Expected type 'str', got 'Literal[1]' instead
+      #             ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
 
 
       @dataclass
@@ -2413,7 +2413,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       replace(B(1))
       replace(B(1), a=1)
-      replace(B(1), a="str") # WARNING Expected type 'int', got 'str' instead
+      replace(B(1), a="str") # WARNING Expected type 'int', got 'Literal["str"]' instead
 
 
       @dataclass
@@ -2426,8 +2426,8 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       replace(C(1))
       replace(C(1), a=1, b="str")
       replace(C(1), a="str", b=1)
-      #             │        ^^^ WARNING Expected type 'str', got 'int' instead
-      #             ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #             │        ^^^ WARNING Expected type 'str', got 'Literal[1]' instead
+      #             ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
 
 
       class D:
@@ -2632,7 +2632,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     def foo():
         return 'foo'
 
-    print(foo + 3) # WARNING Expected type 'int', got '() -> str' instead
+    print(foo + 3) # WARNING Expected type 'int', got '() -> Literal["foo"]' instead
     """)
 
   @Test

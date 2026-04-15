@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.jetbrains.python.PyPsiBundle
@@ -13,7 +13,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
       """
         from typing import cast
 
-        <warning descr="Cast of type 'str' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
+        <warning descr="Cast of type 'Literal[\"a\"]' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
         <warning descr="Cast of type 'list[str]' to type 'list[int]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[int], ["a"])</warning>
 
         cast(int, object())  # ok

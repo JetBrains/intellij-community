@@ -165,7 +165,14 @@ class PyTypedDictType(
             else {
               actualFieldType
             }
-            if (!match(expectedFieldType, promotedType, actualFieldValue, context, result)) {
+            // `promotedType` may preserve element literals inside an invariant container (e.g. `list[Literal['b']]`
+            // for `["b"]`), which spuriously fails the invariant match against the field's own widened type
+            // (`list[str]`). If the value's natural (un-promoted) type already matches, the fresh literal is
+            // assignable and there is no real mismatch. Mirrors the assignment-statement handling in
+            // PyTypeCheckerInspection.
+            // temporary special casing to avoid Literal problems PY-90366
+            if (!match(expectedFieldType, promotedType, actualFieldValue, context, result) &&
+                (actualFieldType == promotedType || !match(expectedFieldType, actualFieldType, actualFieldValue, context, result))) {
               result.valueTypeErrors.add(ValueTypeError(actualFieldValue, expectedFieldType, actualFieldType))
             }
           }

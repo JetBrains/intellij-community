@@ -1,9 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.allure.Components;
-import com.jetbrains.python.allure.Layers;
-import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -14,6 +11,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Subsystems.CodeInsight
 @Components.Intentions
 @Layers.Functional
-public class PyIntentionTest extends PyTestCase {
+public class  PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
 
   @Override

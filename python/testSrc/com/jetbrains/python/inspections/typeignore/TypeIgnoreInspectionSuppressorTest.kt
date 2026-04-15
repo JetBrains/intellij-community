@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.typeignore
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
@@ -87,7 +87,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   fun testIgnoreType() {
     doTestByText("""
       print(2 + 'foo') # type: ignore
-      print(2 + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
+      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)
     """)
   }
 

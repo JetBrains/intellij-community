@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix
 
 import com.intellij.codeInsight.completion.CompletionUtil
@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -49,7 +50,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       return PyBuiltinCache.getInstance(element).boolType == type
     }
 
@@ -63,7 +64,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       val builtinCache = PyBuiltinCache.getInstance(element)
       val intType = builtinCache.intType
       val floatType = builtinCache.floatType
@@ -83,7 +84,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       val builtinCache = PyBuiltinCache.getInstance(element)
       val languageLevel = LanguageLevel.forElement(element)
       val types = setOfNotNull(builtinCache.getStringType(languageLevel), builtinCache.getByteStringType(languageLevel),

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -158,7 +158,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
               return 1
       factory = RectangleFactory()
       expr = factory[:]
-      # └ TYPE int
+      # └ TYPE Literal[1]
       """)
 
     @Test
@@ -371,7 +371,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-29489"])
     fun `non generic iterable unpacking`() = test(noAny, """
       _, expr = "ab"
-      #  └ TYPE str
+      #  └ TYPE LiteralString
       """)
 
     @Test
@@ -657,8 +657,8 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       foo(1, "hello")
       foo("hello", 1)
-      #   │        └ WARNING Expected type 'str', got 'int' instead
-      #   ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      #   │        └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #   ^^^^^^^ WARNING Expected type 'int', got 'Literal["hello"]' instead
       """)
 
     @Test
@@ -668,8 +668,8 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
 
       foo(1, "a", "b", 3.14)
       foo(1, 3.14)
-      foo("wrong", "a", 3.14) # WARNING Expected type 'int', got 'str' instead
-      foo(1, "a", "b", "c", "d") # WARNING Expected type 'float | int', got 'str' instead
+      foo("wrong", "a", 3.14) # WARNING Expected type 'int', got 'Literal["wrong"]' instead
+      foo(1, "a", "b", "c", "d") # WARNING Expected type 'float | int', got 'Literal["d"]' instead
       """)
 
     @Test
@@ -680,9 +680,9 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       foo("a", True)
       foo(1, "a", True)
       foo(1, 2, 3, "a", True)
-      foo("wrong", "a", True) # WARNING Expected type 'int', got 'str' instead
-      foo(1, 2, True) # WARNING Expected type 'str', got 'int' instead
-      foo(1, "a", "wrong") # WARNING Expected type 'bool', got 'str' instead
+      foo("wrong", "a", True) # WARNING Expected type 'int', got 'Literal["wrong"]' instead
+      foo(1, 2, True) # WARNING Expected type 'str', got 'Literal[2]' instead
+      foo(1, "a", "wrong") # WARNING Expected type 'bool', got 'Literal["wrong"]' instead
       """)
 
     @Test

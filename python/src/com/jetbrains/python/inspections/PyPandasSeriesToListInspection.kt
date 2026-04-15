@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -49,7 +50,7 @@ class PyPandasSeriesToListInspection : PyInspection() {
      */
     private fun hasSeriesType(expression: PyExpression, context: TypeEvalContext): Boolean {
       if (expression is PySubscriptionExpression) {
-        val type = context.getType(expression.indexExpression)
+        val type = PyLiteralType.upcastLiteralToClass(context.getType(expression.indexExpression))
         return type.isPyClassWithName("str") || type is PyLiteralStringType
       }
 

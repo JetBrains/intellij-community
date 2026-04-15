@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.showcase
 
 import com.intellij.psi.PsiFile
@@ -8,6 +8,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfo
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.junit5.framework.annotations.InjectCodeInsightTestFixture
 import com.jetbrains.python.junit5.framework.annotations.InspectionTest
 import com.jetbrains.python.junit5.framework.annotations.MultiFileTest
@@ -15,7 +16,6 @@ import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplic
 import com.jetbrains.python.junit5.framework.annotations.WithLanguageLevel
 import com.jetbrains.python.junit5.framework.util.doTestByFile
 import com.jetbrains.python.junit5.framework.util.doTestByText
-import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DynamicTest
@@ -42,7 +42,7 @@ class PyJUnit5CodeInsightExampleTest {
   @Test
   fun testInjectedFixture(fixture: CodeInsightTestFixture) {
     fixture.doTestByText("""
-      x: int = <warning descr="Expected type 'int', got 'str' instead">"123"</warning>
+      x: int = <warning descr="Expected type 'int', got 'Literal[\"123\"]' instead">"123"</warning>
     """.trimIndent())
   }
 
@@ -52,7 +52,7 @@ class PyJUnit5CodeInsightExampleTest {
   @Test
   fun oldStyleTestInPlaceTest() {
     codeInsightFixture.doTestByText("""
-      x: int = <warning descr="Expected type 'int', got 'str' instead">"123"</warning>
+      x: int = <warning descr="Expected type 'int', got 'Literal[\"123\"]' instead">"123"</warning>
     """.trimIndent())
   }
 
@@ -105,7 +105,7 @@ class PyJUnit5CodeInsightExampleTest {
   fun withLanguageLevel() {
     codeInsightFixture.doTestByText(
       """
-      x: int = <warning descr="Expected type 'int', got 'str' instead">"123"</warning>
+      x: int = <warning descr="Expected type 'int', got 'Literal[\"123\"]' instead">"123"</warning>
       """.trimIndent()
     )
     Assertions.assertEquals(LanguageLevel.forElement(codeInsightFixture.file), LanguageLevel.PYTHON38)
@@ -128,7 +128,7 @@ class PyJUnit5CodeInsightExampleTest {
     codeInsightFixture
       .doTestByText("""
       def foo(x: str) -> str: ...
-      foo(<warning descr="Expected type 'str', got 'int' instead">$arg</warning>)
+      foo(<warning descr="Expected type 'str', got 'Literal[$arg]' instead">$arg</warning>)
     """.trimIndent())
   }
 
