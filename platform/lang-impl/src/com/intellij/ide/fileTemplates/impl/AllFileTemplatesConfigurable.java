@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -706,6 +707,38 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   @Override
   public @NotNull String getId() {
     return "fileTemplates";
+  }
+
+  @Override
+  public @Nullable Runnable enableSearch(String option) {
+    if (!StringUtil.isEmpty(option)) {
+      final Pair<FileTemplateTab, FileTemplate> found = findTabAndTemplate(option,
+                                                                           myTemplatesList, myIncludesList,
+                                                                           myCodeTemplatesList, otherTemplatesList);
+      if (!found.equals(Pair.empty())) {
+        FileTemplateTab tab = found.getFirst();
+        FileTemplate template = found.getSecond();
+        return () -> {
+          myTabbedPane.setSelectedIndex(Arrays.asList(myTabs).indexOf(tab));
+          tab.selectTemplate(template);
+        };
+      }
+    }
+
+    return SearchableConfigurable.super.enableSearch(option);
+  }
+
+  @NotNull
+  private Pair<FileTemplateTab, FileTemplate> findTabAndTemplate(String templateId, FileTemplateTab... tabs) {
+    for (FileTemplateTab tab : tabs) {
+      for (FileTemplate template : tab.getTemplates()) {
+        if (Objects.equals(templateId, template.getName())) {
+          return Pair.create(tab, template);
+        }
+      }
+    }
+
+    return Pair.empty();
   }
 
   public static void editCodeTemplate(final @NotNull String templateId, Project project) {
