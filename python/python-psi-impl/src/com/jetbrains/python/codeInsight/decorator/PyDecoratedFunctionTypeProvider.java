@@ -238,6 +238,9 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
         if (type instanceof PyClassType classType) {
           type = classType.toClass();
         }
+        if (type == null) {
+          type = pyClass.getType(context);
+        }
       }
       else {
         type = context.getType(resolvedElement);
