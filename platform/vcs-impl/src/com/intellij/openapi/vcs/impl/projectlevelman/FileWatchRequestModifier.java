@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -46,6 +47,7 @@ public final class FileWatchRequestModifier implements Runnable, Disposable {
 
   @Override
   public void run() {
+    if (!Registry.is("vcs.watch.roots")) return;
     synchronized (LOCK) {
       if (myDisposed) return;
       if (!myProject.isInitialized()) return;

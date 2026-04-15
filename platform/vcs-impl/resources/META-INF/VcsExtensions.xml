@@ -38,6 +38,8 @@
     <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
+    <registryKey key="vcs.watch.roots" defaultValue="true" restartRequired="true"
+                 description="Add VCS repository roots as recursive VFS watch roots"/>
     <dependencyCollector kind="vcs" implementation="com.intellij.openapi.vcs.impl.MissingVcsPluginAdvertiser"/>
     <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
