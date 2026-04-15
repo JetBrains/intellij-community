@@ -43,7 +43,9 @@ import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrIn
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
+import com.jetbrains.python.psi.types.PyTypeChecker.substituteSelfInProtocolMember
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.USE_DEFAULTS
 import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
@@ -63,7 +65,7 @@ object PyTypeChecker {
   @JvmStatic
   fun match(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
     val substitutions = GenericSubstitutions()
-    return match(expected, actual, MatchContext(context, substitutions, false)).orElse(true)!!
+    return match(expected, actual, MatchContext(context, substitutions, false, )).orElse(true)!!
   }
 
   /**
@@ -90,7 +92,7 @@ object PyTypeChecker {
     typeVars: Map<PyTypeParameterType, PyType?>,
   ): Boolean {
     val substitutions = GenericSubstitutions(typeVars)
-    return match(expected, actual, MatchContext(context, substitutions, false)).orElse(true)!!
+    return match(expected, actual, MatchContext(context, substitutions, false, )).orElse(true)!!
   }
 
   @JvmStatic
@@ -100,7 +102,7 @@ object PyTypeChecker {
     context: TypeEvalContext,
     substitutions: GenericSubstitutions,
   ): Boolean {
-    return match(expected, actual, MatchContext(context, substitutions, false))
+    return match(expected, actual, MatchContext(context, substitutions, false, ))
       .orElse(true)!!
   }
 
@@ -399,7 +401,10 @@ object PyTypeChecker {
     }
 
     if (!safeActual.isUnknown) {
-      val type = if (constraints.isEmpty()) safeActual else constraints[matchedConstraintIndex]
+      val type = if (constraints.isEmpty())
+        // temporary special casing to avoid Literal problems PY-90366
+        if (context.literalInference) safeActual else PyLiteralType.upcastLiteralToClass(safeActual)
+      else constraints[matchedConstraintIndex]
       context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
     }
     else {
@@ -755,7 +760,7 @@ object PyTypeChecker {
     // It should be equivalent to replacing Self in the protocol with the Foo class we're matching it with.
     val protocolSubstitutions = GenericSubstitutions()
     protocolSubstitutions.qualifierType = actual.toInstance()
-    val protocolContext = MatchContext(context, protocolSubstitutions, matchContext.reversedSubstitutions)
+    val protocolContext = MatchContext(context, protocolSubstitutions, matchContext.reversedSubstitutions, matchContext.literalInference)
 
     for (pair in inspectProtocolSubclass(expected, actual, context)) {
       val protocolMember = pair.first
@@ -865,6 +870,11 @@ object PyTypeChecker {
     val selfParamType = parameters.first().getType(context) ?: return elementType
     val selfBindingTarget = prepareSelfBindingTarget(classType, elementType.callable, context)
     val selfSubstitutions = GenericSubstitutions()
+
+    /**
+     * Note: intentionally does not propagate [literalInference] into the self-binding sub-context;
+     * binding `self` is a separate concern from the conversion of [convertToType], so this match keeps the widening default.
+     */
     val selfMatchContext = MatchContext(context, selfSubstitutions, false)
     if (!match(selfParamType, selfBindingTarget, selfMatchContext).orElse(true)) return elementType
     return substitute(elementType, selfSubstitutions, context) as? PyCallableType ?: elementType
@@ -1935,7 +1945,7 @@ object PyTypeChecker {
     if (container.isPositionalContainer && expectedArgumentType is PyPositionalVariadicType) {
       return match(
         expectedArgumentType, PyUnpackedTupleTypeImpl.create(actualArgumentTypes),
-        MatchContext(context, substitutions, false)
+        MatchContext(context, substitutions, false, )
       )
     }
     return match(expectedArgumentType, PyUnionType.union(actualArgumentTypes), context, substitutions)
@@ -2224,7 +2234,7 @@ object PyTypeChecker {
   @JvmStatic
   @ApiStatus.Internal
   fun convertToType(type: PyType?, superType: PyClassType, context: TypeEvalContext): PyType? {
-    val matchContext = MatchContext(context, GenericSubstitutions(), false)
+    val matchContext = MatchContext(context, GenericSubstitutions(), false, literalInference=true)
     val matched = match(superType, type, matchContext)
     if (matched.orElse(false)) {
       // There is a tricky problem with handling type parameter binds to Any. Namely, during matching list[Any] to Iterable[T@Iterable],
@@ -2381,13 +2391,22 @@ object PyTypeChecker {
     val context: TypeEvalContext,
     val mySubstitutions: GenericSubstitutions,
     val reversedSubstitutions: Boolean,
+    /**
+     * When `true`, a type variable inferred from an actual value keeps that value's literal type (e.g. `Literal[1]`);
+     * when `false` (the default), the literal is widened to its class (e.g. `int`) at the bind site.
+     *
+     * It is enabled only by [convertToType] (upcasting/conversion: iteration, `Sequence`/`Mapping` patterns,
+     * with-items), where preserving literals is desirable. Regular generic-call inference uses the default `false`
+     * and relies on widening here.
+     */
+    val literalInference: Boolean = false,
   ) {
     fun reverseSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, !reversedSubstitutions)
+      return MatchContext(context, mySubstitutions, !reversedSubstitutions, literalInference)
     }
 
     fun resetSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, false)
+      return MatchContext(context, mySubstitutions, false, literalInference)
     }
   }
 }

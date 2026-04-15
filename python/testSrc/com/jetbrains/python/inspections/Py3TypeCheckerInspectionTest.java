@@ -42,7 +42,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
           
-          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list[_T]', got 'int' instead">2</warning>)
+          Weak1(1, <warning descr="Expected type 'int', got 'Literal[\\"str\\"]' instead">"str"</warning>, <warning descr="Expected type 'list[_T]', got 'Literal[2]' instead">2</warning>)
           
           
           @attr.s
@@ -62,7 +62,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0, type=int)
               z = attr.ib(default=attr.Factory(list), type=typing.List[int])
           
-          Strong(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[str]' instead">["str"]</warning>)"""
+          Strong(1, <warning descr="Expected type 'int', got 'Literal[\\"str\\"]' instead">"str"</warning>, <warning descr="Expected type 'list[int]', got 'list[Literal[\\"str\\"]]' instead">["str"]</warning>)"""
       )
     );
   }
@@ -141,11 +141,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    class MyIntEnum(IntEnum):
                        OK = 1
-                       BAD = <warning descr="Expected type 'int', got 'str' instead">"string"</warning>
+                       BAD = <warning descr="Expected type 'int', got 'Literal[\\"string\\"]' instead">"string"</warning>
 
                    class MyStrEnum(StrEnum):
                        OK = "a"
-                       BAD = <warning descr="Expected type 'str', got 'int' instead">1</warning>
+                       BAD = <warning descr="Expected type 'str', got 'Literal[1]' instead">1</warning>
                    """);
   }
 
@@ -278,7 +278,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    # Should infer int
                    x: int = SimpleEnum.A.value
-                   y: str = <warning descr="Expected type 'str', got 'int' instead">SimpleEnum.B.value</warning>
+                   y: str = <warning descr="Expected type 'str', got 'Literal[2]' instead">SimpleEnum.B.value</warning>
 
                    # Enum with non-member first, then actual members
                    class E(Enum):
@@ -290,7 +290,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
                    # Should infer int from FIRST_MEMBER (ignoring HELPER_CONSTANT)
                    a: int = E.FIRST_MEMBER.value
-                   b: str = <warning descr="Expected type 'str', got 'int' instead">E.SECOND_MEMBER.value</warning>
+                   b: str = <warning descr="Expected type 'str', got 'Literal[43]' instead">E.SECOND_MEMBER.value</warning>
                    """);
   }
 
@@ -309,19 +309,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
       """
         def f(a, b, c): pass
 
-        f(*<warning descr="Expected an iterable, got 'int'">1</warning>)
-        f(*<warning descr="Expected an iterable, got 'int'">(1)</warning>)
-        (*<warning descr="Expected an iterable, got 'int'">1</warning>,)
-        [*<warning descr="Expected an iterable, got 'int'">1</warning>]
-        {*<warning descr="Expected an iterable, got 'int'">1</warning>}
-        {*<warning descr="Expected an iterable, got 'int'">(1)</warning>}
+        f(*<warning descr="Expected an iterable, got 'Literal[1]'">1</warning>)
+        f(*<warning descr="Expected an iterable, got 'Literal[1]'">(1)</warning>)
+        (*<warning descr="Expected an iterable, got 'Literal[1]'">1</warning>,)
+        [*<warning descr="Expected an iterable, got 'Literal[1]'">1</warning>]
+        {*<warning descr="Expected an iterable, got 'Literal[1]'">1</warning>}
+        {*<warning descr="Expected an iterable, got 'Literal[1]'">(1)</warning>}
 
         def g(**kwargs): pass
 
-        g(**<warning descr="Expected a mapping, got 'int'">1</warning>)
-        g(**<warning descr="Expected a mapping, got 'int'">(1)</warning>)
-        {**<warning descr="Expected a mapping, got 'int'">1</warning>}
-        {**<warning descr="Expected a mapping, got 'int'">(1)</warning>}
+        g(**<warning descr="Expected a mapping, got 'Literal[1]'">1</warning>)
+        g(**<warning descr="Expected a mapping, got 'Literal[1]'">(1)</warning>)
+        {**<warning descr="Expected a mapping, got 'Literal[1]'">1</warning>}
+        {**<warning descr="Expected a mapping, got 'Literal[1]'">(1)</warning>}
         """);
   }
 
@@ -350,9 +350,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText(
       """
         x: int
-        x, = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
-        (x,) = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
-        [x] = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
+        x, = <warning descr="Expected type 'int', got 'Literal[\\"a\\"]' instead">"a"</warning>,
+        (x,) = <warning descr="Expected type 'int', got 'Literal[\\"a\\"]' instead">"a"</warning>,
+        [x] = <warning descr="Expected type 'int', got 'Literal[\\"a\\"]' instead">"a"</warning>,
         """);
   }
 
@@ -416,7 +416,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText(
       """
         b: bool
-        *a, b = 1, 2, <warning descr="Expected type 'bool', got 'str' instead">"x"</warning>
+        *a, b = 1, 2, <warning descr="Expected type 'bool', got 'Literal[\\"x\\"]' instead">"x"</warning>
         """);
   }
 
@@ -461,7 +461,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             a: int
 
         n1: N = N(1)
-        n2: N = <warning descr="Expected type 'N', got 'tuple[int]' instead">(1,)</warning>
+        n2: N = <warning descr="Expected type 'N', got 'tuple[Literal[1]]' instead">(1,)</warning>
 
         class M(NamedTuple):
             a: int

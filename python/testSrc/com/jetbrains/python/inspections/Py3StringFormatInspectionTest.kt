@@ -189,7 +189,7 @@ class Py3StringFormatInspectionTest : PyInspectionTestCase() {
 
     def foo(s: LiteralString) -> None:
         f'{s:s}'
-        f'{s:<warning descr="Format code 'b' not supported for 'LiteralString'">b</warning>}'
+        f'{s:<warning descr="Format code 'b' not supported for 'str'">b</warning>}'
     """.trimIndent())
 
   override fun getInspectionClass() = PyStringFormatInspection::class.java

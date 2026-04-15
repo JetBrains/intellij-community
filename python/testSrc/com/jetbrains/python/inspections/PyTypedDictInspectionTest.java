@@ -170,7 +170,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    m.pop('based_on_book')
                    m.<warning descr="Key 'year' of TypedDict 'Horror' cannot be deleted">pop</warning>('year')
                    m.<warning descr="This operation might break TypedDict consistency">popitem</warning>()
-                   m.setdefault('based_on_book', <warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
+                   m.setdefault('based_on_book', <warning descr="Expected type 'bool', got 'Literal[42]' instead">42</warning>)""");
   }
 
   public void testUpdateMethods() {
@@ -184,9 +184,9 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    m = Horror(name='Alien', year=1979)
                    d={'name':'Garden State', 'year':2004}
                    m.update(d)
-                   m.update({'name':'Garden State', 'year':<warning descr="Expected type 'int | None', got 'str' instead">'2004'</warning>, <warning descr="TypedDict \\"Horror\\" cannot have key 'based_on'">'based_on'</warning>: 'book'})
-                   m.update(name=<warning descr="Expected type 'str', got 'int' instead">1984</warning>, year=1984, based_on_book=<warning descr="Expected type 'bool', got 'str' instead">'yes'</warning>)
-                   m.update([('name',<warning descr="Expected type 'str', got 'int' instead">1984</warning>), ('year',None)])""");
+                   m.update({'name':'Garden State', 'year':<warning descr="Expected type 'int | None', got 'Literal[\\"2004\\"]' instead">'2004'</warning>, <warning descr="TypedDict \\"Horror\\" cannot have key 'based_on'">'based_on'</warning>: 'book'})
+                   m.update(name=<warning descr="Expected type 'str', got 'Literal[1984]' instead">1984</warning>, year=1984, based_on_book=<warning descr="Expected type 'bool', got 'Literal[\\"yes\\"]' instead">'yes'</warning>)
+                   m.update([('name',<warning descr="Expected type 'str', got 'Literal[1984]' instead">1984</warning>), ('year',None)])""");
   }
 
   public void testDocString() {
@@ -230,7 +230,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                        year: int
                    movie = Movie()
                    movie2 = Movie2()
-                   movie['year'], movie2['year'] = <warning descr="Expected type 'int', got 'str' instead">'1984'</warning>, <warning descr="Expected type 'int', got 'str' instead">'1984'</warning>
+                   movie['year'], movie2['year'] = <warning descr="Expected type 'int', got 'Literal[\\"1984\\"]' instead">'1984'</warning>, <warning descr="Expected type 'int', got 'Literal[\\"1984\\"]' instead">'1984'</warning>
                    """);
   }
 

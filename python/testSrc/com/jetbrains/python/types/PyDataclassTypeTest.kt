@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -665,23 +665,23 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
     fun `initializing dataclass checks generated init arguments`() = test("""
       import dataclasses
       import typing
-      
+
       @dataclasses.dataclass
       class A:
           x: int
           y: str
           z: float = 0.0
-      
+
       A(1, "a")
       A("a", 1)
-      # │    └ WARNING Expected type 'str', got 'int' instead
-      # ^^^ WARNING Expected type 'int', got 'str' instead
+      # │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      # ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
 
       A(1, "a", 1.0)
       A("a", 1, "b")
-      # │    │  ^^^ WARNING Expected type 'float | int', got 'str' instead
-      # │    └ WARNING Expected type 'str', got 'int' instead
-      # ^^^ WARNING Expected type 'int', got 'str' instead
+      # │    │  ^^^ WARNING Expected type 'float | int', got 'Literal["b"]' instead
+      # │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      # ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
 
 
       @dataclasses.dataclass(init=True)
@@ -689,17 +689,17 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           x: int
           y: str
           z: float = 0.0
-      
+
       A2(1, "a")
       A2("a", 1)
-      #  │    └ WARNING Expected type 'str', got 'int' instead
-      #  ^^^ WARNING Expected type 'int', got 'str' instead
+      #  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #  ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
 
       A2(1, "a", 1.0)
       A2("a", 1, "b")
-      #  │    │  ^^^ WARNING Expected type 'float | int', got 'str' instead
-      #  │    └ WARNING Expected type 'str', got 'int' instead
-      #  ^^^ WARNING Expected type 'int', got 'str' instead
+      #  │    │  ^^^ WARNING Expected type 'float | int', got 'Literal["b"]' instead
+      #  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #  ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead
 
 
       @dataclasses.dataclass(init=False)
@@ -707,59 +707,59 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           x: int = 1
           y: str = "2"
           z: float = 0.0
-      
+
       B1(1)
       B1("1")
-      
+
       B1(1, "a")
       B1("a", 1)
-      
+
       B1(1, "a", 1.0)
       B1("a", 1, "b")
-      
-      
+
+
       @dataclasses.dataclass(init=False)
       class B2:
           x: int
           y: str
           z: float = 0.0
-      
+
           def __init__(self, x: int):
               self.x = x
               self.y = str(x)
               self.z = 0.0
-      
+
       B2(1)
-      B2("1") # WARNING Expected type 'int', got 'str' instead
-      
-      
+      B2("1") # WARNING Expected type 'int', got 'Literal["1"]' instead
+
+
       @dataclasses.dataclass
       class C1:
           a: typing.ClassVar[int]
           b: int
-      
+
       C1(1)
-      C1("1") # WARNING Expected type 'int', got 'str' instead
-      
-      
+      C1("1") # WARNING Expected type 'int', got 'Literal["1"]' instead
+
+
       @dataclasses.dataclass
       class C2:
           a: typing.ClassVar
           b: int
-      
+
       C2(1)
-      C2("1") # WARNING Expected type 'int', got 'str' instead
-      
-      
+      C2("1") # WARNING Expected type 'int', got 'Literal["1"]' instead
+
+
       @dataclasses.dataclass
       class D1:
           a: dataclasses.InitVar[int]
           b: int
-      
+
       D1(1, 2)
       D1("1", "2")
-      #  │    ^^^ WARNING Expected type 'int', got 'str' instead
-      #  ^^^ WARNING Expected type 'int', got 'str' instead
+      #  │    ^^^ WARNING Expected type 'int', got 'Literal["2"]' instead
+      #  ^^^ WARNING Expected type 'int', got 'Literal["1"]' instead
 
 
       @dataclasses.dataclass
@@ -769,32 +769,32 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           c: int = dataclasses.field(init=False)
           d: bytes = dataclasses.field(default=b"b")
           e: int = dataclasses.field(default_factory=int)
-      
+
       E1(1, "1")
       E1("1", 1)
-      #  │    └ WARNING Expected type 'str', got 'int' instead
-      #  ^^^ WARNING Expected type 'int', got 'str' instead
+      #  │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #  ^^^ WARNING Expected type 'int', got 'Literal["1"]' instead
 
       E1(1, "1", b"1")
       E1(b"1", "1", 1)
-      #  │          └ WARNING Expected type 'bytes', got 'int' instead
+      #  │          └ WARNING Expected type 'bytes', got 'Literal[1]' instead
       #  ^^^^ WARNING Expected type 'int', got 'bytes' instead
 
       E1(1, "1", b"1", 1)
       E1("1", b"1", "1", "1")
-      #  │    │     │    ^^^ WARNING Expected type 'int', got 'str' instead
-      #  │    │     ^^^ WARNING Expected type 'bytes', got 'str' instead
+      #  │    │     │    ^^^ WARNING Expected type 'int', got 'Literal["1"]' instead
+      #  │    │     ^^^ WARNING Expected type 'bytes', got 'Literal["1"]' instead
       #  │    ^^^^ WARNING Expected type 'str', got 'bytes' instead
-      #  ^^^ WARNING Expected type 'int', got 'str' instead
+      #  ^^^ WARNING Expected type 'int', got 'Literal["1"]' instead
 
 
       @dataclasses.dataclass
       class F1:
           foo = "bar"  # <- has no type annotation, so doesn't count.
           baz: str
-      
+
       F1("1")
-      F1(1) # WARNING Expected type 'str', got 'int' instead
+      F1(1) # WARNING Expected type 'str', got 'Literal[1]' instead
       """)
 
     @Test
@@ -822,7 +822,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       class C:
           attr: int = 1
       
-      C().attr = "foo" # WARNING Expected type 'int', got 'str' instead
+      C().attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
       """)
   }
 
@@ -838,7 +838,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           name:str
       
       asdict(MyDataClass(name="Bob"))
-      asdict("Bob") # WARNING Expected type 'DataclassInstance', got 'str' instead
+      asdict("Bob") # WARNING Expected type 'DataclassInstance', got 'Literal["Bob"]' instead
       """)
   }
 

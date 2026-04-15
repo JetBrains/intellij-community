@@ -13,7 +13,7 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
       """
         from typing import cast
 
-        <warning descr="Cast of type 'str' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
+        <warning descr="Cast of type 'Literal[\"a\"]' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
 
         cast(int, object())  # ok
         cast(object, 1)  # ok

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -114,13 +114,13 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
       UserId = NewType("UserId", int)
 
       a = UserId(42)
-      b = UserId("John") # WARNING Expected type 'int', got 'str' instead
+      b = UserId("John") # WARNING Expected type 'int', got 'Literal["John"]' instead
 
       KeyValue = NewType("KeyValue", Dict[str, int])
 
       KeyValue({"key": 13})
-      KeyValue(42) # WARNING Expected type 'dict[str, int]', got 'int' instead
-      KeyValue({"key1": "key2"}) # WARNING Expected type 'dict[str, int]', got 'dict[str, str]' instead
+      KeyValue(42) # WARNING Expected type 'dict[str, int]', got 'Literal[42]' instead
+      KeyValue({"key1": "key2"}) # WARNING Expected type 'dict[str, int]', got 'dict[Literal["key1"], Literal["key2"]]' instead
       """)
 
   @Test
@@ -135,8 +135,8 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
 
 
       get_user(UserId(5))
-      get_user("John") # WARNING Expected type 'UserId', got 'str' instead
-      get_user(4) # WARNING Expected type 'UserId', got 'int' instead
+      get_user("John") # WARNING Expected type 'UserId', got 'Literal["John"]' instead
+      get_user(4) # WARNING Expected type 'UserId', got 'Literal[4]' instead
       """)
 
   @Test

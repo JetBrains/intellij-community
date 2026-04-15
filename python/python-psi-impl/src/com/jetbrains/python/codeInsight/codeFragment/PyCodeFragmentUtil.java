@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNoneTypeKt;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -150,7 +151,7 @@ public final class PyCodeFragmentUtil {
 
   private static @Nullable PyType getType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PyTypedElement typedElement) {
-      PyType type = context.getType(typedElement);
+      PyType type = PyLiteralType.upcastLiteralToClass(context.getType(typedElement));
       if (type != null && !(type instanceof PyStructuralType) && !PyNoneTypeKt.isNoneType(type)) {
         return type;
       }

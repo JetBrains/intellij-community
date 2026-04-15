@@ -5,4 +5,4 @@ def f(x):
 
 
 def test():
-    f(<warning descr="Expected type 'Foo', got 'int' instead">10</warning>)
+    f(<warning descr="Expected type 'Foo', got 'Literal[10]' instead">10</warning>)

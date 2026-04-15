@@ -34,7 +34,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           x = property(lambda self: 'foo', None, None)
       c = C()
       expr = c.x
-      #└ TYPE str
+      #└ TYPE Literal["foo"]
       """)
 
     @Test
@@ -47,7 +47,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       c = C()
       expr = c.foo
-      # └ TYPE () -> int
+      # └ TYPE () -> Literal[0]
       """)
 
     @Test
@@ -77,7 +77,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               return 'foo'
       def f(d: D):
         expr = d.foo
-      # └ TYPE str
+      # └ TYPE Literal["foo"]
       """,
     )
 
@@ -91,7 +91,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               return 'foo'
       def f(d: D):
         expr = d.foo
-      # └ TYPE str
+      # └ TYPE Literal["foo"]
       """,
     )
 
@@ -194,7 +194,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           def __init__(self):
               self.foo = 3
               expr = self.foo
-      #       └ TYPE int
+      #       └ TYPE Literal[3]
       """)
 
     @Test
@@ -308,7 +308,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           attr: int
 
           def __init__(self):
-              self.attr = 'foo' # WARNING Expected type 'int', got 'str' instead
+              self.attr = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
 
       expr = C().attr
       #└ TYPE int
@@ -321,7 +321,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           attr: int
 
           def __init__(self):
-              self.attr = 'foo' # WARNING Expected type 'int', got 'str' instead
+              self.attr = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
 
           def m(self):
               expr = self.attr
@@ -567,7 +567,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               if self.attr is None:
                   self.attr = 42
               expr = self.attr
-      #       └ TYPE UnsafeUnion[None, Any] | int
+      #       └ TYPE UnsafeUnion[None, Any] | Literal[42]
       """)
 
     @Test
@@ -578,7 +578,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           if True:
               g().x = 'foo'
           expr = x
-      #   └ TYPE int
+      #   └ TYPE Literal[42]
       """)
   }
 
@@ -635,7 +635,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       class B(A):
           pass
       expr = B().foo(abc) # ERROR Unresolved reference 'abc'
-      #└ TYPE B | int
+      #└ TYPE B | Literal[1]
       """)
 
     @Test
@@ -801,7 +801,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           x = C()
 
       expr = x.method()
-      #│       ^^^^^^ WEAK-WARNING Member 'int' of 'int | C' does not have attribute 'method'
+      #│       ^^^^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
       #└ TYPE C
       """,
     )
@@ -1296,21 +1296,21 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           attr: int
           class_attr: ClassVar[int]
 
-      ClassAnnotations().attr = "foo" # WARNING Expected type 'int', got 'str' instead
-      ClassAnnotations.class_attr = "foo" # WARNING Expected type 'int', got 'str' instead
+      ClassAnnotations().attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
+      ClassAnnotations.class_attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
 
       class ClassAnnotationInstanceAssignment:
           attr: int
           def __init__(self, x):
               self.attr = x
 
-      ClassAnnotationInstanceAssignment(42).attr = "foo" # WARNING Expected type 'int', got 'str' instead
+      ClassAnnotationInstanceAssignment(42).attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
 
       class InstanceAnnotationAndAssignment:
           def __init__(self):
               self.attr: int = 42
 
-      InstanceAnnotationAndAssignment().attr = "foo" # WARNING Expected type 'int', got 'str' instead
+      InstanceAnnotationAndAssignment().attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
       """)
 
     @Test
@@ -1319,12 +1319,12 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       class A:
           a: str = "ok"
-          b: int = "string" # WARNING Expected type 'int', got 'str' instead
+          b: int = "string" # WARNING Expected type 'int', got 'Literal["string"]' instead
           c: Literal[True] = True
           d: Literal[True] = False # WARNING Expected type 'Literal[True]', got 'Literal[False]' instead
 
           annotated: int
-          annotated = "string" # WARNING Expected type 'int', got 'str' instead
+          annotated = "string" # WARNING Expected type 'int', got 'Literal["string"]' instead
       """)
 
     @Test
@@ -1341,7 +1341,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
 
       x = Test("foo")
-      x.member = 42 # WARNING Expected type 'str' (from '__set__'), got 'int' instead
+      x.member = 42 # WARNING Expected type 'str' (from '__set__'), got 'Literal[42]' instead
       """)
 
     @Test
@@ -1402,7 +1402,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           attr: list[T]
 
       c: C[int]
-      c.attr = ["foo"] # WARNING Expected type 'list[int]', got 'list[str]' instead
+      c.attr = ["foo"] # WARNING Expected type 'list[int]', got 'list[Literal["foo"]]' instead
       """)
 
     @Test
@@ -1424,7 +1424,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A[int] = A()
       a.attr += 1
-      a.attr += "s" # WARNING Expected type 'int', got 'str' instead
+      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
 
       class B:
           def __add__(self, other) -> int: ...
@@ -1457,7 +1457,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.attr += 1
-      a.attr += "s" # WARNING Expected type 'int', got 'str' instead
+      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       a.attr += C() # WARNING Expected type 'int' (from '__set__'), got 'str' instead
       """)
   }

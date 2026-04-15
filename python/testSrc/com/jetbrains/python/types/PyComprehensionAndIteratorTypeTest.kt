@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -151,7 +151,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           def __len__(self):
               return 10
       for expr in C():
-      #   └ TYPE int
+      #   └ TYPE Literal[0]
           pass
       """)
 
@@ -167,8 +167,8 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       def g(c):
           for expr in f(c):
-      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | str' instead
-      #       └ TYPE int | str | Any
+      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
+      #       └ TYPE int | LiteralString | Any
               pass
       """)
 
@@ -204,7 +204,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               return AIter()
       a = A()
       for expr in a:
-      #   └ TYPE int
+      #   └ TYPE Literal[5]
           print(expr)
       """)
 
@@ -219,7 +219,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               return AIter()
       a = A()
       for expr in a:
-      #   └ TYPE int
+      #   └ TYPE Literal[5]
           print(expr)
       """)
 
@@ -252,7 +252,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `iter on list of lists result`() = test("""
       expr = iter([[1, 2, 3]])
-      # └ TYPE Iterator[list[int]]
+      # └ TYPE Iterator[list[Literal[1, 2, 3]]]
       """)
 
     @Test
@@ -283,7 +283,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
     fun `iteration over regular str emits str not literal string`() = test("""
       s = "foo"
       for expr in s:
-      #   └ TYPE str
+      #   └ TYPE LiteralString
           pass
       """)
 
@@ -580,7 +580,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           return 0
 
       expr = f()
-      # └ TYPE Generator[str, Any, int]
+      # └ TYPE Generator[Literal["foo"], Any, Literal[0]]
       """)
 
     @TestFor(issues = ["PY-26643"])
@@ -604,14 +604,14 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           y = lambda x: (yield x)
           return 42
       expr = foo()
-      # └ TYPE int
+      # └ TYPE Literal[42]
       """)
 
     @TestFor(issues = ["PY-20710"])
     @Test
     fun `lambda generator`() = test("""
       expr = (lambda: (yield 1))()
-      # └ TYPE Generator[int, Any, Any]
+      # └ TYPE Generator[Literal[1], Any, Any]
       """)
 
     @TestFor(issues = ["PY-20710"])
@@ -621,7 +621,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield from (lambda: (yield 1))()
           return "foo"
       expr = g()
-      # └ TYPE Generator[int, Any, str]
+      # └ TYPE Generator[Literal[1], Any, Literal["foo"]]
       """)
 
     @TestFor(issues = ["PY-20710"])
@@ -663,7 +663,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       l = lambda: (yield from gen1()) or (yield from gen2())
       expr = l()
-      # └ TYPE Generator[int | str, str | Any, bool]
+      # └ TYPE Generator[int | Literal["str"], str | Any, bool | Literal[True]]
       """)
 
     // PY-6702
@@ -679,7 +679,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 3.14
 
       for expr in gen():
-      #   └ TYPE str | int | float
+      #   └ TYPE Literal["foo"] | int | float
           pass
       """)
 
@@ -707,7 +707,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       def b():
           expr = yield from a()
-      #   └ TYPE str
+      #   └ TYPE Literal["a"]
           return expr
       """)
 
@@ -722,7 +722,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           x = yield from g()
 
       for expr in f():
-      #   └ TYPE int
+      #   └ TYPE Literal[1]
           pass
       """)
 
@@ -864,7 +864,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
 
       def test():
-          return f((yield from a())) # WARNING Expected type 'int', got 'str' instead
+          return f((yield from a())) # WARNING Expected type 'int', got 'Literal["a"]' instead
       """)
 
     @Test
@@ -873,37 +873,37 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       # Fix incorrect YieldType
       def a() -> Iterable[str]:
-          yield 42 # WARNING Expected yield type 'str', got 'int' instead
+          yield 42 # WARNING Expected yield type 'str', got 'Literal[42]' instead
 
       def b() -> Iterator[str]:
-          yield 42 # WARNING Expected yield type 'str', got 'int' instead
+          yield 42 # WARNING Expected yield type 'str', got 'Literal[42]' instead
 
       def c() -> Generator[str, Any, int]:
-          yield 13 # WARNING Expected yield type 'str', got 'int' instead
+          yield 13 # WARNING Expected yield type 'str', got 'Literal[13]' instead
           return 42
 
       def c2() -> Generator[int, Any, str]:
           yield 13
-          return 42 # WARNING Expected type 'str', got 'int' instead
+          return 42 # WARNING Expected type 'str', got 'Literal[42]' instead
 
       # Suggest AsyncGenerator
-      async def d() -> Iterable[int]: # WARNING Expected type 'AsyncGenerator[int, Any]', got 'Iterable[int]' instead
+      async def d() -> Iterable[int]: # WARNING Expected type 'AsyncGenerator[Literal[42], Any]', got 'Iterable[int]' instead
           yield 42
 
-      async def e() -> Iterator[int]: # WARNING Expected type 'AsyncGenerator[int, Any]', got 'Iterator[int]' instead
+      async def e() -> Iterator[int]: # WARNING Expected type 'AsyncGenerator[Literal[42], Any]', got 'Iterator[int]' instead
           yield 42
 
-      async def f() -> Generator[int, str, None]: # WARNING Expected type 'AsyncGenerator[int, str]', got 'Generator[int, str, None]' instead
+      async def f() -> Generator[int, str, None]: # WARNING Expected type 'AsyncGenerator[Literal[13], str]', got 'Generator[int, str, None]' instead
           yield 13
 
       # Suggest sync Generator
-      def g() -> AsyncIterable[int]: # WARNING Expected type 'Generator[int, Any, None]', got 'AsyncIterable[int]' instead
+      def g() -> AsyncIterable[int]: # WARNING Expected type 'Generator[Literal[42], Any, None]', got 'AsyncIterable[int]' instead
           yield 42
 
-      def h() -> AsyncIterator[int]: # WARNING Expected type 'Generator[int, Any, None]', got 'AsyncIterator[int]' instead
+      def h() -> AsyncIterator[int]: # WARNING Expected type 'Generator[Literal[42], Any, None]', got 'AsyncIterator[int]' instead
           yield 42
 
-      def i() -> AsyncGenerator[int, str]: # WARNING Expected type 'Generator[int, str, None]', got 'AsyncGenerator[int, str]' instead
+      def i() -> AsyncGenerator[int, str]: # WARNING Expected type 'Generator[Literal[13], str, None]', got 'AsyncGenerator[int, str]' instead
           yield 13
 
       def j() -> Iterator[int]:
@@ -949,7 +949,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def x(b: bool) -> IntIterator:
         if b:
             yield 0
-        yield "str" # WARNING Expected yield type 'int', got 'str' instead
+        yield "str" # WARNING Expected yield type 'int', got 'Literal["str"]' instead
 
       class TIterator[T](Protocol):
           def __next__(self, /) -> T:
@@ -958,7 +958,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def y(b: bool) -> TIterator[int]:
           if b:
               yield 0
-          yield "str" # WARNING Expected yield type 'int', got 'str' instead
+          yield "str" # WARNING Expected yield type 'int', got 'Literal["str"]' instead
       """)
 
     @TestFor(issues = ["PY-20709"])
@@ -1029,7 +1029,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def foo():
           c = C()
           expr = await c
-      #   └ TYPE int
+      #   └ TYPE Literal[0]
       """)
 
     @Test
@@ -1040,7 +1040,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       def bar(y):
           expr = foo(y)
-      #   └ TYPE CoroutineType[Any, Any, int]
+      #   └ TYPE CoroutineType[Any, Any, Literal[0]]
       """)
 
     @Test
@@ -1051,7 +1051,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       async def bar(y):
           expr = await foo(y)
-      #   └ TYPE int
+      #   └ TYPE Literal[0]
       """)
 
     @Test
@@ -1080,7 +1080,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 42
       expr = asyncgen()
-      # └ TYPE AsyncGenerator[int, Any]
+      # └ TYPE AsyncGenerator[Literal[42], Any]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1089,7 +1089,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 42
       expr = asyncgen().__aiter__()
-      # └ TYPE AsyncIterator[int]
+      # └ TYPE AsyncIterator[Literal[42]]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1098,7 +1098,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 42
       expr = asyncgen().__anext__()
-      # └ TYPE Coroutine[Any, Any, int]
+      # └ TYPE Coroutine[Any, Any, Literal[42]]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1117,7 +1117,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 42
       expr = asyncgen().asend("hello")
-      #└ TYPE Coroutine[Any, Any, int]
+      #└ TYPE Coroutine[Any, Any, Literal[42]]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1138,7 +1138,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def run():
           async for i in asyncgen():
               expr = i
-      #       └ TYPE int
+      #       └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1148,7 +1148,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           {expr async for expr in asyncgen()}
-      #    └ TYPE int
+      #    └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1158,7 +1158,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           [expr async for expr in asyncgen()]
-      #    └ TYPE int
+      #    └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1168,7 +1168,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           {expr: expr ** 2 async for expr in asyncgen()}
-      #    └ TYPE int
+      #    └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1178,7 +1178,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           (expr async for expr in asyncgen())
-      #    └ TYPE int
+      #    └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1188,7 +1188,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           list(expr async for expr in asyncgen())
-      #        └ TYPE int
+      #        └ TYPE Literal[10]
       """)
 
     @TestFor(issues = ["PY-20770"])
@@ -1199,7 +1199,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           dataset = {data async for expr in asyncgen()
-      #              └ TYPE int
+      #              └ TYPE Literal[10]
                           async for data in asyncgen()
                           if check(data)}
       """)
@@ -1212,7 +1212,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield 10
       async def run():
           dataset = {expr async for line in asyncgen()
-      #              └ TYPE int
+      #              └ TYPE Literal[10]
                           async for expr in asyncgen()
                           if check(expr)}
       """)
@@ -1251,7 +1251,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def run():
           a = A()
           async for expr in a:
-      #             └ TYPE int
+      #             └ TYPE Literal[5]
               print(expr)
       """)
 
@@ -1448,7 +1448,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               yield 42
 
       expr = Specific().get()
-      # └ TYPE AsyncGenerator[int, Any]
+      # └ TYPE AsyncGenerator[Literal[42], Any]
       """)
 
     @TestFor(issues = ["PY-40458"])
@@ -1547,7 +1547,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
 
       async def run():
-          for i in asyncgen(): # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
+          for i in asyncgen(): # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
               print(i)
       """)
 
@@ -1576,16 +1576,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def gen():
           yield 10
       async def run():
-          {i async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
-          [i async for i in gen()] # WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
-          {i: i ** 2 async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
-          (i ** 2 async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
-          list(i async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
+          {i async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
+          [i async for i in gen()] # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
+          {i: i ** 2 async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
+          (i ** 2 async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
+          list(i async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
 
           dataset = {data async for line in gen()
-      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
+      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
                           async for data in gen()
-      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[int, Any, None]' instead
+      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Any, None]' instead
                           if check(data)}
       """)
 
@@ -1596,16 +1596,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 10
       async def run():
-          {i for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
-          [i for i in asyncgen()] # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
-          {i: i ** 2 for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
-          (i ** 2 for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
-          list(i for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
+          {i for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
+          [i for i in asyncgen()] # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
+          {i: i ** 2 for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
+          (i ** 2 for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
+          list(i for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
 
           dataset = {data for line in asyncgen()
-      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
+      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
                           for data in asyncgen()
-      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead
+      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Any]' instead
                           if check(data)}
       """)
 
@@ -1643,7 +1643,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
 
       async_for(async_iter())
-      async_for([1, 2, 3]) # WARNING Type 'list[int]' doesn't have expected attribute '__aiter__'
+      async_for([1, 2, 3]) # WARNING Type 'list[Literal[1, 2, 3]]' doesn't have expected attribute '__aiter__'
       """)
   }
 

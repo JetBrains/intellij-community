@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass list = cache.getClass("list");
     if (resultExpr != null && list != null) {
-      final PyType elementType = context.getType(resultExpr);
+      final PyType elementType = PyLiteralType.upcastLiteralToClass(resultExpr.getType(context));
       return new PyCollectionTypeImpl(list, false, Collections.singletonList(elementType));
     }
     return cache.getListType();

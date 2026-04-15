@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -68,7 +68,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           B = val
       
       expr = Example.foo, Example.bar, Example.A, Example.B
-      # └ TYPE tuple[() -> int, (x: int) -> None, Literal[Example.A], Literal[Example.B]]
+      # └ TYPE tuple[() -> Literal[1], (x: int) -> None, Literal[Example.A], Literal[Example.B]]
       """)
 
     @Test
@@ -292,7 +292,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
       expr = IDE_TO_CLEAR_SETTINGS_FOR.value
-      # └ TYPE str
+      # └ TYPE Literal["PyCharm"]
       """)
 
     @Test
@@ -309,7 +309,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       res = f()
       expr = res.value
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """)
 
     @Test
@@ -322,7 +322,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           TWO = 2
       
       expr = MyEnum['ONE'].value
-      # └ TYPE int
+      # └ TYPE Literal[1, 2]
       """)
 
     @Test
@@ -335,7 +335,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           TWO = 2
       
       expr = MyEnum(1).value
-      #└ TYPE int
+      #└ TYPE Literal[1, 2]
       """)
 
     @Test
@@ -349,7 +349,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       def f(p: MyEnum):
           expr = p.value
-      #   └ TYPE int
+      #   └ TYPE Literal[1, 2]
       """)
 
     @Test
@@ -369,7 +369,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       from mod import MyEnum
       
       expr = MyEnum['ONE'].value
-      # └ TYPE int
+      # └ TYPE Literal[1, 2]
       """,
       "mod.py" to """
         import enum
@@ -391,7 +391,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         BLUE = 2, "blue"
       
       expr = Color.BLUE.value
-      # └ TYPE tuple[int, str]
+      # └ TYPE tuple[Literal[2], Literal["blue"]]
       """)
   }
 
@@ -519,7 +519,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     fun `iterate enum yields members`() = test("""
       from enum import Enum
       class Foo(str, Enum):
-          ONE = 1 # WARNING Expected type 'str', got 'int' instead
+          ONE = 1 # WARNING Expected type 'str', got 'Literal[1]' instead
       for expr in Foo:
       #   └ TYPE Foo
           pass
@@ -662,13 +662,13 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-80837"])
     fun `enum attribute default value type is checked`() = test("""
       from enum import Enum, IntEnum
-      
+
       class MyIntEnum(IntEnum):
           OK = 1
           BAD = "string"
-      #         ^^^^^^^^ WARNING Expected type 'int', got 'str' instead
-      #         ^^^^^^^^ WARNING Type 'str' is not assignable to declared type 'int'
-      
+      #         ^^^^^^^^ WARNING Expected type 'int', got 'Literal["string"]' instead
+      #         ^^^^^^^^ WARNING Type 'Literal["string"]' is not assignable to declared type 'int'
+
       class MyEnum(Enum):
           OK = 1
           BAD = "string" # WARNING Expected type 'int', got 'str' instead

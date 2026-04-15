@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Disabled
@@ -34,7 +36,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr: Literal[] = False
       #│            └ ERROR Expression expected
-      #└ TYPE bool
+      #└ TYPE Literal[False]
       """)
 
     @Test
@@ -43,14 +45,14 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr: Literal = False
       #│    ^^^^^^^ WARNING 'Literal' must have at least one parameter
-      #└ TYPE bool
+      #└ TYPE Literal[False]
       """)
 
     @Test
     @TestFor(issues = ["PY-35235"])
     fun `bool inferred without Literal annotation`() = test("""
       expr = False
-      #└ TYPE bool
+      #└ TYPE Literal[False]
       """)
 
     @Test
@@ -77,7 +79,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr = 20  # type: Literal[10.5]
       #│                         ^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-      #└ TYPE int
+      #└ TYPE Literal[20]
       """)
 
     @Test
@@ -86,7 +88,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr = 20  # type: Literal[10j]
       #│                         ^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
-      #└ TYPE int
+      #└ TYPE Literal[20]
       """)
 
     @Test
@@ -95,7 +97,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr = 20  # type: Literal[]
       # │                        └ ERROR Expression expected
-      # └ TYPE int
+      # └ TYPE Literal[20]
       """)
 
     @Test
@@ -104,7 +106,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr = 20  # type: Literal
       #│                 ^^^^^^^ WARNING 'Literal' must have at least one parameter
-      #└ TYPE int
+      #└ TYPE Literal[20]
       """)
 
     @Test
@@ -112,7 +114,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     fun `int inferred without Literal type comment`() = test("""
       from typing_extensions import Literal
       expr = 20
-      #└ TYPE int
+      #└ TYPE Literal[20]
       """)
 
     @Test
@@ -274,8 +276,8 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       def foo(p1):
           pass
-      
-      a = "a"
+
+      a: str = "a"
       expr = foo(a)
       #└ TYPE int
       """,
@@ -561,9 +563,13 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    fun `list of literal and literalstring widens to union`() = test("""
+    fun `list of literal and literalstring widens to union`() = test(
+      // weak warnings disabled: with literal inference on, the `|` chain in the annotation
+      // triggers a spurious `__or__` weak-warning unrelated to the inferred element type
+      TestOptions(enableWeakWarnings = false),
+      """
       from typing import Literal, LiteralString
-      
+
       e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
       expr = [e]
       #└ TYPE list[int | str]
@@ -593,9 +599,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    fun `set of literal and literalstring widens to union`() = test("""
+    fun `set of literal and literalstring widens to union`() = test(
+      // weak warnings disabled: see `list of literal and literalstring widens to union`
+      TestOptions(enableWeakWarnings = false),
+      """
       from typing import Literal, LiteralString
-      
+
       e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
       expr = {e}
       #└ TYPE set[int | str]
@@ -630,9 +639,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-77937"])
-    fun `dict of literal unions widens to unions`() = test("""
+    fun `dict of literal unions widens to unions`() = test(
+      // weak warnings disabled: see `list of literal and literalstring widens to union`
+      TestOptions(enableWeakWarnings = false),
+      """
       from typing import Literal, LiteralString
-      
+
       k: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
       v: Literal[1, "ab"] | LiteralString | Literal["x"] = 1
       expr = {k: v}
@@ -694,11 +706,11 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `literal widens to int when imported via star`() = test(
+    fun `literal preserved when imported via star`() = test(
       """
       from m import *
       expr = foo
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """,
       "m.py" to "foo = 1",
     )
@@ -845,5 +857,147 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           return "foo" if condition1() else literal_string  # OK
       """,
     )
+  }
+
+  @Nested
+  inner class LiteralInferenceForLiteralExpressions {
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `int literal expression inferred as literal by default`() = test("""
+      expr = 1
+      #└ TYPE Literal[1]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `bool literal expression inferred as literal by default`() = test("""
+      expr = True
+      #└ TYPE Literal[True]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `str literal expression inferred as literal by default`() = test("""
+      expr = "s"
+      #└ TYPE Literal["s"]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `literal inference for literal expressions can be disabled by registry`() {
+      val disposable = Disposer.newDisposable("PY-46450 literal-types-for-literals registry")
+      try {
+        Registry.get("python.typing.literal.types.for.literals").setValue(false, disposable)
+        test("""
+          expr = 1
+          #└ TYPE int
+          """)
+      }
+      finally {
+        Disposer.dispose(disposable)
+      }
+    }
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `class attribute accessed via self is not over-narrowed to literal`() = test(
+      // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
+      TestOptions(enablePyAnyType = false),
+      """
+      class A:
+          a = 1
+          def f(self):
+              expr = self.a
+      #       └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `instance attribute accessed via self is not over-narrowed to literal`() = test(
+      // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
+      TestOptions(enablePyAnyType = false),
+      """
+      class A:
+          def __init__(self):
+              self.foo = 42
+
+          def f(self):
+              expr = self.foo
+      #       └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `class attribute accessed via class is not over-narrowed to literal`() = test(
+      // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
+      TestOptions(enablePyAnyType = false),
+      """
+      class A:
+          a = 1
+      expr = A.a
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `literal argument to generic constructor widens type parameter`() = test("""
+      class A[T]:
+          def __init__(self, t: T, *x_): ...
+      expr = A(1, 1)
+      #└ TYPE A[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `literal in list comprehension widens to int`() = test("""
+      def f(): return 1
+
+      expr = [f() for x in []]
+      #└ TYPE list[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    fun `literal in tuple from generator stays literal`() = test(
+      // enablePyAnyType=false: generator element inference still degrades to Unknown under the py-any migration
+      TestOptions(enablePyAnyType = false),
+      """
+      def f():
+          return 1
+
+      expr = tuple(f() for x in [])
+      #└ TYPE tuple[Literal[1], ...]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-80353"])
+    @Disabled("PY-80353: literal in class body is inferred as int instead of Literal[1]")
+    fun `literal in class body inferred as literal`() = test("""
+      class A:
+          a = 1
+          expr = a
+      #       └ TYPE Literal[1]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    @Disabled("PY-46450: TypeVarTuple captures the widened type, yielding tuple[[int]] instead of tuple[Literal[1]]")
+    fun `literal captured by TypeVarTuple stays literal`() = test("""
+      def f[*Ts](*t: *Ts) -> tuple[*Ts]: ...
+      expr = f(1)
+      #└ TYPE tuple[Literal[1]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-46450"])
+    @Disabled("PY-46450: literal TypeVar bound is not propagated, yielding list[[Any]] instead of list[int]")
+    fun `literal TypeVar bound propagates to result`() = test("""
+      from typing import Literal
+
+      def f[T: Literal[1]](t: T) -> list[T]: ...
+      expr = f(1)
+      #└ TYPE list[int]
+      """)
   }
 }

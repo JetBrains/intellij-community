@@ -404,11 +404,11 @@ public class PyNumericLiteralTest extends PyTestCase {
   }
 
   private void doTestIntegerLiteral(@NotNull String text, int expected) {
-    doTestLiteral(text, true, Long.valueOf(expected), BigInteger.valueOf(expected), BigDecimal.valueOf(expected), "int");
+    doTestLiteral(text, true, Long.valueOf(expected), BigInteger.valueOf(expected), BigDecimal.valueOf(expected), "Literal[" + expected + "]");
   }
 
   private void doTestMoreThanLongIntegerLiteral(@NotNull String text, @NotNull BigInteger expected) {
-    doTestLiteral(text, true, null, expected, new BigDecimal(expected), "int");
+    doTestLiteral(text, true, null, expected, new BigDecimal(expected), "Literal[" + expected + "]");
   }
 
   private void doTestFloatLiteral(@NotNull String text, int expectedInt, @NotNull BigDecimal expectedDecimal) {

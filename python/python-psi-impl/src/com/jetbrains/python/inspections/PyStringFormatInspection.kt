@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
@@ -713,7 +714,7 @@ class PyStringFormatInspection : PyInspection() {
 
       val reportElement = formatPart.findElementAt(reportOffset) ?: formatPart
       val incompatibleTypeName =
-        incompatibleTypes.joinToString(" | ") { PythonDocumentationProvider.getTypeName(it, myTypeEvalContext) }
+        incompatibleTypes.joinToString(" | ") { PythonDocumentationProvider.getTypeName(PyLiteralType.upcastLiteralToClass(it), myTypeEvalContext) }
       registerProblem(reportElement, PyPsiBundle.message("INSP.str.format.code.not.supported", reportChar, incompatibleTypeName))
     }
 

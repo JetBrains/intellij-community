@@ -43,7 +43,7 @@ class PlatformWayJUnit5CodeInsightTest {
   @Test
   fun testAssignIntToStr() {
     codeInsightFixture.configureByText("test.py",
-                       "x: str = <warning descr=\"Expected type 'str', got 'int' instead\">3</warning>")
+                       "x: str = <warning descr=\"Expected type 'str', got 'Literal[3]' instead\">3</warning>")
     codeInsightFixture.checkHighlighting()
   }
 

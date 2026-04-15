@@ -16,6 +16,6 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
     class B(A, a=123): ...
     
     class C(A, a="str"): ...
-    #          ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+    #          ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
     """)
 }

@@ -600,6 +600,8 @@
                  description="Maximum statement list size as a percentage of the containing file for incremental reparse."/>
     <registryKey key="python.strict.type.narrow" defaultValue="false"
                  description="Allows narrowing types exhaustively to Never"/>
+    <registryKey key="python.typing.literal.types.for.literals" defaultValue="true"
+                 description="Infer literal types (e.g. Literal[42]) for integer, boolean and string literal expressions"/>
     <registryKey key="python.typing.soft.keys.type.eval.context" defaultValue="false"
                  description="Enable soft-key caching for TypeEvalContext"/>
     <registryKey key="python.typing.weak.keys.type.eval.context" defaultValue="true"

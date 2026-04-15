@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.StackOverflowPreventedException
@@ -1302,7 +1302,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
     def test():
-        f("string") # WARNING Type 'str' doesn't have expected attributes 'foo', 'bar'
+        f("string") # WARNING Type 'Literal["string"]' doesn't have expected attributes 'foo', 'bar'
     """)
 
   @Test
@@ -1312,8 +1312,8 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
         print(x.foo)
 
 
-    print(f(True)) # WARNING Type 'bool' doesn't have expected attribute 'foo'
-    print(f(0)) # WARNING Type 'int' doesn't have expected attribute 'foo'
+    print(f(True)) # WARNING Type 'Literal[True]' doesn't have expected attribute 'foo'
+    print(f(0)) # WARNING Type 'Literal[0]' doesn't have expected attribute 'foo'
     print(f(3.14)) # WARNING Type 'float' doesn't have expected attribute 'foo'
     """)
 

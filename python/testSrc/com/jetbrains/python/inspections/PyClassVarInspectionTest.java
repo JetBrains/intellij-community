@@ -354,7 +354,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               from typing import ClassVar
                                               
                                               class Clazz:
-                                                  a: ClassVar[int] = <warning descr="Expected type 'int', got 'str' instead">"abc"</warning>
+                                                  a: ClassVar[int] = <warning descr="Expected type 'int', got 'Literal[\\"abc\\"]' instead">"abc"</warning>
                                                   b: ClassVar[int] = <warning descr="Expected type 'int', got 'float' instead">1.0</warning>
                                                   d: ClassVar[list[str]] = <warning descr="Expected type 'list[str]', got 'list[int]' instead">[1, 2]</warning>
                                                   e: ClassVar[dict[str, int]] = <warning descr="Expected type 'dict[str, int]', got 'dict[str, str]' instead">{"a": "b"}</warning>

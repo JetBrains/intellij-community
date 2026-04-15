@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -127,7 +127,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               x = 1 if c else 'foo'
               self.assertIsInstance(x, int)
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -259,7 +259,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               print(x)
           else:
               expr = x
-      #       └ TYPE str
+      #       └ TYPE Literal["foo"]
       """)
 
     @Test
@@ -276,7 +276,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     fun `isinstance in conditional expression`() = test("""
       def f(x):
           expr = x if isinstance(x, str) else 10
-      #   └ TYPE str | int
+      #   └ TYPE str | Literal[10]
       """)
 
     @Test
@@ -362,7 +362,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = 1 if c else None
           if x is not None:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -371,7 +371,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = 1 if c else None
           if None is not x:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -380,7 +380,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = 1 if c else None
           if not x is None:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -389,7 +389,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = 1 if c else None
           if not None is x:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -470,7 +470,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               print(x)
           else:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -481,7 +481,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               print(x)
           else:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -524,7 +524,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           if x is not None:
               pass
       expr = x
-      #└ TYPE str
+      #└ TYPE Literal["foo"]
       """)
 
     @Test
@@ -543,7 +543,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       a = 1
       if a is a:
          expr = a
-      #   └ TYPE int
+      #   └ TYPE Literal[1]
       """)
 
     @Test
@@ -635,7 +635,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           x = 1 if c else None
           if x is not None:
               expr = x
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -937,7 +937,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     fun `not isinstance float narrows int`() = test("""
       if not isinstance((x := 42), float):
           expr = x
-      #   └ TYPE int
+      #   └ TYPE Literal[42]
       """)
 
     @Test
@@ -1145,7 +1145,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     fun `walrus callable`() = test("""
       if callable(a := 42):
           expr = a
-      #   └ TYPE int
+      #   └ TYPE Literal[42]
       """)
 
     @Test
@@ -1253,7 +1253,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           val = 1
           if x and b:
               expr = val
-      #       └ TYPE int
+      #       └ TYPE Literal[1]
       """)
 
     @Test
@@ -1271,7 +1271,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               val = 1
           if b:
               expr = val
-      #       └ TYPE list[str] | int
+      #       └ TYPE list[str] | Literal[1]
       """)
 
     @Test

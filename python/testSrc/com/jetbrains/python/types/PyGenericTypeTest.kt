@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -570,13 +570,13 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-27627"])
     fun `explicitly parametrized generic class instance typization priority`() = test("""
       from typing import TypeVar, Generic, List
-      
+
       T = TypeVar('T')
       class Node(Generic[T]):
           def __init__(self, children : List[T]):
               self.children = children
       expr = Node[str]([1,2,3])
-      #│               ^^^^^^^ WARNING Expected type 'list[str]' (matched generic type 'list[T]'), got 'list[int]' instead
+      #│               ^^^^^^^ WARNING Expected type 'list[str]' (matched generic type 'list[T]'), got 'list[Literal[1, 2, 3]]' instead
       #└ TYPE Node[str]
       """)
 
@@ -1734,7 +1734,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     F = TypeVar('F', bound=int)
 
     def deco(func: F) -> F:
-        return "" # WARNING Expected type 'F ≤: int', got 'str' instead
+        return "" # WARNING Expected type 'F ≤: int', got 'Literal[""]' instead
     """)
 
   @Test
@@ -1773,7 +1773,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
             pass
 
     def foo(cb: Callback[int]):
-        cb("42") # WARNING Expected type 'int' (matched generic type '_T'), got 'str' instead
+        cb("42") # WARNING Expected type 'int' (matched generic type '_T'), got 'Literal["42"]' instead
     """)
 
   @Test

@@ -32,7 +32,7 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   }
 
   public void testSuggestUniqueNames() {  // PY-4409
-    doTestSuggestions(PyExpression.class, "S1");
+    doTestSuggestions(PyExpression.class, "L1");
   }
 
   public void testSuggestUniqueNamesGlobalScope() {  // PY-4409

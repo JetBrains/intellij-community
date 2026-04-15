@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -302,7 +302,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def foo(p1):
           pass
 
-      a = "a"
+      a: str = "a"
       expr = foo(a)
       #└ TYPE int
       """,
@@ -850,10 +850,10 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
       t = Test()
       t.member = "abc"
-      t.member = 42 # WARNING Expected type 'str' (from '__set__'), got 'int' instead
+      t.member = 42 # WARNING Expected type 'str' (from '__set__'), got 'Literal[42]' instead
       p = Prod()
-      p.member = "abc" # WARNING Expected type 'LocalizedString' (from '__set__'), got 'str' instead
-      p.member = 42 # WARNING Expected type 'LocalizedString' (from '__set__'), got 'int' instead
+      p.member = "abc" # WARNING Expected type 'LocalizedString' (from '__set__'), got 'Literal["abc"]' instead
+      p.member = 42 # WARNING Expected type 'LocalizedString' (from '__set__'), got 'Literal[42]' instead
       """)
 
     @Test
@@ -1027,11 +1027,11 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
     foo("str")
     foo(5)
-    foo([5]) # WARNING No overload of 'foo' matches the arguments. Argument types: (list[int]). Expected one of: (p: str), (p: int)
+    foo([5]) # WARNING No overload of 'foo' matches the arguments. Argument types: (list[Literal[5]]). Expected one of: (p: str), (p: int)
 
     bar("str")
     bar(5)
-    bar([5]) # WARNING No overload of 'bar' matches the arguments. Argument types: (list[int]). Expected one of: (p: str), (p: int)
+    bar([5]) # WARNING No overload of 'bar' matches the arguments. Argument types: (list[Literal[5]]). Expected one of: (p: str), (p: int)
     """,
     "module.pyi" to """
       from typing import overload

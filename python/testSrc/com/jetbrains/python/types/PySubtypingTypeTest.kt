@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -23,10 +23,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-24832"])
     fun `assignment with annotation`() = test("""
       def f():
-          x1: int = 'foo' # WARNING Expected type 'int', got 'str' instead
+          x1: int = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
           x2: str = 'bar'
           x3: int = 0
-          x4: str = 1 # WARNING Expected type 'str', got 'int' instead
+          x4: str = 1 # WARNING Expected type 'str', got 'Literal[1]' instead
       """)
 
     @Test
@@ -34,15 +34,15 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `reassignment respects declared type`() = test("""
       def f1():
           x: int = 0
-          x = 'foo' # WARNING Expected type 'int', got 'str' instead
+          x = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
           x = 1
-          x = 'bar' # WARNING Expected type 'int', got 'str' instead
+          x = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
           y: str = 'foo'
           y = 'bar'
-          y = 0 # WARNING Expected type 'str', got 'int' instead
+          y = 0 # WARNING Expected type 'str', got 'Literal[0]' instead
           z: int
           z: str
-          z = 1 # WARNING Expected type 'str', got 'int' instead
+          z = 1 # WARNING Expected type 'str', got 'Literal[1]' instead
           z = "aba"
 
 
@@ -64,13 +64,13 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def outer():
           global v_global
-          v_global = "abb" # WARNING Expected type 'int', got 'str' instead
+          v_global = "abb" # WARNING Expected type 'int', got 'Literal["abb"]' instead
 
           v: int
 
           def inner():
               nonlocal v
-              v = "abb" # WARNING Expected type 'int', got 'str' instead
+              v = "abb" # WARNING Expected type 'int', got 'Literal["abb"]' instead
       """)
 
     @Test
@@ -78,7 +78,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `type declaration and assignment`() = test("""
       def f():
           x: int
-          x = 'foo' # WARNING Expected type 'int', got 'str' instead
+          x = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
           y: str
           y = 'bar'
       """)
@@ -92,24 +92,24 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       class C:
           x: int
           y: int = 0
-          z: int = 'foo' # WARNING Expected type 'int', got 'str' instead
+          z: int = 'foo' # WARNING Expected type 'int', got 'Literal["foo"]' instead
           class_var: ClassVar[int]
 
           def f(self):
               self.x = 1
-              self.x = 'bar' # WARNING Expected type 'int', got 'str' instead
+              self.x = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
               self.y = 1
-              self.y = 'bar' # WARNING Expected type 'int', got 'str' instead
+              self.y = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
               self.z = 1
-              self.z = 'bar' # WARNING Expected type 'int', got 'str' instead
+              self.z = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
 
               self.class_var = 1
       #       ^^^^^^^^^^^^^^ WARNING Cannot assign to class variable 'class_var' via instance
               self.class_var = 'bar'
-      #       │                ^^^^^ WARNING Expected type 'int', got 'str' instead
+      #       │                ^^^^^ WARNING Expected type 'int', got 'Literal["bar"]' instead
       #       ^^^^^^^^^^^^^^ WARNING Cannot assign to class variable 'class_var' via instance
               C.class_var = 1
-              C.class_var = 'bar' # WARNING Expected type 'int', got 'str' instead
+              C.class_var = 'bar' # WARNING Expected type 'int', got 'Literal["bar"]' instead
       """)
 
     @Test
@@ -135,7 +135,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
         a += 1
 
         a = A()
-        a += "a" # WARNING Expected type 'int', got 'str' instead
+        a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
         """)
     }
 
@@ -148,7 +148,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       a += 1
 
       a = A()
-      a += "a" # WARNING Expected type 'int', got 'str' instead
+      a += "a" # WARNING Expected type 'int', got 'Literal["a"]' instead
       """)
 
     @Test
@@ -180,7 +180,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.i += 1
-      a.i += "s" # WARNING Expected type 'int', got 'str' instead
+      a.i += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """)
 
     @Test
@@ -191,7 +191,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.a += 1
-      a.a += "s" # WARNING Expected type 'int', got 'str' instead
+      a.a += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
       """)
   }
 
@@ -211,7 +211,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       t = Test()
       t.member = "str"
-      t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'int' instead
+      t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'Literal[123]' instead
       t.member = list # WARNING Expected type 'str' (from '__set__'), got 'type[list]' instead
       """)
 
@@ -228,7 +228,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       t = Test()
       t.member = "str"
-      t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'int' instead
+      t.member = 123 # WARNING Expected type 'str' (from '__set__'), got 'Literal[123]' instead
       t.member = list # WARNING Expected type 'str' (from '__set__'), got 'type[list]' instead
       """)
 
@@ -261,7 +261,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def f(
           a: str = "ok",
-          b: int = "not ok", # WARNING Expected type 'int', got 'str' instead
+          b: int = "not ok", # WARNING Expected type 'int', got 'Literal["not ok"]' instead
           c: Literal[True] = True,
           d: Literal[True] = False # WARNING Expected type 'Literal[True]', got 'Literal[False]' instead
       ): ...
@@ -581,7 +581,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           return v2
 
 
-      _ = bar(1, "a") # WARNING Expected type 'int' (matched generic type 'T ≤: int'), got 'str' instead
+      _ = bar(1, "a") # WARNING Expected type 'int' (matched generic type 'T ≤: int'), got 'Literal["a"]' instead
       """)
 
     @Test
@@ -976,7 +976,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       from struct import Struct
 
       s = Struct('c')
-      s.unpack(' ') # WARNING Expected type 'Buffer', got 'str' instead
+      s.unpack(' ') # WARNING Expected type 'Buffer', got 'Literal[" "]' instead
       s.unpack(b' ')
       """)
 
@@ -1001,9 +1001,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `builtin operators and numerics`() = test("""
       def test_operators():
-          print(2 + 'foo') # WARNING Expected type 'int', got 'str' instead
-          print(b'foo' + 'bar') # WARNING Expected type 'Buffer', got 'str' instead
-          print(b'foo' + 3) # WARNING Expected type 'Buffer', got 'int' instead
+          print(2 + 'foo') # WARNING Expected type 'int', got 'Literal["foo"]' instead
+          print(b'foo' + 'bar') # WARNING Expected type 'Buffer', got 'Literal["bar"]' instead
+          print(b'foo' + 3) # WARNING Expected type 'Buffer', got 'Literal[3]' instead
 
 
       def test_numerics():
@@ -1014,9 +1014,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           float(False)
           complex(False)
           divmod(False, False)
-          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, str). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])
+          divmod(b'foo', 'bar') # WARNING No overload of 'divmod' matches the arguments. Argument types: (bytes, Literal["bar"]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])
           pow(False, True)
-          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (bool, str). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
+          round(False, 'foo') # WARNING No overload of 'round' matches the arguments. Argument types: (Literal[False], Literal["foo"]). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)
       """)
 
     @Test
@@ -1069,9 +1069,9 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     fun `typing Annotated type`() = test("""
       from typing import Annotated
       A = Annotated[bool, 'Some constraint']
-      a: A = 'str' # WARNING Expected type 'bool', got 'str' instead
+      a: A = 'str' # WARNING Expected type 'bool', got 'Literal["str"]' instead
       b: A = True
-      c: Annotated[bool, 'Some constraint'] = 'str' # WARNING Expected type 'bool', got 'str' instead
+      c: Annotated[bool, 'Some constraint'] = 'str' # WARNING Expected type 'bool', got 'Literal["str"]' instead
       d: Annotated[str, 'Some constraint'] = 'str'
       """)
 
@@ -1082,7 +1082,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       from annotated import A
 
 
-      a: A = 'str' # WARNING Expected type 'int', got 'str' instead
+      a: A = 'str' # WARNING Expected type 'int', got 'Literal["str"]' instead
       a1: A = 42
       """,
       "annotated.py" to """
@@ -1147,22 +1147,22 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def expects_builtin_list(xs: list[int]):
           expects_typing_List(xs)
-          expects_typing_List(['a']) # WARNING Expected type 'list[int]', got 'list[str]' instead
+          expects_typing_List(['a']) # WARNING Expected type 'list[int]', got 'list[Literal["a"]]' instead
 
 
       def expects_typing_List(xs: List[int]):
           expects_builtin_list(xs)
-          expects_builtin_list(['a']) # WARNING Expected type 'list[int]', got 'list[str]' instead
+          expects_builtin_list(['a']) # WARNING Expected type 'list[int]', got 'list[Literal["a"]]' instead
 
 
       def expects_builtin_set(xs: set[int]):
           expects_typing_Set(xs)
-          expects_typing_Set({'a'}) # WARNING Expected type 'set[int]', got 'set[str]' instead
+          expects_typing_Set({'a'}) # WARNING Expected type 'set[int]', got 'set[Literal["a"]]' instead
 
 
       def expects_typing_Set(xs: Set[int]):
           expects_builtin_set(xs)
-          expects_builtin_set({'a'}) # WARNING Expected type 'set[int]', got 'set[str]' instead
+          expects_builtin_set({'a'}) # WARNING Expected type 'set[int]', got 'set[Literal["a"]]' instead
 
 
       def expects_builtin_frozenset(xs: frozenset[int]):
@@ -1177,22 +1177,22 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def expects_builtin_dict(xs: dict[str, int]):
           expects_typing_Dict(xs)
-          expects_typing_Dict({42: 'a'}) # WARNING Expected type 'dict[str, int]', got 'dict[int, str]' instead
+          expects_typing_Dict({42: 'a'}) # WARNING Expected type 'dict[str, int]', got 'dict[Literal[42], Literal["a"]]' instead
 
 
       def expects_typing_Dict(xs: Dict[str, int]):
           expects_builtin_dict(xs)
-          expects_builtin_dict({42: 'a'}) # WARNING Expected type 'dict[str, int]', got 'dict[int, str]' instead
+          expects_builtin_dict({42: 'a'}) # WARNING Expected type 'dict[str, int]', got 'dict[Literal[42], Literal["a"]]' instead
 
 
       def expects_builtin_tuple(xs: tuple[str, int]):
           expects_typing_Tuple(xs)
-          expects_typing_Tuple((42, 'a')) # WARNING Expected type 'tuple[str, int]', got 'tuple[int, str]' instead
+          expects_typing_Tuple((42, 'a')) # WARNING Expected type 'tuple[str, int]', got 'tuple[Literal[42], Literal["a"]]' instead
 
 
       def expects_typing_Tuple(xs: Tuple[str, int]):
           expects_builtin_tuple(xs)
-          expects_builtin_tuple((42, 'a')) # WARNING Expected type 'tuple[str, int]', got 'tuple[int, str]' instead
+          expects_builtin_tuple((42, 'a')) # WARNING Expected type 'tuple[str, int]', got 'tuple[Literal[42], Literal["a"]]' instead
       """)
 
     @Test
@@ -1285,7 +1285,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       class StrBox(Box[str]):
           pass
 
-      StrBox(42) # WARNING Expected type 'str' (matched generic type 'T'), got 'int' instead
+      StrBox(42) # WARNING Expected type 'str' (matched generic type 'T'), got 'Literal[42]' instead
       """)
 
     @Test
@@ -1293,7 +1293,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       class A[T]:
           def __init__(self, v: T) -> None: ...
 
-      A[int]("") # WARNING Expected type 'int' (matched generic type 'T'), got 'str' instead
+      A[int]("") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
       """)
 
     @Test
@@ -1348,7 +1348,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           pass
 
 
-      expects_int_subclass_or_none('foo') # WARNING Expected type 'T ≤: int | None', got 'str' instead
+      expects_int_subclass_or_none('foo') # WARNING Expected type 'T ≤: int | None', got 'Literal["foo"]' instead
       """)
 
     @Test
@@ -1430,10 +1430,10 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           return [x] # WARNING Expected type 'list[str]', got 'list[list[int]]' instead
 
       def b(x: int) -> List[str]:
-          return [1,2] # WARNING Expected type 'list[str]', got 'list[int]' instead
+          return [1,2] # WARNING Expected type 'list[str]', got 'list[Literal[1, 2]]' instead
 
       def c() -> int:
-          return 'abc' # WARNING Expected type 'int', got 'str' instead
+          return 'abc' # WARNING Expected type 'int', got 'Literal["abc"]' instead
 
       def d(x: int) -> List[str]:
           return [str(x)]
@@ -1444,7 +1444,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def f() -> Optional[str]:
           x = int(input())
           if x > 0:
-              return 42 # WARNING Expected type 'str | None', got 'int' instead
+              return 42 # WARNING Expected type 'str | None', got 'Literal[42]' instead
           elif x == 0:
               return 'abc'
           else:
@@ -1452,7 +1452,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
       def g(x) -> int:
           if x:
-              return 'abc' # WARNING Expected type 'int', got 'str' instead
+              return 'abc' # WARNING Expected type 'int', got 'Literal["abc"]' instead
           else:
               return {} # WARNING Expected type 'int', got 'dict[Any, Any]' instead
 
@@ -1469,7 +1469,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
           if True:
               pass
 
-      def l(x) -> int: # WARNING Expected type 'int', got 'int | None' instead
+      def l(x) -> int: # WARNING Expected type 'int', got 'Literal[42] | None' instead
           if x == 1:
               return 42
 
@@ -1481,7 +1481,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def n() -> Generator[int, Any, str]:
       #                         ^^^ ERROR Unresolved reference 'Any'
           yield 13
-          return 42 # WARNING Expected type 'str', got 'int' instead
+          return 42 # WARNING Expected type 'str', got 'Literal[42]' instead
 
       def o(val) -> int:
           assert val is int
@@ -1664,8 +1664,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
       """
       map('foo', lambda c: 42)
-      #   │      ^^^^^^^^^^^^ WARNING Expected type 'Iterable[_T1]', got '(c: Any) -> int' instead
-      #   ^^^^^ WARNING Expected type '(_T1) -> Any' (matched generic type '(_T1) -> _S'), got 'str' instead
+      #   │      ^^^^^^^^^^^^ WARNING Expected type 'Iterable[_T1]', got '(c: Any) -> Literal[42]' instead
+      #   ^^^^^ WARNING Expected type '(_T1) -> Any' (matched generic type '(_T1) -> _S'), got 'Literal["foo"]' instead
       """,
     )
   }
@@ -1677,7 +1677,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-28076"])
     fun `assignment parens`() = test("""
       ((expr)) = 42
-      #└ TYPE int
+      #└ TYPE Literal[42]
       """)
 
     @Test
@@ -1687,7 +1687,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       g = f
       h = g
       expr = h()
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """)
   }
 }

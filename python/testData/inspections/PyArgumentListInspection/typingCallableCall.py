@@ -27,6 +27,6 @@ cllbl_b(1, "2")
 
 cllbl_c = baz()
 cllbl_c(<warning descr="No signature matches the arguments. Argument types: (). Expected one of: (int, str)">)</warning>
-cllbl_c(1<warning descr="No signature matches the arguments. Argument types: (int). Expected one of: (int, str)">)</warning>
+cllbl_c(1<warning descr="No signature matches the arguments. Argument types: (Literal[1]). Expected one of: (int, str)">)</warning>
 cllbl_c(1, "2")
 cllbl_c(1, "2", <warning descr="Unexpected argument">3</warning>)

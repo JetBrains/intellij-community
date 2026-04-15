@@ -87,7 +87,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   fun testIgnoreType() {
     doTestByText("""
       print(2 + 'foo') # type: ignore
-      print(2 + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
+      print(2 + <warning descr="Expected type 'int', got 'Literal[\"foo\"]' instead">'foo'</warning>)
     """)
   }
 

@@ -30,10 +30,10 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     def foo(a: int) -> str: # no inlay here
         return "Hi!"
     
-    def bar(a: int)/*<# -> str #>*/:
+    def bar(a: int)/*<# -> Literal["Hi!"] #>*/:
         return "Hi!"
         
-    def gen(a: int)/*<# -> Generator[int | str | float, Any, str | int] #>*/:
+    def gen(a: int)/*<# -> Generator[Literal[42, "str"] | float, Any, Literal["Hi!", 42… #>*/:
         yield 42
         yield "str"
         yield 42.5
@@ -153,7 +153,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   @TestFor(issues = ["PY-82956"])
   fun `test async def`() {
     doTest("""
-      async def foo()/*<# -> int #>*/:
+      async def foo()/*<# -> Literal[1] #>*/:
           return 1
     """.trimIndent())
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python
+package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -39,7 +39,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-19220"])
     fun `multi line assignment type comment`() = test("""
       expr = [
-      #      └ WARNING Expected type 'list[str]', got 'list[int]' instead
+      #      └ WARNING Expected type 'list[str]', got 'list[Literal[1, 2]]' instead
           1,
           2,
       ]  # type: list[str]
@@ -243,7 +243,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
     fun `type comment assignment mismatch`() = test("""
       def f():
           x = 0  # type: str
-      #       └ WARNING Expected type 'str', got 'int' instead
+      #       └ WARNING Expected type 'str', got 'Literal[0]' instead
           y = 1  # type: int
       """)
   }

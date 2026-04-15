@@ -22,4 +22,4 @@ def process_data_without_type_hint(name):
     pass
 
 process_data_with_type_hint(name=10)
-process_data_without_type_hint(<warning descr="Expected type 'str', got 'int' instead">name=10</warning>)
+process_data_without_type_hint(<warning descr="Expected type 'str', got 'Literal[10]' instead">name=10</warning>)

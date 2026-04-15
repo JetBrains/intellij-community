@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -172,6 +173,8 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     if (function.isAsync()) {
       inferredType = Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(inferredType));
     }
+    // Annotate with the wide type (e.g. `str`), not a one-return literal like `Literal["42"]`.
+    inferredType = PyLiteralType.upcastLiteralToClass(inferredType);
     return new AnnotationInfo(
       PythonDocumentationProvider.getTypeHint(inferredType, context),
       PythonDocumentationProvider.getFullyQualifiedTypeHint(inferredType, context)

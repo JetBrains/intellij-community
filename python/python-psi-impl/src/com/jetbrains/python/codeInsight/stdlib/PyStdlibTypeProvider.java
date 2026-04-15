@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -62,7 +63,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.types.PyTypeUtilKt.widenTupleLiterals;
 
 
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
@@ -254,8 +254,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       PyExpression value = targetExpression.findAssignedValue();
       if (value == null) return null;
 
-      // until heterogeneous enums are supported, we must widen tuple types
-      PyType type = widenTupleLiterals(context.getType(value));
+      var type = context.getType(value);
       return getEnumAttributeInfo(enumClass, type, context);
     }
     else {
@@ -294,7 +293,21 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       PyLiteralKind literalKind = stub != null
                                   ? stub.getAssignedLiteralKind()
                                   : PyLiteralKind.fromExpression(targetExpression.findAssignedValue());
-      PyType type = literalKind != null ? PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression)) : null;
+      if (literalKind == null) {
+        return new EnumAttributeInfo(null, EnumAttributeKind.MEMBER);
+      }
+      PyType type = null;
+      if (PyLiteralType.inferLiteralTypeForLiteralExpressions()) {
+        String literalValue = stub != null
+                              ? stub.getAssignedLiteralValue()
+                              : PyTargetExpressionImpl.getAssignedLiteralValueText(targetExpression.findAssignedValue());
+        if (literalValue != null) {
+          type = PyLiteralType.fromLiteralKind(targetExpression, literalKind, literalValue);
+        }
+      }
+      if (type == null) {
+        type = PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression));
+      }
       return new EnumAttributeInfo(type, EnumAttributeKind.MEMBER);
     }
   }

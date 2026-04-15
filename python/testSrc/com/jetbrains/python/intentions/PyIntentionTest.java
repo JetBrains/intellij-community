@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Subsystems.CodeInsight
 @Components.Intentions
 @Layers.Functional
-public class PyIntentionTest extends PyTestCase {
+public class  PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
 
   @Override

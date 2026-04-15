@@ -62,6 +62,7 @@ import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -78,6 +79,7 @@ import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.psi.types.TypeEvalContextImpl;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -584,7 +586,17 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     if (target instanceof PyTypedElement) {
-      return Ref.create(context.getType((PyTypedElement)target));
+      PyType type = context.getType((PyTypedElement)target);
+      // Widen literal types for non-Final instance attributes in cross-method access.
+      // Same-function flow-sensitive access takes an early return via getQualifiedReferenceTypeByControlFlow
+      // and never reaches this code, so widening here only applies to cross-scope resolution.
+      if (anchor.isQualified()
+          && target instanceof PyTargetExpression targetExpr
+          && targetExpr.isQualified()
+          && !PyTypingTypeProvider.isFinal(targetExpr, context)) {
+        type = PyLiteralType.upcastLiteralToClass(type);
+      }
+      return Ref.create(type);
     }
     if (target instanceof PsiDirectory dir) {
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);

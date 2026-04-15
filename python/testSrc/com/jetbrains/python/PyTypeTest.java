@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.jetbrains.python.allure.Layers;
-import com.jetbrains.python.allure.Subsystems;
-
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -51,7 +50,7 @@ public class PyTypeTest extends PyTestCase {
       """;
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
-    doTest("UnsafeUnion[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("UnsafeUnion[Union[Literal[3], str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   // TODO: enable this test when properties will be calculated with TypeEvalContext
@@ -282,7 +281,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorNextType() {
-    doTest("int", """
+    doTest("Literal[10]", """
       def f():
           yield 10
       expr = f().next()
