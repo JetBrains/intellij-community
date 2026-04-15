@@ -52,17 +52,10 @@ import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUT
 import com.intellij.util.ProcessingContext
 import icons.GradleIcons
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-    if (!useDependencyCompletionService()) {
-      return
-    }
-
-    if (parameters.isAndroidProject()) {
-      return
-    }
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        if (!isGradleDependenciesCompletionEnabled(parameters)) return
 
     val positionElement = parameters.position
     when {
@@ -282,11 +275,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   }
 
   private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
-
-  private fun CompletionParameters.isAndroidProject(): Boolean {
-    val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
-    return snapshot.entities<FacetEntity>().any { it.name == "Android" }
-  }
 
   private fun isFreeMode(): Boolean {
     return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)

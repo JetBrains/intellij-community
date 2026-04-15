@@ -1,11 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -28,9 +32,18 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import java.io.IOException
 
 private val LOG = Logger.getInstance("KotlinGradleScriptCompletionUtils")
+
+internal fun isGradleDependenciesCompletionEnabled(parameters: CompletionParameters): Boolean =
+    useDependencyCompletionService() && !parameters.isAndroidProject()
+
+private fun CompletionParameters.isAndroidProject(): Boolean {
+    val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
+    return snapshot.entities<FacetEntity>().any { it.name == "Android" }
+}
 
 internal fun readLinesFromFile(path: String): List<String> {
     try {

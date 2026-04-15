@@ -25,6 +25,7 @@ class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
 
 private class RemainingCompletionContributorsFilterer : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        if (!isGradleDependenciesCompletionEnabled(parameters)) return
         if (parameters.invocationCount >= 2) return
         // Hide ignored contributors for autocompletion (0 invocations) and first-time invoked completion
 
