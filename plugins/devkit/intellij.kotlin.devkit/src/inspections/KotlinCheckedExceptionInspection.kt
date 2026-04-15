@@ -24,6 +24,7 @@ import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -451,18 +451,18 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
       ?.filterIsInstance<KaContractCallsInPlaceContractEffectDeclaration>()
       ?.singleOrNull()
 
-    when (callEffect?.occurrencesRange) {
-      EventOccurrencesRange.AT_MOST_ONCE,
-      EventOccurrencesRange.EXACTLY_ONCE,
-      EventOccurrencesRange.AT_LEAST_ONCE,
-      EventOccurrencesRange.MORE_THAN_ONCE,
+    when (callEffect?.invocationKind) {
+      KaContractInvocationKind.AT_MOST_ONCE,
+      KaContractInvocationKind.EXACTLY_ONCE,
+      KaContractInvocationKind.AT_LEAST_ONCE,
+      KaContractInvocationKind.MORE_THAN_ONCE,
         -> {
         // TODO Check what exceptions the decorator handles.
         return LambdaCheckResult.RethrowsInPlace
       }
 
-      EventOccurrencesRange.ZERO,
-      EventOccurrencesRange.UNKNOWN,
+      KaContractInvocationKind.ZERO,
+      KaContractInvocationKind.UNKNOWN,
       null,
         -> Unit
     }

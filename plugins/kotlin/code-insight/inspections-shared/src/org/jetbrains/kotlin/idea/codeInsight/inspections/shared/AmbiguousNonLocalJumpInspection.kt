@@ -7,14 +7,13 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange.AT_MOST_ONCE
-import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange.EXACTLY_ONCE
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -116,7 +115,7 @@ private fun KaNamedFunctionSymbol.hasNoCallsInPlaceContract(lambdaParameterName:
     contractEffects.none {
         it is KaContractCallsInPlaceContractEffectDeclaration
                 && (it.valueParameterReference.symbol as? KaValueParameterSymbol)?.name == lambdaParameterName
-                && it.occurrencesRange in setOf(AT_MOST_ONCE, EXACTLY_ONCE)
+                && it.invocationKind in setOf(KaContractInvocationKind.AT_MOST_ONCE, KaContractInvocationKind.EXACTLY_ONCE)
     }
 
 private fun PsiElement.findMatchingCallExpr(): KtCallExpression? =
