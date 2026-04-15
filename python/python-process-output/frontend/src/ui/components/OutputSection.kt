@@ -1,63 +1,41 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
-import androidx.compose.foundation.gestures.ScrollableState
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.selection.DisableSelection
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import com.intellij.python.processOutput.common.OutputKindDto
+import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.frontend.InfoTag
 import com.intellij.python.processOutput.frontend.OutputFilter
+import com.intellij.python.processOutput.frontend.OutputTag
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ProcessStatus
-import com.intellij.python.processOutput.frontend.Tag
 import com.intellij.python.processOutput.frontend.formatFull
 import com.intellij.python.processOutput.frontend.ui.Colors
 import com.intellij.python.processOutput.frontend.ui.Icons
 import com.intellij.python.processOutput.frontend.ui.commandString
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
-import com.intellij.python.processOutput.frontend.ui.thenIfNotNull
-import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
-import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
-
-private object OutputSectionStyling {
-    val COPY_SECTION_BUTTON_SPACE_SIZE = 18.dp
-    val LINE_START_PADDING = 8.dp
-    val LINE_HORIZONTAL_ALIGNMENT = 10.dp
-    val LINE_SPACER_HEIGHT = 4.dp
-}
 
 @Composable
 internal fun OutputSection(controller: ProcessOutputController) {
-    val listState = remember { controller.processOutputUiState.lazyListState }
-
     val selectedProcess by controller.selectedProcess.collectAsState()
 
     Column {
@@ -95,347 +73,157 @@ internal fun OutputSection(controller: ProcessOutputController) {
             )
         }
 
-        selectedProcess?.let { loggedProcess ->
-            VerticallyScrollableContainer(
-                modifier = Modifier.fillMaxSize(),
-                scrollState = listState as ScrollableState,
-            ) {
-                val lines = remember(loggedProcess) { loggedProcess.lines }
-                val status by loggedProcess.status.collectAsState()
-                val isInfoExpandedState =
-                    controller.processOutputUiState.isInfoExpanded.collectAsState()
-                val isOutputExpandedState =
-                    controller.processOutputUiState.isOutputExpanded.collectAsState()
-
-                val isDisplayTags = controller.processOutputUiState.filters.active.contains(
-                    OutputFilter.Item.SHOW_TAGS,
-                )
-
-                SelectionContainer {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                    ) {
-                        collapsibleSectionItem(
-                            title = message("process.output.output.sections.info"),
-                            modifier = Modifier.testTag(OutputSectionTestTags.INFO_SECTION),
-                            isExpandedState = isInfoExpandedState,
-                            onToggle = { controller.toggleProcessInfo() },
-                        ) {
-                            infoLineItems(
-                                InfoLine.Single(
-                                    message("process.output.output.sections.info.started"),
-                                    loggedProcess.data.startedAt.formatFull(),
-                                ),
-                                InfoLine.Single(
-                                    message("process.output.output.sections.info.command"),
-                                    loggedProcess.data.commandString,
-                                ),
-                                loggedProcess.data.pid?.let { pid ->
-                                    InfoLine.Single(
-                                        message("process.output.output.sections.info.pid"),
-                                        pid.toString(),
-                                    )
-                                },
-                                loggedProcess.data.cwd?.let { cwd ->
-                                    InfoLine.Single(
-                                        message("process.output.output.sections.info.cwd"),
-                                        cwd,
-                                    )
-                                },
-                                InfoLine.Single(
-                                    message("process.output.output.sections.info.target"),
-                                    loggedProcess.data.target,
-                                ),
-                                InfoLine.Multi(
-                                    message("process.output.output.sections.info.env"),
-                                    loggedProcess.data.env.entries.map { (key, value) ->
-                                        "$key=$value"
-                                    },
-                                ),
-                            )
-
-                            item(key = "blank") { Text("") }
-                        }
-
-                        collapsibleSectionItem(
-                            title = message("process.output.output.sections.output"),
-                            modifier = Modifier.testTag(OutputSectionTestTags.OUTPUT_SECTION),
-                            isExpandedState = isOutputExpandedState,
-                            onToggle = { controller.toggleProcessOutput() },
-                        ) {
-                            itemsIndexed(
-                                items = lines,
-                                key = { index, _ -> index },
-                            ) { index, line ->
-                                // when the kind of the current line does not match the kind of the
-                                // previous line, it means that the current line is the start of a
-                                // new section
-                                val startOfNewSection =
-                                    lines.getOrNull(index - 1)?.kind != line.kind
-
-                                OutputLine(
-                                    displayTags = isDisplayTags,
-                                    sectionIndicator =
-                                        if (startOfNewSection) {
-                                            SectionIndicator(line.kind.tag) {
-                                                controller.copyOutputTagAtIndexToClipboard(
-                                                    loggedProcess,
-                                                    index,
-                                                )
-                                            }
-                                        } else {
-                                            null
-                                        },
-                                    text = line.text,
-                                )
-                            }
-
-                            when (val status = status) {
-                                ProcessStatus.Running -> {}
-                                is ProcessStatus.Done -> {
-                                    item(key = "exit") {
-                                        OutputLine(
-                                            displayTags = isDisplayTags,
-                                            sectionIndicator =
-                                                SectionIndicator(
-                                                    Tag.EXIT,
-                                                    OutputSectionTestTags.COPY_OUTPUT_EXIT_INFO_BUTTON,
-                                                ) {
-                                                    controller.copyOutputExitInfoToClipboard(
-                                                        loggedProcess,
-                                                    )
-                                                },
-                                            text = buildString {
-                                                append(status.exitCode)
-
-                                                status.additionalMessageToUser?.also { message ->
-                                                    append(": ")
-                                                    append(message)
-                                                }
-                                            },
-                                            textStyle = SpanStyle(
-                                                color =
-                                                    if (status.exitCode != 0) {
-                                                        Colors.ErrorText
-                                                    } else {
-                                                        Color.Unspecified
-                                                    },
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-            ?: EmptyContainerNotice(
+        if (selectedProcess == null) {
+            EmptyContainerNotice(
                 text = message("process.output.output.blankMessage"),
                 modifier = Modifier.testTag(OutputSectionTestTags.NOT_SELECTED_TEXT),
             )
+        } else {
+            OutputView(controller)
+        }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun OutputLine(
-    displayTags: Boolean,
-    sectionIndicator: SectionIndicator? = null,
-    text: String,
-    textStyle: SpanStyle = SpanStyle(),
-) {
-    Column {
-        if (sectionIndicator != null) {
-            LineSpacer()
-        }
+private fun OutputView(controller: ProcessOutputController) {
+    val isInfoExpanded by controller.processOutputUiState.isInfoExpanded.collectAsState()
+    val isOutputExpanded by controller.processOutputUiState.isOutputExpanded.collectAsState()
+    val selectedProcess by controller.selectedProcess.collectAsState()
+    val verticalScrollState = remember { controller.processOutputUiState.verticalScrollState }
+    val horizontalScrollState = remember { controller.processOutputUiState.horizontalScrollState }
+    val filters = remember { controller.processOutputUiState.filters }
 
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .padding(
-                    end = scrollbarContentSafePadding(),
-                    start = OutputSectionStyling.LINE_START_PADDING,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(OutputSectionStyling.LINE_HORIZONTAL_ALIGNMENT),
-        ) {
-            if (displayTags) {
-                DisableSelection {
-                    Text(
-                        text = sectionIndicator?.tag?.colonTagString ?: Tag.blankColonTagString,
-                        style = JewelTheme.consoleTextStyle,
-                        fontWeight = FontWeight.Thin,
-                        modifier =
-                            Modifier.thenIfNotNull(sectionIndicator) {
-                                testTag(OutputSectionTestTags.OUTPUT_SECTION_TAG)
-                            },
-                    )
+    selectedProcess?.let { loggedProcess ->
+        val data = loggedProcess.data
+        var lines by remember { mutableStateOf(emptyList<OutputLineDto>()) }
+        val status by loggedProcess.status.collectAsState()
+        val outputLines = remember(lines, filters, status) {
+            buildList {
+                for (line in lines) {
+                    add(ConsoleLine(line.kind.tag, AnnotatedString(line.text)))
+                }
+
+                when (val status = status) {
+                    ProcessStatus.Running -> {}
+                    is ProcessStatus.Done -> {
+                        val textColor = if (status.exitCode != 0)
+                            Colors.ErrorText
+                        else
+                            Color.Unspecified
+
+                        val exitText = buildAnnotatedString {
+                            withStyle(SpanStyle(color = textColor)) {
+                                append(status.exitCode.toString())
+                                status.additionalMessageToUser?.also { message ->
+                                    append(": ")
+                                    append(message)
+                                }
+                            }
+                        }
+
+                        add(
+                            ConsoleLine(tag = OutputTag.EXIT, text = exitText),
+                        )
+                    }
                 }
             }
+        }
+        val infoLines = remember(data) {
+            buildList {
+                add(ConsoleLine(InfoTag.STARTED, AnnotatedString(data.startedAt.formatFull())))
+                add(ConsoleLine(InfoTag.COMMAND, AnnotatedString(data.commandString)))
+                data.pid?.also { pid ->
+                    add(ConsoleLine(InfoTag.PID, AnnotatedString(pid.toString())))
+                }
+                data.cwd?.also { cwd ->
+                    add(ConsoleLine(InfoTag.CWD, AnnotatedString(cwd)))
+                }
+                add(ConsoleLine(InfoTag.TARGET, AnnotatedString(data.target)))
 
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(style = textStyle) {
-                        append(text)
-                    }
-                },
-                style = JewelTheme.consoleTextStyle,
-                modifier = Modifier.fillMaxWidth()
-                    .weight(1f),
+                for ((key, value) in data.env.entries) {
+                    add(ConsoleLine(InfoTag.ENV, AnnotatedString("$key=$value")))
+                }
+            }
+        }
+
+        LaunchedEffect(loggedProcess) {
+            snapshotFlow { loggedProcess.lines.toList() }
+                .collect { lines = it }
+        }
+
+        ConsoleContainer(
+            verticalScrollState = verticalScrollState,
+            horizontalScrollState = horizontalScrollState,
+            wrapContent = filters.active.contains(OutputFilter.Item.WRAP_CONTENT),
+        ) {
+            CollapsibleListSection(
+                text = message("process.output.output.sections.info"),
+                modifier = Modifier.testTag(OutputSectionTestTags.INFO_SECTION),
+                isExpanded = isInfoExpanded,
+                onToggle = { controller.toggleProcessInfo() },
             )
 
-            if (sectionIndicator != null) {
-                ActionIconButton(
-                    modifier = Modifier
-                        .size(OutputSectionStyling.COPY_SECTION_BUTTON_SPACE_SIZE)
-                        .testTag(sectionIndicator.copyButtonTestTag),
-                    iconKey = Icons.Keys.Copy,
-                    tooltipText = message("process.output.output.copySection.tooltip"),
-                    onClick = sectionIndicator.onCopy,
-                )
-            } else {
-                Spacer(
-                    modifier = Modifier.size(OutputSectionStyling.COPY_SECTION_BUTTON_SPACE_SIZE),
+            if (isInfoExpanded) {
+                ConsoleOutput(
+                    lines = infoLines,
+                    formatter = InfoTag.formatter,
+                    inputTestTag = OutputSectionTestTags.INFO_SECTION_CONTENT,
+                    tagTestTag = OutputSectionTestTags.INFO_SECTION_TAG,
+                    copyButtonTestTag = OutputSectionTestTags.INFO_SECTION_COPY_BUTTON,
                 )
             }
-        }
-    }
-}
 
-private data class SectionIndicator(
-    val tag: Tag,
-    val copyButtonTestTag: String = OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
-    val onCopy: () -> Unit,
-)
+            CollapsibleListSection(
+                text = message("process.output.output.sections.output"),
+                modifier = Modifier.testTag(OutputSectionTestTags.OUTPUT_SECTION),
+                isExpanded = isOutputExpanded,
+                onToggle = { controller.toggleProcessOutput() },
+            )
 
-private fun LazyListScope.collapsibleSectionItem(
-    title: String,
-    modifier: Modifier = Modifier,
-    isExpandedState: State<Boolean>,
-    onToggle: () -> Unit,
-    content: LazyListScope.() -> Unit,
-) {
-    item(key = "collapsibleSection $title") {
-        val isExpanded by isExpandedState
-
-        CollapsibleListSection(
-            text = title,
-            modifier = modifier,
-            isExpanded = isExpanded,
-            onToggle = onToggle,
-        )
-    }
-
-    if (isExpandedState.value) {
-        this.content()
-    }
-}
-
-private fun LazyListScope.infoLineItems(
-    vararg infoLines: InfoLine?,
-) {
-    val maxLength = infoLines.maxOfOrNull {
-        when (it) {
-            is InfoLine.Single -> it.key.length
-            else -> 0
-        }
-    } ?: 0
-    val padding = maxLength + 1
-
-    infoLines.forEach { infoLine ->
-        when (infoLine) {
-            is InfoLine.Single ->
-                infoLineItemSingle(infoLine.key, infoLine.key, infoLine.value, padding)
-            is InfoLine.Multi -> {
-                infoLineItemSingle(
-                    infoLine.key,
-                    infoLine.key,
-                    infoLine.values.takeIf { it.isNotEmpty() }?.let { it[0] },
-                    padding,
-                )
-
-                infoLine.values.drop(1).forEachIndexed { index, value ->
-                    infoLineItemSingle("${infoLine.key} $index", null, value, padding)
-                }
-            }
-            null -> {}
-        }
-    }
-}
-
-private fun LazyListScope.infoLineItemSingle(
-    id: Any,
-    key: String?,
-    value: String?,
-    padding: Int,
-) {
-    item(key = "infoLineItem ${id}") {
-        Column {
-            if (key != null) {
-                LineSpacer()
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(
-                        end = scrollbarContentSafePadding(),
-                        start = OutputSectionStyling.LINE_START_PADDING,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(OutputSectionStyling.LINE_HORIZONTAL_ALIGNMENT),
-            ) {
-                Text(
-                    text =
-                        if (key != null) {
-                            "${key}:".padStart(padding)
-                        } else {
-                            " ".repeat(padding)
-                        },
-                    style = JewelTheme.consoleTextStyle,
-                    fontWeight = FontWeight.Thin,
-                )
-
-                Text(
-                    text = value ?: "(empty)",
-                    modifier = Modifier.fillMaxWidth(),
-                    color = if (value == null) {
-                        Colors.Output.Info
-                    } else {
-                        Color.Unspecified
+            if (isOutputExpanded) {
+                ConsoleOutput(
+                    lines = outputLines,
+                    formatter = OutputTag.formatter,
+                    displayTags = filters.active.contains(OutputFilter.Item.SHOW_TAGS),
+                    displayCopyButtons = true,
+                    onCopy = { line, index ->
+                        when (line.tag) {
+                            OutputTag.EXIT ->
+                                controller.copyOutputExitInfoToClipboard(loggedProcess)
+                            OutputTag.OUTPUT, OutputTag.ERROR ->
+                                controller.copyOutputTagAtIndexToClipboard(loggedProcess, index)
+                        }
                     },
-                    style = JewelTheme.consoleTextStyle,
+                    inputTestTag = OutputSectionTestTags.OUTPUT_SECTION_CONTENT,
+                    tagTestTag = OutputSectionTestTags.OUTPUT_SECTION_TAG,
+                    copyButtonTestTag = OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 )
             }
         }
     }
-}
-
-@Composable
-private fun LineSpacer() {
-    Spacer(modifier = Modifier.height(OutputSectionStyling.LINE_SPACER_HEIGHT))
-}
-
-private sealed class InfoLine {
-    abstract val key: String
-
-    data class Single(override val key: String, val value: String?) : InfoLine()
-    data class Multi(override val key: String, val values: List<String?>) : InfoLine()
 }
 
 private val OutputKindDto.tag
     get() =
         when (this) {
-            OutputKindDto.OUT -> Tag.OUTPUT
-            OutputKindDto.ERR -> Tag.ERROR
+            OutputKindDto.OUT -> OutputTag.OUTPUT
+            OutputKindDto.ERR -> OutputTag.ERROR
         }
 
 internal object OutputSectionTestTags {
     const val NOT_SELECTED_TEXT = "ProcessOutput.Output.NotSelectedText"
     const val INFO_SECTION = "ProcessOutput.Output.InfoSection"
+    const val INFO_SECTION_CONTENT = "ProcessOutput.Output.InfoSectionContent"
+    const val INFO_SECTION_TAG = "ProcessOutput.Output.InfoSection.Tag"
+    const val INFO_SECTION_COPY_BUTTON = "ProcessOutput.Output.InfoSection.CopyButton"
     const val OUTPUT_SECTION = "ProcessOutput.Output.OutputSection"
+    const val OUTPUT_SECTION_CONTENT = "ProcessOutput.Output.OutputSectionContent"
     const val OUTPUT_SECTION_TAG = "ProcessOutput.Output.OutputSection.Tag"
+    const val OUTPUT_SECTION_COPY_BUTTON = "ProcessOutput.Output.OutputSection.CopyButton"
     const val FILTERS_TAGS = "ProcessOutput.Output.FiltersTags"
+    const val FILTERS_WRAP = "ProcessOutput.Output.FiltersWrap"
     const val FILTERS_BUTTON = "ProcessOutput.Output.FiltersButton"
     const val FILTERS_MENU = "ProcessOutput.Output.FiltersMenu"
     const val COPY_OUTPUT_BUTTON = "ProcessOutput.Output.CopyButton"
-    const val COPY_OUTPUT_TAG_SECTION_BUTTON = "ProcessOutput.Output.CopyTagSectionButton"
-    const val COPY_OUTPUT_EXIT_INFO_BUTTON = "ProcessOutput.Output.CopyExitInfoButton"
 }

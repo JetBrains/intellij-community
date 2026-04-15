@@ -1,18 +1,26 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.frontend.InfoTag
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.OutputFilter
+import com.intellij.python.processOutput.frontend.OutputTag
 import com.intellij.python.processOutput.frontend.ProcessOutputTest
 import com.intellij.python.processOutput.frontend.ProcessStatus
+import com.intellij.python.processOutput.frontend.formatFull
+import com.intellij.python.processOutput.frontend.ui.commandString
 import io.mockk.called
 import io.mockk.verify
+import kotlin.collections.listOf
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.time.Clock
@@ -77,10 +85,24 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
         // tags should have been called with enabled false
         verify(exactly = 1) {
-            controllerSpy.onOutputFilterItemToggled(
-                OutputFilter.Item.SHOW_TAGS,
-                false,
-            )
+            controllerSpy.onOutputFilterItemToggled(OutputFilter.Item.SHOW_TAGS, false)
+        }
+        verify(exactly = 0) {
+            controllerSpy.onOutputFilterItemToggled(OutputFilter.Item.WRAP_CONTENT, false)
+        }
+
+        // clicking on wrap content
+        onNodeWithTag(
+            OutputSectionTestTags.FILTERS_WRAP,
+            useUnmergedTree = true,
+        ).performClick()
+
+        // wrap should have been called with enabled false
+        verify(exactly = 1) {
+            controllerSpy.onOutputFilterItemToggled(OutputFilter.Item.SHOW_TAGS, false)
+        }
+        verify(exactly = 1) {
+            controllerSpy.onOutputFilterItemToggled(OutputFilter.Item.WRAP_CONTENT, false)
         }
     }
 
@@ -123,24 +145,24 @@ internal class OutputSectionTest : ProcessOutputTest() {
             // 7..9 - stdout
             val process = selectTestProcess(
                 lines = listOf(
-                    outLine("out1", 1),
-                    outLine("out2", 2),
-                    outLine("out3", 3),
+                    outLine("out1"),
+                    outLine("out2"),
+                    outLine("out3"),
 
-                    errLine("err4", 4),
-                    errLine("err5", 5),
-                    errLine("err6", 6),
-                    errLine("err7", 7),
+                    errLine("err4"),
+                    errLine("err5"),
+                    errLine("err6"),
+                    errLine("err7"),
 
-                    outLine("out8", 8),
-                    outLine("out9", 9),
-                    outLine("out10", 10),
+                    outLine("out8"),
+                    outLine("out9"),
+                    outLine("out10"),
                 ),
             )
 
             // three copy tag section buttons should appear in total
             onAllNodesWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             ).assertCountEquals(3)
 
@@ -149,7 +171,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
             // clicking on the first copy button (for section 0..2)
             onAllNodesWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             )[0].performClick()
 
@@ -160,7 +182,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
             // clicking on the second copy button (for section 3..6)
             onAllNodesWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             )[1].performClick()
 
@@ -171,7 +193,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
             // clicking on the second copy button (for section 7..9)
             onAllNodesWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             )[2].performClick()
 
@@ -195,7 +217,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
             // a copy exit info button should appear
             onNodeWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_EXIT_INFO_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             ).assertExists()
 
@@ -204,7 +226,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
 
             // clicking the copy exit info button
             onNodeWithTag(
-                OutputSectionTestTags.COPY_OUTPUT_EXIT_INFO_BUTTON,
+                OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
                 useUnmergedTree = true,
             ).performClick()
 
@@ -220,13 +242,13 @@ internal class OutputSectionTest : ProcessOutputTest() {
         // 6    - exit
         selectTestProcess(
             lines = listOf(
-                outLine("out1", 1),
-                outLine("out2", 2),
-                outLine("out3", 3),
+                outLine("out1"),
+                outLine("out2"),
+                outLine("out3"),
 
-                errLine("err4", 4),
-                errLine("err5", 5),
-                errLine("err6", 6),
+                errLine("err4"),
+                errLine("err5"),
+                errLine("err6"),
             ),
             status =
                 ProcessStatus.Done(
@@ -251,9 +273,164 @@ internal class OutputSectionTest : ProcessOutputTest() {
         ).assertCountEquals(0)
     }
 
-    private suspend fun selectTestProcess(
+    @Test
+    fun `copy buttons should not appear for info section`() = processOutputTest {
+        // selecting a process
+        selectTestProcess()
+
+        // no copy section buttons should appear
+        onAllNodesWithTag(OutputSectionTestTags.INFO_SECTION_COPY_BUTTON).assertCountEquals(0)
+
+        // expanding the info section
+        processOutputInfoExpanded.value = true
+
+        // no copy section buttons should appear even with info section expanded
+        onAllNodesWithTag(OutputSectionTestTags.INFO_SECTION_COPY_BUTTON).assertCountEquals(0)
+    }
+
+    @Test
+    fun `info section should contain correct information`() = processOutputTest {
+        // selecting a process
+        val process =
+            selectTestProcess(
+                env = mapOf(
+                    "foo" to "123",
+                    "bar" to "hello",
+                    "baz" to "world",
+                ),
+            )
+
+        // expanding the info section
+        processOutputInfoExpanded.value = true
+
+        // info should be correct
+        onNodeWithTag(OutputSectionTestTags.INFO_SECTION_CONTENT)
+            .assertTextEquals(
+                """
+                    ${process.data.startedAt.formatFull()}
+                    ${process.data.commandString}
+                    ${process.data.pid}
+                    ${process.data.cwd}
+                    ${process.data.target}
+                    foo=123
+                    bar=hello
+                    baz=world
+                    
+                """.trimIndent(),
+            )
+
+        // tags should be correct
+        onAllNodesWithTag(OutputSectionTestTags.INFO_SECTION_TAG, useUnmergedTree = true).apply {
+            assertCountEquals(6)
+            get(0).assertTextContains(InfoTag.STARTED.text, substring = true)
+            get(1).assertTextContains(InfoTag.COMMAND.text, substring = true)
+            get(2).assertTextContains(InfoTag.PID.text, substring = true)
+            get(3).assertTextContains(InfoTag.CWD.text, substring = true)
+            get(4).assertTextContains(InfoTag.TARGET.text, substring = true)
+            get(5).assertTextContains(InfoTag.ENV.text, substring = true)
+        }
+    }
+
+    @Test
+    fun `output section should contain correct information`() = processOutputTest {
+        // selecting process that has stdout, stderr and exit sections
+        selectTestProcess(
+            lines = listOf(
+                outLine("out1"),
+                outLine("out2"),
+                outLine("out3"),
+
+                errLine("err4"),
+                errLine("err5"),
+                errLine("err6"),
+            ),
+            status =
+                ProcessStatus.Done(
+                    exitedAt = Clock.System.now(),
+                    exitCode = 0,
+                ),
+        )
+
+        // output should be correct
+        onNodeWithTag(OutputSectionTestTags.OUTPUT_SECTION_CONTENT)
+            .assertTextEquals(
+                """
+                    out1
+                    out2
+                    out3
+                    err4
+                    err5
+                    err6
+                    0
+                    
+                """.trimIndent(),
+            )
+
+        // tags should be correct
+        onAllNodesWithTag(OutputSectionTestTags.OUTPUT_SECTION_TAG, useUnmergedTree = true).apply {
+            assertCountEquals(3)
+            get(0).assertTextContains(OutputTag.OUTPUT.text, substring = true)
+            get(1).assertTextContains(OutputTag.ERROR.text, substring = true)
+            get(2).assertTextContains(OutputTag.EXIT.text, substring = true)
+        }
+    }
+
+    @Test
+    fun `output section should reflect newly added lines in an existing process`() =
+        processOutputTest {
+            // creating process with initial lines
+            val lines = SnapshotStateList<OutputLineDto>()
+            lines += outLine("line 1")
+            selectTestProcess(lines = lines)
+
+            // output should reflect line 1
+            onNodeWithTag(OutputSectionTestTags.OUTPUT_SECTION_CONTENT)
+                .assertTextEquals(
+                    """
+                        line 1
+                        
+                    """.trimIndent(),
+                )
+
+            // adding additional lines
+            lines += outLine("line 2")
+            lines += outLine("line 3")
+            awaitIdle()
+
+            // output should now reflect line 1, 2 and 3
+            onNodeWithTag(OutputSectionTestTags.OUTPUT_SECTION_CONTENT)
+                .assertTextEquals(
+                    """
+                        line 1
+                        line 2
+                        line 3
+                        
+                    """.trimIndent(),
+                )
+        }
+
+    @Test
+    fun `sections should be shown or hidden depending on state`() = processOutputTest {
+        // selecting a process
+        selectTestProcess()
+
+        // info should be hidden, output should be shown
+        onAllNodesWithTag(OutputSectionTestTags.INFO_SECTION_CONTENT).assertCountEquals(0)
+        onAllNodesWithTag(OutputSectionTestTags.OUTPUT_SECTION_CONTENT).assertCountEquals(1)
+
+        // toggling the state values
+        processOutputInfoExpanded.value = true
+        processOutputOutputExpanded.value = false
+
+        // info should be shown, output should be hidden
+        onAllNodesWithTag(OutputSectionTestTags.INFO_SECTION_CONTENT).assertCountEquals(1)
+        onAllNodesWithTag(OutputSectionTestTags.OUTPUT_SECTION_CONTENT).assertCountEquals(0)
+    }
+
+    private fun selectTestProcess(
         lines: List<OutputLineDto> = listOf(),
         status: ProcessStatus = ProcessStatus.Running,
+        env: Map<String, String> = mapOf(),
     ): LoggedProcess {
         val newProcess =
             process(
@@ -264,6 +441,7 @@ internal class OutputSectionTest : ProcessOutputTest() {
                 cwd = "some/random/path",
                 lines = lines,
                 status = status,
+                env = env,
             )
 
         setSelectedProcess(newProcess)
