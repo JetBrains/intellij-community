@@ -2,8 +2,14 @@
 package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.createDocumentBuilder
+import org.w3c.dom.Document
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.image.BufferedImage
+import java.nio.file.Path
+import javax.swing.JComponent
 import kotlin.math.min
 
 /**
@@ -32,13 +38,52 @@ abstract class BaseVectorDrawablePreviewRenderer {
     }
   }
 
+  fun applyOverrides(xmlContent: String, overrideInfo: VectorDrawableOverrideInfo?, errors: StringBuilder): String {
+    if (overrideInfo == null) return xmlContent
+    val doc = parseXmlDocument(xmlContent, errors) ?: return xmlContent
+    return overrideXmlContent(doc, overrideInfo, errors) ?: xmlContent
+  }
+
+  abstract fun overrideXmlContent(document: Document, overrideInfo: VectorDrawableOverrideInfo, errors: StringBuilder?): String?
+
+  fun parseXmlDocument(xmlContent: String, errors: StringBuilder?): Document? {
+    if (xmlContent.isBlank()) return null
+    return try {
+      val builder = createDocumentBuilder(namespaceAware = true)
+      builder.parse(xmlContent.byteInputStream(Charsets.UTF_8))
+    }
+    catch (e: Exception) {
+      if (Logger.shouldRethrow(e)) throw e
+      errors?.append("Exception while parsing XML:\n${e.message}")
+      null
+    }
+  }
+
+  abstract fun convertSvgToVectorDrawable(svgFile: Path, errors: StringBuilder): String?
+
   abstract fun getVectorDrawableSizeDp(xmlContent: String): Dimension?
 
   abstract fun doRenderPreview(imageScale: Double, xmlContent: String, errors: StringBuilder): BufferedImage?
 
+  abstract fun adjustIconColor(component: JComponent, image: BufferedImage): BufferedImage
+
   sealed class RenderResult {
     data class Success(val image: BufferedImage) : RenderResult()
     data class Error(val message: String) : RenderResult()
+  }
+
+  data class VectorDrawableOverrideInfo(
+    var width: Double = 0.0,
+    var height: Double = 0.0,
+    var tint: Color? = null,
+    var alpha: Double = -1.0,
+    var autoMirrored: Boolean = false,
+  ) {
+    fun needsOverrideWidth(): Boolean = width > 0
+    fun needsOverrideHeight(): Boolean = height > 0
+    fun needsOverrideAlpha(): Boolean = alpha in 0.0..<1.0
+    fun needsOverrideTint(): Boolean = tint != null
+    fun tintRgb(): Int = (tint?.rgb ?: 0) and 0xFFFFFF
   }
 
   companion object {

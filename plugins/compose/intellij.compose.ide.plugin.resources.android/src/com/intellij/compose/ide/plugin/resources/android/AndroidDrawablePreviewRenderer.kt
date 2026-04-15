@@ -1,20 +1,45 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.android
 
+import com.android.ide.common.vectordrawable.Svg2Vector
+import com.android.ide.common.vectordrawable.VdIcon
+import com.android.ide.common.vectordrawable.VdOverrideInfo
 import com.android.ide.common.vectordrawable.VdPreview
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
 import com.intellij.openapi.diagnostic.Logger
 import org.kxml2.io.KXmlParser
+import org.w3c.dom.Document
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.awt.Dimension
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.StringReader
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import javax.swing.JComponent
 import kotlin.math.roundToInt
 
 /** Android implementation using VdPreview from Android SDK tools. */
 class AndroidDrawablePreviewRenderer : BaseVectorDrawablePreviewRenderer() {
+
+  override fun convertSvgToVectorDrawable(svgFile: Path, errors: StringBuilder): String? {
+    return try {
+      val outputStream = ByteArrayOutputStream()
+      val errorMessage = Svg2Vector.parseSvgToXml(svgFile, outputStream)
+      if (!errorMessage.isNullOrEmpty()) {
+        errors.append(errorMessage)
+      }
+      outputStream.toString(StandardCharsets.UTF_8)
+    }
+    catch (e: Exception) {
+      if (Logger.shouldRethrow(e)) throw e
+      errors.append(e.message)
+      null
+    }
+  }
+
   override fun getVectorDrawableSizeDp(xmlContent: String): Dimension? {
     return try {
       val parser = createParser(xmlContent)
@@ -45,6 +70,16 @@ class AndroidDrawablePreviewRenderer : BaseVectorDrawablePreviewRenderer() {
       errors.append(e.message)
       null
     }
+  }
+
+  override fun adjustIconColor(component: JComponent, image: BufferedImage): BufferedImage {
+    return VdIcon.adjustIconColor(component, image)
+  }
+
+  override fun overrideXmlContent(document: Document, overrideInfo: VectorDrawableOverrideInfo, errors: StringBuilder?): String? {
+    val vdOverrideInfo =
+      VdOverrideInfo(overrideInfo.width, overrideInfo.height, overrideInfo.tint, overrideInfo.alpha, overrideInfo.autoMirrored)
+    return VdPreview.overrideXmlContent(document, vdOverrideInfo, errors)
   }
 
   private fun createParser(drawable: String): KXmlParser =
