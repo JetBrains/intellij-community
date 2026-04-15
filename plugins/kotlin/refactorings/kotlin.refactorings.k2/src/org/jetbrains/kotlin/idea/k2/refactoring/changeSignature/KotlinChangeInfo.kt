@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.lang.Language
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableChangeInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 class KotlinChangeInfo(
     val methodDescriptor: KotlinMethodDescriptor,
     parameterInfos: List<KotlinParameterInfo> = methodDescriptor.parameters,
-    override var aNewVisibility: Visibility = methodDescriptor.visibility,
+    override var aNewVisibility: KaSymbolVisibility = methodDescriptor.visibility,
     receiver: KotlinParameterInfo? = methodDescriptor.receiver,
     private var name: String = methodDescriptor.name,
     var newReturnTypeInfo: KotlinTypeInfo = KotlinTypeInfo(methodDescriptor.oldReturnType, methodDescriptor.method),
@@ -98,7 +98,7 @@ class KotlinChangeInfo(
         return receiverParameterInfo?.let { receiver -> newParameters.filter { it != receiver } } ?: newParameters
     }
 
-    override fun setNewVisibility(visibility: Visibility) {
+    override fun setNewVisibility(visibility: KaSymbolVisibility) {
         aNewVisibility = visibility
     }
     override fun isVisibilityChanged(): Boolean = aNewVisibility != methodDescriptor.visibility

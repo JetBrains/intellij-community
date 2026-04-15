@@ -7,9 +7,8 @@ import com.intellij.psi.PsiCodeFragment
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
@@ -28,9 +27,16 @@ import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(project: Project,
                                           private val methodDescriptor: KotlinMethodDescriptor) :
-    KotlinBaseChangePropertySignatureDialog<KotlinParameterInfo, Visibility, KotlinMethodDescriptor>(project, methodDescriptor) {
-    override fun fillVisibilities(model: DefaultComboBoxModel<Visibility>) {
-        model.addAll(listOf(Visibilities.Internal, Visibilities.Private, Visibilities.Protected, Visibilities.Public))
+    KotlinBaseChangePropertySignatureDialog<KotlinParameterInfo, KaSymbolVisibility, KotlinMethodDescriptor>(project, methodDescriptor) {
+    override fun fillVisibilities(model: DefaultComboBoxModel<KaSymbolVisibility>) {
+        model.addAll(
+            listOf(
+                KaSymbolVisibility.INTERNAL,
+                KaSymbolVisibility.PRIVATE,
+                KaSymbolVisibility.PROTECTED,
+                KaSymbolVisibility.PUBLIC
+            )
+        )
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -51,8 +57,8 @@ class KotlinChangePropertySignatureDialog(project: Project,
         return kotlinPsiFactory.createTypeCodeFragment(receiverPresentableType ?: "", m.method)
     }
 
-    override fun isDefaultVisibility(v: Visibility): Boolean {
-        return v == Visibilities.Public
+    override fun isDefaultVisibility(v: KaSymbolVisibility): Boolean {
+        return v == KaSymbolVisibility.PUBLIC
     }
 
     override fun PsiCodeFragment?.isValidType(): Boolean {
@@ -88,7 +94,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         return KotlinChangeInfo(
             methodDescriptor,
             emptyList(),
-            if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as Visibility else methodDescriptor.visibility,
+            if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as KaSymbolVisibility else methodDescriptor.visibility,
             receiver,
             name,
             KotlinTypeInfo(returnTypeCodeFragment.getCanonicalText(false), methodDescriptor.method)

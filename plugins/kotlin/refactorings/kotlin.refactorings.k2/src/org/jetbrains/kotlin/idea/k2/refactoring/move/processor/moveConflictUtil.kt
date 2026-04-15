@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleContainingElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkFunctionOverriddenInSubclassConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkImplicitPackagePrefixConflict
@@ -158,7 +158,7 @@ internal fun MoveRenameUsageInfo.willNotBeMoved(declarationsToMove: Iterable<KtN
     return this !is K2MoveRenameUsageInfo || !element.willBeMoved(declarationsToMove)
 }
 
-internal val KtNamedDeclaration.isInternal get() = visibilityModifierTypeOrDefault().toVisibility() == Visibilities.Internal
+internal val KtNamedDeclaration.isInternal get() = visibilityModifierTypeOrDefault().toCompilerVisibility() == Visibilities.Internal
 
 internal fun tryFindConflict(findConflict: () -> Pair<PsiElement, String>?): Pair<PsiElement, String>? {
     return try {
