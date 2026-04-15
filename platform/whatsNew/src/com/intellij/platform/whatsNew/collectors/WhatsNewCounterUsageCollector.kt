@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew.collectors
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
@@ -6,41 +6,37 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.whatsNew.WhatsNewMultipageIdsCache
+import com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider
 import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
 
 internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 4, description = "What's New usage statistics")
+  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 5)
 
   private val pageId = EventFields.StringValidatedByCustomRule("page_id", WhatsNewMultipageIdValidationRule::class.java)
-  private val opened =
-    eventLogGroup.registerEvent("tab_opened", pageId, EventFields.Enum(("type"), OpenedType::class.java), "What's New tab was opened")
+  private val opened = eventLogGroup.registerEvent("tab_opened", pageId, EventFields.Enum(("type"), OpenedType::class.java))
   private val duration = EventFields.Long("duration_seconds")
-  private val closed = eventLogGroup.registerEvent("tab_closed", pageId, duration, "What's New tab was closed")
+  private val closed = eventLogGroup.registerEvent("tab_closed", pageId, duration)
 
   private val actionId = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
-  private val perform = eventLogGroup.registerEvent("action_performed", actionId, "An action was performed in the What's New tab")
-  private val failed = eventLogGroup.registerEvent("action_failed",
-                                                   actionId,
-                                                   EventFields.Enum(("type"), ActionFailedReason::class.java),
-                                                   "An action failed in the What's New tab")
+  private val perform = eventLogGroup.registerEvent("action_performed", actionId)
+  private val failed = eventLogGroup.registerEvent("action_failed", actionId, EventFields.Enum(("type"), ActionFailedReason::class.java))
   private val visionActionId = EventFields.String("vision_action_id", listOf("whatsnew.vision.zoom", "whatsnew.vision.gif"))
-  private val visionAction =
-    eventLogGroup.registerEvent("vision_action_performed", visionActionId, "A vision-related action was performed in the What's New tab")
+  private val visionAction = eventLogGroup.registerEvent("vision_action_performed", visionActionId)
 
   private val oldId = EventFields.StringValidatedByCustomRule("old_id", WhatsNewMultipageIdValidationRule::class.java)
   private val newId = EventFields.StringValidatedByCustomRule("new_id", WhatsNewMultipageIdValidationRule::class.java)
-  private val multipageIdChanged = eventLogGroup.registerEvent("multipage_id_changed", oldId, newId, "What's New multipage id has changed")
+  private val multipageIdChanged = eventLogGroup.registerEvent("multipage_id_changed", oldId, newId)
 
 
   fun openedPerformed(project: Project?, id: String?, byClient: Boolean) {
-    opened.log(project, id ?: DEFAULT_ID, if (byClient) OpenedType.ByClient else OpenedType.Auto)
+    opened.log(project, id ?: WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID, if (byClient) OpenedType.ByClient else OpenedType.Auto)
   }
 
   fun closedPerformed(project: Project?, id: String?, seconds: Long) {
-    closed.log(project, id ?: DEFAULT_ID, seconds)
+    closed.log(project, id ?: WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID, seconds)
   }
 
   fun actionPerformed(project: Project?, id: String) {
@@ -82,11 +78,9 @@ internal class WhatsNewMultipageIdValidationRule : CustomValidationRule() {
     id: String,
     context: IEventContext,
   ): ValidationResultType {
-    if (id == DEFAULT_ID) return ValidationResultType.ACCEPTED
-
-    val cache = WhatsNewMultipageIdsCache.getInstance()
-    return if (cache.isValidId(id)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+    return if (id in service<WhatsNewInVisionContentProvider>().getAllowedMultipageIds()) {
+      ValidationResultType.ACCEPTED
+    }
+    else ValidationResultType.REJECTED
   }
 }
-
-private const val DEFAULT_ID = "Default"
