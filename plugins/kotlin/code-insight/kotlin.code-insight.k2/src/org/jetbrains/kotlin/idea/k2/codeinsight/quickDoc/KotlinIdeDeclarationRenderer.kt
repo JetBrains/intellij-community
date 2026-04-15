@@ -869,6 +869,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderConstantValue(value: KaAnnotationValue) {
         when (value) {
             is KaAnnotationValue.NestedAnnotationValue -> {
@@ -897,11 +898,13 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderKClassAnnotationValue(value: KaAnnotationValue.ClassLiteralValue) {
         renderType(value.type)
         append("::class")
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderType(type: KaType) {
         if (type.annotations.isNotEmpty()) {
             for (annotation in type.annotations) {
@@ -938,6 +941,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderConstantAnnotationValue(value: KaAnnotationValue.ConstantValue) {
         with(highlightingManager) {
             val builder = StringBuilder()
@@ -946,6 +950,7 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderEnumEntryConstantValue(value: KaAnnotationValue.EnumEntryValue) {
         val callableId = value.callableId
         if (callableId != null) {
@@ -955,10 +960,12 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderAnnotationConstantValue(application: KaAnnotationValue.NestedAnnotationValue) {
         renderAnnotationApplication(application.annotation)
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderAnnotationApplication(value: KaAnnotation) {
         val shortClassName = value.classId?.shortClassName
         if (shortClassName != null) {
@@ -973,18 +980,21 @@ internal class KotlinIdeDeclarationRenderer(
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderArrayConstantValue(value: KaAnnotationValue.ArrayValue) {
         append(highlight("[") { asBrackets } )
         renderConstantValueList(value.values)
         append(highlight("]") { asBrackets } )
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderConstantValueList(list: Collection<KaAnnotationValue>) {
         printCollection(list, ", ") { constantValue ->
             renderConstantValue(constantValue)
         }
     }
 
+    @KaExperimentalApi
     private fun PrettyPrinter.renderNamedConstantValueList(list: Collection<KaNamedAnnotationValue>) {
         printCollection(list, ", ") { namedValue ->
             append(highlight(namedValue.name.renderName()) { asParameter } )
