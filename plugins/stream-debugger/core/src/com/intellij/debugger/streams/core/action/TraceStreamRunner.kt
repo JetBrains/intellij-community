@@ -7,6 +7,7 @@ import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
+import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.ui.ChooserOption
 import com.intellij.debugger.streams.core.ui.ElementChooser
@@ -167,6 +168,8 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
         val tracer: StreamTracer = provider.getTracerFor(chain, session)
         val result = tracer.trace(chain)
+
+        StreamDebuggerStatisticsCollector.logTraceFinished(project, provider, tracer, result)
 
         when (result) {
           is StreamTracer.Result.Evaluated -> {
