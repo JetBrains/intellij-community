@@ -83,10 +83,9 @@ class LoggingProcess(
       target = target,
       id = nextId.getAndAdd(1),
     )
-  private val lineCounter = AtomicInteger(0)
 
-  private val stdoutStream = LoggingInputStream(loggedProcess.id, backingProcess.inputStream, OutputKindDto.OUT, lineCounter)
-  private val stderrStream = LoggingInputStream(loggedProcess.id, backingProcess.errorStream, OutputKindDto.ERR, lineCounter)
+  private val stdoutStream = LoggingInputStream(loggedProcess.id, backingProcess.inputStream, OutputKindDto.OUT)
+  private val stderrStream = LoggingInputStream(loggedProcess.id, backingProcess.errorStream, OutputKindDto.ERR)
 
   init {
     ApplicationManager.getApplication().service<LoggingService>().scope.launch {
@@ -155,7 +154,6 @@ private class LoggingInputStream(
   private val processId: Int,
   private val backingInputStream: InputStream,
   private val kind: OutputKindDto,
-  private val lineCounter: AtomicInteger,
 ) : InputStream() {
   private var closed = AtomicBoolean(false)
   private var outputSize = 0
@@ -249,7 +247,6 @@ private class LoggingInputStream(
         OutputLineDto(
           kind = kind,
           text = line,
-          lineNo = lineCounter.getAndAdd(1),
         )
       )
     )

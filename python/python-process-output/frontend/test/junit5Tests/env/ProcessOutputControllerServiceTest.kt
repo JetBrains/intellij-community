@@ -7,7 +7,6 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.impl.LoggingLimits
-import com.intellij.python.community.execService.impl.LoggingProcess
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.processOutput.common.OutputKindDto
@@ -128,7 +127,7 @@ class ProcessOutputControllerServiceTest {
                     val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen)
                     val yLen = LoggingLimits.MAX_OUTPUT_SIZE
 
-                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $it", 0)))
+                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $it")))
                     assertNotNull(
                         find { elem ->
                             elem.text.startsWith("xxx") && elem.text.length == xLen
@@ -182,7 +181,7 @@ class ProcessOutputControllerServiceTest {
                     val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen)
                     val yLen = LoggingLimits.MAX_OUTPUT_SIZE
 
-                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $newIt", 0)))
+                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $newIt")))
                     assertNotNull(
                         find { elem ->
                             elem.text.startsWith("xxx") && elem.text.length == xLen
@@ -515,6 +514,46 @@ class ProcessOutputControllerServiceTest {
         }
 
         assertEquals(nonAsciiText, lines?.last()?.text)
+    }
+
+    @Test
+    fun `line limits are maintained`(
+        @TempDir cwd: Path,
+        @PythonBinaryPath python: PythonBinary,
+    ): Unit = timeoutRunBlocking {
+        val service = projectFixture.get().service<ProcessOutputControllerService>()
+
+        val binOnEel = BinOnEel(python, cwd)
+        val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+
+        edtWriteAction {
+            mainPy.toFile().writeText(
+                """
+                    import sys 
+                    
+                    for i in range(${ProcessOutputControllerServiceLimits.MAX_LINES} * 2):
+                        print("line " + str(i))
+                """.trimIndent(),
+            )
+        }
+
+        runBin(binOnEel, Args(MAIN_PY))
+
+        var process: LoggedProcess? = null
+
+        waitUntil {
+            process = service.loggedProcesses.value.find {
+                it.lines.getOrNull(0)?.text == "line ${ProcessOutputControllerServiceLimits.MAX_LINES}"
+            }
+            process != null
+        }
+
+        repeat(ProcessOutputControllerServiceLimits.MAX_LINES) {
+            assertEquals(
+                "line ${ProcessOutputControllerServiceLimits.MAX_LINES + it}",
+                process!!.lines[it].text,
+            )
+        }
     }
 
     private fun Map<Int, LoggedProcess>.remapByFirstLine(): Map<String?, LoggedProcess> =

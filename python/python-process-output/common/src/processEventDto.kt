@@ -1,16 +1,16 @@
 package com.intellij.python.processOutput.common
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.sendToClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -80,7 +80,6 @@ enum class OutputKindDto {
 data class OutputLineDto(
   val kind: OutputKindDto,
   val text: String,
-  val lineNo: Int,
 )
 
 @ApiStatus.Internal
@@ -114,18 +113,14 @@ internal class ProcessOutputTopicListener : ApplicationRemoteTopicListener<Proce
   override val topic: ApplicationRemoteTopic<ProcessOutputEventDto> = PROCESS_OUTPUT_TOPIC
 
   override fun handleEvent(event: ProcessOutputEventDto) {
-    val service = ApplicationManager.getApplication().service<FrontendTopicService>()
-
-    service.coroutineScope.launch {
-      eventsInternal.emit(event)
-    }
+    eventsChannel.trySend(event)
   }
 }
 
-private val eventsInternal = MutableSharedFlow<ProcessOutputEventDto>()
+private val eventsChannel = Channel<ProcessOutputEventDto>(capacity = UNLIMITED)
 
 @ApiStatus.Internal
 @Service
 class FrontendTopicService(internal val coroutineScope: CoroutineScope) {
-  val events: SharedFlow<ProcessOutputEventDto> = eventsInternal.asSharedFlow()
+  val events: Flow<ProcessOutputEventDto> = eventsChannel.receiveAsFlow().shareIn(coroutineScope, SharingStarted.Eagerly)
 }

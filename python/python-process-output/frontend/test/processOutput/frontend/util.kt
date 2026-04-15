@@ -1,5 +1,6 @@
 package com.intellij.python.processOutput.frontend
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
@@ -58,7 +59,8 @@ internal abstract class ProcessOutputTest {
         filters = FilterActionGroupState(OutputFilter),
         isInfoExpanded = processOutputInfoExpanded,
         isOutputExpanded = processOutputOutputExpanded,
-        lazyListState = LazyListState(),
+        verticalScrollState = ScrollState(0),
+        horizontalScrollState = ScrollState(0),
     )
 
     @get:Rule
@@ -170,6 +172,7 @@ internal abstract class ProcessOutputTest {
         lines: List<OutputLineDto> = listOf(),
         status: ProcessStatus = ProcessStatus.Running,
         weight: ProcessWeightDto? = null,
+        env: Map<String, String> = mapOf(),
     ): LoggedProcess =
         LoggedProcess(
             data = LoggedProcessDto(
@@ -185,7 +188,7 @@ internal abstract class ProcessOutputTest {
                         parts = command.first().split(Regex("[/\\\\]+")),
                     ),
                 args = command.drop(1),
-                env = mapOf(),
+                env = env,
                 target = "Local",
                 id = nextId.getAndAdd(1),
             ),
@@ -193,18 +196,16 @@ internal abstract class ProcessOutputTest {
             status = MutableStateFlow(status),
         )
 
-    fun outLine(text: String, lineNo: Int): OutputLineDto =
+    fun outLine(text: String): OutputLineDto =
         OutputLineDto(
             text = text,
             kind = OutputKindDto.OUT,
-            lineNo = lineNo,
         )
 
-    fun errLine(text: String, lineNo: Int): OutputLineDto =
+    fun errLine(text: String): OutputLineDto =
         OutputLineDto(
             text = text,
             kind = OutputKindDto.ERR,
-            lineNo = lineNo,
         )
 
     fun traceContext(
