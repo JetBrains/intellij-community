@@ -127,6 +127,8 @@ object DebouncedUpdates {
    * When the component is hidden, any currently executing action is cancelled.
    * When the component is shown again, queued items are processed and the action resumes executing.
    *
+   * Actions run on `Dispatchers.UI` by default. Use [Builder.withContext] to override.
+   *
    * @param component The UI component whose visibility controls when items are processed
    * @param name Debug name for the coroutine
    * @param delay The delay as a [Duration]
