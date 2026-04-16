@@ -4,9 +4,14 @@ package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatVersionCatalogsAreSupported
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCase() {
@@ -882,5 +887,61 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
                 """.trimIndent()
             )
         }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun `test different unresolvable accessors are not duplicates`(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "7.0") {
+            "Gradle 7.0+ supports type-safe project dependencies"
+        }
+        test(gradleVersion, WITH_TYPE_SAFE_PROJECT_DEPENDENCIES) {
+            codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+            testHighlighting(
+                """
+                dependencies {
+                    api(projects.subproject1)
+                    api(projects.subproject2)
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun `test identical unresolvable accessors are duplicates`(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "7.0") {
+            "Gradle 7.0+ supports type-safe project dependencies"
+        }
+        test(gradleVersion, WITH_TYPE_SAFE_PROJECT_DEPENDENCIES) {
+            codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+            testHighlighting(
+                """
+                dependencies {
+                    api(projects.subproject1)
+                    <weak_warning>api(projects.subproject1.sub)</weak_warning>
+                    <weak_warning>api(projects.subproject1.sub)</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    companion object {
+        private val WITH_TYPE_SAFE_PROJECT_DEPENDENCIES =
+            GradleTestFixtureBuilder.create("with-type-safe-project-dependencies") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("with-type-safe-project-dependencies")
+                    addCode("enableFeaturePreview(\"TYPESAFE_PROJECT_ACCESSORS\")")
+                    include("subproject1", "subproject1:sub", "subproject2")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    withKotlinJvmPlugin()
+                }
+                withBuildFile(gradleVersion, "subproject1", gradleDsl = GradleDsl.KOTLIN)
+                withBuildFile(gradleVersion, "subproject1/sub", gradleDsl = GradleDsl.KOTLIN)
+                withBuildFile(gradleVersion, "subproject2", gradleDsl = GradleDsl.KOTLIN)
+            }
     }
 }
