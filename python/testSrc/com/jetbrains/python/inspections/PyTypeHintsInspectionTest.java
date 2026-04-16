@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -1391,7 +1392,20 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    d: Annotated[A, '']
                    e: Annotated[<warning descr="'Annotated' must be called with at least two arguments">Annotated[A, True]</warning>]
-                   f: Annotated[Annotated[<warning descr="'Annotated' must be called with at least two arguments">A</warning>], '']""");
+                   f: Annotated[Annotated[<warning descr="'Annotated' must be called with at least two arguments">A</warning>], '']
+                   g: Annotated[<error>[]</error>, 1]
+                   """);
+  }
+
+  @TestFor(issues = "PY-89188")
+  public void testAnnotatedMetadata() {
+    doTestByText(
+      """
+       from typing import Annotated
+
+       a: Annotated[int, [], print("asdf")]
+       """
+    );
   }
 
   // PY-41847

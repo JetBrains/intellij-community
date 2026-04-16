@@ -1137,13 +1137,17 @@ class PyTypeHintsInspection : PyInspection() {
 
       var typingOnly = true
       var callableExists = false
+      var isAnnotated = false
 
       qNames.forEach {
         when (it) {
           genericQName -> checkTypingGenericParameters(node, false)
           protocolQName, protocolExtQName -> checkTypingGenericParameters(node, true)
           literalQName, literalExtQName -> checkLiteralParameter(index)
-          annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
+          annotatedQName, annotatedExtQName -> {
+            isAnnotated = true
+            checkAnnotatedParameter(index)
+          }
           typeAliasQName, typeAliasExtQName -> reportParameterizedTypeAlias(index)
           typingSelf, typingExtSelf -> reportParameterizedSelf(index)
           unionQName -> checkGenericTypeArguments(node)
@@ -1167,7 +1171,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
       else {
         if (typingOnly) {
-          checkTypingMemberParameters(index, callableExists)
+          checkTypingMemberParameters(index, dropFirst = callableExists, takeFirst = isAnnotated)
         }
       }
     }
@@ -1568,13 +1572,16 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
+    private fun checkTypingMemberParameters(index: PyExpression, dropFirst: Boolean, takeFirst: Boolean) {
+      require(!(dropFirst && takeFirst))
+
       val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
 
       var alreadyHaveUnpacking = false
       parameters
         .asSequence()
-        .drop(if (isCallable) 1 else 0)
+        .drop(if (dropFirst) 1 else 0)
+        .take(if (takeFirst) 1 else parameters.size)
         .forEach { argument ->
           val flatArgument = PyPsiUtils.flattenParens(argument)
           when (flatArgument) {
