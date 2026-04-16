@@ -120,10 +120,14 @@ object DebouncedUpdates {
   }
 
   /**
-   * Creates a builder for a debounced update queue tied to a [JComponent] lifecycle.
-   * The queue starts when the component is shown and stops when hidden.
+   * Creates a builder for a debounced update queue tied to a [JComponent] visibility lifecycle.
    *
-   * @param component The UI component whose lifecycle controls the queue
+   * The queue accepts items at any time, but the processing action only executes while the component is showing.
+   * Items queued while the component is hidden remain in the queue and are processed when the component becomes visible.
+   * When the component is hidden, any currently executing action is cancelled.
+   * When the component is shown again, queued items are processed and the action resumes executing.
+   *
+   * @param component The UI component whose visibility controls when items are processed
    * @param name Debug name for the coroutine
    * @param delay The delay as a [Duration]
    * @return A builder to configure and create the queue
@@ -133,10 +137,12 @@ object DebouncedUpdates {
   }
 
   /**
-   * Creates a builder for a debounced update queue tied to a [JComponent] lifecycle.
+   * Creates a builder for a debounced update queue tied to a [JComponent] visibility lifecycle.
    * Java-friendly overload accepting delay in milliseconds.
    *
-   * @param component The UI component whose lifecycle controls the queue
+   * See the overload with [Duration] parameter for detailed behavior documentation.
+   *
+   * @param component The UI component whose visibility controls when items are processed
    * @param name Debug name for the coroutine
    * @param delayMillis The delay in milliseconds
    * @return A builder to configure and create the queue
