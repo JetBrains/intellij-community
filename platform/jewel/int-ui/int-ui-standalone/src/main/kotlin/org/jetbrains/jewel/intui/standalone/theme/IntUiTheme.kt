@@ -1077,7 +1077,7 @@ public fun IntUiTheme(
 ) {
     BaseJewelTheme(theme, ComponentStyling.default().with(styling), swingCompatMode) {
         CompositionLocalProvider(
-            LocalPainterHintsProvider provides StandalonePainterHintsProvider(theme),
+            LocalPainterHintsProvider provides remember(theme) { StandalonePainterHintsProvider(theme) },
             LocalNewUiChecker provides StandaloneNewUiChecker,
             LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
