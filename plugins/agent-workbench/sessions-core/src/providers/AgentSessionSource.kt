@@ -20,6 +20,20 @@ data class AgentSessionRefreshHints(
   @JvmField val activityByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 )
 
+const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT = -1L
+
+data class AgentSessionRefreshThreadSeed(
+  @JvmField val threadId: String,
+  @JvmField val updatedAt: Long = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT,
+  @JvmField val forceRefresh: Boolean = false,
+)
+
+fun Collection<String>.toAgentSessionRefreshThreadSeeds(): Set<AgentSessionRefreshThreadSeed> {
+  return asSequence()
+    .map { threadId -> AgentSessionRefreshThreadSeed(threadId = threadId) }
+    .toCollection(LinkedHashSet())
+}
+
 enum class AgentSessionSourceUpdate {
   THREADS_CHANGED,
   HINTS_CHANGED,
@@ -79,7 +93,7 @@ interface AgentSessionSource {
    */
   suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> = emptyMap()
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}

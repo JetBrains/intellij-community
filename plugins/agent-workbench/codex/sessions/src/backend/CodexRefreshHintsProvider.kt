@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.codex.sessions.backend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.flow.Flow
 
@@ -31,6 +32,6 @@ internal interface CodexRefreshHintsProvider {
 
   suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, CodexRefreshHints>
 }

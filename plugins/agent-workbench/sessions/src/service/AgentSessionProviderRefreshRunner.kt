@@ -7,8 +7,10 @@ import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import com.intellij.agent.workbench.sessions.core.providers.describeScope
 import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -19,6 +21,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -147,10 +150,16 @@ internal class AgentSessionProviderRefreshRunner(
         emptyMap()
       }
       else {
+        val refreshThreadSeedsByPath = buildRefreshThreadSeedsByPath(
+          provider = provider,
+          outcomes = outcomes,
+          hintThreadIdsByPath = hintThreadIdsByPath.filterKeys { it in refreshHintPaths },
+          forcedThreadIds = updateEvent.threadIds,
+        )
         try {
           source.prefetchRefreshHints(
             paths = refreshHintPaths.toList(),
-            knownThreadIdsByPath = hintThreadIdsByPath.filterKeys { it in refreshHintPaths },
+            refreshThreadSeedsByPath = refreshThreadSeedsByPath,
           )
         }
         catch (e: Throwable) {
@@ -292,10 +301,10 @@ internal class AgentSessionProviderRefreshRunner(
     }
   }
 
-  private fun calculateNewProviderThreadIdsByPath(
-    provider: AgentSessionProvider,
-    outcomes: Map<String, ProviderRefreshOutcome>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+private fun calculateNewProviderThreadIdsByPath(
+  provider: AgentSessionProvider,
+  outcomes: Map<String, ProviderRefreshOutcome>,
+  knownThreadIdsByPath: Map<String, Set<String>>,
   ): Map<String, Set<String>> {
     val result = LinkedHashMap<String, Set<String>>()
     for ((path, outcome) in outcomes) {
@@ -426,6 +435,45 @@ private fun collectLoadedProviderThreadIdsByPath(
         .map { it.id }
         .toCollection(LinkedHashSet())
     }
+  }
+  return result
+}
+
+private fun buildRefreshThreadSeedsByPath(
+  provider: AgentSessionProvider,
+  outcomes: Map<String, ProviderRefreshOutcome>,
+  hintThreadIdsByPath: Map<String, Set<String>>,
+  forcedThreadIds: Set<String>?,
+): Map<String, Set<AgentSessionRefreshThreadSeed>> {
+  if (hintThreadIdsByPath.isEmpty()) {
+    return emptyMap()
+  }
+
+  val forcedThreadIds = forcedThreadIds.orEmpty()
+  val result = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>(hintThreadIdsByPath.size)
+  for ((path, threadIds) in hintThreadIdsByPath) {
+    val updatedAtByThreadId = Object2LongOpenHashMap<String>()
+    updatedAtByThreadId.defaultReturnValue(UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT)
+    outcomes[path]
+      ?.threads
+      .orEmpty()
+      .asSequence()
+      .filter { thread -> thread.provider == provider }
+      .forEach { thread ->
+        updatedAtByThreadId.put(thread.id, thread.updatedAt)
+      }
+
+    val seeds = LinkedHashSet<AgentSessionRefreshThreadSeed>(threadIds.size)
+    threadIds.forEach { threadId ->
+      seeds.add(
+        AgentSessionRefreshThreadSeed(
+          threadId = threadId,
+          updatedAt = updatedAtByThreadId.getLong(threadId),
+          forceRefresh = threadId in forcedThreadIds,
+        )
+      )
+    }
+    result[path] = seeds
   }
   return result
 }

@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -186,6 +187,17 @@ class ScriptedSessionSource(
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
   ) -> Map<String, AgentSessionRefreshHints> = { _, _ -> emptyMap() },
+  private val prefetchRefreshThreadSeedsProvider: suspend (
+    paths: List<String>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+  ) -> Map<String, AgentSessionRefreshHints> = { paths, refreshThreadSeedsByPath ->
+    prefetchRefreshHintsProvider(
+      paths,
+      refreshThreadSeedsByPath.mapValues { (_, refreshThreadSeeds) ->
+        refreshThreadSeeds.asSequence().map { refreshThreadSeed -> refreshThreadSeed.threadId }.toCollection(LinkedHashSet())
+      }
+    )
+  },
 ) : AgentSessionSource {
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
     return listFromOpenProject(path, project)
@@ -201,9 +213,9 @@ class ScriptedSessionSource(
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
-    return prefetchRefreshHintsProvider(paths, knownThreadIdsByPath)
+    return prefetchRefreshThreadSeedsProvider(paths, refreshThreadSeedsByPath)
   }
 }
 

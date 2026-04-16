@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
@@ -93,15 +94,15 @@ internal class CodexSessionSource internal constructor(
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
-    knownThreadIdsByPath: Map<String, Set<String>>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
     val appServerHints = appServerRefreshHintsProvider.prefetchRefreshHints(
       paths = paths,
-      knownThreadIdsByPath = knownThreadIdsByPath,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
     )
     val rolloutHints = rolloutRefreshHintsProvider.prefetchRefreshHints(
       paths = paths,
-      knownThreadIdsByPath = knownThreadIdsByPath,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
     )
     return filterCodexRefreshHints(
       mergeCodexRefreshHints(

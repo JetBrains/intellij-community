@@ -10,8 +10,10 @@ import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -73,8 +75,8 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsByPath = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = mapOf(
-        "/work/project" to snapshotsByThreadId.keys,
+      refreshThreadSeedsByPath = mapOf(
+        "/work/project" to snapshotsByThreadId.keys.toRefreshThreadSeeds(),
       ),
     )
 
@@ -112,9 +114,9 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsByPath = provider.prefetchRefreshHints(
       paths = listOf("/work/project-a", "/work/project-b"),
-      knownThreadIdsByPath = mapOf(
-        "/work/project-a" to setOf("thread-shared"),
-        "/work/project-b" to setOf("thread-shared"),
+      refreshThreadSeedsByPath = mapOf(
+        "/work/project-a" to setOf(refreshThreadSeed("thread-shared", updatedAt = 100L)),
+        "/work/project-b" to setOf(refreshThreadSeed("thread-shared", updatedAt = 100L)),
       ),
     )
 
@@ -142,8 +144,11 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsByPath = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = mapOf(
-        "/work/project" to linkedSetOf("new-123", "thread-real"),
+      refreshThreadSeedsByPath = mapOf(
+        "/work/project" to linkedSetOf(
+          refreshThreadSeed("new-123"),
+          refreshThreadSeed("thread-real", updatedAt = 100L),
+        ),
       ),
     )
 
@@ -182,7 +187,7 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsByPath = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = mapOf("/work/project" to setOf("thread-rename")),
+      refreshThreadSeedsByPath = mapOf("/work/project" to setOf(refreshThreadSeed("thread-rename", updatedAt = 100L))),
     )
 
     val hints = hintsByPath.getValue("/work/project")
@@ -234,7 +239,7 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsByPath = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = emptyMap(),
+      refreshThreadSeedsByPath = emptyMap(),
     )
 
     val hints = hintsByPath.getValue("/work/project")
@@ -285,13 +290,13 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hintsBeforeKnown = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = emptyMap(),
+      refreshThreadSeedsByPath = emptyMap(),
     )
     assertThat(hintsBeforeKnown.getValue("/work/project").rebindCandidates).hasSize(1)
 
     val hintsAfterKnown = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = mapOf("/work/project" to setOf("thread-started")),
+      refreshThreadSeedsByPath = mapOf("/work/project" to setOf(refreshThreadSeed("thread-started", updatedAt = 500L))),
     )
 
     val hints = hintsAfterKnown.getValue("/work/project")
@@ -329,7 +334,7 @@ class CodexAppServerRefreshHintsProviderTest {
 
     val hints = provider.prefetchRefreshHints(
       paths = listOf("/work/project"),
-      knownThreadIdsByPath = emptyMap(),
+      refreshThreadSeedsByPath = emptyMap(),
     ).getValue("/work/project")
 
     val candidate = hints.rebindCandidates.single()
@@ -362,6 +367,117 @@ class CodexAppServerRefreshHintsProviderTest {
     val updateEvent = update.await()
     assertThat(updateEvent.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
     assertThat(updateEvent.threadIds).containsExactly("thread-1")
+  }
+
+  @Test
+  fun reusesCachedSnapshotWhenUpdatedAtIsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+    val requestedThreadIds = mutableListOf<String>()
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        requestedThreadIds += threadId
+        snapshot(
+          threadId = threadId,
+          statusKind = CodexThreadStatusKind.IDLE,
+          updatedAt = 100L,
+        )
+      },
+      notifications = emptyFlow(),
+    )
+
+    val refreshThreadSeedsByPath = mapOf(
+      "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 100L)),
+    )
+
+    provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+    val secondHints = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+
+    assertThat(requestedThreadIds).containsExactly("thread-cached")
+    assertThat(secondHints.getValue("/work/project").activities())
+      .containsExactlyEntriesOf(mapOf("thread-cached" to AgentThreadActivity.READY))
+  }
+
+  @Test
+  fun refetchesSnapshotWhenUpdatedAtChanges(): Unit = runBlocking(Dispatchers.Default) {
+    val requestedThreadIds = mutableListOf<String>()
+    val snapshotsByUpdatedAt = mapOf(
+      100L to snapshot(threadId = "thread-cached", statusKind = CodexThreadStatusKind.IDLE, updatedAt = 100L),
+      200L to snapshot(threadId = "thread-cached", statusKind = CodexThreadStatusKind.ACTIVE, updatedAt = 200L),
+    )
+    var currentUpdatedAt = 100L
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        requestedThreadIds += threadId
+        snapshotsByUpdatedAt.getValue(currentUpdatedAt)
+      },
+      notifications = emptyFlow(),
+    )
+
+    provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = mapOf(
+        "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 100L)),
+      ),
+    )
+    currentUpdatedAt = 200L
+    val refreshedHints = provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = mapOf(
+        "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 200L)),
+      ),
+    )
+
+    assertThat(requestedThreadIds).containsExactly("thread-cached", "thread-cached")
+    assertThat(refreshedHints.getValue("/work/project").activities())
+      .containsExactlyEntriesOf(mapOf("thread-cached" to AgentThreadActivity.PROCESSING))
+  }
+
+  @Test
+  fun statusNotificationsInvalidateCachedSnapshot(): Unit = runBlocking(Dispatchers.Default) {
+    val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+    val requestedThreadIds = mutableListOf<String>()
+    val provider = CodexAppServerRefreshHintsProvider(
+      readThreadActivitySnapshot = { threadId ->
+        requestedThreadIds += threadId
+        snapshot(
+          threadId = threadId,
+          statusKind = CodexThreadStatusKind.IDLE,
+          updatedAt = 100L,
+        )
+      },
+      notifications = notifications,
+    )
+
+    val refreshThreadSeedsByPath = mapOf(
+      "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 100L)),
+    )
+    provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+
+    notifications.emit(
+      CodexAppServerNotification(
+        method = "thread/status/changed",
+        kind = CodexAppServerNotificationKind.THREAD_STATUS_CHANGED,
+        threadId = "thread-cached",
+      )
+    )
+    withTimeout(2.seconds) {
+      provider.updateEvents.first()
+    }
+
+    provider.prefetchRefreshHints(
+      paths = listOf("/work/project"),
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+
+    assertThat(requestedThreadIds).containsExactly("thread-cached", "thread-cached")
   }
 
   @Test
@@ -436,6 +552,22 @@ private fun snapshot(
 
 private fun CodexRefreshHints.activities(): Map<String, AgentThreadActivity> {
   return activityHintsByThreadId.mapValues { (_, hint) -> hint.activity }
+}
+
+private fun Collection<String>.toRefreshThreadSeeds(): Set<AgentSessionRefreshThreadSeed> {
+  return mapTo(LinkedHashSet()) { threadId -> refreshThreadSeed(threadId) }
+}
+
+private fun refreshThreadSeed(
+  threadId: String,
+  updatedAt: Long = UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT,
+  forceRefresh: Boolean = false,
+): AgentSessionRefreshThreadSeed {
+  return AgentSessionRefreshThreadSeed(
+    threadId = threadId,
+    updatedAt = updatedAt,
+    forceRefresh = forceRefresh,
+  )
 }
 
 private fun startedThread(

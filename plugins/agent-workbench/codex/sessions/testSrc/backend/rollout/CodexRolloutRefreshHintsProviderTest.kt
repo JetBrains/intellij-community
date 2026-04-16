@@ -2,6 +2,7 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -63,7 +64,9 @@ class CodexRolloutRefreshHintsProviderTest {
 
       val hints = provider.prefetchRefreshHints(
         paths = listOf(projectDir.toString()),
-        knownThreadIdsByPath = mapOf(projectDir.toString() to setOf("cli-parent")),
+        refreshThreadSeedsByPath = mapOf(
+          projectDir.toString() to setOf(AgentSessionRefreshThreadSeed(threadId = "cli-parent"))
+        ),
       ).getValue(projectDir.toString())
 
       assertThat(hints.rebindCandidates.map { it.threadId }).containsExactly("cli-new")

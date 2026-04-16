@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutS
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.emptyFlow
 import java.nio.file.Files
@@ -64,7 +66,7 @@ internal suspend fun testRefreshHints(
 
   return source.prefetchRefreshHints(
     paths = listOf(projectPath),
-    knownThreadIdsByPath = mapOf(projectPath to threadIds.toSet()),
+    refreshThreadSeedsByPath = mapOf(projectPath to threadIds.toSet().toAgentSessionRefreshThreadSeeds()),
   ).getOrElse(projectPath) { AgentSessionRefreshHints() }
 }
 
@@ -88,7 +90,7 @@ internal suspend fun testRefreshCodexHints(
     rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { codexHome })
   ).prefetchRefreshHints(
     paths = listOf(projectPath),
-    knownThreadIdsByPath = knownThreadIdsByPath,
+    refreshThreadSeedsByPath = knownThreadIdsByPath.mapValues { (_, threadIds) -> threadIds.toAgentSessionRefreshThreadSeeds() },
   )
   return mergeCodexRefreshHints(
     appServerHintsByPath = appServerHints,
@@ -102,7 +104,7 @@ internal fun testStaticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>
 
     override suspend fun prefetchRefreshHints(
       paths: List<String>,
-      knownThreadIdsByPath: Map<String, Set<String>>,
+      refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
     ): Map<String, CodexRefreshHints> {
       return hintsByPath.filterKeys(paths::contains)
     }
