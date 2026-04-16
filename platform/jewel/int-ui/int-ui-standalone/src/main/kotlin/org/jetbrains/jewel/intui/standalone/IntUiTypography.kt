@@ -2,6 +2,7 @@
 package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -18,7 +19,7 @@ import org.jetbrains.jewel.ui.component.plus
 public object IntUiTypography : Typography {
     @get:Composable
     override val labelTextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle()
+        get() = remember { JewelTheme.createDefaultTextStyle() }
 
     @get:Composable
     override val labelTextSize: TextUnit
@@ -26,27 +27,33 @@ public object IntUiTypography : Typography {
 
     @get:Composable
     override val h0TextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 12.sp, fontWeight = FontWeight.Bold)
+        get() = remember {
+            JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 12.sp, fontWeight = FontWeight.Bold)
+        }
 
     @get:Composable
     override val h1TextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 9.sp, fontWeight = FontWeight.Bold)
+        get() = remember {
+            JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 9.sp, fontWeight = FontWeight.Bold)
+        }
 
     @get:Composable
     override val h2TextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 5.sp)
+        get() = remember { JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 5.sp) }
 
     @get:Composable
     override val h3TextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 3.sp)
+        get() = remember { JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 3.sp) }
 
     @get:Composable
     override val h4TextStyle: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 1.sp, fontWeight = FontWeight.Bold)
+        get() = remember {
+            JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize + 1.sp, fontWeight = FontWeight.Bold)
+        }
 
     @get:Composable
     override val editorTextStyle: TextStyle
-        get() = JewelTheme.createEditorTextStyle()
+        get() = remember { JewelTheme.createEditorTextStyle() }
 
     @get:Composable
     override val consoleTextStyle: TextStyle
@@ -58,9 +65,9 @@ public object IntUiTypography : Typography {
 
     @get:Composable
     override val medium: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize - 1.sp)
+        get() = remember { JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize - 1.sp) }
 
     @get:Composable
     override val small: TextStyle
-        get() = JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize - 2.sp)
+        get() = remember { JewelTheme.createDefaultTextStyle(fontSize = DefaultFontSize - 2.sp) }
 }

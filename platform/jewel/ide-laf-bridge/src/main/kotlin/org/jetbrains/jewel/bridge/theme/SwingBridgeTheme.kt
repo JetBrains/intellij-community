@@ -45,7 +45,10 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
         swingCompatMode = true,
     ) {
         CompositionLocalProvider(
-            LocalPainterHintsProvider provides BridgePainterHintsProvider(themeData.themeDefinition.isDark),
+            LocalPainterHintsProvider provides
+                remember(themeData.themeDefinition.isDark) {
+                    BridgePainterHintsProvider(themeData.themeDefinition.isDark)
+                },
             LocalNewUiChecker provides BridgeNewUiChecker,
             LocalDensity provides scaleDensityWithIdeScale(LocalDensity.current),
             LocalClipboard provides remember { JewelBridgeClipboard() },
@@ -53,7 +56,7 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
             LocalMenuItemShortcutHintProvider provides BridgeMenuItemShortcutHintProvider,
             LocalTypography provides BridgeTypography,
             LocalUriHandler provides BridgeUriHandler,
-            LocalMessageResourceResolverProvider provides BridgeMessageResourceResolver(),
+            LocalMessageResourceResolverProvider provides remember { BridgeMessageResourceResolver() },
             LocalPlatformCursorController provides BridgePlatformCursorController,
         ) {
             content()

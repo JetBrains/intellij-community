@@ -2,6 +2,8 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -13,8 +15,10 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.util.ui.JBFont
 import java.awt.Font
 import org.jetbrains.jewel.bridge.theme.computeBaseLineHeightFor
+import org.jetbrains.jewel.bridge.theme.retrieveConsoleTextStyle
 import org.jetbrains.jewel.bridge.theme.retrieveDefaultTextStyle
 import org.jetbrains.jewel.bridge.theme.retrieveEditorTextStyle
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Typography
 
 /**
@@ -24,39 +28,57 @@ import org.jetbrains.jewel.ui.Typography
 public object BridgeTypography : Typography {
     @get:Composable
     override val labelTextStyle: TextStyle
-        get() = retrieveDefaultTextStyle()
+        get() = remember(JewelTheme.instanceUuid) { retrieveDefaultTextStyle() }
 
     @get:Composable
     override val labelTextSize: TextUnit
-        get() = labelTextStyle.fontSize
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.fontSize) }.value
+        }
 
     @get:Composable
     override val h0TextStyle: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.h0())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.h0())) }.value
+        }
 
     @get:Composable
     override val h1TextStyle: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.h1())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.h1())) }.value
+        }
 
     @get:Composable
     override val h2TextStyle: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.h2())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.h2())) }.value
+        }
 
     @get:Composable
     override val h3TextStyle: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.h3())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.h3())) }.value
+        }
 
     @get:Composable
     override val h4TextStyle: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.h4())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.h4())) }.value
+        }
 
     @get:Composable
     override val editorTextStyle: TextStyle
-        get() = retrieveEditorTextStyle()
+        get() = remember(JewelTheme.instanceUuid) { retrieveEditorTextStyle() }
 
     @get:Composable
     override val consoleTextStyle: TextStyle
-        get() = retrieveEditorTextStyle()
+        get() = remember(JewelTheme.instanceUuid) { retrieveConsoleTextStyle() }
 
     @get:Composable
     override val regular: TextStyle
@@ -64,11 +86,17 @@ public object BridgeTypography : Typography {
 
     @get:Composable
     override val medium: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.medium())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.medium())) }.value
+        }
 
     @get:Composable
     override val small: TextStyle
-        get() = labelTextStyle.applyFrom(JBFont.small())
+        get() {
+            val baseStyle = labelTextStyle
+            return remember(baseStyle) { mutableStateOf(baseStyle.applyFrom(JBFont.small())) }.value
+        }
 }
 
 // Do NOT use for editor and console fonts! They are already unscaled.
