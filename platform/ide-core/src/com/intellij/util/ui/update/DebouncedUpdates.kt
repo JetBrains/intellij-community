@@ -11,14 +11,17 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -778,6 +781,12 @@ private class BatchedScopeQueue<T>(
 
 /**
  * Single-item queue bound to a JComponent lifecycle.
+ *
+ * Uses a two-channel architecture:
+ * - First channel (main): Receives items from queue(), does delay/debouncing in global scope
+ * - Second channel (processing): Receives items ready to process, consumed inside launchOnShow
+ *
+ * This ensures items are never lost even if component is hidden during processing.
  */
 @ApiStatus.Experimental
 private class SingleComponentQueue<T>(
@@ -789,8 +798,98 @@ private class SingleComponentQueue<T>(
   action: suspend (T) -> Unit
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
-  override val job: Job = component.launchOnShow(name) {
-    processLatest(delay, context, restartTimerOnAdd, action)
+  // Second channel for items ready to be processed (capacity 1 for latest behavior)
+  private val processingChannel = Channel<T>(capacity = 1)
+
+  // Pending item from cancelled action (persists across launchOnShow restarts)
+  @Volatile
+  private var pendingItem: T? = null
+
+  // Global scope job for channel processing (delay/debouncing)
+  private val channelProcessingJob: Job = GlobalScope.launch(CoroutineName("$name-channel-processor")) {
+    processLatestAndForward(delay, restartTimerOnAdd)
+  }
+
+  // Component scope job for action execution (only when showing)
+  private val actionProcessingJob: Job = component.launchOnShow("$name-action-processor") {
+    processFromSecondChannel(context, action)
+  }
+
+  override val job: Job = GlobalScope.launch(CoroutineName(name)) {
+    // Supervise both jobs
+    try {
+      joinAll(channelProcessingJob, actionProcessingJob)
+    } finally {
+      processingChannel.close()
+    }
+  }
+
+  /**
+   * Process items from the main channel and forward to the processing channel.
+   * Runs in global scope, never canceled.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private suspend fun processLatestAndForward(
+    delay: Duration,
+    restartTimerOnAdd: Boolean,
+  ) {
+    var latestItem: T? = null
+
+    processWithDelay(
+      delay = delay,
+      context = EmptyCoroutineContext,
+      restartTimerOnAdd = restartTimerOnAdd,
+      onReceive = { latestItem = it },
+      onPrepare = {
+        @Suppress("UNCHECKED_CAST")
+        latestItem as T
+      },
+      onProcess = { item ->
+        // Send to the processing channel (capacity 1, so this replaces any pending item)
+        processingChannel.trySend(item)
+      }
+    )
+  }
+
+  /**
+   * Process items from the second channel and execute the action.
+   * Runs inside launchOnShow, so automatically waits for the component to show.
+   * Stores the item before processing to ensure it's not lost if action gets canceled.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private suspend fun processFromSecondChannel(
+    context: CoroutineContext,
+    action: suspend (T) -> Unit,
+  ) {
+    // Process pending item only if channel is empty (prioritize newer items)
+    if (processingChannel.isEmpty) {
+      pendingItem?.let { pending ->
+        processItem(pending, context, action)
+      }
+    }
+
+    // Process new items from the channel
+    for (item in processingChannel) {
+      processItem(item, context, action)
+    }
+  }
+
+  private suspend fun processItem(
+    item: T,
+    context: CoroutineContext,
+    action: suspend (T) -> Unit,
+  ) {
+    pendingItem = item
+    try {
+      withContext(context) {
+        action(item)
+      }
+      pendingItem = null
+    } catch (e: CancellationException) {
+      // Component was hidden during action execution
+      // Keep pendingItem so we retry when launchOnShow restarts
+      throw e
+    }
   }
 }
 

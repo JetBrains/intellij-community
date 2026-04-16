@@ -854,6 +854,80 @@ class DebouncedUpdatesTest {
     }
   }
 
+  @Test
+  fun `test component queue does not lose item when hidden during processing`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val processingStarted = AtomicInteger(0)
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-hide-during-processing", 50.milliseconds)
+        .runLatest { value ->
+          processingStarted.incrementAndGet()
+          delay(100.milliseconds) // Simulate slow processing
+          executedValues.add(value)
+        }
+
+      // Queue item and let it start processing
+      queue.queue(1)
+      delay(80.milliseconds) // Wait for debounce + processing to start
+
+      assertEquals(1, processingStarted.get(), "Processing should have started")
+
+      // Hide component during processing
+      withShowingChanged { container.remove(component) }
+      yield()
+      delay(50.milliseconds) // Give time for cancellation
+
+      // Show component again - item should be retried
+      withShowingChanged { container.add(component) }
+      yield()
+
+      // Wait for item to be processed
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+    }
+  }
+
+  @Test
+  fun `test component queue prioritizes new item over pending`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-prioritize-new", 50.milliseconds)
+        .runLatest { value ->
+          delay(100.milliseconds) // Simulate slow processing
+          executedValues.add(value)
+        }
+
+      // Queue item 1 and let it start processing
+      queue.queue(1)
+      delay(80.milliseconds) // Wait for debounce + processing to start
+
+      // Hide component during processing (item 1 becomes pending)
+      withShowingChanged { container.remove(component) }
+      yield()
+      delay(50.milliseconds)
+
+      // Queue item 2 while component is hidden
+      queue.queue(2)
+      delay(80.milliseconds) // Wait for debounce
+
+      // Show component - should process item 2 (newer), not item 1 (pending)
+      withShowingChanged { container.add(component) }
+      yield()
+
+      // Wait for item to be processed
+      assertEquals(listOf(2), awaitValue(listOf(2)) { executedValues.toList() })
+    }
+  }
+
   private fun edtTest(block: suspend CoroutineScope.() -> Unit) {
     timeoutRunBlocking(timeout = 30.seconds) {
       withForcedRespectIsShowingClientProperty {
