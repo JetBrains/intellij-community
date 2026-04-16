@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Document
 import java.awt.Color
@@ -53,7 +53,7 @@ abstract class BaseVectorDrawablePreviewRenderer {
       builder.parse(xmlContent.byteInputStream(Charsets.UTF_8))
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       errors?.append("Exception while parsing XML:\n${e.message}")
       null
     }

@@ -3,32 +3,52 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` start
 
 jvm_library(
-  name = "ide-plugin-resources-android",
-  module_name = "intellij.compose.ide.plugin.resources.android",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
-    "@lib//:studio-platform-provided",
-    "//platform/util",
-  ]
+    name = "ide-plugin-resources-android",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.resources.android",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
+        "@lib//:studio-platform-provided",
+        "//platform/util",
+        "//android/android-npw:newProjectWizard",
+        "//platform/core-ui",
+        "//platform/platform-api:ide",
+    ],
 )
 
 jvm_library(
-  name = "ide-plugin-resources-android_test_lib",
-  testonly = True,
-  module_name = "intellij.compose.ide.plugin.resources.android",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ide-plugin-resources-android",
-    "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources_test_lib",
-    "@lib//:studio-platform-provided",
-    "//platform/util:util_test_lib",
-  ]
+    name = "ide-plugin-resources-android_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.resources.android",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-plugin-resources-android",
+        "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources_test_lib",
+        "@lib//:studio-platform-provided",
+        "//platform/util:util_test_lib",
+        "//android/android-npw:newProjectWizard_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` end
 

@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 
 @Service(Service.Level.PROJECT)
-internal class ComposeResourcesCoroutineScopeService(val coroutineScope: CoroutineScope) {
+internal class ComposeResourcesCoroutineScopeService(private val coroutineScope: CoroutineScope) {
   fun childScope(name: String, parentDisposable: Disposable): CoroutineScope =
     coroutineScope.childScope(name).apply { coroutineContext.job.cancelOnDispose(parentDisposable) }
 

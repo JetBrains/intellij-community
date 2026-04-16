@@ -10,8 +10,8 @@
     <module name="intellij.xml.impl"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
-  <resource-bundle>messages.ComposeIdeBundle</resource-bundle>
   <!-- endregion -->
+  <resource-bundle>messages.ComposeIdeBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint
       dynamic="true"
@@ -79,7 +79,7 @@
   <actions>
     <action id="compose.newVectorAsset"
             class="com.intellij.compose.ide.plugin.resources.actions.vectorAsset.ComposeResourcesNewVectorAsset"
-            icon="com.intellij.compose.ide.plugin.shared.ComposeIdeIcons.AndroidHead">
+            icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ComposeMultiplatform">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
   </actions>

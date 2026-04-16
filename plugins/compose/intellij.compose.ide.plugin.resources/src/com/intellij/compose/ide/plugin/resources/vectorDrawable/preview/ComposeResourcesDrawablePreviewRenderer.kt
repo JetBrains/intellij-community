@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.rendering.ComposeResourceDrawableTree
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.svgConverter.ComposeResourcesSvgConverter
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.svgConverter.ComposeResourcesSvgTree.Companion.formatFloatValue
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -42,7 +42,7 @@ internal class ComposeResourcesDrawablePreviewRenderer : BaseVectorDrawablePrevi
       outputStream.toString(StandardCharsets.UTF_8)
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       errors.append(e.message)
       null
     }
@@ -63,7 +63,7 @@ internal class ComposeResourcesDrawablePreviewRenderer : BaseVectorDrawablePrevi
       Dimension(width.roundToInt(), height.roundToInt())
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       null
     }
   }
@@ -76,7 +76,7 @@ internal class ComposeResourcesDrawablePreviewRenderer : BaseVectorDrawablePrevi
       renderToImage(imageScale, tree)
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       errors.append(e.message)
       null
     }

@@ -8,17 +8,14 @@ import java.net.URL
  * Extension point for picking vector icons (e.g., Material Design Icons).
  */
 interface BaseVectorIconPicker {
-  data class Result(
-    val name: String,
-    val url: URL,
-  )
+  data class Result(val name: String, val url: URL)
 
   fun pickIcon(): Result?
   fun getDefaultIconUrl(): URL?
 
   companion object {
     val EP_NAME: ExtensionPointName<BaseVectorIconPicker> =
-      ExtensionPointName.Companion.create("com.intellij.compose.ide.plugin.resources.vectorIconPicker")
+      ExtensionPointName.create("com.intellij.compose.ide.plugin.resources.vectorIconPicker")
 
     fun getInstance(): BaseVectorIconPicker? = EP_NAME.extensionList.firstOrNull()
   }

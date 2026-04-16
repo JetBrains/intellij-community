@@ -6,7 +6,7 @@ import com.android.ide.common.vectordrawable.VdIcon
 import com.android.ide.common.vectordrawable.VdOverrideInfo
 import com.android.ide.common.vectordrawable.VdPreview
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import org.kxml2.io.KXmlParser
 import org.w3c.dom.Document
 import org.xmlpull.v1.XmlPullParser
@@ -34,7 +34,7 @@ class AndroidDrawablePreviewRenderer : BaseVectorDrawablePreviewRenderer() {
       outputStream.toString(StandardCharsets.UTF_8)
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       errors.append(e.message)
       null
     }
@@ -66,7 +66,7 @@ class AndroidDrawablePreviewRenderer : BaseVectorDrawablePreviewRenderer() {
       VdPreview.getPreviewFromVectorXml(targetSize, xmlContent, errors)
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       errors.append(e.message)
       null
     }
