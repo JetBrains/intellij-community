@@ -16,7 +16,7 @@ interface EelReceiveChannel {
    * To read to the end, read until result is [ReadResult.EOF].
    *
    * @return [ReadResult] (see its doc for usage instructions)
-   * @throws EelReceiveChannelException if some I/O error occured that certainly can be treated just as [ReadResult.EOF].
+   * @throws EelReceiveChannelException if some I/O error occurred that certainly can be treated just as [ReadResult.EOF].
    *   The channel is unusable after receiving the error. No methods except [closeForReceive] may be called.
    */
   @Throws(EelReceiveChannelException::class)
@@ -30,7 +30,7 @@ interface EelReceiveChannel {
    * I.e., it is possible that [available] returns 0 even though it's possible to read something immediately.
    * Moreover, implementations may return 0 every time.
    *
-   * @throws EelReceiveChannelException if some I/O error occured that certainly can be treated just as [ReadResult.EOF].
+   * @throws EelReceiveChannelException if some I/O error occurred that certainly can be treated just as [ReadResult.EOF].
    *   The channel is unusable after receiving the error. No methods except [closeForReceive] may be called.
    */
   @Throws(EelReceiveChannelException::class)
