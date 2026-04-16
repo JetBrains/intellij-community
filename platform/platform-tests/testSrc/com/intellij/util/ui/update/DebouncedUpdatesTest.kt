@@ -653,41 +653,6 @@ class DebouncedUpdatesTest {
   }
 
   @Test
-  fun `test component batched queue collects items only when showing`() {
-    edtTest {
-      val component = JLabel()
-      val batches = CopyOnWriteArrayList<List<Int>>()
-
-      val queue = DebouncedUpdates.forComponent<Int>(component, "test-component-batched", 100.milliseconds)
-        .runBatched { batch ->
-          batches.add(batch)
-        }
-
-      // Queue items when not showing
-      queue.queue(1)
-      delay(40.milliseconds)
-      queue.queue(2)
-      delay(120.milliseconds)
-      assertEquals(emptyList<List<Int>>(), awaitValue(emptyList()) { batches.toList() })
-
-      // Show component - batched items should execute
-      withShowingChanged { container.add(component) }
-      yield()
-      delay(120.milliseconds)
-      assertEquals(1, awaitValue(1) { batches.size })
-      assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { batches[0] })
-
-      // Queue more items while showing
-      queue.queue(3)
-      delay(40.milliseconds)
-      queue.queue(4)
-      delay(120.milliseconds)
-      assertEquals(2, awaitValue(2) { batches.size })
-      assertEquals(listOf(3, 4), awaitValue(listOf(3, 4)) { batches[1] })
-    }
-  }
-
-  @Test
   fun `test zero delay processes immediately`() {
     edtTest {
       val executedValues = CopyOnWriteArrayList<Int>()

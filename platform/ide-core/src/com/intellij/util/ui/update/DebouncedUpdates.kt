@@ -45,8 +45,11 @@ import kotlin.time.Duration.Companion.nanoseconds
  *
  * Supports three execution modes (all execute sequentially without cancellation):
  * - **runLatest**: Processes only the latest queued item (replaces earlier items with newer ones).
+ *   Available for both scope-based and component-based queues.
  * - **runBatched**: Collects and processes all items accumulated during the delay window.
+ *   Only available for scope-based queues. Not supported for component-based queues.
  * - **runBatchedDistinct**: Like runBatched, but automatically removes duplicate items.
+ *   Only available for scope-based queues. Not supported for component-based queues.
  *
  * Supports two timing modes:
  * - **Throttle mode** (default, `restartTimerOnAdd = false`): Timer starts on first item, waits for delay
@@ -58,36 +61,36 @@ import kotlin.time.Duration.Companion.nanoseconds
  *
  * Example usage in Kotlin:
  * ```kotlin
- * // Latest item, scope-bound
- * val queue1 = DebouncedUpdates.forScope<State>(scope, "update-ui", 300.milliseconds)
- *   .withContext(Dispatchers.EDT)
+ * // Batched items, scope-bound
+ * val queue1 = DebouncedUpdates.forScope<Event>(scope, "process-events", 300.milliseconds)
+ *   .withContext(Dispatchers.Default)
  *   .restartTimerOnAdd(true)
- *   .runLatest { state -> updateUI(state) }
+ *   .runBatched { events -> processEvents(events) }
  *   .cancelOnDispose(disposable)
  *
- * // Batched, component-bound
- * val queue2 = DebouncedUpdates.forComponent<Event>(component, "process-events", 100.milliseconds)
- *   .runBatched { events -> processEvents(events) }
+ * // Latest item, component-bound
+ * val queue2 = DebouncedUpdates.forComponent<State>(component, "update-ui", 100.milliseconds)
+ *   .runLatest { state -> updateUI(state) }
  *
- * queue1.queue(newState)
- * queue2.queue(event)
+ * queue1.queue(event)
+ * queue2.queue(newState)
  * ```
  *
  * Example usage in Java:
  * ```java
- * // Latest item, scope-bound
- * var queue1 = DebouncedUpdates.forScope(scope, "update-ui", 300)
- *   .withContext(Dispatchers.getEDT())
+ * // Batched items, scope-bound
+ * var queue1 = DebouncedUpdates.forScope(scope, "process-events", 300)
+ *   .withContext(Dispatchers.getDefault())
  *   .restartTimerOnAdd(true)
- *   .runLatest(state -> updateUI(state))
+ *   .runBatched(events -> processEvents(events))
  *   .cancelOnDispose(disposable);
  *
- * // Batched, component-bound
- * var queue2 = DebouncedUpdates.forComponent(component, "process-events", 100)
- *   .runBatched(events -> processEvents(events));
+ * // Latest item, component-bound
+ * var queue2 = DebouncedUpdates.forComponent(component, "update-ui", 100)
+ *   .runLatest(state -> updateUI(state));
  *
- * queue1.queue(newState);
- * queue2.queue(event);
+ * queue1.queue(event);
+ * queue2.queue(newState);
  * ```
  */
 @ApiStatus.Experimental
@@ -126,6 +129,9 @@ object DebouncedUpdates {
    * Items queued while the component is hidden remain in the queue and are processed when the component becomes visible.
    * When the component is hidden, any currently executing action is cancelled.
    * When the component is shown again, queued items are processed and the action resumes executing.
+   *
+   * **Note:** Only [Builder.runLatest] is supported for component-based queues.
+   * Use [forScope] if batching is required.
    *
    * Actions run on `Dispatchers.UI` by default. Use [Builder.withContext] to override.
    *
@@ -326,7 +332,7 @@ object DebouncedUpdates {
     fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
       return when (owner) {
         is ScopeOwner -> BatchedScopeQueue(owner.scope, name, delay, context, restartTimerOnAdd, action)
-        is ComponentOwner -> BatchedComponentQueue(owner.component, name, delay, context, restartTimerOnAdd, action)
+        is ComponentOwner -> error("runBatched() is not supported for component-based queues. Use runLatest() instead, or use DebouncedUpdates.forScope() if batching is required.")
       }
     }
 
@@ -369,7 +375,7 @@ object DebouncedUpdates {
     fun runBatchedDistinct(action: suspend (Set<T>) -> Unit): UpdateQueue<T> {
       return when (owner) {
         is ScopeOwner -> BatchedDistinctScopeQueue(owner.scope, name, delay, context, restartTimerOnAdd, action)
-        is ComponentOwner -> BatchedDistinctComponentQueue(owner.component, name, delay, context, restartTimerOnAdd, action)
+        is ComponentOwner -> error("runBatchedDistinct() is not supported for component-based queues. Use runLatest() instead, or use DebouncedUpdates.forScope() if batching is required.")
       }
     }
 
@@ -395,7 +401,7 @@ object DebouncedUpdates {
 sealed interface UpdateQueue<T> {
   /**
    * Queues an item for processing.
-   * 
+   *
    * If the queue is closed (e.g., scope was cancelled, component was removed, or [cancelOnDispose] was triggered),
    * the call is silently ignored and a warning is logged.
    */
@@ -470,10 +476,10 @@ private abstract class BaseUpdateQueue<T>(
 
   protected val channel: Channel<T> = Channel(capacity = channelCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   protected abstract val job: Job
-  
+
   // Track the currently running processing job for tests
   protected val processingJob = AtomicReference<Job?>(null)
-  
+
   // Track whether we're collecting items - set after receive(), cleared before starting processing job
   @Volatile
   protected var isCollecting: Boolean = false
@@ -491,7 +497,7 @@ private abstract class BaseUpdateQueue<T>(
     job.cancelOnDispose(disposable)
     return this
   }
-  
+
   /**
    * Returns true if there are no pending items in the channel AND we're not collecting.
    * Returns false if channel has items OR we just received the first item and are collecting.
@@ -499,7 +505,7 @@ private abstract class BaseUpdateQueue<T>(
   @OptIn(ExperimentalCoroutinesApi::class)
   private val isEmpty: Boolean
     get() = channel.isEmpty && !isCollecting
-  
+
   /**
    * Returns true if a job is currently processing items.
    */
@@ -508,14 +514,14 @@ private abstract class BaseUpdateQueue<T>(
       val job = processingJob.get()
       return job != null && !job.isCompleted
     }
-  
+
   /**
    * Waits for all queued items to be processed.
    * This is a blocking call intended for testing.
-   * 
+   *
    * **WARNING:** This method uses `runBlockingCancellable` which is forbidden on EDT.
    * When calling from EDT, use `PlatformTestUtil.waitWithEventsDispatching` with [isAllExecuted] condition.
-   * 
+   *
    * @param timeout timeout duration
    * @throws TimeoutException if the timeout is exceeded
    */
@@ -524,14 +530,14 @@ private abstract class BaseUpdateQueue<T>(
   @Throws(TimeoutException::class)
   override fun waitForAllExecuted(timeout: Duration) {
     val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
-    
+
     // Loop until both channel is empty AND no processing job is running
     // This handles nested queuing (items queued during batch processing)
     while (!isAllExecuted) {
       if (System.currentTimeMillis() > deadline) {
         throw TimeoutException("Timed out waiting for DebouncedUpdates '$name'")
       }
-      
+
       val currentJob = processingJob.get()
       if (currentJob != null && !currentJob.isCompleted) {
         runBlockingMaybeCancellable {
@@ -545,10 +551,10 @@ private abstract class BaseUpdateQueue<T>(
       }
     }
   }
-  
+
   /**
    * Java-friendly overload: Waits for all queued items to be processed.
-   * 
+   *
    * @param timeoutMillis timeout in milliseconds
    * @throws TimeoutException if the timeout is exceeded
    */
@@ -576,7 +582,7 @@ private abstract class BaseUpdateQueue<T>(
 
   /**
    * Core function for processing channel items with manual channel processing.
-   * 
+   *
    * @param delay The delay duration
    * @param context The coroutine context for executing actions
    * @param restartTimerOnAdd If true, uses debounce mode (timer resets on each new item).
@@ -597,21 +603,21 @@ private abstract class BaseUpdateQueue<T>(
     while (true) {
       // Wait for first item and add it
       onReceive(channel.receive())
-      
+
       // Mark as collecting - we received an item and are collecting the batch
       isCollecting = true
 
       if (restartTimerOnAdd) {
         // Debounce mode: restart timer on each new item
         var lastItemTime = System.nanoTime()
-        
+
         while (true) {
           val remainingDelay = delay.inWholeNanoseconds - (System.nanoTime() - lastItemTime)
           if (remainingDelay <= 0) {
             // Timer expired, process collected items
             break
           }
-          
+
           // Wait for remaining delay or new item, whichever comes first
           withTimeoutOrNull(remainingDelay.nanoseconds) {
             onReceive(channel.receive())
@@ -621,7 +627,7 @@ private abstract class BaseUpdateQueue<T>(
       } else {
         // Throttle/sample mode: fixed interval
         delay(delay)
-        
+
         // Collect all remaining items
         var extraItem = channel.tryReceive().getOrNull()
         while (extraItem != null) {
@@ -640,13 +646,13 @@ private abstract class BaseUpdateQueue<T>(
             onProcess(data)
           }
         }
-        
+
         // Track the processing job and clear collecting flag
         // IMPORTANT: Must set processingJob before clearing isCollecting to avoid race condition
         // where both would be false/null even though processing is about to start
         processingJob.set(job)
         isCollecting = false
-        
+
         try {
           job.join()
         } finally {
@@ -655,7 +661,7 @@ private abstract class BaseUpdateQueue<T>(
       }
     }
   }
-  
+
   /**
    * Process latest item only (replaces previous item with new one).
    */
@@ -667,7 +673,7 @@ private abstract class BaseUpdateQueue<T>(
     action: suspend (T) -> Unit
   ) {
     var latestItem: T? = null
-    
+
     processWithDelay(
       delay = delay,
       context = context,
@@ -680,7 +686,7 @@ private abstract class BaseUpdateQueue<T>(
       onProcess = { item -> action(item) }
     )
   }
-  
+
   /**
    * Process all items as a batch (collects all items into a list).
    */
@@ -692,7 +698,7 @@ private abstract class BaseUpdateQueue<T>(
     action: suspend (List<T>) -> Unit
   ) {
     val buffer = mutableListOf<T>()
-    
+
     processWithDelay(
       delay = delay,
       context = context,
@@ -789,24 +795,6 @@ private class SingleComponentQueue<T>(
 }
 
 /**
- * Batched queue bound to a JComponent lifecycle.
- */
-@ApiStatus.Experimental
-private class BatchedComponentQueue<T>(
-  component: JComponent,
-  name: String,
-  delay: Duration,
-  context: CoroutineContext,
-  restartTimerOnAdd: Boolean,
-  action: suspend (List<T>) -> Unit
-) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
-
-  override val job: Job = component.launchOnShow(name) {
-    processBatched(delay, context, restartTimerOnAdd, action)
-  }
-}
-
-/**
  * Batched deduplicating queue bound to a CoroutineScope.
  */
 @ApiStatus.Experimental
@@ -820,24 +808,6 @@ private class BatchedDistinctScopeQueue<T>(
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processBatchedDistinct(delay, context, restartTimerOnAdd, action)
-  }
-}
-
-/**
- * Batched deduplicating queue bound to a JComponent lifecycle.
- */
-@ApiStatus.Experimental
-private class BatchedDistinctComponentQueue<T>(
-  component: JComponent,
-  name: String,
-  delay: Duration,
-  context: CoroutineContext,
-  restartTimerOnAdd: Boolean,
-  action: suspend (Set<T>) -> Unit
-) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
-
-  override val job: Job = component.launchOnShow(name) {
     processBatchedDistinct(delay, context, restartTimerOnAdd, action)
   }
 }
