@@ -122,6 +122,11 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
+- Claude provider archive, unarchive, and thread rename must stay provider-backed and must not depend on IDE-local archive persistence; archive, unarchive, and rename share a single non-interactive headless `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>` transport (rename must use `AgentThreadRenameHandler.Backend`, not `ChatDispatch`, so it does not flash open an editor tab or enter Claude's TUI). Observed Claude title prefix state is the source used for active-list visibility, and provider title parsing must preserve the full normalized title without truncation. Because the archive marker is the stored-title prefix `[archived] `, a thread whose stored title literally begins with that prefix is treated as archived — this is an accepted trade-off (Claude has no native archive state).
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
+
 - `Select in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/SessionTreeSelectionSyncTest.kt

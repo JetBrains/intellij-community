@@ -6,9 +6,7 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
@@ -28,7 +26,9 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 internal class ClaudeAgentSessionProviderDescriptor(
-  override val sessionSource: AgentSessionSource = ClaudeSessionSource(),
+  private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
+  override val sessionSource: AgentSessionSource = ClaudeSessionSource(backend = backend),
+  private val renameEngine: ClaudeThreadRenameEngine = PtyClaudeThreadRenameEngine(backend = backend),
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CLAUDE
@@ -66,17 +66,27 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val refreshPathAfterCreateNewSession: Boolean
     get() = true
 
+  override val archiveRefreshDelayMs: Long
+    get() = 1_000L
+
+  override val suppressArchivedThreadsDuringRefresh: Boolean
+    get() = true
+
+  override val supportsArchiveThread: Boolean
+    get() = true
+
+  override val supportsUnarchiveThread: Boolean
+    get() = true
+
   override val supportsPlanMode: Boolean
     get() = true
 
-  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.ChatDispatch {
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
     override val supportedContexts: Set<AgentThreadRenameContext>
       get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
 
-    override fun buildDispatchPlan(normalizedName: String): AgentInitialMessageDispatchPlan {
-      return AgentInitialMessageDispatchPlan(
-        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "/rename $normalizedName")),
-      )
+    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
+      return renameEngine.rename(path = path, threadId = threadId, newTitle = normalizedName)
     }
   }
 
@@ -86,17 +96,11 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override fun isCliAvailable(): Boolean = ClaudeCliSupport.isAvailable()
 
   override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(
-      command = ClaudeCliSupport.buildResumeCommand(sessionId),
-      envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
-    )
+    return buildClaudeResumeLaunchSpec(sessionId)
   }
 
   override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    return AgentSessionTerminalLaunchSpec(
-      command = ClaudeCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO),
-      envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
-    )
+    return buildClaudeNewSessionLaunchSpec(mode)
   }
 
   override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
@@ -155,13 +159,21 @@ internal class ClaudeAgentSessionProviderDescriptor(
       launchSpec = buildNewSessionLaunchSpec(mode),
     )
   }
+
+  override suspend fun archiveThread(path: String, threadId: String): Boolean {
+    return renameEngine.archiveThread(path, threadId)
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    return renameEngine.unarchiveThread(path, threadId)
+  }
 }
 
 private fun resolveLaunchMode(launchSpec: AgentSessionTerminalLaunchSpec): String {
   return if ("--dangerously-skip-permissions" in launchSpec.command) "yolo" else "standard"
 }
 
-private fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
+internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
   val result = command.toMutableList()
   val index = result.indexOf(PERMISSION_MODE_FLAG)
   if (index >= 0 && index + 1 < result.size) {
@@ -171,6 +183,20 @@ private fun replaceOrAddPermissionMode(command: List<String>, mode: String): Lis
     result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
   }
   return result
+}
+
+internal fun buildClaudeResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+  return AgentSessionTerminalLaunchSpec(
+    command = ClaudeCliSupport.buildResumeCommand(sessionId),
+    envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
+  )
+}
+
+internal fun buildClaudeNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+  return AgentSessionTerminalLaunchSpec(
+    command = ClaudeCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO),
+    envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
+  )
 }
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -178,6 +179,46 @@ class ClaudeSessionSourceTest {
       val result = withTimeoutOrNull(2.seconds) { source.updateEvents.first() }
       assertThat(result?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
     }
+  }
+
+  @Test
+  fun archivedThreadsAreHiddenFromActiveList() {
+    val source = ClaudeSessionSource(
+      backend = staticBackend(
+        listOf(
+          ClaudeBackendThread(id = "visible", title = "Visible", updatedAt = 2_000L),
+          ClaudeBackendThread(id = "archived", title = "Archived", archived = true, updatedAt = 1_000L),
+        )
+      )
+    )
+
+    val result = runBlocking(Dispatchers.Default) {
+      source.listThreadsFromClosedProject(path = "/any")
+    }
+
+    assertThat(result.map { it.id }).containsExactly("visible")
+  }
+
+  @Test
+  fun archivedThreadsDoNotProduceRefreshHintCandidates() {
+    val source = ClaudeSessionSource(
+      backend = staticBackend(
+        listOf(
+          ClaudeBackendThread(id = "existing", title = "Existing", updatedAt = 3_000L),
+          ClaudeBackendThread(id = "archived", title = "Archived", archived = true, updatedAt = 2_000L),
+          ClaudeBackendThread(id = "new-visible", title = "New visible", updatedAt = 1_000L),
+        )
+      )
+    )
+
+    val hints = runBlocking(Dispatchers.Default) {
+      source.prefetchRefreshHints(
+        paths = listOf("/any"),
+        refreshThreadSeedsByPath = mapOf("/any" to setOf("existing").toAgentSessionRefreshThreadSeeds()),
+      )
+    }
+
+    assertThat(hints.getValue("/any").rebindCandidates.map { it.threadId }).containsExactly("new-visible")
   }
 
 

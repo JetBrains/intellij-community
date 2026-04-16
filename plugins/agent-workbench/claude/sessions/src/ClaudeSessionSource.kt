@@ -44,16 +44,17 @@ class ClaudeSessionSource(
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
+    val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
     val currentActiveId = activeThreadId
     if (currentActiveId != null) {
-      for (thread in threads) {
+      for (thread in visibleThreads) {
         if (thread.id == currentActiveId) {
           readTracker.merge(thread.id, thread.updatedAt, ::maxOf)
           break
         }
       }
     }
-    return threads.map { it.toAgentSessionThread(readTracker) }
+    return visibleThreads.map { it.toAgentSessionThread(readTracker) }
   }
 
   override suspend fun prefetchRefreshHints(
@@ -70,8 +71,9 @@ class ClaudeSessionSource(
       catch (_: Throwable) {
         continue
       }
+      val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
       val knownIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { it.threadId }.toCollection(LinkedHashSet())
-      val rebindCandidates = threads
+      val rebindCandidates = visibleThreads
         .filter { it.id !in knownIds }
         .map { thread ->
           AgentSessionRebindCandidate(
@@ -100,7 +102,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Lo
     id = id,
     title = title,
     updatedAt = updatedAt,
-    archived = false,
+    archived = archived,
     provider = AgentSessionProvider.CLAUDE,
     originBranch = gitBranch,
     activity = effectiveActivity(readTracker),

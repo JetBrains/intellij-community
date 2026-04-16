@@ -191,6 +191,12 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
+- Claude archive, unarchive, and thread rename must share the same provider-backed short-lived non-interactive Claude resume+rename command transport: `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>`. Archive uses the exact stored-title prefix `[archived] ` on top of the normalized title; active Claude discovery must hide prefixed threads until unarchive restores them on refresh; archive/unarchive must preserve the full normalized title content apart from the archive prefix transform. A thread whose stored title literally begins with `[archived] ` is, by design, treated as archived and hidden from the active list — this is the accepted trade-off of using the title prefix as the archive marker, since Claude has no native archive state. Claude's `threadRenameHandler` must be a `Backend` handler (not `ChatDispatch`), so a rename action does not flash open an editor tab or enter Claude's TUI.
+  [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
 - Codex explicit thread names must take precedence over fallback title fields (`title`, `summary`, `preview`) when deriving visible thread titles from app-server payloads.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
 
@@ -207,6 +213,9 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
 - Unarchive flow for previously archived Codex targets must restore thread visibility on refresh without requiring tool-window recreation.
+  [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
+- Unarchive flow for previously archived Claude targets must restore thread visibility on refresh without requiring tool-window recreation.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
 - Tool window factory must create Swing panel content and register tool-window title and gear actions.

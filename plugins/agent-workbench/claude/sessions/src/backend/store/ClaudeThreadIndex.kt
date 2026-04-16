@@ -4,6 +4,8 @@
 package com.intellij.agent.workbench.claude.sessions.backend.store
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
+import com.intellij.agent.workbench.claude.common.isClaudeArchivedThreadTitle
+import com.intellij.agent.workbench.claude.common.resolveClaudeThreadTitleState
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
@@ -105,10 +107,12 @@ internal class ClaudeThreadIndex(
         sessionId = parsed.id,
         cachedIndexFilesByPath = cachedIndexFilesByPath,
       )
+      val resolvedTitle = resolveClaudeThreadTitleState(resolveTitleForArchiveState(parsed, indexedTitle), parsed.id)
       threads.add(
         ClaudeBackendThread(
           id = parsed.id,
-          title = indexedTitle ?: parsed.title,
+          title = resolvedTitle.title,
+          archived = resolvedTitle.archived,
           updatedAt = parsed.updatedAt,
           gitBranch = parsed.gitBranch,
           activity = parsed.activity,
@@ -191,6 +195,19 @@ private fun resolveIndexedTitle(
   val sessionDirectory = sessionFile?.parent ?: return null
   val indexPathKey = toFileBackedSessionPathKey(sessionDirectory.resolve(CLAUDE_SESSION_INDEX_FILE))
   return cachedIndexFilesByPath[indexPathKey]?.parsedValue?.get(sessionId)
+}
+
+private fun resolveTitleForArchiveState(
+  parsed: com.intellij.agent.workbench.claude.common.ClaudeSessionThread,
+  indexedTitle: String?,
+): String {
+  if (!parsed.hasCustomTitle) {
+    return indexedTitle ?: parsed.title
+  }
+  if (isClaudeArchivedThreadTitle(parsed.title) || isClaudeArchivedThreadTitle(indexedTitle.orEmpty())) {
+    return parsed.title
+  }
+  return indexedTitle ?: parsed.title
 }
 
 private fun isClaudeSessionFile(path: Path): Boolean {
