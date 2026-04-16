@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -48,7 +49,7 @@ val Project.projectDirectory: Path
  * to a subdirectory (e.g., `.ijwb/`) while source files reside in the workspace root.
  */
 private fun Project.allProjectRoots(): List<Path> {
-  val roots = mutableListOf(projectDirectory)
+  val roots = mutableListOf(projectDirectory.normalize())
   try {
     ProjectRootManager.getInstance(this).contentRoots
       .mapNotNull { it.toNioPathOrNull()?.normalize() }
