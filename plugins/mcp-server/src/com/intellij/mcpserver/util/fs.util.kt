@@ -46,7 +46,7 @@ val Project.projectDirectory: Path
  * to a subdirectory (e.g., `.ijwb/`) while source files reside in the workspace root.
  */
 private fun Project.allProjectRoots(): List<Path> {
-  val roots = mutableListOf(projectDirectory)
+  val roots = mutableListOf(projectDirectory.normalize())
   try {
     ProjectRootManager.getInstance(this).contentRoots
       .mapNotNull { it.toNioPathOrNull()?.normalize() }
@@ -155,13 +155,13 @@ private suspend fun findMostRelevantProject(path: Path): Project? {
   val pairs = openProjects.mapNotNull { project ->
     val openProjectPath = if (project is ProjectStoreOwner) project.componentStore.projectBasePath.normalize() else return@mapNotNull null
     // Check against projectBasePath first
-    if (targetNormalizedPath.startsWith(openProjectPath)) return@mapNotNull project to path
+    if (targetNormalizedPath.startsWith(openProjectPath)) return@mapNotNull project to openProjectPath
     // Also check against content roots (needed for Bazel/IJwB where projectBasePath is a subdirectory)
     try {
       val contentRoots = ProjectRootManager.getInstance(project).contentRoots
       for (root in contentRoots) {
         val rootPath = root.toNioPathOrNull()?.normalize() ?: continue
-        if (targetNormalizedPath.startsWith(rootPath)) return@mapNotNull project to path
+        if (targetNormalizedPath.startsWith(rootPath)) return@mapNotNull project to rootPath
       }
     }
     catch (_: Throwable) {
