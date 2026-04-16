@@ -53,6 +53,7 @@ class SeTargetItemPresentationBuilder {
   private var locationIconId: IconId? = null
   private var extendedInfo: SeExtendedInfo? = null
   private var isMultiSelectionSupported: Boolean = false
+  private var shouldKeepLocationVisible: Boolean = false
 
   fun withBackgroundColor(color: Color?): SeTargetItemPresentationBuilder {
     this.backgroundColorId = color?.rpcId()
@@ -119,6 +120,11 @@ class SeTargetItemPresentationBuilder {
     return this
   }
 
+  fun withShouldKeepLocationVisible(isVisible: Boolean): SeTargetItemPresentationBuilder {
+    this.shouldKeepLocationVisible = isVisible
+    return this
+  }
+
   fun withTargetPresentation(tp: TargetPresentation, matchers: ItemMatchers?, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeTargetItemPresentationBuilder =
     withBackgroundColor(tp.backgroundColor)
       .withIcon(tp.icon)
@@ -154,7 +160,8 @@ class SeTargetItemPresentationBuilder {
       locationText = locationText,
       locationIconId = locationIconId,
       extendedInfo = extendedInfo,
-      isMultiSelectionSupported = isMultiSelectionSupported
+      isMultiSelectionSupported = isMultiSelectionSupported,
+      shouldKeepLocationVisible = shouldKeepLocationVisible,
     )
 
   companion object {
@@ -181,6 +188,7 @@ data class SeTargetItemPresentationImpl(
   private val locationIconId: IconId? = null,
   override val extendedInfo: SeExtendedInfo?,
   override val isMultiSelectionSupported: Boolean,
+  val shouldKeepLocationVisible: Boolean,
 ) : SeTargetItemPresentation {
   override val text: String get() = presentableText
 

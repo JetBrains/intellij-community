@@ -76,7 +76,13 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
       val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
       val width = resultList.width
-      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })
+      val keepLocationVisibleSpace = if (presentation.shouldKeepLocationVisible) JBUI.scale(54) else 0
+
+      val shortenContainerText = SETextShortener.getShortenContainerText(
+        containerText,
+        width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20) - keepLocationVisibleSpace
+      ) { fontMetrics.stringWidth(it) }
+
       nonLocationContentWidth += fontMetrics.stringWidth(shortenContainerText)
 
       text(shortenContainerText) {
