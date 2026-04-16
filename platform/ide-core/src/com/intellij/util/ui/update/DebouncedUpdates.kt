@@ -654,7 +654,10 @@ private abstract class BaseUpdateQueue<T>(
       context = context,
       restartTimerOnAdd = restartTimerOnAdd,
       onReceive = { latestItem = it },
-      onPrepare = { latestItem!! },
+      onPrepare = {
+        @Suppress("UNCHECKED_CAST")
+        latestItem as T
+      },
       onProcess = { item -> action(item) }
     )
   }
