@@ -138,7 +138,7 @@ final class PyUnitTestsDebuggingService {
   /**
    * Check if the error has happened while set up or tear down.
    *
-   * @param frames of the thread where an exception has occured
+   * @param frames of the thread where an exception has occurred
    */
   public static boolean isErrorInTestSetUpOrTearDown(@NotNull List<PyStackFrameInfo> frames) {
     for (PyStackFrameInfo frameInfo : frames) {
