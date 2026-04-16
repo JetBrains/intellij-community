@@ -2,14 +2,14 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.runtime.HatchConstants
-import com.intellij.python.hatch.runtime.HatchRuntime
+import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.runtime.executeAndMatch
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import io.github.z4kn4fein.semver.Version
@@ -18,47 +18,9 @@ import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-/**
- * Handles hatch-specific errors, runs [transformer] only on outputs with codes 0 or 1 without tracebacks.
- */
-private suspend fun <T> HatchRuntime.executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
-  val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
-    when {
-      output.exitCode !in 0..1 -> Result.failure(null)
-      output.exitCode == 1 && output.stdoutString.substringBefore('\n').contains("Traceback (most recent call last)") -> {
-        val hatchErrorDescription = output.stdoutString.split('\n').lastOrNull { it.isNotEmpty() } ?: ""
-        Result.failure(hatchErrorDescription)
-      }
-      else -> transformer.invoke(output)
-    }
-  }
-
-  return this.execute(*arguments, processOutputTransformer = errorHandlerTransformer)
-}
-
-private suspend fun <T> HatchRuntime.executeAndMatch(
-  vararg arguments: String,
-  expectedOutput: Regex,
-  outputContentSupplier: (EelProcessExecutionResultInfo) -> String = { it.stdoutString },
-  transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
-): PyResult<T> {
-  return this.executeAndHandleErrors(*arguments) { processOutput ->
-    if (processOutput.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
-
-    val output = outputContentSupplier.invoke(processOutput).replace("\r\n", "\n")
-    val matchResult = expectedOutput.matchEntire(output)
-    if (matchResult == null) {
-      Result.failure(PyHatchBundle.message("python.hatch.cli.error.response.out.of.pattern", expectedOutput.toString()))
-    }
-    else {
-      transformer.invoke(matchResult)
-    }
-  }
-}
-
-sealed class HatchCommand(private val command: Array<String>, protected val runtime: HatchRuntime) {
+sealed class HatchCommand(private val command: Array<String>, protected val runtime: PyToolRuntime) {
   @Suppress("unused")
-  constructor(command: String, runtime: HatchRuntime) : this(arrayOf(command), runtime)
+  constructor(command: String, runtime: PyToolRuntime) : this(arrayOf(command), runtime)
 
   protected suspend fun <T> executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
     return runtime.executeAndHandleErrors(*command, *arguments, transformer = transformer)
@@ -69,7 +31,7 @@ sealed class HatchCommand(private val command: Array<String>, protected val runt
   }
 }
 
-class HatchCli(private val runtime: HatchRuntime) {
+class HatchCli(private val runtime: PyToolRuntime) {
   /**
    * Build a project
    */

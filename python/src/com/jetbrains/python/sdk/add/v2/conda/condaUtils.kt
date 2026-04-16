@@ -13,10 +13,10 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
-import com.jetbrains.python.sdk.add.v2.Version
-import com.jetbrains.python.sdk.add.v2.VersionFormatException
+import com.intellij.python.pytools.Version
+import com.intellij.python.pytools.VersionFormatException
 import com.jetbrains.python.sdk.add.v2.existingSdks
-import com.jetbrains.python.sdk.add.v2.getToolVersion
+import com.intellij.python.pytools.getToolVersion
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService
 
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.FullPathOnTarget
@@ -331,4 +332,9 @@ class Args(vararg initialArgs: String) {
         is Arg.FileArg -> it.generator.generateArg(mapFileToRemote(it.file))
       }
     }
+}
+
+
+fun BinOnEel.asGeneralCommandLine(): GeneralCommandLine {
+  return GeneralCommandLine(path.toString()).withWorkingDirectory(workDir)
 }

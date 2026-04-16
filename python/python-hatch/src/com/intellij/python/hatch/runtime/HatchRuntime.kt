@@ -1,102 +1,31 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.runtime
 
-import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.execService.ProcessSemiInteractiveFun
-import com.intellij.python.community.execService.execute
-import com.intellij.python.community.execService.processSemiInteractiveHandler
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchConfiguration
-import com.intellij.python.hatch.HatchError
-import com.intellij.python.hatch.PythonVirtualEnvironment
-import com.intellij.python.hatch.WorkingDirectoryNotFoundHatchError
 import com.intellij.python.hatch.cli.HatchCli
-import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.PythonHomePath
+import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.pytools.runtime.WorkingDirectoryNotFoundError
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.errorProcessing.PyError
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
-import kotlin.io.path.isExecutable
 
-class HatchRuntime(
-  val hatchBinary: BinOnEel,
-  val execOptions: ExecOptions,
-  private val execService: ExecService = ExecService(),
-) {
-  fun hatchCli(): HatchCli = HatchCli(this)
-
-  fun withEnv(vararg envVars: Pair<String, String>): HatchRuntime {
-    return HatchRuntime(
-      hatchBinary = this.hatchBinary,
-      execOptions = this.execOptions.copy(env = this.execOptions.env + envVars)
-    )
-  }
-
-  fun withWorkingDirectory(workDirectoryPath: Path): Result<HatchRuntime, HatchError> {
-    if (!workDirectoryPath.isDirectory()) {
-      return Result.failure(WorkingDirectoryNotFoundHatchError(workDirectoryPath))
-    }
-
-    val runtime = HatchRuntime(
-      hatchBinary = this.hatchBinary.copy(workDir = workDirectoryPath),
-      execOptions = this.execOptions
-    )
-    return Result.success(runtime)
-  }
-
-  fun withBasePythonBinaryPath(basePythonPath: PythonBinary): Result<HatchRuntime, HatchError> {
-    if (!basePythonPath.isExecutable()) {
-      return Result.failure(BasePythonExecutableNotFoundHatchError(basePythonPath))
-    }
-
-    val runtime = withEnv(HatchConstants.AppEnvVars.PYTHON to basePythonPath.toString())
-    return Result.success(runtime)
-  }
-
-  /**
-   * Pure execution of [hatchBinary] with command line [arguments] and [execOptions] by [execService]
-   * Doesn't make any validation of stdout/stderr content.
-   */
-  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): PyResult<T> {
-    return execService.execute(hatchBinary, Args(*arguments), execOptions, processOutputTransformer = processOutputTransformer)
-  }
-
-  internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyResult<T> {
-    return execService.executeAdvanced(hatchBinary, Args(*arguments), execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
-  }
-
-  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
-    val pythonInfo = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
-      pythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
-    }
-
-    val pythonVirtualEnvironment = when {
-      pythonInfo == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
-      else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonInfo)
-    }
-    return Result.success(pythonVirtualEnvironment)
-  }
-}
-
+fun PyToolRuntime.hatchCli(): HatchCli = HatchCli(this)
 
 suspend fun createHatchRuntime(
   fileSystem: FileSystem<PathHolder.Eel>,
   hatchExecutablePath: Path?,
   workingDirectoryPath: Path?,
   envVars: Map<String, String> = emptyMap(),
-): Result<HatchRuntime, HatchError> {
+): Result<PyToolRuntime, PyError> {
   val actualHatchExecutable = hatchExecutablePath
                               ?: HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr { return it }.path
   if (workingDirectoryPath?.isDirectory() != true) {
-    return Result.failure(WorkingDirectoryNotFoundHatchError(workingDirectoryPath))
+    return Result.failure(WorkingDirectoryNotFoundError(workingDirectoryPath))
   }
 
   val defaultVariables = mapOf(
@@ -109,8 +38,8 @@ suspend fun createHatchRuntime(
   )
   val actualEnvVars = defaultVariables + envVars
 
-  val runtime = HatchRuntime(
-    hatchBinary = BinOnEel(actualHatchExecutable, workingDirectoryPath),
+  val runtime = PyToolRuntime(
+    binary = BinOnEel(actualHatchExecutable, workingDirectoryPath),
     execOptions = ExecOptions(
       env = actualEnvVars,
     )

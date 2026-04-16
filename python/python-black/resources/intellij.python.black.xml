@@ -1,0 +1,22 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.sdk"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Deprecated registry key-->
+    <registryKey key="black.formatter.support.enabled" defaultValue="true" description="Enable Black formatter support"/>
+
+    <python.pytools.pyTool implementation="com.intellij.python.black.BlackPyTool"/>
+    <projectSettings service="com.intellij.python.black.configuration.BlackFormatterConfiguration"/>
+    <formattingService implementation="com.intellij.python.black.BlackFormattingService"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder"/>
+  </extensions>
+</idea-plugin>

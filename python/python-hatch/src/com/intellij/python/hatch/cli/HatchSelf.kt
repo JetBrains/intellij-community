@@ -3,7 +3,7 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.PyHatchBundle
-import com.intellij.python.hatch.runtime.HatchRuntime
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.jetbrains.python.Result
@@ -12,7 +12,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 /**
  * Manage environment dependencies
  */
-class HatchSelf(runtime: HatchRuntime) : HatchCommand("self", runtime) {
+class HatchSelf(runtime: PyToolRuntime) : HatchCommand("self", runtime) {
 
   /**
    * Generate a pre-populated GitHub issue.

@@ -433,14 +433,6 @@ internal val Sdk.remoteSourcesLocalPath: Path
             }.hashCode().toString())
 
 
-/**
- * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
- */
-@Internal
-fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
-  getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
-}
-
 
 @Internal
 @Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)

@@ -34,7 +34,7 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
     sdkPanelBuilderAndSdkCreator.buildPanel(this, projectNameProvider.projectPathFlows)
 
     specificUiAndSettings?.first?.advancedSettings?.let {
-      collapsibleGroup(PyBundle.message("black.advanced.settings.panel.title")) {
+      collapsibleGroup(PyBundle.message("new.project.advanced.settings.panel.title")) {
         it(this, specificUiAndSettings.second, projectNameProvider)
       }
     }

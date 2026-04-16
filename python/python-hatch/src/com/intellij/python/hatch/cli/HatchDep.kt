@@ -2,7 +2,7 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.hatch.runtime.HatchRuntime
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.errorProcessing.PyResult
 
 enum class Scope(val options: Array<String>) {
@@ -14,7 +14,7 @@ enum class Scope(val options: Array<String>) {
 /**
  * Manage environment dependencies
  */
-class HatchDep(runtime: HatchRuntime) : HatchCommand("dep", runtime) {
+class HatchDep(runtime: PyToolRuntime) : HatchCommand("dep", runtime) {
   /**
    *  Output a hash of the currently defined dependencies
    **/
@@ -31,7 +31,7 @@ class HatchDep(runtime: HatchRuntime) : HatchCommand("dep", runtime) {
 /**
  * Manage environment dependencies
  */
-class HatchDepShow(runtime: HatchRuntime) : HatchCommand(arrayOf("dep", "show"), runtime) {
+class HatchDepShow(runtime: PyToolRuntime) : HatchCommand(arrayOf("dep", "show"), runtime) {
   /**
    * Enumerate dependencies as a list of requirements.
    *

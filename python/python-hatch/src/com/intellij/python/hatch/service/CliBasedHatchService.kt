@@ -7,6 +7,7 @@ import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.hatch.EnvironmentCreationHatchError
 import com.intellij.python.hatch.FileSystemOperationHatchError
 import com.intellij.python.hatch.HatchService
@@ -17,14 +18,17 @@ import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironments
 import com.intellij.python.hatch.runtime.HatchConstants
-import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.runtime.createHatchRuntime
+import com.intellij.python.hatch.runtime.hatchCli
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -41,7 +45,7 @@ import kotlin.io.path.readText
 
 internal class CliBasedHatchService private constructor(
   private val workingDirectoryPath: Path,
-  private val hatchRuntime: HatchRuntime,
+  private val hatchRuntime: PyToolRuntime,
 ) : HatchService {
   companion object {
     suspend operator fun invoke(
@@ -101,7 +105,7 @@ internal class CliBasedHatchService private constructor(
 
     val available = virtualEnvironments.concurrentMap { env ->
       val pythonHomePath = hatchEnv.find(env.name).getOr { return@concurrentMap null } ?: return@concurrentMap null
-      val pythonVirtualEnvironment = hatchRuntime.resolvePythonVirtualEnvironment(pythonHomePath).getOr { return@concurrentMap null }
+      val pythonVirtualEnvironment = resolvePythonVirtualEnvironment(pythonHomePath).getOr { return@concurrentMap null }
       HatchVirtualEnvironment(
         hatchEnvironment = env,
         pythonVirtualEnvironment = pythonVirtualEnvironment
@@ -144,14 +148,14 @@ internal class CliBasedHatchService private constructor(
     envName: String?,
   ): PyResult<PythonVirtualEnvironment.Existing> {
     val pythonBasedRuntime = basePythonBinaryPath?.let { path ->
-      hatchRuntime.withBasePythonBinaryPath(path).getOr { return it }
+      hatchRuntime.withBasePythonBinaryPath(path, HatchConstants.AppEnvVars.PYTHON).getOr { return it }
     } ?: hatchRuntime
 
     val hatchEnv = pythonBasedRuntime.hatchCli().env()
 
     hatchEnv.create(envName).getOr { return it }
     val pythonHomePath = hatchEnv.find(envName).getOr { return it }
-    val pythonVirtualEnvironment = pythonHomePath?.let { hatchRuntime.resolvePythonVirtualEnvironment(it) }?.getOr { return it }
+    val pythonVirtualEnvironment = pythonHomePath?.let { resolvePythonVirtualEnvironment(it) }?.getOr { return it }
 
     val result = when (pythonVirtualEnvironment) {
       is PythonVirtualEnvironment.Existing -> Result.success(pythonVirtualEnvironment)
@@ -178,4 +182,16 @@ private fun HatchEnvironments.getAvailableVirtualHatchEnvironments(): List<Hatch
     }
   }
   return (standalone + matricesFlatted).filter { it.type == ENV_TYPE_VIRTUAL }
+}
+
+private suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
+  val pythonInfo = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
+    pythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
+  }
+
+  val pythonVirtualEnvironment = when {
+    pythonInfo == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
+    else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonInfo)
+  }
+  return Result.success(pythonVirtualEnvironment)
 }

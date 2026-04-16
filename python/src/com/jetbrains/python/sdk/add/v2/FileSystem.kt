@@ -70,7 +70,6 @@ import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
@@ -679,7 +678,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       }
     }.mapNotNull { sdk ->
       val languageLevel = sdk.versionString?.let {
-        PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(it)
+        LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
         val binToExecute = sdk.asBinToExecute().orLogException(LOG)
         val pythonInfo = binToExecute?.let {

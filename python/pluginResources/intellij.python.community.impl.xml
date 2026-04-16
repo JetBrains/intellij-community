@@ -18,7 +18,8 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.community.impl.poetry.common"/>
-    <module name="intellij.python.community.impl.uv.common"/>
+    <module name="intellij.python.uv.common"/>
+    <module name="intellij.python.uv.backend"/>
     <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.externalIndex"/>
@@ -27,6 +28,7 @@
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.requirements"/>
+    <module name="intellij.python.pytools"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.sdkConfigurator.common"/>
@@ -171,7 +173,6 @@
     <projectSettings service="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <applicationSettings service="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.add.v2.poetry.PoetryConfigService"/>
-    <projectSettings service="com.jetbrains.python.black.configuration.BlackFormatterConfiguration"/>
     <projectSettings service="com.jetbrains.python.module.PySourceRootDetectionService"/>
     <applicationSettings service="com.jetbrains.python.packaging.repository.PyPackageRepositories"/>
     <projectSettings service="com.jetbrains.python.statistics.PyPackageUsageStatistics"/>
@@ -753,29 +754,6 @@
       serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
 
     <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
-
-    <!-- Black -->
-    <projectConfigurable groupId="tools"
-                         provider="com.jetbrains.python.black.configuration.BlackFormatterConfigurableProvider"
-                         id="com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
-                         bundle="messages.PyBundle"
-                         key="black.configurable.name"
-                         nonDefaultProject="true"/>
-
-    <registryKey key="black.formatter.support.enabled" defaultValue="true"
-                 description="Enable Black formatter support"/>
-
-    <formattingService implementation="com.jetbrains.python.black.BlackFormattingService"/>
-    <actionOnSave id="BlackFormatterActionOnSave"
-                  implementation="com.jetbrains.python.black.BlackFormatterActionOnSave"
-                  order="after FormatOnSaveAction"/>
-
-    <actionOnSaveInfoProvider id="BlackFormatterActionOnSaveInfo"
-                              implementation="com.jetbrains.python.black.configuration.BlackFormatterConfigurable$BlackFormatterActionOnSaveInfoProvider"/>
-
-    <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
-                       key="black.configurable.name"/>
-    <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.BlackFormatterIntegrationIdsHolder"/>
 
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
 

@@ -427,6 +427,8 @@ jvm_library(
     "//python/conda",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//python/python-requirements:requirements",
+    "//python/python-pytools:pytools",
+    "//python/python-uv/backend",
   ],
   exports = [
     "//python/openapi:community",
@@ -585,6 +587,8 @@ jvm_library(
     "//python/conda:conda_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//python/python-requirements:requirements_test_lib",
+    "//python/python-pytools:pytools_test_lib",
+    "//python/python-uv/backend:backend_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1044,6 +1048,8 @@ jvm_library(
     "//python/python-psi-api:psi_test_lib",
     "//python:python-community-impl",
     "//python:python-community-impl_test_lib",
+    "//python/python-pytools:pytools",
+    "//python/python-pytools:pytools_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-api:debugger_test_lib",
     "//libraries/guava",

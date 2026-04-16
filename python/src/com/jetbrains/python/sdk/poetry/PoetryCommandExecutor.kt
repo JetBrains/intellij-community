@@ -30,6 +30,7 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.pyRichSdkAsync
 import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -104,7 +105,7 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
                     ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
   val pythonHomePath = sdk.pyRichSdkAsync().pythonHomePath
-                       ?: return PyResult.localizedError(PyBundle.message("python.sdk.broken.configuration", sdk.name))
+                       ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
   val env = buildMap {
     put("POETRY_VIRTUALENVS_IN_PROJECT", "false")
     put("POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON", "true")

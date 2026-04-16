@@ -16,23 +16,17 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.python.common.tools.ToolId
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.python.community.impl.pipenv.PIPENV_ICON
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
-import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
-import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
+import com.intellij.python.uv.common.UV_TOOL_ID
+import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.venv.icons.PythonVenvIcons
-import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
@@ -43,13 +37,10 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.LOGGER
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.persist
@@ -60,8 +51,6 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import javax.swing.Icon
@@ -158,7 +147,7 @@ enum class PythonSupportedEnvironmentManagers(
   CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = false),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON, sshAutoUploadRequired = false),
-  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, sshAutoUploadRequired = true, { true }),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonUvCommonIcons.UV, sshAutoUploadRequired = true, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = false),
   PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
 }
@@ -236,42 +225,6 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
 
   return PyResult.success(newSdk)
-}
-
-class VersionFormatException : Exception()
-
-data class Version(val value: String) {
-  override fun toString(): String {
-    return value
-  }
-
-  companion object {
-    fun parse(versionString: String): Version {
-      return Version(versionString)
-    }
-  }
-}
-
-internal suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyResult<Version> {
-  val version = withContext(Dispatchers.IO) {
-    ExecService().execGetStdout(this@getToolVersion, Args("--version"))
-  }.getOr { return it }
-
-  val pattern = "^$toolVersionPrefix,?(?:\\s\\(?version)?\\s([^\\s)]+).*$".toRegex(RegexOption.IGNORE_CASE)
-  val matchResult = pattern.matchEntire(version)
-  return if (matchResult != null) {
-    val (versionString) = matchResult.destructured
-    try {
-      PyResult.success(Version.parse(versionString))
-    }
-    catch (ex: VersionFormatException) {
-      PyResult.localizedError(ex.localizedMessage)
-    }
-  }
-  else {
-    val versionPresentation = StringUtil.shortenTextWithEllipsis(version, 250, 0, true)
-    PyResult.localizedError(message("selected.tool.is.wrong", toolVersionPrefix.trim(), versionPresentation))
-  }
 }
 
 internal fun savePathForEelOnly(pathHolder: PathHolder, pathPersister: (Path) -> Unit) {

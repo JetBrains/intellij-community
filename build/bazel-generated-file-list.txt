@@ -1625,6 +1625,8 @@ python/pluginJava
 python/pluginMinor
 python/pluginMinorRider
 python/python-ast
+python/python-black
+python/python-black/tests
 python/python-copyright
 python/python-core-impl
 python/python-exec-service
@@ -1644,6 +1646,8 @@ python/python-process-output/frontend
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
+python/python-pytools
+python/python-pytools-ui
 python/python-requirements
 python/python-restructuredtext
 python/python-sdk
@@ -1663,6 +1667,7 @@ python/python-test-env/plain
 python/python-test-env/uv
 python/python-uv/backend
 python/python-uv/common
+python/python-uv/tests
 python/python-venv
 python/services/internal-impl
 python/services/shared

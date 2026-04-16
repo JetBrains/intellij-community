@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 
@@ -84,6 +86,9 @@ public enum LanguageLevel {
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON310;
+
+  @ApiStatus.Internal
+  public static final Pattern VERSION_RE = Pattern.compile("((Python|GraalPy) (\\S+)).*", Pattern.DOTALL);
 
   @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
@@ -221,6 +226,21 @@ public enum LanguageLevel {
 
   public static @NotNull LanguageLevel getLatest() {
     return ArrayUtil.getLastElement(values());
+  }
+
+    /**
+   * For <code>python --version</code> output (i.e <code>Python 3.12</code>) returns {@link LanguageLevel}.
+   * Typical usage: call `python --version`, trim, and provide here.
+   *
+   * @param versionString output to look language level for
+   * @return level or null if no parsable output was found
+   */
+  public static @Nullable LanguageLevel getLanguageLevelFromVersionStringStaticSafe(@NotNull String versionString) {
+    final Matcher m = VERSION_RE.matcher(versionString);
+    if (m.matches()) {
+      return fromPythonVersionSafe(m.group(3));
+    }
+    return null;
   }
 
   @Override
