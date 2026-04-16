@@ -97,7 +97,7 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
       if (i == variadicIdx) {
         PyUnpackedTupleType variadic = as(elementTypes.get(i), PyUnpackedTupleType.class);
         assert variadic != null;
-        result.add(PyCallableParameterImpl.positionalNonPsi(null, variadic.getElementTypes().getFirst()));
+        result.add(PyCallableParameterImpl.positionalContainerNonPsi(null, variadic.getElementTypes().getFirst()));
       }
       else {
         result.add(PyCallableParameterImpl.nonPsi("__p" + i, elementTypes.get(i)));

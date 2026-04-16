@@ -153,13 +153,13 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
             // *args: type
             val paramName = namedParam.name
             val paramType = namedParam.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
-            PyCallableParameterImpl.positionalNonPsi(paramName, paramType)
+            PyCallableParameterImpl.positionalContainerNonPsi(paramName, paramType)
           }
           else {
             // Unnamed *args: *type
             val innerExpr = param.expression
             val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) }
-            PyCallableParameterImpl.positionalNonPsi(null, paramType)
+            PyCallableParameterImpl.positionalContainerNonPsi(null, paramType)
           }
         }
         is PyDoubleStarExpression -> {
@@ -180,13 +180,13 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
                 )
               }
             }
-            PyCallableParameterImpl.keywordNonPsi(paramName, paramType)
+            PyCallableParameterImpl.keywordContainerNonPsi(paramName, paramType)
           }
           else {
             // Unnamed kwargs: `**type`
             val innerExpr = param.expression
             val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) }
-            PyCallableParameterImpl.keywordNonPsi(null, paramType)
+            PyCallableParameterImpl.keywordContainerNonPsi(null, paramType)
           }
         }
         is PyExpression -> {

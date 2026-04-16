@@ -71,7 +71,7 @@ class PyTypedDictType(
         }
 
         val extraItemsParam = if (extraItemsType != null && !isClosed) {
-          listOf(PyCallableParameterImpl.keywordNonPsi("kwargs", extraItemsType))
+          listOf(PyCallableParameterImpl.keywordContainerNonPsi("kwargs", extraItemsType))
         } else {
           emptyList()
         }

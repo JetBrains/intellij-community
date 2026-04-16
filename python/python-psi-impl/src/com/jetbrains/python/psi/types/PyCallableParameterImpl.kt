@@ -35,8 +35,8 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   private val myDefaultValue: PyExpression? = null,
   private val myDefaultValueText: String? = null,
   override val parameter: PyParameter? = null,
-  private val myIsPositional: Boolean = false,
-  private val myIsKeyword: Boolean = false,
+  private val myIsPositionalContainer: Boolean = false,
+  private val myIsKeywordContainer: Boolean = false,
   private val myIsSelf: Boolean = false,
   private val myIsKeywordOnlySeparator: Boolean = false,
   private val myIsPositionalOnlySeparator: Boolean = false,
@@ -71,10 +71,10 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     }
 
   override val isPositionalContainer: Boolean
-    get() = myIsPositional || (parameter as? PyNamedParameter)?.isPositionalContainer == true
+    get() = myIsPositionalContainer || (parameter as? PyNamedParameter)?.isPositionalContainer == true
 
   override val isKeywordContainer: Boolean
-    get() = myIsKeyword || (parameter as? PyNamedParameter)?.isKeywordContainer == true
+    get() = myIsKeywordContainer || (parameter as? PyNamedParameter)?.isKeywordContainer == true
 
   override val isSelf: Boolean
     get() = myIsSelf || parameter?.isSelf == true
@@ -163,8 +163,8 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
            myName == other.myName &&
            myType?.get() == other.myType?.get() &&
            myIsSelf == other.myIsSelf &&
-           myIsPositional == other.myIsPositional &&
-           myIsKeyword == other.myIsKeyword &&
+           myIsPositionalContainer == other.myIsPositionalContainer &&
+           myIsKeywordContainer == other.myIsKeywordContainer &&
            myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
            myIsPositionalOnlySeparator == other.myIsPositionalOnlySeparator &&
            myDefaultValue == other.myDefaultValue &&
@@ -177,8 +177,8 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       myName,
       myType?.get(),
       myIsSelf,
-      myIsPositional,
-      myIsKeyword,
+      myIsPositionalContainer,
+      myIsKeywordContainer,
       myIsKeywordOnlySeparator,
       myIsPositionalOnlySeparator,
       myDefaultValue,
@@ -203,12 +203,12 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
 
     @JvmStatic
-    fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter =
-      PyCallableParameterImpl(name, Ref(type), myIsPositional = true)
+    fun positionalContainerNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsPositionalContainer = true)
 
     @JvmStatic
-    fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter =
-      PyCallableParameterImpl(name, Ref(type), myIsKeyword = true)
+    fun keywordContainerNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsKeywordContainer = true)
 
     @JvmStatic
     fun keywordOnlySeparatorNonPsi(): PyCallableParameter =

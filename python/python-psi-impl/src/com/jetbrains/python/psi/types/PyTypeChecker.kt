@@ -1455,8 +1455,8 @@ object PyTypeChecker {
         }
         else {
           existingSubstitutions.putParamSpec(paramSpecType, PyCallableParameterListTypeImpl(
-            listOf(PyCallableParameterImpl.positionalNonPsi("args", null),
-                              PyCallableParameterImpl.keywordNonPsi("kwargs", null))), KeyImpl
+            listOf(PyCallableParameterImpl.positionalContainerNonPsi("args", null),
+                   PyCallableParameterImpl.keywordContainerNonPsi("kwargs", null))), KeyImpl
           )
         }
       }

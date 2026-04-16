@@ -500,7 +500,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           namedParameter.isKeywordContainer() &&
           context.getType(namedParameter) instanceof PyTypedDictType typedDictType) {
         PyUnpackedTypedDictTypeImpl keywordContainerType = new PyUnpackedTypedDictTypeImpl(typedDictType);
-        parameters.add(PyCallableParameterImpl.keywordNonPsi(parameter.getName(), keywordContainerType));
+        parameters.add(PyCallableParameterImpl.keywordContainerNonPsi(parameter.getName(), keywordContainerType));
       }
       else {
         parameters.add(PyCallableParameterImpl.psi(parameter));
