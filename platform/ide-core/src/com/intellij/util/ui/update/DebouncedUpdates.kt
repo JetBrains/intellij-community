@@ -261,7 +261,7 @@ object DebouncedUpdates {
      * Creates a queue that processes only the latest queued item.
      * Java-friendly overload accepting a [Consumer].
      *
-     * See [runLatest] for behavior details.
+     * See the overload with suspend function parameter for behavior details.
      *
      * @param action The action to perform for each item
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -325,7 +325,7 @@ object DebouncedUpdates {
      * Creates a queue that batches all items during the delay window.
      * Java-friendly overload accepting a [Consumer].
      *
-     * See [runBatched] for behavior details.
+     * See the overload with suspend function parameter for behavior details.
      *
      * @param action The action to perform for each batch of items
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -366,7 +366,7 @@ object DebouncedUpdates {
      * Creates a queue that batches all items during the delay window with automatic deduplication.
      * Java-friendly overload accepting a [Consumer].
      *
-     * See [runBatchedDistinct] for behavior details.
+     * See the overload with suspend function parameter for behavior details.
      *
      * @param action The action to perform for each batch of deduplicated items
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
@@ -412,6 +412,8 @@ sealed interface UpdateQueue<T> {
 
   /**
    * Java-friendly overload: Waits for all queued items to be processed.
+   *
+   * See the overload with [Duration] parameter for detailed behavior documentation.
    *
    * @param timeoutMillis timeout in milliseconds
    * @throws TimeoutException if the timeout is exceeded
