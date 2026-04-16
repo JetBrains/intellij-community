@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.buildStartupEelContext;
 import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR;
 import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID;
 import static org.jetbrains.plugins.terminal.util.TerminalUtilKt.toExistentNioDirectory;
@@ -49,13 +49,13 @@ public final class LocalOptionsConfigurer {
     boolean isRequestedWorkingDirectoryInvalid = baseOptions.getWorkingDirectory() != null && requestedWorkingDirectory == null;
     Path workingDir = requestedWorkingDirectory != null ? requestedWorkingDirectory : getDefaultStartingDirectory(project);
     List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir, isRequestedWorkingDirectoryInvalid);
-    var eelDescriptor = findEelDescriptor(workingDir.toString(), initialCommand);
+    var eelContext = buildStartupEelContext(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(
       baseOptions.getEnvVariables(),
       baseOptions.getProcessType(),
       project,
-      eelDescriptor,
-      initialCommand
+      eelContext.getEelDescriptor(),
+      eelContext.getShellCommand().getCommand()
     );
 
     TerminalWidget widget = baseOptions.getWidget();
@@ -64,8 +64,8 @@ public final class LocalOptionsConfigurer {
     }
 
     return baseOptions.builder()
-      .shellCommand(initialCommand)
-      .workingDirectory(workingDir.toString())
+      .shellCommand(eelContext.getShellCommand().getCommand())
+      .setFinalWorkingDirectoryEelPath(eelContext.getWorkingDirectory())
       .envVariables(envs)
       .modify(builder -> {
         builder.setInitialShellCommand(new InitialShellCommand(initialCommand));

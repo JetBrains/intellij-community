@@ -11,7 +11,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.terminal.isWslCommand
+import org.jetbrains.plugins.terminal.startup.WslShellExecCommand.Companion.isWslCommand
 
 @ApiStatus.Internal
 object TerminalEnvironment {

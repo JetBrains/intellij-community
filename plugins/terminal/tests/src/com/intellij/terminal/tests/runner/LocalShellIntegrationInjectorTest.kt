@@ -2,6 +2,8 @@
 package com.intellij.terminal.tests.runner
 
 import com.intellij.idea.TestFor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
@@ -10,6 +12,8 @@ import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import kotlin.io.path.absolute
 
 @TestFor(classes = [LocalShellIntegrationInjector::class])
 internal class LocalShellIntegrationInjectorTest {
@@ -17,6 +21,7 @@ internal class LocalShellIntegrationInjectorTest {
   fun testZsh() {
     val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
+        .useCurrentDirectoryAsWorkingDirectory()
         .shellCommand(listOf("/bin/zsh"))
         .envVariables(buildMap {
           put(MY_CUSTOM_ENV_NAME, MY_CUSTOM_ENV_VALUE)
@@ -27,6 +32,7 @@ internal class LocalShellIntegrationInjectorTest {
     )
     val expectedCommandBlocks = expectedCommandBlocks()
     val expected = ShellStartupOptions.Builder()
+      .useCurrentDirectoryAsWorkingDirectory()
       .shellCommand(listOf("/bin/zsh"))
       .shellIntegration(ShellIntegration(ShellType.ZSH, expectedCommandBlocks))
       .envVariables(getExpectedCommonEnv(expectedCommandBlocks) + buildMap {
@@ -43,6 +49,7 @@ internal class LocalShellIntegrationInjectorTest {
   fun testBash() {
     val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
+        .useCurrentDirectoryAsWorkingDirectory()
         .shellCommand(listOf("/bin/bash"))
         .envVariables(buildMap {
           put(MY_CUSTOM_ENV_NAME, MY_CUSTOM_ENV_VALUE)
@@ -54,6 +61,7 @@ internal class LocalShellIntegrationInjectorTest {
 
     val expectedCommandBlocks = expectedCommandBlocks()
     val expected = ShellStartupOptions.Builder()
+      .useCurrentDirectoryAsWorkingDirectory()
       .shellCommand(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()))
       .shellIntegration(ShellIntegration(ShellType.BASH, expectedCommandBlocks))
       .envVariables(getExpectedCommonEnv(expectedCommandBlocks) + mapOf(MY_CUSTOM_ENV_NAME to MY_CUSTOM_ENV_VALUE))
@@ -89,6 +97,11 @@ internal class LocalShellIntegrationInjectorTest {
         "PROCESS_LAUNCHED_BY_Q",
         "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"
       ).takeIf { commandBlocks }.orEmpty().associateWith { "1" }
+    }
+
+    @JvmStatic
+    fun ShellStartupOptions.Builder.useCurrentDirectoryAsWorkingDirectory(): ShellStartupOptions.Builder = also {
+      it.setFinalWorkingDirectoryEelPath(Path.of(".").absolute().normalize().asEelPath(LocalEelDescriptor))
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
+import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 import org.junit.Assume;
 import org.junit.Test;
@@ -19,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.terminal.tests.runner.LocalShellIntegrationInjectorTest.useCurrentDirectoryAsWorkingDirectory;
 
 @TestFor(classes = {LocalTerminalDirectRunner.class, LocalTerminalStartCommandBuilder.class})
 @RunWith(JUnit4.class)
@@ -56,8 +59,7 @@ public class TerminalShellCommandTest extends BasePlatformTestCase {
   private List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
     List<String> shellCommand = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
     if (shellIntegration) {
-      var runner = new LocalTerminalDirectRunner(getProject());
-      ShellStartupOptions options = runner.injectShellIntegration(shellCommand, envs);
+      ShellStartupOptions options = injectShellIntegration(shellCommand, envs);
       envs.clear();
       envs.putAll(options.getEnvVariables());
       return Objects.requireNonNull(options.getShellCommand());
@@ -81,4 +83,14 @@ public class TerminalShellCommandTest extends BasePlatformTestCase {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));
     }
   }
+
+  private static @NotNull ShellStartupOptions injectShellIntegration(
+    @NotNull List<String> shellCommand,
+    @NotNull Map<String, String> envs
+  ) {
+    ShellStartupOptions options = useCurrentDirectoryAsWorkingDirectory(new ShellStartupOptions.Builder())
+      .shellCommand(shellCommand).envVariables(envs).build();
+    return LocalShellIntegrationInjector.injectShellIntegration(options, false, true);
+  }
+
 }

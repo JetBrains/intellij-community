@@ -289,7 +289,8 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
     val startupOptions = startupOptionsBuilder.build()
     val terminalRunner = LocalTerminalDirectRunner(project)
     val configuredOptions = terminalRunner.configureStartupOptions(startupOptions)
-    return CustomizationResult(configuredOptions.toExecOptions(workingDir.descriptor))
+    Assertions.assertThat(configuredOptions.eelDescriptorNotNull).isEqualTo(workingDir.descriptor)
+    return CustomizationResult(configuredOptions.toExecOptions())
   }
 
   private class Directory(val nioDir: Path, val eelDir: EelPath, val descriptor: EelDescriptor) {

@@ -60,15 +60,14 @@ class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: S
   companion object {
     private fun start(shellCommand: List<String>?, terminalWidget: JBTerminalWidget) {
       val runner = LocalTerminalDirectRunner.createTerminalRunner(terminalWidget.project)
-      val baseOptions = shellStartupOptions(terminalWidget.project.basePath) {
-        it.shellCommand = shellCommand
-      }
       val initialTermSize = TermSize(80, 50)
       val workingDirectory = Files.createTempDirectory("intellij-terminal-working-dir")
-      val configuredOptions = runner.configureStartupOptions(baseOptions).builder().modify {
+      val baseOptions = shellStartupOptions(terminalWidget.project.basePath) {
+        it.shellCommand = shellCommand
         it.initialTermSize = initialTermSize
         it.workingDirectory = workingDirectory.toString()
-      }.build()
+      }
+      val configuredOptions = runner.configureStartupOptions(baseOptions)
       val connector = runner.createTtyConnector(configuredOptions)
       val process = (connector as PtyProcessTtyConnector).process
       terminalWidget.asNewWidget().connectToTty(connector, initialTermSize)

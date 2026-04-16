@@ -135,6 +135,9 @@
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.HyperlinkIdDataContextSerializer" />
 
     <notificationGroup displayType="BALLOON" id="terminal" bundle="messages.TerminalBundle" key="notification.group.terminal"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.startup.TerminalEnvironmentVariablesProvider"
+                        serviceImplementation="org.jetbrains.plugins.terminal.startup.TerminalEnvironmentVariablesProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
