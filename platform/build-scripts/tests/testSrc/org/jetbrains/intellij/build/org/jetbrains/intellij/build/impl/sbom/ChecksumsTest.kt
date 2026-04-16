@@ -1,22 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.org.jetbrains.intellij.build.impl.sbom
 
-import com.intellij.util.io.DigestUtil.md5
-import com.intellij.util.io.DigestUtil.sha1
-import com.intellij.util.io.DigestUtil.sha256
-import com.intellij.util.io.DigestUtil.sha512
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.Checksums
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class ChecksumsTest {
   @Test
   fun checksums(@TempDir tempDir: Path) {
     val file = tempDir.resolve("file.txt")
     file.write("test")
-    val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
+    val checksums = Checksums(file, Checksums.Algorithm.SHA1, Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512, Checksums.Algorithm.MD5)
     assert(checksums.sha1sum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3") {
       "Unexpected SHA1 checksum '${checksums.sha1sum}'"
     }
@@ -28,6 +26,32 @@ class ChecksumsTest {
     }
     assert(checksums.md5sum == "098f6bcd4621d373cade4e832627b4f6") {
       "Unexpected MD5 checksum '${checksums.md5sum}'"
+    }
+  }
+
+  @Test
+  fun `verify or write checksum file with file name`(@TempDir tempDir: Path) = runBlocking {
+    val file = tempDir.resolve("file.txt")
+    file.write("test")
+    val checksums = Checksums(file, Checksums.Algorithm.SHA256)
+
+    val checksumFile = checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256)
+
+    assert("${checksums.sha256sum} *file.txt" == checksumFile.readText()) {
+      "Unexpected checksum file content '${checksumFile.readText()}'"
+    }
+  }
+
+  @Test
+  fun `verify or write checksum file without file name`(@TempDir tempDir: Path) = runBlocking {
+    val file = tempDir.resolve("file.txt")
+    file.write("test")
+    val checksums = Checksums(file, Checksums.Algorithm.SHA256)
+
+    val checksumFile = checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256, withFileName = false)
+
+    assert(checksums.sha256sum == checksumFile.readText()) {
+      "Unexpected checksum file content '${checksumFile.readText()}'"
     }
   }
 }

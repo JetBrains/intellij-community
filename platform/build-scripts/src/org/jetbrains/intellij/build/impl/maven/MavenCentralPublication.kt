@@ -2,10 +2,6 @@
 package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.io.Compressor
-import com.intellij.util.io.DigestUtil.md5
-import com.intellij.util.io.DigestUtil.sha1
-import com.intellij.util.io.DigestUtil.sha256
-import com.intellij.util.io.DigestUtil.sha512
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -41,10 +37,8 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.io.path.readLines
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
-import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -209,11 +203,17 @@ class MavenCentralPublication(
       for (artifact in artifacts) {
         for (file in artifact.distributionFiles.minus(artifact.checksums.toSet())) {
           launch(CoroutineName("checksums for $file")) {
-            val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
-            generateOrVerifyChecksum(file, extension = "sha1", checksums.sha1sum)
-            generateOrVerifyChecksum(file, extension = "sha256", checksums.sha256sum)
-            generateOrVerifyChecksum(file, extension = "sha512", checksums.sha512sum)
-            generateOrVerifyChecksum(file, extension = "md5", checksums.md5sum)
+            val checksumAlgorithms = listOf(Checksums.Algorithm.SHA1,
+                                            Checksums.Algorithm.SHA256,
+                                            Checksums.Algorithm.SHA512,
+                                            Checksums.Algorithm.MD5)
+            val checksums = Checksums(
+              file,
+              *checksumAlgorithms.toTypedArray(),
+            )
+            checksumAlgorithms.forEach {
+              generateOrVerifyChecksum(checksums, it)
+            }
           }
         }
       }
@@ -228,29 +228,11 @@ class MavenCentralPublication(
   }
 
   @VisibleForTesting
-  class ChecksumMismatch(message: String) : RuntimeException(message)
-
-  @VisibleForTesting
   class SuppliedSignatures(message: String) : RuntimeException(message)
 
-  private fun CoroutineScope.generateOrVerifyChecksum(file: Path, extension: String, value: String) {
-    launch(CoroutineName("checksum $extension for $file")) {
-      spanBuilder("checksum").setAttribute("file", "$file").setAttribute("extension", extension).use {
-        val checksumFile = file.resolveSibling("${file.name}.$extension")
-        if (checksumFile.exists()) {
-          val suppliedValue = checksumFile.readLines().asSequence()
-            // sha256sum command output is a line with checksum,
-            // a character indicating type ('*' for --binary, ' ' for --text),
-            // and the supplied file argument
-            .flatMap { it.splitToSequence(" ") }
-            .firstOrNull()
-          if (suppliedValue != value) {
-            throw ChecksumMismatch("The supplied file $checksumFile content mismatch: '$suppliedValue' != '$value'")
-          }
-        }
-        // a checksum file should contain only a checksum itself
-        checksumFile.writeText(value)
-      }
+  private fun CoroutineScope.generateOrVerifyChecksum(checksums: Checksums, algorithm: Checksums.Algorithm) {
+    launch(CoroutineName("checksum ${algorithm.name} for ${checksums.path}")) {
+      checksums.verifyOrWriteChecksumFile(algorithm, false)
     }
   }
 

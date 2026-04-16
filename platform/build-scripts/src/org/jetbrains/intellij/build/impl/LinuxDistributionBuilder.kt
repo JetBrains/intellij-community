@@ -130,7 +130,11 @@ class LinuxDistributionBuilder(
               span.addEvent("skip")
             }
             else {
-              buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch, targetLibcImpl))
+              createChecksumAndGpgSignFiles(
+                context = context,
+                buildArtifact = {
+                  buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch, targetLibcImpl))
+                })
             }
           }
         }
@@ -146,7 +150,10 @@ class LinuxDistributionBuilder(
         "linux_tar_gz_${arch.name}"
       ) { _ ->
         val suffix = suffix(arch, targetLibcImpl)
-        buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix)
+        createChecksumAndGpgSignFiles(
+          context = context,
+          buildArtifact = { buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix) }
+        )
       }
 
       if (targetLibcImpl != LinuxLibcImpl.MUSL) {
