@@ -12,7 +12,7 @@ This file captures development references only. Product/design decisions live in
 
 ## Running Tests
 
-Run commands from repository root (`/Users/develar/projects/idea-4`).
+Run commands from repository root.
 
 Always pass fully-qualified test names (FQN). Simple class names do not match.
 
