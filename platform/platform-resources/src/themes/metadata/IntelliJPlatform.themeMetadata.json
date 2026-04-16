@@ -2574,7 +2574,7 @@
     },
     {
       "key": "ToggleButton.buttonColor",
-      "description": "Legacy sliding knob fill (DefaultOnOffButtonUI). Islands pill uses onForeground/offForeground for notches per Component-specs",
+      "description": "Legacy sliding knob fill (DefaultOnOffButtonUI)",
       "since": "2026.2"
     },
     {
@@ -2596,7 +2596,17 @@
       "since": "2026.2"
     },
     {
+      "key": "ToggleButton.offDisabledNotchColor",
+      "description": "Notch fill when unselected and disabled (Islands pill)",
+      "since": "2026.2"
+    },
+    {
       "key": "ToggleButton.offForeground"
+    },
+    {
+      "key": "ToggleButton.offNotchColor",
+      "description": "Notch fill when unselected and enabled (Islands pill)",
+      "since": "2026.2"
     },
     {
       "key": "ToggleButton.onBackground"
@@ -2612,7 +2622,17 @@
       "since": "2026.2"
     },
     {
+      "key": "ToggleButton.onDisabledNotchColor",
+      "description": "Notch fill when selected and disabled (Islands pill)",
+      "since": "2026.2"
+    },
+    {
       "key": "ToggleButton.onForeground"
+    },
+    {
+      "key": "ToggleButton.onNotchColor",
+      "description": "Notch fill when selected and enabled (Islands pill)",
+      "since": "2026.2"
     },
     {
       "key": "SegmentedButton.selectedStartBorderColor",

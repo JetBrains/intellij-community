@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.scale.JBUIScale
@@ -12,18 +11,19 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Area
+import java.awt.geom.Ellipse2D
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import kotlin.math.max
 import javax.swing.AbstractButton
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.basic.BasicToggleButtonUI
 
 /**
  * Islands-themed on/off toggle UI delegate.
  *
- * Renders a pill-shaped track with notch **SVG icons** (16×16), same pattern as [DarculaCheckBoxUI] + theme `icons` map.
+ * Renders a pill-shaped track with manually painted notch indicators (no text labels).
+ * Supports default, disabled, and focused states via [javax.swing.ButtonModel].
  *
  * Registered in Islands theme JSON via `"OnOffButtonUI"` key.
  */
@@ -46,15 +46,10 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
 
     private val FOCUS_BORDER = JBColor.namedColor("ToggleButton.focusBorderColor", ON_BG)
 
-    private fun notchIcon(selected: Boolean, enabled: Boolean): Icon {
-      val path = when {
-        !enabled && !selected -> "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOffDisabled.svg"
-        !enabled && selected -> "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOnDisabled.svg"
-        selected -> "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOn.svg"
-        else -> "/com/intellij/ide/ui/laf/icons/intellij/toggleNotchOff.svg"
-      }
-      return IconLoader.getIcon(path, IslandsOnOffButtonUI::class.java)
-    }
+    private val ON_NOTCH_COLOR = JBColor.namedColor("ToggleButton.onNotchColor", JBColor(Color.WHITE, Color.WHITE))
+    private val OFF_NOTCH_COLOR = JBColor.namedColor("ToggleButton.offNotchColor", JBColor(Color.WHITE, Color.WHITE))
+    private val ON_DISABLED_NOTCH_COLOR = JBColor.namedColor("ToggleButton.onDisabledNotchColor", JBColor(0xC3C5CB, 0x5F6269))
+    private val OFF_DISABLED_NOTCH_COLOR = JBColor.namedColor("ToggleButton.offDisabledNotchColor", JBColor(0xC3C5CB, 0x5F6269))
 
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
@@ -113,13 +108,15 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
         val trackFill = if (selected) ON_DISABLED_BACKGROUND else OFF_DISABLED_BACKGROUND
         val borderColor = if (selected) ON_DISABLED_BORDER else OFF_DISABLED_BORDER
         paintDisabledTrack(g2, track, arc, trackFill, borderColor)
+        g2.color = if (selected) ON_DISABLED_NOTCH_COLOR else OFF_DISABLED_NOTCH_COLOR
+        if (selected) paintOnNotch(g2, x, y, h) else paintOffNotch(g2, x, y, h)
       }
       else {
         g2.color = if (selected) ON_BG else OFF_BG
         g2.fill(track)
+        g2.color = if (selected) ON_NOTCH_COLOR else OFF_NOTCH_COLOR
+        if (selected) paintOnNotch(g2, x, y, h) else paintOffNotch(g2, x, y, h)
       }
-
-      paintNotchIcon(g2, c, x, y, w, h, selected, enabled)
 
       if (enabled && DarculaUIUtil.getOutline(c) == null && c.hasFocus()) {
         paintFocusRing(g2, x, y, w, h)
@@ -130,34 +127,24 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
     }
   }
 
-  /**
-   * 16×16 SVG from theme `icons` map. Align to Component-specs track coords (same as former vector paint):
-   * OFF graphic ~`left: 5px`, ON bar ~`left: 18px` on the 26px-wide track — not icon-box right/left edges,
-   * because the shapes sit inside the viewBox (bar starts at x=8; ring ~x≈5).
-   */
-  private fun paintNotchIcon(
-    g2: Graphics2D,
-    c: JComponent,
-    x: Float,
-    y: Float,
-    @Suppress("unused") w: Float,
-    h: Float,
-    selected: Boolean,
-    enabled: Boolean,
-  ) {
-    val icon = notchIcon(selected, enabled)
-    val iw = icon.iconWidth
-    val ih = icon.iconHeight
-    val iconX = if (selected) {
-      val barLeftInView = iw * (8f / 16f)
-      (x + JBUIScale.scale(18f) - barLeftInView).toInt()
-    }
-    else {
-      val ringLeftInView = iw * (5f / 16f)
-      (x + JBUIScale.scale(5f) - ringLeftInView).toInt()
-    }
-    val iconY = (y + (h - ih) / 2f).toInt()
-    icon.paintIcon(c, g2, iconX, iconY)
+  private fun paintOnNotch(g2: Graphics2D, x: Float, y: Float, h: Float) {
+    val nh = JBUIScale.scale(7f)
+    val nw = JBUIScale.scale(2f)
+    val nx = x + JBUIScale.scale(18f)
+    val ny = y + (h - nh) / 2f
+    g2.fill(RoundRectangle2D.Float(nx, ny, nw, nh, nw, nw))
+  }
+
+  private fun paintOffNotch(g2: Graphics2D, x: Float, y: Float, h: Float) {
+    val nd = JBUIScale.scale(8f)
+    val ny = y + (h - nd) / 2f
+    val nx = x + JBUIScale.scale(4f)
+    val outer = Area(Ellipse2D.Float(nx, ny, nd, nd))
+    val holeSize = JBUIScale.scale(4f)
+    val hx = nx + (nd - holeSize) / 2f
+    val hy = ny + (nd - holeSize) / 2f
+    outer.subtract(Area(Ellipse2D.Float(hx, hy, holeSize, holeSize)))
+    g2.fill(outer)
   }
 
   /**
