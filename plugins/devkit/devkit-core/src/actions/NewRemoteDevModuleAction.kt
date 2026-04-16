@@ -86,7 +86,7 @@ internal class NewRemoteDevModuleAction : DumbAwareAction() {
       catch (e: Exception) {
         LOG.warn("Couldn't create Remote Dev Module", e)
         withContext(Dispatchers.EDT) {
-          Messages.showErrorDialog(project, "Remote Dev Module created only partially. An exception occured during the process: ${e.message}.", "Remote Dev Module Creation Failed")
+          Messages.showErrorDialog(project, "Remote Dev Module created only partially. An exception occurred during the process: ${e.message}.", "Remote Dev Module Creation Failed")
         }
       }
     }
