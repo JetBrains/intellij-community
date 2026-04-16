@@ -203,6 +203,8 @@ object DebouncedUpdates {
      * Call `withContext()` first to set the dispatcher (e.g., Dispatchers.EDT), then call this method
      * to add the component's modality state.
      *
+     * **Use only with [DebouncedUpdates.forScope].** Not applicable to [DebouncedUpdates.forComponent] which uses the component's modality state.
+     *
      * Example:
      * ```kotlin
      * DebouncedUpdates.forScope<State>(scope, "update", 300.milliseconds)
@@ -212,8 +214,13 @@ object DebouncedUpdates {
      * ```
      *
      * @param component The component to derive modality state from
+     * @throws IllegalStateException if called on a builder created with [DebouncedUpdates.forComponent]
      */
     fun withComponentModality(component: JComponent): Builder<T> {
+      require(owner !is ComponentOwner) {
+        "withComponentModality() cannot be used with forComponent() because forComponent() already uses the component's modality state. " +
+        "Only use withComponentModality() with forScope()."
+      }
       this.context += ModalityState.stateForComponent(component).asContextElement()
       return this
     }
