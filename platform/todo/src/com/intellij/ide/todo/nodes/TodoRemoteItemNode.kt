@@ -31,6 +31,10 @@ class TodoRemoteItemNode(
     val presentation: List<SerializableTextChunk>,
   )
 
+  private fun checkValue() : Value {
+    return checkNotNull(value) { "TodoRemoteItemNode value is null" }
+  }
+
   override fun canRepresent(element: Any?): Boolean {
     if (element !is TodoRemoteItemNode) return false
     val v = value ?: return false
@@ -78,25 +82,25 @@ class TodoRemoteItemNode(
     }
   }
 
-  override fun canNavigate(): Boolean = true
+  override fun canNavigate(): Boolean = value != null
 
   override fun navigate(requestFocus: Boolean) {
-    val v = value ?: return
+    val v = checkValue()
     OpenFileDescriptor(project, v.file, v.navigationOffset).navigate(requestFocus)
   }
 
   override fun getVirtualFile(): VirtualFile {
-    val v = value
+    val v = checkValue()
     return v.file
   }
 
   override fun getNavigationOffset(): Int {
-    val v = value
+    val v = checkValue()
     return v.navigationOffset
   }
 
-  override fun createNavigatable(project: Project): Navigatable {
-    val v = value
+  override fun createNavigatable(@NotNull project: Project): Navigatable {
+    val v = checkValue()
     return OpenFileDescriptor(project, v.file, v.navigationOffset)
   }
 }
