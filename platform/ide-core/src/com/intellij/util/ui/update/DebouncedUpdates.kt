@@ -349,6 +349,8 @@ object DebouncedUpdates {
      * Like [runBatched], but automatically removes duplicate items. The action receives a [Set] of unique items.
      * Useful when multiple identical items may be queued, and you only want to process each unique item once.
      *
+     * **Note:** The order of items in the set is not guaranteed. If you need to preserve order, use [runBatched] instead.
+     *
      * Example:
      * ```kotlin
      * val queue = DebouncedUpdates.forScope<String>(scope, "batch", 100.milliseconds)
@@ -357,7 +359,7 @@ object DebouncedUpdates {
      * queue.queue("id1")
      * queue.queue("id2")
      * queue.queue("id1")  // Duplicate, will be deduplicated
-     * delay(150)  // Batch emitted: ["id1", "id2"]
+     * delay(150)  // Batch emitted: ["id1", "id2"] (order not guaranteed)
      * ```
      *
      * @param action The action to perform for each batch of deduplicated items
@@ -715,7 +717,7 @@ private abstract class BaseUpdateQueue<T>(
     restartTimerOnAdd: Boolean,
     action: suspend (Set<T>) -> Unit
   ) {
-    val buffer = mutableSetOf<T>()
+    val buffer = HashSet<T>()
 
     processWithDelay(
       delay = delay,
