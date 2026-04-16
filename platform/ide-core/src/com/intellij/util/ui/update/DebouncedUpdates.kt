@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.launchOnShow
@@ -515,7 +515,7 @@ private abstract class BaseUpdateQueue<T>(
       
       val currentJob = processingJob.get()
       if (currentJob != null && !currentJob.isCompleted) {
-        runBlockingCancellable {
+        runBlockingMaybeCancellable {
           withTimeout((deadline - System.currentTimeMillis()).milliseconds) {
             currentJob.join()
           }
