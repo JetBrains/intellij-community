@@ -90,7 +90,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
           hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
       }
 
-      val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.Companion.DEFAULT, environment)
+      val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
       val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
           sdk.setAssociationToModule(module)
           module.project.pySdkService.persistSdk(sdk)

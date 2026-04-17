@@ -261,8 +261,17 @@ data class HatchEnvironment(
   val description: String = "",
 ) {
   companion object {
+    /**
+     * This environment should NOT be used in equality checks, please use [isDefault] method for this purpose
+     */
     val DEFAULT: HatchEnvironment = HatchEnvironment(name = DEFAULT_ENV_NAME, type = ENV_TYPE_VIRTUAL)
   }
+
+  /**
+   * It checks whether the environment is a default one. It ignores other fields on purpose. For example, they can be different depending
+   * on the packages installed in system python
+   */
+  fun isDefault(): Boolean = name == DEFAULT.name && type == DEFAULT.type
 }
 
 data class HatchMatrixEnvironment(
