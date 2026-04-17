@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyNamedParameter
@@ -29,191 +28,151 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.ParamHelper
 import org.jetbrains.annotations.Nls
 import java.util.Objects
-import java.util.function.Predicate
 
-class PyCallableParameterImpl internal constructor(
-  @field:NlsSafe private val myName: @NlsSafe String?,
-  private val myType: Ref<PyType?>?,
-  private val myDefaultValue: PyExpression?,
-  override val parameter: PyParameter?,
-  private val myIsPositional: Boolean,
-  private val myIsKeyword: Boolean,
-  private val myDeclarationElement: PsiElement?,
+class PyCallableParameterImpl @JvmOverloads internal constructor(
+  @field:NlsSafe private val myName: @NlsSafe String? = null,
+  private val myType: Ref<PyType?>? = null,
+  private val myDefaultValue: PyExpression? = null,
+  override val parameter: PyParameter? = null,
+  private val myIsPositional: Boolean = false,
+  private val myIsKeyword: Boolean = false,
+  private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
   @get:Nls
   override val name: @Nls String?
-    get() {
-      if (myName != null) {
-        return myName
-      }
-      else if (this.parameter != null) {
-        return parameter.getName()
-      }
-      return null
-    }
+    get() = myName ?: parameter?.name
 
-  override fun getType(context: TypeEvalContext): PyType? {
-    if (myType != null) {
-      return myType.get()
-    }
-    else if (this.parameter is PyNamedParameter) {
-      return context.getType(this.parameter)
-    }
-    return null
+  override fun getType(context: TypeEvalContext): PyType? = when {
+    myType != null -> myType.get()
+    parameter is PyNamedParameter -> context.getType(parameter)
+    else -> null
   }
 
   override val declarationElement: PsiElement?
-    get() {
-      if (myDeclarationElement != null) return myDeclarationElement
-      return parameter
-    }
+    get() = myDeclarationElement ?: parameter
 
   override val defaultValue: PyExpression?
-    get() = if (this.parameter == null) myDefaultValue else parameter.getDefaultValue()
+    get() = if (parameter == null) myDefaultValue else parameter.defaultValue
 
   override fun hasDefaultValue(): Boolean {
-    return if (this.parameter == null) myDefaultValue != null else parameter.hasDefaultValue()
+    return parameter?.hasDefaultValue() ?: (myDefaultValue != null)
   }
 
   override val defaultValueText: String?
-    get() {
-      if (this.parameter != null) return parameter.getDefaultValueText()
-      return if (myDefaultValue == null) null else myDefaultValue.getText()
-    }
+    get() = if (parameter != null)
+      parameter.defaultValueText
+    else
+      myDefaultValue?.text
 
   override val isPositionalContainer: Boolean
-    get() {
-      if (myIsPositional) return true
-
-      val namedParameter = PyUtil.`as`<PyNamedParameter?>(this.parameter, PyNamedParameter::class.java)
-      return namedParameter != null && namedParameter.isPositionalContainer()
-    }
+    get() = myIsPositional || (parameter as? PyNamedParameter)?.isPositionalContainer == true
 
   override val isKeywordContainer: Boolean
-    get() {
-      if (myIsKeyword) return true
-
-      val namedParameter = PyUtil.`as`<PyNamedParameter?>(this.parameter, PyNamedParameter::class.java)
-      return namedParameter != null && namedParameter.isKeywordContainer()
-    }
+    get() = myIsKeyword || (parameter as? PyNamedParameter)?.isKeywordContainer == true
 
   override val isSelf: Boolean
-    get() = this.parameter != null && parameter.isSelf()
+    get() = parameter?.isSelf == true
 
   override val isPositionOnlySeparator: Boolean
-    get() = this.parameter is PySlashParameter
+    get() = parameter is PySlashParameter
 
   override val isKeywordOnlySeparator: Boolean
-    get() = this.parameter is PySingleStarParameter
+    get() = parameter is PySingleStarParameter
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
-    return getPresentableText(includeDefaultValue, context, Predicate { obj: PyType? -> Objects.isNull(obj) })
+    return getPresentableText(includeDefaultValue, context, { it.isUnknown })
   }
 
   override fun getPresentableText(
     includeDefaultValue: Boolean,
     context: TypeEvalContext?,
-    typeFilter: Predicate<PyType?>,
+    typeFilter: (PyType?) -> Boolean,
   ): String {
-    if (this.parameter is PyNamedParameter || this.parameter == null) {
-      val sb = StringBuilder()
-
-      sb.append(ParamHelper.getNameInSignature(this))
+    if (parameter !is PyNamedParameter && parameter != null) {
+      return PyUtil.getReadableRepr(parameter, false)
+    }
+    return buildString {
+      append(ParamHelper.getNameInSignature(this@PyCallableParameterImpl))
 
       var renderedAsTyped = false
       if (context != null) {
         val argumentType = getArgumentType(context)
-        if (!typeFilter.test(argumentType)) {
-          sb.append(": ")
-          sb.append(PythonDocumentationProvider.getTypeName(argumentType, context))
+        if (!typeFilter(argumentType)) {
+          append(": ")
+          append(PythonDocumentationProvider.getTypeName(argumentType, context))
           renderedAsTyped = true
         }
       }
 
       if (includeDefaultValue) {
-        sb.append(ParamHelper.getDefaultValuePartInSignature(defaultValueText, renderedAsTyped) ?: "")
+        append(ParamHelper.getDefaultValuePartInSignature(defaultValueText, renderedAsTyped) ?: "")
       }
-
-      return sb.toString()
     }
-
-    return PyUtil.getReadableRepr(this.parameter, false)
   }
 
   override fun getArgumentType(context: TypeEvalContext): PyType? {
     val parameterType = getType(context)
 
-    if (isPositionalContainer && parameterType is PyTupleType) {
+    return if (isPositionalContainer && parameterType is PyTupleType) {
       // *args: str is equivalent to *args: *tuple[str, ...]
       // *args: *Ts is equivalent to *args: *tuple[*Ts]
       // Convert its type to a more general form of an unpacked tuple
       val unpackedTupleType = parameterType.asUnpackedTupleType()
-      if (unpackedTupleType.isUnbound()) {
-        return unpackedTupleType.getElementTypes().get(0)
-      }
-      return unpackedTupleType
+      if (unpackedTupleType.isUnbound)
+        unpackedTupleType.elementTypes.first()
+      else
+        unpackedTupleType
     }
     else if (isKeywordContainer && parameterType is PyCollectionType) {
-      return ContainerUtil.getOrElse<PyType?>(parameterType.getElementTypes(), 1, null)
+      parameterType.elementTypes.getOrNull(1)
     }
-
-    return parameterType
+    else
+      parameterType
   }
 
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other == null || javaClass != other.javaClass) return false
 
-    val parameter = other as PyCallableParameterImpl
-    return myIsPositional == parameter.myIsPositional && myIsKeyword == parameter.myIsKeyword &&
-           myName == parameter.myName &&
-           Ref.deref<PyType?>(myType) == Ref.deref<PyType?>(parameter.myType) &&
-           myDefaultValue == parameter.myDefaultValue &&
-           this.parameter == parameter.parameter
+    other as PyCallableParameterImpl
+    return myIsPositional == other.myIsPositional && myIsKeyword == other.myIsKeyword &&
+           myName == other.myName &&
+           myType?.get() == other.myType?.get() &&
+           myDefaultValue == other.myDefaultValue &&
+           parameter == other.parameter
   }
 
   override fun hashCode(): Int {
     return Objects.hash(
-      myName, Ref.deref<PyType?>(myType), myDefaultValue,
-      this.parameter, myIsPositional, myIsKeyword
+      myName, myType?.get(), myDefaultValue,
+      parameter, myIsPositional, myIsKeyword
     )
   }
 
   companion object {
     @JvmStatic
-    fun nonPsi(type: PyType?): PyCallableParameter {
-      return nonPsi(null, type)
-    }
+    fun nonPsi(type: PyType?): PyCallableParameter = nonPsi(null, type)
 
     @JvmStatic
     @JvmOverloads
-    fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression? = null): PyCallableParameter {
-      return PyCallableParameterImpl(name, Ref.create<PyType?>(type), defaultValue, null, false, false, null)
-    }
+    fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression? = null): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), defaultValue)
 
-    fun nonPsi(
-      name: String?, type: PyType?, defaultValue: PyExpression?,
-      declarationElement: PsiElement,
-    ): PyCallableParameter {
-      return PyCallableParameterImpl(name, Ref.create<PyType?>(type), defaultValue, null, false, false, declarationElement)
-    }
+    fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression?, declarationElement: PsiElement): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
 
-    fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter {
-      return PyCallableParameterImpl(name, Ref.create<PyType?>(type), null, null, true, false, null)
-    }
+    fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsPositional = true)
 
-    fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter {
-      return PyCallableParameterImpl(name, Ref.create<PyType?>(type), null, null, false, true, null)
-    }
+    fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myIsKeyword = true)
 
     @JvmStatic
-    fun psi(parameter: PyParameter): PyCallableParameter {
-      return PyCallableParameterImpl(null, null, null, parameter, false, false, null)
-    }
+    fun psi(parameter: PyParameter): PyCallableParameter =
+      PyCallableParameterImpl(parameter = parameter)
 
     @JvmStatic
-    fun psi(parameter: PyParameter, type: PyType?): PyCallableParameter {
-      return PyCallableParameterImpl(null, Ref.create<PyType?>(type), null, parameter, false, false, null)
-    }
+    fun psi(parameter: PyParameter, type: PyType?): PyCallableParameter =
+      PyCallableParameterImpl(myType = Ref(type), parameter =  parameter)
   }
 }
