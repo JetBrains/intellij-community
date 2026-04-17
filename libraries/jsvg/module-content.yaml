@@ -3,4 +3,4 @@
   - name: intellij.libraries.jsvg
     libraries:
       jsvg:
-      - name: $MAVEN_REPOSITORY$/com/github/weisj/jsvg/1/jsvg-1.jar
+        - name: $MAVEN_REPOSITORY$/com/github/weisj/jsvg/2/jsvg-2.jar
