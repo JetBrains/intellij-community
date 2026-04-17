@@ -686,7 +686,10 @@ private abstract class BaseUpdateQueue<T>(
         @Suppress("UNCHECKED_CAST")
         latestItem as T
       },
-      onProcess = { item -> action(item) }
+      onProcess = { item ->
+        action(item)
+        latestItem = null
+      }
     )
   }
 
@@ -847,6 +850,7 @@ private class SingleComponentQueue<T>(
       onProcess = { item ->
         // Send to the processing channel (capacity 1, so this replaces any pending item)
         processingChannel.trySend(item)
+        latestItem = null
       }
     )
   }
