@@ -7,7 +7,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyParameter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.function.Predicate
 
 interface PyCallableParameter {
   val name: @Nls String?
@@ -73,7 +72,7 @@ interface PyCallableParameter {
    * Includes asterisks for *param and **param.
    * Also includes argument type if `context` is not null and filter returns `false` for it.
    */
-  fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?, typeFilter: Predicate<PyType?>): String
+  fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?, typeFilter: (PyType?) -> Boolean): String
 
   /**
    * @param context context to be used to resolve argument type
