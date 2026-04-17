@@ -31,4 +31,9 @@
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.debugger.streams.inlay.StreamDebuggerInlaySessionListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
 </idea-plugin>
