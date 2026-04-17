@@ -35,6 +35,9 @@ open class WhatsNewInVisionContentProvider {
   /**
    * Returns a set of allowed multipage IDs.
    * By default, returns a set containing only [DEFAULT_MULTIPAGE_ID].
+   *
+   * @see WhatsNewMultipageStartIdProvider
+   * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-495/Vision-Based-Whats-New">Vision Based What's new documentation</a>
    */
   open fun getAllowedMultipageIds(): Set<String> = setOf(DEFAULT_MULTIPAGE_ID)
 

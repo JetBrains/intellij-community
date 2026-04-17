@@ -2,64 +2,44 @@
 package com.intellij.platform.whatsNew
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
 /**
  * Determines which page of a multipage Vision-based What's New artifact should be shown on IDE startup.
  *
  * Each IDE can implement its own logic to determine the starting page based on project-specific parameters.
- * The page identifier returned by [getId] must exactly match one of the Custom IDs defined in the Vision artifact.
+ * The page identifier returned by [getId] must exactly match one of the Custom IDs defined in the Vision artifact
+ * and be included in the set of allowed IDs returned by [WhatsNewInVisionContentProvider.getAllowedMultipageIds].
  *
  * #### Usage
  * 1. Override this service in your product
  * 2. Implement [getId] to return the appropriate page ID based on your project context
- * 3. Configure matching Custom IDs in the Vision website (the identifiers must match exactly)
- * 4. Build the Vision artifact and place it in the target directory
+ * 3. Register allowed multipage IDs by overriding [WhatsNewInVisionContentProvider.getAllowedMultipageIds]
+ * 4. Configure matching Custom IDs in the Vision website (the identifiers must match exactly)
+ * 5. Build the Vision artifact and place it in the target directory
  *
  * #### Expected Behavior
- * - **Single-page artifact**: The only available page is shown, regardless of the ID
- * - **Multipage artifact without custom provider**: The first page is shown by default (with a warning logged)
+ * - **Single-page artifact**: The only available page is shown, regardless of the ID, [WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID] logged into statistics
+ * - **Multipage artifact without custom provider**: The first page is shown by default, [WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID] logged into statistics
+ *   If the artifact has only one page ID, that page is shown directly.
  * - **Multipage artifact with custom provider**: The page matching the ID from [getId] is shown
- *   - If identifiers don't match, the page will not open
+ *   - If the returned ID is not in the artifact's multipage IDs, a warning is logged but the ID is still used
  *
+ * @see WhatsNewInVisionContentProvider.getAllowedMultipageIds
  * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-495/Vision-Based-Whats-New">Vision Based What's new documentation</a>
  */
 open class WhatsNewMultipageStartIdProvider(val project: Project) {
   /**
    * Returns the page ID that should be shown on startup for the multipage What's New artifact.
    *
-   * The returned ID must exactly match one of the Custom IDs defined in the Vision artifact's `multipageIds` field.
-   * If `null` is returned for a multipage artifact, the first page will be shown with a warning logged.
+   * The returned ID must exactly match one of the Custom IDs defined in the Vision artifact's `multipageIds` field
+   * and be present in [WhatsNewInVisionContentProvider.getAllowedMultipageIds].
    *
    * @return the page ID to display, or `null` to use default behavior
    */
-  protected open suspend fun getId(): String? = null
-
-  internal suspend fun getIdIfSupported(multipageIds: List<String>): String? {
-    if (multipageIds.size == 1) return multipageIds.first()
-    val startPageId = getId()
-    if (startPageId == null) {
-      logger.warn("What's new artifact contains several page ids but getId() returns null. Implement WhatsNewMultipageStartIdProvider.getId() to return one of them. Now trying to show the first page from available.")
-      return multipageIds.firstOrNull()
-    }
-    return startPageId.checkSupported(multipageIds)
-  }
-
-  private fun String.checkSupported(multipageIds: List<String>): String {
-    if (multipageIds.isEmpty() || this in multipageIds) return this
-    else {
-      logger.warn("What's new multipage id \"$this\" is not supported. Supported ids: ${multipageIds.joinToString()}")
-      return this
-    }
-  }
+  open suspend fun getId(): String? = WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID
 
   companion object {
     fun getInstance(project: Project): WhatsNewMultipageStartIdProvider = project.service()
   }
 }
-
-private val logger = logger<WhatsNewMultipageStartIdProvider>()
-
-
-

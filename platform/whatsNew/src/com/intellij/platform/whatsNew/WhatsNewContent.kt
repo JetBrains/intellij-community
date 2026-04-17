@@ -285,7 +285,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     withContext(Dispatchers.EDT) {
       logger.info("Opening What's New in editor.")
       val disposable = Disposer.newDisposable(project)
-      val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getIdIfSupported(multipageIds)
+      val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getId()
       val request = getRequest(startPageId, dataContext)
       val editor = openEditorAsync(project, title, request)
 
