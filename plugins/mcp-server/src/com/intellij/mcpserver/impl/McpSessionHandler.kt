@@ -22,11 +22,8 @@ import com.intellij.mcpserver.ToolCallListener
 import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.mcpCallInfoOrNull
-import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
-import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -305,32 +302,22 @@ internal class McpSessionHandler(
     return RegisteredTool(tool) { request ->
         val session = sessionAwaiter.await()
         val httpRequest = currentCoroutineContext().httpRequestOrNull
-        val projectPathFromHeaders =
-            httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH)
-                ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
-                ?: projectPathFromInitialRequest
         val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
+        val projectPathFromCallHeader =
+          httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH)
+          ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
         val project = try {
-            val roots = sessionRoots.get()
-            val projectFromRootList = roots?.let { findMostRelevantProjectForRoots(roots) }
-            logger.trace { "Locating project for session: ${session.sessionId}, roots: $roots, ${projectPathParameterName}: $projectPathFromMcpRequest, projectPathFromHeaders: $projectPathFromHeaders" }
-            if (projectFromRootList != null) {
-                logger.trace { "Project $projectFromRootList from roots list: $roots" }
-                // prefer project from list of roots
-                projectFromRootList
-            } else if (!projectPathFromMcpRequest.isNullOrBlank()) {
-                logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-                // project from mcp argument first (may hallucinate)
-                findMostRelevantProject(projectPathFromMcpRequest)
-                    ?: throw noSuitableProjectError("`${projectPathParameterName}`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
-            } else if (!projectPathFromHeaders.isNullOrBlank()) {
-                logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
-                // then from headers
-                findMostRelevantProject(projectPathFromHeaders)
-                    ?: throw noSuitableProjectError("Project path specified via header variable `${IJ_MCP_SERVER_PROJECT_PATH}`=`$projectPathFromHeaders` doesn't correspond to any open project.")
-            } else {
-                null
-            }
+          val roots = sessionRoots.get() ?: emptySet()
+          logger.trace {
+            "Locating project for session ${session.sessionId}... roots: $roots, ${projectPathParameterName}: $projectPathFromMcpRequest, " +
+            "callHeaderProjectPath: $projectPathFromCallHeader, sessionHeaderProjectPath: $projectPathFromInitialRequest"
+          }
+          McpProjectLocationInputs(
+            projectPathFromArgument = projectPathFromMcpRequest,
+            projectPathFromCallHeader = projectPathFromCallHeader,
+            projectPathFromSessionHeader = projectPathFromInitialRequest,
+            roots = roots,
+          ).resolveProject()
         } catch (tce: TimeoutCancellationException) {
             logger.trace { "Calling of tool '${mcpTool.descriptor.name}' has been timed out: ${tce.message}" }
             return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${mcpTool.descriptor.name}' has been timed out: ${tce.message}")
