@@ -3516,6 +3516,70 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments")
+        public static class ExplicitContextArguments extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("existingArguments.kt")
+            public void testExistingArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/existingArguments.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/function.kt");
+            }
+
+            @TestMetadata("initBlock.kt")
+            public void testInitBlock() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/initBlock.kt");
+            }
+
+            @TestMetadata("lambda.kt")
+            public void testLambda() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/lambda.kt");
+            }
+
+            @TestMetadata("lambdaInLambda.kt")
+            public void testLambdaInLambda() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/lambdaInLambda.kt");
+            }
+
+            @TestMetadata("multipleContextParameters.kt")
+            public void testMultipleContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/multipleContextParameters.kt");
+            }
+
+            @TestMetadata("overloadAmbiguity.kt")
+            public void testOverloadAmbiguity() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overloadAmbiguity.kt");
+            }
+
+            @TestMetadata("overloadAmbiguityWithContext.kt")
+            public void testOverloadAmbiguityWithContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overloadAmbiguityWithContext.kt");
+            }
+
+            @TestMetadata("overrideFunction.kt")
+            public void testOverrideFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overrideFunction.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/property.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext")
         public static class SurroundWithContext extends AbstractHighLevelQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {

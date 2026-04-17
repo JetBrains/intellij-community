@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -11,12 +15,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
+import kotlin.collections.any
 
 @OptIn(KaExperimentalApi::class)
 internal object NoContextParameterFixFactory {
@@ -27,7 +32,11 @@ internal object NoContextParameterFixFactory {
         val symbol = diagnostic.symbol as? KaContextParameterSymbol
             ?: return@ModCommandBased emptyList()
 
-        val contextType = symbol.returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+        val contextName = symbol.name.asString()
+        val contextType = symbol.returnType.render(
+            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
+            position = Variance.INVARIANT
+        )
         buildList {
             findSurroundingContextCall(expression)?.let {
                 add(AddContextParameterToExistingContextFix(it))
@@ -39,6 +48,15 @@ internal object NoContextParameterFixFactory {
                     SurroundCallWithContextFix.Wrapper.WITH
                 }
                 add(SurroundCallWithContextFix(expression, wrapper))
+                add(SurroundCallWithContextFix(expression, wrapper))
+                if (!wouldCauseOverloadAmbiguity(expression, contextName)) {
+                    add(
+                        AddExplicitContextArgumentFix(
+                            expression,
+                            listOf(AddExplicitContextArgumentFix.ContextParameterInfo(contextName, contextType))
+                        )
+                    )
+                }
             }
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
@@ -52,5 +70,16 @@ internal object NoContextParameterFixFactory {
         val callee = parentCall.calleeExpression?.text ?: return null
         if (callee != "context") return null
         return parentCall
+    }
+
+    context(_: KaSession)
+    private fun wouldCauseOverloadAmbiguity(
+        callElement: KtExpression,
+        contextParamName: String,
+    ): Boolean {
+        return callElement.resolveToCallCandidates().any { candidateInfo ->
+            val symbol = (candidateInfo.candidate as? KaFunctionCall<*>)?.symbol ?: return@any false
+            symbol.valueParameters.any { it.name.asString() == contextParamName }
+        }
     }
 }
