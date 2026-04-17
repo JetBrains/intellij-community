@@ -15,6 +15,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -803,6 +804,7 @@ private class SingleComponentQueue<T>(
   private var pendingItem: T? = null
 
   // Global scope job for channel processing (delay/debouncing)
+  @OptIn(DelicateCoroutinesApi::class)
   private val channelProcessingJob: Job = GlobalScope.launch(CoroutineName("$name-channel-processor")) {
     processLatestAndForward(delay, restartTimerOnAdd)
   }
@@ -812,6 +814,7 @@ private class SingleComponentQueue<T>(
     processFromSecondChannel(context, action)
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override val job: Job = GlobalScope.launch(CoroutineName(name)) {
     try {
       awaitCancellation()
