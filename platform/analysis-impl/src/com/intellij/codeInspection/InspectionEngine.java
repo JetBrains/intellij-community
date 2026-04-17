@@ -69,11 +69,11 @@ public final class InspectionEngine {
                                                          @NotNull ProblemsHolder holder,
                                                          boolean isOnTheFly,
                                                          @NotNull LocalInspectionToolSession session) {
-    if (!tool.isAvailableForFile(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     PsiElementVisitor visitor;
     try {
+      if (!tool.isAvailableForFile(holder.getFile())) {
+        return PsiElementVisitor.EMPTY_VISITOR;
+      }
       visitor = tool.buildVisitor(holder, isOnTheFly, session);
     }
     catch (Throwable e) {
