@@ -19,6 +19,8 @@
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.essential.xml"/>
 
-  <xi:include href="/META-INF/game-tools.xml"/>
+  <xi:include href="/META-INF/game-tools.xml">
+    <xi:fallback />
+  </xi:include>
 
 </idea-plugin>

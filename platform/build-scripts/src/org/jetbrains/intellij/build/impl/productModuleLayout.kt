@@ -106,6 +106,35 @@ internal suspend fun processAndGetProductPluginContentModules(
 
   descriptorCache.put(PRODUCT_DESCRIPTOR_META_PATH, data.encodeToByteArray())
 
+  if (context.productProperties.platformPrefix == "AndroidStudio") {
+    val gameToolsPluginFileName = "AndroidGameDevelopmentToolsPlugin.xml"
+    val gameToolsPluginFile = requireNotNull(context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/$gameToolsPluginFileName")
+    ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
+    val gameToolsPluginXml = JDOMUtil.load(gameToolsPluginFile)
+
+    resolveIncludes(element = gameToolsPluginXml, elementResolver = /*gameToolsXIncludeResolver*/ xIncludeResolver)
+    val gameToolsModuleItems = LinkedHashSet<ModuleItem>()
+    filterAndProcessContentModules(rootElement = gameToolsPluginXml, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
+      processProductModule(
+        moduleElement = moduleElement,
+        frontendModuleFilter = frontendModuleFilter,
+        result = gameToolsModuleItems,
+        moduleToSetChainOverride = moduleToSetChainMapping,
+        moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
+        descriptorCache = descriptorCache,
+        xIncludeResolver = /*gameToolsXIncludeResolver*/ xIncludeResolver,
+        moduleName = moduleName,
+        isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.xmlValue,
+        context = context,
+      )
+    }
+
+    val gameToolsPluginData = JDOMUtil.write(gameToolsPluginXml)
+    layout.withPatch { moduleOutputPatcher, _, _ ->
+      moduleOutputPatcher.patchModuleOutput(productPluginSourceModuleName, "META-INF/$gameToolsPluginFileName", gameToolsPluginData)
+    }
+  }
+
   return moduleItems
 }
 
