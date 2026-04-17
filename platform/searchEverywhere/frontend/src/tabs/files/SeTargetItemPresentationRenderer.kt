@@ -44,11 +44,27 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     val iconsWidth = (presentation.icon?.iconWidth ?: 0) + (presentation.locationIcon?.iconWidth ?: 0)
 
     val fontMetrics = resultList.getFontMetrics(resultList.font)
+
     // Calculate the combined width without locationText.
     // If it is larger than the available space, we need to hide the locationIcon to avoid text overlap (IJPL-188565).
-    var nonLocationContentWidth = 2 * defaultGapWidth + bordersWidth + fontMetrics.stringWidth(presentation.presentableText) + iconsWidth
+    var nonLocationContentWidth = 2 * defaultGapWidth + bordersWidth + iconsWidth
 
-    text(presentation.presentableText) {
+    var presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
+    val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
+    val locationTextWidthWithGap = if (locationTextWidth > 0) locationTextWidth + defaultGapWidth else 0
+    val width = resultList.width
+
+    val maxPresentableTextWidth = width - nonLocationContentWidth - locationTextWidthWithGap.coerceAtMost(width / 3)
+    val presentableText = if (presentation.shouldKeepLocationVisible && presentableTextWidth > maxPresentableTextWidth) {
+      val newText = SETextShortener.getShortenText(presentation.presentableText, maxPresentableTextWidth) { fontMetrics.stringWidth(it) }
+      presentableTextWidth = fontMetrics.stringWidth(newText)
+      newText
+    }
+    else presentation.presentableText
+
+    nonLocationContentWidth += presentableTextWidth
+
+    text(presentableText) {
       accessibleName = presentation.presentableText + (presentation.containerText?.let { " $it" } ?: "")
 
       if (presentation.presentableTextStrikethrough) {
@@ -74,13 +90,16 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
 
     presentation.containerText?.let { containerText ->
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
-      val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
-      val width = resultList.width
       val keepLocationVisibleSpace = if (presentation.shouldKeepLocationVisible) JBUI.scale(54) else 0
+      val maxContainerTextWidth = width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20) - keepLocationVisibleSpace
+
+      // If shouldKeepLocationVisible is true, then it doesn't make sense to show container text
+      // if there's not enough space even for 2 letters with ellipsis
+      if (presentation.shouldKeepLocationVisible && maxContainerTextWidth <= JBUI.scale(25)) return@let
 
       val shortenContainerText = SETextShortener.getShortenContainerText(
         containerText,
-        width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20) - keepLocationVisibleSpace
+        maxContainerTextWidth
       ) { fontMetrics.stringWidth(it) }
 
       nonLocationContentWidth += fontMetrics.stringWidth(shortenContainerText)
