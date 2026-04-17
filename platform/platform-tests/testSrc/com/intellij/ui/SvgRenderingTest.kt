@@ -268,9 +268,13 @@ class SvgRenderingTest {
       </svg>
     """.trimIndent()
 
+    // jsvg 2.x aborts the render when the `DocumentLimits.maxPathCount` guard trips. The old
+    // bespoke "use is over-nested" check was replaced by upstream's own DoS protection; the
+    // guarantee — rendering this billion-laughs SVG throws rather than exhausting memory — is
+    // what the test covers.
     assertThatThrownBy {
-      val image = renderSvg(svg.byteInputStream())
-    }.hasMessage("use is over-nested: 7")
+      renderSvg(svg.byteInputStream())
+    }.hasMessageContaining("Maximum count of rendered element instances exceeded")
   }
 
   @Test
