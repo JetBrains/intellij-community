@@ -785,11 +785,7 @@ private class BatchedScopeQueue<T>(
 /**
  * Single-item queue bound to a JComponent lifecycle.
  *
- * Uses a two-channel architecture:
- * - First channel (main): Receives items from queue(), does delay/debouncing in global scope
- * - Second channel (processing): Receives items ready to process, consumed inside launchOnShow
- *
- * This ensures items are never lost even if component is hidden during processing.
+ * Items are never lost even if the component is hidden during processing.
  */
 @ApiStatus.Experimental
 private class SingleComponentQueue<T>(
