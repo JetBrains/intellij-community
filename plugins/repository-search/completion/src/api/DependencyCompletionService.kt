@@ -25,6 +25,7 @@ interface DependencyCompletionService {
 
 interface DependencyCompletionContributor {
   val buildSystemId: ProjectSystemId
+  val source: DependencyCompletionContributionSource
   fun isEnabled(): Boolean = true
   suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult>
   suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult>

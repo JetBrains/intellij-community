@@ -19,8 +19,9 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 @ApiStatus.Internal
 class GradleLocalDependencyCompletionContributor : DependencyCompletionContributor {
 
-  override val buildSystemId: ProjectSystemId
-    get() = GradleConstants.SYSTEM_ID
+  override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
+
+  override val buildSystemId: ProjectSystemId = GradleConstants.SYSTEM_ID
 
   override fun isEnabled(): Boolean {
     return Registry.`is`("gradle.dependency.completion.contributor.local")

@@ -7,8 +7,8 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
-import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -24,55 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-
-private val GRADLE_SYSTEM_ID = ProjectSystemId("Gradle")
-private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
-
-private object TestEelDescriptor : EelDescriptor {
-  override val name: String get() = "test"
-  override val osFamily: EelOsFamily get() = EelOsFamily.Posix
-}
-
-private class TestContext(override val buildSystemId: ProjectSystemId = GRADLE_SYSTEM_ID) : DependencyCompletionContext {
-  override val eelDescriptor: EelDescriptor get() = TestEelDescriptor
-}
-
-private fun testResult(groupId: String = "g", artifactId: String = "a", version: String = "1.0") =
-  DependencyCompletionResult(groupId, artifactId, version, source = DependencyCompletionContributionSource.SERVER)
-
-private fun testPartResult(value: String) =
-  DependencyPartCompletionResult(value, source = DependencyCompletionContributionSource.SERVER)
-
-private fun fakeContributor(
-  systemId: ProjectSystemId = GRADLE_SYSTEM_ID,
-  enabled: Boolean = true,
-  searchResults: List<DependencyCompletionResult> = emptyList(),
-  groupResults: List<String> = emptyList(),
-  failWith: Exception? = null,
-): DependencyCompletionContributor = object : DependencyCompletionContributor {
-  override val buildSystemId: ProjectSystemId get() = systemId
-  override fun isEnabled(): Boolean = enabled
-
-  override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
-    if (failWith != null) throw failWith
-    return searchResults
-  }
-
-  override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
-    if (failWith != null) throw failWith
-    return groupResults.map { testPartResult(it) }
-  }
-
-  override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
-    if (failWith != null) throw failWith
-    return emptyList()
-  }
-
-  override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
-    if (failWith != null) throw failWith
-    return emptyList()
-  }
-}
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class DependencyCompletionServiceImplTest {
@@ -157,6 +109,8 @@ class DependencyCompletionServiceImplTest {
     var receivedRequest: DependencyCompletionRequest? = null
     val capturingContributor = object : DependencyCompletionContributor {
       override val buildSystemId: ProjectSystemId get() = GRADLE_SYSTEM_ID
+      override val source: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL
+
       override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
         receivedRequest = request
         return emptyList()
@@ -169,5 +123,74 @@ class DependencyCompletionServiceImplTest {
     ExtensionTestUtil.maskExtensions(DependencyCompletionService.EP_NAME, listOf(capturingContributor), disposable)
     DependencyCompletionServiceImpl().suggestCompletions(searchRequest).toList()
     assertEquals(searchRequest, receivedRequest)
+  }
+
+  @Test
+  fun `local results arrive after server results even when local contributor is faster`(): Unit = runBlocking {
+    val serverResult = testResult("server-group", "artifact", "2.0")
+    val localResult = DependencyCompletionResult("local-group", "artifact", "1.0", source = DependencyCompletionContributionSource.LOCAL)
+    val service = withContributors(
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.SERVER,
+                      delayMs = 50L,
+                      searchResults = listOf(serverResult)),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.LOCAL, searchResults = listOf(localResult)),
+    )
+    val results = service.suggestCompletions(searchRequest).toList()
+    assertThat(results).hasSize(2)
+    assertThat(results[0]).isEqualTo(serverResult)
+    assertThat(results[1]).isEqualTo(localResult)
+  }
+}
+
+private val GRADLE_SYSTEM_ID = ProjectSystemId("Gradle")
+private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
+
+private object TestEelDescriptor : EelDescriptor {
+  override val name: String get() = "test"
+  override val osFamily: EelOsFamily get() = EelOsFamily.Posix
+}
+
+private class TestContext(override val buildSystemId: ProjectSystemId = GRADLE_SYSTEM_ID) : DependencyCompletionContext {
+  override val eelDescriptor: EelDescriptor get() = TestEelDescriptor
+}
+
+private fun testResult(groupId: String = "g", artifactId: String = "a", version: String = "1.0") =
+  DependencyCompletionResult(groupId, artifactId, version, source = DependencyCompletionContributionSource.SERVER)
+
+private fun testPartResult(value: String) =
+  DependencyPartCompletionResult(value, source = DependencyCompletionContributionSource.SERVER)
+
+private fun fakeContributor(
+  systemId: ProjectSystemId = GRADLE_SYSTEM_ID,
+  enabled: Boolean = true,
+  contributorSource: DependencyCompletionContributionSource = DependencyCompletionContributionSource.LOCAL,
+  delayMs: Long = 0L,
+  searchResults: List<DependencyCompletionResult> = emptyList(),
+  groupResults: List<String> = emptyList(),
+  failWith: Exception? = null,
+): DependencyCompletionContributor = object : DependencyCompletionContributor {
+  override val buildSystemId: ProjectSystemId get() = systemId
+  override val source: DependencyCompletionContributionSource = contributorSource
+  override fun isEnabled(): Boolean = enabled
+
+  override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
+    if (delayMs > 0) kotlinx.coroutines.delay(delayMs.milliseconds)
+    if (failWith != null) throw failWith
+    return searchResults
+  }
+
+  override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
+    if (failWith != null) throw failWith
+    return groupResults.map { testPartResult(it) }
+  }
+
+  override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
+    if (failWith != null) throw failWith
+    return emptyList()
+  }
+
+  override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
+    if (failWith != null) throw failWith
+    return emptyList()
   }
 }

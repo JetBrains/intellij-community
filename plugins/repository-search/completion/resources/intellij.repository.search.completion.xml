@@ -9,5 +9,8 @@
     <statistics.collectorExtension
       implementation="com.intellij.repository.search.completion.statistics.DependencyCompletionUsageCollectorExtension"/>
     <lookup.usageDetails implementation="com.intellij.repository.search.completion.statistics.DependencyCompletionUsageDescriptor"/>
+
+    <registryKey key="dependency.completion.local.results.delay.ms" defaultValue="3000"
+                 description="Max wait time for server dependency completion results before local results are shown (ms)"/>
   </extensions>
 </idea-plugin>
