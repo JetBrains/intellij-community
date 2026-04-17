@@ -105,15 +105,16 @@ private fun computeImageDimensions(parsed: ParsedSvgDocument): ImageDimensions {
 
 /**
  * Parses a CSS/SVG length attribute (e.g. `"16"`, `"16px"`, `"1em"`, `"50%"`) into the IDEA
- * [ImageDimension] used by the adaptive image pipeline. Returns `null` for absent or
- * unparseable values.
+ * [ImageDimension] used by the SVG pipeline. Returns `null` for absent or unparseable values.
  *
  * Supports only the units IDEA carries forward: PX, EM, EX, PERCENTAGE. Other units
  * (`pt`, `cm`, `mm`, `in`, `pc`, `Q`, `rem`, `ch`, viewport units) fall through to PX
  * using the numeric portion, matching the historical "resolve against 16×16 viewport"
  * approximation that legacy IDEA code applied for unsupported units.
+ *
+ * Shared with `jsvg.kt`'s renderer-side intrinsic-size computation.
  */
-private fun parseLengthAttribute(raw: String?): ImageDimension? {
+internal fun parseLengthAttribute(raw: String?): ImageDimension? {
   if (raw == null) return null
   val trimmed = raw.trim()
   if (trimmed.isEmpty()) return null

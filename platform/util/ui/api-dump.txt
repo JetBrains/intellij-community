@@ -3447,6 +3447,8 @@ c:com.intellij.ui.scale.UserScaleContext
 - p:updateAll(com.intellij.ui.scale.UserScaleContext):Z
 com.intellij.ui.scale.UserScaleContext$UpdateListener
 - a:contextUpdated():V
+f:com.intellij.ui.svg.JsvgKt
+- sf:computeIntrinsicSize(java.lang.String,java.lang.String,F,F):kotlin.Pair
 com.intellij.ui.svg.SvgAttributePatcher
 - patchColors(java.util.Map):V
 f:com.intellij.ui.svg.SvgKt

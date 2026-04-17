@@ -66,6 +66,39 @@ class SvgIconSizeTest {
     TestCase.assertEquals("wrong svg doc height", 10.0, size.getHeight())
   }
 
+  /**
+   * Regression for IJPL-242849: an SVG that doesn't declare absolute `width`/`height` must
+   * still report the IDEA icon-default 16×16 logical size, *regardless* of any viewBox. That's
+   * the convention the icon-class generator codifies as `/** 16x16 */` for every icon in the
+   * tree, and downstream code relies on it (icon caches, layouts, etc.).
+   *
+   * Concrete cases that broke when we leaked the SVG's "true" dimensions through:
+   *  - `<svg width="100%" height="100%" viewBox="0 0 16 16">` was reported as 100×100 (jsvg's
+   *    own resolution against its hardcoded 100×100 viewport).
+   *  - `<svg viewBox="0 0 963 961">` (no width/height — e.g. cypress.svg) was reported as
+   *    963×961 once we started using the viewBox as a fallback.
+   *
+   * Both must fall back to ([baseWidth], [baseHeight]) — 16×16 here.
+   */
+  @Test
+  fun iconWithoutAbsoluteSizeReports16x16RegardlessOfViewBox() {
+    fun assertSizeIs16x16(svg: String) {
+      val size = getSvgDocumentSize(svg.trimIndent().toByteArray())
+      TestCase.assertEquals("wrong svg doc width: $svg", 16.0, size.getWidth())
+      TestCase.assertEquals("wrong svg doc height: $svg", 16.0, size.getHeight())
+    }
+
+    // 100% width/height with a small viewBox — jsvg would return 100×100 if asked directly.
+    assertSizeIs16x16("""<svg width="100%" height="100%" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"/>""")
+
+    // 100% width/height with a larger viewBox — proves we're not just using the viewBox.
+    assertSizeIs16x16("""<svg width="100%" height="100%" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"/>""")
+
+    // No width/height at all, only a viewBox (e.g. icons exported from Illustrator like
+    // plugins/aqua/frameworks/cypress/resources/icons/cypress.svg).
+    assertSizeIs16x16("""<svg viewBox="0 0 963 961" xmlns="http://www.w3.org/2000/svg"/>""")
+  }
+
   companion object {
     @ClassRule
     @JvmField
