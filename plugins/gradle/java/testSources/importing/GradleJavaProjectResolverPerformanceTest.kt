@@ -84,6 +84,8 @@ class GradleJavaProjectResolverPerformanceTest {
       numHolderModules: Int, numSourceSetModules: Int,
       test: (JavaGradleProjectResolver, IdeaProject, DataNode<ProjectData>) -> Unit,
     ) {
+      setGradleJvm(project, gradleJvm)
+
       val ideaProject = testIdeaProject {
         it.numHolderModules = numHolderModules
         it.projectName = project.name
@@ -106,11 +108,13 @@ class GradleJavaProjectResolverPerformanceTest {
       }
 
       val setup = {
-        project.gradleSettings.linkedProjectsSettings = listOf(
-          GradleProjectSettings(project.basePath!!).also {
-            it.gradleJvm = gradleJvm
-          }
-        )
+        // Removes the project resolver's caches
+        projectResolver.resolveFinished(projectNode)
+        // Removes the resolved SDK data from the data nodes' graph
+        projectNode.projectSdkNode?.clear(/* removeFromGraph = */ true)
+        for (moduleNode in projectNode.moduleNodes) {
+          moduleNode.moduleSdkNode?.clear(/* removeFromGraph = */ true)
+        }
       }
 
       val test = {
@@ -158,5 +162,13 @@ class GradleJavaProjectResolverPerformanceTest {
   private class NoOpNextResolver : GradleProjectResolverExtension by notImplemented<GradleProjectResolverExtension>() {
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {}
     override fun populateProjectExtraModels(gradleProject: IdeaProject, ideProject: DataNode<ProjectData>) {}
+  }
+
+  companion object {
+    fun setGradleJvm(project: Project, gradleJvm: String) {
+      project.gradleSettings.linkedProjectsSettings = listOf(
+        GradleProjectSettings(project.basePath!!).also { it.gradleJvm = gradleJvm }
+      )
+    }
   }
 }

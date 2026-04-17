@@ -78,6 +78,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   @Override
   public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
     buildScriptEntriesMap.clear();
+
+    resolverCtx.putUserData(SDK_BY_NAME_CACHE, null);
+    resolverCtx.putUserData(SDK_BY_PATH_CACHE, null);
+    resolverCtx.putUserData(SDK_BY_VERSION_CACHE, null);
   }
 
   @Override
