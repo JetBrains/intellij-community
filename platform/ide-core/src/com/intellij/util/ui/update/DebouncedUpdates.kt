@@ -479,12 +479,16 @@ private abstract class BaseUpdateQueue<T>(
   }
 
   protected val channel: Channel<T> = Channel(capacity = channelCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  // Notifies the processor that a new item was queued, before it is consumed from the main channel.
+  protected val notifyChannel: Channel<Unit> = Channel(capacity = channelCapacity)
+
   protected abstract val job: Job
 
   // Track the currently running processing job for tests
   protected val processingJob = AtomicReference<Job?>(null)
 
-  // Track whether we're collecting items - set after receive(), cleared before starting processing job
+  // Track whether we're collecting items (between receiving first item and starting processing)
   @Volatile
   protected var isCollecting: Boolean = false
 
@@ -495,6 +499,9 @@ private abstract class BaseUpdateQueue<T>(
     }
     val result = channel.trySend(item)
     check(result.isSuccess) { "Failed to send value to channel in UpdateQueue '$name': $result" }
+
+    // Signal after trySend so the item is already in the channel when the receiver wakes up.
+    notifyChannel.trySend(Unit)
   }
 
   override fun cancelOnDispose(disposable: Disposable): UpdateQueue<T> {
@@ -605,11 +612,14 @@ private abstract class BaseUpdateQueue<T>(
     onProcess: suspend (R) -> Unit
   ) {
     while (true) {
-      // Wait for first item and add it
-      onReceive(channel.receive())
+      // Wait for sync signal that indicates an item was queued
+      notifyChannel.receive()
 
-      // Mark as collecting - we received an item and are collecting the batch
+      // Must be set before channel.receive() to avoid a window where channel.isEmpty=true and isCollecting=false.
       isCollecting = true
+
+      // Now receive the actual item from the main channel
+      onReceive(channel.receive())
 
       if (restartTimerOnAdd) {
         // Debounce mode: restart timer on each new item
@@ -624,6 +634,7 @@ private abstract class BaseUpdateQueue<T>(
 
           // Wait for remaining delay or new item, whichever comes first
           withTimeoutOrNull(remainingDelay.nanoseconds) {
+            notifyChannel.receive()
             onReceive(channel.receive())
             lastItemTime = System.nanoTime()
           } ?: break // Timeout - process collected items
@@ -633,10 +644,8 @@ private abstract class BaseUpdateQueue<T>(
         delay(delay)
 
         // Collect all remaining items
-        var extraItem = channel.tryReceive().getOrNull()
-        while (extraItem != null) {
-          onReceive(extraItem)
-          extraItem = channel.tryReceive().getOrNull()
+        while (notifyChannel.tryReceive().isSuccess) {
+          onReceive(channel.receive())
         }
       }
 
@@ -651,9 +660,7 @@ private abstract class BaseUpdateQueue<T>(
           }
         }
 
-        // Track the processing job and clear collecting flag
-        // IMPORTANT: Must set processingJob before clearing isCollecting to avoid race condition
-        // where both would be false/null even though processing is about to start
+        // Must set processingJob before clearing isCollecting to avoid a window where both are false/null.
         processingJob.set(job)
         isCollecting = false
 
