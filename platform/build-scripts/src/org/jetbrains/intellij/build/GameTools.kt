@@ -33,7 +33,8 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
       "plugins/java/lib/java-frontback.jar",
       "plugins/java/lib/java-impl.jar",
       "plugins/java/lib/resources.jar",
-      "plugins/java/lib/java_resources_en.jar"
+      "plugins/java/lib/java_resources_en.jar",
+      "plugins/java/lib/modules/*"
     ))
 
     return classPaths
