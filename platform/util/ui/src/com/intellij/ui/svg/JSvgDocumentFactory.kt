@@ -1,43 +1,32 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui.svg
 
-import com.github.weisj.jsvg.attributes.AttributeParser
-import com.github.weisj.jsvg.attributes.paint.DefaultPaintParser
-import com.github.weisj.jsvg.nodes.SVG
-import com.github.weisj.jsvg.nodes.Style
-import com.github.weisj.jsvg.parser.AttributeNode
-import com.github.weisj.jsvg.parser.LoadHelper
-import com.github.weisj.jsvg.parser.NodeMap
-import com.github.weisj.jsvg.parser.ParsedElement
-import com.github.weisj.jsvg.parser.ResourceLoader
-import com.github.weisj.jsvg.parser.ValueUIFuture
-import com.github.weisj.jsvg.parser.css.StyleSheet
-import com.github.weisj.jsvg.parser.css.impl.SimpleCssParser
-import com.github.weisj.jsvg.util.ResourceUtil
+import com.github.weisj.jsvg.parser.impl.MutableLoaderContext
+import com.github.weisj.jsvg.parser.impl.NodeSupplier
+import com.github.weisj.jsvg.parser.impl.SVGDocumentBuilder
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.io.InputStream
+import java.util.Locale
 import javax.xml.stream.XMLStreamConstants
-import javax.xml.stream.XMLStreamReader
 
 @Internal
-fun createJSvgDocument(inputStream: InputStream): SVG {
+fun createJSvgDocument(inputStream: InputStream): ParsedSvgDocument {
   return createJSvgDocument(createXmlStreamReader(inputStream))
 }
 
 @Internal
-fun createJSvgDocument(data: ByteArray): SVG = createJSvgDocument(createXmlStreamReader(data))
+fun createJSvgDocument(data: ByteArray): ParsedSvgDocument = createJSvgDocument(createXmlStreamReader(data))
 
 typealias AttributeMutator = (MutableMap<String, String>) -> Unit
 
 @Internal
-fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: AttributeMutator? = null): SVG {
+fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: AttributeMutator? = null): ParsedSvgDocument {
   try {
     return buildDocument(xmlStreamReader, attributeMutator)
   }
@@ -46,178 +35,137 @@ fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: Attr
   }
 }
 
-private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeMutator?): SVG {
-  var state = reader.eventType
-  if (XMLStreamConstants.START_DOCUMENT != state) {
-    throw IOException("Incorrect state: $state")
+private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeMutator?): ParsedSvgDocument {
+  if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
+    throw IOException("Incorrect state: ${reader.eventType}")
   }
 
-  var root: ParsedElement? = null
+  val rootAttributes = RootAttributeCollector()
+  // The default LoaderContext already denies external resources and accepts embedded data URIs,
+  // which matches IDEA's historical "data URI only" rule.
+  val loaderContext = MutableLoaderContext.createDefault()
+    .preProcessor(rootAttributes)
+    .build()
+  val builder = SVGDocumentBuilder(/* rootURI = */ null, loaderContext, NODE_SUPPLIER)
+  builder.startDocument()
 
-  val styleElements = mutableListOf<Style>()
-  val styleSheets = mutableListOf<StyleSheet>()
+  pushRootElement(reader, builder)
+  streamFragment(reader, builder, attributeMutator)
+  builder.endDocument()
 
-  while (state != XMLStreamConstants.END_DOCUMENT) {
-    when (state) {
-      XMLStreamConstants.START_DOCUMENT -> {
-        assert(root == null)
-      }
-      XMLStreamConstants.DTD, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.SPACE -> {
-      }
+  val svgDocument = builder.build()
+  return ParsedSvgDocument(
+    document = svgDocument,
+    isDataScaled = rootAttributes.isDataScaled,
+    rawWidth = rootAttributes.rawWidth,
+    rawHeight = rootAttributes.rawHeight,
+    rawViewBox = rootAttributes.rawViewBox,
+  )
+}
+
+/**
+ * Advances [reader] until the root `<svg>` element and pushes it into [builder].
+ *
+ * Matches the strict behavior of the legacy IDEA parser: the first start-element must be `svg`
+ * (any other element, or character data, is a hard error). The root's attributes are passed to
+ * the builder untouched — the caller-supplied [AttributeMutator] is applied only to descendants
+ * to preserve the historical contract.
+ */
+private fun pushRootElement(reader: XMLStreamReader2, builder: SVGDocumentBuilder) {
+  while (reader.hasNext()) {
+    when (reader.next()) {
       XMLStreamConstants.START_ELEMENT -> {
         val localName = reader.localName
         if (localName != "svg") {
           throw IOException("Root element does not match that requested:\nRequested: svg\nFound: $localName")
         }
-
-        val namedElements = HashMap<String, ParsedElement>()
-        val attributes = readAttributes(reader = reader, attributeMutator = null)
-
-        root = ParsedElement(
-          attributes.get("id"),
-          AttributeNode(/* tagName = */ getQualifiedName(reader.prefix, localName),
-                        /* attributes = */ attributes,
-                        /* parent = */ null,
-                        /* namedElements = */ namedElements,
-                        /* styleSheets = */ styleSheets,
-                        /* loadHelper = */ jsvgLoadHelper), SVG()
-        )
-        processElementFragment(reader = reader,
-                               root = root,
-                               namedElements = namedElements,
-                               attributeMutator = attributeMutator,
-                               styleSheets = styleSheets,
-                               styleElements = styleElements)
+        val attributes = readAttributes(reader, attributeMutator = null)
+        builder.startElement(qualifiedName(reader.prefix, localName), attributes)
+        return
+      }
+      XMLStreamConstants.DTD,
+      XMLStreamConstants.COMMENT,
+      XMLStreamConstants.PROCESSING_INSTRUCTION,
+      XMLStreamConstants.SPACE -> {
+        // ignore
       }
       XMLStreamConstants.CHARACTERS -> {
-        val badContent = reader.text
         if (!reader.isWhiteSpace) {
-          throw IOException("Unexpected XMLStream event at Document level: CHARACTERS ($badContent)")
+          throw IOException("Unexpected XMLStream event at document level: CHARACTERS (${reader.text})")
         }
       }
-      else -> throw IOException("Unexpected XMLStream event at Document level:$state")
-    }
-    state = if (reader.hasNext()) {
-      reader.next()
-    }
-    else {
-      throw IOException("Unexpected end-of-XMLStreamReader")
+      else -> throw IOException("Unexpected XMLStream event at document level: ${reader.eventType}")
     }
   }
-
-  if (!styleElements.isEmpty()) {
-    val cssParser = SimpleCssParser()
-    for (styleElement in styleElements) {
-      styleElement.parseStyleSheet(cssParser)
-      styleSheets.add(styleElement.styleSheet())
-    }
-  }
-  root!!.build()
-  return root.node() as SVG
+  throw IOException("Unexpected end-of-XMLStreamReader")
 }
 
-private val jsvgLoadHelper = LoadHelper(
-  /* attributeParser = */ AttributeParser(DefaultPaintParser()),
-  /* resourceLoader = */ ResourceLoader { uri ->
-  if (uri.scheme == "data") {
-    ValueUIFuture(ResourceUtil.loadImage(uri))
-  }
-  else {
-    LOG.warn("Only data URI is allowed (uri=$uri)")
-    null
-  }
-})
-
-private val LOG: Logger
-  get() = Logger.getInstance(NodeMap::class.java)
-
-private val NODE_CONSTRUCTOR_MAP = NodeMap.createNodeConstructorMap(CollectionFactory.createCaseInsensitiveStringMap())
-
-private fun processElementFragment(reader: XMLStreamReader2,
-                                   root: ParsedElement,
-                                   namedElements: MutableMap<String, ParsedElement>,
-                                   attributeMutator: AttributeMutator?,
-                                   styleSheets: List<StyleSheet>,
-                                   styleElements: MutableList<Style>) {
-  val queue = ArrayList<ParsedElement>()
-  queue.add(root)
-  while (queue.isNotEmpty() && reader.hasNext()) {
+/**
+ * Streams XML events from [reader] into [builder] until the document end is reached.
+ *
+ * Mirrors the contract of the upstream `StaxSVGLoader` parse loop but drives the builder
+ * directly from a [XMLStreamReader2] cursor to avoid per-event allocations of the
+ * `XMLEventReader` API used by [com.github.weisj.jsvg.parser.SVGLoader].
+ */
+private fun streamFragment(reader: XMLStreamReader2, builder: SVGDocumentBuilder, attributeMutator: AttributeMutator?) {
+  while (reader.hasNext()) {
     when (reader.next()) {
       XMLStreamConstants.START_ELEMENT -> {
-        val localName = reader.localName
-        val nodeSupplier = NODE_CONSTRUCTOR_MAP.get(localName)
-        if (nodeSupplier == null) {
+        val tagName = toLowerCaseTag(reader.localName)
+        val attributes = readAttributes(reader, attributeMutator)
+        val handled = builder.startElement(qualifiedName(reader.prefix, tagName), attributes)
+        if (!handled) {
+          // jsvg doesn't recognize this tag (unknown element or non-SVG namespace) — skip the
+          // whole subtree. Mirrors StaxSVGLoader's handling so we stay forgiving about oddities.
           reader.skipElement()
-          LOG.warn("unsupported $localName")
-          continue
+          LOG.warn("unsupported $tagName")
         }
-
-        val svgNode = nodeSupplier.get()
-        if (svgNode is Style) {
-          styleElements.add(svgNode)
-        }
-
-        val parent = queue.last()
-
-        val attributes = readAttributes(reader = reader, attributeMutator = attributeMutator)
-        val parsedElement = ParsedElement(
-          attributes.get("id"),
-          AttributeNode(/* tagName = */ getQualifiedName(reader.prefix, localName),
-                        /* attributes = */ attributes,
-                        /* parent = */ parent.attributeNode(),
-                        /* namedElements = */ namedElements,
-                        /* styleSheets = */ styleSheets,
-                        /* loadHelper = */ jsvgLoadHelper),
-          svgNode,
-        )
-        parent.addChild(parsedElement)
-
-        val id = parsedElement.id()
-        if (id != null) {
-          namedElements.putIfAbsent(id, parsedElement)
-        }
-
-        queue.add(parsedElement)
       }
       XMLStreamConstants.END_ELEMENT -> {
-        queue.removeLast()
+        builder.endElement(qualifiedName(reader.prefix, toLowerCaseTag(reader.localName)))
       }
-      XMLStreamConstants.CDATA -> queue.last().node().addContent(getChars(reader))
+      XMLStreamConstants.CDATA -> feedText(reader, builder)
       XMLStreamConstants.SPACE, XMLStreamConstants.CHARACTERS -> {
-        if (!reader.isWhiteSpace) {
-          queue.last().node().addContent(getChars(reader))
-        }
+        if (!reader.isWhiteSpace) feedText(reader, builder)
       }
-      XMLStreamConstants.ENTITY_REFERENCE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION -> {
+      XMLStreamConstants.ENTITY_REFERENCE,
+      XMLStreamConstants.COMMENT,
+      XMLStreamConstants.PROCESSING_INSTRUCTION -> {
+        // ignore
       }
+      XMLStreamConstants.END_DOCUMENT -> return
       else -> throw IOException("Unexpected XMLStream event: ${reader.eventType}")
     }
   }
 }
 
-private fun getChars(reader: XMLStreamReader2): CharArray {
-  val fromIndex = reader.textStart
-  return reader.textCharacters.copyOfRange(fromIndex, fromIndex + reader.textLength)
+private fun feedText(reader: XMLStreamReader2, builder: SVGDocumentBuilder) {
+  val start = reader.textStart
+  builder.addTextContent(reader.textCharacters, start, start + reader.textLength)
 }
 
-private fun readAttributes(reader: XMLStreamReader, attributeMutator: AttributeMutator?): Map<String, String> {
+private fun readAttributes(reader: XMLStreamReader2, attributeMutator: AttributeMutator?): MutableMap<String, String> {
   val attributeCount = reader.attributeCount
-  if (attributeCount == 0) {
-    return emptyMap()
+  if (attributeCount == 0 && attributeMutator == null) {
+    return mutableMapOf()
   }
-
   val attributes = HashMap<String, String>(attributeCount)
   for (i in 0 until attributeCount) {
-    val localName = reader.getAttributeLocalName(i)
-    val prefix = reader.getAttributePrefix(i)
-    val qualifiedName = getQualifiedName(prefix = prefix, localName = localName)
+    val qualifiedName = qualifiedName(reader.getAttributePrefix(i), reader.getAttributeLocalName(i))
     attributes.put(qualifiedName, reader.getAttributeValue(i).trim())
   }
-
   attributeMutator?.invoke(attributes)
   return attributes
 }
 
-private fun getQualifiedName(prefix: String?, localName: String): String {
+private fun qualifiedName(prefix: String?, localName: String): String {
   return if (prefix.isNullOrEmpty()) localName else "$prefix:$localName"
 }
+
+private fun toLowerCaseTag(localName: String): String = localName.lowercase(Locale.ROOT)
+
+// NodeSupplier is stateless aside from its internal map — safe to share across parses.
+private val NODE_SUPPLIER = NodeSupplier()
+
+private val LOG: Logger
+  get() = Logger.getInstance("com.intellij.ui.svg.JSvgDocumentFactory")

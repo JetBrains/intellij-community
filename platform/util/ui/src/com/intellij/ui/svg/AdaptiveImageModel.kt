@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.svg
 
-import com.github.weisj.jsvg.nodes.SVG
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.util.DataUrl
 import com.intellij.util.MemorySizeAware
@@ -50,7 +49,7 @@ sealed class LoadedAdaptiveImage(val dimensions: ImageDimensions, private val me
 }
 
 @ApiStatus.Internal
-class LoadedSVGImage(val src: String, val svgNode: SVG, dimensions: ImageDimensions, memorySize: Long) : LoadedAdaptiveImage(dimensions, memorySize)
+class LoadedSVGImage(val src: String, val parsed: ParsedSvgDocument, dimensions: ImageDimensions, memorySize: Long) : LoadedAdaptiveImage(dimensions, memorySize)
 
 @ApiStatus.Internal
 class LoadedRasterImage(val image: BufferedImage, dimensions: ImageDimensions, memorySize: Long) : LoadedAdaptiveImage(dimensions, memorySize)
