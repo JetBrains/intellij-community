@@ -858,23 +858,23 @@ fun PyCallSiteExpression.mapArguments(callable: PyCallable, context: TypeEvalCon
 }
 
 fun <T> Map<T, PyCallableParameter>.getArgumentsMappedToPositionalContainer(): List<T> {
-  return filterValues { it.isPositionalContainer() }.keys.toList()
+  return filterValues { it.isPositionalContainer }.keys.toList()
 }
 
 fun <T> Map<T, PyCallableParameter>.getArgumentsMappedToKeywordContainer(): List<T> {
-  return filterValues { it.isKeywordContainer() }.keys.toList()
+  return filterValues { it.isKeywordContainer }.keys.toList()
 }
 
 fun <T> Map<T, PyCallableParameter>.getRegularMappedParameters(): Map<T, PyCallableParameter> {
-  return filterValues { !it.isPositionalContainer() && !it.isKeywordContainer() }
+  return filterValues { !it.isPositionalContainer && !it.isKeywordContainer }
 }
 
 fun <T> Map<T, PyCallableParameter>.getMappedPositionalContainer(): PyCallableParameter? {
-  return values.find { it.isPositionalContainer() }
+  return values.find { it.isPositionalContainer }
 }
 
 fun <T> Map<T, PyCallableParameter>.getMappedKeywordContainer(): PyCallableParameter? {
-  return values.find { it.isKeywordContainer() }
+  return values.find { it.isKeywordContainer }
 }
 
 fun PyClassType.resolveImplicitlyInvokedMethods(
@@ -1038,7 +1038,7 @@ fun analyzeArguments(
       if (!parameter.isSelf && !hasSlashParameter && !parameter.isLegacyPositionalOnly()) {
         positionalOnlyMode = false
       }
-      if (parameter.isPositionalContainer()) {
+      if (parameter.isPositionalContainer) {
         for (argument in allPositionalArguments) {
           if (argument != null) {
             mappedParameters.put(argument, parameter)
@@ -1054,7 +1054,7 @@ fun analyzeArguments(
         variadicPositionalArguments.clear()
         keywordOnlyMode = true
       }
-      else if (parameter.isKeywordContainer()) {
+      else if (parameter.isKeywordContainer) {
         for (argument in keywordArguments) {
           mappedParameters.put(argument, parameter)
         }

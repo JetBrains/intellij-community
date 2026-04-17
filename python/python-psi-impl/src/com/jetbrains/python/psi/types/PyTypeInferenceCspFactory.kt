@@ -90,7 +90,7 @@ object PyTypeInferenceCspFactory {
 
     // arguments
     for ((argument, parameter) in mappedParameters) {
-      if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
+      if (parameter.isPositionalContainer || parameter.isKeywordContainer) {
         throw NotSupportedException()
       }
 

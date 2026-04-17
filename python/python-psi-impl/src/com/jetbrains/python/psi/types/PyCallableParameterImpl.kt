@@ -36,6 +36,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   override val parameter: PyParameter? = null,
   private val myIsPositional: Boolean = false,
   private val myIsKeyword: Boolean = false,
+  private val myIsSelf: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
   @get:Nls
@@ -71,7 +72,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = myIsKeyword || (parameter as? PyNamedParameter)?.isKeywordContainer == true
 
   override val isSelf: Boolean
-    get() = parameter?.isSelf == true
+    get() = myIsSelf || parameter?.isSelf == true
 
   override val isPositionOnlySeparator: Boolean
     get() = parameter is PySlashParameter

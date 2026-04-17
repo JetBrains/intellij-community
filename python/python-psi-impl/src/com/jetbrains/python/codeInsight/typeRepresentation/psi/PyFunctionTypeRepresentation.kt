@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.typeRepresentation.psi
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.findChildByClass
@@ -23,6 +24,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.PyStarExpression
@@ -83,7 +85,6 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     val typeVarMap = createTypeVarMap(context)
 
     // Parse callable parameters from the signature (shared by both callable and function types)
-    val callableParams = parseCallableParameters(context, typeVarMap)
     val retType = resolveTypeExpression(returnTypeExpr, context, typeVarMap)
     // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
     val qualifiedFunctionName = functionName
@@ -93,6 +94,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
       // If we resolved the function, create PyFunctionType with the signature from the representation
       if (resolvedFunction is PyFunction) {
         // Create a custom PyFunctionType that uses our return type, not the function's definition
+        val callableParams = parseCallableParameters(context, typeVarMap, resolvedFunction.parameterList)
         return object : PyFunctionTypeImpl(resolvedFunction, callableParams) {
           override fun getReturnType(context: TypeEvalContext): PyType? = retType
         }
@@ -101,6 +103,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     }
 
     // Create PyCallableType from the signature (for both unresolved functions and plain callables)
+    val callableParams = parseCallableParameters(context, typeVarMap, null)
     return PyCallableTypeImpl(callableParams, retType)
   }
 
@@ -129,13 +132,18 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     return result
   }
 
-  private fun parseCallableParameters(context: TypeEvalContext, typeVarMap: Map<String, PyTypeVarType>): List<PyCallableParameter> {
+  private fun parseCallableParameters(
+    context: TypeEvalContext,
+    typeVarMap: Map<String, PyTypeVarType>,
+    resolvedFunctionParameters: PyParameterList?,
+  ): List<PyCallableParameter> {
     return parameterList.parameters.map { param ->
       when (param) {
         is PySlashParameter -> PyCallableParameterImpl.psi(param)
         is PyNamedParameterTypeRepresentation -> {
+          val isSelf = resolvedFunctionParameters?.findParameterByName(param.name ?: "")?.isSelf ?: false
           val paramType = param.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
-          PyCallableParameterImpl.nonPsi(param.name, paramType, param.defaultValue)
+          PyCallableParameterImpl(param.name, Ref(paramType), param.defaultValue, myIsSelf = isSelf)
         }
         is PyStarExpression -> {
           // *args parameter
