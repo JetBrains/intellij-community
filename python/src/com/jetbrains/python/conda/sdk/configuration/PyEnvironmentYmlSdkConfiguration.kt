@@ -34,7 +34,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
-import com.jetbrains.python.sdk.conda.suggestCondaPath
+import com.jetbrains.python.sdk.conda.findConda
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -77,7 +77,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   private suspend fun checkManageableEnv(module: Module): EnvCheckerResult =
     withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
       val condaPath = withContext(Dispatchers.IO) {
-        suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+        findConda()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
       }
       val canManage = condaPath != null
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
@@ -107,7 +107,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
 
     // Again: only local conda is supported for now
-    val condaExecutable = suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+    val condaExecutable = findConda()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
     validateCondaPath(condaExecutable?.path, PlatformAndRoot.local)?.let {
       return PyResult.localizedError(it.message)
     }
