@@ -18,10 +18,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -813,10 +813,11 @@ private class SingleComponentQueue<T>(
   }
 
   override val job: Job = GlobalScope.launch(CoroutineName(name)) {
-    // Supervise both jobs
     try {
-      joinAll(channelProcessingJob, actionProcessingJob)
+      awaitCancellation()
     } finally {
+      channelProcessingJob.cancel()
+      actionProcessingJob.cancel()
       processingChannel.close()
     }
   }

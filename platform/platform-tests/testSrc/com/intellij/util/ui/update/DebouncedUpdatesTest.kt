@@ -324,6 +324,49 @@ class DebouncedUpdatesTest {
   }
 
   @Test
+  fun `test component queue stops processing after cancelOnDispose`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val disposable = Disposer.newDisposable()
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-cancel-on-dispose", 50.milliseconds)
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+        .cancelOnDispose(disposable)
+
+      // Queue item and let it execute normally
+      queue.queue(1)
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+
+      // Dispose — cancels the queue including background jobs
+      Disposer.dispose(disposable)
+      delay(100.milliseconds)
+
+      // Queueing after disposal should log a warning and skip
+      val warnings = mutableListOf<String>()
+      LoggedErrorProcessor.executeWith<Exception>(object : LoggedErrorProcessor() {
+        override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+          warnings.add(message)
+          return true
+        }
+      }, {
+        queue.queue(2)
+      })
+
+      assertTrue(warnings.size == 1, "Expected exactly one warning when queueing after disposal, got ${warnings.size}")
+
+      // Verify action was not executed
+      delay(100.milliseconds)
+      assertEquals(listOf(1), executedValues.toList(), "No items should be processed after disposal")
+    }
+  }
+
+  @Test
   fun `test channel holds no values after scope cancellation`() {
     timeoutRunBlocking {
       class QueuedValue(val id: Int) {
