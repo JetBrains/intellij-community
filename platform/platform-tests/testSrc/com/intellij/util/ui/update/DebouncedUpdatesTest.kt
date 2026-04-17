@@ -920,17 +920,19 @@ class DebouncedUpdatesTest {
 
       assertEquals(1, processingStarted.get(), "Processing should have started")
 
-      // Hide component during processing
+      // Hide component during processing — action should be cancelled before it completes
       withShowingChanged { container.remove(component) }
       yield()
       delay(50.milliseconds) // Give time for cancellation
+      assertTrue(executedValues.isEmpty(), "Action should not have completed while component was hidden")
 
       // Show component again - item should be retried
       withShowingChanged { container.add(component) }
       yield()
 
-      // Wait for item to be processed
+      // Wait for item to be processed (action should have been started twice: once cancelled, once completed)
       assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+      assertEquals(2, processingStarted.get(), "Action should have been started twice (cancelled + retried)")
     }
   }
 
@@ -957,6 +959,7 @@ class DebouncedUpdatesTest {
       withShowingChanged { container.remove(component) }
       yield()
       delay(50.milliseconds)
+      assertTrue(executedValues.isEmpty(), "Item 1 should not have completed before hiding")
 
       // Queue item 2 while component is hidden
       queue.queue(2)
