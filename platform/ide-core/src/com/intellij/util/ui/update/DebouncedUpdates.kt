@@ -130,8 +130,8 @@ object DebouncedUpdates {
    *
    * The queue accepts items at any time, but the processing action only executes while the component is showing.
    * Items queued while the component is hidden remain in the queue and are processed when the component becomes visible.
-   * When the component is hidden, any currently executing action is cancelled.
-   * When the component is shown again, queued items are processed and the action resumes executing.
+   * When the component is hidden, any currently executing action is canceled and will be reprocessed when the component is shown again.
+   * Items are never lost due to the component being hidden.
    *
    * **Note:** Only [Builder.runLatest] is supported for component-based queues.
    * Use [forScope] if batching is required.
@@ -784,8 +784,6 @@ private class BatchedScopeQueue<T>(
 
 /**
  * Single-item queue bound to a JComponent lifecycle.
- *
- * Items are never lost even if the component is hidden during processing.
  */
 @ApiStatus.Experimental
 private class SingleComponentQueue<T>(
@@ -797,10 +795,10 @@ private class SingleComponentQueue<T>(
   action: suspend (T) -> Unit
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
-  // Second channel for items ready to be processed (capacity 1 for latest behavior)
-  private val processingChannel = Channel<T>(capacity = 1)
+  // Delivers debounced items to launchOnShow for action execution; DROP_OLDEST keeps the latest
+  private val processingChannel = Channel<T>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  // Pending item from cancelled action (persists across launchOnShow restarts)
+  // Pending item from canceled action (persists across launchOnShow restarts)
   @Volatile
   private var pendingItem: T? = null
 
@@ -844,8 +842,7 @@ private class SingleComponentQueue<T>(
         latestItem as T
       },
       onProcess = { item ->
-        // Send to the processing channel (capacity 1, so this replaces any pending item)
-        processingChannel.trySend(item)
+        processingChannel.send(item)
         latestItem = null
       }
     )
