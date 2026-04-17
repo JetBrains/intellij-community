@@ -1,5 +1,43 @@
 # Jewel Release Notes
 
+## v0.36 (2026-04-27)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3.4, 2026.1.1         | 1.10.0                        |
+
+### ⚠️ Important Changes
+
+* [**JEWEL-1024**](https://youtrack.jetbrains.com/issue/JEWEL-1024) Added 'dismissOnLoseFocus' property to SpeedSearchArea, allowing users to choose if they want to keep the input visible on lose focus ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+  * This is important for cases that you want to use SpeedSearch as a filter
+
+
+### New features
+
+* [**JEWEL-1024**](https://youtrack.jetbrains.com/issue/JEWEL-1024) Added support for filtering Collections using SpeedSearchMatcher ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+  * Check the '.filter()' extension functions available in the 'org.jetbrains.jewel.foundation.search' package
+
+* [**JEWEL-1069**](https://youtrack.jetbrains.com/issue/JEWEL-1069) Added a new button variant called `SlimButton`, which has both `DefaultSlimButton` and `OutlinedSlimButton` styles ([#3360](https://github.com/JetBrains/intellij-community/pull/3360))
+
+### Bug fixes
+
+* [**JEWEL-1024**](https://youtrack.jetbrains.com/issue/JEWEL-1024) Fixed an issue that was not triggering the 'onSelectedIndexesChange' call when the selection gets changed by the SpeedSearch ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+* [**JEWEL-1223**](https://youtrack.jetbrains.com/issue/JEWEL-1223) "java.lang.IllegalArgumentException: Header cannot be empty" when editing an HTML table ([#3382](https://github.com/JetBrains/intellij-community/pull/3382))
+* [**JEWEL-1258**](https://youtrack.jetbrains.com/issue/JEWEL-1258) Fixed missing `remember` keys in `DefaultMarkdownBlockRenderer` and `GitHubTableBlockRenderer` that caused stale `onUrlClick` callbacks and `enabled` state when these values changed ([#3432](https://github.com/JetBrains/intellij-community/pull/3432))
+* [**JEWEL-1284**](https://youtrack.jetbrains.com/issue/JEWEL-1284) Fixed `SelectableLazyColumn` selecting items on click and on initial focus even when `SelectionMode.None` was set ([#3446](https://github.com/JetBrains/intellij-community/pull/3446))
+* [**JEWEL-368**](https://youtrack.jetbrains.com/issue/JEWEL-368) Fixed custom title bar mouse event (drag/press) not moving the window some times ([#3362](https://github.com/JetBrains/intellij-community/pull/3362))
+* [**JEWEL-921**](https://youtrack.jetbrains.com/issue/JEWEL-921) A series of modifiers are now more performant, since they now use `Modifier.Node` API: ([#3423](https://github.com/JetBrains/intellij-community/pull/3423))
+  * `trackWindowActivation`
+  * `trackComponentActivation`
+  * `trackActivation`
+  * `onActivated`
+  * `border`
+* [**JEWEL-1303**](https://youtrack.jetbrains.com/issue/JEWEL-1303) Cache instances to avoid repeated allocations during recomposition ([#3486](https://github.com/JetBrains/intellij-community/pull/3486))
+
+### Other
+
+* [**JEWEL-1297**](https://youtrack.jetbrains.com/issue/JEWEL-1297) Update Jewel release flow and Metalava API compatibility checks ([#3465](https://github.com/JetBrains/intellij-community/pull/3465))
+
 ## v0.35 (2026-03-30)
 
 | Min supported IJP versions | Compose Multiplatform version |
