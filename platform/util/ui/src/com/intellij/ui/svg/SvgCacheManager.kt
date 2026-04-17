@@ -38,7 +38,7 @@ import java.nio.file.Path
 import java.util.Arrays
 import kotlin.time.Duration.Companion.seconds
 
-internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-cache-v1.db")
+internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-cache-v2.db")
 
 @JvmInline
 @Internal
