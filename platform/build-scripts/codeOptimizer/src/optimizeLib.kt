@@ -85,7 +85,6 @@ internal object LibraryCodeOptimizer {
       Files.deleteIfExists(output)
     }
 
-    //val input = m2.resolve("com/github/weisj/jsvg/1.3.0-jb.3/jsvg-1.3.0-jb.3.jar")
     val input = m2.resolve("it/unimi/dsi/fastutil/$version/fastutil-$version.jar")
     val mapping = outDir.resolve("fastutil-proguard-map.txt")
     val duration = measureTime {
