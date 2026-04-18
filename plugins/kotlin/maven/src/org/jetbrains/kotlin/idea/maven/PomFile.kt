@@ -194,7 +194,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
     }
 
-    fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+    fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? =
+        domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+            ?: domModel.build.pluginManagement.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
 
     fun isPluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): Boolean {
         require(plugin.parent === referencePlugin.parent) { "Plugins should be siblings" }
