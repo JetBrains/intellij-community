@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
@@ -53,12 +54,15 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
 
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingServer()
     when {
       key == moduleKey -> {
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestCompletions(request)
             .collect {
+              loadingAdvertiser.onResultReceived(it)
               resultSet.addElement(
                 it,
                 it.groupId + ":" + it.artifactId,
@@ -74,7 +78,10 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyGroupCompletionRequest(text, artifact, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestGroupCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup) }
+            .collect {
+              loadingAdvertiser.onResultReceived(it)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup)
+            }
         }
       }
 
@@ -83,7 +90,10 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyArtifactCompletionRequest(group, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestArtifactCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup) }
+            .collect {
+              loadingAdvertiser.onResultReceived(it)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup)
+            }
         }
       }
 
@@ -92,7 +102,10 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyVersionCompletionRequest(group, artifact, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestVersionCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup) }
+            .collect {
+              loadingAdvertiser.onResultReceived(it)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup)
+            }
         }
       }
 
@@ -102,6 +115,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         runBlockingCancellable {
           completionService.suggestCompletions(request)
             .collect {
+              loadingAdvertiser.onResultReceived(it)
               resultSet.addElement(
                 it,
                 it.groupId + ":" + it.artifactId + ":" + it.version,
@@ -111,8 +125,8 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
             }
         }
       }
-
     }
+    loadingAdvertiser.onComplete()
   }
 
   private fun CompletionResultSet.addElement(

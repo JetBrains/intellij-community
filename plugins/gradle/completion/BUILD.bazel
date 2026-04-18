@@ -44,6 +44,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/lang-impl",
     "//platform/util:util-ui",
+    "//platform/ide-core",
   ]
 )
 
@@ -81,6 +82,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.completion` end

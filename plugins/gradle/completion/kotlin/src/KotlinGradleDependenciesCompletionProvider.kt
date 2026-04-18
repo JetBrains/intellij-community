@@ -14,6 +14,7 @@ import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUM
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY
@@ -169,10 +170,13 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
 
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingServer()
     var index = 0
     runBlockingCancellable {
       completionService.suggestCompletions(request)
         .collect { item ->
+          loadingAdvertiser.onResultReceived(item)
           val lookupString = lookupStringProvider(item)
           val lookupElement = LookupElementBuilder
             .create(item, lookupString)
@@ -195,6 +199,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
         }
     }
+    loadingAdvertiser.onComplete()
   }
 
 
@@ -241,8 +246,11 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       else -> flowOf()
     }
 
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingServer()
     runBlockingCancellable {
       itemFlow.collect { item ->
+        loadingAdvertiser.onResultReceived(item)
         val lookupElement = LookupElementBuilder.create(item, item.result)
           .withPresentableText(item.result)
           .withIcon(item.icon)
@@ -259,6 +267,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         result.addElement(MLRankingIgnorable.wrap(lookupElement))
       }
     }
+    loadingAdvertiser.onComplete()
   }
 
   private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)

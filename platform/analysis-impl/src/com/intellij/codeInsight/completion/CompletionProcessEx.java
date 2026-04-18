@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -53,6 +53,20 @@ public interface CompletionProcessEx extends CompletionProcessBase, UserDataHold
   void itemSelected(@Nullable LookupElement item, char completionChar);
 
   void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String message, @Nullable Icon icon);
+
+  /**
+   * Replaces all existing advertisements with a single new one.
+   * Useful for transient status messages that need to be updated (e.g., loading indicators).
+   * Thread-safe: can be called from any thread.
+   */
+  default void replaceAllAdvertisements(@NotNull @NlsContexts.PopupAdvertisement String text, @Nullable Icon icon) {
+    addAdvertisement(text, icon);
+  }
+
+  /**
+   * Clears all advertisements. Thread-safe: can be called from any thread.
+   */
+  default void clearAllAdvertisements() { }
 
   /** Not null after initialization is finished */
   CompletionParameters getParameters();

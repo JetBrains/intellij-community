@@ -1,12 +1,17 @@
 package com.intellij.repository.search.completion.impl
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributor
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.repository.search.completion.util.logWarn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -16,13 +21,8 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.milliseconds
-import com.intellij.repository.search.completion.util.logWarn
-import com.intellij.repository.search.completion.api.DependencyCompletionService
-import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
-import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class DependencyCompletionServiceImpl : DependencyCompletionService {
   private val allContributors get() = DependencyCompletionService.EP_NAME.extensionList

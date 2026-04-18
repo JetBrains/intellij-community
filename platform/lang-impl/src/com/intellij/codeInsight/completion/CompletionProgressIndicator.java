@@ -1057,6 +1057,21 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     queue.queue(myUpdate);
   }
 
+  @Override
+  public void replaceAllAdvertisements(@NotNull String text, @Nullable Icon icon) {
+    myAdvertiserChanges.offer(() -> {
+      lookup.getAdvertiser().clearAdvertisements();
+      lookup.addAdvertisement(text, icon);
+    });
+    queue.queue(myUpdate);
+  }
+
+  @Override
+  public void clearAllAdvertisements() {
+    myAdvertiserChanges.offer(() -> lookup.getAdvertiser().clearAdvertisements());
+    queue.queue(myUpdate);
+  }
+
   @TestOnly
   public static void setGroupingTimeSpan(int timeSpan) {
     ourInsertSingleItemTimeSpan = timeSpan;
