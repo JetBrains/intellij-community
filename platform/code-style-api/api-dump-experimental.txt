@@ -14,6 +14,10 @@ com.intellij.lang.ImportOptimizer
 - sf:WRITE_COMMAND_ACTION:com.intellij.lang.ImportOptimizer$ActionMode
 - s:valueOf(java.lang.String):com.intellij.lang.ImportOptimizer$ActionMode
 - s:values():com.intellij.lang.ImportOptimizer$ActionMode[]
+*:com.intellij.lang.SuspendableImportOptimizer
+- com.intellij.lang.ImportOptimizer
+- processFile(com.intellij.psi.PsiFile):java.lang.Runnable
+- a:processFileSuspend(com.intellij.psi.PsiFile,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.openapi.editor.EditorModificationUtilEx
 - *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
 f:com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent

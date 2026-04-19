@@ -83,6 +83,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(previousProcessor, getCommandName(), getProgressText());
   }
 
+  @Override
+  protected boolean needsReadActionToPrepareTask() {
+    return false;
+  }
+
   /**
    * Honours {@link ImportOptimizer#getActionMode} for the file:
    * <ul>
@@ -149,18 +154,20 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   @Override
   protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    if (DumbService.isDumb(psiFile.getProject())) {
+    if (ReadAction.computeBlocking(() -> DumbService.isDumb(psiFile.getProject()))) {
       return emptyTask();
     }
 
-    List<Runnable> runnables = collectOptimizers(psiFile);
+    List<Runnable> runnables = ReadAction.computeBlocking(() -> collectOptimizers(psiFile));
+    runnables.addAll(OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile));
+
     if (runnables.isEmpty()) {
       return emptyTask();
     }
 
     List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
-                                  ? Collections.emptyList() : collectAutoImports(psiFile);
+                                  ? Collections.emptyList()
+                                  : ReadAction.computeBlocking(() -> collectAutoImports(psiFile));
 
     return new FutureTask<>(() -> {
       ThreadingAssertions.assertEventDispatchThread();

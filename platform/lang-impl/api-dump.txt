@@ -269,6 +269,7 @@ com.intellij.codeInsight.actions.LayoutCodeOptions
 - a:getTextRangeType():com.intellij.codeInsight.actions.TextRangeType
 c:com.intellij.codeInsight.actions.OptimizeImportsProcessor
 - <init>(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor):V
+- p:needsReadActionToPrepareTask():Z
 com.intellij.codeInsight.actions.ReaderModeListener
 - java.util.EventListener
 - a:modeChanged(com.intellij.openapi.project.Project):V
