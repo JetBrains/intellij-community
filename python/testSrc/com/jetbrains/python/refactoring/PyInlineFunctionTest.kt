@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.idea.TestFor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
@@ -138,4 +139,19 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testUsedAsReference() = doTestError("The function foo is used as a reference and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("The function foo uses argument unpacking and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testNestedIfElseIndentation() = doTest()
+
+  @TestFor(issues = ["PY-81983"])
+  fun testParameterReassigned() = doTest()
+
+  @TestFor(issues = ["PY-81983"])
+  fun testParameterReassignedInNestedScope() = doTest()
+
+  @TestFor(issues = ["PY-81983"])
+  fun testParameterReassignedNameClash() = doTest()
+
+  @TestFor(issues = ["PY-81983"])
+  fun testParameterAugmentedAssignment() = doTest()
+
+  @TestFor(issues = ["PY-81983"])
+  fun testParameterDeleted() = doTest()
 }
