@@ -133,4 +133,5 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testUsedAsReference() = doTestError("The function foo is used as a reference and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("The function foo uses argument unpacking and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testNestedIfElseIndentation() = doTest()
+  fun testParameterReassigned() = doTest()
 }

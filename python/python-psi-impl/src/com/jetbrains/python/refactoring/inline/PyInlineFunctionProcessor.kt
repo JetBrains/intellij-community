@@ -180,13 +180,22 @@ class PyInlineFunctionProcessor(
     val functionScope = ControlFlowCache.getScope(myFunction)
     PyClassRefactoringUtil.rememberNamedReferences(myFunction)
 
+    val reassignedParams = mutableSetOf<String>()
+    myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
+      override fun visitPyTargetExpression(node: PyTargetExpression) {
+        if (!node.isQualified) {
+          node.name?.let { reassignedParams.add(it) }
+        }
+        super.visitPyTargetExpression(node)
+      }
+    })
+
     references.forEach { usage ->
       val reference = usage.element as PyReferenceExpression
       val languageLevel = LanguageLevel.forElement(reference)
       val refScopeOwner = ScopeUtil.getScopeOwner(reference) ?: error("Unable to find scope owner for ${reference.name}")
       val declarations = mutableListOf<PyAssignmentStatement>()
       val generatedNames = mutableSetOf<String>()
-
 
       val callSite = PsiTreeUtil.getParentOfType(reference, PyCallExpression::class.java)
                      ?: error("Unable to find call expression for ${reference.name}")
@@ -210,7 +219,7 @@ class PyInlineFunctionProcessor(
       val returnStatements = mutableListOf<PyReturnStatement>()
 
       val mappedArguments =
-        prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
+        prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed, reassignedParams)
 
       myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -421,6 +430,7 @@ class PyInlineFunctionProcessor(
     languageLevel: LanguageLevel,
     context: PyResolveContext,
     selfUsed: Boolean,
+    reassignedParams: Set<String>,
   ): Map<String, PyExpression> {
     val mapping = callSite.mapArguments(context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
@@ -439,14 +449,14 @@ class PyInlineFunctionProcessor(
     val passedArguments = mappedParams.asSequence()
       .map { (arg, param) ->
         val argValue = if (arg is PyKeywordArgument) arg.valueExpression!! else arg
-        tryExtractDeclaration(param.name!!, argValue, declarations, generatedNames, scopeAnchor, languageLevel)
+        tryExtractDeclaration(param.name!!, argValue, declarations, generatedNames, scopeAnchor, languageLevel, reassignedParams)
       }
       .toMap()
 
     val defaultValues = myFunction.parameterList.parameters.asSequence()
       .filter { it.name !in passedArguments }
       .filter { it.hasDefaultValue() }
-      .map { tryExtractDeclaration(it.name!!, it.defaultValue!!, declarations, generatedNames, scopeAnchor, languageLevel) }
+      .map { tryExtractDeclaration(it.name!!, it.defaultValue!!, declarations, generatedNames, scopeAnchor, languageLevel, reassignedParams) }
       .toMap()
 
     return self + passedArguments + defaultValues
@@ -454,9 +464,9 @@ class PyInlineFunctionProcessor(
 
   private fun tryExtractDeclaration(
     paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
-    scopeAnchor: PsiElement, languageLevel: LanguageLevel,
+    scopeAnchor: PsiElement, languageLevel: LanguageLevel, reassignedParams: Set<String>,
   ): Pair<String, PyExpression> {
-    if (arg !is PyReferenceExpression && arg !is PyLiteralExpression) {
+    if (paramName in reassignedParams || (arg !is PyReferenceExpression && arg !is PyLiteralExpression)) {
       return extractDeclaration(paramName, arg, declarations, generatedNames, scopeAnchor, languageLevel)
     }
     return paramName to arg
