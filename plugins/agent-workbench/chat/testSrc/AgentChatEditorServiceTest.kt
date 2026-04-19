@@ -315,13 +315,22 @@ class AgentChatEditorServiceTest {
       threadTitle = "Thread",
       subAgentId = null,
     )
-    openChatInModal(
+    openChat(
+      project = project,
+      projectPath = projectPath,
       threadIdentity = "CODEX:thread-1",
       shellCommand = codexCommand,
       threadId = "thread-1",
       threadTitle = "Renamed thread",
       subAgentId = null,
     )
+    waitForCondition {
+      val file = openedChatFiles().singleOrNull() ?: return@waitForCondition false
+      file.threadIdentity == "CODEX:thread-1" &&
+      file.threadId == "thread-1" &&
+      file.threadTitle == "Renamed thread" &&
+      editorTabTitle(file) == "Renamed thread"
+    }
 
     val files = openedChatFiles()
     assertThat(files).hasSize(1)

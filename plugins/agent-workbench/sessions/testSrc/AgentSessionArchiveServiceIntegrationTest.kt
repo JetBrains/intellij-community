@@ -300,8 +300,11 @@ class AgentSessionArchiveServiceIntegrationTest {
           assertThat(backgroundRunner.hasPendingTask()).isTrue()
 
           backgroundRunner.resume()
-          waitForCondition {
-            backgroundRunner.completed && service.state.value.projects.firstOrNull()?.threads.orEmpty().none { it.id == "codex-1" }
+          waitForCondition(timeoutMs = 6_000) {
+            backgroundRunner.completed
+          }
+          waitForCondition(timeoutMs = 6_000) {
+            service.state.value.projects.firstOrNull()?.threads.orEmpty().none { it.id == "codex-1" }
           }
         }
       }
@@ -344,7 +347,10 @@ class AgentSessionArchiveServiceIntegrationTest {
           }
 
           backgroundRunner.resume()
-          waitForCondition {
+          waitForCondition(timeoutMs = 6_000) {
+            backgroundRunner.completed
+          }
+          waitForCondition(timeoutMs = 6_000) {
             service.state.value.projects.firstOrNull()?.threads.orEmpty().map { it.id } == listOf("codex-1", "codex-2")
           }
           assertThat(cleanupCalls).isEmpty()

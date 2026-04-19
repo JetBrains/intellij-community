@@ -226,6 +226,20 @@ internal class AgentChatOpenTabsSnapshot(
     return concreteFilesByProviderAndPathAndTabKey[provider]?.get(normalizedPath)?.get(tabKey)
   }
 
+  fun findOpenTopLevelConcreteEntry(
+    normalizedPath: String,
+    provider: AgentSessionProvider,
+    threadId: String,
+  ): AgentChatOpenFileEntry? {
+    return entries.firstOrNull { entry ->
+      entry.normalizedProjectPath == normalizedPath &&
+      !entry.file.isPendingThread &&
+      entry.file.subAgentId == null &&
+      entry.file.provider == provider &&
+      entry.file.threadId == threadId
+    }
+  }
+
   fun managersFor(file: AgentChatVirtualFile): Set<FileEditorManagerEx> {
     return managerByFile[file].orEmpty()
   }

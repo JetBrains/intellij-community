@@ -159,6 +159,82 @@ class ClaudeThreadRenameEngineTest {
   }
 
   @Test
+  fun archiveThreadDispatchesThroughOpenTabAndSkipsFallbackRunner() {
+    runBlocking(Dispatchers.Default) {
+      var threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
+      var fallbackRenameTitle: String? = null
+      var dispatchedCommand: String? = null
+      val engine = ClaudeOpenTabAwareThreadRenameEngine(
+        backend = testBackend { threads },
+        fallbackEngine = fallbackRenameEngine { _, _, newTitle ->
+          fallbackRenameTitle = newTitle
+          true
+        },
+        openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, dispatchPlan ->
+          dispatchedCommand = dispatchPlan.postStartDispatchSteps.single().text
+          threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", archived = true, updatedAt = 101L))
+          true
+        },
+        waitTimeoutMs = 1_000L,
+        pollIntervalMs = 1L,
+        delayFn = {},
+      )
+
+      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
+      assertThat(dispatchedCommand).isEqualTo("/rename [archived] Thread title")
+      assertThat(fallbackRenameTitle).isNull()
+    }
+  }
+
+  @Test
+  fun archiveThreadFallsBackToPtyRunnerWhenNoOpenTabExists() {
+    runBlocking(Dispatchers.Default) {
+      val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
+      var fallbackRenameTitle: String? = null
+      val engine = ClaudeOpenTabAwareThreadRenameEngine(
+        backend = testBackend { threads },
+        fallbackEngine = fallbackRenameEngine { _, _, newTitle ->
+          fallbackRenameTitle = newTitle
+          true
+        },
+        openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, _ -> false },
+        waitTimeoutMs = 1_000L,
+        pollIntervalMs = 1L,
+        delayFn = {},
+      )
+
+      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
+      assertThat(fallbackRenameTitle).isEqualTo("[archived] Thread title")
+    }
+  }
+
+  @Test
+  fun archiveThreadReturnsFalseWhenOpenTabDispatchDoesNotChangeObservedState() {
+    runBlocking(Dispatchers.Default) {
+      var currentTime = 0L
+      val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
+      var fallbackInvoked = false
+      val engine = ClaudeOpenTabAwareThreadRenameEngine(
+        backend = testBackend { threads },
+        fallbackEngine = fallbackRenameEngine { _, _, _ ->
+          fallbackInvoked = true
+          true
+        },
+        openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, _ -> true },
+        waitTimeoutMs = 3L,
+        pollIntervalMs = 1L,
+        currentTimeMs = { currentTime },
+        delayFn = { duration ->
+          currentTime += duration.inWholeMilliseconds
+        },
+      )
+
+      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isFalse()
+      assertThat(fallbackInvoked).isFalse()
+    }
+  }
+
+  @Test
   fun archiveThreadReturnsFalseWhenRenameRunnerFails() {
     runBlocking(Dispatchers.Default) {
       val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
@@ -317,6 +393,22 @@ private data class CommandInvocation(
   val launchCommand: List<String>,
   val environment: Map<String, String>,
 )
+
+private fun fallbackRenameEngine(rename: suspend (path: String, threadId: String, newTitle: String) -> Boolean): ClaudeThreadRenameEngine {
+  return object : ClaudeThreadRenameEngine {
+    override suspend fun rename(path: String, threadId: String, newTitle: String): Boolean {
+      return rename(path, threadId, newTitle)
+    }
+
+    override suspend fun archiveThread(path: String, threadId: String): Boolean {
+      error("archiveThread should not be invoked in fallback test stub")
+    }
+
+    override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+      error("unarchiveThread should not be invoked in fallback test stub")
+    }
+  }
+}
 
 private const val PROJECT_PATH = "/tmp/project"
 

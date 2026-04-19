@@ -9,7 +9,6 @@ targets:
   - ../sessions/src/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
-  - ../plugin/resources/META-INF/plugin.xml
   - ../plugin-content.yaml
   - ../chat/testSrc/*.kt
   - ../sessions/testSrc/*.kt
@@ -18,7 +17,7 @@ targets:
 # Agent Chat Editor
 
 Status: Draft
-Date: 2026-03-09
+Date: 2026-04-20
 
 ## Summary
 Define how Agent chat tabs are opened, restored, reused, and rendered in editor tabs. This spec owns tab lifecycle and persistence behavior. Shared command mapping and shared editor-tab popup action semantics are owned by `spec/agent-core-contracts.spec.md`.
@@ -47,6 +46,10 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 
 - Chat tabs must reuse an existing tab for the same canonical thread identity (`provider:threadId`) and `subAgentId` when present.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Chat must provide a reusable app-level dispatch path for already-open top-level concrete tabs, keyed by normalized project path + provider + thread id.
+- Reusing that path must attach to the existing live tab, preserve the tab's current thread title/activity, and deliver ordered post-start dispatch steps without opening a second tab.
+  [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 
 - Agent chat virtual files must use protocol-backed v2 URLs: `agent-chat://2/<tabKey>`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt

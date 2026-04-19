@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
@@ -11,8 +13,10 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -74,13 +78,54 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
-    fun renameThreadHandlerUsesSharedBackendContract() {
-        val renameHandler = bridge.threadRenameHandler
+    fun archiveAndRenameDelegateToThreadMutationBackend() {
+        runBlocking(Dispatchers.Default) {
+            var archivedPath: String? = null
+            var archivedThreadId: String? = null
+            var unarchivedPath: String? = null
+            var unarchivedThreadId: String? = null
+            var renamedPath: String? = null
+            var renamedThreadId: String? = null
+            var renamedName: String? = null
+            val descriptor = CodexAgentSessionProviderDescriptor(
+                sessionSource = emptySource(),
+                threadMutationBackend = object : CodexThreadMutationBackend {
+                    override suspend fun archiveThread(path: String, threadId: String) {
+                        archivedPath = path
+                        archivedThreadId = threadId
+                    }
 
-        assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
-        renameHandler as AgentThreadRenameHandler.Backend
-        assertThat(renameHandler.supportedContexts)
-            .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+                    override suspend fun unarchiveThread(path: String, threadId: String) {
+                        unarchivedPath = path
+                        unarchivedThreadId = threadId
+                    }
+
+                    override suspend fun setThreadName(path: String, threadId: String, name: String) {
+                        renamedPath = path
+                        renamedThreadId = threadId
+                        renamedName = name
+                    }
+                },
+            )
+
+            assertThat(descriptor.archiveThread(path = "/tmp/project", threadId = "thread-1")).isTrue()
+            assertThat(descriptor.unarchiveThread(path = "/tmp/project", threadId = "thread-1")).isTrue()
+            val renameHandler = descriptor.threadRenameHandler
+
+            assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
+            renameHandler as AgentThreadRenameHandler.Backend
+            assertThat(renameHandler.supportedContexts)
+                .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+            assertThat(renameHandler.execute(path = "/tmp/project", threadId = "thread-1", normalizedName = "Renamed thread"))
+                .isTrue()
+            assertThat(archivedPath).isEqualTo("/tmp/project")
+            assertThat(archivedThreadId).isEqualTo("thread-1")
+            assertThat(unarchivedPath).isEqualTo("/tmp/project")
+            assertThat(unarchivedThreadId).isEqualTo("thread-1")
+            assertThat(renamedPath).isEqualTo("/tmp/project")
+            assertThat(renamedThreadId).isEqualTo("thread-1")
+            assertThat(renamedName).isEqualTo("Renamed thread")
+        }
     }
 
     @Test
@@ -337,4 +382,15 @@ class CodexAgentSessionProviderDescriptorTest {
 
 private fun messageFor(bridge: CodexAgentSessionProviderDescriptor, request: AgentPromptInitialMessageRequest): String {
     return checkNotNull(bridge.buildInitialMessagePlan(request).message)
+}
+
+private fun emptySource(): AgentSessionSource {
+    return object : AgentSessionSource {
+        override val provider: AgentSessionProvider
+            get() = AgentSessionProvider.CODEX
+
+        override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+        override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+    }
 }

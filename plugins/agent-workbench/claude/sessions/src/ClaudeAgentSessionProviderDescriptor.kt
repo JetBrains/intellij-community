@@ -28,7 +28,10 @@ import javax.swing.JComponent
 internal class ClaudeAgentSessionProviderDescriptor(
   private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   override val sessionSource: AgentSessionSource = ClaudeSessionSource(backend = backend),
-  private val renameEngine: ClaudeThreadRenameEngine = PtyClaudeThreadRenameEngine(backend = backend),
+  private val renameEngine: ClaudeThreadRenameEngine = ClaudeOpenTabAwareThreadRenameEngine(
+    backend = backend,
+    fallbackEngine = PtyClaudeThreadRenameEngine(backend = backend),
+  ),
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CLAUDE

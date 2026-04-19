@@ -7,6 +7,7 @@ targets:
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/intellij.agent.workbench.sessions.iml
   - ../sessions/BUILD.bazel
+  - ../claude/sessions/src/*.kt
   - ../sessions/testSrc/*.kt
   - ../chat/src/*.kt
 ---
@@ -14,7 +15,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-03-07
+Date: 2026-04-20
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -191,7 +192,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
-- Claude archive, unarchive, and thread rename must share the same provider-backed short-lived non-interactive Claude resume+rename command transport: `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>`. Archive uses the exact stored-title prefix `[archived] ` on top of the normalized title; active Claude discovery must hide prefixed threads until unarchive restores them on refresh; archive/unarchive must preserve the full normalized title content apart from the archive prefix transform. A thread whose stored title literally begins with `[archived] ` is, by design, treated as archived and hidden from the active list — this is the accepted trade-off of using the title prefix as the archive marker, since Claude has no native archive state. Claude's `threadRenameHandler` must be a `Backend` handler (not `ChatDispatch`), so a rename action does not flash open an editor tab or enter Claude's TUI.
+- Claude archive, unarchive, and thread rename must preserve the exact stored-title prefix semantics `[archived] ` over the normalized title, hide prefixed threads from active Claude discovery until unarchive restores them on refresh, and preserve the full normalized title content apart from the archive prefix transformation.
+- Transport choice for Claude rename/archive/unarchive is owned by `spec/agent-core-contracts.spec.md`; this spec owns the resulting refresh and visibility behavior only.
   [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeSessionSourceTest.kt

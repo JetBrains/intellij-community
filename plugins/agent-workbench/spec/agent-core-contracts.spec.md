@@ -11,6 +11,7 @@ targets:
   - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt
   - ../chat/src/*.kt
+  - ../claude/sessions/src/ClaudeThreadRenameEngine.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../chat/resources/messages/AgentChatBundle.properties
@@ -22,7 +23,7 @@ targets:
 # Agent Workbench Core Contracts
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-04-20
 
 ## Summary
 Define the single source of truth for cross-feature behavior that must stay consistent across Agent Threads, Agent Chat editor tabs, dedicated-frame routing, and provider-specific session actions.
@@ -122,8 +123,12 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
-- Claude provider archive, unarchive, and thread rename must stay provider-backed and must not depend on IDE-local archive persistence; archive, unarchive, and rename share a single non-interactive headless `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>` transport (rename must use `AgentThreadRenameHandler.Backend`, not `ChatDispatch`, so it does not flash open an editor tab or enter Claude's TUI). Observed Claude title prefix state is the source used for active-list visibility, and provider title parsing must preserve the full normalized title without truncation. Because the archive marker is the stored-title prefix `[archived] `, a thread whose stored title literally begins with that prefix is treated as archived — this is an accepted trade-off (Claude has no native archive state).
-  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+- Claude provider archive, unarchive, and thread rename must stay provider-backed and must not depend on IDE-local archive persistence.
+- If a matching top-level Claude chat tab is already open for the same normalized path + canonical thread identity, Claude rename/archive/unarchive must reuse that live tab through the shared open-top-level-thread dispatch path and must not open a second editor tab.
+- If no matching top-level Claude chat tab is open, Claude rename/archive/unarchive must fall back to the non-interactive headless transport `--resume <id> --permission-mode default --print --name <title> -- <ack prompt>`.
+- Observed Claude title prefix state remains the source used for active/archived visibility semantics.
+  [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
+  [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 

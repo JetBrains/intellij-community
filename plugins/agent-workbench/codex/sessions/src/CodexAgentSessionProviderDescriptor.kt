@@ -26,6 +26,7 @@ import javax.swing.Icon
 
 internal class CodexAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
+  private val threadMutationBackend: CodexThreadMutationBackend = SharedServiceCodexThreadMutationBackend,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CODEX
@@ -95,7 +96,7 @@ internal class CodexAgentSessionProviderDescriptor(
       get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
 
     override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
-      serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, normalizedName)
+      threadMutationBackend.setThreadName(path, threadId, normalizedName)
       return true
     }
   }
@@ -167,17 +168,39 @@ internal class CodexAgentSessionProviderDescriptor(
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
-    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+    threadMutationBackend.archiveThread(path, threadId)
     return true
   }
 
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
-    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
+    threadMutationBackend.unarchiveThread(path, threadId)
     return true
   }
 
   override fun isCliMissingError(throwable: Throwable): Boolean {
     return throwable is CodexCliNotFoundException
+  }
+}
+
+internal interface CodexThreadMutationBackend {
+  suspend fun archiveThread(path: String, threadId: String)
+
+  suspend fun unarchiveThread(path: String, threadId: String)
+
+  suspend fun setThreadName(path: String, threadId: String, name: String)
+}
+
+private object SharedServiceCodexThreadMutationBackend : CodexThreadMutationBackend {
+  override suspend fun archiveThread(path: String, threadId: String) {
+    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String) {
+    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
+  }
+
+  override suspend fun setThreadName(path: String, threadId: String, name: String) {
+    serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, name)
   }
 }
 
