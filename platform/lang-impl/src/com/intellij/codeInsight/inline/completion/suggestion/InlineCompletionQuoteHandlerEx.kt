@@ -104,21 +104,26 @@ interface InlineCompletionQuoteHandlerEx {
      * start and end quotes.
      */
     fun findClosingQuoteRange(documentText: String, iterator: HighlighterIterator, offset: Int): TextRange? {
+      val iteratorWrapper = HighlighterIteratorWrapper(iterator)
       getClosingQuoteRangeForOpening(documentText, iterator, offset)?.let {
         return it
       }
+      iteratorWrapper.restoreLastPosition()
+
       var balance = 0
-      while (!iterator.atEnd()) {
+      while (!iteratorWrapper.atEnd()) {
         val endOffset = iterator.end
         var i = iterator.start
         while (i < endOffset) {
           val openingQuoteRange = getOpeningQuoteRange(documentText, iterator, i)
+          iteratorWrapper.restoreLastPosition()
           if (openingQuoteRange != null) {
             balance++
             i = openingQuoteRange.endOffset
             continue
           }
           val closingQuoteRange = getClosingQuoteRange(documentText, iterator, i)
+          iteratorWrapper.restoreLastPosition()
           if (closingQuoteRange != null) {
             balance--
             if (balance == 0) {
@@ -129,7 +134,7 @@ interface InlineCompletionQuoteHandlerEx {
           }
           i++
         }
-        iterator.advance()
+        iteratorWrapper.advance()
       }
       return null
     }
@@ -143,5 +148,55 @@ interface InlineCompletionQuoteHandlerEx {
       val quoteHandlerEx = EP.forLanguage(file.viewProvider.baseLanguage) ?: Default()
       return Adapter(quoteHandler, quoteHandlerEx)
     }
+  }
+}
+
+/**
+ * Required to control the current position of [original].
+ *
+ * The implementations of [QuoteHandler.isClosingQuote] and [QuoteHandler.isOpeningQuote] may move the iterator.
+ * We have to be able to restore its last actual position.
+ */
+private class HighlighterIteratorWrapper(val original: HighlighterIterator) {
+
+  private var state = getState()
+
+  fun atEnd(): Boolean {
+    return original.atEnd() || state is State.Finished
+  }
+
+  fun advance() {
+    if (!original.atEnd()) {
+      original.advance()
+      state = getState()
+    }
+  }
+
+  fun restoreLastPosition() {
+    var currentState = getState()
+    val storedState = state
+    if (currentState !is State.AtToken || storedState !is State.AtToken) {
+      state = State.Finished
+      return
+    }
+    while (currentState is State.AtToken && currentState.start < storedState.start) {
+      original.advance()
+      currentState = getState()
+    }
+    while (currentState is State.AtToken && currentState.start > storedState.start) {
+      original.retreat()
+      currentState = getState()
+    }
+    state = currentState
+  }
+
+  private fun getState(): State {
+    return if (original.atEnd()) State.Finished else State.AtToken(original.start, original.end)
+  }
+
+  private sealed interface State {
+    data class AtToken(val start: Int, val end: Int) : State
+
+    data object Finished : State
   }
 }
