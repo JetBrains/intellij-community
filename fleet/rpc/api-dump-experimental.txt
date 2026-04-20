@@ -1,0 +1,101 @@
+f:fleet.rpc.FleetApiKt
+- *sf:serializer(fleet.rpc.RemoteKind,java.lang.String):kotlinx.serialization.KSerializer
+*f:fleet.rpc.ParameterDescriptor
+- <init>(java.lang.String,fleet.rpc.RemoteKind):V
+- f:component1():java.lang.String
+- f:component2():fleet.rpc.RemoteKind
+- f:copy(java.lang.String,fleet.rpc.RemoteKind):fleet.rpc.ParameterDescriptor
+- bs:copy$default(fleet.rpc.ParameterDescriptor,java.lang.String,fleet.rpc.RemoteKind,I,java.lang.Object):fleet.rpc.ParameterDescriptor
+- equals(java.lang.Object):Z
+- f:getParameterKind():fleet.rpc.RemoteKind
+- f:getParameterName():java.lang.String
+- hashCode():I
+fleet.rpc.RemoteApiDescriptor
+- *a:call(fleet.rpc.RemoteApi,java.lang.String,java.lang.Object[],kotlin.coroutines.Continuation):java.lang.Object
+- *a:clientStub(kotlin.jvm.functions.Function3):fleet.rpc.RemoteApi
+- *a:getApiFqn():java.lang.String
+- *a:getSignature(java.lang.String):fleet.rpc.RpcSignature
+*:fleet.rpc.RemoteKind
+*f:fleet.rpc.RemoteKind$Data
+- fleet.rpc.RemoteKind
+- <init>(kotlinx.serialization.KSerializer):V
+- f:component1():kotlinx.serialization.KSerializer
+- f:copy(kotlinx.serialization.KSerializer):fleet.rpc.RemoteKind$Data
+- bs:copy$default(fleet.rpc.RemoteKind$Data,kotlinx.serialization.KSerializer,I,java.lang.Object):fleet.rpc.RemoteKind$Data
+- equals(java.lang.Object):Z
+- f:getSerializer():kotlinx.serialization.KSerializer
+- hashCode():I
+*f:fleet.rpc.RemoteKind$Deferred
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteKind,Z):V
+- f:component1():fleet.rpc.RemoteKind
+- f:component2():Z
+- f:copy(fleet.rpc.RemoteKind,Z):fleet.rpc.RemoteKind$Deferred
+- bs:copy$default(fleet.rpc.RemoteKind$Deferred,fleet.rpc.RemoteKind,Z,I,java.lang.Object):fleet.rpc.RemoteKind$Deferred
+- equals(java.lang.Object):Z
+- f:getElementKind():fleet.rpc.RemoteKind
+- f:getNullable():Z
+- hashCode():I
+*f:fleet.rpc.RemoteKind$Flow
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteKind,Z):V
+- f:component1():fleet.rpc.RemoteKind
+- f:component2():Z
+- f:copy(fleet.rpc.RemoteKind,Z):fleet.rpc.RemoteKind$Flow
+- bs:copy$default(fleet.rpc.RemoteKind$Flow,fleet.rpc.RemoteKind,Z,I,java.lang.Object):fleet.rpc.RemoteKind$Flow
+- equals(java.lang.Object):Z
+- f:getElementKind():fleet.rpc.RemoteKind
+- f:getNullable():Z
+- hashCode():I
+*f:fleet.rpc.RemoteKind$ReceiveChannel
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteKind,Z):V
+- f:component1():fleet.rpc.RemoteKind
+- f:component2():Z
+- f:copy(fleet.rpc.RemoteKind,Z):fleet.rpc.RemoteKind$ReceiveChannel
+- bs:copy$default(fleet.rpc.RemoteKind$ReceiveChannel,fleet.rpc.RemoteKind,Z,I,java.lang.Object):fleet.rpc.RemoteKind$ReceiveChannel
+- equals(java.lang.Object):Z
+- f:getElementKind():fleet.rpc.RemoteKind
+- f:getNullable():Z
+- hashCode():I
+*f:fleet.rpc.RemoteKind$RemoteObject
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteApiDescriptor):V
+- f:component1():fleet.rpc.RemoteApiDescriptor
+- f:copy(fleet.rpc.RemoteApiDescriptor):fleet.rpc.RemoteKind$RemoteObject
+- bs:copy$default(fleet.rpc.RemoteKind$RemoteObject,fleet.rpc.RemoteApiDescriptor,I,java.lang.Object):fleet.rpc.RemoteKind$RemoteObject
+- equals(java.lang.Object):Z
+- f:getDescriptor():fleet.rpc.RemoteApiDescriptor
+- hashCode():I
+*f:fleet.rpc.RemoteKind$Resource
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteApiDescriptor):V
+- f:component1():fleet.rpc.RemoteApiDescriptor
+- f:copy(fleet.rpc.RemoteApiDescriptor):fleet.rpc.RemoteKind$Resource
+- bs:copy$default(fleet.rpc.RemoteKind$Resource,fleet.rpc.RemoteApiDescriptor,I,java.lang.Object):fleet.rpc.RemoteKind$Resource
+- equals(java.lang.Object):Z
+- f:getDescriptor():fleet.rpc.RemoteApiDescriptor
+- hashCode():I
+*f:fleet.rpc.RemoteKind$SendChannel
+- fleet.rpc.RemoteKind
+- <init>(fleet.rpc.RemoteKind,Z):V
+- f:component1():fleet.rpc.RemoteKind
+- f:component2():Z
+- f:copy(fleet.rpc.RemoteKind,Z):fleet.rpc.RemoteKind$SendChannel
+- bs:copy$default(fleet.rpc.RemoteKind$SendChannel,fleet.rpc.RemoteKind,Z,I,java.lang.Object):fleet.rpc.RemoteKind$SendChannel
+- equals(java.lang.Object):Z
+- f:getElementKind():fleet.rpc.RemoteKind
+- f:getNullable():Z
+- hashCode():I
+*f:fleet.rpc.RpcSignature
+- <init>(java.lang.String,fleet.rpc.ParameterDescriptor[],fleet.rpc.RemoteKind):V
+- f:component1():java.lang.String
+- f:component2():fleet.rpc.ParameterDescriptor[]
+- f:component3():fleet.rpc.RemoteKind
+- f:copy(java.lang.String,fleet.rpc.ParameterDescriptor[],fleet.rpc.RemoteKind):fleet.rpc.RpcSignature
+- bs:copy$default(fleet.rpc.RpcSignature,java.lang.String,fleet.rpc.ParameterDescriptor[],fleet.rpc.RemoteKind,I,java.lang.Object):fleet.rpc.RpcSignature
+- equals(java.lang.Object):Z
+- f:getMethodName():java.lang.String
+- f:getParameters():fleet.rpc.ParameterDescriptor[]
+- f:getReturnType():fleet.rpc.RemoteKind
+- hashCode():I

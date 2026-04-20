@@ -1,3 +1,4 @@
+f:fleet.rpc.FleetApiKt
 fleet.rpc.RemoteApi
 fleet.rpc.RemoteApiDescriptor
 @:fleet.rpc.Rpc

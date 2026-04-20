@@ -27,7 +27,7 @@ interface RemoteApi<Metadata>
 @Target(AnnotationTarget.CLASS)
 annotation class Rpc
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface RemoteKind {
   data class Data(val serializer: KSerializer<*>) : RemoteKind
   data class Flow(val elementKind: RemoteKind, val nullable: Boolean) : RemoteKind
@@ -38,7 +38,7 @@ sealed interface RemoteKind {
   data class Resource(val descriptor: RemoteApiDescriptor<*>) : RemoteKind
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun RemoteKind.serializer(debugInfo: String): KSerializer<Any?> {
   return when (this) {
     is RemoteKind.Data -> serializer
@@ -50,19 +50,19 @@ fun RemoteKind.serializer(debugInfo: String): KSerializer<Any?> {
     is RemoteKind.Resource -> error("Resource has no serializer")
   }.cast()
 }
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class ParameterDescriptor(val parameterName: String, val parameterKind: RemoteKind)
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class RpcSignature(val methodName: String, val parameters: Array<ParameterDescriptor>, val returnType: RemoteKind)
 
 interface RemoteApiDescriptor<T : RemoteApi<*>> {
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun getSignature(methodName: String): RpcSignature
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun clientStub(proxy: suspend (String, Array<Any?>) -> Any?): T
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun getApiFqn(): String
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   suspend fun call(impl: T, methodName: String, args: Array<Any?>): Any?
 }
 
