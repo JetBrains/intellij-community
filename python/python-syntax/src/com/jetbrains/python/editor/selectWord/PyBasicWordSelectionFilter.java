@@ -14,6 +14,9 @@ public final class PyBasicWordSelectionFilter implements Condition<PsiElement> {
     if (PyTokenTypes.STRING_NODES.contains(elementType)) {
       return false;
     }
+    if (PyTokenTypes.FSTRING_LITERAL_TOKENS.contains(elementType)) {
+      return false;
+    }
     return true;
   }
 }
