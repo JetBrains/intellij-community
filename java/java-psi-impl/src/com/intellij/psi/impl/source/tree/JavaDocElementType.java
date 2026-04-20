@@ -14,6 +14,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocFragmentNameImpl;
@@ -185,12 +186,21 @@ public interface JavaDocElementType {
                                  @NotNull CharSequence newText,
                                  @NotNull Language fileLanguage,
                                  @NotNull Project project) {
-      if (!StringUtil.startsWith(newText, "/**") || !StringUtil.endsWith(newText, "*/")) return false;
+      SyntaxElementType targetType;
+      if (StringUtil.startsWith(newText, "/**") && StringUtil.endsWith(newText, "*/")) {
+        targetType = JavaDocSyntaxElementType.DOC_COMMENT;
+      }
+      else if (StringUtil.startsWith(newText, "///")) {
+        targetType = JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT;
+      }
+      else {
+        return false;
+      }
 
       LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
       JavaLexer lexer = new JavaLexer(level);
       lexer.start(newText);
-      if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
+      if (lexer.getTokenType() == targetType) {
         lexer.advance();
         return lexer.getTokenType() == null;
       }

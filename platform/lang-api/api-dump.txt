@@ -936,6 +936,8 @@ com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 - showCustomOption(java.lang.Class,java.lang.String,java.lang.String,java.lang.String,com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$OptionAnchor,java.lang.String,java.lang.Object[]):V
 - showCustomOption(java.lang.Class,java.lang.String,java.lang.String,java.lang.String,java.lang.Object[]):V
 - a:showStandardOptions(java.lang.String[]):V
+e:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
+- sf:DOCUMENTATION_LINE_COMMENT_PREFERRED:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 com.intellij.psi.codeStyle.DisplayPrioritySortable
 - s:compare(java.lang.Object,java.lang.Object,java.util.function.Function):I
 - a:getPriority():com.intellij.psi.codeStyle.DisplayPriority

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,6 +40,8 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Creates documentation comment for the current context if it's not created yet (e.g. the caret is inside a method which
@@ -182,6 +185,7 @@ public final class FixDocCommentAction extends EditorAction {
                                       @NotNull CodeDocumentationProvider documentationProvider,
                                       @NotNull CodeDocumentationAwareCommenter commenter,
                                       @NotNull Project project) {
+    PsiFile anchorFile = anchor.getContainingFile();
     Document document = anchor.getContainingFile().getFileDocument();
     int commentStartOffset = anchor.getTextRange().getStartOffset();
     int lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset));
@@ -201,24 +205,31 @@ public final class FixDocCommentAction extends EditorAction {
     int commentBodyRelativeOffset = 0;
     int caretLineOffset = 0;
     StringBuilder buffer = new StringBuilder();
-    String commentPrefix = commenter.getDocumentationCommentPrefix();
-    if (commentPrefix != null) {
-      buffer.append(commentPrefix).append("\n");
-      caretLineOffset++;
-      commentBodyRelativeOffset += commentPrefix.length() + 1;
-    }
 
-    String linePrefix = commenter.getDocumentationCommentLinePrefix();
-    if (linePrefix != null) {
-      buffer.append(linePrefix);
-      commentBodyRelativeOffset += linePrefix.length();
+    if (preferDocumentationLineComment(anchorFile, null)) {
+      buffer.append(commenter.getDocumentationLineCommentPrefix()).append("\n");
+      commentBodyRelativeOffset += Objects.requireNonNull(commenter.getDocumentationLineCommentPrefix()).length() + 1;
     }
-    buffer.append("\n");
-    commentBodyRelativeOffset++;
+    else {
+      String commentPrefix = commenter.getDocumentationCommentPrefix();
+      if (commentPrefix != null) {
+        buffer.append(commentPrefix).append("\n");
+        caretLineOffset++;
+        commentBodyRelativeOffset += commentPrefix.length() + 1;
+      }
 
-    String commentSuffix = commenter.getDocumentationCommentSuffix();
-    if (commentSuffix != null) {
-      buffer.append(commentSuffix).append("\n");
+      String linePrefix = commenter.getDocumentationCommentLinePrefix();
+      if (linePrefix != null) {
+        buffer.append(linePrefix);
+        commentBodyRelativeOffset += linePrefix.length();
+      }
+      buffer.append("\n");
+      commentBodyRelativeOffset++;
+
+      String commentSuffix = commenter.getDocumentationCommentSuffix();
+      if (commentSuffix != null) {
+        buffer.append(commentSuffix).append("\n");
+      }
     }
 
     if (buffer.length() <= 0) {
@@ -298,5 +309,21 @@ public final class FixDocCommentAction extends EditorAction {
       }
     }
     return result;
+  }
+
+  /// @param file    The file being worked on. Useful to retrieve the settings.
+  /// @param comment A comment possibly targeted by an action.
+  /// @return `true` if the language/comment prefers/id **line** documentation comments
+  /// over **block** documentation comments.
+  public static boolean preferDocumentationLineComment(@NotNull PsiFile file, @Nullable PsiDocCommentBase comment) {
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
+    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
+      if (comment == null) {
+        return CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED;
+      }
+      return docCommenter.isDocumentationLineComment(comment);
+    }
+    // Can't guess
+    return false;
   }
 }

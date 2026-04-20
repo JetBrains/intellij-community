@@ -1,15 +1,31 @@
 PsiJavaFile:CodeBlockMarkdown05.java
-  PsiDocComment
-    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
-    PsiWhiteSpace(' ')
-    PsiMarkdownCodeBlock:
-      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
-      PsiWhiteSpace('\n')
-      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
-      PsiDocToken:DOC_COMMENT_DATA(' According to markdown rules, this is inline')
-      PsiWhiteSpace('\n')
-      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
-      PsiDocToken:DOC_COMMENT_DATA(' ')
-      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
   PsiImportList
     <empty list>
+  PsiClass:X
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiMarkdownCodeBlock:
+        PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+        PsiWhiteSpace('\n')
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+        PsiDocToken:DOC_COMMENT_DATA(' According to markdown rules, this is inline')
+        PsiWhiteSpace('\n')
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+        PsiDocToken:DOC_COMMENT_DATA(' ')
+        PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:X('X')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

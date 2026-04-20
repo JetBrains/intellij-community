@@ -1,10 +1,26 @@
 PsiJavaFile:CodeBlockMarkdown04.java
-  PsiDocComment
-    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
-    PsiWhiteSpace(' ')
-    PsiMarkdownCodeBlock:
-      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
-      PsiDocToken:DOC_COMMENT_DATA('Single line codeblock')
-      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
   PsiImportList
     <empty list>
+  PsiClass:X
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiMarkdownCodeBlock:
+        PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+        PsiDocToken:DOC_COMMENT_DATA('Single line codeblock')
+        PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:X('X')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

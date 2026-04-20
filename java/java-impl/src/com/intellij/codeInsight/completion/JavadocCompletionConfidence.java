@@ -44,6 +44,9 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
         return ThreeState.NO;
       }
     }
+    if(PsiDocToken.isDocToken(contextElement, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+      return ThreeState.NO;
+    }
     return ThreeState.UNSURE;
   }
 

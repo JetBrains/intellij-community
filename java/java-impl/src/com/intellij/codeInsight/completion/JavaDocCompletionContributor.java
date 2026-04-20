@@ -25,6 +25,7 @@ import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,6 +65,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
@@ -84,6 +86,7 @@ import com.intellij.psi.javadoc.PsiSnippetAttribute;
 import com.intellij.psi.javadoc.PsiSnippetAttributeList;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -147,9 +150,20 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
                                     @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
+
+        if (isStartOfMarkdownComment(position)) {
+          JavadocMarkdownTemplateLookupElement documentationElement = new JavadocMarkdownTemplateLookupElement(
+            ((PsiDocComment)position.getParent()).getOwner());
+
+          if (documentationElement.isAvailable()) {
+            result.addElement(documentationElement);
+            // Unusual early return, but only the template should be shown
+            return;
+          }
+        }
+
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
-        boolean onlyConstants = !isArg && tag != null && tag.getName().equals(VALUE_TAG);
 
         final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
         PsiElement refElement = ref == null ? null : ref.getElement();
@@ -165,6 +179,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
           result = JavaCompletionSorting.addJavaSorting(parameters, result);
           result.stopHere();
 
+          boolean onlyConstants = !isArg && tag != null && tag.getName().equals(VALUE_TAG);
           for (LookupElement item : completeJavadocReference(position, (PsiJavaReference)ref)) {
             if (onlyConstants) {
               if (!(item.getObject() instanceof PsiField field)) continue;
@@ -192,7 +207,6 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
             }
           }
         }
-
         if (tag != null && "author".equals(tag.getName())) {
           result.addElement(LookupElementBuilder.create(SystemProperties.getUserName()));
         }
@@ -282,6 +296,76 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
         }
       }
     });
+
+    extend(CompletionType.BASIC, psiElement(PsiSnippetDocTagValue.class), new CompletionProvider<>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiElement position = parameters.getPosition();
+
+        PsiElement parent = position.getParent();
+        if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
+          PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
+          if (docTag != null) {
+            JavadocManager docManager = JavadocManager.getInstance(parameters.getOriginalFile().getProject());
+            JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
+            if (info != null) {
+              // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
+              suggestTags(parameters, result, position, true);
+            }
+          }
+        }
+      }
+    });
+
+    extend(CompletionType.BASIC, psiElement(JavaDocTokenType.DOC_COMMENT_DATA), new CompletionProvider<>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiElement position = parameters.getPosition();
+        if (isStartOfMarkdownComment(position)) return;
+
+        final PsiParameter param = getDocTagParam(position.getParent());
+        if (param != null) {
+          suggestSimilarParameterDescriptions(result, position, param);
+        }
+
+        if (!(position.getParent() instanceof PsiInlineDocTag)) {
+          suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
+        }
+
+        suggestCodeLiterals(result, position);
+
+        boolean forceInlineTags = position.getParent() instanceof PsiDocTag &&
+                                  !(position.getPrevSibling() instanceof PsiDocToken token &&
+                                    token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
+
+        suggestTags(parameters, result, position, forceInlineTags);
+      }
+    });
+  }
+
+  /// Returns `true` if the element is at the start of the Markdown comment.
+  /// Note that if the comment isn't empty, `false` will be returned.
+  private static boolean isStartOfMarkdownComment(@NotNull PsiElement element) {
+    PsiElement prev = element.getPrevSibling();
+    if (prev == null) return false;
+    ASTNode prevNode = prev.getNode();
+    IElementType prevType = prevNode.getElementType();
+
+    PsiDocComment comment = PsiTreeUtil.getParentOfType(prev, PsiDocComment.class);
+    if (comment == null || !comment.isMarkdownComment()) return false;
+    PsiElement[] children = comment.getChildren();
+    if (children.length > 3) return false;
+
+    // The identifier gets merged into the existing comment data (if it exists)
+    if (element.getTextLength() > CompletionUtilCore.DUMMY_IDENTIFIER.length()) return false;
+
+    if (prevType == TokenType.WHITE_SPACE) return true;
+    if (prev == comment.getFirstChild()) return true;
+    return false;
   }
 
   private @Unmodifiable @NotNull List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
@@ -324,51 +408,6 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       }
     }
     return null;
-  }
-
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    PsiElement position = parameters.getPosition();
-
-    if (position.getParent() instanceof PsiDocFragmentName) {
-      super.fillCompletionVariants(parameters, result);
-      return;
-    }
-
-    if (PsiDocToken.isDocToken(position, JavaDocTokenType.DOC_TAG_VALUE_TOKEN)) {
-      PsiElement parent = position.getParent();
-      if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
-        PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
-        if (docTag != null) {
-          JavadocManager docManager = JavadocManager.getInstance(parameters.getOriginalFile().getProject());
-          JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
-          if (info != null) {
-            // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
-            suggestTags(parameters, result, position, true);
-          }
-        }
-      }
-    }
-    if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(position)) {
-      final PsiParameter param = getDocTagParam(position.getParent());
-      if (param != null) {
-        suggestSimilarParameterDescriptions(result, position, param);
-      }
-
-      if (!(position.getParent() instanceof PsiInlineDocTag)) {
-        suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
-      }
-
-      suggestCodeLiterals(result, position);
-
-      boolean forceInlineTags = position.getParent() instanceof PsiDocTag &&
-                                !(position.getPrevSibling() instanceof PsiDocToken token
-                                  && token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
-
-      suggestTags(parameters, result, position, forceInlineTags);
-    }
-
-    super.fillCompletionVariants(parameters, result);
   }
 
   private static void suggestTags(@NotNull CompletionParameters parameters,

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -31,7 +30,6 @@ import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -43,6 +41,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public final class JavaDocCommentFixer implements DocCommentFixer {
@@ -99,12 +98,12 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     }
     Document document = file.getFileDocument();
     if (!commonProblems.isEmpty()) {
-      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), comment, document, project);
+      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), owner, document, project);
     }
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    ensureContentOrdered(docComment, document);
-    locateCaret(docComment, editor, file);
+    ensureContentOrdered(Objects.requireNonNull(owner.getDocComment()), document);
+    locateCaret(Objects.requireNonNull(owner.getDocComment()), editor, file);
   }
 
   private static @NotNull MissingJavadocInspection getMissingJavadocInspection() {
@@ -151,15 +150,18 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
    * parameter doesn't have a description etc). This method handles result of the second exception
    *
    * @param problems detected problems
-   * @param comment  target comment to fix
+   * @param commentOwner owner of the comment to fix
    * @param document target document which contains text of the comment being fixed
    * @param project  current project
    */
   @SuppressWarnings("unchecked")
   private static void fixCommonProblems(@NotNull List<? extends ProblemDescriptor> problems,
-                                        @NotNull PsiComment comment,
+                                        @NotNull PsiJavaDocumentedElement commentOwner,
                                         final @NotNull Document document,
                                         @NotNull Project project) {
+    PsiDocComment comment = commentOwner.getDocComment();
+    if (comment == null) return;
+
     List<RangeMarker> toRemove = new ArrayList<>();
     List<ProblemDescriptor> problemsToApply = new ArrayList<>();
     for (ProblemDescriptor problem : problems) {
@@ -167,7 +169,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       if (element == null) {
         continue;
       }
-      if (!PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_START) && comment.getTextRange().contains(element.getTextRange())) {
+      if ((element != comment.getFirstChild()) && comment.getTextRange().contains(element.getTextRange())) {
         // Unnecessary element like '@return' at the void method's javadoc.
         for (PsiElement e = element; e != null; e = e.getParent()) {
           if (e instanceof PsiDocTag) {
@@ -188,6 +190,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
         fixes[0].applyFix(project, problem);
       }
     }
+    comment = commentOwner.getDocComment();
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     if (toRemove.isEmpty()) {
@@ -205,8 +208,15 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       int i = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
       if (i >= 0) {
         char c = text.charAt(i);
-        if (c == '*') {
-          i = CharArrayUtil.shiftBackward(text, i - 1, " \t");
+        if (!comment.isMarkdownComment()) {
+          if (c == '*') {
+            i = CharArrayUtil.shiftBackward(text, i - 1, " \t");
+          }
+        }
+        else {
+          if (c == '/') {
+            i = CharArrayUtil.shiftBackward(text, i - 1, " \t/");
+          }
         }
       }
       if (i >= 0 && text.charAt(i) == '\n') {
@@ -215,7 +225,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
 
       int endOffset = range.getEndOffset();
       // Javadoc PSI is awkward, it includes next line text before the next tag. That's why we need to strip it.
-      i = CharArrayUtil.shiftBackward(text, endOffset - 1, " \t*");
+      i = findBackwardOffset(text, endOffset - 1, comment.isMarkdownComment());
       if (i > 0 && text.charAt(i) == '\n') {
         endOffset = i;
       }
@@ -246,7 +256,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       String paramName = valueElement.getText();
       if (paramName != null) {
         current.add(paramName);
-        tagInfoByName.put(paramName, parseTagValue(tag, document));
+        tagInfoByName.put(paramName, parseTagValue(comment, tag, document));
       }
     }
     //endregion
@@ -294,7 +304,9 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     //endregion
   }
 
-  private static @NotNull Pair<TextRange, String> parseTagValue(@NotNull PsiDocTag tag, @NotNull Document document) {
+  private static @NotNull Pair<TextRange, String> parseTagValue(@NotNull PsiDocComment comment,
+                                                                @NotNull PsiDocTag tag,
+                                                                @NotNull Document document) {
     PsiDocTagValue valueElement = tag.getValueElement();
     assert valueElement != null;
 
@@ -302,7 +314,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     int endOffset = tag.getTextRange().getEndOffset();
     // Javadoc PSI is rather weird...
     CharSequence text = document.getCharsSequence();
-    int i = CharArrayUtil.shiftBackward(text, endOffset - 1, " \t*");
+    int i = findBackwardOffset(text, endOffset - 1, comment.isMarkdownComment());
     if (i > 0 && text.charAt(i) == '\n') {
       endOffset = i;
     }
@@ -333,7 +345,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       if (!good) {
         int offset = tag.getTextRange().getEndOffset();
         CharSequence text = document.getCharsSequence();
-        int i = CharArrayUtil.shiftBackward(text, offset - 1, " \t*");
+        int i = findBackwardOffset(text, offset - 1, comment.isMarkdownComment());
         if (i > 0 && text.charAt(i) == '\n') {
           offset = i - 1;
         }
@@ -346,5 +358,10 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       editor.getCaretModel().moveToOffset(document.getLineEndOffset(lineToNavigate));
       JavadocNavigationDelegate.navigateToLineEnd(editor, file);
     }
+  }
+
+  /// @return the new offset, taking into account the start of a comment line
+  private static int findBackwardOffset(@NotNull CharSequence text, int offset, boolean isMarkdown) {
+    return CharArrayUtil.shiftBackward(text, offset, isMarkdown ? " \t/" : " \t*");
   }
 }

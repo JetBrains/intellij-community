@@ -580,13 +580,13 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
 
       final PsiType returnType = method.getInferredReturnType();
       if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiTypes.voidType().equals(returnType)) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment.getContainingFile(), commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment, commenter));
         builder.append(LINE_SEPARATOR);
       }
 
       final PsiClassType[] references = method.getThrowsList().getReferencedTypes();
       for (PsiClassType reference : references) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, contextComment.getContainingFile(), commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, contextComment, commenter));
         builder.append(reference.getClassName());
         builder.append(LINE_SEPARATOR);
       }
@@ -594,7 +594,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
     else if (owner instanceof GrTypeDefinition) {
       final PsiTypeParameterList typeParameterList = ((PsiClass)owner).getTypeParameterList();
       if (typeParameterList != null) {
-        JavaDocumentationProvider.createTypeParamsListComment(builder, commenter, typeParameterList);
+        JavaDocumentationProvider.createTypeParamsListComment(builder, commenter, typeParameterList, contextComment);
       }
     }
     return !builder.isEmpty() ? builder.toString() : null;

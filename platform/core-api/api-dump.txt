@@ -154,9 +154,14 @@ com.intellij.lang.CodeDocumentationAwareCommenter
 - a:getDocumentationCommentPrefix():java.lang.String
 - a:getDocumentationCommentSuffix():java.lang.String
 - a:getDocumentationCommentTokenType():com.intellij.psi.tree.IElementType
+- getDocumentationLineCommentPrefix():java.lang.String
+- getDocumentationLineCommentPrefixes():java.util.List
+- getDocumentationLineCommentTokenType():com.intellij.psi.tree.IElementType
+- getDocumentationLineCommentTokenTypes():java.util.List
 - a:getLineCommentTokenType():com.intellij.psi.tree.IElementType
 - getLineCommentTokenTypes():java.util.List
 - a:isDocumentationComment(com.intellij.psi.PsiComment):Z
+- isDocumentationLineComment(com.intellij.psi.PsiComment):Z
 com.intellij.lang.CodeDocumentationAwareCommenterEx
 - com.intellij.lang.CodeDocumentationAwareCommenter
 - a:isDocumentationCommentText(com.intellij.psi.PsiElement):Z

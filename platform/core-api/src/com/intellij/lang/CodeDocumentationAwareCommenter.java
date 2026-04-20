@@ -42,9 +42,9 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   IElementType getBlockCommentTokenType();
 
   /**
-   * Returns the type of the documentation comment token in the language,
-   * or {@code null} if the language does not support documentation comments.
-   * It is assumed that the documentation comment prefix is not {@code null} when the documentation comment type is not {@code null}.
+   * Returns the type of the <b>block</b> documentation comment token in the language,
+   * or {@code null} if the language does not support <b>block</b> documentation comments.
+   * It is assumed that {@link #getDocumentationCommentPrefix()} does not return {@code null} when the documentation comment type is not {@code null}.
    *
    * @return the documentation comment type.
    */
@@ -75,5 +75,40 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
    */
   @Nullable String getDocumentationCommentSuffix();
 
+  @Nullable
+  default IElementType getDocumentationLineCommentTokenType() {
+    return null;
+  }
+
+  /// Returns the types of the documentation **line** comment token in the language,
+  /// or `null` if the language does not support documentation  **line** comments.
+  ///
+  /// It is assumed that [#getDocumentationLineCommentPrefixes()] does not return `null` when the documentation comment type is not `null`.
+  /// Implementations are expected to have [List]s of the same length between this function and [#getDocumentationLineCommentPrefixes()]
+  @Nullable
+  default List<IElementType> getDocumentationLineCommentTokenTypes() {
+    return ContainerUtil.createMaybeSingletonList(getDocumentationLineCommentTokenType());
+  }
+
+  @Nullable
+  default String getDocumentationLineCommentPrefix() {
+    return null;
+  }
+
+  /// Returns the prefixes of the **line** documentation comment in the language,
+  /// or `null` if the language does not support **line** documentation comments.
+  ///
+  /// It is assumed that [#getDocumentationLineCommentTokenTypes()] does not return `null` when the documentation comment type is not `null`.
+  /// Implementations are expected to have [List]s of the same length between this function and [#getDocumentationLineCommentTokenTypes()]
+  @Nullable
+  default List<String> getDocumentationLineCommentPrefixes() {
+    return ContainerUtil.createMaybeSingletonList(getDocumentationLineCommentPrefix());
+  }
+
   boolean isDocumentationComment(PsiComment element);
+
+  /// @return `true` if the comment is a documentation **line** comment
+  default boolean isDocumentationLineComment(PsiComment element) {
+    return false;
+  }
 }

@@ -245,6 +245,8 @@ c:com.intellij.codeInsight.editorActions.AutoHardWrapHandler
 - wrapLineIfNecessary(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,J):V
 com.intellij.codeInsight.editorActions.CodeBlockProvider
 - a:getCodeBlockRange(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+f:com.intellij.codeInsight.editorActions.CodeDocumentationUtil
+- s:createDocCommentLine(java.lang.String,com.intellij.psi.PsiComment,com.intellij.lang.CodeDocumentationAwareCommenter):java.lang.String
 com.intellij.codeInsight.editorActions.CommentCompleteHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:isApplicable(com.intellij.psi.PsiComment,com.intellij.lang.CodeDocumentationAwareCommenter):Z
@@ -258,6 +260,7 @@ c:com.intellij.codeInsight.editorActions.EnterHandler
 - s:adjustLineIndentNoCommit(com.intellij.openapi.editor.Document,I,java.lang.String):I
 f:com.intellij.codeInsight.editorActions.FixDocCommentAction
 - s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator):V
+- s:preferDocumentationLineComment(com.intellij.psi.PsiFile,com.intellij.psi.PsiDocCommentBase):Z
 com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler
 - com.intellij.codeInsight.editorActions.QuoteHandler
 - canBeConcatenated(com.intellij.psi.PsiElement):Z
