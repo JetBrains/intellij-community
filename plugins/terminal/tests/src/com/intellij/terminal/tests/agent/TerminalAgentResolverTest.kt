@@ -10,8 +10,8 @@ import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.terminal.backend.rpc.TerminalAgentResolutionContext
-import com.intellij.terminal.backend.rpc.findTerminalAgentBinaryPath
+import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolutionContext
+import com.intellij.terminal.frontend.session.rpc.findTerminalAgentBinaryPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat

@@ -50,6 +50,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/util:util-ui",
     "//fleet/rhizomedb",
+    "//platform/execution",
   ]
 )
 
@@ -102,6 +103,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/util:util-ui_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//platform/execution:execution_test_lib",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

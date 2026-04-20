@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.backend
 
-import com.intellij.terminal.backend.TerminalContentChangesTracker
-import com.intellij.terminal.backend.TerminalContentUpdate
-import com.intellij.terminal.backend.TerminalDiscardedHistoryTracker
+import com.intellij.terminal.frontend.session.TerminalContentChangesTracker
+import com.intellij.terminal.frontend.session.TerminalContentUpdate
+import com.intellij.terminal.frontend.session.TerminalDiscardedHistoryTracker
 import com.intellij.terminal.tests.reworked.util.scrollDown
 import com.intellij.terminal.tests.reworked.util.write
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

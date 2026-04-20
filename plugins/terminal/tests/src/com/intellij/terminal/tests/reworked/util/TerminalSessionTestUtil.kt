@@ -5,9 +5,9 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.terminal.backend.TerminalSessionsManager
-import com.intellij.terminal.backend.createTerminalSession
-import com.intellij.terminal.backend.startTerminalProcess
+import com.intellij.terminal.frontend.session.TerminalSessionsManager
+import com.intellij.terminal.frontend.session.createTerminalSession
+import com.intellij.terminal.frontend.session.startTerminalProcess
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.createShellCommand
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PathUtil
