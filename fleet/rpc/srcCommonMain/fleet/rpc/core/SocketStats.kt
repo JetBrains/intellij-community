@@ -3,7 +3,9 @@ package fleet.rpc.core
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SocketStats {
   fun outgoingBeforeCompression(size: Int)
   fun outgoingAfterCompression(size: Int)

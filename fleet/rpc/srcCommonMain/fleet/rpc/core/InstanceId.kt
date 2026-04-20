@@ -5,12 +5,14 @@ import fleet.util.UID
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Opaque identifier of a remote service.
  * Should be unique between all providers connected to the workspace.
  * Does not have any restrictions on its length.
  * */
+@ApiStatus.Internal
 @Serializable(with = InstanceIdSerializer::class)
 data class InstanceId(val id: String) {
   companion object {

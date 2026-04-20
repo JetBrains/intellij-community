@@ -28,6 +28,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 private class SerializationContext(val streamDescriptors: MutableList<StreamDescriptor>,
@@ -37,6 +38,7 @@ private class SerializationContext(val streamDescriptors: MutableList<StreamDesc
 
 private val SerializationContextThreadLocal: ThreadLocal<SerializationContext?> = ThreadLocal()
 
+@ApiStatus.Internal
 fun <T> withSerializationContext(displayName: String,
                                  token: RpcToken?,
                                  rpcScope: CoroutineScope,
@@ -60,6 +62,7 @@ private inline fun <reified T> requireSerializationContext() = checkNotNull(Seri
   "Serialization and deserialization of ${T::class} requires SerializationContextThreadLocal to be bound"
 }
 
+@ApiStatus.Internal
 class SendChannelSerializer<T>(private val elementSerializer: KSerializer<T>) : DataSerializer<SendChannel<T>, UID>(UIDSerializer) {
 
   @Suppress("UNCHECKED_CAST")
@@ -89,6 +92,7 @@ class SendChannelSerializer<T>(private val elementSerializer: KSerializer<T>) : 
   }
 }
 
+@ApiStatus.Internal
 class ReceiveChannelSerializer<T>(private val elementSerializer: KSerializer<T>) : DataSerializer<ReceiveChannel<T>, UID>(UIDSerializer) {
   @Suppress("UNCHECKED_CAST")
   override fun fromData(data: UID): ReceiveChannel<T> {
@@ -118,6 +122,7 @@ class ReceiveChannelSerializer<T>(private val elementSerializer: KSerializer<T>)
 }
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.app.fleet.tests"])
+@ApiStatus.Internal
 @Deprecated("please don't use directly, use RpcFlow instead")
 class FlowSerializer<T>(elementSerializer: KSerializer<T>) :
   DataSerializer<Flow<T>, ReceiveChannel<T>>(ReceiveChannelSerializer(elementSerializer)) {
@@ -132,6 +137,7 @@ class FlowSerializer<T>(elementSerializer: KSerializer<T>) :
   }
 }
 
+@ApiStatus.Internal
 class DeferredSerializer<T>(elementSerializer: KSerializer<T>) :
   DataSerializer<Deferred<T>, ReceiveChannel<T>>(ReceiveChannelSerializer(elementSerializer)) {
 
@@ -196,6 +202,7 @@ private val RpcJson: Json by lazy {
   }
 }
 
+@ApiStatus.Internal
 fun rpcJsonImplementationDetail(): Json =
   RpcJson
 
@@ -222,6 +229,7 @@ class Blob(val bytes: ByteArray) {
 }
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.common", "fleet.protocol"])
+@ApiStatus.Internal
 object BlobSerializer : DataSerializer<Blob, String>(String.serializer()) {
   @OptIn(ExperimentalEncodingApi::class)
   override fun fromData(data: String): Blob {
@@ -234,6 +242,7 @@ object BlobSerializer : DataSerializer<Blob, String>(String.serializer()) {
   }
 }
 
+@ApiStatus.Internal
 class ThrowingSerializer<T>(private val debugInfo: String) : DataSerializer<T, String>(String.serializer()) {
   override fun fromData(data: String): T {
     error(debugInfo)

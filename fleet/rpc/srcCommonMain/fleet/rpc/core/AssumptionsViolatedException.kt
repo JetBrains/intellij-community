@@ -5,7 +5,9 @@ import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.CopyableThrowable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class AssumptionsViolatedException(msg: String? = null)
   : RpcClientException(if (msg == null) "Conflict" else "Conflict: $msg", null),
     CopyableThrowable<AssumptionsViolatedException> {
@@ -14,6 +16,7 @@ class AssumptionsViolatedException(msg: String? = null)
   }
 }
 
+@ApiStatus.Internal
 suspend fun <T> retry(block: suspend CoroutineScope.() -> T): T {
   return withTimeout(30_000) {
     var counter = 0

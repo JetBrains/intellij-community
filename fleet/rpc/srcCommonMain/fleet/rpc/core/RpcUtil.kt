@@ -2,17 +2,21 @@
 package fleet.rpc.core
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.jetbrains.annotations.ApiStatus
 
 internal typealias RequestCompletionHandler = (cause: Throwable?) -> Unit
 
+@ApiStatus.Internal
 internal fun classMethodDisplayName(serviceName: String, method: String): String {
   return "$serviceName#$method"
 }
 
+@ApiStatus.Internal
 fun methodParamDisplayName(methodDisplayName: String, parameterName: String): String {
   return "${methodDisplayName}($parameterName)"
 }
 
+@ApiStatus.Internal
 suspend fun sendSuspend(sendAsync: (TransportMessage, RequestCompletionHandler) -> Unit, message: TransportMessage) {
   suspendCancellableCoroutine { continuation ->
     sendAsync(message) { ex: Throwable? ->
