@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.4.0-ij261-32">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.4.0-ij261-46">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-32/kotlin-scripting-compiler-impl-2.4.0-ij261-32.jar">
-          <sha256sum>7c1089c4d2b7c25894ba448f11422094411829d5da939221f9bd945ef8875f1a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-46/kotlin-scripting-compiler-impl-2.4.0-ij261-46.jar">
+          <sha256sum>d62ba243e8b9379dbfd480f9cbf17984d528ca649570d6250d761f2d42ef93f7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-32/kotlin-scripting-compiler-impl-2.4.0-ij261-32.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-46/kotlin-scripting-compiler-impl-2.4.0-ij261-46.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-32/kotlin-scripting-compiler-impl-2.4.0-ij261-32-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.0-ij261-46/kotlin-scripting-compiler-impl-2.4.0-ij261-46-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
