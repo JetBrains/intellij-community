@@ -52,21 +52,17 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
     return withUv { uv ->
-      if (module != null) {
+      if (sdk.uvUsePackageManagement) {
+        uv.installPackage(installRequest, emptyList())
+      }
+      else if (module != null) {
         val packageName = resolvePackageName(module)
         uv.addDependency(installRequest, emptyList(), PyWorkspaceMember(packageName))
-      }
-      else if (sdk.uvUsePackageManagement) {
-        uv.installPackage(installRequest, emptyList())
       }
       else {
         uv.addDependency(installRequest, emptyList())
       }
     }
-  }
-
-  override suspend fun installPackageDetachedCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    return withUv { uv -> uv.installPackage(installRequest, emptyList()) }
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
