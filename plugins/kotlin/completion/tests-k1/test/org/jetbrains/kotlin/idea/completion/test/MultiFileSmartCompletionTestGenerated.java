@@ -80,6 +80,16 @@ public class MultiFileSmartCompletionTestGenerated extends AbstractMultiFileSmar
         runTest("../testData/smartMultiFile/GenericInheritors4/");
     }
 
+    @TestMetadata("HideNestedPrivateObject")
+    public void testHideNestedPrivateObject() throws Exception {
+        runTest("../testData/smartMultiFile/HideNestedPrivateObject/");
+    }
+
+    @TestMetadata("HidePrivateObject")
+    public void testHidePrivateObject() throws Exception {
+        runTest("../testData/smartMultiFile/HidePrivateObject/");
+    }
+
     @TestMetadata("InheritorInTheSameFile")
     public void testInheritorInTheSameFile() throws Exception {
         runTest("../testData/smartMultiFile/InheritorInTheSameFile/");

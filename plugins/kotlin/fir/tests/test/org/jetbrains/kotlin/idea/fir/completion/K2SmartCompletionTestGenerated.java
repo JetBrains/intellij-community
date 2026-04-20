@@ -1403,6 +1403,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/GroupBySubstitutor.kt");
         }
 
+        @TestMetadata("HideInternalObject.kt")
+        public void testHideInternalObject() throws Exception {
+            runTest("../../completion/testData/smart/HideInternalObject.kt");
+        }
+
         @TestMetadata("HighOrderFunction.kt")
         public void testHighOrderFunction() throws Exception {
             runTest("../../completion/testData/smart/HighOrderFunction.kt");

@@ -175,9 +175,9 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         val canBeInherited = symbolPsi.canBeInherited()
         val canBeInstantiated = symbolPsi.canBeInstantiated()
-        val isObject = symbolPsi is KtObjectDeclaration
+        val isVisibleObject = symbolPsi.isVisibleObject()
         // Fast path of returning without resolving symbols
-        if (!canBeInherited && !canBeInstantiated && !isObject) return
+        if (!canBeInherited && !canBeInstantiated && !isVisibleObject) return
 
         val symbol = alreadyResolvedSymbol ?: resolveClassSymbol(symbolPsi) ?: return
         if (symbol.classKind == KaClassKind.ENUM_CLASS) {
@@ -200,7 +200,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         }
 
         // Note: These if statements are not necessarily mutually exclusive, e.g., for open classes.
-        if (isObject) {
+        if (isVisibleObject) {
             addObjectLookupElement(
                 symbol = symbol,
                 importingStrategy = importStrategy,
@@ -390,6 +390,16 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
             addElement(element)
         }
+    }
+
+    /**
+     * Returns if the given [PsiElement] is an object that is visible at the position of the completion context, taking
+     * into account visibility rules.
+     */
+    context(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun PsiElement.isVisibleObject(): Boolean {
+        if (this !is KtObjectDeclaration) return false
+        return context.visibilityChecker.canBeVisible(this)
     }
 
     /**

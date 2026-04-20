@@ -1403,6 +1403,11 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/GroupBySubstitutor.kt");
         }
 
+        @TestMetadata("HideInternalObject.kt")
+        public void testHideInternalObject() throws Exception {
+            runTest("../testData/smart/HideInternalObject.kt");
+        }
+
         @TestMetadata("HighOrderFunction.kt")
         public void testHighOrderFunction() throws Exception {
             runTest("../testData/smart/HighOrderFunction.kt");
