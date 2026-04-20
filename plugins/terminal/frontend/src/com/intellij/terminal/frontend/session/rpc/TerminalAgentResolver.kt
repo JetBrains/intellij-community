@@ -15,27 +15,14 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentsApi
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 
-internal class TerminalAgentsApiImpl : TerminalAgentsApi {
-  override suspend fun listAvailableAgents(projectId: ProjectId): List<TerminalAvailableAgentDto> {
-    return TerminalAgentResolver.listAvailableAgents(projectId.findProject())
-  }
-
-  override suspend fun resolveLaunchSpec(projectId: ProjectId, agentKey: TerminalAgent.AgentKey): TerminalAgentLaunchSpecDto? {
-    return TerminalAgentResolver.resolveLaunchSpec(projectId.findProject(), agentKey)
-  }
-}
-
-private object TerminalAgentResolver {
+internal object TerminalAgentResolver {
   suspend fun listAvailableAgents(project: Project): List<TerminalAvailableAgentDto> {
     val context = createResolutionContext(project) ?: return emptyList()
     return TerminalAgent.getAllTerminalAgents().mapNotNull { agent ->

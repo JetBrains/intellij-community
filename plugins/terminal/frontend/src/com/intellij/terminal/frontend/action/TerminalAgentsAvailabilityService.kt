@@ -7,12 +7,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.projectId
+import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentsApi
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 
 @ApiStatus.Internal
@@ -40,7 +39,7 @@ class TerminalAgentsAvailabilityService(
       !isTerminalAgentsEnabled() -> emptyList()
       else -> {
         try {
-          val allAgents = TerminalAgentsApi.getInstance().listAvailableAgents(project.projectId())
+          val allAgents = TerminalAgentResolver.listAvailableAgents(project)
           thisLogger().debug {
             "Terminal AI agents availability: ${allAgents.joinToString { "${it.agentKey}=${it.mode}" }}"
           }

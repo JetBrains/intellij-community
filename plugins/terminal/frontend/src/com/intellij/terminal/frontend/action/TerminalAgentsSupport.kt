@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.project.projectId
+import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolver
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.ContentManager
@@ -31,7 +31,6 @@ import org.jetbrains.plugins.terminal.agent.TERMINAL_AI_AGENTS_REGISTRY_KEY
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentsApi
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -79,7 +78,7 @@ internal fun launchTerminalAgent(
 ) {
   terminalProjectScope(project).launch {
     val launchSpec = try {
-      TerminalAgentsApi.getInstance().resolveLaunchSpec(project.projectId(), agentKey)
+      TerminalAgentResolver.resolveLaunchSpec(project, agentKey)
     }
     catch(e: CancellationException) {
       throw e
