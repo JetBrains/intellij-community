@@ -16,7 +16,7 @@ __all__ = (
     "storages",
 )
 
-class DefaultStorage(LazyObject): ...
+class DefaultStorage(LazyObject[Storage]): ...
 
 storages: StorageHandler
 # default_storage is actually an instance of DefaultStorage, but it proxies through to a Storage

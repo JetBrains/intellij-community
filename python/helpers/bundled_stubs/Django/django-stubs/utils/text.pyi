@@ -1,3 +1,4 @@
+from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
 from html.parser import HTMLParser
 from io import BytesIO
@@ -22,11 +23,17 @@ def calculate_truncate_chars_length(length: int, replacement: str | None) -> int
 
 class TruncateHTMLParser(HTMLParser):
     TruncationCompleted: ClassVar[type[Exception]]
+    tags: deque[str]
+    output: str
+    remaining: int
+    replacement: str | None
     def __init__(self, *, length: int, replacement: str | None, convert_charrefs: bool = True) -> None: ...
     @cached_property
     def void_elements(self) -> frozenset[str]: ...
 
 class TruncateCharsHTMLParser(TruncateHTMLParser):
+    length: int
+    processed_chars: int
     def process(self, data: str) -> tuple[str, str]: ...
 
 class TruncateWordsHTMLParser(TruncateHTMLParser):

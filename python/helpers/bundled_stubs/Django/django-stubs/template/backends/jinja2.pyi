@@ -1,16 +1,17 @@
 from collections.abc import Callable
 from typing import Any
 
-from _typeshed import Incomplete
 from django.http.request import HttpRequest
 from django.template.exceptions import TemplateSyntaxError
 from django.utils.functional import cached_property
+from jinja2 import Environment
+from jinja2 import Template as Jinja2Template
 from typing_extensions import override
 
 from .base import BaseEngine
 
 class Jinja2(BaseEngine):
-    env: Any
+    env: Environment
     context_processors: list[str]
     def __init__(self, params: dict[str, Any]) -> None: ...
     @override
@@ -18,18 +19,18 @@ class Jinja2(BaseEngine):
     @override
     def get_template(self, template_name: str) -> Template: ...
     @cached_property
-    def template_context_processors(self) -> list[Callable]: ...
+    def template_context_processors(self) -> list[Callable[[HttpRequest], dict[str, Any]]]: ...
+
+class Template:
+    template: Jinja2Template
+    backend: Jinja2
+    origin: Origin
+    def __init__(self, template: Jinja2Template, backend: Jinja2) -> None: ...
+    def render(self, context: dict[str, Any] | None = None, request: HttpRequest | None = None) -> str: ...
 
 class Origin:
     name: str
     template_name: str | None
     def __init__(self, name: str, template_name: str | None) -> None: ...
-
-class Template:
-    template: Incomplete
-    backend: Jinja2
-    origin: Origin
-    def __init__(self, template: Incomplete, backend: Jinja2) -> None: ...
-    def render(self, context: dict[str, Any] | None = ..., request: HttpRequest | None = ...) -> str: ...
 
 def get_exception_info(exception: TemplateSyntaxError) -> dict[str, Any]: ...

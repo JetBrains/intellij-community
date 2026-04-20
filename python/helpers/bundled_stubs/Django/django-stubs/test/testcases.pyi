@@ -3,7 +3,7 @@ import unittest
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.handlers.wsgi import WSGIHandler
@@ -62,8 +62,7 @@ class SimpleTestCase(unittest.TestCase):
     client: Client
     async_client_class: type[AsyncClient]
     async_client: AsyncClient
-    # TODO: str -> Literal['__all__']
-    databases: set[str] | str
+    databases: set[str] | Literal["__all__"]
     @classmethod
     def ensure_connection_patch_method(cls) -> None: ...
     @override

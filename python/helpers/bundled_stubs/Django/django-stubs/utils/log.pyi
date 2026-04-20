@@ -16,6 +16,7 @@ def configure_logging(logging_config: str, logging_settings: dict[str, Any]) -> 
 class AdminEmailHandler(logging.Handler):
     include_html: bool
     email_backend: str | None
+    reporter_class: type[Any]
     def __init__(
         self,
         include_html: bool = False,

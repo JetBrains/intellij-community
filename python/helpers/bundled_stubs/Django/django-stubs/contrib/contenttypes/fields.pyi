@@ -31,6 +31,7 @@ class GenericForeignKey(FieldCacheMixin, Field):
     ct_field: str
     fk_field: str
     for_concrete_model: bool
+    column: None
     def __init__(
         self, ct_field: str = "content_type", fk_field: str = "object_id", for_concrete_model: bool = True
     ) -> None: ...
@@ -39,7 +40,7 @@ class GenericForeignKey(FieldCacheMixin, Field):
     @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
     @override
-    def get_attname_column(self) -> tuple[str, None]: ...  # type: ignore[override]
+    def get_attname_column(self) -> tuple[str, None]: ...
     @cached_property
     def ct_field_attname(self) -> str: ...
     @override

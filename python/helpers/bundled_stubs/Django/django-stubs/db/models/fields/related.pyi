@@ -98,6 +98,7 @@ class RelatedField(FieldCacheMixin, Field[_ST, _GT]):
 class ForeignObject(RelatedField[_ST, _GT]):
     remote_field: ForeignObjectRel
     rel_class: type[ForeignObjectRel]
+    column: None
     from_fields: Sequence[str]
     to_fields: Sequence[str | None]  # None occurs in ForeignKey, where to_field defaults to None
     def __init__(
@@ -169,6 +170,8 @@ class ForeignObject(RelatedField[_ST, _GT]):
     @cached_property
     def reverse_path_infos(self) -> list[PathInfo]: ...
     def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
+    @override
+    def get_attname_column(self) -> tuple[str, None]: ...
     forward_related_accessor_class: type[ForwardManyToOneDescriptor]
     related_accessor_class: type[ReverseManyToOneDescriptor]
     requires_unique_target: bool
@@ -180,6 +183,7 @@ class ForeignKey(ForeignObject[_ST, _GT]):
     descriptor_class: type[ForeignKeyDeferredAttribute]
     remote_field: ManyToOneRel
     rel_class: type[ManyToOneRel]
+    column: str  # type: ignore[assignment]
     def __init__(
         self,
         to: type[Model] | str,
@@ -225,6 +229,8 @@ class ForeignKey(ForeignObject[_ST, _GT]):
     @override
     def cast_db_type(self, connection: BaseDatabaseWrapper) -> str | None: ...
     def convert_empty_strings(self, value: Any, expression: Expression, connection: BaseDatabaseWrapper) -> Any: ...
+    @override
+    def get_attname_column(self) -> tuple[str, str]: ...  # type: ignore[override]
 
 class OneToOneField(ForeignKey[_ST, _GT]):
     _pyi_private_set_type: Any | Combinable
@@ -299,6 +305,7 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
 
     remote_field: ManyToManyRel
     rel_class: type[ManyToManyRel]
+    column: None
     def __init__(
         self,
         to: type[_To] | str,
@@ -351,6 +358,8 @@ class ManyToManyField(RelatedField[Any, Any], Generic[_To, _Through]):
     @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
     def contribute_to_related_class(self, cls: type[Model], related: RelatedField) -> None: ...
+    @override
+    def get_attname_column(self) -> tuple[str, None]: ...
     def m2m_db_table(self) -> str: ...
     def m2m_column_name(self) -> str: ...
     def m2m_reverse_name(self) -> str: ...

@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from datetime import date, datetime
 from typing import Any, ClassVar
 
@@ -14,7 +14,7 @@ from django.http.request import HttpRequest
 from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import _StrOrPromise
 from django.utils.safestring import SafeString
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 class _ListFilterChoices(TypedDict):
     selected: bool
@@ -25,12 +25,12 @@ class ListFilter:
     title: _StrOrPromise | None
     template: str
     request: HttpRequest
-    used_parameters: dict[str, bool | datetime | str]
+    used_parameters: dict[str, object]
     def __init__(
-        self, request: HttpRequest, params: dict[str, str], model: type[Model], model_admin: ModelAdmin
+        self, request: HttpRequest, params: dict[str, list[str]], model: type[Model], model_admin: ModelAdmin
     ) -> None: ...
     def has_output(self) -> bool: ...
-    def choices(self, changelist: ChangeList) -> Iterator[_ListFilterChoices]: ...
+    def choices(self, changelist: ChangeList) -> Iterator[Mapping[str, object]]: ...
     def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet | None: ...
     def expected_parameters(self) -> list[str | None]: ...
 
@@ -39,10 +39,15 @@ class FacetsMixin:
     def get_facet_queryset(self, changelist: ChangeList) -> dict[str, int]: ...
 
 class SimpleListFilter(FacetsMixin, ListFilter):
+    # SimpleListFilter stores scalar str values (see value() and get_facet_counts())
+    used_parameters: dict[str, str]  # type: ignore[assignment]
+
     parameter_name: str | None
     lookup_choices: list[tuple[str, _StrOrPromise]]
     def value(self) -> str | None: ...
     def lookups(self, request: HttpRequest, model_admin: ModelAdmin) -> Iterable[tuple[str, _StrOrPromise]] | None: ...
+    @override
+    def choices(self, changelist: ChangeList) -> Iterator[_ListFilterChoices]: ...
 
 class FieldListFilter(FacetsMixin, ListFilter):
     list_separator: ClassVar[str]
@@ -52,7 +57,7 @@ class FieldListFilter(FacetsMixin, ListFilter):
         self,
         field: Field,
         request: HttpRequest,
-        params: dict[str, str],
+        params: dict[str, list[str]],
         model: type[Model],
         model_admin: ModelAdmin,
         field_path: str,
@@ -66,11 +71,13 @@ class FieldListFilter(FacetsMixin, ListFilter):
         cls,
         field: Field,
         request: HttpRequest,
-        params: dict[str, str],
+        params: dict[str, list[str]],
         model: type[Model],
         model_admin: ModelAdmin,
         field_path: str,
     ) -> FieldListFilter: ...
+    @override
+    def choices(self, changelist: ChangeList) -> Iterator[_ListFilterChoices]: ...
 
 class RelatedFieldListFilter(FieldListFilter):
     lookup_kwarg: str

@@ -1,12 +1,10 @@
 from collections.abc import Iterable
-from functools import cached_property
 from html.parser import HTMLParser
 from json import JSONEncoder
 from re import Pattern
 from typing import Any, overload
 
-from _typeshed import Incomplete
-from django.utils.functional import SimpleLazyObject, _StrOrPromise
+from django.utils.functional import SimpleLazyObject, _StrOrPromise, cached_property
 from django.utils.safestring import SafeData, SafeString
 from typing_extensions import deprecated, override
 
@@ -30,7 +28,7 @@ def format_html_join(sep: str, format_string: str, args_generator: Iterable[Iter
 def linebreaks(value: Any, autoescape: bool = False) -> str: ...
 
 class MLStripper(HTMLParser):
-    fed: Any
+    fed: list[str]
     def __init__(self) -> None: ...
     @override
     def handle_data(self, d: str) -> None: ...
@@ -43,17 +41,15 @@ class MLStripper(HTMLParser):
 def strip_tags(value: str) -> str: ...
 def strip_spaces_between_tags(value: str) -> str: ...
 def smart_urlquote(url: str) -> str: ...
-def urlize(text: str, trim_url_limit: int | None = None, nofollow: bool = False, autoescape: bool = False) -> str: ...
-def avoid_wrapping(value: str) -> str: ...
-def html_safe(klass: type) -> type: ...
 
 class CountsDict(dict[str, Any]):
+    word: str
     def __init__(self, *args: Any, word: str, **kwargs: Any) -> None: ...
     def __missing__(self, key: str) -> Any: ...
 
 class Urlizer:
     trailing_punctuation_chars: str
-    wrapping_punctuation: Incomplete
+    wrapping_punctuation: list[tuple[str, str]]
     word_split_re: Pattern[str] | SimpleLazyObject
     simple_url_re: Pattern[str] | SimpleLazyObject
     simple_url_2_re: Pattern[str] | SimpleLazyObject
@@ -61,21 +57,21 @@ class Urlizer:
     url_template: str
     def __call__(
         self,
-        text: Incomplete,
-        trim_url_limit: Incomplete | None = None,
+        text: _StrOrPromise | SafeData,
+        trim_url_limit: int | None = None,
         nofollow: bool = False,
         autoescape: bool = False,
-    ) -> Incomplete: ...
+    ) -> str: ...
     def handle_word(
         self,
-        word: Incomplete,
+        word: str,
         *,
-        safe_input: Incomplete,
-        trim_url_limit: Incomplete | None = None,
+        safe_input: bool,
+        trim_url_limit: int | None = None,
         nofollow: bool = False,
         autoescape: bool = False,
-    ) -> Incomplete: ...
-    def trim_url(self, x: str, *, limit: int | None) -> Incomplete: ...
+    ) -> str: ...
+    def trim_url(self, x: str, *, limit: int | None) -> str: ...
     def trim_punctuation(self, word: str) -> tuple[str, str, str]: ...
     @staticmethod
     def is_email_simple(value: str) -> bool: ...
@@ -87,3 +83,9 @@ class Urlizer:
     def trailing_punctuation_chars_has_semicolon(self) -> bool: ...
 
 urlizer: Urlizer
+
+def urlize(
+    text: _StrOrPromise | SafeData, trim_url_limit: int | None = None, nofollow: bool = False, autoescape: bool = False
+) -> str: ...
+def avoid_wrapping(value: str) -> str: ...
+def html_safe(klass: type) -> type: ...

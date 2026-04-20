@@ -12,9 +12,10 @@ class Stylesheet:
     def __init__(
         self,
         url: str,
-        mimetype: str = ...,
-        media: str = ...,
+        mimetype: str = "",
+        media: str = "screen",
     ) -> None: ...
+    media: str
     @property
     def url(self) -> str: ...
     @property
@@ -28,17 +29,17 @@ class SyndicationFeed:
         title: str,
         link: str,
         description: str | None,
-        language: str | None = ...,
-        author_email: str | None = ...,
-        author_name: str | None = ...,
-        author_link: str | None = ...,
-        subtitle: str | None = ...,
-        categories: tuple[str, str] | None = ...,
-        feed_url: str | None = ...,
-        feed_copyright: str | None = ...,
-        feed_guid: str | None = ...,
-        ttl: int | None = ...,
-        stylesheets: list[Stylesheet] | None = ...,
+        language: str | None = None,
+        author_email: str | None = None,
+        author_name: str | None = None,
+        author_link: str | None = None,
+        subtitle: str | None = None,
+        categories: tuple[str, str] | None = None,
+        feed_url: str | None = None,
+        feed_copyright: str | None = None,
+        feed_guid: str | None = None,
+        ttl: int | None = None,
+        stylesheets: list[Stylesheet] | None = None,
         **kwargs: Any,
     ) -> None: ...
     def add_item(
@@ -46,36 +47,36 @@ class SyndicationFeed:
         title: str,
         link: str,
         description: str,
-        author_email: str | None = ...,
-        author_name: str | None = ...,
-        author_link: str | None = ...,
-        pubdate: datetime.datetime | None = ...,
-        comments: str | None = ...,
-        unique_id: str | None = ...,
-        unique_id_is_permalink: bool | None = ...,
-        categories: Sequence[str | None] | None = ...,
-        item_copyright: str | None = ...,
-        ttl: int | None = ...,
-        updateddate: datetime.datetime | None = ...,
-        enclosures: list[Enclosure] | None = ...,
+        author_email: str | None = None,
+        author_name: str | None = None,
+        author_link: str | None = None,
+        pubdate: datetime.datetime | None = None,
+        comments: str | None = None,
+        unique_id: str | None = None,
+        unique_id_is_permalink: bool | None = None,
+        categories: Sequence[str | None] = (),
+        item_copyright: str | None = None,
+        ttl: int | None = None,
+        updateddate: datetime.datetime | None = None,
+        enclosures: list[Enclosure] | None = None,
         **kwargs: Any,
     ) -> None: ...
     def num_items(self) -> int: ...
-    def root_attributes(self) -> dict[Any, Any]: ...
+    def root_attributes(self) -> dict[str, str]: ...
     def add_root_elements(self, handler: SimplerXMLGenerator) -> None: ...
     def add_stylesheets(self, handler: SimplerXMLGenerator) -> None: ...
-    def item_attributes(self, item: dict[str, Any]) -> dict[Any, Any]: ...
+    def item_attributes(self, item: dict[str, Any]) -> dict[str, str]: ...
     def add_item_elements(
         self,
         handler: SimplerXMLGenerator,
         item: dict[str, Any],
     ) -> None: ...
-    def write(self, outfile: Any, encoding: Any) -> None: ...
+    def write(self, outfile: Any, encoding: str) -> None: ...  # Any: file-like object (IO[bytes])
     def writeString(self, encoding: str) -> str: ...
     def latest_post_date(self) -> datetime.datetime: ...
 
 class Enclosure:
-    length: Any
+    length: int | str
     mime_type: str
     url: str
     def __init__(self, url: str, length: int | str, mime_type: str) -> None: ...

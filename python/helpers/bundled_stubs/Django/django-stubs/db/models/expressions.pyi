@@ -16,6 +16,7 @@ from django.utils.deconstruct import _Deconstructible
 from django.utils.functional import cached_property
 from typing_extensions import Never, Self, override
 
+_OutputField = TypeVar("_OutputField", bound=Field, default=Field)
 _Numeric: TypeAlias = float | Decimal
 _ExprListCompatible: TypeAlias = Sequence[BaseExpression | F | str] | BaseExpression | F | str
 
@@ -186,7 +187,7 @@ class OuterRef(F):
     def __init__(self, name: str | OuterRef) -> None: ...
     def relabeled_clone(self, relabels: Any) -> Self: ...
 
-class Func(SQLiteNumericMixin, Expression):
+class Func(SQLiteNumericMixin, Expression, Generic[_OutputField]):
     @cached_property
     @override
     def allowed_default(self) -> bool: ...  # type: ignore[override]
@@ -196,7 +197,7 @@ class Func(SQLiteNumericMixin, Expression):
     arity: int | None
     source_expressions: list[Expression]
     extra: dict[Any, Any]
-    def __init__(self, *expressions: Any, output_field: Field | None = None, **extra: Any) -> None: ...
+    def __init__(self, *expressions: Any, output_field: _OutputField | None = None, **extra: Any) -> None: ...
     @override
     def as_sql(
         self,
@@ -311,13 +312,13 @@ class Case(Expression):
         **extra_context: Any,
     ) -> _AsSqlType: ...
 
-class Subquery(BaseExpression, Combinable):
+class Subquery(BaseExpression, Combinable, Generic[_OutputField]):
     template: str
     subquery: bool
     query: Query
     extra: dict[Any, Any]
     def __init__(
-        self, queryset: Query | QuerySet | Subquery, output_field: Field | None = None, **extra: Any
+        self, queryset: Query | QuerySet | Subquery, output_field: _OutputField | None = None, **extra: Any
     ) -> None: ...
     @property
     def external_aliases(self) -> set[str]: ...

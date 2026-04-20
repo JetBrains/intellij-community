@@ -3,7 +3,7 @@ from typing import Any, ClassVar
 from django.db import models
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Func, Transform
-from django.db.models.expressions import Combinable, Expression, Value
+from django.db.models.expressions import Combinable, Expression, Value, _OutputField
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from typing_extensions import override
 
@@ -36,9 +36,16 @@ class ConcatPair(Func):
 class Concat(Func):
     def __init__(self, *expressions: Any, **extra: Any) -> None: ...
 
-class Left(Func):
+class Left(Func[_OutputField]):
     output_field: ClassVar[models.CharField]
-    def __init__(self, expression: Combinable | str, length: Expression | int, **extra: Any) -> None: ...
+    def __init__(
+        self,
+        expression: Combinable | str,
+        length: Expression | int,
+        *,
+        output_field: _OutputField | None = None,
+        **extra: Any,
+    ) -> None: ...
     def get_substr(self) -> Substr: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
@@ -72,7 +79,7 @@ class Replace(Func):
 class Reverse(Transform):
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
-class Right(Left):
+class Right(Left[_OutputField]):
     @override
     def get_substr(self) -> Substr: ...
 
@@ -93,10 +100,16 @@ class StrIndex(Func):
         self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
     ) -> _AsSqlType: ...
 
-class Substr(Func):
+class Substr(Func[_OutputField]):
     output_field: ClassVar[models.CharField]
     def __init__(
-        self, expression: Combinable | str, pos: Expression | int, length: Expression | int | None = None, **extra: Any
+        self,
+        expression: Combinable | str,
+        pos: Expression | int,
+        length: Expression | int | None = None,
+        *,
+        output_field: _OutputField | None = None,
+        **extra: Any,
     ) -> None: ...
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 

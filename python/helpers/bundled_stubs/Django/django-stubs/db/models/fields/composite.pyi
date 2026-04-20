@@ -24,6 +24,7 @@ class CompositeAttribute:
 class CompositePrimaryKey(Field[Any, Any]):
     field_names: tuple[str]
     descriptor_class: type[CompositeAttribute]
+    column: None
     def __init__(
         self,
         *args: str,
@@ -62,5 +63,7 @@ class CompositePrimaryKey(Field[Any, Any]):
     def __len__(self) -> int: ...
     @override
     def get_pk_value_on_save(self, instance: Model) -> tuple: ...  # actual type is tuple of field.value_from_object
+    @override
+    def get_attname_column(self) -> tuple[str, None]: ...
 
 def unnest(fields: Iterable[Field[Any, Any]]) -> list[Field[Any, Any]]: ...

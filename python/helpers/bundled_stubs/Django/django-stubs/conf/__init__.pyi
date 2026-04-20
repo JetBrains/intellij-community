@@ -12,7 +12,7 @@ STATICFILES_STORAGE_ALIAS: Literal["staticfiles"]
 
 # required for plugin to be able to distinguish this specific instance of LazySettings from others
 @type_check_only
-class _DjangoConfLazyObject(LazyObject):
+class _DjangoConfLazyObject(LazyObject[Any]):
     @override
     def __getattr__(self, item: Any) -> Any: ...
 
