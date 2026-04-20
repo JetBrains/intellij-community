@@ -39,9 +39,6 @@ abstract class TypeEvalContext protected constructor() {
   @ApiStatus.Internal
   abstract fun hasAssumptions(): Boolean
 
-  @ApiStatus.Internal
-  abstract fun isKnown(element: PyTypedElement): Boolean
-
   abstract fun getType(element: PyTypedElement): PyType?
 
   abstract fun getReturnType(callable: PyCallable): PyType?

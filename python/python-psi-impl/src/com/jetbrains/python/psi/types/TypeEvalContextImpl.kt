@@ -134,11 +134,6 @@ open class TypeEvalContextImpl internal constructor(
     return this is AssumptionContext
   }
 
-  @ApiStatus.Internal
-  override fun isKnown(element: PyTypedElement): Boolean {
-    return getKnownType(element) != null
-  }
-
   override fun getKnownType(element: PyTypedElement): PyType? {
     if (element is PyInstantTypeProvider) {
       return element.getType(this, KeyImpl)
