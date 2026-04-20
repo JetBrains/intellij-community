@@ -36,8 +36,6 @@ jvm_library(
   module_name = "intellij.python.community",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = glob(["testResources/**/*"]),
-  resource_strip_prefix = "testResources",
   exports = [
     "//python/python-psi-api:psi",
     "//python/python-psi-api:psi_test_lib",
