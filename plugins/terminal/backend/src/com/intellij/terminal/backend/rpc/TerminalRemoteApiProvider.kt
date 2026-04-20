@@ -1,25 +1,9 @@
 package com.intellij.terminal.backend.rpc
 
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import fleet.rpc.remoteApiDescriptor
-import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentsApi
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
-import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 
 internal class TerminalRemoteApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<TerminalTabsManagerApi>()) {
-      TerminalTabsManagerApiImpl()
-    }
-    remoteApi(remoteApiDescriptor<TerminalSessionApi>()) {
-      TerminalSessionApiImpl()
-    }
-    remoteApi(remoteApiDescriptor<TerminalAgentsApi>()) {
-      TerminalAgentsApiImpl()
-    }
-    remoteApi(remoteApiDescriptor<TerminalShellsDetectionApi>()) {
-      TerminalShellsDetectionApiImpl()
-    }
+    // todo: add new RPC implementations for backend-dependent terminal features
   }
 }

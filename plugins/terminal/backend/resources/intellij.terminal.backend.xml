@@ -6,17 +6,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.frontend.session.rpc.TerminalRemoteApiProvider"/>
-
-    <projectService serviceInterface="com.intellij.terminal.frontend.session.TerminalPortForwardingManager" open="true"
-                    serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoPortForwardingManager"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfoService"
-                        serviceImplementation="com.intellij.terminal.frontend.session.hyperlinks.BackendHyperlinkInfoServiceImpl"/>
-    <applicationService serviceImplementation="com.intellij.terminal.frontend.session.rpc.TerminalInputChannelsManager"
-                        client="remote"/>
-    <applicationService serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker" open="true"
-                        serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"/>
-    <projectSettings service="com.intellij.terminal.frontend.session.TerminalTabsStorage"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
