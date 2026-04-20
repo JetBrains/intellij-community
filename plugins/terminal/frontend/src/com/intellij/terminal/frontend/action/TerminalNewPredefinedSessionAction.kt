@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.project.projectId
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +23,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
-import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import javax.swing.Icon
@@ -76,8 +75,7 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
   }
 
   private suspend fun detectShells(project: Project): List<AnAction> {
-    // Fetch shells from the backend
-    val detectionResult = TerminalShellsDetectionApi.getInstance().detectShells(project.projectId())
+    val detectionResult = TerminalShellsDetectionService.detectShells(project)
     val shellEnvironments = detectionResult.environments.filter { it.shells.isNotEmpty() }
     return when {
       shellEnvironments.isEmpty() -> emptyList()
