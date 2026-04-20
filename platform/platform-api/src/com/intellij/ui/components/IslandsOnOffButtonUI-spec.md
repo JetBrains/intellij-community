@@ -140,11 +140,7 @@ Islands resolves all colors via `JBColor.namedColor("ToggleButton.*")` backed by
 
 ## 7. UI Delegate Registration
 
-In both `ManyIslandsLight.theme.json` and `ManyIslandsDark.theme.json`:
-
-```json
-"OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI"
-```
+Registered programmatically by `IslandsUICustomization.applyMissingKeys()` whenever Islands mode is enabled (`IslandsState.isEnabled()`). The delegate class name is injected into `UIManager` defaults as `"OnOffButtonUI"` if not already set by the theme, so any Islands-enabled theme — including custom themes — gets the Islands toggle automatically without explicit JSON configuration.
 
 ---
 
@@ -162,7 +158,8 @@ In both `ManyIslandsLight.theme.json` and `ManyIslandsDark.theme.json`:
 ### Files modified
 
 - `community/platform/platform-impl/src/com/intellij/ide/ui/laf/darcula/ui/IslandsOnOffButtonUI.kt` — UI delegate
-- `community/platform/platform-resources/src/themes/islands/ManyIslandsLight.theme.json` — token aliases + UI registration
-- `community/platform/platform-resources/src/themes/islands/ManyIslandsDark.theme.json` — token aliases + UI registration
+- `community/platform/platform-impl/src/com/intellij/openapi/application/impl/islands/IslandsUICustomization.kt` — programmatic UI delegate registration
+- `community/platform/platform-resources/src/themes/islands/ManyIslandsLight.theme.json` — token aliases
+- `community/platform/platform-resources/src/themes/islands/ManyIslandsDark.theme.json` — token aliases
 - `community/platform/platform-resources/src/themes/metadata/IntelliJPlatform.themeMetadata.json` — 11 new keys (`since: 2026.2`)
 - `community/platform/platform-impl/internal/src/com/intellij/internal/ui/sandbox/components/OnOffButtonPanel.kt` — updated sandbox demo

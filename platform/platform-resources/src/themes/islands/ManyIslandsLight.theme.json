@@ -1107,8 +1107,6 @@
       "warningForeground": "text-default"
     },
 
-    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
-
     "ToggleButton": {
       "onBackground": "toggle-on-bg",
       "offBackground": "toggle-off-bg",

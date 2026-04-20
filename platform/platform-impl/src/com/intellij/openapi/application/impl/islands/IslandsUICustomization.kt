@@ -336,9 +336,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun applyMissingKeys() {
-    if (IslandsState.isCustomEnabled()) {
-      val uiDefaults = UIManager.getLookAndFeelDefaults()
+    val uiDefaults = UIManager.getLookAndFeelDefaults()
+    if (uiDefaults["OnOffButtonUI"] == null) {
+      uiDefaults["OnOffButtonUI"] = "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI"
+    }
 
+    if (IslandsState.isCustomEnabled()) {
       uiDefaults["MainToolbar.borderColor"] = Gray.TRANSPARENT
       uiDefaults["ToolWindow.borderColor"] = Gray.TRANSPARENT
       uiDefaults["ToolWindow.Stripe.borderColor"] = Gray.TRANSPARENT
