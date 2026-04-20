@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
@@ -182,6 +183,14 @@ class PyInlineFunctionProcessor(
 
     val reassignedParams = mutableSetOf<String>()
     myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
+      override fun visitPyFunction(node: PyFunction) {
+        // Do not recurse into nested functions — their locals are in a different scope
+      }
+
+      override fun visitPyClass(node: PyClass) {
+        // Do not recurse into nested classes — their locals are in a different scope
+      }
+
       override fun visitPyTargetExpression(node: PyTargetExpression) {
         if (!node.isQualified) {
           node.name?.let { reassignedParams.add(it) }
