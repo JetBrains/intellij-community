@@ -2,7 +2,9 @@
 package fleet.rpc.core
 
 import fleet.rpc.RemoteApi
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Deprecated("use fleet.rpc.core.RemoteResource")
 interface RemoteObject : RemoteApi<Unit> {
   /**

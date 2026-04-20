@@ -5,7 +5,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 data class FailureInfo(
   val authenticationError: String? = null,
@@ -19,6 +21,7 @@ data class FailureInfo(
   val serviceNotReady: String? = null,
 )
 
+@ApiStatus.Internal
 fun Throwable.toFailureInfo(): FailureInfo {
   return when (this) {
     is AssumptionsViolatedException -> FailureInfo(conflict = stackTraceToString())
@@ -27,6 +30,7 @@ fun Throwable.toFailureInfo(): FailureInfo {
   }
 }
 
+@ApiStatus.Internal
 fun FailureInfo.message(): String {
   val s = when {
     this.authenticationError != null -> this.authenticationError
@@ -51,6 +55,7 @@ internal fun rpcStreamFailureMessage(displayName: String, message: String): Stri
   return "Remote channel <${displayName}> was closed with error: $message"
 }
 
+@ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class RpcException(
   message: String,

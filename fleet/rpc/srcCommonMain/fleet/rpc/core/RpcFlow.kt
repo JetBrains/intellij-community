@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 @Serializable(with=RpcFlow.Serializer::class)
 data class RpcFlow<T> internal constructor(internal val flow: Flow<T>) {
   companion object {
@@ -29,12 +31,16 @@ data class RpcFlow<T> internal constructor(internal val flow: Flow<T>) {
   fun toFlow(): Flow<T> = flow
 }
 
+
+@ApiStatus.Internal
 class FlowScope(val scope: CoroutineScope): CoroutineContext.Element {
   companion object: CoroutineContext.Key<FlowScope>
 
   override val key: CoroutineContext.Key<*> get() = FlowScope
 }
 
+@ApiStatus.Internal
 suspend fun<T> Flow<T>.toRpc(): RpcFlow<T> = toRpc(currentCoroutineContext())
 
+@ApiStatus.Internal
 fun<T> Flow<T>.toRpc(context: CoroutineContext): RpcFlow<T> = RpcFlow(flowOn(context.minusKey(Job)))

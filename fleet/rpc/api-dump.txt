@@ -37,3 +37,11 @@ f:fleet.rpc.client.UnresolvedServiceException
 - fleet.rpc.client.RpcClientException
 - kotlinx.coroutines.CopyableThrowable
 - createCopy():fleet.rpc.client.UnresolvedServiceException
+f:fleet.rpc.core.Blob
+- sf:Companion:fleet.rpc.core.Blob$Companion
+- <init>(B[]):V
+- equals(java.lang.Object):Z
+- f:getBytes():B[]
+- hashCode():I
+f:fleet.rpc.core.Blob$Companion
+- f:serializer():kotlinx.serialization.KSerializer
