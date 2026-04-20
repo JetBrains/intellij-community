@@ -48,7 +48,6 @@ class AndroidStudioProperties : ProductProperties() {
       "intellij.vcs.hg",
       // Bundle the ML completion ranking plugins, just like IntelliJ IDEA does (b/456525685).
       "intellij.completionMlRanking",
-      "intellij.turboComplete",
       // Android Studio: package CIDR plugins.
       "intellij.cidr.clangd",
       "intellij.c",
