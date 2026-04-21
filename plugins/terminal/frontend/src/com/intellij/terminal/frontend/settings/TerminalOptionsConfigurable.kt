@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
@@ -24,13 +25,23 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withFileToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.rpc.topics.broadcast
@@ -142,7 +153,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
     return panel {
       lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
-      val shellPathField: TextFieldWithHistoryWithBrowseButton = createShellPathField()
+      val shellPathField: TextFieldWithHistoryWithBrowseButton = createShellPathField(project)
 
       panel {
         row {
@@ -243,17 +254,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }.visibleIf(newUiPredicate())
 
       group(message("settings.terminal.project.settings")) {
-        row(message("settings.start.directory")) {
-          textFieldWithBrowseButton(
-            FileChooserDescriptorFactory.createSingleFolderDescriptor().withDescription(message("settings.start.directory.browseFolder.description")),
-            project,
-          ).setupDefaultValue( { childComponent }, projectOptionsProvider.defaultStartingDirectory)
-            .bindText(
-              getter = { projectOptionsProvider.startingDirectory ?: projectOptionsProvider.defaultStartingDirectory ?: "" },
-              setter = { projectOptionsProvider.startingDirectory = it },
-            )
-            .align(AlignX.FILL)
-        }
+        workingDirectoryField(project)
+
         row(message("settings.environment.variables")) {
           cell(EnvironmentVariablesTextFieldWithBrowseButton(project))
             .bind(
@@ -456,10 +458,31 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     blockTerminalConfigurables.drop()
   }
 
-  private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
+  private fun createShellPathField(project: Project): TextFieldWithHistoryWithBrowseButton {
+    val eelDescriptor = project.getEelDescriptor()
+    val fileChooserDescriptor = FileChooserDescriptorFactory
+      .singleFile()
+      .withDescription(message("settings.terminal.shell.executable.path.browseFolder.description"))
+      .withEelRoot(eelDescriptor)
+      .withFileToTextConvertor { virtualFile ->
+        // We assume that shell path is relative to the EEL root (without `\\wsl.localhost\<name>\` prefix and so on)
+        @Suppress("HardCodedStringLiteral")
+        virtualFile.toNioPath().asEelPath().toString()
+      }
+      .withTextToPathConvertor { text ->
+        val eelPath = try {
+          EelPath.parse(text, eelDescriptor)
+        }
+        catch (_: EelPathException) {
+          null
+        }
+        @Suppress("HardCodedStringLiteral")
+        eelPath?.asNioPath()?.toString() ?: text
+      }
+
     val shellPathField = textFieldWithHistoryWithBrowseButton(
       project,
-      FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
+      fileChooserDescriptor,
       historyProvider = {
         runWithModalProgressBlocking(project, "") {
           detectAvailableShellCommandLines(project)
@@ -475,8 +498,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   }
 
   private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
-    // Use shells detector directly because this code is executed on the backend.
-    // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
     return TerminalShellsDetectionService.detectShells(project)
       .environments
       .flatMap { it.shells }
@@ -491,6 +512,39 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         ParametersListUtil.join(shellCommand)
       }
   }
+}
+
+private fun Panel.workingDirectoryField(project: Project) {
+  row(message("settings.start.directory")) {
+    val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
+    val fileChooserDescriptor = FileChooserDescriptorFactory
+      .singleDir()
+      .withDescription(message("settings.start.directory.browseFolder.description"))
+      .withEelRoot(project.getEelDescriptor())
+
+    textFieldWithBrowseButton(fileChooserDescriptor, project)
+      .setupDefaultValue({ childComponent }, projectOptionsProvider.defaultStartingDirectory)
+      .bindText(
+        getter = { projectOptionsProvider.startingDirectory ?: projectOptionsProvider.defaultStartingDirectory ?: "" },
+        setter = { projectOptionsProvider.startingDirectory = it },
+      )
+      .align(AlignX.FILL)
+  }
+}
+
+/**
+ * Applicable only to the remote EEL scenario - we need to limit the file lookup to the remote environment.
+ * Do not add any filter in the local scenario.
+ */
+private fun FileChooserDescriptor.withEelRoot(eelDescriptor: EelDescriptor): FileChooserDescriptor {
+  if (eelDescriptor == LocalEelDescriptor) {
+    return this
+  }
+  return if (eelDescriptor is EelPathBoundDescriptor) {
+    val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(eelDescriptor.rootPath)
+    if (root != null) withRoots(root) else this
+  }
+  else this
 }
 
 private fun Panel.applicationTitleSettings(options: TerminalOptionsProvider) {
