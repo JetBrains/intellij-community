@@ -138,7 +138,7 @@ object TerminalShellsDetectionUtil {
   }
 
   private suspend fun EelFileSystemApi.isRegularFile(path: EelPath): Boolean {
-    return stat(path).justResolve().eelIt().getOrNull()?.type is EelFileInfo.Type.Regular
+    return stat(path).resolveAndFollow().eelIt().getOrNull()?.type is EelFileInfo.Type.Regular
   }
 
   private fun EelPath.startsWithIgnoreCase(path: String): Boolean {

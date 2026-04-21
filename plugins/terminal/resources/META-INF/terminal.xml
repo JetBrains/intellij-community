@@ -158,6 +158,7 @@
     <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
 
     <shellsDetector implementation="org.jetbrains.plugins.terminal.shellDetection.LocalProjectShellsDetector"/>
+    <shellsDetector implementation="org.jetbrains.plugins.terminal.shellDetection.RemoteProjectShellsDetector"/>
   </extensions>
 
   <extensionPoints>
