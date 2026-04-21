@@ -49,7 +49,6 @@ internal class InlineCompletionTooltipProvokerMouseMotionListener : EditorMouseM
     return when (InlineCompletionEditorType.get(editor)) {
       InlineCompletionEditorType.TERMINAL,
       InlineCompletionEditorType.MAIN_EDITOR,
-        -> true
       InlineCompletionEditorType.XDEBUGGER,
       InlineCompletionEditorType.COMMIT_MESSAGES,
       InlineCompletionEditorType.AI_ASSISTANT_CHAT_INPUT,
