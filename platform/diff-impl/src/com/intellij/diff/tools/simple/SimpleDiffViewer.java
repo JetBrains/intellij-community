@@ -150,6 +150,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> diffActions = new ArrayList<>();
     diffActions.add(new MyToggleExpandByDefaultAction());
+    diffActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
     diffActions.add(new MyToggleAutoScrollAction());
     diffActions.addAll(myTextDiffProvider.getDiffSettingsActions());
     myEditorSettingsAction.setDiffActions(diffActions);
@@ -168,6 +169,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected @NotNull List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>();
     group.add(new MyToggleExpandByDefaultAction());
+    group.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
     group.add(new MyToggleAutoScrollAction());
     group.addAll(myTextDiffProvider.getDiffSettingsActions());
 
