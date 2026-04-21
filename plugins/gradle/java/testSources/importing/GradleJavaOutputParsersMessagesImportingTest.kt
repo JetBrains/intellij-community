@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.roots.ui.configuration.actions.ChangeModuleNamesAction
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -199,9 +198,13 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
     assertBuildViewSelectedNode("Could Not Resolve junit:junit:4.12 because no repositories are defined",
                                 """
-                                |Execution failed for task ':compileTestJava'.
+                                |Execution failed for task ':compileTestJava'$taskSourceSuffix.
                                 |> Could not resolve all files for configuration ':testCompileClasspath'.
                                 |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
                                 |     Required by:
@@ -285,8 +288,12 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
     assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99", """
-      |Execution failed for task ':compileTestJava'.
+      |Execution failed for task ':compileTestJava'$taskSourceSuffix.
       |> Could not resolve all files for configuration ':testCompileClasspath'.
       |   > Could not resolve junit:junit:99.99.
       |     Required by:
@@ -375,8 +382,12 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
     assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99",
-                                """Execution failed for task ':compileTestJava'.
+                                """Execution failed for task ':compileTestJava'$taskSourceSuffix.
                                 |> Could not resolve all files for configuration ':testCompileClasspath'.
                                 |   > Could not find junit:junit:99.99.
                                 |     Searched in the following locations:

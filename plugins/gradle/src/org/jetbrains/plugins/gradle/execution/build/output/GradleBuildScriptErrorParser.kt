@@ -51,6 +51,8 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     val parentId: Any
     if (reason.startsWith("Execution failed for task '")) {
       parentId = reason.substringAfter("Execution failed for task '").substringBefore("'.")
+        .substringBefore("' (registered in build file")
+        .substringBefore("' (registered by plugin class")
     }
     else {
       parentId = reader.parentEventId

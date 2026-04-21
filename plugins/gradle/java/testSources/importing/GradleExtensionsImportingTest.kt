@@ -71,6 +71,10 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
         // org.gradle.testing.base.internal.DefaultTestingExtension was replaced by org.gradle.testing.base.TestingExtension
         put("testing", "org.gradle.testing.base.TestingExtension")
       }
+      if (isGradleAtLeast("9.5.0")) {
+        remove("base", "org.gradle.api.plugins.internal.DefaultBasePluginExtension")
+        put("base", "org.gradle.api.plugins.BasePluginExtension")
+      }
     }
 
     Assertions.assertThat(actualExtensionMap)
