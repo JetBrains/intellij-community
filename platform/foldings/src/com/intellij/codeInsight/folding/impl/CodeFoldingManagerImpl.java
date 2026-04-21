@@ -126,7 +126,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @RequiresReadLock
   static PsiFile getPsiFileForFolding(@NotNull Project project, @NotNull Document document) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile == null || !psiFile.isValid() || !psiFile.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (psiFile == null || !psiFile.isValid()) {
       return null;
     }
     if (psiFile instanceof PsiCompiledFile compiled) {
