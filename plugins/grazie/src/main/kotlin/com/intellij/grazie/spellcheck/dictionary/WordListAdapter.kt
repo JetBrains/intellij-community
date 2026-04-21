@@ -37,7 +37,16 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
 
   override fun suggest(word: String): LinkedHashSet<String> {
     val result = LinkedHashSet<String>()
-    for (dictionary in dictionaries.values) {
+    suggest(result, word, dictionaries.values)
+    suggest(result, word, GrazieConfig.get().dictionaries)
+
+    result.addAll(aggregator.suggest(word))
+    result.remove("")
+    return result
+  }
+
+  private fun suggest(result: LinkedHashSet<String>, word: String, dictionaries: Collection<Dictionary>) {
+    for (dictionary in dictionaries) {
       dictionary.consumeSuggestions(word) {
         if (it.isEmpty()) {
           return@consumeSuggestions
@@ -48,9 +57,5 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
         }
       }
     }
-
-    result.addAll(aggregator.suggest(word))
-    result.remove("")
-    return result
   }
 }

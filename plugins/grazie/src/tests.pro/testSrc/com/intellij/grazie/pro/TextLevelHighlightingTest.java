@@ -53,7 +53,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
   @NeedsCloud
   @Test
   public void testGermanSentenceCapitalization() {
-    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getTestRootDisposable());
     myFixture.configureByText("a.md", """
       Sehr geehrte Damen und Herren,
       
@@ -80,7 +80,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
   @NeedsCloud
   @Test
   public void testJavadocSentenceCapitalization() {
-    HighlightingTest.enableLanguages(Set.of(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN), getTestRootDisposable());
     myFixture.configureByText("a.java", """
       /**
        * A capitalized sentence.
@@ -245,7 +245,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
   @NeedsCloud
   @Test
   public void testGermanGender() {
-    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getTestRootDisposable());
     myFixture.configureByText("a.txt", """
       Viele <STYLE_SUGGESTION descr="Grazie.RuleEngine.De.Style.GENDERN_STYLE"><caret>ArbeiterInnen</STYLE_SUGGESTION>
       und <STYLE_SUGGESTION>Schüler*innen</STYLE_SUGGESTION> waren da.
@@ -358,7 +358,7 @@ public class TextLevelHighlightingTest extends BaseTestCase {
   @NeedsCloud
   @Test
   public void testMassApplyActionConsidersTextLevelIssues() {
-    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getTestRootDisposable());
 
     // text level problem is not selected
     myFixture.configureByText("a.java", """

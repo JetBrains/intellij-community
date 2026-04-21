@@ -16,6 +16,7 @@ import ai.grazie.spell.language.LanguageModel
 import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
 import ai.grazie.utils.mpp.Resources
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.async.WordListLoader
 import com.intellij.grazie.spellcheck.dictionary.ExtendedWordListWithFrequency
 import com.intellij.grazie.spellcheck.dictionary.WordListAdapter
@@ -228,10 +229,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
 
       override fun iterator(): Iterator<RuleDictionary> {
         val replacingRules = mutableSetOf(IgnoreRuleDictionary.standard(tooShortLength = 2), enDictionary.ruleDictionary!!)
-        val hunspellReplacingRules = dictionaryNames
-          .map { adapter.getDictionary(it) }
-          .mapNotNull { (it as? HunspellDictionary)?.ruleDictionary }
-          .toSet()
+        val hunspellReplacingRules = GrazieConfig.get().dictionaries.mapNotNull { it.ruleDictionary }
         return (replacingRules + hunspellReplacingRules).iterator()
       }
     }

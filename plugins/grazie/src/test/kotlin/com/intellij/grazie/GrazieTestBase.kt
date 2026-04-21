@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
-import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.rules.settings.TextStyle
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.grazie.grammar.LanguageToolChecker
@@ -21,10 +20,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -63,15 +60,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, disposable)
     }
 
-    fun loadLangs(langs: Collection<Lang>, project: Project) {
-      langs.filter { it in hunspellLangs }.forEach { loadLang(it, project) }
+    fun loadLangs(langs: Collection<Lang>, disposable: Disposable) {
+      langs.filter { it in hunspellLangs }.forEach { loadLang(it, disposable) }
     }
 
-    fun unloadLangs(project: Project) {
-      hunspellLangs.forEach { unloadLang(it.iso, project) }
-    }
-
-    private fun loadLang(lang: Lang, project: Project) {
+    private fun loadLang(lang: Lang, disposable: Disposable) {
       val zipPath = PathManager.getResourceRoot(
         PathManager::class.java.classLoader,
         "dictionary/${lang.iso.name.lowercase()}.aff"
@@ -86,16 +79,8 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       val outputDir = GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.storageName)
       Files.createDirectories(outputDir)
       ZipUtil.extract(zip, outputDir, HunspellDescriptor.filenameFilter())
-      getInstance(project).spellChecker!!.addDictionary(lang.dictionary!!)
-    }
-
-    private fun unloadLang(iso: LanguageISO, project: Project) {
-      val lang = Lang.entries.find { it.iso == iso }!!
-      getInstance(project).removeDictionary(getDictionaryPath(lang))
-    }
-
-    private fun getDictionaryPath(lang: Lang): String {
-      return GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.file).toString()
+      lang.dictionary!! // pre initialize dictionary
+      Disposer.register(disposable) { NioFiles.deleteRecursively(outputDir) }
     }
   }
 
@@ -118,7 +103,6 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     try {
       GrazieConfig.update { GrazieConfig.State() }
       service<GrazieCheckers>().awaitConfiguration()
-      unloadLangs(project)
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -136,7 +120,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   ) {
     // Load langs manually to prevent potential deadlock
     val enabledLanguages = languages + GrazieConfig.get().enabledLanguages
-    loadLangs(enabledLanguages, project)
+    loadLangs(enabledLanguages, testRootDisposable)
 
     GrazieConfig.update { state ->
       val checkingContext = state.checkingContext.copy(

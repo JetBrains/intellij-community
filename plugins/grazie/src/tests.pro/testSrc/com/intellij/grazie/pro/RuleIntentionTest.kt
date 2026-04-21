@@ -46,7 +46,7 @@ class RuleIntentionTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test newline in the quick fix`() {
-    HighlightingTest.enableLanguages(setOf(Lang.GERMANY_GERMAN), project, testRootDisposable)
+    HighlightingTest.enableLanguages(setOf(Lang.GERMANY_GERMAN), testRootDisposable)
     myFixture.configureByText("a.md", "Beste Weihnachtsg<caret>rüße, Alex")
     myFixture.doHighlighting()
     val intentionTexts = availableIntentions.map { it.text }
@@ -153,7 +153,7 @@ class RuleIntentionTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test use Oxford spelling fix from GB`() {
-    HighlightingTest.enableLanguages(setOf(Lang.BRITISH_ENGLISH), project, testRootDisposable)
+    HighlightingTest.enableLanguages(setOf(Lang.BRITISH_ENGLISH), testRootDisposable)
     assertFalse(GrazieConfig.get().useOxfordSpelling)
 
     myFixture.configureByText("a.txt",
