@@ -13,6 +13,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -51,9 +52,9 @@ internal object TerminalAgentResolver {
   }
 
   private fun isAgentsResolutionAvailable(eelDescriptor: EelDescriptor): Boolean {
-    // Allow only for the local env at the moment.
+    // Allow only for the local env and RemDev scenario at the moment.
     // WSL and Docker require special handling, so they are postponed.
-    return eelDescriptor is LocalEelDescriptor
+    return eelDescriptor is LocalEelDescriptor || IdeProductMode.isFrontend
   }
 
   @VisibleForTesting
@@ -134,7 +135,7 @@ internal object TerminalAgentResolver {
   }
 
   private suspend fun EelFileSystemApi.isRegularFile(path: EelPath): Boolean {
-    return stat(path, EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrNull()?.type is EelFileInfo.Type.Regular
+    return stat(path, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW).getOrNull()?.type is EelFileInfo.Type.Regular
   }
 
   private const val HOME_MARKER: String = $$"$HOME"

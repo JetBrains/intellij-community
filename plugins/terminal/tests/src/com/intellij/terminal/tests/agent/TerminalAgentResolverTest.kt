@@ -393,7 +393,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
 
     val fileSystem = mock<EelFileSystemApi>()
     whenever(fileSystem.user).thenReturn(userInfo)
-    whenever(fileSystem.stat(any(), eq(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE))).thenAnswer { invocation ->
+    whenever(fileSystem.stat(any(), eq(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW))).thenAnswer { invocation ->
       val path = invocation.getArgument<EelPath>(0).toString()
       if (path in existingFiles) regularFileResult else missingFileResult
     }
