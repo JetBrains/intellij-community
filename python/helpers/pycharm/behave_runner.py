@@ -10,6 +10,7 @@ See https://pythonhosted.org/behave/behave.html#tag-expression
 
 import functools
 import glob
+import importlib.machinery
 import re
 import sys
 import traceback
@@ -25,6 +26,7 @@ from _jb_utils import VersionAgnosticUtils
 
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
+_EXT_SUFFIXES = tuple(importlib.machinery.EXTENSION_SUFFIXES)  # .pyd, .so, ABI-tagged variants
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -244,10 +246,19 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         # directories. And since we then clear step registry, there's no way to
         # get those steps back without reimport. So we clear up the modules that
         # were imported during the dry run to support such scenario.
+        # C-extension modules (.pyd / .so) must be skipped: their initializers
+        # register types in process-global registries (e.g. pybind11), so
+        # reimporting them raises "type X is already registered". Step decorators
+        # only live in pure-Python modules, so skipping extensions is safe.
         new_modules = sys.modules.copy()
         for module in new_modules.keys():
-            if module not in old_modules:
-                del sys.modules[module]
+            if module in old_modules:
+                continue
+            mod = sys.modules.get(module)
+            path = getattr(mod, '__file__', None)
+            if path and path.endswith(_EXT_SUFFIXES):
+                continue
+            del sys.modules[module]
         features_to_run = self.__real_runner.features
         self.__real_runner.clean()  # To make sure nothing left after dry run
 
