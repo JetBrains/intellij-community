@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.setToolTipText
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -32,6 +33,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -72,6 +74,7 @@ import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -272,7 +275,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .align(AlignX.FILL)
         }
         row(message("settings.environment.variables")) {
-          cell(EnvironmentVariablesTextFieldWithBrowseButton())
+          cell(EnvironmentVariablesTextFieldWithBrowseButton(project))
             .bind(
               componentGet = { component -> component.data },
               componentSet = { component, data -> component.data = data },
@@ -427,7 +430,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             // Other ways of filtering the Keymap actions tree don't work reliably.
             val dataContext = DataManager.getInstance().getDataContext(e.getSource() as? ActionLink)
             openKeymapPageAndSelectAction(dataContext, "Terminal.CommandCompletion.Invoke")
-          }).apply { toolTipText = message("settings.keymap.plugins.terminal") })
+          }).apply { setToolTipText(HtmlChunk.text(message("settings.keymap.plugins.terminal"))) })
         }
         row {
           checkBox(message("settings.shell.integration"))
@@ -485,7 +488,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     )
     shellPathField.childComponent.setEditor(object : BasicComboBoxEditor() {
       override fun createEditorComponent(): JTextField = JBTextField().also {
-        it.border = null
+        it.border = JBUI.Borders.empty()
       }
     })
     return shellPathField
