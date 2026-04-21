@@ -70,16 +70,20 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
 
         val project = this.project
         val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-        val mavenProject = mavenProjectsManager.findProject(this) ?: return null
+        val mavenProject = mavenProjectsManager.findProject(this)
 
-        var parentId: MavenId? = mavenProject.parentId
+        if (mavenProject != null) {
+            var parentId: MavenId? = mavenProject.parentId
 
-        // child module could inherit plugin from parent
-        while (parentId != null) {
-            val parentModule = mavenProjectsManager.findProject(parentId) ?: return null
-            val psiFile = findPomXmlByFile(parentModule.file) ?: return null
-            if (psiFile.hasSuitablePlugin(pluginId, extraCheck = { it.findExecutionWithKotlinCompileGoal() != null })) return psiFile
-            parentId = parentModule.parentId
+            // child module could inherit plugin from parent
+            while (parentId != null) {
+                val parentModule = mavenProjectsManager.findProject(parentId) ?: break
+                val psiFile = findPomXmlByFile(parentModule.file) ?: break
+                if (psiFile.hasSuitablePlugin(pluginId, extraCheck = { it.findExecutionWithKotlinCompileGoal() != null })) {
+                    return psiFile
+                }
+                parentId = parentModule.parentId
+            }
         }
 
         // otherwise, force using pom.xml for the current module if it has declared maven kotlin plugin
