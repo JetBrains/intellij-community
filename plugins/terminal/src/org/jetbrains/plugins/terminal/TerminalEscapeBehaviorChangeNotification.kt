@@ -26,7 +26,7 @@ object TerminalEscapeBehaviorChangeNotification {
     val configureAction = NotificationAction.createSimple(TerminalBundle.message("escape.behavior.change.notification.action")) {
       ShowSettingsUtilImpl.showSettingsDialog(
         project,
-        idToSelect = TERMINAL_CONFIGURABLE_ID,
+        idToSelect = TerminalUtil.TERMINAL_CONFIGURABLE_ID,
         filter = TerminalBundle.message("settings.move.focus.to.editor.with"),
       )
     }

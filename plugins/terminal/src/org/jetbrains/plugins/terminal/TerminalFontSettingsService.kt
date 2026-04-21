@@ -46,11 +46,9 @@ class TerminalFontSettingsService(private val coroutineScope: CoroutineScope) : 
     }
   }
 
-  @ApiStatus.Internal // for Java
-  @JvmName("getSettings")
-  internal fun getSettings(): TerminalFontSettings = TerminalFontSettings(fontPreferences, columnSpacing)
+  fun getSettings(): TerminalFontSettings = TerminalFontSettings(fontPreferences, columnSpacing)
 
-  internal fun setSettings(settings: TerminalFontSettings) {
+  fun setSettings(settings: TerminalFontSettings) {
     val oldSettings = getSettings()
 
     val newPreferences = FontPreferencesImpl()
@@ -152,7 +150,8 @@ class TerminalFontSettingsService(private val coroutineScope: CoroutineScope) : 
 // So we're hiding all data classes as implementation details here,
 // exposing only the abstract interfaces.
 
-internal sealed class TerminalFontSize {
+@ApiStatus.Internal
+sealed class TerminalFontSize {
   companion object {
     private val validRange: ClosedFloatingPointRange<Float>
       get() = EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat()
@@ -182,7 +181,8 @@ internal sealed class TerminalFontSize {
 
 // these two are the same, but we don't want them to be mutually assignable
 
-internal sealed class TerminalLineSpacing {
+@ApiStatus.Internal
+sealed class TerminalLineSpacing {
   companion object {
     private val validRange: ClosedFloatingPointRange<Float>
       get() = EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing()
@@ -206,7 +206,8 @@ internal sealed class TerminalLineSpacing {
   }
 }
 
-internal sealed class TerminalColumnSpacing {
+@ApiStatus.Internal
+sealed class TerminalColumnSpacing {
   companion object {
     // there are no default column spacing values in the API,
     // but these will do just fine
@@ -256,7 +257,8 @@ interface TerminalFontSettingsListener {
 // and its PersistentFontPreferences are named TerminalFontSettingsState,
 // as, again, it's exactly what it is.
 
-internal data class TerminalFontSettings(
+@ApiStatus.Internal
+data class TerminalFontSettings(
   val fontFamily: String,
   val fallbackFontFamily: String,
   val fontSize: TerminalFontSize,

@@ -15,6 +15,11 @@
     <projectService serviceInterface="com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager"
                     serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
 
+    <projectConfigurable groupId="tools"
+                         bundle="messages.IdeBundle"
+                         key="configurable.TerminalOptionsConfigurable.display.name"
+                         id="terminal" instance="com.intellij.terminal.frontend.settings.TerminalOptionsConfigurable"/>
+
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
     <selectInTarget implementation="com.intellij.terminal.frontend.toolwindow.impl.SelectInTerminal"/>
 

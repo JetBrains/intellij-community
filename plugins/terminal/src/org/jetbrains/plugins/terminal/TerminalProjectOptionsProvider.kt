@@ -37,6 +37,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Files
@@ -134,7 +135,9 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       }
     }
 
-  internal var shellPathWithoutDefault: String?
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var shellPathWithoutDefault: String?
     get() {
       val workingDirectory = startingDirectory
       val shellPath = when {

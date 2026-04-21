@@ -23,7 +23,8 @@ interface TerminalSettingsProvider {
   fun createConfigurable(project: Project): UnnamedConfigurable?
 
   companion object {
-    internal val EP_NAME: ExtensionPointName<TerminalSettingsProvider> =
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<TerminalSettingsProvider> =
       ExtensionPointName("org.jetbrains.plugins.terminal.terminalSettingsProvider")
   }
 }

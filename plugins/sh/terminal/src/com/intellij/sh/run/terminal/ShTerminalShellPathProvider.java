@@ -20,7 +20,7 @@ final class ShTerminalShellPathProvider implements ShDefaultShellPathProvider {
   @Override
   public @NotNull String getDefaultShell() {
     TerminalProjectOptionsProvider terminalProjectOptionsProvider = TerminalProjectOptionsProvider.getInstance(myProject);
-    String shellPathWithoutDefault = terminalProjectOptionsProvider.getShellPathWithoutDefault$intellij_terminal();
+    String shellPathWithoutDefault = terminalProjectOptionsProvider.getShellPathWithoutDefault();
     if (shellPathWithoutDefault != null) {
       return shellPathWithoutDefault;
     }

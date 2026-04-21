@@ -34,6 +34,8 @@ public final class TerminalUtil {
 
   private static final Logger LOG = Logger.getInstance(TerminalUtil.class);
 
+  public static final String TERMINAL_CONFIGURABLE_ID = "terminal";
+
   private TerminalUtil() {}
 
   /**

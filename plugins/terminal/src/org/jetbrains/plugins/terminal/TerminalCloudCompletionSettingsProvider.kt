@@ -17,7 +17,8 @@ interface TerminalCloudCompletionSettingsProvider {
   companion object {
     private val EP_NAME = ExtensionPointName<TerminalCloudCompletionSettingsProvider>("org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider")
 
-    internal fun getProvider(): TerminalCloudCompletionSettingsProvider? {
+    @ApiStatus.Internal
+    fun getProvider(): TerminalCloudCompletionSettingsProvider? {
       return EP_NAME.extensionList.firstOrNull()
     }
   }

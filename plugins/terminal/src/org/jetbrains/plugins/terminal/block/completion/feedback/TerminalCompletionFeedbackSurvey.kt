@@ -10,12 +10,14 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackMoment
 import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils.getFeedbackMoment
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 
-internal class TerminalCompletionFeedbackSurvey : FeedbackSurvey() {
+@ApiStatus.Internal
+class TerminalCompletionFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(TerminalCompletionSurveyConfig())
 }
 

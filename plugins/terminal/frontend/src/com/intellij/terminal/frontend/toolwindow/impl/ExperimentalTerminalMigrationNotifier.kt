@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
-import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -105,7 +105,7 @@ internal class ExperimentalTerminalMigrationNotifier(private val project: Projec
     val configureAction = NotificationAction.createSimple(TerminalBundle.message("exp.terminal.switch.notification.open.settings")) {
       ShowSettingsUtilImpl.showSettingsDialog(
         project,
-        idToSelect = TERMINAL_CONFIGURABLE_ID,
+        idToSelect = TerminalUtil.TERMINAL_CONFIGURABLE_ID,
         filter = null,
       )
     }

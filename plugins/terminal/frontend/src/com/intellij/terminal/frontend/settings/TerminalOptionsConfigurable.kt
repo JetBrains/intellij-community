@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.frontend.settings
 
 import com.intellij.application.options.colors.ColorAndFontOptions
 import com.intellij.codeWithMe.ClientId
@@ -77,8 +77,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
+import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
+import org.jetbrains.plugins.terminal.RunCommandUsingIdeUtil
+import org.jetbrains.plugins.terminal.TERMINAL_ACTION_SHORTCUT_CHANGED_TOPIC
+import org.jetbrains.plugins.terminal.TerminalActionShortcutChangedEvent
 import org.jetbrains.plugins.terminal.TerminalBundle.message
+import org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalColumnSpacing
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
+import org.jetbrains.plugins.terminal.TerminalFontSize
+import org.jetbrains.plugins.terminal.TerminalLineSpacing
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
@@ -107,13 +121,10 @@ import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
-@ApiStatus.Internal
-const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
-
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
   helpTopic = "reference.settings.terminal",
-  _id = TERMINAL_CONFIGURABLE_ID
+  _id = TerminalUtil.TERMINAL_CONFIGURABLE_ID
 ) {
   private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
     @Suppress("DEPRECATION")

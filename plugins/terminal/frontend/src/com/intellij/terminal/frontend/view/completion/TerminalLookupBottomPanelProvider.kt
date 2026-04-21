@@ -31,8 +31,8 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -183,7 +183,7 @@ internal class TerminalCommandCompletionSettingsAction : DumbAwareAction(
 
     ShowSettingsUtilImpl.showSettingsDialog(
       project,
-      idToSelect = TERMINAL_CONFIGURABLE_ID,
+      idToSelect = TerminalUtil.TERMINAL_CONFIGURABLE_ID,
       filter = TerminalBundle.message("terminal.command.completion")
     )
   }

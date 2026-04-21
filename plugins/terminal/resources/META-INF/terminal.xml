@@ -6,11 +6,6 @@
                 canCloseContents="true"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory" open="true"/>
 
-    <projectConfigurable groupId="tools"
-                         bundle="messages.IdeBundle"
-                         key="configurable.TerminalOptionsConfigurable.display.name"
-                         id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
-
     <fileEditorProvider id="classic-terminal-session-editor"
                         implementation="org.jetbrains.plugins.terminal.vfs.ClassicTerminalSessionEditorProvider"/>
 

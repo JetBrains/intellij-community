@@ -4,8 +4,10 @@ package org.jetbrains.plugins.terminal
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
-internal object RunCommandUsingIdeUtil {
+@ApiStatus.Internal
+object RunCommandUsingIdeUtil {
   var isEnabled: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT_VALUE)
     set(value) {
