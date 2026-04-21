@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.terminal.frontend.settings
 
 import com.intellij.application.options.colors.ColorAndFontOptions
-import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -11,9 +12,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSystemInfo
-import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -30,10 +28,10 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
@@ -71,6 +69,7 @@ import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
@@ -198,7 +197,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
             actionShortcutComboboxWithEnabledCheckbox(
               labelText = message("terminal.command.completion.shortcut.trigger"),
-              presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
+              presets = listOf(CTRL_SPACE_PRESET, TAB_SHORTCUT_PRESET),
               actionId = "Terminal.CommandCompletion.Invoke"
             )
             row {
@@ -215,7 +214,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                       .and(shellPathField.shellWithIntegrationSelected())
+                       .and(shellPathField.shellWithIntegrationSelected(project))
                        .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
                        .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
 
@@ -375,7 +374,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
             .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                         .and(shellPathField.shellWithIntegrationSelected()))
+                         .and(shellPathField.shellWithIntegrationSelected(project)))
         }
         row {
           checkBox(message("settings.audible.bell"))
@@ -397,7 +396,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
             .bindSelected(optionsProvider::copyOnSelection)
-            .visible(isMac(project) || isWindows(project))
+            .visible(OS.CURRENT == OS.macOS || OS.CURRENT == OS.Windows)
         }
         row {
           checkBox(message("settings.paste.on.middle.mouse.button.click"))
@@ -424,7 +423,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.use.option.as.meta.key.label"))
             .bindSelected(optionsProvider::useOptionAsMetaKey)
-            .visible(isMac(project))
+            .visible(OS.CURRENT == OS.macOS)
         }
         row {
           checkBox(message("settings.terminal.smart.command.handling"))
@@ -585,18 +584,19 @@ private fun newUiPredicate(): ComponentPredicate {
   else ComponentPredicate.FALSE
 }
 
-private fun TextFieldWithHistoryWithBrowseButton.shellWithIntegrationSelected(): ComponentPredicate {
+private fun TextFieldWithHistoryWithBrowseButton.shellWithIntegrationSelected(project: Project): ComponentPredicate {
   return childComponent.textEditor.enteredTextSatisfies { text ->
-    isShellWithIntegration(text)
+    isShellWithIntegration(project, text)
   }
 }
 
-private fun isShellWithIntegration(text: String): Boolean {
-  val command = ParametersListUtil.parse(text, false, OS.CURRENT != OS.Windows)
+private fun isShellWithIntegration(project: Project, text: String): Boolean {
+  val eelDescriptor = project.getEelDescriptor()
+  val command = ParametersListUtil.parse(text, false, eelDescriptor.osFamily != EelOsFamily.Windows)
   val shellPath = command.firstOrNull() ?: return false
   val shellName = PathUtil.getFileName(shellPath)
 
-  return LocalShellIntegrationInjector.supportsBlocksShellIntegration(shellName, LocalEelDescriptor /* to be replaced with proper EelDescriptor */)
+  return LocalShellIntegrationInjector.supportsBlocksShellIntegration(shellName, eelDescriptor)
 }
 
 private fun getDefaultValueColor(): Color {
@@ -614,26 +614,6 @@ private fun findColorByKey(vararg colorKeys: String): Color =
 private fun fontComboBox(): FontComboBox = FontComboBox().apply {
   setupDefaultRenderer(true, false)
   isMonospacedOnly = true
-}
-
-/**
- * [TerminalOptionsConfigurable] is created on backend under local [ClientId].
- * But some options need to be shown depending on client OS.
- * So, it is a hack to check the client OS from the configurable code.
- */
-private fun isMac(project: Project): Boolean {
-  return getClientSystemInfo(project)?.macClient ?: SystemInfo.isMac
-}
-
-private fun isWindows(project: Project): Boolean {
-  return getClientSystemInfo(project)?.windowsClient ?: SystemInfo.isWindows
-}
-
-private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
-  val clientId = project.sessions(ClientKind.CONTROLLER).singleOrNull()?.clientId ?: return null
-  return ClientId.withExplicitClientId(clientId) {
-    ClientSystemInfo.getInstance()
-  }
 }
 
 private val LOG = logger<TerminalOptionsConfigurable>()
@@ -798,12 +778,10 @@ private val ESCAPE_SHORTCUT_PRESET = ShortcutPreset(
   KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), null),
   "Escape"
 )
-private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
-  return ShortcutPreset(
-    KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), null),
-    if (isMac(project)) "⌃ Space" else "Ctrl+Space"
-  )
-}
+private val CTRL_SPACE_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), null),
+  if (OS.CURRENT == OS.macOS) "⌃ Space" else "Ctrl+Space"
+)
 
 private data class ShortcutPreset(val shortcut: KeyboardShortcut, val text: String)
 
