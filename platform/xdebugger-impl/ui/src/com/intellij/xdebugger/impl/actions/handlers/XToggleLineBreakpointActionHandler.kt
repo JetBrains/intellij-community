@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.InterLineBreakpointProperties
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.util.ThreeState
@@ -72,7 +73,8 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
     val isMouseClick = inputEvent is MouseEvent
     val isLoggingBreakpoint = isInterlineLogging ||
                               isFromGutterClick && editor != null && isMouseClick && !isAltClick && isShiftClick
-    val selection = if (isLoggingBreakpoint) editor.getSelectionModel().selectedText else null
+    val logExpression = (event.dataContext as? UserDataHolder)?.getUserData(XLineBreakpointManager.LOG_EXPRESSION)
+                        ?: editor?.getSelectionModel()?.selectedText.takeIf { isLoggingBreakpoint }
 
     // do not toggle more than once on the same line
     val processedLines = hashSetOf<Int>()
@@ -81,8 +83,10 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
       if (processedLines.add(position.getLine())) {
         val future = XBreakpointUIUtil.toggleLineBreakpointProxy(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection, verticalPlacement
+          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection, placement
         ).thenAccept { breakpoint ->
+          // isMouseClick is always `true`, but its usage here enables smart cast for nullable `inputEvent`
+          @Suppress("KotlinConstantConditions")
           if (breakpoint != null && isLoggingBreakpoint && !isInterlineLogging && isMouseClick) {
             runInEdt {
               // edit breakpoint
