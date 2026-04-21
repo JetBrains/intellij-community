@@ -11,8 +11,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
@@ -99,9 +97,6 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
-import org.jetbrains.plugins.terminal.block.completion.feedback.TerminalCompletionFeedbackSurvey
-import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils
-import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
@@ -169,12 +164,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .label(message("settings.terminal.engine"))
             .bindItem(
               getter = { optionsProvider.terminalEngine },
-              setter = {
-                val oldEngine = optionsProvider.terminalEngine
-                val newEngine = it!!
-                optionsProvider.terminalEngine = newEngine
-                askForFeedbackIfReworkedTerminalDisabled(project, oldEngine, newEngine)
-              }
+              setter = { optionsProvider.terminalEngine = it!! }
             )
             .component
         }
@@ -190,16 +180,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
                 .bindSelected(
                   getter = { optionsProvider.showCompletionPopupAutomatically },
-                  setter = {
-                    optionsProvider.showCompletionPopupAutomatically = it
-                    if (!it) {
-                      ApplicationManager.getApplication().invokeLater(
-                        { TerminalFeedbackUtils.showFeedbackNotificationOnDemand(project, TerminalCompletionFeedbackSurvey::class) },
-                        ModalityState.nonModal(), // show the notification after settings dialog is closed
-                        project.disposed
-                      )
-                    }
-                  },
+                  setter = { optionsProvider.showCompletionPopupAutomatically = it },
                 )
                 .component
             }
