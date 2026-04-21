@@ -32,6 +32,9 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
+import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
+import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.isReadOnly
@@ -59,11 +62,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   val sdk: Sdk,
   /**
    * Whether this manager has an explicit list of top-level dependencies (e.g. from pyproject.toml).
-   * When true, only packages from [extractDependenciesCached] are treated as "declared" in the UI,
+   * When true, only packages from [listDeclaredPackagesCached] are treated as "declared" in the UI,
    * and the rest are shown as transitive.
    * When false (default), all installed packages are considered declared.
    */
-  internal val installedMightBeTransitive: Boolean = false,
+  internal val installedPackagesIncludeTransitive: Boolean = false,
 ) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
 
@@ -83,6 +86,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   @Volatile
   protected var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
+
+  @ApiStatus.Internal
+  internal open val treeProvider: DependencyTreeProvider? = null
 
   abstract val repositoryManager: PythonRepositoryManager
 
@@ -150,6 +156,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
+    treeProvider?.invalidateCache()
     return loadPackagesImpl(isInit = false)
   }
 
@@ -260,32 +267,30 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   protected abstract suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>>
 
   /**
-   * Extracts project top-level dependencies.
+   * Lists project top-level (declared) dependencies.
    * Returns null by default — this manager doesn't support dependency extraction.
    */
   @ApiStatus.Internal
-  open suspend fun extractDependencies(): PyResult<List<PythonPackage>>? = null
+  open suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? = null
 
   /**
-   * Returns all packages that are declared in the project configuration or are transitive
-   * dependencies of declared packages. Used by the UI to distinguish "declared" packages from
-   * standalone-installed ones.
-   *
-   * Returns null if this package manager doesn't support this operation.
+   * Extracts the complete package tree structure for the tool window.
+   * Returns either a workspace member tree, a flat collection of packages,
+   * or [FlatPackageStructureNode] if this manager doesn't distinguish declared from transitive.
    */
   @ApiStatus.Internal
-  open suspend fun allDeclaredPackages(): List<PythonPackage>? = null
+  open suspend fun getPackageTree(): PackageStructureNode = FlatPackageStructureNode
 
   /**
-   * Extracts project top-level dependencies with caching based on dependency file modification time.
-   * Returns cached result if dependency file hasn't changed since last extraction.
+   * Lists project top-level (declared) dependencies with caching based on dependency file modification time.
+   * Returns cached result if dependency file hasn't changed since last call.
    *
-   * @return null if this package manager doesn't support dependency extraction,
-   *         PyResult.Failure if extraction is supported but failed (e.g., parsing error),
-   *         PyResult.Success with the list of dependencies if extraction succeeded.
+   * @return null if this package manager doesn't support dependency listing,
+   *         PyResult.Failure if listing is supported but failed (e.g., parsing error),
+   *         PyResult.Success with the list of dependencies if listing succeeded.
    */
-  @ApiStatus.Experimental
-  suspend fun extractDependenciesCached(): PyResult<List<PythonPackage>>? {
+  @ApiStatus.Internal
+  suspend fun listDeclaredPackagesCached(): PyResult<List<PythonPackage>>? {
     val dependencyFile = getDependencyFile() ?: return null
     return dependencyCache.getOrCompute(dependencyFile).await()
   }
@@ -347,7 +352,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       val cached = entry?.takeIf { it.file == dependencyFile && it.stamp == stamp }
       return cached?.deferred ?: run {
         PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
-          extractDependencies()
+          listDeclaredPackages()
         }.also { entry = Entry(dependencyFile, stamp, it) }
       }
     }
@@ -377,13 +382,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
 
 /**
- * Extracts project top-level dependencies (blocking version for Java interop).
+ * Lists declared project top-level dependencies (blocking version for Java interop).
  * Returns null by default — this manager doesn't support dependency extraction.
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread
-fun PythonPackageManager.extractDependenciesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
-  extractDependenciesCached()
+fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
+  listDeclaredPackagesCached()
 }?.getOrNull()
 
 /**

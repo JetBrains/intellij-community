@@ -91,7 +91,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     }
   }
 
-  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
     val moduleDir = sdk.associatedModuleDir ?: return null
 

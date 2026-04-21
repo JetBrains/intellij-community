@@ -149,7 +149,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       pipPackageEngine
   }
 
-  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+  override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val envFile = getDependencyFile() ?: return null
     val requirements = CondaEnvironmentYmlParser.fromFile(envFile) ?: return null
     return PyResult.success(requirements.toPythonPackages())

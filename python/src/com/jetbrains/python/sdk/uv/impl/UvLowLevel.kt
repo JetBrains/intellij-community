@@ -164,13 +164,6 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     }
   }
 
-  override suspend fun listTopLevelPackages(packageName: PyWorkspaceMember): PyResult<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--depth=1", "--frozen", "--package", packageName.name)
-      .getOr { return it }
-
-    return PyExecResult.success(UvOutputParser.parseUvPackageList(out))
-  }
-
   override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>> {
     val out = uvCli.runUv(cwd, venvPath, false, "pip", "show", name.name)
       .getOr { return it }
@@ -178,15 +171,8 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     return PyExecResult.success(UvOutputParser.parseUvPackageRequirements(out))
   }
 
-  override suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--package", name.name, "--frozen")
-      .getOr { return it }
-
-    return PyExecResult.success(out)
-  }
-
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe")
       .getOr { return it }
 
     return PyExecResult.success(out)

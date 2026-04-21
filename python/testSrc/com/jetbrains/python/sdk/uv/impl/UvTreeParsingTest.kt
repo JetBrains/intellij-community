@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTrees
+import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
+import com.jetbrains.python.packaging.packageRequirements.TreeParser.parseTrees
+import com.jetbrains.python.packaging.packageRequirements.collectAllNames
+import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -254,6 +258,7 @@ class UvTreeParsingTest {
       val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("requests")
+      assertThat(tree.version).isEqualTo("2.31.0")
       assertThat(tree.children).isEmpty()
     }
 
@@ -267,8 +272,10 @@ class UvTreeParsingTest {
       val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("requests")
+      assertThat(tree.version).isEqualTo("2.31.0")
       assertThat(tree.children).hasSize(1)
       assertThat(tree.children[0].name.name).isEqualTo("urllib3")
+      assertThat(tree.children[0].version).isEqualTo("2.1.0")
     }
 
     @Test
@@ -347,8 +354,353 @@ class UvTreeParsingTest {
       assertThat(tree.children).hasSize(2)
       assertThat(tree.children[0].name.name).isEqualTo("pytest")
       assertThat(tree.children[0].group).isEqualTo("dev")
+      assertThat(tree.children[0].version).isEqualTo("8.0.0")
       assertThat(tree.children[1].name.name).isEqualTo("requests")
       assertThat(tree.children[1].group).isNull()
+    }
+
+    @Test
+    fun `poetry-style versions without v prefix`() {
+      val lines = listOf(
+        "flask 3.0.0 A micro web framework",
+        "├── jinja2 3.1.3",
+        "└── werkzeug 3.0.1",
+      )
+
+      val tree = parseTrees(lines).first()
+
+      assertThat(tree.name.name).isEqualTo("flask")
+      assertThat(tree.version).isEqualTo("3.0.0")
+      assertThat(tree.children[0].version).isEqualTo("3.1.3")
+      assertThat(tree.children[1].version).isEqualTo("3.0.1")
+    }
+
+    @Test
+    fun `version extracted correctly for extras with spaces`() {
+      val lines = listOf(
+        "myapp v1.0.0",
+        "├── faststream[cli, nats, otel] v0.6.7",
+        "└── uvicorn[standard] v0.41.0",
+      )
+
+      val tree = parseTrees(lines).first()
+
+      assertThat(tree.children[0].name.name).isEqualTo("faststream")
+      assertThat(tree.children[0].version).isEqualTo("0.6.7")
+      assertThat(tree.children[1].name.name).isEqualTo("uvicorn")
+      assertThat(tree.children[1].version).isEqualTo("0.41.0")
+    }
+  }
+
+  @Nested
+  inner class ParseWorkspaceTrees {
+
+    @Test
+    fun `workspace output produces one PackageTreeNode per member`() {
+      val lines = listOf(
+        "monorepo v0.1.0",
+        "├── cli v0.1.0",
+        "├── requests v2.31.0",
+        "│   └── urllib3 v2.1.0",
+        "cli v0.1.0",
+        "├── lib v0.1.0",
+        "├── click v8.1.0",
+        "lib v0.1.0",
+        "└── pydantic v2.0.0",
+      )
+
+      val trees = parseTrees(lines)
+
+      assertThat(trees).hasSize(3)
+      assertThat(trees.map { it.name.name }).containsExactly("monorepo", "cli", "lib")
+    }
+
+    @Test
+    fun `workspace members can be indexed by name`() {
+      val lines = listOf(
+        "monorepo v0.1.0",
+        "├── cli v0.1.0",
+        "├── requests v2.31.0",
+        "cli v0.1.0",
+        "├── click v8.1.0",
+        "lib v0.1.0",
+        "└── pydantic v2.0.0",
+      )
+
+      val byName = parseTrees(lines).associateBy { it.name.name }
+
+      assertThat(byName).containsKeys("monorepo", "cli", "lib")
+      assertThat(byName["monorepo"]!!.children.map { it.name.name }).containsExactly("cli", "requests")
+      assertThat(byName["cli"]!!.children.map { it.name.name }).containsExactly("click")
+      assertThat(byName["lib"]!!.children.map { it.name.name }).containsExactly("pydantic")
+    }
+
+    @Test
+    fun `workspace with blank lines between sections`() {
+      val lines = listOf(
+        "root v1.0.0",
+        "├── numpy v1.26.0",
+        "",
+        "sub-a v0.1.0",
+        "├── pandas v2.0.0",
+        "",
+        "sub-b v0.1.0",
+        "└── scipy v1.12.0",
+      )
+
+      val trees = parseTrees(lines)
+
+      assertThat(trees).hasSize(3)
+      assertThat(trees.map { it.name.name }).containsExactly("root", "sub-a", "sub-b")
+      assertThat(trees[0].children.map { it.name.name }).containsExactly("numpy")
+      assertThat(trees[1].children.map { it.name.name }).containsExactly("pandas")
+      assertThat(trees[2].children.map { it.name.name }).containsExactly("scipy")
+    }
+
+    @Test
+    fun `workspace member with nested dependencies`() {
+      val lines = listOf(
+        "root v1.0.0",
+        "├── sub v0.1.0",
+        "sub v0.1.0",
+        "├── flask v3.0.0",
+        "│   └── jinja2 v3.1.3",
+        "└── click v8.1.0",
+      )
+
+      val byName = parseTrees(lines).associateBy { it.name.name }
+
+      assertThat(byName["sub"]!!.children).hasSize(2)
+      val flask = byName["sub"]!!.children[0]
+      assertThat(flask.name.name).isEqualTo("flask")
+      assertThat(flask.children).hasSize(1)
+      assertThat(flask.children[0].name.name).isEqualTo("jinja2")
+    }
+
+    @Test
+    fun `workspace member with no dependencies`() {
+      val lines = listOf(
+        "root v1.0.0",
+        "├── requests v2.31.0",
+        "empty-member v0.1.0",
+      )
+
+      val byName = parseTrees(lines).associateBy { it.name.name }
+
+      assertThat(byName).containsKeys("root", "empty-member")
+      assertThat(byName["empty-member"]!!.children).isEmpty()
+    }
+  }
+
+  @Nested
+  inner class ExtractDeclaredDependencies {
+
+    @Test
+    fun `extracts depth-1 packages from all workspace members`() {
+      val input = """
+        monorepo v0.1.0
+        ├── cli v0.1.0
+        ├── requests v2.31.0
+        │   └── urllib3 v2.1.0
+        └── flask v3.0.0
+            └── jinja2 v3.1.3
+        cli v0.1.0
+        ├── click v8.1.0
+        │   └── colorama v0.4.6
+        └── lib v0.1.0
+        lib v0.1.0
+        └── pydantic v2.0.0
+      """.trimIndent()
+
+      val trees = parseTrees(input.lines())
+      val packages = extractDeclaredDependencies(trees)
+
+      assertThat(packages.map { it.name }).containsExactlyInAnyOrder("cli", "requests", "flask", "click", "lib", "pydantic")
+      val byName = packages.associateBy { it.name }
+      assertThat(byName["requests"]!!.version).isEqualTo("2.31.0")
+      assertThat(byName["click"]!!.version).isEqualTo("8.1.0")
+      assertThat(byName["pydantic"]!!.version).isEqualTo("2.0.0")
+    }
+
+    @Test
+    fun `skips transitive dependencies`() {
+      val input = """
+        myapp v1.0.0
+        ├── flask v3.0.0
+        │   ├── jinja2 v3.1.3
+        │   │   └── markupsafe v2.1.5
+        │   └── werkzeug v3.0.1
+        └── requests v2.31.0
+            └── urllib3 v2.1.0
+      """.trimIndent()
+
+      val trees = parseTrees(input.lines())
+      val packages = extractDeclaredDependencies(trees)
+
+      assertThat(packages.map { it.name }).containsExactly("flask", "requests")
+    }
+
+    @Test
+    fun `handles single non-workspace project`() {
+      val input = """
+        myapp v1.0.0
+        ├── requests v2.31.0
+        └── flask v3.0.0
+      """.trimIndent()
+
+      val trees = parseTrees(input.lines())
+      val packages = extractDeclaredDependencies(trees)
+
+      assertThat(packages).hasSize(2)
+      assertThat(packages.map { it.name }).containsExactly("requests", "flask")
+    }
+
+    @Test
+    fun `deduplicates packages across members`() {
+      val input = """
+        root v1.0.0
+        ├── shared-lib v1.0.0
+        sub v0.1.0
+        └── shared-lib v1.0.0
+      """.trimIndent()
+
+      val trees = parseTrees(input.lines())
+      val packages = extractDeclaredDependencies(trees)
+
+      assertThat(packages.map { it.name }).containsExactly("shared-lib")
+    }
+
+    @Test
+    fun `preserves dependency groups`() {
+      val input = """
+        myapp v1.0.0
+        ├── requests v2.31.0
+        └── pytest v8.0.0 (group: dev)
+      """.trimIndent()
+
+      val trees = parseTrees(input.lines())
+      val packages = extractDeclaredDependencies(trees)
+
+      assertThat(packages).hasSize(2)
+      val byName = packages.associateBy { it.name }
+      assertThat(byName["requests"]!!.dependencyGroup).isNull()
+      assertThat(byName["pytest"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("dev"))
+    }
+  }
+
+  @Nested
+  inner class CollectAllNames {
+
+    private fun node(name: String, vararg children: PackageTreeNode): PackageTreeNode =
+      PackageTreeNode(PyPackageName.from(name), children.toMutableList())
+
+    @Test
+    fun `single node`() {
+      val root = node("a")
+      assertThat(root.collectAllNames()).containsExactly("a")
+    }
+
+    @Test
+    fun `tree with duplicates`() {
+      val root = node("a",
+        node("b", node("d")),
+        node("c", node("d")),
+      )
+      assertThat(root.collectAllNames()).containsExactlyInAnyOrder("a", "b", "c", "d")
+    }
+
+    @Test
+    fun `cycle does not cause infinite loop`() {
+      val a = node("a")
+      val b = node("b")
+      val c = node("c")
+      a.children.add(b)
+      b.children.add(c)
+      c.children.add(a)
+
+      assertThat(a.collectAllNames()).containsExactlyInAnyOrder("a", "b", "c")
+    }
+
+    @Test
+    fun `wide tree with many children`() {
+      val children = (1..1000).map { node("pkg-$it") }.toMutableList()
+      val root = PackageTreeNode(PyPackageName.from("root"), children)
+      val names = root.collectAllNames()
+      assertThat(names).hasSize(1001)
+      assertThat(names).contains("root", "pkg-1", "pkg-500", "pkg-1000")
+    }
+
+    @Test
+    fun `deep tree with heavy duplication`() {
+      // Simulates --no-dedupe: each level repeats the same subtree
+      val shared = node("shared", node("leaf-1"), node("leaf-2"))
+      val root = node("root",
+        node("a", shared),
+        node("b", shared),
+        node("c", shared),
+      )
+      assertThat(root.collectAllNames()).containsExactlyInAnyOrder(
+        "root", "a", "b", "c", "shared", "leaf-1", "leaf-2"
+      )
+    }
+
+    @Test
+    fun `large graph with multiple cycles, self-loops, and heavy duplication`() {
+      // Build a wide + deep graph that exercises deduplication and cycle handling:
+      //
+      //  root ──► branch-0..9 ──► mid-0..9 ──► leaf-0..4
+      //               │                │              │
+      //               └──► shared ◄────┘              │
+      //                     │  ▲                      │
+      //                     └──┘ (self-loop)          │
+      //                     │                         │
+      //                     └──► deep-0..2 ──► root (cycle back to root)
+      //
+      //  Every mid-N also points back to branch-((N+1) % 10) forming inter-branch cycles.
+
+      val shared = node("shared")
+      val deepNodes = (0..2).map { node("deep-$it") }
+      shared.children.addAll(deepNodes)
+      shared.children.add(shared) // self-loop
+
+      val root = node("root")
+      deepNodes.forEach { it.children.add(root) } // cycles back to root
+
+      val leaves = (0..4).map { node("leaf-$it") }
+      val branches = (0..9).map { i ->
+        val mids = (0..9).map { j ->
+          val mid = node("mid-$i-$j")
+          mid.children.addAll(leaves)      // every mid references same leaf nodes
+          mid.children.add(shared)          // every mid references shared
+          mid
+        }
+        val branch = node("branch-$i")
+        branch.children.addAll(mids)
+        branch.children.add(shared)         // direct branch → shared too
+        branch
+      }
+
+      // inter-branch cycles: mid-i-0 → branch-((i+1)%10)
+      for (i in 0..9) {
+        val mid0 = branches[i].children[0] // mid-i-0
+        mid0.children.add(branches[(i + 1) % 10])
+      }
+
+      root.children.addAll(branches)
+
+      val names = root.collectAllNames()
+
+      // Expected: root + 10 branches + 100 mids + 5 leaves + shared + 3 deep = 120
+      val expectedNames = mutableSetOf("root", "shared")
+      (0..9).forEach { i ->
+        expectedNames.add("branch-$i")
+        (0..9).forEach { j -> expectedNames.add("mid-$i-$j") }
+      }
+      (0..4).forEach { expectedNames.add("leaf-$it") }
+      (0..2).forEach { expectedNames.add("deep-$it") }
+
+      assertThat(names).containsExactlyInAnyOrderElementsOf(expectedNames)
+      assertThat(names).hasSize(120)
     }
   }
 
