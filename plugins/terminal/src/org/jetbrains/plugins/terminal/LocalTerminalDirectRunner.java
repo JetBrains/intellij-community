@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -30,6 +33,8 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,13 +90,17 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     EelDescriptor eelDescriptor = options.getEelDescriptorNotNull();
 
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    //noinspection deprecation
-    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
-      try {
-        shellCommand = customizer.customizeCommandAndEnvironment(myProject, workingDirectory, shellCommand, envs, eelDescriptor);
-      }
-      catch (Exception e) {
-        LOG.error("Exception during customization of the terminal session", e);
+    if (shouldApplyLocalTerminalCustomizers(eelDescriptor)) {
+      //noinspection deprecation
+      for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
+        try {
+          //noinspection deprecation
+          shellCommand = customizer.customizeCommandAndEnvironment(myProject, workingDirectory, shellCommand, envs, eelDescriptor);
+        }
+        catch (Throwable t) {
+          LoggerKt.rethrowControlFlowException(t);
+          LOG.error("Exception during customization of the terminal session", t);
+        }
       }
     }
 
@@ -115,6 +124,45 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       .shellCommand(shellCommand)
       .envVariables(envs)
       .build();
+  }
+
+  private boolean shouldApplyLocalTerminalCustomizers(@NotNull EelDescriptor shellProcessEelDescriptor) {
+    //noinspection deprecation
+    if (!LocalTerminalCustomizer.EP_NAME.hasAnyExtensions()) {
+      return false;
+    }
+    EelDescriptor projectEelDescriptor = getProjectEelDescriptor();
+    if (projectEelDescriptor == null) {
+      return true;
+    }
+    // Apply `LocalTerminalCustomizer` only if the project and the shell process
+    // belong to the same environment.
+    // Otherwise, `LocalTerminalCustomizer` implementations may customize wrongly,
+    // like `com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer` does:
+    // environment variables from one environment being injected into the other, breaking the shell.
+    //
+    // Examples of mixed environments:
+    // - Running powershell.exe (using LocalEelDescriptor) in projects under \\wsl.localhost\Ubuntu\
+    // - Running "wsl.exe -d Ubuntu" (using WSL EelDescriptor) in projects under C:\
+    return shellProcessEelDescriptor.equals(projectEelDescriptor);
+  }
+
+  private @Nullable EelDescriptor getProjectEelDescriptor() {
+    // Replace with `project.getEelDescriptor()` once `TerminalStartupConfigurationTest` creates a project inside EEL.
+    String startingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
+    if (StringUtil.isEmptyOrSpaces(startingDirectory)) {
+      LOG.warn("Got empty starting directory");
+      return null;
+    }
+    EelDescriptor startingDirEelDescriptor;
+    try {
+      startingDirEelDescriptor = EelProviderProjectUtilKt.getEelDescriptor(Path.of(startingDirectory));
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Cannot get EEL descriptor for starting directory " + startingDirectory, e);
+      return null;
+    }
+    return startingDirEelDescriptor;
   }
 
   /**

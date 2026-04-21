@@ -23,6 +23,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.setValueInTest
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -168,6 +169,87 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
+  @ParameterizedTest(name = "shell integration: {0}")
+  @ValueSource(booleans = [true, false])
+  fun `LocalTerminalCustomizer is not applied when shell process is local and working directory is WSL`(
+    allowShellIntegration: Boolean,
+  ): Unit = timeoutRunBlocking(TIMEOUT) {
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
+    var called = false
+    register(localTerminalCustomizer { called = true })
+
+    configureStartupOptionsAndValidateResult(InitialOptions(
+      tempDir,
+      "powershell.exe",
+      allowShellIntegration,
+    ), ConfiguredOptions(
+      tempDir.asEelPath(LocalEelDescriptor),
+      expectedConfiguredPowerShellCommand(listOf("powershell.exe"), allowShellIntegration),
+      ShellIntegration(ShellType.POWERSHELL, expectedCommandBlocks(LocalEelDescriptor)).takeIf { allowShellIntegration }
+    ))
+
+    // workingDir is a WSL path, but powershell.exe is launched as a local process
+    // LocalTerminalCustomizer shouldn't be called in such case.
+    Assertions.assertThat(called).isFalse
+  }
+
+  @ParameterizedTest(name = "shell integration: {0}")
+  @ValueSource(booleans = [true, false])
+  fun `LocalTerminalCustomizer is not applied when shell process is WSL and working directory is local`(
+    allowShellIntegration: Boolean,
+  ): Unit = timeoutRunBlocking(TIMEOUT) {
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
+    var called = false
+    register(localTerminalCustomizer { called = true })
+
+    val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
+    val defaultShellInWsl = "/my/custom/bin/zsh"
+    registerShellForDetection(defaultShellInWsl)
+
+    val windowsTmpDir = createTempDirectory(localEel, testDisposable)
+    configureStartupOptionsAndValidateResult(InitialOptions(
+      windowsTmpDir,
+      "wsl.exe -d $distribName",
+      allowShellIntegration,
+    ), ConfiguredOptions(
+      EelPath.parse(WSLDistribution(distribName).getWslPath(windowsTmpDir)!!, eelApi.descriptor),
+      expectedConfiguredZshCommand(listOf(defaultShellInWsl)),
+      ShellIntegration(ShellType.ZSH, expectedCommandBlocks(eelApi.descriptor)).takeIf { allowShellIntegration }
+    ))
+
+    // workingDir is on local Windows drive, but Zsh is launched in WSL via IJEnt
+    // LocalTerminalCustomizer shouldn't be called in such case.
+    Assertions.assertThat(called).isFalse
+  }
+
+  private fun register(
+    vararg customizers: org.jetbrains.plugins.terminal.LocalTerminalCustomizer // FQN to avoid importing deprecated class
+  ) {
+    @Suppress("DEPRECATION")
+    ExtensionTestUtil.maskExtensions(
+      org.jetbrains.plugins.terminal.LocalTerminalCustomizer.EP_NAME,
+      customizers.toList(),
+      testDisposable
+    )
+  }
+
+  @Suppress("DEPRECATION")
+  private fun localTerminalCustomizer(handler: (envs: MutableMap<String, String>) -> Unit): org.jetbrains.plugins.terminal.LocalTerminalCustomizer {
+    return object : org.jetbrains.plugins.terminal.LocalTerminalCustomizer() {
+      @Deprecated("Deprecated in Java")
+      override fun customizeCommandAndEnvironment(
+        project: Project,
+        workingDirectory: String?,
+        shellCommand: List<String>,
+        envs: MutableMap<String, String>,
+        eelDescriptor: EelDescriptor,
+      ): List<String> {
+        handler(envs)
+        return shellCommand
+      }
+    }
+  }
+
   private fun registerShellForDetection(@Suppress("SameParameterValue") shellPath: String) {
     val provider = object: TerminalEnvironmentVariablesProvider {
       override suspend fun fetchMinimalEnvironmentVariableValue(eelApi: EelApi, envName: String): String {
@@ -211,7 +293,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     }
   }
 
-  private fun assertEelDescriptorsEqual(expected: EelDescriptor, actual: EelDescriptor) {
+  private fun assertEelDescriptorsEqual(actual: EelDescriptor, expected: EelDescriptor) {
     // EelDescriptors pointing to the same WSL might be unequal. This will fail:
     // Assertions.assertThat(actual).isEqualTo(expected)
     when (expected) {
