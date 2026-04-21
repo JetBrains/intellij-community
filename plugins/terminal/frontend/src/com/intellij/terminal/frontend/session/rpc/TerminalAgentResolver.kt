@@ -4,18 +4,17 @@ package com.intellij.terminal.frontend.session.rpc
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrNull
-import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
@@ -24,91 +23,79 @@ import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 
 internal object TerminalAgentResolver {
   suspend fun listAvailableAgents(project: Project): List<TerminalAvailableAgentDto> {
-    val context = createResolutionContext(project) ?: return emptyList()
+    val eelDescriptor = project.getEelDescriptor()
+    if (!isAgentsResolutionAvailable(eelDescriptor)) return emptyList()
+
+    val eelApi = eelDescriptor.toEelApi()
     return TerminalAgent.getAllTerminalAgents().mapNotNull { agent ->
       when {
-        findBinaryPath(agent, context) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.RUN)
-        agent.getInstallCommand(context.osFamily) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.INSTALL_AND_RUN)
+        findBinaryPath(agent, eelApi) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.RUN)
+        agent.getInstallCommand(eelDescriptor.osFamily) != null -> TerminalAvailableAgentDto(agent.agentKey, TerminalAgentMode.INSTALL_AND_RUN)
         else -> null
       }
     }
   }
 
   suspend fun resolveLaunchSpec(project: Project, agentKey: TerminalAgent.AgentKey): TerminalAgentLaunchSpecDto? {
+    val eelDescriptor = project.getEelDescriptor()
+    if (!isAgentsResolutionAvailable(eelDescriptor)) return null
+
     val agent = TerminalAgent.findByKey(agentKey) ?: return null
-    val context = createResolutionContext(project) ?: return null
-    val binaryPath = findBinaryPath(agent, context)
+    val binaryPath = findBinaryPath(agent, eelDescriptor.toEelApi())
     if (binaryPath != null) {
       return TerminalAgentLaunchSpecDto(command = listOf(binaryPath), mode = TerminalAgentMode.RUN)
     }
 
-    val installCommand = agent.getInstallCommand(context.osFamily) ?: return null
+    val installCommand = agent.getInstallCommand(eelDescriptor.osFamily) ?: return null
     return TerminalAgentLaunchSpecDto(command = installCommand, mode = TerminalAgentMode.INSTALL_AND_RUN)
   }
 
-  private suspend fun createResolutionContext(project: Project): TerminalAgentResolutionContext? {
-    val descriptor = project.getEelDescriptor()
-    if (descriptor != LocalEelDescriptor) return null
-
-    val eelApi = descriptor.toEelApi()
-    val environment = if (eelApi.platform.isWindows) {
-      try {
-        eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
-      }
-      catch (ex: EelExecApi.EnvironmentVariablesException) {
-        thisLogger().warn("Failed to fetch environment variables for terminal AI agent resolution", ex)
-        emptyMap()
-      }
-    }
-    else {
-      emptyMap()
-    }
-    return TerminalAgentResolutionContext(
-      eelApi = eelApi,
-      osFamily = descriptor.osFamily,
-      environment = environment,
-    )
+  private fun isAgentsResolutionAvailable(eelDescriptor: EelDescriptor): Boolean {
+    // Allow only for the local env at the moment.
+    // WSL and Docker require special handling, so they are postponed.
+    return eelDescriptor is LocalEelDescriptor
   }
 
+  @VisibleForTesting
   suspend fun findBinaryPath(
     terminalAgent: TerminalAgent,
-    context: TerminalAgentResolutionContext,
+    eelApi: EelApi,
   ): String? {
-    return when (context.osFamily) {
-      EelOsFamily.Windows -> findWindowsBinaryPath(terminalAgent, context)
-      EelOsFamily.Posix -> findPosixBinaryPath(terminalAgent, context)
+    return when (eelApi.descriptor.osFamily) {
+      EelOsFamily.Windows -> findWindowsBinaryPath(terminalAgent, eelApi)
+      EelOsFamily.Posix -> findPosixBinaryPath(terminalAgent, eelApi)
     }
   }
 
   private suspend fun findPosixBinaryPath(
     terminalAgent: TerminalAgent,
-    context: TerminalAgentResolutionContext,
+    eelApi: EelApi,
   ): String? {
-    return context.eelApi.exec.findExeFilesInPath(terminalAgent.binaryName).firstOrNull()?.toString()
-           ?: findPosixKnownLocationBinaryPath(terminalAgent, context)
+    return eelApi.exec.findExeFilesInPath(terminalAgent.binaryName).firstOrNull()?.toString()
+           ?: findPosixKnownLocationBinaryPath(terminalAgent, eelApi)
   }
 
   private suspend fun findWindowsBinaryPath(
     terminalAgent: TerminalAgent,
-    context: TerminalAgentResolutionContext,
+    eelApi: EelApi,
   ): String? {
     for (extension in terminalAgent.windowsExecutableExtensions) {
-      val path = context.eelApi.exec.findExeFilesInPath("${terminalAgent.binaryName}.$extension").firstOrNull()
+      val path = eelApi.exec.findExeFilesInPath("${terminalAgent.binaryName}.$extension").firstOrNull()
       if (path != null) {
         return path.toString()
       }
     }
-    return findWindowsKnownLocationBinaryPath(terminalAgent, context)
+    return findWindowsKnownLocationBinaryPath(terminalAgent, eelApi)
   }
 
   private suspend fun findPosixKnownLocationBinaryPath(
     terminalAgent: TerminalAgent,
-    context: TerminalAgentResolutionContext,
+    eelApi: EelApi,
   ): String? {
     for (candidate in terminalAgent.posixKnownLocationCandidates) {
-      val folder = resolveKnownLocationCandidate(candidate, context) ?: continue
+      val folder = resolveKnownLocationCandidate(candidate, eelApi) ?: continue
       val path = folder.resolve(terminalAgent.binaryName)
-      if (context.eelApi.fs.isRegularFile(path)) {
+      if (eelApi.fs.isRegularFile(path)) {
         return path.toString()
       }
     }
@@ -117,13 +104,13 @@ internal object TerminalAgentResolver {
 
   private suspend fun findWindowsKnownLocationBinaryPath(
     terminalAgent: TerminalAgent,
-    context: TerminalAgentResolutionContext,
+    eelApi: EelApi,
   ): String? {
     for (candidate in terminalAgent.windowsKnownLocationCandidates) {
-      val folder = resolveKnownLocationCandidate(candidate, context) ?: continue
+      val folder = resolveKnownLocationCandidate(candidate, eelApi) ?: continue
       for (extension in terminalAgent.windowsExecutableExtensions) {
         val path = folder.resolve("${terminalAgent.binaryName}.$extension")
-        if (context.eelApi.fs.isRegularFile(path)) {
+        if (eelApi.fs.isRegularFile(path)) {
           return path.toString()
         }
       }
@@ -131,14 +118,14 @@ internal object TerminalAgentResolver {
     return null
   }
 
-  private fun resolveKnownLocationCandidate(candidate: String, context: TerminalAgentResolutionContext): EelPath? {
+  private fun resolveKnownLocationCandidate(candidate: String, eelApi: EelApi): EelPath? {
     return if (candidate.startsWith(HOME_MARKER)) {
       val homeRelative = candidate.removePrefix(HOME_MARKER).removePrefix("/").removeSuffix("\\")
-      context.eelApi.fs.user.home.resolve(homeRelative)
+      eelApi.fs.user.home.resolve(homeRelative)
     }
     else {
       runCatching {
-        EelPath.parse(candidate, context.eelApi.descriptor)
+        EelPath.parse(candidate, eelApi.descriptor)
       }.getOrElse { error ->
         thisLogger().error("Parsing candidate path: $candidate", error)
         null
@@ -154,18 +141,10 @@ internal object TerminalAgentResolver {
 }
 
 @ApiStatus.Internal
-@VisibleForTesting
-data class TerminalAgentResolutionContext(
-  val eelApi: EelApi,
-  val osFamily: EelOsFamily,
-  val environment: Map<String, String>,
-)
-
-@ApiStatus.Internal
-@VisibleForTesting
+@TestOnly
 suspend fun findTerminalAgentBinaryPath(
   terminalAgent: TerminalAgent,
-  context: TerminalAgentResolutionContext,
+  eelApi: EelApi,
 ): String? {
-  return TerminalAgentResolver.findBinaryPath(terminalAgent, context)
+  return TerminalAgentResolver.findBinaryPath(terminalAgent, eelApi)
 }

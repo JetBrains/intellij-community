@@ -10,7 +10,6 @@ import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolutionContext
 import com.intellij.terminal.frontend.session.rpc.findTerminalAgentBinaryPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
@@ -33,7 +32,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
       val claude = bundledAgentByKey("claude_code")
       val eelApi = mockEelApi(EelOsFamily.Posix, "claude", listOf("/opt/bin/claude"))
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
 
       assertThat(binaryPath).isEqualTo("/opt/bin/claude")
     }
@@ -45,7 +44,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
       val codex = bundledAgentByKey("codex")
       val eelApi = mockEelApi(EelOsFamily.Posix, "codex", listOf("/usr/local/bin/codex"))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
     }
@@ -57,7 +56,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
       val codex = bundledAgentByKey("codex")
       val eelApi = mockEelApi(EelOsFamily.Posix, "codex", listOf("/usr/local/bin/codex", "/opt/bin/codex"))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
     }
@@ -69,7 +68,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
       val codex = bundledAgentByKey("codex")
       val eelApi = mockEelApi(EelOsFamily.Posix, "codex", emptyList())
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isNull()
       assertThat(codex.getInstallCommand(EelOsFamily.Posix)).isNull()
@@ -82,7 +81,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
       val codex = bundledAgentByKey("codex")
       val eelApi = mockEelApi(EelOsFamily.Windows, "codex", emptyList())
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isNull()
     }
@@ -98,7 +97,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         "C:\\bin\\codex.exe",
       ))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).endsWith("codex.exe")
     }
@@ -113,7 +112,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         "C:\\bin\\codex.cmd",
       ))
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).endsWith("codex.cmd")
     }
@@ -133,7 +132,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -153,7 +152,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(localBinPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isNull()
     }
@@ -174,7 +173,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(firstKnownLocation, secondKnownLocation),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
 
       assertThat(binaryPath).isEqualTo(firstKnownLocation)
     }
@@ -193,7 +192,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf("$homePath\\AppData\\Roaming\\npm\\codex.exe"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo("C:\\bin\\codex.ps1")
     }
@@ -213,7 +212,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -233,7 +232,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
@@ -250,7 +249,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf("/usr/local/bin/codex"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo("/usr/local/bin/codex")
     }
@@ -267,7 +266,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf("/usr/local/bin/claude"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(claude, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(claude, eelApi)
 
       assertThat(binaryPath).isEqualTo("/usr/local/bin/claude")
     }
@@ -288,7 +287,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(firstKnownLocation, secondKnownLocation),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(codex, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(codex, eelApi)
 
       assertThat(binaryPath).isEqualTo(firstKnownLocation)
     }
@@ -305,7 +304,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf("/usr/local/bin/junie"),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(junie, TerminalAgentResolutionContext(eelApi, EelOsFamily.Posix, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(junie, eelApi)
 
       assertThat(binaryPath).isNull()
     }
@@ -325,7 +324,7 @@ internal class TerminalAgentResolverTest : BasePlatformTestCase() {
         existingFiles = setOf(expectedPath),
       )
 
-      val binaryPath = findTerminalAgentBinaryPath(junie, TerminalAgentResolutionContext(eelApi, EelOsFamily.Windows, emptyMap()))
+      val binaryPath = findTerminalAgentBinaryPath(junie, eelApi)
 
       assertThat(binaryPath).isEqualTo(expectedPath)
     }
