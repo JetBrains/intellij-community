@@ -59,7 +59,10 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 @ApiStatus.Internal
 object ITNProxy {
   private const val DEFAULT_ENDPOINT = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
+  private const val REPORT_ENDPOINT_PROPERTY = "idea.diagnostic.itn.endpoint"
+  private const val JETBRAINS_HOST_SUFFIX = ".jetbrains.com"
   private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
+  private val LOG = logger<ITNProxy>()
 
   internal val DEVICE_ID: String by lazy {
     DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
@@ -184,7 +187,7 @@ object ITNProxy {
   internal suspend fun sendError(error: ErrorBean, newThreadPostUrl: String?): Long {
     val context = currentCoroutineContext()
     val request = createRequest(error.event, error)
-    val response = post(newThreadPostUrl ?: DEFAULT_ENDPOINT, request)
+    val response = post(newThreadPostUrl ?: getReportEndpoint(), request)
     context.ensureActive()
     val reportId = handleResponse(response)
     logger<ITNProxy>().info("report ID: ${reportId}")
@@ -195,8 +198,27 @@ object ITNProxy {
   @Throws(Exception::class)
   fun sendError(event: IdeaLoggingEvent): Long {
     val request = createRequest(event, errorBean = null)
-    val response = post(DEFAULT_ENDPOINT, request)
+    val response = post(getReportEndpoint(), request)
     return handleResponse(response)
+  }
+
+  private fun getReportEndpoint(): String {
+    val endpoint = System.getProperty(REPORT_ENDPOINT_PROPERTY)?.trim().takeUnless { it.isNullOrEmpty() } ?: return DEFAULT_ENDPOINT
+
+    if (!isEndpointValid(endpoint)) {
+      LOG.debug("Ignoring -D$REPORT_ENDPOINT_PROPERTY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
+      return DEFAULT_ENDPOINT
+    }
+
+    return endpoint
+  }
+
+  private fun isEndpointValid(endpoint: String): Boolean {
+    val uri = runCatching { URI(endpoint) }.getOrNull() ?: return false
+    val host = uri.host ?: return false
+    if (!uri.scheme.equals("https", ignoreCase = true)) return false
+    if (!host.endsWith(JETBRAINS_HOST_SUFFIX, ignoreCase = true)) return false
+    return true
   }
 
   private fun handleResponse(response: HttpResponse<String>): Long {
