@@ -28,6 +28,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
@@ -92,20 +93,28 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           }
         }
 
-        val sseLink = browserLink("", "").visibleIf(enabledCheckboxState!!).gap(RightGap.SMALL)
-        val streamLink = browserLink("", "").visibleIf(enabledCheckboxState!!)
+        var sseUrl = ""
+        var streamUrl = ""
+        val sseLinkComponent = ActionLink("") {
+          CopyPasteManager.getInstance().setContents(TextTransferable(sseUrl as CharSequence))
+        }
+        val streamLinkComponent = ActionLink("") {
+          CopyPasteManager.getInstance().setContents(TextTransferable(streamUrl as CharSequence))
+        }
+        cell(sseLinkComponent).visibleIf(enabledCheckboxState!!).gap(RightGap.SMALL)
+        cell(streamLinkComponent).visibleIf(enabledCheckboxState!!)
 
         fun refreshLinks() {
           val service = McpServerService.getInstance()
           val isServerRunning = service.isRunning
-          val sseText = if (isServerRunning) service.serverSseUrl else ""
-          val streamText = if (isServerRunning) service.serverStreamUrl else ""
+          sseUrl = if (isServerRunning) service.serverSseUrl else ""
+          streamUrl = if (isServerRunning) service.serverStreamUrl else ""
 
-          sseLink.component.text = sseText
-          sseLink.component.toolTipText = sseText
+          sseLinkComponent.text = sseUrl
+          sseLinkComponent.toolTipText = sseUrl
 
-          streamLink.component.text = streamText
-          streamLink.component.toolTipText = streamText
+          streamLinkComponent.text = streamUrl
+          streamLinkComponent.toolTipText = streamUrl
 
           checkboxWithValidation.text = if (isServerRunning) McpServerBundle.message("enable.mcp.server.when.enabled") else McpServerBundle.message("enable.mcp.server")
         }
