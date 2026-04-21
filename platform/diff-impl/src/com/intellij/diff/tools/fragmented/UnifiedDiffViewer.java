@@ -326,6 +326,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     group.add(new ReplaceSelectedChangesAction(Side.LEFT));
     group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
     group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
 
     return group;

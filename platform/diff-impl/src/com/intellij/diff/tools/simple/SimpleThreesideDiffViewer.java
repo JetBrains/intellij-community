@@ -123,6 +123,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(new ReplaceSelectedChangesAction(ThreeSide.BASE, ThreeSide.RIGHT));
 
     group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
+
+    group.add(Separator.getInstance());
     group.addAll(super.createEditorPopupActions());
 
     return group;

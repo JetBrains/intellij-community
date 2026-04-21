@@ -189,6 +189,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new AppendSelectedChangesAction(Side.RIGHT));
 
     group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
+    group.add(new MyToggleAutoScrollAction());
+
+    group.add(Separator.getInstance());
     group.addAll(super.createEditorPopupActions());
 
     return group;
