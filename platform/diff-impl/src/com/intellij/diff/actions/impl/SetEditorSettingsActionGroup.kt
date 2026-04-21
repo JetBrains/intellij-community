@@ -39,6 +39,9 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
 
   private var syncScrollSupport: SyncScrollSupport.Support? = null
   private val editors get() = editorsSupplier()
+  private var diffActions = emptyList<AnAction>()
+  private var gutterActions = emptyList<AnAction>()
+
   protected val actions: List<AnAction> = buildList {
     add(object : EditorSettingToggleAction("EditorToggleShowWhitespaces") {
       override var isSelected: Boolean
@@ -121,14 +124,14 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     }
     add(EditorBreadcrumbsPlacementGroup())
   }
-  private var diffActions = emptyList<AnAction>()
 
   init {
     installGutterPopup()
   }
 
-  fun setDiffActions(diffActions: List<AnAction>) {
+  fun setDiffActions(gutterActions: List<AnAction>, diffActions: List<AnAction>) {
     this@SetEditorSettingsActionGroup.diffActions = diffActions
+    this@SetEditorSettingsActionGroup.gutterActions = gutterActions
   }
 
   fun setSyncScrollSupport(syncScrollSupport: SyncScrollSupport.Support?) {
@@ -157,13 +160,13 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val editorSettingsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS)
-
+    val appearanceGroup = createAppearanceGroup()
     val actions = buildList {
-      add(editorSettingsGroup)
+      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS)
+      )
       addAll(diffActions)
       add(Separator.getInstance())
-      add(createAppearanceGroup())
+      add(appearanceGroup)
       add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
     }
 
@@ -171,14 +174,14 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
       return actions.toArray<AnAction>(EMPTY_ARRAY)
     }
 
-    val gutterGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP) as ActionGroup
-    val result = mutableListOf<AnAction>().apply {
-      addAll(gutterGroup.getChildren(e))
+    return buildList {
+      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP))
       add(Separator.getInstance())
-    }
-
-    replaceOrAppend(result, editorSettingsGroup, DefaultActionGroup(actions))
-    return result.toArray<AnAction>(EMPTY_ARRAY)
+      addAll(gutterActions)
+      add(Separator.getInstance())
+      add(appearanceGroup)
+      add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
+    }.toArray<AnAction>(EMPTY_ARRAY)
   }
 
   protected fun createAppearanceGroup(): DefaultActionGroup {

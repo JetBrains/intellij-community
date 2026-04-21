@@ -54,8 +54,8 @@ class SetEditorSettingsAction @ApiStatus.Internal constructor(
     editorSettingsActionGroup.applyDefaults()
   }
 
-  fun setDiffActions(actions: List<AnAction>) {
-    editorSettingsActionGroup.setDiffActions(actions)
+  fun setDiffActions(gutterActions: List<AnAction>, diffActions: List<AnAction>) {
+    editorSettingsActionGroup.setDiffActions(gutterActions, diffActions)
   }
 
   fun setSyncScrollSupport(syncScrollSupport: SyncScrollSupport.Support) {
