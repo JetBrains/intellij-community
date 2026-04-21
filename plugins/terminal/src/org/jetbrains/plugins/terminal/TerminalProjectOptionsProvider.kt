@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
@@ -30,6 +32,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getRemoteProjectBaseNioPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
@@ -107,7 +110,16 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
   private fun getDefaultWorkingDirectory(): String? {
-    return project.guessProjectDir()?.canonicalPath
+    return if (ApplicationManager.getApplication().isUnitTestMode) {
+      // Use just `guessProjectDir` in unit tests because in this case it is "temp:///src"
+      // and `EelPath.parse` call in `getRemoteProjectBaseNioPath` will fail for this path on Windows.
+      project.guessProjectDir()?.canonicalPath
+    }
+    else {
+      // Can't just use `guessProjectDir` because in RD case it would return a path to the fake thin client project.
+      // While we need a true "MultiRoutingFileSystem" path that points to the remote project path.
+      project.getRemoteProjectBaseNioPath()?.toCanonicalPath()
+    }
   }
 
   var shellPath: String
