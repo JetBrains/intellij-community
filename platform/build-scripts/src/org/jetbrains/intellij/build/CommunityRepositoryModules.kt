@@ -584,6 +584,7 @@ private fun createAndroidPluginLayout(
       spec.withModule("intellij.android.plugin.descriptor", "android.jar")
     }
     spec.withModule("intellij.android.preview-elements", "android.jar")
+    spec.withModule("intellij.android.play-publishing", "android.jar")
     spec.withModule("intellij.android.profilersAndroid", "android.jar")
     spec.withModule("intellij.android.profilersAndroid.gradle", "android.jar")
     spec.withModule("intellij.android.projectSystem.apk", "android.jar")

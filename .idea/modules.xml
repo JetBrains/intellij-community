@@ -253,6 +253,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/android/observable-ui/intellij.android.observable.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/old-agp-tests/intellij.android.old-agp-tests.iml" filepath="$PROJECT_DIR$/android/old-agp-tests/intellij.android.old-agp-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/platform-performance-testing/intellij.android.platform-performance-testing.iml" filepath="$PROJECT_DIR$/android/platform-performance-testing/intellij.android.platform-performance-testing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/play-publishing/intellij.android.play-publishing.iml" filepath="$PROJECT_DIR$/android/play-publishing/intellij.android.play-publishing.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/intellij.android.plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/intellij.android.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/descriptor/intellij.android.plugin.descriptor.iml" filepath="$PROJECT_DIR$/android/android-plugin/descriptor/intellij.android.plugin.descriptor.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/preview-designer/intellij.android.preview-designer.iml" filepath="$PROJECT_DIR$/android/preview-designer/intellij.android.preview-designer.iml" />

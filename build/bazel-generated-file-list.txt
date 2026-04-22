@@ -164,6 +164,7 @@ android/observable
 android/observable-ui
 android/old-agp-tests
 android/platform-performance-testing
+android/play-publishing
 android/preview-designer
 android/preview-elements
 android/preview-fast-compile
