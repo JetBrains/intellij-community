@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.lang.reflect.Field
 import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
@@ -20,50 +21,105 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class LeakHunterIgnoreReferencesTest {
-  @Test
-  fun `leaked disposable ignored`(): Unit = timeoutRunBlocking(60.seconds) {
-    val ref = ReferenceToDisposable(TestDisposable())
-    assertThrows<AssertionError> { checkReferenced(ref, listOf()) }
-    assertDoesNotThrow { checkReferenced(ref, listOf(IgnoredTraverseReference("com.intellij.openapi.util.ReferenceToDisposable.ref", -1))) }
-  }
-  fun checkReferenced(root: Any, ignoredTraverseEntries: List<IgnoredTraverseEntry>) {
-    val rootSupplier: Supplier<Map<Any, String>> = Supplier {
-      mapOf(root to "root")
+    @Test
+    fun `leaked disposable ignored`(): Unit = timeoutRunBlocking(60.seconds) {
+        val ref = ReferenceToDisposable(TestDisposable())
+        assertThrows<AssertionError> { checkReferenced(ref, listOf()) }
+        assertDoesNotThrow {
+            checkReferenced(
+                ref,
+                listOf(IgnoredTraverseReference("com.intellij.openapi.util.ReferenceToDisposable.ref", -1))
+            )
+        }
     }
-    LeakHunter.checkLeak(rootSupplier, TestDisposable::class.java, ignoredTraverseEntries) { true }
-  }
 
-  @Test
-  fun testLeakHunterDoesntReportFalsePositivesFromWeakHashMap() {
-    val javaMap: WeakHashMap<Any?, MyLeakData?> = WeakHashMap<Any?, MyLeakData?>()
-    val disposable = AtomicReference(Any())
-    javaMap.put(disposable.get(), MyLeakData())
+    @Test
+    fun `ignored field does not hide non ignored path to same leak`() {
+        val leaked = TestDisposable()
+        val ignoredField = IgnoredLeakRoot::class.java.name + ".ignored"
+        val rootsSupplier: Supplier<Map<Any, String>> = Supplier {
+            linkedMapOf(
+                IgnoredLeakRoot(leaked) to "ignored root",
+                VisibleLeakRoot(leaked) to "visible root",
+            )
+        }
 
-    disposable.set(null)
+        assertThrows<AssertionError> {
+            LeakHunter.checkLeak(rootsSupplier, TestDisposable::class.java, shouldExamineField(ignoredField)) { true }
+        }
+    }
 
-    LeakHunter.processLeaks({ mapOf(javaMap to "Standard WeakHashMap")}, MyLeakData::class.java, Predicate { leak: MyLeakData? -> true }, null, PairProcessor { _, _ ->
-      Assertions.fail("Found a leak!")
-    })
-  }
-  @Test
-  fun testLeakHunterDoesntReportDisposedDisposablesFromDisposer() {
-    val disposable: AtomicReference<Disposable.Default?> = AtomicReference(object : Disposable.Default {})
-    Disposer.dispose(disposable.get()!!)
-    Disposer.getDisposalTrace(disposable.get()!!).addSuppressed(MyLeakThrowable(MyLeakData()))
-    //Ensure that the reference is GC'ed, even in interpreter mode
-    disposable.set(null)
-    LeakHunter.processLeaks({ mapOf(Disposer.getTree() to "Disposer.getTree()")}, MyLeakData::class.java, Predicate { leak: MyLeakData? -> true }, null, PairProcessor { _, _ ->
-      Assertions.fail("Found a leak!")
-    })
-  }
+    @Test
+    fun `ignored field suppresses leak when all paths are ignored`() {
+        val leaked = TestDisposable()
+        val ignoredField = IgnoredLeakRoot::class.java.name + ".ignored"
+
+        assertDoesNotThrow {
+            checkReferenced(IgnoredLeakRoot(leaked), shouldExamineField = shouldExamineField(ignoredField))
+        }
+    }
+
+    private fun checkReferenced(
+        root: Any,
+        ignoredTraverseEntries: List<IgnoredTraverseEntry> = emptyList(),
+        shouldExamineField: Predicate<Field> = Predicate { true },
+    ) {
+        val rootSupplier: Supplier<Map<Any, String>> = Supplier {
+            mapOf(root to "root")
+        }
+        LeakHunter.checkLeak(rootSupplier, TestDisposable::class.java, ignoredTraverseEntries, shouldExamineField) { true }
+    }
+
+    private fun shouldExamineField(ignoredField: String): Predicate<Field> =
+        Predicate { field -> field.declaringClass.name + "." + field.name != ignoredField }
+
+    @Test
+    fun testLeakHunterDoesntReportFalsePositivesFromWeakHashMap() {
+        val javaMap: WeakHashMap<Any?, MyLeakData?> = WeakHashMap<Any?, MyLeakData?>()
+        val disposable = AtomicReference(Any())
+        javaMap[disposable.get()] = MyLeakData()
+
+        disposable.set(null)
+
+        LeakHunter.processLeaks(
+            { mapOf(javaMap to "Standard WeakHashMap") },
+            MyLeakData::class.java,
+            Predicate { true },
+            null,
+            PairProcessor { _, _ ->
+                Assertions.fail("Found a leak!")
+            })
+    }
+
+    @Test
+    fun testLeakHunterDoesntReportDisposedDisposablesFromDisposer() {
+        val disposable: AtomicReference<Disposable.Default?> = AtomicReference(object : Disposable.Default {})
+        Disposer.dispose(disposable.get()!!)
+        Disposer.getDisposalTrace(disposable.get()!!).addSuppressed(MyLeakThrowable(MyLeakData()))
+        //Ensure that the reference is GC'ed, even in interpreter mode
+        disposable.set(null)
+        LeakHunter.processLeaks(
+            { mapOf(Disposer.getTree() to "Disposer.getTree()") },
+            MyLeakData::class.java,
+            Predicate { true },
+            null,
+            PairProcessor { _, _ ->
+                Assertions.fail("Found a leak!")
+            })
+    }
 }
 
 private class MyLeakData
-private class MyLeakThrowable(private val myData: MyLeakData) : Throwable()
+private class MyLeakThrowable(@Suppress("unused") private val myData: MyLeakData) : Throwable()
 
 class TestDisposable : Disposable {
-  override fun dispose() {}
+    override fun dispose() {}
 }
 
-class ReferenceToDisposable(val ref: Disposable)
+@Suppress("unused")
+private class IgnoredLeakRoot(val ignored: TestDisposable)
 
+@Suppress("unused")
+private class VisibleLeakRoot(val visible: TestDisposable)
+
+class ReferenceToDisposable(val ref: Disposable)

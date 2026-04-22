@@ -1408,6 +1408,9 @@ f:com.intellij.util.indexing.FileContentImpl
 - s:createByContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.util.NotNullComputable,com.intellij.openapi.project.Project):com.intellij.util.indexing.FileContent
 - s:createByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.FileContent
 - getPsiFile():com.intellij.psi.PsiFile
+f:com.intellij.util.ref.DebugReflectionUtil
+- s:walkObjects(I,I,java.util.Map,java.lang.Class,java.util.function.Predicate,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
+- s:walkObjects(I,java.util.Map,java.lang.Class,java.util.function.Predicate,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink
 - getValue():java.lang.Object
 - prev():com.intellij.util.ref.DebugReflectionUtil$BackLink
