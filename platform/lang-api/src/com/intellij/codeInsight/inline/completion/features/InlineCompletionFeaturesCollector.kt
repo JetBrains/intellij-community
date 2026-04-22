@@ -30,6 +30,7 @@ interface InlineCompletionFeaturesCollector {
   fun getBlockStatementLevel(element: PsiElement): Int
   fun getSuggestionReferenceFeatures(fileWithSuggestion: PsiFile, suggestionRange: TextRange): List<SuggestionReferenceFeatures>
   fun getExtendedScopeFeatures(file: PsiFile, offset: Int): ExtendedScopeFeatures
+  fun isStringLiteral(element: PsiElement): Boolean?
 
   data class ArgumentFeatures(
     val isInArguments: Boolean,
