@@ -317,6 +317,8 @@ fun <T> Deferred<T>.toPromise(logErrors: Boolean = true): Promise<T> = object : 
   }
 }
 
+fun <T> Deferred<T>.toPromiseWithoutLogError(): Promise<T> = toPromise(logErrors = false)
+
 fun ActionCallback.toPromise(): Promise<Any?> {
   val promise = AsyncPromise<Any?>()
   doWhenDone { promise.setResult(null) }

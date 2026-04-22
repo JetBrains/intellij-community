@@ -15,3 +15,4 @@ org.jetbrains.concurrency.ObsolescentFunction
 f:org.jetbrains.concurrency.Promises
 - sf:toPromise(kotlinx.coroutines.Deferred,Z):org.jetbrains.concurrency.Promise
 - bs:toPromise$default(kotlinx.coroutines.Deferred,Z,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- sf:toPromiseWithoutLogError(kotlinx.coroutines.Deferred):org.jetbrains.concurrency.Promise
