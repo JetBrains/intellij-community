@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.module` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "module_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "module",
+  module_name = "intellij.module",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k21"
+)
+
+jvm_library(
+  name = "module_test_lib",
+  testonly = True,
+  module_name = "intellij.module",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
+  resource_jars = [":module_test_resources"],
+  kotlinc_opts = "@community//:k21",
+  runtime_deps = [":module"]
+)
+### auto-generated section `build intellij.module` end
+
+### auto-generated section `iml intellij.module` start
+exports_files([
+  "intellij.module.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.module` end

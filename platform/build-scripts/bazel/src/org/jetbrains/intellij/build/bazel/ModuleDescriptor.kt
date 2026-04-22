@@ -52,6 +52,7 @@ internal data class ResourceDescriptor(
   @JvmField val baseDirectory: String,
   @JvmField val files: List<String>,
   @JvmField val relativeOutputPath: String,
+  @JvmField val root: Path,
 )
 
 internal data class SourceDirDescriptor(

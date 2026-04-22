@@ -46,6 +46,12 @@ class BazelGeneratorIntegrationTests {
   @Test fun moduleRepositoryLibrarySnapshot() = doTest("module-repository-library-snapshot")
   @Test fun communitySubdirNaming() = doTest("community-subdir-naming")
 
+  @Test fun resourcesSingleRoot() = doTest("resources-single-root")
+  @Test fun resourcesMultipleRoots() = doTest("resources-multiple-roots")
+  @Test fun resourcesNonPluginXmlIgnored() = doTest("resources-non-plugin-xml-ignored")
+  @Test fun resourcesTestRoot() = doTest("resources-test-root")
+  @Test fun resourcesPluginDescriptorInSecondRoot() = doTest("resources-plugin-descriptor-in-second-root")
+
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,

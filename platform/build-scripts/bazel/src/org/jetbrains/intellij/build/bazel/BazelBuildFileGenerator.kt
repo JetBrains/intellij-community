@@ -27,9 +27,12 @@ import java.util.IdentityHashMap
 import java.util.TreeMap
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -112,9 +115,9 @@ internal class BazelBuildFileGenerator(
   private val projectJavacSettings = javaExtensionService.getCompilerConfiguration(project)
   private val projectLanguageLevel: LanguageLevel = run {
     val projectExtension = javaExtensionService.getProjectExtension(project)
-      ?: error("Project-level language version is not defined: JpsJavaProjectExtension is missing on project ${project.name}")
+                           ?: error("Project-level language version is not defined: JpsJavaProjectExtension is missing on project ${project.name}")
     projectExtension.languageLevel
-      ?: error("Project-level language version is not defined: JpsJavaProjectExtension.languageLevel is null on project ${project.name}")
+    ?: error("Project-level language version is not defined: JpsJavaProjectExtension.languageLevel is null on project ${project.name}")
   }
 
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
@@ -597,8 +600,10 @@ internal class BazelBuildFileGenerator(
                               ?: (if (jvmTarget == kotlincDefaults.jvmTarget) null else "@community//:k$jvmTarget")
     val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
 
-    val resourceTargets = mutableListOf<BazelLabel>()
-    val testResourceTargets = mutableListOf<BazelLabel>()
+    var directResources: ResourcesInfo? = null
+    var directTestResources: ResourcesInfo? = null
+    val resourceJarTargets = mutableListOf<BazelLabel>()
+    val testResourceJarTargets = mutableListOf<BazelLabel>()
     val productionCompileTargets = mutableListOf<BazelLabel>()
     val productionCompileJars = mutableListOf<BazelLabel>()
     val testCompileTargets = mutableListOf<BazelLabel>()
@@ -607,11 +612,13 @@ internal class BazelBuildFileGenerator(
     if (customModule == null) {
       if (moduleDescriptor.resources.isNotEmpty()) {
         val result = generateResources(module = moduleDescriptor, forTests = false)
-        resourceTargets.addAll(result.resourceTargets)
+        directResources = result.resources
+        resourceJarTargets.addAll(result.resourceJarsTargets)
       }
       if (moduleDescriptor.testResources.isNotEmpty()) {
         val result = generateResources(module = moduleDescriptor, forTests = true)
-        testResourceTargets.addAll(result.resourceTargets)
+        directTestResources = result.resources
+        testResourceJarTargets.addAll(result.resourceJarsTargets)
       }
     }
 
@@ -639,7 +646,7 @@ internal class BazelBuildFileGenerator(
           option("deps", deps.deps)
         }
       }
-      resourceTargets.add(BazelLabel(label = codegenTargetName, module = null))
+      resourceJarTargets.add(BazelLabel(label = codegenTargetName, module = null))
     }
 
     target("jvm_library") {
@@ -657,12 +664,16 @@ internal class BazelBuildFileGenerator(
         option("srcs", customModule.sources)
       }
       if (customModule == null) {
-        if (resourceTargets.isNotEmpty()) {
-          option("resources", resourceTargets.map { ":${it.label}" })
+        if (directResources != null) {
+          option("resources", glob(directResources.fileGlobs, allowEmpty = false))
+          option("resource_strip_prefix", directResources.stripPrefix)
+        }
+        if (resourceJarTargets.isNotEmpty()) {
+          option("resource_jars", resourceJarTargets.map { ":${it.label}" })
         }
       }
       else if (customModule.resources.isNotEmpty()) {
-        option("resources", customModule.resources)
+        option("resource_jars", customModule.resources)
       }
       if (javacOptionsLabel != null && sources.isNotEmpty()) {
         option("javac_opts", javacOptionsLabel)
@@ -698,8 +709,12 @@ internal class BazelBuildFileGenerator(
       visibility(arrayOf("//visibility:public"))
 
       option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
-      if (testResourceTargets.isNotEmpty()) {
-        option("resources", testResourceTargets.map { ":${it.label}" })
+      if (directTestResources != null) {
+        option("resources", glob(directTestResources.fileGlobs, allowEmpty = false))
+        option("resource_strip_prefix", directTestResources.stripPrefix)
+      }
+      if (testResourceJarTargets.isNotEmpty()) {
+        option("resource_jars", testResourceJarTargets.map { ":${it.label}" })
       }
 
       javacOptionsLabel?.let { option("javac_opts", it) }
@@ -791,8 +806,14 @@ internal class BazelBuildFileGenerator(
     return extraDeps
   }
 
+  private data class ResourcesInfo(
+    val fileGlobs: List<String>,
+    val stripPrefix: String,
+  )
+
   private data class GenerateResourcesResult(
-    val resourceTargets: List<BazelLabel>,
+    val resources: ResourcesInfo?,
+    val resourceJarsTargets: List<BazelLabel>,
   )
 
   private fun BuildFile.generateResources(
@@ -824,32 +845,45 @@ internal class BazelBuildFileGenerator(
       else {
         listOf(BazelLabel("$productionLabel$PRODUCTION_RESOURCES_TARGET_SUFFIX", module))
       }
-      return GenerateResourcesResult(resourceTargets = fixedTargetsList)
+      return GenerateResourcesResult(resources = null, resourceJarsTargets = fixedTargetsList)
     }
-
-    load("@rules_jvm//:jvm.bzl", "resourcegroup")
 
     val targetNameSuffix = if (forTests) TEST_RESOURCES_TARGET_SUFFIX else PRODUCTION_RESOURCES_TARGET_SUFFIX
-
-    val resourceTargets = resources.withIndex().map { (i, resource) ->
-      val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
-
-      target("resourcegroup") {
-        option("name", name)
-        option("srcs", glob(resource.files, allowEmpty = false))
-        if (resource.baseDirectory.isNotEmpty()) {
-          option("strip_prefix", resource.baseDirectory)
+    if (resources.isEmpty()) return GenerateResourcesResult(null, emptyList())
+    val directResources = resources
+      .singleOrNull()
+      ?: resources.find { it.root.containsXmlDescriptors() }
+      ?: resources.first()
+    val resourceJarsTargets = resources
+      .minus(directResources)
+      .withIndex()
+      .map { (i, resource) ->
+        val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
+        target("resourcegroup") {
+          option("name", name)
+          option("srcs", glob(resource.files, allowEmpty = false))
+          if (resource.baseDirectory.isNotEmpty()) {
+            option("strip_prefix", resource.baseDirectory)
+          }
+          if (resource.relativeOutputPath.isNotEmpty()) {
+            option("add_prefix", resource.relativeOutputPath)
+          }
         }
-        if (resource.relativeOutputPath.isNotEmpty()) {
-          option("add_prefix", resource.relativeOutputPath)
-        }
+
+        BazelLabel(name, module)
       }
 
-      BazelLabel(name, module)
-    }
-
-    return GenerateResourcesResult(resourceTargets = resourceTargets)
+    if (resourceJarsTargets.isNotEmpty()) load("@rules_jvm//:jvm.bzl", "resourcegroup")
+    return GenerateResourcesResult(
+      resources = ResourcesInfo(
+        fileGlobs = directResources.files,
+        stripPrefix = directResources.baseDirectory
+      ),
+      resourceJarsTargets = resourceJarsTargets
+    )
   }
+
+  private fun Path.containsXmlDescriptors(): Boolean = exists() && walk().any { it.extension == "xml" && it.readText().contains("<idea-plugin") }
 
   private fun BuildFile.computeJavacOptions(module: ModuleDescriptor, jvmTarget: String): String? {
     val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.module.name) ?: ""
@@ -978,10 +1012,15 @@ private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelB
   return module.sourceRoots
     .asSequence()
     .filter { it.rootType == type }
-    .map {
-      val prefix = resolveRelativeToBazelBuildFileDirectory(it.path, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
-      val relativeOutputPath = (it.properties as JavaResourceRootProperties).relativeOutputPath
-      ResourceDescriptor(baseDirectory = prefix, files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"), relativeOutputPath = relativeOutputPath)
+    .map { root ->
+      val prefix = resolveRelativeToBazelBuildFileDirectory(root.path, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
+      val relativeOutputPath = (root.properties as JavaResourceRootProperties).relativeOutputPath
+      ResourceDescriptor(
+        baseDirectory = prefix,
+        files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"),
+        relativeOutputPath = relativeOutputPath,
+        root = root.path
+      )
     }
     .toList()
 }

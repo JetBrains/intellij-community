@@ -92,6 +92,20 @@ def _jvm_deps(ctx, associated_targets, deps, runtime_deps):
         runtime_deps = [_java_info(d) for d in runtime_deps],
     )
 
+def _collect_resources(ctx):
+    """Collects resources from both direct resources and resource_jars attrs."""
+    result = []
+    if ctx.attr.resources:
+        res = struct(
+          files = ctx.files.resources,
+          strip_prefix = ctx.file.strip_prefix,
+          add_prefix = "",
+        )
+        result.append(res)
+    for r in ctx.attr.resource_jars:
+        result.append(r[ResourceGroupInfo])
+    return result
+
 def kt_jvm_produce_jar_actions(ctx, isTest = False):
     """Sets up a compile action for a jar.
 
@@ -123,7 +137,7 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
         ctx = ctx,
         output_jar = output_jar,
         srcs = srcs,
-        resources = [r[ResourceGroupInfo] for r in ctx.attr.resource_jars],
+        resources = _collect_resources(ctx),
         associates = associates,
         compile_deps = compile_deps,
         transitiveInputs = transitiveInputs,

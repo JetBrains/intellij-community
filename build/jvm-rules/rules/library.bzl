@@ -42,8 +42,25 @@ _jvm_library_jps = rule(
             allow_files = [".kt", ".java", ".srcjar", ".form"],
             mandatory = True,
         ),
+        "resources": attr.label_list(
+            doc = """The list of resource files.""",
+            default = [],
+            allow_files = True,
+        ),
+        "strip_prefix": attr.label(
+            doc = """The path prefix to remove from Java resources""",
+            allow_single_file = True,
+        ),
+        "resource_strip_prefix": attr.string(
+            doc = """\
+                Equivalent of `strip_prefix`, but includes the package path as a prefix.
+                Its name and value follow the standard Bazel convention and are properly recognized by the Bazel plugin.
+                It's only added to satisfy the plugin. Monorepo rules use `strip_prefix` value instead.
+                """,
+            default = "",
+        ),
         "resource_jars": attr.label_list(
-            doc = """The list of resource groups to create the target.""",
+            doc = """The remaining resource groups passed as resource jars.""",
             default = [],
             providers = [ResourceGroupInfo],
         ),
@@ -93,6 +110,8 @@ def jvm_library(
         exports = [],
         runtime_deps = [],
         resources = [],
+        resource_strip_prefix = None,
+        resource_jars = [],
         neverlink = False,
         plugins = [],
         module_name = None,
@@ -113,7 +132,9 @@ def jvm_library(
         deps: Dependencies
         exports: Exported dependencies
         runtime_deps: Runtime-only dependencies
-        resources: Resource groups (ResourceGroupInfo).
+        resources: Resource files.
+        resource_strip_prefix: Label for the path prefix to strip from resources.
+        resource_jars: Remaining resource groups (ResourceGroupInfo targets).
         neverlink: If true, only use for compilation
         plugins: Compiler plugins
         module_name: Kotlin module name
@@ -130,14 +151,15 @@ def jvm_library(
     effective_kotlinc_opts = kotlinc_opts if kotlinc_opts != None else Label("//:default-kotlinc-opts")
 
     if use_rules_kotlin_backend:
-        # resourcegroup targets also emit resource jars (DefaultInfo), so they can be forwarded via resource_jars.
         kt_jvm_library(
             name = name,
             srcs = srcs,
             deps = deps,
             exports = exports,
             runtime_deps = runtime_deps,
-            resource_jars = resources,
+            resources = resources,
+            resource_strip_prefix = resource_strip_prefix,
+            resource_jars = resource_jars,
             neverlink = neverlink,
             plugins = plugins,
             module_name = module_name,
@@ -151,13 +173,22 @@ def jvm_library(
             **kwargs
         )
     else:
+        package_name = native.package_name()
+        if package_name:
+            package_name = package_name + "/"
+        standard_resource_strip_prefix = ""
+        if resource_strip_prefix:
+          standard_resource_strip_prefix = package_name + resource_strip_prefix
         _jvm_library_jps(
             name = name,
             srcs = srcs,
             deps = deps,
             exports = exports,
             runtime_deps = runtime_deps,
-            resource_jars = resources,
+            resources = resources,
+            strip_prefix = resource_strip_prefix,
+            resource_strip_prefix = standard_resource_strip_prefix,
+            resource_jars = resource_jars,
             neverlink = neverlink,
             plugins = plugins,
             module_name = module_name,
