@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.features.CommonBracketType
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
 import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFactorsComponent
@@ -255,10 +256,10 @@ internal object InlineCompletionContextLogs {
 
     getBracketFeatures(element)?.let {
       with(it) {
-        result.add(Logs.HAVE_OPENING_PARENTHESIS_LEFT with haveOpeningParenthesisOnTheLeft)
-        result.add(Logs.HAVE_OPENING_BRACKET_LEFT with haveOpeningBracketOnTheLeft)
-        result.add(Logs.HAVE_OPENING_BRACE_LEFT with haveOpeningBraceOnTheLeft)
-        result.add(Logs.HAVE_OPENING_ANGLE_BRACKET_LEFT with haveOpeningAngleBracketOnTheLeft)
+        result.add(Logs.HAVE_OPENING_PARENTHESIS_LEFT with (CommonBracketType.PARENTHESIS in openingBracketsLeft))
+        result.add(Logs.HAVE_OPENING_BRACKET_LEFT with (CommonBracketType.BRACKET in openingBracketsLeft))
+        result.add(Logs.HAVE_OPENING_BRACE_LEFT with (CommonBracketType.BRACE in openingBracketsLeft))
+        result.add(Logs.HAVE_OPENING_ANGLE_BRACKET_LEFT with (CommonBracketType.ANGLE_BRACKET in openingBracketsLeft))
       }
     }
     return result
