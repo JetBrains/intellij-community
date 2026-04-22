@@ -3,6 +3,7 @@ package org.jetbrains.yaml.openrewrite
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
@@ -39,6 +40,8 @@ internal class OpenRewriteSuggestionProvider : PluginSuggestionProvider {
 
     val requiredPluginId = PluginId.getId(OPENREWRITE_PLUGIN_ID)
     if (PluginManager.isPluginInstalled(requiredPluginId)) return null
+
+    if (!PluginManagerCore.isPluginInstalled(PluginManagerCore.JAVA_PLUGIN_ID)) return null
 
     val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
 
