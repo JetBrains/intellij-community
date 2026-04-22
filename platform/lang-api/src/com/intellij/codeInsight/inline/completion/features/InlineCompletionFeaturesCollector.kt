@@ -42,10 +42,9 @@ interface InlineCompletionFeaturesCollector {
   )
 
   data class BracketFeatures(
-    val haveOpeningParenthesisOnTheLeft: Boolean,
-    val haveOpeningBracketOnTheLeft: Boolean,
-    val haveOpeningBraceOnTheLeft: Boolean,
-    val haveOpeningAngleBracketOnTheLeft: Boolean,
+    val openingBracketsLeft: Set<CommonBracketType>,
+    val balanceLeft: Map<CommonBracketType, Int>,
+    val missingOpeningBracketsLeft: Map<CommonBracketType, Int>,
   )
 
   data class SuggestionReferenceFeatures(
