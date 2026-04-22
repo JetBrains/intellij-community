@@ -89,7 +89,6 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     weightTextIfEnabled(value)
 
     presentation.containerText?.let { containerText ->
-      val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
       val keepLocationVisibleSpace = if (presentation.shouldKeepLocationVisible) JBUI.scale(54) else 0
       val maxContainerTextWidth = width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20) - keepLocationVisibleSpace
 
