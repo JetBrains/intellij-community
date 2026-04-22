@@ -54,13 +54,17 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
 
     /**
-     * So far only the `single repository` case is supported for working trees
+     * Working trees UI currently supports only the `single repository` case.
+     * The returned value distinguishes unsupported, single-repository, and multi-repository project states.
      */
-    fun getRepoForWorkingTreesSupport(project: Project?): GitRepository? {
-      if (project == null) return null
-      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return null
+    fun getWorktreeSupportStatus(project: Project?): GitWorktreeSupportStatus {
+      if (project == null || !GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return GitWorktreeSupportStatus.Unsupported
       val repositories = GitRepositoryManager.getInstance(project).repositories
-      return repositories.singleOrNull()
+      return when (repositories.size) {
+        0 -> GitWorktreeSupportStatus.Unsupported
+        1 -> GitWorktreeSupportStatus.SingleRepository(repositories.single())
+        else -> GitWorktreeSupportStatus.MultipleRepository(repositories)
+      }
     }
   }
 
@@ -69,7 +73,10 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    val repository = getRepoForWorkingTreesSupport(project) ?: return false
+    val repository = when (val status = getWorktreeSupportStatus(project)) {
+      is GitWorktreeSupportStatus.SingleRepository -> status.repository
+      else -> return false
+    }
     val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
     return when (value) {
       WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> false
@@ -123,4 +130,10 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
       ProjectUtil.openOrImportAsync(Path(tree.path.path))
     }
   }
+}
+
+internal sealed class GitWorktreeSupportStatus {
+  data object Unsupported : GitWorktreeSupportStatus()
+  data class SingleRepository(val repository: GitRepository) : GitWorktreeSupportStatus()
+  data class MultipleRepository(val repositories: List<GitRepository>) : GitWorktreeSupportStatus()
 }

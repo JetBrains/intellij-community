@@ -11,6 +11,7 @@ import com.intellij.vcs.VcsShowToolWindowTabAction
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
+import git4idea.workingTrees.GitWorktreeSupportStatus
 
 internal class ShowWorkingTreesAction : DumbAwareAction() {
 
@@ -24,7 +25,7 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
   private fun shouldShow(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     if (ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) == null) return false
-    return GitWorkingTreesService.getRepoForWorkingTreesSupport(project) != null
+    return GitWorkingTreesService.getWorktreeSupportStatus(project) is GitWorktreeSupportStatus.SingleRepository
   }
 
   override fun actionPerformed(e: AnActionEvent) {
