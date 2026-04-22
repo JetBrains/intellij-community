@@ -18,7 +18,7 @@ val pluginVersion = run {
 }
 
 // the compiler plugin will be used together with this Kotlin compiler
-val KOTLIN_VERSION = "2.3.21-RC2"
+val KOTLIN_VERSION = "2.4.0-RC"
 
 // the compiler plugin will be built with these Kotlin LV/APIV
 val KOTLIN_LANGUAGE_VERSION = "2.3"
@@ -33,6 +33,7 @@ repositories {
   //    please do not change it before discussing it in #ij-monorepo-kotlin
   maven("https://packages.jetbrains.team/maven/p/kt/bootstrap/") // periodic dev-builds of the Kotlin compiler (stable availability)
   maven("https://packages.jetbrains.team/maven/p/kt/dev/") // per-commit dev-builds of the Kotlin compiler (unpublished after 1-2 weeks)
+  maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/") // special dev-builds of the Kotlin compiler for IntelliJ
   if ("SNAPSHOT" in KOTLIN_VERSION || KOTLIN_VERSION.count { it == '-' } > 1) { // e.g., X.Y.Z-SNAPSHOT, X.Y.Z-dev-1234, X.Y.Z-ReleaseN-1234
     mavenLocal()
   }
