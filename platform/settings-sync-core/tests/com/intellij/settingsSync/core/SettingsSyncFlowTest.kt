@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -570,6 +571,48 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
         val blob = treeWalk.getObjectId(0)
         return String(objectReader.open(blob).bytes, StandardCharsets.UTF_8)
       }
+    }
+  }
+
+  @TestFor(issues = ["IJPL-203153"])
+  @Test
+  fun `checkServer does not block DefaultDispatcher when communicator blocks`() {
+    val appReadyLatch = CountDownLatch(1)
+
+    // Use a single-slot view of Dispatchers.Default to reproduce the deadlock scenario:
+    // if checkServerState() blocks the thread (instead of suspending to IO), the single
+    // available slot is exhausted and the APP_READY-simulator coroutine can never run.
+    val limitedDefault = Dispatchers.Default.limitedParallelism(1)
+
+    // The outer timeout acts as the deadlock detector: if not done within 5 s, test fails.
+    timeoutRunBlocking(5.seconds, context = limitedDefault) {
+      initSettingsSync(waitForInit = false)
+
+      // Wait for bridge to finish initialization by suspending (not blocking) the coroutine,
+      // so limitedDefault's single slot is freed for the bridge's init coroutine.
+      while (!bridge.isAnyInitializePerformed.get()) {
+        delay(10.milliseconds)
+      }
+
+      // Activate the blocking interceptor only after the bridge has initialized.
+      // checkServerStateInterceptor is invoked at the start of checkServerState() and
+      // simulates myValidatedToken.get() blocking until APP_READY.
+      remoteCommunicator.checkServerStateInterceptor = { appReadyLatch.await(10, TimeUnit.SECONDS) }
+
+      // Fire a SyncRequest to trigger processExclusiveEvent → checkServer() → checkServerState().
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+
+      // Simulate APP_READY being reached from a second coroutine.
+      // Without fix: the single limitedDefault slot is occupied by checkServerState() blocking
+      //              on appReadyLatch.await() → this launch never runs → deadlock → timeout.
+      // With fix: checkServerState() runs on Dispatchers.IO (via withContext), the limitedDefault
+      //           slot is free → this launch runs → latch released → no deadlock.
+      launch {
+        appReadyLatch.countDown()
+      }
+
+      bridge.waitForAllExecuted()
+      cleanup()
     }
   }
 
