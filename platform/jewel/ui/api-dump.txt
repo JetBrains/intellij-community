@@ -2885,6 +2885,8 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Diff
 - sf:MagicResolveToolbar:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Remove:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Revert:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SideBySide:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Unified:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Duplicates
 - sf:SendToTheLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey

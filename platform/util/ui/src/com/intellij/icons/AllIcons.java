@@ -446,6 +446,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MagicResolveToolbar = load("expui/diff/magicResolveToolbar.svg", "diff/magicResolveToolbar.svg", 485340428, 2);
     /** 12x12 */ public static final @NotNull Icon Remove = load("expui/diff/remove@14x14.svg", "diff/remove.svg", 1317117219, 2);
     /** 12x12 */ public static final @NotNull Icon Revert = load("expui/diff/revert@14x14.svg", "diff/revert.svg", -889517433, 2);
+    /** 16x16 */ public static final @NotNull Icon SideBySide = load("expui/diff/sideBySide.svg", 1504631767, 2);
+    /** 16x16 */ public static final @NotNull Icon Unified = load("expui/diff/unified.svg", 1282318432, 2);
   }
 
   public static final class Duplicates {

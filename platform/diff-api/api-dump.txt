@@ -139,6 +139,7 @@ com.intellij.diff.FocusableContext
 com.intellij.diff.FrameDiffTool
 - com.intellij.diff.DiffTool
 - a:createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
+- getIcon():javax.swing.Icon
 - getToolType():com.intellij.diff.DiffToolType
 com.intellij.diff.FrameDiffTool$DiffViewer
 - com.intellij.openapi.Disposable

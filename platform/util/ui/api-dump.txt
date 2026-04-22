@@ -409,6 +409,8 @@ f:com.intellij.icons.AllIcons$Diff
 - sf:MagicResolveToolbar:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
 - sf:Revert:javax.swing.Icon
+- sf:SideBySide:javax.swing.Icon
+- sf:Unified:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Duplicates
 - sf:SendToTheLeft:javax.swing.Icon

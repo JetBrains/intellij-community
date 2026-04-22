@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -934,7 +934,13 @@ public abstract class DiffRequestProcessor
 
     @Override
     public @NotNull DiffTool getActiveTool() {
-      return myState.getActiveTool();
+      DiffTool activeTool = myState.getActiveTool();
+      for (DiffTool tool : getTools()) {
+        if (isSameToolOrSubstitutor(tool, activeTool, myContext, myActiveRequest)) {
+          return tool;
+        }
+      }
+      return activeTool;
     }
 
     @Override
@@ -944,7 +950,6 @@ public abstract class DiffRequestProcessor
   }
 
   private class MyChangeDiffToolComboBoxAction extends ComboBoxAction implements DumbAware {
-    // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;

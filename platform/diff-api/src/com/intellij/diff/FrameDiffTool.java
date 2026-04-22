@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import java.util.List;
 
@@ -24,6 +26,12 @@ public interface FrameDiffTool extends DiffTool {
   @RequiresEdt
   @NotNull
   DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request);
+
+  default @NotNull Icon getIcon() {
+    return getToolType() == DiffToolType.Unified.INSTANCE
+           ? AllIcons.Diff.Unified
+           : AllIcons.Diff.SideBySide;
+  }
 
   default @NotNull DiffToolType getToolType() {
     return DiffToolType.Default.INSTANCE;

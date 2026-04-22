@@ -1229,6 +1229,12 @@ public final class AllIconsKeys {
     /** 12x12 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Revert = new IntelliJIconKey("diff/revert.svg", "expui/diff/revert@14x14.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey SideBySide = new IntelliJIconKey("expui/diff/sideBySide.svg", "expui/diff/sideBySide.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Unified = new IntelliJIconKey("expui/diff/unified.svg", "expui/diff/unified.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
