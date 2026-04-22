@@ -39,7 +39,7 @@ class ToolchainResolverSession private constructor(
       }
     }
 
-    val TOOLCHAIN_SESSION_KEY: Key<ToolchainResolverSession> = Key<ToolchainResolverSession>.create("Sync.ToolchainResolverSession.cache")
+    val TOOLCHAIN_SESSION_KEY: Key<ToolchainResolverSession> = Key.create("Sync.ToolchainResolverSession.cache")
   }
 
   private var cached: List<ToolchainModel>? = null

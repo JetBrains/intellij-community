@@ -97,7 +97,7 @@ internal class CancelingSteppingListener : SteppingListener {
         }
       }
       else {
-        CompletableFuture<String>.completedFuture(filter?.filterName ?: debuggerProcessImpl.session.sessionName)
+        CompletableFuture.completedFuture(filter?.filterName ?: debuggerProcessImpl.session.sessionName)
       }
 
       whereStrFuture.thenAccept { whereStr ->
