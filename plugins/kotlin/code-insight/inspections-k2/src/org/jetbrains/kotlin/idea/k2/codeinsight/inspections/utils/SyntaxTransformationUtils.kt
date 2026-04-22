@@ -2,11 +2,15 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils
 
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 /**
@@ -47,3 +51,28 @@ internal fun applyToWithConversion(
     )
     return qualifiedExpression.replace(newWithCall) as KtCallExpression
 }
+
+internal val TARGET_FUNCTION_FQ_NAMES: Set<FqName> = setOf(
+    FqName("kotlin.collections.listOf"),
+    FqName("kotlin.collections.emptyList"),
+    FqName("kotlin.collections.mutableListOf"),
+    FqName("kotlin.collections.setOf"),
+    FqName("kotlin.collections.emptySet"),
+    FqName("kotlin.collections.mutableSetOf"),
+    FqName("kotlin.sequences.sequenceOf"),
+    FqName("kotlin.sequences.emptySequence"),
+    FqName("kotlin.arrayOf"),
+    FqName("kotlin.emptyArray"),
+    FqName("kotlin.booleanArrayOf"),
+    FqName("kotlin.byteArrayOf"),
+    FqName("kotlin.charArrayOf"),
+    FqName("kotlin.doubleArrayOf"),
+    FqName("kotlin.floatArrayOf"),
+    FqName("kotlin.intArrayOf"),
+    FqName("kotlin.shortArrayOf"),
+    FqName("kotlin.longArrayOf"),
+    FqName("kotlin.ubyteArrayOf"),
+    FqName("kotlin.uintArrayOf"),
+    FqName("kotlin.ulongArrayOf"),
+    FqName("kotlin.ushortArrayOf"),
+)

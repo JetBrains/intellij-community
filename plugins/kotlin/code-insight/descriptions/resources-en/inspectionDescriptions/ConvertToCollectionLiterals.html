@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports calls to collection factory functions that can be replaced with collection literal syntax.
+<p>
+    When the <code>-Xcollection-literals</code> compiler flag is enabled, collection creation functions such as
+    <code>listOf()</code>, <code>setOf()</code>, <code>arrayOf()</code>, and similar functions can be expressed
+    using the more concise collection literal syntax <code>[...]</code>.
+</p>
+<p>Example:</p>
+<pre><code>
+val list = listOf("a", "b", "c")
+</code></pre>
+<p>After applying the fix:</p>
+<pre><code>
+val list: List&lt;String&gt; = ["a", "b", "c"]
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection requires the <code>-Xcollection-literals</code> compiler flag to be enabled.</p>
+</body>
+</html>

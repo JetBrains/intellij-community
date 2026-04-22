@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+val set: MutableSet<Int> = [1, 2, 3]

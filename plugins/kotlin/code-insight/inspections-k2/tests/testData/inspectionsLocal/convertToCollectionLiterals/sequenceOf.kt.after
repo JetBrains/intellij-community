@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+val seq: Sequence<Int> = [1, 2, 3]

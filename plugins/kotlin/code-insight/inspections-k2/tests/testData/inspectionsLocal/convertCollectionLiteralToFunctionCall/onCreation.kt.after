@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+// FIX: Replace with a function call
+class A(x: Set<String>) {}
+
+fun main() {
+    val a = A(setOf())
+}

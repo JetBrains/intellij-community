@@ -1,0 +1,3 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+// FIX: Replace with a function call
+val seq: Sequence<Int> = sequenceOf(1, 2, 3)

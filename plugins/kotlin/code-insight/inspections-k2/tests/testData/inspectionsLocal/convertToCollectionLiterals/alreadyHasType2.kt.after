@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+val mySet: Set<*> = [1, 2, 3]
