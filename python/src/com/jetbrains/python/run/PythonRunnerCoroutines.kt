@@ -6,11 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.toPromise
 import java.util.function.Supplier
 
 /**
@@ -31,20 +29,6 @@ fun <T> asyncPromise(project: Project, block: suspend CoroutineScope.() -> T): P
 @ApiStatus.Internal
 fun <T> runAsync(project: Project, supplier: Supplier<T>): Promise<T> {
   return asyncPromise(project) { supplier.get() }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun <T> Deferred<T>.toPromise(): Promise<T> {
-  val promise = AsyncPromise<T>()
-  invokeOnCompletion { throwable ->
-    if (throwable != null) {
-      promise.setError(throwable)
-    }
-    else {
-      promise.setResult(getCompleted())
-    }
-  }
-  return promise
 }
 
 @Service(Service.Level.PROJECT)

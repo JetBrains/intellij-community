@@ -50,7 +50,6 @@ import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -67,9 +66,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.toPromise
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
@@ -587,18 +585,6 @@ class PlatformUtilitiesTest {
     assertThat(counter.get()).isEqualTo(numberOfNonBlockingReadActions)
   }
 
-
-  fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromise<T>().also { promise ->
-    invokeOnCompletion { throwable ->
-      if (throwable != null) {
-        promise.setError(throwable)
-      }
-      else {
-        @Suppress("OPT_IN_USAGE")
-        promise.setResult(getCompleted())
-      }
-    }
-  }
 
   @Test
   fun `async promise does not leak cancellation`(): Unit = timeoutRunBlocking {
