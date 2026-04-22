@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
 import com.intellij.ide.actions.SETextShortener
 import com.intellij.ide.rpc.util.textRange
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
@@ -81,7 +82,8 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
 
       if (selected) {
         speedSearch {
-          ranges = presentation.presentableTextMatchedRanges?.map { it.textRange() }
+          val textRange = TextRange(0, presentableText.length)
+          ranges = presentation.presentableTextMatchedRanges?.map { it.textRange() }?.filter { textRange.contains(it) }
         }
       }
     }
