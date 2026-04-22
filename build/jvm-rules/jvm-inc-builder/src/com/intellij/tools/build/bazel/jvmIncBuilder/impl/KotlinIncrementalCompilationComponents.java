@@ -27,7 +27,7 @@ public class KotlinIncrementalCompilationComponents implements IncrementalCompil
 
   @Override
   public @NotNull AbstractProjectFileSearchScope createSearchScope(@NotNull VfsBasedProjectEnvironment pe) {
-    return new PsiBasedProjectFileSearchScope(new KotlinToJVMBytecodeCompiler.DirectoriesScope(pe.getProject(), Set.of(myOutputRoot)));
+    return new PsiBasedProjectFileSearchScope(new VfsBasedProjectEnvironment.DirectoriesScope(pe.getProject(), Set.of(myOutputRoot)));
   }
 
   @Override

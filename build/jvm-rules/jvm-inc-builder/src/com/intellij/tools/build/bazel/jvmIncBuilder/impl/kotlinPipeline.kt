@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.config.phaser.CompilerPhase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.PerformanceManager
 import org.jetbrains.kotlin.util.PerformanceManagerImpl
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 private class BazelJvmCliPipeline(
   private val configurationUpdater: (CompilerConfiguration) -> Unit,
@@ -24,7 +25,7 @@ private class BazelJvmCliPipeline(
     return createRegularPipeline()
   }
 
-  private fun createRegularPipeline(): CompilerPhase<PipelineContext, ArgumentsPipelineArtifact<K2JVMCompilerArguments>, ExitCodeArtifact> {
+  private fun createRegularPipeline(): CompilerPhase<PipelineContext, ArgumentsPipelineArtifact<K2JVMCompilerArguments>, PipelineArtifactWithExitCode> {
     return JvmConfigurationPipelinePhase then
       BazelConfigurationUpdaterPipelinePhase(configurationUpdater) then
       JvmFrontendPipelinePhase then
@@ -36,7 +37,7 @@ private class BazelJvmCliPipeline(
 
 class BazelJvmBackendPipelinePhase(
     private val consumer: (OutputFileCollection) -> Unit,
-) :PipelinePhase<JvmBackendPipelineArtifact, ExitCodeArtifact>(
+) :PipelinePhase<JvmBackendPipelineArtifact, PipelineArtifactWithExitCode>(
   name = "BazelJvmBackendPipelinePhase",
 ) {
   override fun executePhase(input: JvmBackendPipelineArtifact): ExitCodeArtifact {
@@ -44,9 +45,16 @@ class BazelJvmBackendPipelinePhase(
     return ExitCodeArtifact(ExitCode.OK)
   }
 
-}
+  data class ExitCodeArtifact(override val exitCode: ExitCode) : PipelineArtifactWithExitCode() {
+    override val configuration: CompilerConfiguration
+      get() = shouldNotBeCalled("No Configuration available from this artifact.")
 
-class ExitCodeArtifact(override val exitCode: ExitCode): PipelineArtifactWithExitCode()
+    @CliPipelineInternals(OPT_IN_MESSAGE)
+    override fun withCompilerConfiguration(newConfiguration: CompilerConfiguration): PipelineArtifact {
+      return this
+    }
+  }
+}
 
 class BazelConfigurationUpdaterPipelinePhase(private val updater: (CompilerConfiguration) -> Unit) : PipelinePhase<ConfigurationPipelineArtifact, ConfigurationPipelineArtifact>(
   name = "BazelConfigurationUpdaterPipelinePhase",
