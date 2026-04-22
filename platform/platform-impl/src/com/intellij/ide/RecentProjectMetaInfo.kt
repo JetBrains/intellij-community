@@ -29,6 +29,12 @@ class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
   var displayName: @NlsSafe String? by string()
 
+  /**
+   * Cached only when the project name differs from its directory name (i.e., a custom .idea/.name exists).
+   * Avoids non-local I/O (e.g., WSL) when resolving names on the Welcome Screen.
+   */
+  var customProjectName: @NlsSafe String? by string()
+
   // to set frame title as early as possible
   @get:Attribute
   var frameTitle: String? by string()
