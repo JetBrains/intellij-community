@@ -23,6 +23,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.toPromiseWithoutLogError
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -312,17 +313,12 @@ suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend Coro
 
 
 // See IJPL-157034
-@ExperimentalCoroutinesApi
-fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
-  invokeOnCompletion { throwable ->
-    if (throwable != null) {
-      promise.setError(throwable)
-    }
-    else {
-      promise.setResult(getCompleted())
-    }
-  }
-}
+@ApiStatus.ScheduledForRemoval
+@Deprecated(
+  "Use org.jetbrains.concurrency.toPromise(logErrors) instead",
+  ReplaceWith("toPromise(logErrors = false)", "org.jetbrains.concurrency.toPromise"),
+)
+fun <T> Deferred<T>.toPromise(): Promise<T> = toPromiseWithoutLogError()
 
 // See IJPL-157034
 fun <T> CompletableFuture<T>.toPromise(): Promise<T> = AsyncPromiseWithoutLogError<T>().also { promise ->
