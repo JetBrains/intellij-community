@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
@@ -26,8 +27,15 @@ internal class AsdfSystemPythonProvider : SystemPythonProvider {
     val pythons = withContext(Dispatchers.IO) {
       try {
         val env = eelApi.exec.fetchLoginShellEnvVariables()
-        val asdfRoot = if ("ASDF_DATA_DIR" in env) {
-          EelPath.parse(env["ASDF_DATA_DIR"]!!, eelApi.descriptor)
+        val rawAsdfRoot = env["ASDF_DATA_DIR"]?.takeIf { it.isNotBlank() }
+        val asdfRoot = if (rawAsdfRoot != null) {
+          try {
+            EelPath.parse(rawAsdfRoot, eelApi.descriptor)
+          }
+          catch (e: EelPathException) {
+            LOGGER.warn("ASDF_DATA_DIR='$rawAsdfRoot' is not a valid ${eelApi.descriptor.osFamily} absolute path; skipping asdf discovery", e)
+            return@withContext emptySet()
+          }
         }
         else {
           eelApi.userInfo.home.resolve(".asdf")
