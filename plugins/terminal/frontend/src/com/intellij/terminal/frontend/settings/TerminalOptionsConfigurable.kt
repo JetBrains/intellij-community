@@ -44,7 +44,6 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
@@ -92,8 +91,6 @@ import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.RunCommandUsingIdeUtil
-import org.jetbrains.plugins.terminal.TERMINAL_ACTION_SHORTCUT_CHANGED_TOPIC
-import org.jetbrains.plugins.terminal.TerminalActionShortcutChangedEvent
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalColumnSpacing
@@ -703,7 +700,7 @@ private fun Row.actionShortcutCombobox(
       },
       setter = { item ->
         if (item is ShortcutItem.Preset) {
-          setActionShortcut(actionId, item.preset.shortcut)
+          updateActionShortcut(actionId, item.preset.shortcut)
         }
       }
     ).component
@@ -741,11 +738,11 @@ private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
   fun updateActionShortcut(checkboxChecked: Boolean, shortcutItem: ShortcutItem) {
     if (checkboxChecked) {
       if (shortcutItem is ShortcutItem.Preset) {
-        setActionShortcut(actionId, shortcutItem.preset.shortcut)
+        updateActionShortcut(actionId, shortcutItem.preset.shortcut)
       }
     }
     else {
-      setActionShortcut(actionId, null)
+      updateActionShortcut(actionId, null)
     }
   }
 
@@ -808,16 +805,6 @@ private fun openKeymapPageAndSelectAction(dataContext: DataContext, actionId: St
 private fun getActionShortcuts(actionId: String): List<Shortcut> {
   val keymapManager = KeymapManager.getInstance() ?: return emptyList()
   return keymapManager.activeKeymap.getShortcuts(actionId).toList()
-}
-
-private fun setActionShortcut(actionId: String, value: KeyboardShortcut?) {
-  updateActionShortcut(actionId, value)
-
-  // The Terminal configurable is created on the backend in RemDev mode.
-  // So, here we can change only the backend Keymap, but we actually need to change the frontend one.
-  // The problem is that backend Keymap changes are not automatically synced to the frontend.
-  // But we can use the RemoteTopic API to pass the change to the frontend.
-  TERMINAL_ACTION_SHORTCUT_CHANGED_TOPIC.broadcast(TerminalActionShortcutChangedEvent(actionId, value))
 }
 
 private val TAB_SHORTCUT_PRESET = ShortcutPreset(
