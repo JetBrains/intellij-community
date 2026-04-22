@@ -7,7 +7,13 @@ import java.util.Stack
 
 
 internal sealed interface TokenCategory {
-  data class CommonBracket(val type: CommonBracketType, val isOpening: Boolean) : TokenCategory
+  sealed interface CommonBracket : TokenCategory {
+    val type: CommonBracketType
+  }
+
+  data class OpeningOrClosingBracket(override val type: CommonBracketType) : CommonBracket
+  data class OpeningBracket(override val type: CommonBracketType) : CommonBracket
+  data class ClosingBracket(override val type: CommonBracketType) : CommonBracket
   data object Other : TokenCategory
 }
 
@@ -16,7 +22,10 @@ enum class CommonBracketType(val opening: Char, val closing: Char, val fusName: 
   BRACKET('[', ']', "bracket"),
   PARENTHESIS('(', ')', "parenthesis"),
   BRACE('{', '}', "brace"),
-  ANGLE_BRACKET('<', '>', "angle_bracket");
+  ANGLE_BRACKET('<', '>', "angle_bracket"),
+  DOUBLE_QUOTE('"', '"', "double_quote"),
+  SINGLE_QUOTE('\'', '\'', "single_quote"),
+  ;
 }
 
 internal fun String.tokenCategory(): TokenCategory {
@@ -24,8 +33,9 @@ internal fun String.tokenCategory(): TokenCategory {
   val closingBracketType = entries.find { it.closing.toString() == this }
 
   return when {
-    openingBracketType != null -> TokenCategory.CommonBracket(type = openingBracketType, isOpening = true)
-    closingBracketType != null -> TokenCategory.CommonBracket(type = closingBracketType, isOpening = false)
+    openingBracketType != null && closingBracketType != null -> TokenCategory.OpeningOrClosingBracket(type = openingBracketType)
+    openingBracketType != null -> TokenCategory.OpeningBracket(type = openingBracketType)
+    closingBracketType != null -> TokenCategory.ClosingBracket(type = closingBracketType)
     else -> TokenCategory.Other
   }
 }
@@ -42,21 +52,28 @@ fun getOpenedBrackets(tokens: List<String>): OpeningBracketsBalance {
     return if (isEmpty()) null else pop()
   }
 
+  fun <T> Stack<T>.peekOrNull(): T? {
+    return if (isEmpty()) null else peek()
+  }
+
   val opened = Stack<CommonBracketType>()
   val missingOpeningBrackets = mutableMapOf<CommonBracketType, Int>().withDefault { 0 }
 
   for (t in tokens) {
     when (val currentToken = t.tokenCategory()) {
-      is TokenCategory.CommonBracket -> {
-        when {
-          currentToken.isOpening -> opened.push(currentToken.type)
-          else -> when (opened.popOrNull()) {
-            currentToken.type -> continue
-            else -> missingOpeningBrackets.merge(currentToken.type, 1) { old, new -> old + new }
-          }
+      is TokenCategory.OpeningOrClosingBracket -> {
+        val lastOpened = opened.peekOrNull()
+        when (lastOpened) {
+          currentToken.type -> opened.pop()
+          else -> opened.push(currentToken.type) // Assuming it's not closing something from the previous line, which can't happen because of how getSameLineTextsOnTheLeft works
         }
       }
-      else -> continue
+      is TokenCategory.OpeningBracket -> opened.push(currentToken.type)
+      is TokenCategory.ClosingBracket -> when (opened.popOrNull()) {
+        currentToken.type -> continue
+        else -> missingOpeningBrackets.merge(currentToken.type, 1) { old, new -> old + new }
+      }
+      TokenCategory.Other -> continue
     }
   }
 
