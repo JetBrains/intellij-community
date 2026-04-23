@@ -152,7 +152,6 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       incModificationCount();
     }
 
-    @SuppressWarnings({"removal", "deprecation"})
     private static boolean isIgnoredFileType(@NotNull FileType type) {
       return type.equals(HtmlFileType.INSTANCE) ||
              type instanceof LanguageFileType && "JavaScript".equals(((LanguageFileType)type).getLanguage().getID()) ||
@@ -311,11 +310,15 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       }
 
       final var newChild = event.getNewChild();
+      final var oldChild = event.getOldChild();
+
       final var grandParent = parent == null ? null : parent.getParent();
       final var firstSibling = parent != null && parent.isValid() ? parent.getFirstChild() : null;
       PsiElement unsafeGrandChild = getUnsafeGrandChild(child);
 
-      if (isRelevantAnnotation(child, possiblePsiTypes)                                              // removed annotation
+      if (isInstanceOf(child, possiblePsiTypes.forClasses)                                           // added / removed class declaration
+          || isInstanceOf(oldChild, possiblePsiTypes.forClasses)
+          || isRelevantAnnotation(child, possiblePsiTypes)                                           // removed annotation
           || isRelevantAnnotation(unsafeGrandChild, possiblePsiTypes)                                // removed annotation
           || isRelevantAnnotation(newChild, possiblePsiTypes)                                        // added annotation
           || (isInstanceOf(grandParent, possiblePsiTypes.forClasses)                                 // modifier changed (static, public)
@@ -323,8 +326,8 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
           || ((isInstanceOf(parent, possiblePsiTypes.forClasses)                                     // added/removed inner class
                || isInstanceOf(grandParent, possiblePsiTypes.forClasses))
               && (isInstanceOf(child, possiblePsiTypes.forClasses)
-                  || isInstanceOf(event.getNewChild(), possiblePsiTypes.forClasses)
-                  || isInstanceOf(event.getOldChild(), possiblePsiTypes.forClasses)))
+                  || isInstanceOf(newChild, possiblePsiTypes.forClasses)
+                  || isInstanceOf(oldChild, possiblePsiTypes.forClasses)))
           || isInstanceOf(firstSibling, possiblePsiTypes.forImports)                                 // added import
           || isInstanceOf(unsafeGrandChild, possiblePsiTypes.forImports)                             // removed import
           || isInstanceOf(child, possiblePsiTypes.forImports)                                        // removed import
@@ -385,7 +388,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     }
 
     private @Nullable MyPsiPossibleTypes getPossiblePsiTypesFor(@NotNull String languageId) {
-      return myPsiPossibleTypes.computeIfAbsent(languageId, (_key) ->
+      return myPsiPossibleTypes.computeIfAbsent(languageId, (unused) ->
         CachedValuesManager.getManager(myProject).createCachedValue(() -> {
           final var uastLanguagePlugin =
             ContainerUtil.find(UastLanguagePlugin.Companion.getInstances(), it -> languageId.equals(it.getLanguage().getID()));
