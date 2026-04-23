@@ -2,6 +2,7 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui
 
+import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.diagnostic.ExceptionEAPAutoReportManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
@@ -365,7 +366,10 @@ object AppUIUtil {
     var result = options.consents.first
     if (options.isEAP) {
       val statConsent = options.defaultUsageStatsConsent
-      val errorAutoReportConsent = options.defaultErrorAutoReportConsent
+      val errorAutoReportConsent = when {
+          ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
+          else -> null
+      }
       if (statConsent != null || errorAutoReportConsent != null) {
         // init stats consent and automatic error report consent for EAP from the dedicated location
         val consents = result

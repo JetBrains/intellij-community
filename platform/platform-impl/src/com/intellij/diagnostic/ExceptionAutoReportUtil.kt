@@ -48,6 +48,10 @@ object ExceptionAutoReportUtil {
       return isAutoReportAllowedByUser()
     }
 
+  @JvmStatic
+  val isConsentAllowedToBeVisible: Boolean
+    get() = isAutoReportVisible && !isAutoReportForced // do not show consents UI if level is forced
+
   fun getAutoReportTag(): String? {
     return Registry.stringValue("ea.auto.report.forced.tag", "").nullize()
   }
