@@ -61,24 +61,22 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   }
 
   override fun initTabContent(content: Content) {
-    content.component = GitWorkingTreesMainPanel()
+    content.component = createGitWorkingTreesMainPanel(project)
   }
 
-  private inner class GitWorkingTreesMainPanel : BorderLayoutPanel() {
-    init {
-      val list = WorkingTreesList(project)
-      val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
-      addToCenter(scrollPane)
+  private fun createGitWorkingTreesMainPanel(project: Project): BorderLayoutPanel {
+    val list = WorkingTreesList(project)
+    val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
 
-      val actionManager = ActionManager.getInstance()
-      val toolbarActionGroup = actionManager.getAction("Git.WorkingTrees.ToolwindowGroup.Toolbar") as ActionGroup
-      val toolbar = actionManager.createActionToolbar(GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR,
-                                                      toolbarActionGroup, false)
-      toolbar.setTargetComponent(list)
-      toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
-      toolbar.setOrientation(SwingConstants.VERTICAL)
-      addToLeft(toolbar.component)
-    }
+    val actionManager = ActionManager.getInstance()
+    val toolbarActionGroup = actionManager.getAction("Git.WorkingTrees.ToolwindowGroup.Toolbar") as ActionGroup
+    val toolbar = actionManager.createActionToolbar(GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR,
+                                                    toolbarActionGroup, false)
+    toolbar.setTargetComponent(list)
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
+    toolbar.setOrientation(SwingConstants.VERTICAL)
+
+    return BorderLayoutPanel().addToCenter(scrollPane).addToLeft(toolbar.component)
   }
 
   private class WorkingTreesList(project: Project) : BorderLayoutPanel(), UiDataProvider {
