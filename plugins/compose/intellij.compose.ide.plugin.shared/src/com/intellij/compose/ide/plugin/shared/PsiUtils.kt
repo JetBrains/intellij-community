@@ -30,6 +30,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
@@ -115,11 +117,13 @@ internal fun KtDeclaration.returnTypeFqName(): FqName? =
     if (this !is KtCallableDeclaration) null
     else analyze(this) { this@returnTypeFqName.returnType.expandedSymbol?.classId?.asSingleFqName() }
 
-internal fun KtElement.callReturnTypeFqName(): FqName? =
+@OptIn(KaAllowAnalysisOnEdt::class)
+internal fun KtElement.callReturnTypeFqName(): FqName? = allowAnalysisOnEdt {
   analyze(this) {
     val call = resolveToCall()?.calls?.firstOrNull() as? KaCallableMemberCall<*, *>
     call?.let { it.symbol.returnType.expandedSymbol?.classId?.asSingleFqName() }
   }
+}
 
 internal fun KtValueArgument.matchingParamTypeFqName(callee: KtNamedFunction): FqName? {
   return if (isNamed()) {
