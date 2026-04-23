@@ -65,7 +65,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   }
 
   private fun createGitWorkingTreesMainPanel(project: Project): BorderLayoutPanel {
-    val list = WorkingTreesList(project)
+    val model = WorkingTreesListModel(project)
+    val list = WorkingTreesList(project, model)
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
 
     val actionManager = ActionManager.getInstance()
@@ -76,11 +77,23 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     toolbar.setOrientation(SwingConstants.VERTICAL)
 
+    GitWorkingTreesService.getInstance(project).coroutineScope.launch {
+      GitRepositoriesHolder.getInstance(project).updates.collect { event ->
+        if (event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED) {
+          ApplicationManager.getApplication().invokeLater {
+            model.reload(project)
+          }
+        }
+      }
+    }
+
     return BorderLayoutPanel().addToCenter(scrollPane).addToLeft(toolbar.component)
   }
 
-  private class WorkingTreesList(project: Project) : BorderLayoutPanel(), UiDataProvider {
-    private val model: WorkingTreesListModel = WorkingTreesListModel(project)
+  private class WorkingTreesList(
+    project: Project,
+    private val model: WorkingTreesListModel = WorkingTreesListModel(project),
+  ) : BorderLayoutPanel(), UiDataProvider {
     private val list: JBList<GitWorkingTree> = JBList(model)
 
     init {
@@ -100,16 +113,6 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
           popupMenu.component.show(comp, x, y)
         }
       })
-
-      GitWorkingTreesService.getInstance(project).coroutineScope.launch {
-        GitRepositoriesHolder.getInstance(project).updates.collect { event ->
-          if (event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED) {
-            ApplicationManager.getApplication().invokeLater {
-              model.reload(project)
-            }
-          }
-        }
-      }
     }
 
     private fun initEmptyText(emptyText: StatusText) {
