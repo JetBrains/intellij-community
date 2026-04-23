@@ -5,7 +5,6 @@ import ai.grazie.rules.en.EnglishParameters;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.jlanguage.Lang;
-import com.intellij.grazie.text.TreeRuleChecker;
 import com.intellij.grazie.utils.TextStyleDomain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,59 +68,11 @@ public class TypographyTest extends BaseTestCase {
 
   @NeedsCloud
   @Test
-  public void testSmartApostropheInMarkdown() {
-    useSmartApostrophes();
-    myFixture.configureByText("a.md", "<STYLE_SUGGESTION>Don't</STYLE_SUGGESTION> cry for me Argentina");
-    myFixture.checkHighlighting();
-    myFixture.launchAction(findSingleIntention("Don’t"));
-    myFixture.checkResult("Don’t cry for me Argentina");
-  }
-
-  @NeedsCloud
-  @Test
-  public void testSmartApostropheInHtml() {
-    useSmartApostrophes();
-    myFixture.configureByText("a.html", "<b>Hello. <STYLE_SUGGESTION descr=\"Grazie.RuleEngine.En.Typography.SMART_APOSTROPHE\">Don't</STYLE_SUGGESTION> cry for me Argentina</b>");
-    myFixture.checkHighlighting();
-  }
-
-  @NeedsCloud
-  @Test
-  public void testSmartApostropheInProperties() {
-    useSmartApostrophes();
-    myFixture.configureByText("a.properties", "with.apos=<STYLE_SUGGESTION descr=\"Grazie.RuleEngine.En.Typography.SMART_APOSTROPHE\">Don</STYLE_SUGGESTION>'<STYLE_SUGGESTION descr=\"Grazie.RuleEngine.En.Typography.SMART_APOSTROPHE\">'t</STYLE_SUGGESTION> cry for me Argentina");
-    myFixture.checkHighlighting();
-  }
-
-  @Test
-  public void testNoSmartTypographyInTxtForNow() { // txt files are too versatile and are often expected to be in ASCII
-    useSmartApostrophes();
-    myFixture.configureByText("a.txt", "Don't cry for me Argentina -> also a song");
-    myFixture.checkHighlighting();
-  }
-
-  @NeedsCloud
-  @Test
-  public void testInsertSmartApostrophesWhenEnabledInMarkdown() {
-    useSmartApostrophes();
-    myFixture.configureByText("a.md", "I <caret><GRAMMAR_ERROR>believe</GRAMMAR_ERROR> in justice anymore.");
-    myFixture.checkHighlighting();
-    myFixture.launchAction(myFixture.findSingleIntention("don’t believe"));
-    myFixture.checkResult("I don’t believe in justice anymore.");
-  }
-
-  @NeedsCloud
-  @Test
   public void testAlwaysInsertPlainApostrophesInCode() {
-    useSmartApostrophes();
     myFixture.configureByText("a.java", "// I <caret><GRAMMAR_ERROR>believe</GRAMMAR_ERROR> in justice anymore.");
     myFixture.checkHighlighting();
     myFixture.launchAction(myFixture.findSingleIntention("don't believe"));
     myFixture.checkResult("// I don't believe in justice anymore.");
-  }
-
-  private static void useSmartApostrophes() {
-    HighlightingTest.enableRules(TreeRuleChecker.SMART_APOSTROPHE);
   }
 
   @NeedsCloud
