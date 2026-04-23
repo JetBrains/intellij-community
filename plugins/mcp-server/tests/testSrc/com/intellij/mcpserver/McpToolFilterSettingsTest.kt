@@ -16,7 +16,11 @@ class McpToolFilterSettingsTest {
   @AfterEach
   fun tearDown() {
     // Reset filter to default after each test
-    McpToolFilterSettings.getInstance().toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
+    McpToolFilterSettings.getInstance().apply {
+      toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
+      invocationMode = McpSessionInvocationMode.DIRECT
+      managedSessionToolRouterEnabled = true
+    }
   }
 
   @Test
@@ -123,5 +127,31 @@ class McpToolFilterSettingsTest {
     tools.forEach { tool ->
       assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
     }
+  }
+
+  @Test
+  fun `invocation mode defaults to direct`() {
+    assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.DIRECT)
+  }
+
+  @Test
+  fun `invocation mode can be switched to router`() {
+    McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+
+    assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+  }
+
+  @Test
+  fun `managed session router is enabled by default`() {
+    assertThat(McpManagedSessionToolRouter.isEnabled()).isTrue()
+    assertThat(McpManagedSessionToolRouter.invocationModeOverride()).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+  }
+
+  @Test
+  fun `managed session router can be disabled`() {
+    McpToolFilterSettings.getInstance().managedSessionToolRouterEnabled = false
+
+    assertThat(McpManagedSessionToolRouter.isEnabled()).isFalse()
+    assertThat(McpManagedSessionToolRouter.invocationModeOverride()).isNull()
   }
 }

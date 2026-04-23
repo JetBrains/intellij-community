@@ -22,13 +22,18 @@ internal class McpToolFilterSettings : SimplePersistentStateComponent<McpToolFil
   }
 
   private val _toolsFilterFlow = MutableStateFlow(state.toolsFilter ?: DEFAULT_FILTER)
+  private val _managedSessionToolRouterEnabledFlow = MutableStateFlow(state.managedSessionToolRouterEnabled)
 
   val toolsFilterFlow: StateFlow<String>
     get() = _toolsFilterFlow.asStateFlow()
 
+  val managedSessionToolRouterEnabledFlow: StateFlow<Boolean>
+    get() = _managedSessionToolRouterEnabledFlow.asStateFlow()
+
   override fun loadState(state: MyState) {
     super.loadState(state)
     _toolsFilterFlow.value = state.toolsFilter ?: DEFAULT_FILTER
+    _managedSessionToolRouterEnabledFlow.value = state.managedSessionToolRouterEnabled
   }
 
   var toolsFilter: String
@@ -38,10 +43,11 @@ internal class McpToolFilterSettings : SimplePersistentStateComponent<McpToolFil
       _toolsFilterFlow.value = value
     }
 
-  var showExperimental: Boolean
-    get() = state.showExperimental
+  var managedSessionToolRouterEnabled: Boolean
+    get() = state.managedSessionToolRouterEnabled
     set(value) {
-      state.showExperimental = value
+      state.managedSessionToolRouterEnabled = value
+      _managedSessionToolRouterEnabledFlow.value = value
     }
 
   var invocationMode: McpSessionInvocationMode
@@ -52,7 +58,7 @@ internal class McpToolFilterSettings : SimplePersistentStateComponent<McpToolFil
 
   internal class MyState : BaseState() {
     var toolsFilter: String? by string(DEFAULT_FILTER)
-    var showExperimental: Boolean by property(false)
+    var managedSessionToolRouterEnabled: Boolean by property(true)
     var invocationMode: String? by string(McpSessionInvocationMode.DIRECT.name)
   }
 }
