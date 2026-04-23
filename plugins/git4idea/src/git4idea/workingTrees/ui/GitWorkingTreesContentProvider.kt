@@ -61,10 +61,10 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   }
 
   override fun initTabContent(content: Content) {
-    content.component = GitWorkingTreesUi()
+    content.component = GitWorkingTreesMainPanel()
   }
 
-  private inner class GitWorkingTreesUi : BorderLayoutPanel() {
+  private inner class GitWorkingTreesMainPanel : BorderLayoutPanel() {
     init {
       val list = WorkingTreesList(project)
       val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
