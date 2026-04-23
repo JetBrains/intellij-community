@@ -2,7 +2,6 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea as ComposeTooltipArea
 import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CornerSize
@@ -29,55 +28,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.jewel.foundation.JewelFlags
-
-/**
- * A composable function that provides a tooltip area to display additional information associated with a UI element.
- * The tooltip appears when the user hovers over the content with their cursor, after an optional delay.
- *
- * This function behavior is influenced by the [JewelFlags.useCustomPopupRenderer]. If set to true, it will use the
- * custom popup implementation. Otherwise, it will use the default Compose tooltip implementation.
- *
- * @param tooltip Composable content of the tooltip.
- * @param modifier The modifier to be applied to the layout.
- * @param delayMillis Delay in milliseconds.
- * @param tooltipPlacement Defines the position of the tooltip.
- * @param content Composable content that the current tooltip is set to.
- * @see org.jetbrains.jewel.ui.component.Popup
- * @see androidx.compose.ui.window.Popup
- */
-@Composable
-internal fun FlagAwareTooltipArea(
-    tooltip: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    delayMillis: Int = 500,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement.CursorPoint(offset = DpOffset(0.dp, 16.dp)),
-    cornerSize: CornerSize = ZeroCornerSize,
-    content: @Composable () -> Unit,
-) {
-    if (JewelFlags.useCustomPopupRenderer) {
-        JewelTooltipArea(
-            tooltip = tooltip,
-            modifier = modifier,
-            delayMillis = delayMillis,
-            tooltipPlacement = tooltipPlacement,
-            cornerSize = cornerSize,
-            content = content,
-        )
-    } else {
-        ComposeTooltipArea(
-            tooltip = tooltip,
-            modifier = modifier,
-            delayMillis = delayMillis,
-            tooltipPlacement = tooltipPlacement,
-            content = content,
-        )
-    }
-}
 
 /** Copy of the [androidx.compose.foundation.TooltipArea], but using our implementation of [Popup]. */
 @Composable
-private fun JewelTooltipArea(
+internal fun JewelTooltipArea(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     delayMillis: Int = 500,

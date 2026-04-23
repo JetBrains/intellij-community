@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -72,25 +73,27 @@ public fun Popup(
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
-    if (JewelFlags.useCustomPopupRenderer) {
-        LocalPopupRenderer.current.Popup(
-            popupPositionProvider = popupPositionProvider,
-            properties = properties,
-            onDismissRequest = onDismissRequest,
-            onPreviewKeyEvent = onPreviewKeyEvent,
-            onKeyEvent = onKeyEvent,
-            cornerSize = cornerSize,
-            content = content,
-        )
-    } else {
-        ComposePopup(
-            popupPositionProvider = popupPositionProvider,
-            onDismissRequest = onDismissRequest,
-            properties = properties,
-            onPreviewKeyEvent = onPreviewKeyEvent,
-            onKeyEvent = onKeyEvent,
-            content = content,
-        )
+    DisableSelection {
+        if (JewelFlags.useCustomPopupRenderer) {
+            LocalPopupRenderer.current.Popup(
+                popupPositionProvider = popupPositionProvider,
+                properties = properties,
+                onDismissRequest = onDismissRequest,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+                cornerSize = cornerSize,
+                content = content,
+            )
+        } else {
+            ComposePopup(
+                popupPositionProvider = popupPositionProvider,
+                onDismissRequest = onDismissRequest,
+                properties = properties,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+                content = content,
+            )
+        }
     }
 }
 
