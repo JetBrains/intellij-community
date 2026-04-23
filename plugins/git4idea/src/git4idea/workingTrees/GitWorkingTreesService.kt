@@ -73,16 +73,16 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    val repository = when (val status = getWorktreeSupportStatus(project)) {
-      is GitWorktreeSupportStatus.SingleRepository -> status.repository
-      else -> return false
-    }
+    val status = getWorktreeSupportStatus(project)
+    if (status == GitWorktreeSupportStatus.Unsupported) return false
+
     val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
-    return when (value) {
-      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> false
-      WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> true
-      else -> repository.workingTreeHolder.getWorkingTrees().size > 1
+    when (value) {
+      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> return false
+      WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> return true
     }
+
+    return status is GitWorktreeSupportStatus.SingleRepository && status.repository.workingTreeHolder.getWorkingTrees().size > 1
   }
 
   fun workingTreesTabOpenedByUser() {

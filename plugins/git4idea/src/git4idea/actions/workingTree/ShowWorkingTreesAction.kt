@@ -16,16 +16,21 @@ import git4idea.workingTrees.GitWorktreeSupportStatus
 internal class ShowWorkingTreesAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = shouldShow(e)
+    e.presentation.isEnabledAndVisible = canBeShown(e)
     GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private fun shouldShow(e: AnActionEvent): Boolean {
+  private fun canBeShown(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     if (ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) == null) return false
-    return GitWorkingTreesService.getWorktreeSupportStatus(project) is GitWorktreeSupportStatus.SingleRepository
+    val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
+    return when (status) {
+      is GitWorktreeSupportStatus.Unsupported -> false
+      is GitWorktreeSupportStatus.SingleRepository -> true
+      is GitWorktreeSupportStatus.MultipleRepository -> true
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
