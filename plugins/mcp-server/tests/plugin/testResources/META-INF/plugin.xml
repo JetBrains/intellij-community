@@ -5,6 +5,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.java.rt"/>
+    <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.hamcrest"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
