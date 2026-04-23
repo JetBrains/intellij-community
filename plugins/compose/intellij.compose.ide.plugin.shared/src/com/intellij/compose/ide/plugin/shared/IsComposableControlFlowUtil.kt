@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -39,12 +41,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getAnnotationEntries
  * ```
  * For detailed behavior, see: [com.intellij.compose.ide.plugin.shared.ComposableAnnotationToExtractedFunctionAddingAnalyserTest]
  */
-internal fun PsiElement?.isInsideComposableControlFlow(): Boolean = when (this) {
-  null -> false // Reached root parent
-  is KtPropertyAccessor, is KtNamedFunction -> hasComposableAnnotation()
-  is KtLambdaExpression -> analyze(this) { ownsComposableControlFlow() }
-  is KtLambdaArgument -> analyze(this) { ownsComposableControlFlow() }
-  else -> parent.isInsideComposableControlFlow()
+@OptIn(KaAllowAnalysisOnEdt::class)
+internal fun PsiElement?.isInsideComposableControlFlow(): Boolean = allowAnalysisOnEdt {
+  when (this) {
+    null -> false // Reached root parent
+    is KtPropertyAccessor, is KtNamedFunction -> hasComposableAnnotation()
+    is KtLambdaExpression -> analyze(this) { ownsComposableControlFlow() }
+    is KtLambdaArgument -> analyze(this) { ownsComposableControlFlow() }
+    else -> parent.isInsideComposableControlFlow()
+  }
 }
 
 @OptIn(KaContextParameterApi::class)
