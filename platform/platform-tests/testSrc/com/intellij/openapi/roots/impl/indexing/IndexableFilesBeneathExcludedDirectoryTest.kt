@@ -171,7 +171,8 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
         setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
-    assertIndexableFiles(projectFile.file, appFile.file)
+    assertIndexableFiles()
+    assertHasNoIndexes(projectFile.file, appFile.file)
   }
 
   @Test

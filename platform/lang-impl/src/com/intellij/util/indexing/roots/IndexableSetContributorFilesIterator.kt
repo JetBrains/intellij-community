@@ -53,7 +53,7 @@ class IndexableSetContributorFilesIterator(private val name: String?,
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
-    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter, excludeNonProjectRoots = false)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter, excludeNonProjectRoots = true)
   }
 
   override fun getRootUrls(project: Project): Set<String> {
