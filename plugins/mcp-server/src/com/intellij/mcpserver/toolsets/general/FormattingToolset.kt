@@ -14,7 +14,10 @@ import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +54,15 @@ class FormattingToolset : McpToolset {
       codeProcessor.run()
     }
     finished.await()
+
+    val document = readAction { FileDocumentManager.getInstance().getDocument(file) }
+    if (document != null) {
+      // We need to save the changes on disk, otherwise bash tools and agent's read tool will be unable to read them immediately
+      writeCommandAction(project, McpServerBundle.message("command.action.reformat.file", path)) {
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        FileDocumentManager.getInstance().saveDocument(document)
+      }
+    }
     return "ok"
   }
 }
