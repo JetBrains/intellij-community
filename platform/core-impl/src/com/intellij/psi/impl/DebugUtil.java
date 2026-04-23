@@ -131,7 +131,7 @@ public final class DebugUtil {
                                    boolean useElementType,
                                    @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
     ((TreeElement)root).acceptTree(
-      new TreeToBuffer(buffer, indent, showWhitespaces, showRanges, showChildrenRanges, showClassNames, usePsi, useElementType, extra));
+      new TreeToBuffer(root, buffer, indent, showWhitespaces, showRanges, showChildrenRanges, showClassNames, usePsi, useElementType, extra));
   }
 
   private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
@@ -145,7 +145,8 @@ public final class DebugUtil {
     private final PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra;
     private int indent;
 
-    private TreeToBuffer(Appendable buffer,
+    private TreeToBuffer(@NotNull ASTNode root,
+                         Appendable buffer,
                          int indent,
                          boolean showWhitespaces,
                          boolean showRanges,
@@ -154,6 +155,7 @@ public final class DebugUtil {
                          boolean usePsi,
                          boolean useElementType,
                          PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
+      super(root);
       this.buffer = buffer;
       this.showWhitespaces = showWhitespaces;
       this.showRanges = showRanges;
@@ -441,7 +443,7 @@ public final class DebugUtil {
   public static @NotNull String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
     StringBuilder buffer = new StringBuilder();
     ((TreeElement)element.getNode()).acceptTree(
-      new TreeToBuffer(buffer, 0, false, false, false, false, false, false,null) {
+      new TreeToBuffer(element.getNode(), buffer, 0, false, false, false, false, false, false,null) {
         @Override
         protected boolean shouldShowNode(TreeElement node) {
           return super.shouldShowNode(node) &&

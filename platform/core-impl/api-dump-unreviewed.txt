@@ -2647,7 +2647,6 @@ c:com.intellij.psi.impl.source.tree.AstBufferUtil$BufferVisitor
 - p:end:I
 - pf:offset:I
 - <init>(com.intellij.psi.PsiElement,Z,Z):V
-- <init>(Z,Z,I,C[]):V
 - createCharSequence():java.lang.CharSequence
 - getBuffer():C[]
 - getEnd():I
@@ -3055,7 +3054,6 @@ a:com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 - com.intellij.psi.impl.source.tree.TreeElementVisitor
 - com.intellij.psi.PsiRecursiveVisitor
 - p:<init>():V
-- p:<init>(Z):V
 - p:elementFinished(com.intellij.lang.ASTNode):V
 - stopWalking():V
 - visitComposite(com.intellij.psi.impl.source.tree.CompositeElement):V

@@ -97,6 +97,9 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - <init>():V
 - getLanguage():com.intellij.lang.Language
 - getReferences():com.intellij.psi.PsiReference[]
+c:com.intellij.psi.impl.GeneratedMarkerVisitor
+- com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
+- *:<init>(com.intellij.lang.ASTNode):V
 a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.event.DocumentListener
@@ -136,3 +139,11 @@ c:com.intellij.psi.impl.source.resolve.ResolveCache
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 *:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
 - a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
+c:com.intellij.psi.impl.source.tree.AstBufferUtil$BufferVisitor
+- com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
+- *:<init>(com.intellij.lang.ASTNode,Z,Z,I,C[]):V
+a:com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
+- com.intellij.psi.impl.source.tree.TreeElementVisitor
+- com.intellij.psi.PsiRecursiveVisitor
+- *p:<init>(com.intellij.lang.ASTNode):V
+- *p:<init>(com.intellij.lang.ASTNode,Z):V

@@ -35,6 +35,11 @@ public final class TreeUtil {
     return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
   }
 
+  @ApiStatus.Internal
+  public static boolean isCollapsedChameleonVersioned(ASTNode node, long version) {
+    return node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsedVersioned(version);
+  }
+
   public static @Nullable ASTNode findChildBackward(@NotNull ASTNode parent, @NotNull IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED && parent instanceof TreeElement) {
       ((TreeElement)parent).assertReadAccessAllowed();
@@ -212,7 +217,7 @@ public final class TreeUtil {
   }
 
   public static void clearCaches(@NotNull TreeElement tree) {
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+    tree.acceptTree(new RecursiveTreeElementWalkingVisitor(tree, false) {
       @Override
       protected void visitNode(TreeElement element) {
         element.clearCaches();
@@ -311,7 +316,7 @@ public final class TreeUtil {
       private TreeElement result;
 
       private MyVisitor(boolean doTransform) {
-        super(doTransform);
+        super(element, doTransform);
       }
 
       @Override
@@ -390,7 +395,7 @@ public final class TreeUtil {
 
   public static boolean containsOuterLanguageElements(@NotNull ASTNode node) {
     AtomicBoolean result = new AtomicBoolean(false);
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor(node) {
       @Override
       protected void visitNode(TreeElement element) {
         if (element instanceof OuterLanguageElement) {

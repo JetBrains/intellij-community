@@ -435,7 +435,7 @@ public class CompositeElement extends TreeElement {
   @Override
   protected int textMatches(@NotNull CharSequence buffer, int start) {
     int[] curOffset = {start};
-    acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    acceptTree(new RecursiveTreeElementWalkingVisitor(this) {
       @Override
       public void visitLeaf(LeafElement leaf) {
         matchText(leaf);

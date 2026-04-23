@@ -159,7 +159,7 @@ public final class JavaTreeGenerator implements TreeGenerator {
 
   private static TreeElement markGeneratedIfNeeded(@NotNull PsiElement original, @NotNull TreeElement copy) {
     if (CodeEditUtil.isNodeGenerated(original.getNode())) {
-      copy.acceptTree(new GeneratedMarkerVisitor());
+      copy.acceptTree(new GeneratedMarkerVisitor(copy));
     }
     return copy;
   }
@@ -167,7 +167,7 @@ public final class JavaTreeGenerator implements TreeGenerator {
   private static TreeElement createReference(final Project project, final String text, boolean mark) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
     final TreeElement element = (TreeElement)parserFacade.createReferenceFromText(text, null).getNode();
-    if (mark) element.acceptTree(new GeneratedMarkerVisitor());
+    if (mark) element.acceptTree(new GeneratedMarkerVisitor(element));
     return element;
   }
 

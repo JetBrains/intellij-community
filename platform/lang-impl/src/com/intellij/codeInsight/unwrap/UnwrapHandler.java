@@ -182,7 +182,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     private void restoreCaretPosition(final PsiFile file) {
-      ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor(file.getNode()) {
         @Override
         protected void visitNode(TreeElement element) {
           PsiElement el = element.getPsi();

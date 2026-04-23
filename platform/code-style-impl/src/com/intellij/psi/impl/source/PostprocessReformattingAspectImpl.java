@@ -269,7 +269,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
           case Added, Replaced -> postponeFormatting(viewProvider, affectedChild);
           case ContentsChanged -> {
             if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
-              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+              ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor(affectedChild) {
                 @Override
                 protected void visitNode(TreeElement element) {
                   if (CodeEditUtil.isNodeGenerated(element) && CodeEditUtil.isSuspendedNodesReformattingAllowed()) {
@@ -712,7 +712,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
       return;
     }
     for (final FileASTNode fileElement : ((AbstractFileViewProvider)key).getKnownTreeRoots()) {
-      ((TreeElement) fileElement).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      ((TreeElement) fileElement).acceptTree(new RecursiveTreeElementWalkingVisitor(fileElement, true) {
         @Override
         protected void visitNode(TreeElement element) {
           if (CodeEditUtil.isMarkedToReformatBefore(element)) {

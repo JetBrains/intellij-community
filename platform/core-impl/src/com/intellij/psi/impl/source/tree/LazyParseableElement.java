@@ -217,6 +217,11 @@ public class LazyParseableElement extends CompositeElement {
 
   public boolean isParsed() {
     long version = getVersionForReading();
+    return isParsedVersioned(version);
+  }
+
+  @ApiStatus.Internal
+  public boolean isParsedVersioned(long version) {
     return doGetMyParsed(version) != null;
   }
 

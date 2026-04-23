@@ -130,7 +130,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   }
 
   private static void transformAllChildren(final ASTNode file) {
-    ((TreeElement)file).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    ((TreeElement)file).acceptTree(new RecursiveTreeElementWalkingVisitor(file) {
     });
   }
 

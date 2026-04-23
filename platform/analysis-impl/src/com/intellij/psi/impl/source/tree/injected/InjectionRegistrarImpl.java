@@ -389,7 +389,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                   @NotNull ASTNode parsedNode,
                                   @NotNull CharSequence documentText) throws PatchException {
     Runnable patch = () -> {
-      LeafPatcher patcher = new LeafPatcher(placeInfos, parsedNode.getTextLength());
+      LeafPatcher patcher = new LeafPatcher(parsedNode, placeInfos, parsedNode.getTextLength());
       patcher.patch(parsedNode, placeInfos);
     };
     if (viewProvider instanceof SingleRootInjectedFileViewProvider single) {

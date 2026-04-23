@@ -199,7 +199,7 @@ public final class JavaSharedImplUtil {
           anchor.rawInsertAfterMe(annotations.get(j));
         }
       }
-      newType.acceptTree(new GeneratedMarkerVisitor());
+      newType.acceptTree(new GeneratedMarkerVisitor(newType));
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       CodeEditUtil.replaceChild(variableElement, type, newType);
     }

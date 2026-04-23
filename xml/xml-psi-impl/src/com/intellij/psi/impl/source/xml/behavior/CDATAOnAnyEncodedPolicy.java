@@ -54,7 +54,7 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy {
     cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_START, CDATA_START));
     cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, dummyParent.getCharTable().intern(displayText)));
     cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_END, CDATA_END));
-    dummyParent.acceptTree(new GeneratedMarkerVisitor());
+    dummyParent.acceptTree(new GeneratedMarkerVisitor(dummyParent));
     return dummyParent;
   }
 }

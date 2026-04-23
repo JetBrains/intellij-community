@@ -165,7 +165,7 @@ private fun reformat(file: PsiFile, doc: Document) {
   if (!SourceTreeToPsiMap.hasTreeElement(file)) return
 
   val treeElement = SourceTreeToPsiMap.psiElementToTree(file)
-  (treeElement as TreeElement).acceptTree(object : RecursiveTreeElementWalkingVisitor() {})
+  (treeElement as TreeElement).acceptTree(object : RecursiveTreeElementWalkingVisitor(treeElement) {})
 
   val infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, ranges)
   val codeFormatter = CodeFormatterFacade(CodeStyle.getSettings(file), file.getLanguage(), true)
