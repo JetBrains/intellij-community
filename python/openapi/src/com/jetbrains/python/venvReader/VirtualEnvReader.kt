@@ -181,7 +181,7 @@ class VirtualEnvReader private constructor(
     }
   }
 
-  fun getVenvName(path: Path): String? {
+  fun getVenvRoot(path: Path): Path? {
     val bin = path.parent
 
     val binFolderName = when (forcedOs ?: path.osFamily) {
@@ -194,8 +194,10 @@ class VirtualEnvReader private constructor(
     }
 
     val venv = bin.parent
-    return venv?.name
+    return venv
   }
+
+  fun getVenvName(path: Path): String? = getVenvRoot(path)?.name
 
   fun getVenvNameForTarget(path: FullPathOnTarget, platform: Platform): String? {
     val separator = platform.fileSeparator
