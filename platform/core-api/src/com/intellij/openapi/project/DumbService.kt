@@ -155,7 +155,7 @@ abstract class DumbService {
   /**
    * Backward compatibility for plugins, use [tryRunReadActionInSmartMode] with [DumbModeBlockedFunctionality] instead
    */
-  @Obsolete
+  @Deprecated("Use smartReadAction or ReadAction.nonBlocking() with .inSmartMode()")
   fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
                                       notification: @NlsContexts.PopupContent String?): T? {
     return tryRunReadActionInSmartMode(task, notification, DumbModeBlockedFunctionality.Other)
@@ -164,9 +164,10 @@ abstract class DumbService {
   /**
    * WARNING: this method does not guarantee that Indexes are available if called under read action.
    *
-   * Consider using [com.intellij.openapi.application.smartReadAction] or
+   * Use [com.intellij.openapi.application.smartReadAction] or
    * [com.intellij.openapi.application.NonBlockingReadAction] with `inSmartMode` option.
    */
+  @Deprecated("Use smartReadAction or ReadAction.nonBlocking() with .inSmartMode()")
   fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
                                       notification: @NlsContexts.PopupContent String?,
                                       functionality: DumbModeBlockedFunctionality): T? {
@@ -202,7 +203,7 @@ abstract class DumbService {
     This method is dangerous because it does not provide any guaranties if it is called inside another read action.
     Instead, consider using  
     - `com.intellij.openapi.application.smartReadAction` 
-    - `NonBlockingReadAction(...).inSmartMode()` 
+    - `ReadAction.nonBlocking(...).inSmartMode()` 
   """)
   fun runReadActionInSmartMode(r: Runnable) {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
