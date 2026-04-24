@@ -3,6 +3,7 @@ package com.intellij.json
 
 import com.intellij.json.psi.impl.JsonLazyArrayImpl
 import com.intellij.json.psi.impl.JsonLazyObjectImpl
+import com.intellij.json.syntax.JsonLazyParsing
 import com.intellij.json.syntax.JsonSyntaxLexer
 import com.intellij.json.syntax.isArrayReparseable
 import com.intellij.json.syntax.isObjectReparseable
@@ -31,8 +32,8 @@ import com.intellij.psi.tree.IReparseableElementType
 object JsonElementFactory {
   @JvmStatic
   fun getType(name: String): IElementType = when (name) {
-    "OBJECT" -> LAZY_OBJECT
-    "ARRAY" -> LAZY_ARRAY
+    "OBJECT" -> if (JsonLazyParsing) LAZY_OBJECT else OBJECT
+    "ARRAY" -> if (JsonLazyParsing) LAZY_ARRAY else ARRAY
     else -> throw IllegalArgumentException(name)
   }
 
@@ -50,10 +51,13 @@ object JsonElementFactory {
     parseContents = { builder, deepLevel -> parseArray(builder, deepLevel) },
   )
 
+  private val OBJECT: IElementType = JsonElementType("OBJECT")
+  private val ARRAY: IElementType = JsonElementType("ARRAY")
+
   private inline fun lazyElementType(
     name: String,
     crossinline createNode: (CharSequence?) -> ASTNode,
-    crossinline isReparseable: (TokenList, com.intellij.platform.syntax.CancellationProvider) -> Boolean,
+    crossinline isReparseable: (TokenList, CancellationProvider) -> Boolean,
     crossinline parseContents: (SyntaxTreeBuilder, Int) -> ProductionResult,
   ): IElementType = object : IReparseableElementType(name, JsonLanguage.INSTANCE) {
     override fun createNode(text: CharSequence?): ASTNode = createNode(text)

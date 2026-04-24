@@ -59,19 +59,29 @@ private fun reportLeftoverError(runtime: SyntaxGeneratedParserRuntime, messageKe
 }
 
 fun shallowParseObject(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
-  return s.syntaxBuilder.parseBlockLazy(
-    leftBrace = JsonSyntaxElementTypes.L_CURLY,
-    rightBrace = JsonSyntaxElementTypes.R_CURLY,
-    codeBlock = JsonSyntaxElementTypes.OBJECT
-  ) != null
+  if (JsonLazyParsing) {
+    return s.syntaxBuilder.parseBlockLazy(
+      leftBrace = JsonSyntaxElementTypes.L_CURLY,
+      rightBrace = JsonSyntaxElementTypes.R_CURLY,
+      codeBlock = JsonSyntaxElementTypes.OBJECT
+    ) != null
+  }
+  else {
+    return JsonSyntaxParser.object__(s, l)
+  }
 }
 
 fun shallowParseArray(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
-  return s.syntaxBuilder.parseBlockLazy(
-    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
-    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
-    codeBlock = JsonSyntaxElementTypes.ARRAY
-  ) != null
+  if (JsonLazyParsing) {
+    return s.syntaxBuilder.parseBlockLazy(
+      leftBrace = JsonSyntaxElementTypes.L_BRACKET,
+      rightBrace = JsonSyntaxElementTypes.R_BRACKET,
+      codeBlock = JsonSyntaxElementTypes.ARRAY
+    ) != null
+  }
+  else {
+    return JsonSyntaxParser.array(s, l)
+  }
 }
 
 fun isObjectReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean {

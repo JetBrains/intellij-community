@@ -13,8 +13,8 @@ import kotlin.jvm.JvmStatic
 internal object JsonSyntaxElementFactory {
   @JvmStatic
   fun getType(name: String): SyntaxElementType = when (name) {
-    "OBJECT" -> LAZY_OBJECT
-    "ARRAY" -> LAZY_ARRAY
+    "OBJECT" -> if (JsonLazyParsing) LAZY_OBJECT else OBJECT
+    "ARRAY" -> if (JsonLazyParsing) LAZY_ARRAY else ARRAY
     else -> throw IllegalArgumentException(name)
   }
 }
@@ -30,6 +30,9 @@ private val LAZY_ARRAY: SyntaxElementType = lazySyntaxElementType(
   isReparseable = ::isArrayReparseable,
   parse = ::parseArray,
 )
+
+private val OBJECT = SyntaxElementType("OBJECT")
+private val ARRAY = SyntaxElementType("ARRAY")
 
 private fun lazySyntaxElementType(
   name: String,
