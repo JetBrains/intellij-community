@@ -565,7 +565,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override suspend fun requestUnixSockets(): IjentPosixApi.IjentTransportUnixSockets? = null
 
-  override fun addGrpcChannel(inputStream: InputStream, outputStream: OutputStream): Unit = Unit
+  override fun addGrpcChannel(input: EelReceiveChannel, output: EelSendChannel): Unit = Unit
 
   override fun addSpecialChannel(input: EelReceiveChannel, output: EelSendChannel): Unit = Unit
 }

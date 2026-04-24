@@ -2,14 +2,22 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.eel.ReadResult.EOF
+import com.intellij.platform.eel.ReadResult.NOT_EOF
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.channels.EelChannelException
+import com.intellij.platform.eel.channels.EelReceiveChannelException
+import com.intellij.platform.eel.channels.EelSendChannelException
+import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.getIjentGrpcArgv
+import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
-import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
@@ -19,18 +27,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
-import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.channels.ByteChannel
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import kotlin.io.path.fileSize
-import kotlin.io.path.inputStream
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 
 // The timeout is based on internal measurements done on CI (max: 21.5s, p98: 12.2s)
 private const val SHELL_INIT_TIMEOUT_MILLS = "30000"
@@ -139,79 +149,65 @@ abstract class IjentDeployingOverShellProcessStrategy(
   }
 
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy = IjentConnectionStrategy.Default
+}
 
-  internal class ShellProcessWrapper(private val processFacade: IjentSessionProcessMediator.ProcessFacade, private var mediator: IjentSessionProcessMediator?) {
-    @OptIn(DelicateCoroutinesApi::class)
-    suspend fun write(data: String) {
-      @Suppress("NAME_SHADOWING")
-      val data = if (data.endsWith("\n")) data else "$data\n"
-      LOG.debug {
-        val debugData = data.replace(Regex("\n\n+")) { "<\\n ${it.value.length} times>\n" }
-        "Executing a script inside the shell: $debugData"
-      }
-      withContext(Dispatchers.IO) {
-        processFacade.stdin.write(data.toByteArray())
-        ensureActive()
-        processFacade.stdin.flush()
-        ensureActive()
-      }
+private class ShellProcessWrapper(
+  private val process: IjentSessionProcessMediator.ProcessFacade?,
+  private var mediator: IjentSessionProcessMediator?,
+) {
+  @ThrowsChecked(EelSendChannelException::class)
+  suspend fun write(data: String) {
+    @Suppress("NAME_SHADOWING")
+    val data = if (data.endsWith("\n")) data else "$data\n"
+    LOG.debug {
+      val debugData = data.replace(Regex("\n\n+")) { "<\\n ${it.value.length} times>\n" }
+      "Executing a script inside the shell: $debugData"
     }
-
-    /** The same stdin and stdout will be used for transferring binary data. Some buffering wrapper may occasionally consume too much data. */
-    suspend fun readLineWithoutBuffering(): String =
-      withContext(Dispatchers.IO) {
-        val buffer = StringBuilder()
-        val stream = processFacade.stdout
-        while (true) {
-          ensureActive()
-          while (stream.available() == 0) {
-            when (mediator!!.processExit.state) {
-              is SafeDeferred.State.Finished -> {
-                throw IOException("Shell process exited instead of reading a line.")
-              }
-              SafeDeferred.State.Active -> {
-                delay(1.milliseconds)
-              }
-            }
-          }
-          val c = stream.read()
-          if (c < 0 || c == '\n'.code) {
-            break
-          }
-          buffer.append(c.toChar())
-        }
-        if (buffer.isNotEmpty()) {
-          LOG.trace { "Read line from stdout: $buffer" }
-        }
-        buffer.toString()
-      }
-
-    suspend fun copyDataFrom(stream: InputStream) {
-      withContext(Dispatchers.IO) {
-        stream.copyToAsync(processFacade.stdin)
-        ensureActive()
-        processFacade.stdin.flush()
-      }
+    withContext(Dispatchers.IO) {
+      process!!.stdin.sendWholeText(data)
     }
+  }
 
-    @OptIn(InternalCoroutinesApi::class)
-    suspend fun destroyForciblyAndGetError(): Throwable {
-      processFacade.destroyForcibly()
-      try {
-        val job = mediator!!.ijentProcessScope.s.coroutineContext.job
-        job.join()
-        throw job.getCancellationException()
-      }
-      catch (err: Throwable) {
-        return IjentUnavailableException.unwrapFromCancellationExceptions(err)
-      }
-    }
+  @ThrowsChecked(EelReceiveChannelException::class)
+  suspend fun readLine(): String {
+    // TODO The encoding can be different.
+    return process!!.stdout.readLineOrThrow(StandardCharsets.UTF_8)
+  }
 
-    fun extractProcess(): IjentSessionProcessMediator {
-      val result = mediator!!
-      mediator = null
-      return result
+  @ThrowsChecked(EelChannelException::class)
+  suspend fun copyDataFrom(stream: ByteChannel) {
+    val buffer =
+      if (process!!.stdin.prefersDirectBuffers) ByteBuffer.allocateDirect(64 * 1024)
+      else ByteBuffer.allocate(64 * 1024)
+    val input = stream.consumeAsEelChannel()
+    while (true) {
+      when (input.receive(buffer)) {
+        EOF -> break
+        NOT_EOF -> Unit
+      }
+      buffer.flip()
+      process.stdin.sendWholeBuffer(buffer)
+      buffer.clear()
     }
+  }
+
+  @OptIn(InternalCoroutinesApi::class)
+  suspend fun destroyForciblyAndGetError(): Throwable {
+    mediator!!.process.destroyForcibly()
+    try {
+      val job = mediator!!.ijentProcessScope.s.coroutineContext.job
+      job.join()
+      throw job.getCancellationException()
+    }
+    catch (err: Throwable) {
+      return IjentUnavailableException.unwrapFromCancellationExceptions(err)
+    }
+  }
+
+  fun extractProcess(): IjentSessionProcessMediator {
+    val result = mediator!!
+    mediator = null
+    return result
   }
 }
 
@@ -243,18 +239,18 @@ private suspend fun <T : Any> DeployingContextAndShell.execCommand(block: suspen
   }
 }
 
-private suspend fun IjentDeployingOverShellProcessStrategy.ShellProcessWrapper.filterOutBanners() {
+private suspend fun ShellProcessWrapper.filterOutBanners() {
   // The boundary is for skipping various banners, greeting messages, PS1, etc.
   val boundary = (0..31).joinToString("") { "abcdefghijklmnopqrstuvwxyz0123456789".random().toString() }
   write("echo $boundary")
   do {
-    val line = readLineWithoutBuffering()
+    val line = this@filterOutBanners.readLine()
   }
   while (line != boundary)
 }
 
 private class DeployingContextAndShell(
-  val process: IjentDeployingOverShellProcessStrategy.ShellProcessWrapper,
+  val process: ShellProcessWrapper,
   val context: DeployingContext,
 )
 
@@ -280,7 +276,7 @@ internal data class DeployingContext(
  * This tricky function checks if the necessary core utils exist and tries to substitute them with busybox otherwise.
  */
 private suspend fun createDeployingContext(
-  shellProcess: IjentDeployingOverShellProcessStrategy.ShellProcessWrapper,
+  shellProcess: ShellProcessWrapper,
 ): DeployingContextAndShell {
   val deployingContext = createDeployingContext { commands ->
     val outputOfWhich = mutableListOf<String>()
@@ -297,7 +293,7 @@ private suspend fun createDeployingContext(
     shellProcess.write(whichCmd)
 
     while (true) {
-      val line = shellProcess.readLineWithoutBuffering()
+      val line = shellProcess.readLine()
       if (line == done) break
       outputOfWhich += line
     }
@@ -360,7 +356,7 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
   process.write("${context.uname} -pm")
 
-  val arch = process.readLineWithoutBuffering().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
+  val arch = process.readLine().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
@@ -401,8 +397,10 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
     LOG.debug { "Writing workaround command for Dash (1 of 2)" }
     process.write(BUGGY_DASH_BUFFER_FILLER)
     LOG.debug { "Writing $ijentBinarySize bytes of IJent binary into the stream" }
-    ijentBinaryOnLocalDisk.inputStream().use { stream ->
-      process.copyDataFrom(stream)
+    withContext(Dispatchers.IO) {
+      Files.newByteChannel(ijentBinaryOnLocalDisk, StandardOpenOption.READ).use { stream ->
+        process.copyDataFrom(stream)
+      }
     }
     LOG.debug { "Sent the IJent binary $ijentBinaryOnLocalDisk" }
     LOG.debug { "Writing workaround command for Dash (2 of 2)" }
@@ -426,14 +424,14 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
     "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
   })
 
-  return process.readLineWithoutBuffering()
+  return process.readLine()
 }
 
 
 private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
-    return createMediator(remotePathToBinary, joinedCmd)
-  }
+  return createMediator(remotePathToBinary, joinedCmd)
+}
 
 private suspend fun DeployingContextAndShell.createMediator(
   remotePathToBinary: String,

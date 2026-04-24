@@ -6,7 +6,6 @@ import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
 import com.intellij.platform.eel.ThrowsChecked
 import org.jetbrains.annotations.ApiStatus
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
@@ -68,45 +67,43 @@ fun EelReceiveChannel.peekable(): PeekableEelReceiveChannel =
 
 @ThrowsChecked(EelReceiveChannelException::class)
 @ApiStatus.Experimental
-suspend fun PeekableEelReceiveChannel.readLine(charset: Charset): String? {
-  val result = ByteArrayOutputStream()
+suspend fun PeekableEelReceiveChannel.readUntil(untilByte: Byte, dataConsumer: suspend (ByteBuffer, last: Boolean) -> Unit): Boolean {
   val buffer = ByteBuffer.allocate(4096)
-  var empty = true
-  while (true) {
-    var receivedEol = false
-    when (receive(buffer)) {
-      EOF -> break
-      NOT_EOF -> {
-        empty = false
-      }
-    }
-    buffer.flip()
-    while (buffer.hasRemaining()) {
-      when (val b = buffer.get().toInt()) {
-        '\n'.code -> {
-          receivedEol = true
-          break
-        }
-        '\r'.code -> {
-          if (buffer.hasRemaining() && buffer.get().toInt() == '\n'.code) {
-            receivedEol = true
-            break
-          }
-          else {
-            result.write(b)
-          }
-        }
-        else -> result.write(b)
-      }
-    }
-    if (receivedEol) {
-      prepend(buffer)
-      break
-    }
+
+  mainLoop@ while (true) {
     buffer.clear()
+    when (receive(buffer)) {
+      EOF -> return false
+      NOT_EOF -> {
+        buffer.flip()
+        while (buffer.hasRemaining()) {
+          val b = buffer.get()
+          if (b == untilByte) {
+            prepend(buffer.slice())
+            buffer.flip()
+            dataConsumer(buffer.slice().run { limit(limit() - 1) }, false)
+            break@mainLoop
+          }
+        }
+
+        buffer.flip()
+        dataConsumer(buffer.slice(), true)
+      }
+    }
   }
-  if (empty) {
-    return null
+
+  return true
+}
+
+@ThrowsChecked(EelReceiveChannelException::class)
+@ApiStatus.Experimental
+suspend fun PeekableEelReceiveChannel.readLine(charset: Charset): String? {
+  val line = StringBuilder()
+  val newlineReached = readUntil('\n'.code.toByte()) { buffer, last ->
+    if (last && buffer.hasRemaining() && buffer.get(buffer.limit() - 1) == '\r'.code.toByte()) {
+      buffer.limit(buffer.limit() - 1)
+    }
+    line.append(charset.decode(buffer))
   }
-  return String(result.toByteArray(), charset)
+  return if (newlineReached || line.isNotEmpty()) line.toString() else null
 }

@@ -4,6 +4,12 @@ package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
+import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
+import com.intellij.platform.eel.channels.readLine
+import com.intellij.platform.eel.channels.readUntil
+import com.intellij.platform.eel.channels.useLines
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
@@ -29,8 +35,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.InputStream
 import java.lang.reflect.Method
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.US_ASCII
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Collections
@@ -115,14 +122,17 @@ object IjentSessionMediatorUtils {
   }
 
   suspend fun ijentProcessStderrLogger(
-    errorStream: InputStream,
+    errorStream: EelReceiveChannel,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
     logger: IjentLog,
   ) {
     val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
     try {
-      errorStream.reader().useLines { lines ->
+      // `useLines` reads the stderr stream with a blocking call that parks its thread for the whole IJent
+      // session. Keep that thread on `IjentThreadPool` instead of the default `Dispatchers.IO`, otherwise a
+      // `DefaultDispatcher-worker-*` thread (not whitelisted by `ThreadLeakTracker`) is reported as a leak.
+      errorStream.useLines(IjentThreadPool.coroutineContext) { lines ->
         for (line in lines) {
           yield()
           lineConsumer.consume(line)
@@ -324,6 +334,44 @@ object IjentSessionMediatorUtils {
         mediatorFinalizer()
       }
     }
+  }
+
+  suspend fun PeekableEelReceiveChannel.readLineOrThrow(charset: Charset, msg: String = "Communication terminated unexpectedly"): String {
+    var cause: Throwable? = null
+    var result: String? = null
+    try {
+      result = this.readLine(charset)
+    }
+    catch (err: EelReceiveChannelException) {
+      cause = err
+    }
+    if (result != null) {
+      return result
+    }
+    val error = IjentUnavailableException.CommunicationFailure(msg)
+    cause?.let(error::initCause)
+    throw error
+  }
+
+  suspend fun PeekableEelReceiveChannel.readLineUntilPipeOrThrow(msg: String = "Communication terminated unexpectedly"): String {
+    val line = StringBuilder()
+    val communicationFailure by lazy {
+      IjentUnavailableException.CommunicationFailure(msg)
+    }
+    val pipeReached =
+      try {
+        readUntil('|'.code.toByte()) { buffer, _ ->
+          line.append(US_ASCII.decode(buffer))
+        }
+      }
+      catch (err: EelReceiveChannelException) {
+        communicationFailure.initCause(err)
+        false
+      }
+    if (!pipeReached) {
+      throw communicationFailure
+    }
+    return line.toString()
   }
 }
 

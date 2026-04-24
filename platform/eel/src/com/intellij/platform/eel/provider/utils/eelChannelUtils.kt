@@ -49,16 +49,16 @@ fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel =
 
 @ApiStatus.Experimental
 fun WritableByteChannel.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(this, null)
+  NioWriteToEelAdapter(this)
 
 // Flushes data after each writing.
 @ApiStatus.Experimental
-fun OutputStream.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(Channels.newChannel(this), this)
+fun OutputStream.asEelChannel(dispatcher: CoroutineContext? = null): EelSendChannel =
+  NioWriteToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this)
 
 @ApiStatus.Experimental
-fun InputStream.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(Channels.newChannel(this), this::available)
+fun InputStream.consumeAsEelChannel(dispatcher: CoroutineContext? = null): EelReceiveChannel =
+  NioReadToEelAdapter(Channels.newChannel(this), dispatcher ?: unlimitedDispatcher, this::available)
 
 @ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =

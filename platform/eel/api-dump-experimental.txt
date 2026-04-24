@@ -555,6 +555,9 @@ f:com.intellij.platform.eel.SafeDeferredKt
 *a:com.intellij.platform.eel.channels.EelChannelException
 - java.io.IOException
 - com.intellij.platform.eel.EelError
+f:com.intellij.platform.eel.channels.EelChannelUtilsKt
+- *sf:useLines(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:useLines$default(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.platform.eel.channels.EelReceiveChannel
 - a:available():I
 - a:closeForReceive(kotlin.coroutines.Continuation):java.lang.Object
@@ -589,6 +592,7 @@ f:com.intellij.platform.eel.channels.EelSendChannelKt
 f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 - *sf:peekable(com.intellij.platform.eel.channels.EelReceiveChannel):com.intellij.platform.eel.channels.PeekableEelReceiveChannel
 - *sf:readLine(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,java.nio.charset.Charset,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:readUntil(com.intellij.platform.eel.channels.PeekableEelReceiveChannel,B,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.eelProxyKtHelpers
 - sf:INSTANCE:com.intellij.platform.eel.eelProxyKtHelpers
 *f:com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
@@ -665,12 +669,14 @@ f:com.intellij.platform.eel.provider.LocalEelApiKt
 - com.intellij.platform.eel.EelWindowsApi
 - com.intellij.platform.eel.LocalEelApi
 f:com.intellij.platform.eel.provider.utils.EelChannelUtilsKt
-- *sf:asEelChannel(java.io.OutputStream):com.intellij.platform.eel.channels.EelSendChannel
+- *sf:asEelChannel(java.io.OutputStream,kotlin.coroutines.CoroutineContext):com.intellij.platform.eel.channels.EelSendChannel
 - *sf:asEelChannel(java.nio.channels.WritableByteChannel):com.intellij.platform.eel.channels.EelSendChannel
+- *bs:asEelChannel$default(java.io.OutputStream,kotlin.coroutines.CoroutineContext,I,java.lang.Object):com.intellij.platform.eel.channels.EelSendChannel
 - *sf:asOutputStream(com.intellij.platform.eel.channels.EelSendChannel,kotlin.coroutines.CoroutineContext):java.io.OutputStream
 - *bs:asOutputStream$default(com.intellij.platform.eel.channels.EelSendChannel,kotlin.coroutines.CoroutineContext,I,java.lang.Object):java.io.OutputStream
-- *sf:consumeAsEelChannel(java.io.InputStream):com.intellij.platform.eel.channels.EelReceiveChannel
+- *sf:consumeAsEelChannel(java.io.InputStream,kotlin.coroutines.CoroutineContext):com.intellij.platform.eel.channels.EelReceiveChannel
 - *sf:consumeAsEelChannel(java.nio.channels.ReadableByteChannel):com.intellij.platform.eel.channels.EelReceiveChannel
+- *bs:consumeAsEelChannel$default(java.io.InputStream,kotlin.coroutines.CoroutineContext,I,java.lang.Object):com.intellij.platform.eel.channels.EelReceiveChannel
 - *sf:consumeAsInputStream(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext):java.io.InputStream
 - *bs:consumeAsInputStream$default(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext,I,java.lang.Object):java.io.InputStream
 - *sf:readAllBytes(com.intellij.platform.eel.channels.EelReceiveChannel,I,kotlin.coroutines.Continuation):java.lang.Object
