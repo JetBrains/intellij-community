@@ -3,12 +3,16 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -198,6 +202,19 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
   override fun getDependencyFile(): VirtualFile? {
     val uvWorkingDirectory = runBlockingMaybeCancellable { uvExecutionContextDeferred.await().workingDir }
     return resolvePyProjectToml(uvWorkingDirectory)
+  }
+
+  override suspend fun getDependencyFiles(): List<VirtualFile> {
+    val rootFile = getDependencyFile() ?: return emptyList()
+    val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
+    val memberModules = readAction {
+      val rootModule = ModuleManager.getInstance(project).modules.firstOrNull { module ->
+        ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPath() == uvWorkingDirectory }
+      } ?: return@readAction emptyList()
+      rootModule.getToolWorkspaceLayout(UV_TOOL_ID)?.memberModules.orEmpty()
+    }
+    val memberFiles = memberModules.mapNotNull { PyProjectToml.findFile(it) }
+    return listOf(rootFile) + memberFiles
   }
 
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean = withContext(Dispatchers.IO) {

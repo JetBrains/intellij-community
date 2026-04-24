@@ -294,8 +294,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Experimental
   suspend fun extractDependenciesCached(): PyResult<List<PythonPackage>>? {
-    val dependencyFile = getDependencyFile() ?: return null
-    return dependencyCache.getOrCompute(dependencyFile).await()
+    val stamps = getDependencyFiles()
+      .sortedBy { it.path }
+      .map { it to it.modificationStamp }
+    if (stamps.isEmpty()) return null
+    return dependencyCache.getOrCompute(stamps).await()
   }
 
   /**
@@ -306,6 +309,15 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @RequiresBackgroundThread
   open fun getDependencyFile(): VirtualFile? = null
 
+  /**
+   * Returns every file whose modification should invalidate the declared-packages cache.
+   *
+   * Defaults to `listOfNotNull(getDependencyFile())`. Workspace-aware managers (e.g. uv)
+   * override this to include member pyproject.toml files, so that edits to any member
+   * file invalidate the cached declared-packages list.
+   */
+  @ApiStatus.Internal
+  protected open suspend fun getDependencyFiles(): List<VirtualFile> = listOfNotNull(getDependencyFile())
 
   /**
    * Adds a dependency to the project's dependency declaration file.
@@ -350,17 +362,19 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     private var entry: Entry? = null
 
     @Synchronized
-    fun getOrCompute(dependencyFile: VirtualFile): Deferred<PyResult<List<PythonPackage>>?> {
-      val stamp = dependencyFile.modificationStamp
-      val cached = entry?.takeIf { it.file == dependencyFile && it.stamp == stamp }
+    fun getOrCompute(stamps: List<Pair<VirtualFile, Long>>): Deferred<PyResult<List<PythonPackage>>?> {
+      val cached = entry?.takeIf { it.stamps == stamps }
       return cached?.deferred ?: run {
         PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
           extractDependencies()
-        }.also { entry = Entry(dependencyFile, stamp, it) }
+        }.also { entry = Entry(stamps, it) }
       }
     }
 
-    private inner class Entry(val file: VirtualFile, val stamp: Long, val deferred: Deferred<PyResult<List<PythonPackage>>?>)
+    private inner class Entry(
+      val stamps: List<Pair<VirtualFile, Long>>,
+      val deferred: Deferred<PyResult<List<PythonPackage>>?>,
+    )
   }
 
   companion object {
