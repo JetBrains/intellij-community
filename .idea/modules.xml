@@ -251,7 +251,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-flags/intellij.android.gradle.dsl.flags.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-flags/intellij.android.gradle.dsl.flags.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-groovy/intellij.android.gradle.dsl.groovy.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-groovy/intellij.android.gradle.dsl.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-kotlin/intellij.android.gradle.dsl.kotlin.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-kotlin/intellij.android.gradle.dsl.kotlin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-plugin/intellij.android.gradle.dsl.plugin.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-plugin/intellij.android.gradle.dsl.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl/intellij.android.gradle.dsl.tests.iml" filepath="$PROJECT_DIR$/android/gradle-dsl/intellij.android.gradle.dsl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl/intellij.android.gradle.dsl.testutils.iml" filepath="$PROJECT_DIR$/android/gradle-dsl/intellij.android.gradle.dsl.testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/gradle-dsl-toml/intellij.android.gradle.dsl.toml.iml" filepath="$PROJECT_DIR$/android/gradle-dsl-toml/intellij.android.gradle.dsl.toml.iml" />
