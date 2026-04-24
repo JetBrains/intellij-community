@@ -22,6 +22,7 @@ jvm_library(
     "//libraries/junit4",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
+    "@lib//:kotlin-stdlib",
     "@lib//:tc_service_messages",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",

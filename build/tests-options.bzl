@@ -103,7 +103,7 @@ def _classes_duration_data():
 
     fail("Unexpected repository/module combination for tests-options.bzl: repository_name=%r module_name=%r" % (repo, module))
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}, **kwargs):
     # Merge user-provided args with our default ones
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
     all_args = JAVA_TEST_ARGS + args
@@ -155,4 +155,5 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
         data = all_data,
         env = all_env,
         use_testrunner = False,
+        **kwargs,
     )

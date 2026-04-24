@@ -27,6 +27,8 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -79,12 +81,18 @@ public final class JUnit5BazelRunner {
   private static final String jbEnvTestUniqueIds = "JB_TEST_UNIQUE_IDS";
   // Allow specifying test filter in JUnit5 format. Example: include-package=com.intellij.tests;exclude-classname=com.intellij.tests.IgnoredTest
   private static final String jbEnvJunit5TestFilter = "JB_TEST_JUNIT5_FILTERS";
+  // Allow caller to provide a TestExecutionResultInterceptor. Android Studio team needs this when running tests on ART because some tests
+  // are expected to fail on ART.
+  private static final String jbEnvTestExecutionResultInterceptor = "JB_TEST_EXCECUTION_RESULT_INTERCEPTOR";
+  // Allow test target to specify test jar explicitly. Android Studio runs tests from a external targets so SELF_LOCATION can't be used
+  private static final String jbEnvTestJar = "JB_TEST_JAR";
 
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
   private static final Launcher launcher = LauncherFactory.create();
 
   private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
+  private static final PostDiscoveryFilter shardFilter = ShardFilter.create();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
@@ -235,7 +243,12 @@ public final class JUnit5BazelRunner {
             new Thread(() -> bazelJUnitOutputListener.closeForInterrupt(), "BazelJUnitOutputListenerShutdownHook")
           );
         testExecutionListeners.add(bazelJUnitOutputListener);
-        launcher.registerTestExecutionListeners(testExecutionListeners.toArray(TestExecutionListener[]::new));
+        TestExecutionResultInterceptor interceptor = loadTestExecutionResultInterceptor();
+        Stream<InterceptingTestExecutionListener> listeners =
+          testExecutionListeners.stream().map(it -> new InterceptingTestExecutionListener(it, interceptor));
+
+        ShardFilter.writeShardStatus();
+        launcher.registerTestExecutionListeners(listeners.toArray(TestExecutionListener[]::new));
         launcher.execute(testPlan);
       }
 
@@ -353,6 +366,9 @@ public final class JUnit5BazelRunner {
     List<Filter<?>> filters = new ArrayList<>();
     filters.add(bucketingPostDiscoveryFilter);
     filters.add(performancePostDiscoveryFilter);
+    if (shardFilter != null) {
+      filters.add(shardFilter);
+    }
 
     // value of --test_filter, if specified
     // https://bazel.build/reference/test-encyclopedia
@@ -627,6 +643,13 @@ public final class JUnit5BazelRunner {
     //noinspection unchecked
     List<Path> paths = (List<Path>)getBaseUrls.invoke(classLoader);
 
+    String bazelTestJar = System.getenv(jbEnvTestJar);
+    if (bazelTestJar != null) {
+      return paths.stream()
+        .filter(p -> p.toString().endsWith(bazelTestJar))
+        .collect(Collectors.toSet());
+    }
+
     // Linux/macOS: SELF_LOCATION points to the test binary inside its materialized
     // runfiles tree, so all target-specific jars share its parent directory.
     String selfLocation = System.getenv(bazelEnvSelfLocation);
@@ -792,6 +815,23 @@ public final class JUnit5BazelRunner {
     catch (IOException t) {
       // Non-fatal: we still exit successfully, but log the problem to stderr
       System.err.println("Failed to write XML_OUTPUT_FILE for bucketing-empty plan: " + t.getMessage());
+    }
+  }
+
+  private static TestExecutionResultInterceptor loadTestExecutionResultInterceptor() {
+    String className = System.getenv(jbEnvTestExecutionResultInterceptor);
+    if (className == null) {
+      return (identifier, result) -> result;
+    }
+    try {
+      ClassLoader loader = ClassLoader.getSystemClassLoader();
+      @SuppressWarnings("unchecked")
+      Class<TestExecutionResultInterceptor> cls = (Class<TestExecutionResultInterceptor>)loader.loadClass(className);
+      Constructor<TestExecutionResultInterceptor> constructor = cls.getDeclaredConstructor();
+      return constructor.newInstance();
+    }
+    catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
     }
   }
 }
