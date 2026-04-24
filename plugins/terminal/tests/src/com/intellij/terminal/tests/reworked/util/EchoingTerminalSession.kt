@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.frontend.view.completion.PowerShellCompletionContributor
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CancellationException
@@ -145,6 +147,11 @@ internal class EchoingTerminalSession(
       }
     }
   }
+
+  override val eelDescriptor: EelDescriptor = LocalEelDescriptor
+
+  override val processId: Long
+    get() = throw UnsupportedOperationException("This session doesn't run a real shell process")
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     return inputChannel

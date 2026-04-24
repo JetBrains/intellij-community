@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.session
 
-import com.jediterm.terminal.TtyConnector
+import com.intellij.platform.eel.EelDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
@@ -19,7 +20,7 @@ internal class TerminalSessionImpl(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,
-  private val ttyConnector: TtyConnector,
+  private val ttyConnector: LocalTerminalTtyConnector,
 ) : TerminalSession {
   @Volatile
   override var isClosed: Boolean = false
@@ -30,6 +31,12 @@ internal class TerminalSessionImpl(
       isClosed = true
     }
   }
+
+  override val eelDescriptor: EelDescriptor
+    get() = ttyConnector.eelDescriptor
+
+  override val processId: Long
+    get() = ttyConnector.shellEelProcess.eelProcess.pid.value
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     if (isClosed) {

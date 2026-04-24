@@ -22,7 +22,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
@@ -97,7 +99,12 @@ fun createTerminalSession(
     }
   }
 
-  return TerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope, ttyConnector)
+  return TerminalSessionImpl(
+    inputChannel = inputChannel,
+    outputFlow = outputFlow.asSharedFlow(),
+    coroutineScope = coroutineScope,
+    ttyConnector = ttyConnector.original as LocalTerminalTtyConnector,
+  )
 }
 
 private fun createJediTermServices(

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.session.impl
 
+import com.intellij.platform.eel.EelDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,13 @@ interface TerminalSession {
    * And if the process is terminated on its own, then the scope will be canceled as well.
    */
   val coroutineScope: CoroutineScope
+
+  /**
+   * Environment where the terminal process is running.
+   */
+  val eelDescriptor: EelDescriptor
+
+  val processId: Long
 
   /**
    * Use this channel to send the input events to the Terminal session.

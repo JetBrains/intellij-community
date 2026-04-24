@@ -196,6 +196,12 @@ internal class StateAwareTerminalSession(
     }.buffer(Channel.RENDEZVOUS)
   }
 
+  override val eelDescriptor: EelDescriptor
+    get() = delegate.eelDescriptor
+
+  override val processId: Long
+    get() = delegate.processId
+
   override val isClosed: Boolean
     get() = delegate.isClosed
 
