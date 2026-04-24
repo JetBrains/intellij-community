@@ -264,6 +264,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavadocFor("SecondSealer");
   }
  public void testParameterizedLinks() { doTestClass(); }
+ public void testWrongfulInnerClassReferences() { doTestClass(); }
+ public void testImplicitConstructor() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

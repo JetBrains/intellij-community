@@ -1,6 +1,6 @@
 class Test {
   /**
-   * @param ppp see {@link #<error descr="Cannot resolve symbol 'Test'">Test</error>}
+   * @param ppp see {@link #Test}
    */
   public void i(int ppp) {}
 

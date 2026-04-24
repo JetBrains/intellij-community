@@ -92,7 +92,6 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testException3() { doTest(); }
   public void testException4() { myMissingJavadocInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = "package"; doTest(); }
   public void testInheritJavaDoc() { setLanguageLevel(LanguageLevel.JDK_1_3); doTest(); }
-  public void testLink0() { doTest(); }
   public void testLinkFromInnerClassToSelfMethod() { doTest(); }
   public void testValueBadReference() { doTest(); }
   public void testValueGoodReference() { doTest(); }
