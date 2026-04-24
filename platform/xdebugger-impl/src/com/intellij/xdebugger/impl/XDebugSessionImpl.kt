@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.diagnostic.logging.LogConsoleManager
 import com.intellij.diagnostic.logging.LogFilesManager
 import com.intellij.execution.Executor
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -12,7 +11,6 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.impl.RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC
 import com.intellij.execution.impl.RunContentDescriptorLifecycleListener
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
@@ -628,16 +626,17 @@ class XDebugSessionImpl @JvmOverloads constructor(
           val component get() = myUi.component
           val ui get() = myUi
 
-          val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
+          val consoleManger by lazy { createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler } }
         }
         val disposable = localTabScope.asDisposable()
 
+        val remoteDevHost = AppMode.isRemoteDevHost()
         val layoutBridge = RunnerLayoutUiBridge(project, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           init {
-            runnerLayoutUi = if (AppMode.isRemoteDevHost()) layoutBridge else runTab.ui
+            runnerLayoutUi = if (remoteDevHost) layoutBridge else runTab.ui
           }
 
           override fun isHiddenContent(): Boolean = true
@@ -648,7 +647,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
 
-        initializeConsole(runTab.consoleManger, mockDescriptor.processHandler, disposable)
+        val runConfiguration = executionEnvironment?.runProfile
+        if (remoteDevHost && runConfiguration != null) {
+          val logFilesManager = LogFilesManager(project, runTab.consoleManger, disposable)
+          RunTab.configureLogConsoles(runConfiguration, logFilesManager, debugProcess.processHandler)
+        }
 
         val tabLayouter = debugProcess.createTabLayouter()
         val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
@@ -692,20 +695,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
         if (shouldShowTab) {
           tab.showTab()
         }
-        val consoleManager = tab.createLogConsoleManager(null) { debugProcess.processHandler }
-        initializeConsole(consoleManager, debugProcess.processHandler, tab)
       }
     }
+    setUpOutputToFile()
   }
 
-  private fun initializeConsole(
-    consoleManager: LogConsoleManager,
-    processHandler: ProcessHandler?,
-    disposable: Disposable,
-  ) {
+  private fun setUpOutputToFile() {
     val runConfiguration = executionEnvironment?.runProfile ?: return
-    val logFilesManager = LogFilesManager(project, consoleManager, disposable)
-    RunTab.configureLogConsoles(runConfiguration, logFilesManager, processHandler, consoleView)
+    RunTab.configureConsoleOutputToFile(runConfiguration, debugProcess.processHandler, consoleView)
   }
 
   @ApiStatus.Internal

@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.diagnostic.logging.LogFilesManager
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.action
@@ -453,8 +455,16 @@ class FrontendXDebuggerSession(
     }
 
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
-    if (tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
+    val localEnvironment = tabInfo.executionEnvironmentProxyDto?.executionEnvironment
+    if (localEnvironment == null) {
       subscribeOnAdditionalTabs(tabScope, tab, tabInfo.additionalTabsComponentManagerId)
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        val consoleManager = tab.createLogConsoleManager(null) { processHandler }
+        val logFilesManager = LogFilesManager(project, consoleManager, runContentDescriptor)
+        RunTab.configureLogConsoles(localEnvironment.runProfile, logFilesManager, processHandler)
+      }
     }
 
     tabScope.launch(Dispatchers.EDT) {

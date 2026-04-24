@@ -147,19 +147,28 @@ public abstract class RunTab implements Disposable {
     if (myManager == null) {
       myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
     }
-    configureLogConsoles(runConfiguration, myManager, contentDescriptor.getProcessHandler(), console);
+    ProcessHandler processHandler = contentDescriptor.getProcessHandler();
+    configureLogConsoles(runConfiguration, myManager, processHandler);
+    if (processHandler != null) {
+      configureConsoleOutputToFile(runConfiguration, processHandler, console);
+    }
   }
 
   @ApiStatus.Internal
   public static void configureLogConsoles(@NotNull RunProfile runConfiguration,
                                           @NotNull LogFilesManager manager,
-                                          @Nullable ProcessHandler processHandler,
-                                          @Nullable ExecutionConsole console) {
+                                          @Nullable ProcessHandler processHandler) {
     if (runConfiguration instanceof RunConfigurationBase<?> configuration) {
       manager.addLogConsoles(configuration, processHandler);
-      if (processHandler != null) {
-        OutputFileUtil.attachDumpListener(configuration, processHandler, console);
-      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void configureConsoleOutputToFile(@NotNull RunProfile runConfiguration,
+                                                  @NotNull ProcessHandler processHandler,
+                                                  @Nullable ExecutionConsole console) {
+    if (runConfiguration instanceof RunConfigurationBase<?> configuration) {
+      OutputFileUtil.attachDumpListener(configuration, processHandler, console);
     }
   }
 
