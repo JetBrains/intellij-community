@@ -56,6 +56,7 @@ import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.PatternSyntaxException
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
@@ -428,7 +429,8 @@ private fun toGlobPath(relativePath: Path): Path {
  * - [commonDirectory] is the longest shared prefix used for backend narrowing.
  * - [fileFilter] is a best-effort conversion to Find-in-Project file masks.
  */
-internal data class PathScope(
+@ApiStatus.Internal
+data class PathScope(
   val includeMatchers: List<PathMatcher>,
   val excludeMatchers: List<PathMatcher>,
   val commonDirectory: Path?,
@@ -449,7 +451,8 @@ private data class PathPattern(
 /**
  * Builds include/exclude matchers and derive common prefix and file mask.
  */
-internal fun buildPathScope(projectDir: Path, paths: List<String>?): PathScope? {
+@ApiStatus.Internal
+fun buildPathScope(projectDir: Path, paths: List<String>?): PathScope? {
   if (paths == null) return null
   val normalized = paths.mapNotNull { normalizePattern(it, projectDir) }
   if (normalized.isEmpty()) return null
@@ -531,7 +534,8 @@ private fun expandDirectoryPatternIfNeeded(pattern: String, projectDir: Path): S
 /**
  * Normalizes a glob pattern and guards against escaping the project root.
  */
-internal fun normalizeGlobPattern(raw: String, projectDir: Path, originalPattern: String = raw): String {
+@ApiStatus.Internal
+fun normalizeGlobPattern(raw: String, projectDir: Path, originalPattern: String = raw): String {
   var value = raw.trim()
   if (value.isEmpty()) {
     mcpFail("Glob pattern is empty")
@@ -706,7 +710,8 @@ private fun resolveSearchRoot(
 /**
  * Resolves a directory filter for Find-in-Project from the common prefix.
  */
-internal fun resolveDirectoryFilter(project: Project, pathScope: PathScope?): Path? {
+@ApiStatus.Internal
+fun resolveDirectoryFilter(project: Project, pathScope: PathScope?): Path? {
   val commonDirectory = pathScope?.commonDirectory ?: return null
   val resolved = project.resolveInProject(commonDirectory.pathString)
   return resolved.takeIf { it.isDirectory() }
@@ -715,7 +720,8 @@ internal fun resolveDirectoryFilter(project: Project, pathScope: PathScope?): Pa
 /**
  * Validates and clamps the result limit.
  */
-internal fun normalizeLimit(limit: Int): Int {
+@ApiStatus.Internal
+fun normalizeLimit(limit: Int): Int {
   if (limit <= 0) mcpFail("limit must be > 0")
   return limit.coerceAtMost(MAX_RESULTS_UPPER_BOUND)
 }
@@ -728,8 +734,8 @@ data class SearchSnippet(
   @JvmField val endColumn: Int,
 )
 
-@Serializable
 @Internal
+@Serializable
 data class SearchItem(
   /*
    * Search results are always serialized as SearchItem objects, so all search_* tools
@@ -746,9 +752,9 @@ data class SearchItem(
   @JvmField val endColumn: Int? = null,
 )
 
+@Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-@Internal
 data class SearchResult(
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS) val items: List<SearchItem> = emptyList(),
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val more: Boolean = false,
