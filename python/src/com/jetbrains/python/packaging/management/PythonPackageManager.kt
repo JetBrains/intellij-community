@@ -39,14 +39,17 @@ import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.jvm.Throws
 
 
 /**
@@ -66,6 +69,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   internal val installedMightBeTransitive: Boolean = false,
 ) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
+  private val packageReloadMutex = Mutex()
 
   private val dependencyCache = DependencyCache()
 
@@ -153,14 +157,17 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return loadPackagesImpl(isInit = false)
   }
 
-  private suspend fun loadPackagesImpl(isInit: Boolean): PyResult<List<PythonPackage>> {
-    val packages = loadPackagesCommand().getOr {
-      return it
-    }
+  private suspend fun loadPackagesImpl(isInit: Boolean): PyResult<List<PythonPackage>> = packageReloadMutex.withLock {
+    // Cancellable: external process call.
+    val packages = loadPackagesCommand().getOr { return it }
 
     val changed = packages != installedPackages
-    if (changed) {
-      installedPackages = packages
+    if (!changed) return PyResult.success(installedPackages)
+
+    // Transactional commit: state mutation + listener notification + scheduled refresh
+    // must complete atomically even if the caller is cancelled.
+    withContext(NonCancellable) {
+      this@PythonPackageManager.installedPackages = packages
 
       ApplicationManager.getApplication().messageBus.apply {
         syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
@@ -169,7 +176,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
-      }.cancelOnDispose(this)
+      }.cancelOnDispose(this@PythonPackageManager)
+
       if (!isInit) {
         refreshPaths(project, sdk)
       }
@@ -326,7 +334,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     try {
       if (isInited.getAndSet(true))
         return
-      if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
+      if (!PythonSdkType.isMock(sdk)) {
         loadPackagesImpl(isInit = true)
       }
     }

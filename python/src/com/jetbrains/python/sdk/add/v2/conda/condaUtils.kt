@@ -10,7 +10,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
@@ -45,8 +44,6 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleO
     project = moduleOrProject.project
   )
     .onSuccess { sdk ->
-      (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-
       val module = PyProjectCreateHelpers.getModule(moduleOrProject, null)
       if (module != null) {
         sdk.setAssociationToModule(module)
@@ -89,7 +86,6 @@ suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject:
     project = moduleOrProject.project,
   ).getOr { return it }
 
-  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
   PyProjectCreateHelpers.getModule(moduleOrProject, null)?.let { sdk.setAssociationToModule(it) }
   sdk.persist()
   return PyResult.success(sdk)
