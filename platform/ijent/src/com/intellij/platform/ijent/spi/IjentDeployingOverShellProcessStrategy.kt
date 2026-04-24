@@ -150,9 +150,9 @@ abstract class IjentDeployingOverShellProcessStrategy(
         "Executing a script inside the shell: $debugData"
       }
       withContext(Dispatchers.IO) {
-        processFacade.outputStream.write(data.toByteArray())
+        processFacade.stdin.write(data.toByteArray())
         ensureActive()
-        processFacade.outputStream.flush()
+        processFacade.stdin.flush()
         ensureActive()
       }
     }
@@ -161,7 +161,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     suspend fun readLineWithoutBuffering(): String =
       withContext(Dispatchers.IO) {
         val buffer = StringBuilder()
-        val stream = processFacade.inputStream
+        val stream = processFacade.stdout
         while (true) {
           ensureActive()
           while (stream.available() == 0) {
@@ -188,9 +188,9 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
     suspend fun copyDataFrom(stream: InputStream) {
       withContext(Dispatchers.IO) {
-        stream.copyToAsync(processFacade.outputStream)
+        stream.copyToAsync(processFacade.stdin)
         ensureActive()
-        processFacade.outputStream.flush()
+        processFacade.stdin.flush()
       }
     }
 

@@ -42,9 +42,9 @@ class IjentSessionProcessMediator private constructor(
   val process: ProcessFacade,
 ) : IjentSessionMediator {
   interface ProcessFacade {
-    val outputStream: OutputStream
-    val inputStream: InputStream
-    val errorStream: InputStream
+    val stdin: OutputStream
+    val stdout: InputStream
+    val stderr: InputStream
     val exitCode: SafeDeferred<Int>
     fun destroyForcibly()
     fun destroy()
@@ -58,9 +58,9 @@ class IjentSessionProcessMediator private constructor(
 
   @OptIn(DelicateCoroutinesApi::class)
   class JavaProcessFacade(private val ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
-    override val outputStream: OutputStream = process.outputStream
-    override val inputStream: InputStream = process.inputStream
-    override val errorStream: InputStream = process.errorStream
+    override val stdin: OutputStream = process.outputStream
+    override val stdout: InputStream = process.inputStream
+    override val stderr: InputStream = process.errorStream
 
     // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
     // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
@@ -156,7 +156,7 @@ class IjentSessionProcessMediator private constructor(
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
       GlobalScope.launch(IjentThreadPool.coroutineContext + ijentProcessScope.s.coroutineNameAppended("stderr logger")) {
-        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.errorStream, ijentLabel, lastStderrMessages, LOG)
+        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages, LOG)
       }
 
       val mediator = IjentSessionProcessMediator(ijentProcessScope, process)
@@ -194,7 +194,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
 
   try {
     LOG.debug { "Closing stdin of $ijentLabel" }
-    runCatching { process.outputStream.close() }
+    runCatching { process.stdin.close() }
 
     if (SystemInfoRt.isWindows) {
       awaitProcessExit(process, 1.5.seconds)
