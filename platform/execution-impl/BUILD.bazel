@@ -208,6 +208,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/pty4j",
     "//libraries/pty4j:pty4j_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
   ],
   runtime_deps = [
     ":execution-tests",
