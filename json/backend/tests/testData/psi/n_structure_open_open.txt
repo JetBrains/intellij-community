@@ -21,5 +21,7 @@ JsonFile: n_structure_open_open.json
             <empty list>
         PsiErrorElement:',' or ']' expected
           <empty list>
+      PsiErrorElement:<literal>, IDENTIFIER, '[', '{' or '}' expected
+        <empty list>
     PsiErrorElement:',' or ']' expected
       <empty list>

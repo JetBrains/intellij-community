@@ -16,5 +16,6 @@ internal object DefaultSyntaxRuntimeBundle {
     "parsing.error.unexpected" to "''{0}'' unexpected",
     "parsing.error.unmatched.input" to "unmatched input",
     "parsing.error.leftover.in.object" to "<property> or ''}'' expected, got ''{0}''",
+    "parsing.error.leftover.in.array" to "<value> or '']'' expected, got ''{0}''",
   )
 }

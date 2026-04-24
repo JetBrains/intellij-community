@@ -3,9 +3,10 @@ JsonFile: n_string_leading_uescaped_thinspace.json
     PsiElement([)('[')
     PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got '\'
       PsiElement(BAD_CHARACTER)('\')
-  JsonReferenceExpression
-    PsiElement(IDENTIFIER)('u0020')
-  JsonStringLiteral
-    PsiElement(DOUBLE_QUOTED_STRING)('"asd"')
-  PsiErrorElement:']' unexpected
+    PsiErrorElement:<value> or ']' expected, got 'IDENTIFIER'
+      <empty list>
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('u0020')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"asd"')
     PsiElement(])(']')

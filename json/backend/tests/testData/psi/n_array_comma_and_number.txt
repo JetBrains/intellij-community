@@ -3,7 +3,8 @@ JsonFile: n_array_comma_and_number.json
     PsiElement([)('[')
     PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
       PsiElement(,)(',')
-  JsonNumberLiteral
-    PsiElement(NUMBER)('1')
-  PsiErrorElement:']' unexpected
+    PsiErrorElement:<value> or ']' expected, got 'NUMBER'
+      <empty list>
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
     PsiElement(])(']')

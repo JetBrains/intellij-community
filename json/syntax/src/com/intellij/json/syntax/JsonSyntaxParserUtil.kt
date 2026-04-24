@@ -10,6 +10,7 @@ import com.intellij.platform.syntax.parser.ProductionResult
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.prepareProduction
 import com.intellij.platform.syntax.util.log.logger
+import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.areBracesBalancedInside
 import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.isBalancedBlock
 import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.parseBlockLazy
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
@@ -44,10 +45,16 @@ private fun consumeContentIfTooDeep(
   return true
 }
 
-internal fun leftoverErrorInObject(runtime: SyntaxGeneratedParserRuntime, level: Int): Boolean {
+internal fun leftoverErrorInObject(runtime: SyntaxGeneratedParserRuntime, level: Int): Boolean =
+  reportLeftoverError(runtime, "parsing.error.leftover.in.object")
+
+internal fun leftoverErrorInArray(runtime: SyntaxGeneratedParserRuntime, level: Int): Boolean =
+  reportLeftoverError(runtime, "parsing.error.leftover.in.array")
+
+private fun reportLeftoverError(runtime: SyntaxGeneratedParserRuntime, messageKey: String): Boolean {
   val b = runtime.syntaxBuilder
   val currentToken = requireNotNull(b.tokenType) { "this function must not be called at EOF" }
-  b.error(SyntaxRuntimeBundle.message("parsing.error.leftover.in.object", currentToken))
+  b.error(SyntaxRuntimeBundle.message(messageKey, currentToken))
   return true
 }
 
@@ -59,22 +66,55 @@ fun shallowParseObject(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
   ) != null
 }
 
+fun shallowParseArray(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
+  return s.syntaxBuilder.parseBlockLazy(
+    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
+    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
+    codeBlock = JsonSyntaxElementTypes.ARRAY
+  ) != null
+}
+
 fun isObjectReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean {
   return isBalancedBlock(
     leftBrace = JsonSyntaxElementTypes.L_CURLY,
     rightBrace = JsonSyntaxElementTypes.R_CURLY,
     cancellationProvider = cancellationProvider,
     tokenList = tokenList,
+  ) && areBracesBalancedInside(
+    tokenList = tokenList,
+    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
+    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
+    cancellationProvider = cancellationProvider,
+  )
+}
+
+fun isArrayReparseable(tokenList: TokenList, cancellationProvider: CancellationProvider): Boolean {
+  return isBalancedBlock(
+    leftBrace = JsonSyntaxElementTypes.L_BRACKET,
+    rightBrace = JsonSyntaxElementTypes.R_BRACKET,
+    cancellationProvider = cancellationProvider,
+    tokenList = tokenList,
+  ) && areBracesBalancedInside(
+    tokenList = tokenList,
+    leftBrace = JsonSyntaxElementTypes.L_CURLY,
+    rightBrace = JsonSyntaxElementTypes.R_CURLY,
+    cancellationProvider = cancellationProvider,
   )
 }
 
 private const val JSON_PARSING_MAX_RECURSION_DEPTH: Int = 1000
 
-fun parseObject(syntaxTreeBuilder: SyntaxTreeBuilder, depthLevel: Int): ProductionResult {
+fun parseObject(syntaxTreeBuilder: SyntaxTreeBuilder, depthLevel: Int): ProductionResult =
+  parseContainer(syntaxTreeBuilder, depthLevel, JsonSyntaxElementTypes.OBJECT)
+
+fun parseArray(syntaxTreeBuilder: SyntaxTreeBuilder, depthLevel: Int): ProductionResult =
+  parseContainer(syntaxTreeBuilder, depthLevel, JsonSyntaxElementTypes.ARRAY)
+
+private fun parseContainer(syntaxTreeBuilder: SyntaxTreeBuilder, depthLevel: Int, elementType: SyntaxElementType): ProductionResult {
   if (depthLevel * 2 > JSON_PARSING_MAX_RECURSION_DEPTH) { // multiplying by 2 because parser recursion depth increases faster than the tree depth
     val marker = syntaxTreeBuilder.mark()
     syntaxTreeBuilder.advanceToEOF()
-    marker.done(JsonSyntaxElementTypes.OBJECT)
+    marker.done(elementType)
   }
   else {
     val runtime = SyntaxGeneratedParserRuntime(
@@ -85,7 +125,7 @@ fun parseObject(syntaxTreeBuilder: SyntaxTreeBuilder, depthLevel: Int): Producti
       logger = logger("com.intellij.json.syntax.JsonSyntaxParser"),
       parserUserState = null
     )
-    JsonSyntaxParser.parse(JsonSyntaxElementTypes.OBJECT, runtime)
+    JsonSyntaxParser.parse(elementType, runtime)
   }
   return prepareProduction(syntaxTreeBuilder)
 }

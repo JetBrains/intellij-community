@@ -379,42 +379,33 @@ JsonFile: Broken.json
               PsiWhiteSpace('\n      ')
               PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
                 PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
-          JsonProperty
-            JsonStringLiteral
-              PsiElement(DOUBLE_QUOTED_STRING)('"secret"')
-            PsiErrorElement:':' expected, got ','
-              <empty list>
-          PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
-          JsonProperty
-            JsonStringLiteral
-              PsiElement(DOUBLE_QUOTED_STRING)('"key"')
-            PsiErrorElement:':' expected, got ','
-              <empty list>
-          PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
-          JsonProperty
-            JsonStringLiteral
-              PsiElement(DOUBLE_QUOTED_STRING)('"token"')
-            PsiErrorElement:':' expected, got ','
-              <empty list>
-          PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
-          JsonProperty
-            JsonStringLiteral
-              PsiElement(DOUBLE_QUOTED_STRING)('".*credentials.*"')
-            PsiErrorElement:':' expected, got ','
-              <empty list>
-          PsiElement(,)(',')
-          PsiWhiteSpace('\n    ')
-          JsonProperty
-            JsonStringLiteral
-              PsiElement(DOUBLE_QUOTED_STRING)('"vcap_services"')
-            PsiErrorElement:':' expected, got ']'
-              <empty list>
-          PsiWhiteSpace('\n  ')
-          PsiElement(])(']')
+              PsiErrorElement:<value> or ']' expected, got 'DOUBLE_QUOTED_STRING'
+                <empty list>
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"secret"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"key"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"token"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('".*credentials.*"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"vcap_services"')
+              PsiWhiteSpace('\n  ')
+              PsiElement(])(']')
           PsiWhiteSpace('\n  ')
           PsiElement(})('}')
         PsiElement(,)(',')
@@ -1280,232 +1271,235 @@ JsonFile: Broken.json
                   PsiWhiteSpace('\n        ')
                   PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
                     PsiElement(,)(',')
-              PsiErrorElement:<property> or '}' expected, got '{'
-                <empty list>
-              PsiWhiteSpace('\n  ')
-              JsonObject
-                PsiElement({)('{')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"name"')
-                  PsiElement(:)(':')
-                  PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+                  PsiErrorElement:<value> or ']' expected, got '{'
                     <empty list>
-                PsiWhiteSpace(' ')
-                PsiElement(,)(',')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"values"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonArray
-                    PsiElement([)('[')
-                    JsonBooleanLiteral
-                      PsiElement(false)('false')
-                    PsiErrorElement:',' or ']' expected, got '{'
-                      <empty list>
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"value"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"*"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
                     PsiWhiteSpace('\n    ')
-                    PsiElement(])(']')
-                PsiElement(,)(',')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonArray
-                    PsiElement([)('[')
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"name"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"any"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
-                    PsiWhiteSpace('\n    ')
-                    PsiElement(])(']')
-                PsiWhiteSpace('\n  ')
-                PsiElement(})('}')
-              PsiErrorElement:',' unexpected
-                PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
-              JsonObject
-                PsiElement({)('{')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"name"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"management.endpoints.cors.allowed-origins"')
-                PsiElement(,)(',')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"values"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonArray
-                    PsiElement([)('[')
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"value"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"*"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
-                    PsiWhiteSpace('\n    ')
-                    PsiElement(])(']')
-                PsiElement(,)(',')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonArray
-                    PsiElement([)('[')
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"name"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"any"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
-                    PsiWhiteSpace('\n    ')
-                    PsiElement(])(']')
-                PsiWhiteSpace('\n  ')
-                PsiElement(})('}')
-              PsiErrorElement:',' unexpected
-                PsiElement(,)(',')
-              PsiWhiteSpace('\n  ')
-              JsonObject
-                PsiElement({)('{')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"name"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"management.health.status.order"')
-                PsiElement(,)(',')
-                PsiWhiteSpace('\n    ')
-                JsonProperty
-                  JsonStringLiteral
-                    PsiElement(DOUBLE_QUOTED_STRING)('"values"')
-                  PsiElement(:)(':')
-                  PsiWhiteSpace(' ')
-                  JsonArray
-                    PsiElement([)('[')
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"value"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"UNKNOWN"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+                        <empty list>
+                    PsiWhiteSpace(' ')
                     PsiElement(,)(',')
-                    PsiWhiteSpace('\n      ')
-                    JsonObject
-                      PsiElement({)('{')
-                      PsiWhiteSpace('\n        ')
-                      JsonProperty
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"value"')
-                        PsiElement(:)(':')
-                        PsiWhiteSpace(' ')
-                        JsonStringLiteral
-                          PsiElement(DOUBLE_QUOTED_STRING)('"UP"')
-                      PsiWhiteSpace('\n      ')
-                      PsiElement(})('}')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        JsonBooleanLiteral
+                          PsiElement(false)('false')
+                        PsiErrorElement:',' or ']' expected, got '{'
+                          <empty list>
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"*"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
                     PsiElement(,)(',')
-                    PsiWhiteSpace('\n      ')
-                    PsiErrorElement:',' unexpected
-                      PsiElement(,)(',')
-                    PsiWhiteSpace('\n      ')
-                    JsonReferenceExpression
-                      PsiElement(IDENTIFIER)('CE')
-                    PsiErrorElement:',' or ']' expected, got '"'
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiWhiteSpace('\n  ')
+                    PsiElement(})('}')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"management.endpoints.cors.allowed-origins"')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"*"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiWhiteSpace('\n  ')
+                    PsiElement(})('}')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"management.health.status.order"')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"UNKNOWN"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"UP"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        PsiErrorElement:',' unexpected
+                          PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        JsonReferenceExpression
+                          PsiElement(IDENTIFIER)('CE')
+                        PsiErrorElement:',' or ']' expected, got '"'
+                          <empty list>
+                        JsonStringLiteral
+                          PsiElement(DOUBLE_QUOTED_STRING)('"')
+                        PsiErrorElement:',' or ']' expected, got '}'
+                          <empty list>
+                        PsiWhiteSpace('\n      ')
+                        PsiErrorElement:<literal>, IDENTIFIER, '[', ']' or '{' expected, got '}'
+                          PsiElement(})('}')
+                    PsiErrorElement:',' or '}' expected
                       <empty list>
-                    JsonStringLiteral
-                      PsiElement(DOUBLE_QUOTED_STRING)('"')
-                    PsiErrorElement:',' or ']' expected, got '}'
-                      <empty list>
-                PsiWhiteSpace('\n      ')
-                PsiElement(})('}')
-              PsiWhiteSpace('\n    ')
-              PsiErrorElement:']' unexpected
-                PsiElement(])(']')
-              PsiElement(,)(',')
-              PsiWhiteSpace('\n    ')
-              JsonStringLiteral
-                PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
-              PsiErrorElement:':' unexpected
-                PsiElement(:)(':')
-              PsiWhiteSpace(' ')
-              JsonArray
-                PsiElement([)('[')
-                PsiWhiteSpace('\n      ')
-                JsonObject
-                  PsiElement({)('{')
-                  PsiWhiteSpace('\n        ')
-                  JsonProperty
-                    JsonStringLiteral
-                      PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                  PsiWhiteSpace('\n    ')
+                  PsiElement(])(']')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiElement(DUMMY_BLOCK)
+                    PsiWhiteSpace('\n    ')
+                    PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
                     PsiElement(:)(':')
                     PsiWhiteSpace(' ')
-                    JsonStringLiteral
-                      PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                    PsiElement([)('[')
                   PsiWhiteSpace('\n      ')
+                  PsiElement(DUMMY_BLOCK)
+                    PsiElement({)('{')
+                    PsiElement(DUMMY_BLOCK)
+                      PsiWhiteSpace('\n        ')
+                      PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace('\n    ')
+                  PsiElement(])(']')
+                  PsiWhiteSpace('\n  ')
                   PsiElement(})('}')
-                PsiWhiteSpace('\n    ')
-                PsiElement(])(']')
-              PsiWhiteSpace('\n  ')
-              PsiElement(})('}')
+              PsiErrorElement:',' or '}' expected
+                <empty list>
           PsiWhiteSpace('\n')
           PsiErrorElement:',' or '}' expected, got ']'
             PsiElement(])(']')
           PsiElement(})('}')
         PsiErrorElement:',' or ']' expected
           <empty list>
+    PsiErrorElement:',' or '}' expected
+      <empty list>

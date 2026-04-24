@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json
 
+import com.intellij.json.psi.impl.JsonLazyArrayImpl
 import com.intellij.json.psi.impl.JsonLazyObjectImpl
 import com.intellij.json.syntax.JsonSyntaxLexer
+import com.intellij.json.syntax.isArrayReparseable
 import com.intellij.json.syntax.isObjectReparseable
+import com.intellij.json.syntax.parseArray
 import com.intellij.json.syntax.parseObject
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
@@ -13,7 +16,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.performLexing
+import com.intellij.platform.syntax.parser.ProductionResult
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 import com.intellij.platform.syntax.psi.asSyntaxLogger
@@ -26,22 +32,37 @@ object JsonElementFactory {
   @JvmStatic
   fun getType(name: String): IElementType = when (name) {
     "OBJECT" -> LAZY_OBJECT
+    "ARRAY" -> LAZY_ARRAY
     else -> throw IllegalArgumentException(name)
   }
 
-  private val LAZY_OBJECT: IElementType = object : IReparseableElementType("OBJECT", JsonLanguage.INSTANCE) {
-    override fun createNode(text: CharSequence?): ASTNode {
-      return JsonLazyObjectImpl( text)
-    }
+  private val LAZY_OBJECT: IElementType = lazyElementType(
+    name = "OBJECT",
+    createNode = { JsonLazyObjectImpl(it) },
+    isReparseable = { tokenList, cancellationProvider -> isObjectReparseable(tokenList, cancellationProvider) },
+    parseContents = { builder, deepLevel -> parseObject(builder, deepLevel) },
+  )
+
+  private val LAZY_ARRAY: IElementType = lazyElementType(
+    name = "ARRAY",
+    createNode = { JsonLazyArrayImpl(it) },
+    isReparseable = { tokenList, cancellationProvider -> isArrayReparseable(tokenList, cancellationProvider) },
+    parseContents = { builder, deepLevel -> parseArray(builder, deepLevel) },
+  )
+
+  private inline fun lazyElementType(
+    name: String,
+    crossinline createNode: (CharSequence?) -> ASTNode,
+    crossinline isReparseable: (TokenList, com.intellij.platform.syntax.CancellationProvider) -> Boolean,
+    crossinline parseContents: (SyntaxTreeBuilder, Int) -> ProductionResult,
+  ): IElementType = object : IReparseableElementType(name, JsonLanguage.INSTANCE) {
+    override fun createNode(text: CharSequence?): ASTNode = createNode(text)
 
     override fun isReparseable(currentNode: ASTNode, newText: CharSequence, fileLanguage: Language, project: Project): Boolean {
       val lexer = findLexer(fileLanguage)
       val cancellationProvider = CancellationProvider { ProgressManager.checkCanceled() }
       val tokenList = performLexing(newText, lexer, cancellationProvider, thisLogger().asSyntaxLogger())
-      return isObjectReparseable(
-        tokenList = tokenList,
-        cancellationProvider = cancellationProvider
-      )
+      return isReparseable(tokenList, cancellationProvider)
     }
 
     override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
@@ -51,18 +72,18 @@ object JsonElementFactory {
       val builder = syntaxBuilder.getSyntaxTreeBuilder()
       val deepLevel = chameleon.parents(false).count()
       return registerParse(builder, language) {
-        parseObject(builder, deepLevel)
+        parseContents(builder, deepLevel)
         syntaxBuilder.getTreeBuilt().getFirstChildNode()
       }
     }
+  }
 
-    private fun findLexer(fileLanguage: Language): Lexer {
-      val definition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(fileLanguage) ?: run {
-        thisLogger().error("No syntax definition found for language $fileLanguage")
-        return JsonSyntaxLexer()
-      }
-
-      return definition.createLexer()
+  private fun findLexer(fileLanguage: Language): Lexer {
+    val definition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(fileLanguage) ?: run {
+      thisLogger().error("No syntax definition found for language $fileLanguage")
+      return JsonSyntaxLexer()
     }
+
+    return definition.createLexer()
   }
 }

@@ -10,7 +10,7 @@
   elementTypeClass = 'com.intellij.json.JsonElementType'
   psiClassPrefix = "Json"
   psiVisitorName = "JsonElementVisitor"
-  
+
   psiOutputPath=".."
   syntaxElementTypeHolderClass="com.intellij.json.syntax.JsonSyntaxElementTypes"
   elementTypeConverterFactoryClass="com.intellij.json.psi.JsonElementTypeConverterFactory"
@@ -68,7 +68,7 @@
 // Empty file is also allowed
 json ::= top_level_value*
 
-// parses top-level object eagerly
+// parses top-level object and array eagerly
 private top_level_value ::= object | array | literal | reference_expression {
   recoverWhile = top_level_value_recoverer
 }
@@ -76,6 +76,8 @@ private top_level_value ::= object | array | literal | reference_expression {
 private top_level_value_recoverer ::= !value_start
 
 private shallow_object ::= &'{' <<shallowParseObject>>
+
+private shallow_array ::= &'[' <<shallowParseArray>>
 
 object ::= '{' <<consumeObjectContentIfTooDeep>> object_element* object_leftovers '}' {
   pin=1
@@ -127,12 +129,30 @@ property ::= property_name (':' property_value) {
 
 private property_name ::= literal | reference_expression
 
-array ::= '[' <<consumeArrayContentIfTooDeep>> array_element* ']' {
+array ::= '[' <<consumeArrayContentIfTooDeep>> array_element* array_leftovers ']' {
   methods=[
     getPresentation
   ]
   pin=1
+  extraRoot = true
+  syntaxElementTypeFactory='com.intellij.json.syntax.JsonSyntaxElementFactory.getType'
+  elementTypeFactory='com.intellij.json.JsonElementFactory.getType'
 }
+
+// consuming leftovers as part of `array` because:
+// 1. array is a root node and there is always `]` in the end of array (or EOF) because
+//    `shallow_array` stops only when occurring closing `]`
+// 2. if we can't parse array_elements anymore, then it's better to parse something.
+//    There still be an error element between them, so it's not going to be weird.
+// 3. it is guaranteed that in the end there will be either EOF or the closing bracket of the wrapping array.
+//    If this is not true in some scenario, then it's a bug. Closing brackets must be NEVER consumed by recoverWhile rules because of this.
+private array_leftovers ::= &']' | <<eof>> | <<leftoverErrorInArray>> leftover_value_inside_array*
+
+private leftover_value_inside_array ::= value_impl {
+  recoverWhile = leftover_value_inside_array_recoverer
+}
+
+private leftover_value_inside_array_recoverer ::= !(value_start | ']')
 
 private array_element ::= value_impl (','|&']') {
   recoverWhile = not_bracket_or_next_value
@@ -176,9 +196,9 @@ reference_expression ::= IDENTIFIER {
 }
 
 // fake rule for keeping the hierarchy
-value ::= shallow_object | array | literal | reference_expression
+value ::= shallow_object | shallow_array | literal | reference_expression
 
-private value_impl ::= shallow_object | array | literal | reference_expression
+private value_impl ::= shallow_object | shallow_array | literal | reference_expression
 
 // Recoveries
 private not_bracket_or_next_value ::= !( ']' | '}' | value_start )

@@ -7,7 +7,7 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.json.syntax.JsonSyntaxElementFactory
 
 object JsonSyntaxElementTypes {
-  val ARRAY = SyntaxElementType("ARRAY")
+  val ARRAY = JsonSyntaxElementFactory.getType("ARRAY")
   val BOOLEAN_LITERAL = SyntaxElementType("BOOLEAN_LITERAL")
   val LITERAL = SyntaxElementType("LITERAL")
   val NULL_LITERAL = SyntaxElementType("NULL_LITERAL")

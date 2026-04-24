@@ -7,3 +7,5 @@ JsonFile: n_structure_open_object_open_array.json
       PsiElement([)('[')
       PsiErrorElement:<literal>, IDENTIFIER, '[', ']' or '{' expected
         <empty list>
+    PsiErrorElement:<literal>, IDENTIFIER, '[', '{' or '}' expected
+      <empty list>

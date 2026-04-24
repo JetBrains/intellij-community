@@ -8,7 +8,7 @@ import com.intellij.json.psi.impl.*;
 
 public interface JsonElementTypes {
 
-  IElementType ARRAY = new JsonElementType("ARRAY");
+  IElementType ARRAY = JsonElementFactory.getType("ARRAY");
   IElementType BOOLEAN_LITERAL = new JsonElementType("BOOLEAN_LITERAL");
   IElementType LITERAL = new JsonElementType("LITERAL");
   IElementType NULL_LITERAL = new JsonElementType("NULL_LITERAL");
