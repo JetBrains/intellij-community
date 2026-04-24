@@ -121,10 +121,6 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void test100_100() {
-    doTest();
-  }
-
   public void testSimple3() {
     doTest();
   }
