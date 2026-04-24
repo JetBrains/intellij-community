@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
@@ -53,7 +54,7 @@ fun createTerminalSession(
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-): BackendTerminalSession {
+): TerminalSession {
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
@@ -96,7 +97,7 @@ fun createTerminalSession(
     }
   }
 
-  return BackendTerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope, ttyConnector)
+  return TerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope, ttyConnector)
 }
 
 private fun createJediTermServices(

@@ -49,6 +49,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
@@ -74,11 +75,11 @@ import kotlin.time.TimeSource
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class StateAwareTerminalSession(
   project: Project,
-  private val delegate: BackendTerminalSession,
+  private val delegate: TerminalSession,
   eelDescriptor: EelDescriptor?,
   private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
-) : BackendTerminalSession {
+) : TerminalSession {
   private val outputFlowProducer = IncrementalUpdateFlowProducer(State())
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()

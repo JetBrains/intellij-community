@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.util.eelDescriptor
 import java.util.concurrent.ConcurrentHashMap
@@ -24,10 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.APP)
 class TerminalSessionsManager {
-  private val sessionsMap = ConcurrentHashMap<TerminalSessionId, BackendTerminalSession>()
+  private val sessionsMap = ConcurrentHashMap<TerminalSessionId, TerminalSession>()
 
   /**
-   * Starts the terminal process using provided [options] and wraps it into [BackendTerminalSession].
+   * Starts the terminal process using provided [options] and wraps it into [TerminalSession].
    * Also, it installs the port forwarding feature.
    *
    * The created session lifecycle is bound to the [scope]. If it cancels, then the process will be terminated.
@@ -73,11 +74,11 @@ class TerminalSessionsManager {
     )
   }
 
-  fun getSession(id: TerminalSessionId): BackendTerminalSession? {
+  fun getSession(id: TerminalSessionId): TerminalSession? {
     return sessionsMap[id]
   }
 
-  private fun storeSession(session: BackendTerminalSession, scope: CoroutineScope): TerminalSessionId {
+  private fun storeSession(session: TerminalSession, scope: CoroutineScope): TerminalSessionId {
     val sessionId = TerminalSessionId(sessionIdCounter.getAndIncrement())
     sessionsMap.put(sessionId, session)
     scope.awaitCancellationAndInvoke {

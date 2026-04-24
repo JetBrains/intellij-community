@@ -59,7 +59,7 @@ import kotlin.concurrent.withLock
  */
 internal class EchoingTerminalSession(
   private val startupOptions: TerminalStartupOptions,
-  coroutineScope: CoroutineScope,
+  override val coroutineScope: CoroutineScope,
 ) : TerminalSession {
   private val inputChannel = Channel<TerminalInputEvent>(Channel.UNLIMITED)
 

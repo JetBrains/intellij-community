@@ -12,14 +12,15 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 
-internal class BackendTerminalSessionImpl(
+internal class TerminalSessionImpl(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,
   private val ttyConnector: TtyConnector,
-) : BackendTerminalSession {
+) : TerminalSession {
   @Volatile
   override var isClosed: Boolean = false
     private set

@@ -1,12 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.session.impl
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TerminalSession {
+  /**
+   * Scope in which all session-related activities are executed.
+   * The lifecycle of the session is bound to it.
+   * If it cancels, then the shell process will be terminated.
+   * And if the process is terminated on its own, then the scope will be canceled as well.
+   */
+  val coroutineScope: CoroutineScope
+
   /**
    * Use this channel to send the input events to the Terminal session.
    *
