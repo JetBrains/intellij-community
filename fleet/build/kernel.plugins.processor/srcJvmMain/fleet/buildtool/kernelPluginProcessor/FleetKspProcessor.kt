@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.JvmPlatformInfo
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.NativePlatformInfo
 import com.google.devtools.ksp.processing.PlatformInfo
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -30,6 +31,8 @@ class FleetKspProcessorProvider : SymbolProcessorProvider {
 private data class ServiceDescriptor(val interfaceFqn: String, val returnValue: String)
 
 private const val ENTITY_TYPE_FQN = "com.jetbrains.rhizomedb.EntityType"
+private const val IOS_PLUGIN_PROVIDER_FILE_NAME = "ServiceProvider.ios"
+private const val WASM_PLUGIN_PROVIDER_FILE_NAME = "ServiceProvider.wasm"
 private val SERVICE_DESCRIPTORS = setOf(ServiceDescriptor("fleet.ship.TypedShipLauncher", "fleet.ship.TypedShipLauncher<*>"),
                                         ServiceDescriptor("fleet.kernel.plugins.Plugin", "fleet.kernel.plugins.Plugin<*>"),
                                         ServiceDescriptor("fleet.dock.api.ShipCliHandler", "fleet.dock.api.ShipCliHandler"),
@@ -133,22 +136,43 @@ class FleetKspProcessor(
       }
     }
 
-    if (platforms.any { it.platformName.contains("wasm", ignoreCase = true) }) {
-      if (serviceFqns.isNotEmpty()) {
-        val packageName = shortestPackageName ?: run {
-          logger.error("Cannot infer package name. EntityTypes=$entityTypeFqns, Services=$serviceFqns")
-          return
-        }
+    if (serviceFqns.isNotEmpty()) {
+      val packageName = shortestPackageName ?: run {
+        logger.error("Cannot infer package name. EntityTypes=$entityTypeFqns, Services=$serviceFqns")
+        return
+      }
+      val sortedServiceFqns = serviceFqns.mapValues { (_, implementationFqns) -> implementationFqns.sorted() }
 
+      if (platforms.any { it.platformName.contains("wasm", ignoreCase = true) }) {
         codeGenerator.createNewFile(
           dependencies = Dependencies.ALL_FILES,
           packageName = packageName,
-          fileName = "ServiceProvider.wasm"
+          fileName = WASM_PLUGIN_PROVIDER_FILE_NAME
         ).bufferedWriter().use { writer ->
           writer.appendLine("package $packageName")
-          serviceFqns.forEach { (serviceDescriptor, implementationFqns) ->
+          sortedServiceFqns.forEach { (serviceDescriptor, implementationFqns) ->
             writer.appendLine()
             writer.appendJsServiceAccessor(moduleName, serviceDescriptor.interfaceFqn, serviceDescriptor.returnValue, implementationFqns)
+          }
+        }
+      }
+
+      if (platforms.any { it is NativePlatformInfo && it.targetName.contains("ios", ignoreCase = true) }) {
+        codeGenerator.createNewFile(
+          dependencies = Dependencies.ALL_FILES,
+          packageName = packageName,
+          fileName = IOS_PLUGIN_PROVIDER_FILE_NAME,
+        ).bufferedWriter().use { writer ->
+          writer.appendLine("package $packageName")
+          writer.appendLine()
+          writer.appendLine("import kotlin.ExperimentalStdlibApi")
+          writer.appendLine("import fleet.kernel.plugins.NativeServiceProvider")
+          writer.appendLine("import fleet.kernel.plugins.registerNativeServiceProvider")
+          writer.appendLine("import kotlin.native.EagerInitialization")
+          writer.appendLine()
+          sortedServiceFqns.forEach { (serviceDescriptor, implementationFqns) ->
+            writer.appendLine()
+            writer.appendIosServiceAccessor(moduleName, serviceDescriptor.interfaceFqn, serviceDescriptor.returnValue, implementationFqns)
           }
         }
       }
@@ -179,6 +203,26 @@ class FleetKspProcessor(
     appendLine("fun ${sanitizedModuleName}_findServices_${sanitizedServiceFqn}(): JsReference<List<$returnValueFqn>> {")
     appendLine("  return (listOf(${serviceImplementationFqns.joinToString(", ") { "$it()" }}) as List<$returnValueFqn>).toJsReference()")
     appendLine("}")
+  }
+
+  private fun java.io.Writer.appendIosServiceAccessor(
+    moduleName: String,
+    serviceFqn: String,
+    returnValueFqn: String,
+    serviceImplementationFqns: List<String>,
+  ) {
+    val sanitizedModuleName = sanitizeIdentifier(moduleName)
+    val sanitizedServiceFqn = sanitizeIdentifier(serviceFqn)
+    val registrationName = "${sanitizedModuleName}_${sanitizedServiceFqn}_registration"
+    appendLine("@OptIn(ExperimentalStdlibApi::class)")
+    appendLine("@EagerInitialization")
+    appendLine("private val $registrationName = registerNativeServiceProvider(")
+    appendLine("  moduleName = \"$moduleName\",")
+    appendLine("  serviceFqn = \"$serviceFqn\",")
+    appendLine("  provider = NativeServiceProvider {")
+    appendLine("    listOf(${serviceImplementationFqns.joinToString(", ") { "$it()" }}) as List<$returnValueFqn>")
+    appendLine("  },")
+    appendLine(")")
   }
 
   private fun sanitizeIdentifier(string: String?): String? = string?.replace(Regex("[^a-zA-Z0-9_]"), "_")
