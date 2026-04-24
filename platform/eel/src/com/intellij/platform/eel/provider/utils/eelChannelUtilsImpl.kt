@@ -70,6 +70,9 @@ internal class NioReadToEelAdapter(
           do {
             while (selector.select(100) == 0) {  // I choose 100 ms at random.
               ensureActive()
+              if (!readableByteChannel.isOpen) {
+                throw EelReceiveChannelException(this@NioReadToEelAdapter, "The channel is closed")
+              }
             }
             selector.selectedKeys().clear()
             read = readableByteChannel.read(dst)
@@ -175,7 +178,11 @@ internal class NioWriteToEelAdapter(
             }
           }
         }
-        flushable?.flush()
+        if (flushable != null) {
+          computeDetached {
+            flushable.flush()
+          }
+        }
       }
       catch (err: IOException) {
         throw EelSendChannelException(this@NioWriteToEelAdapter, err)

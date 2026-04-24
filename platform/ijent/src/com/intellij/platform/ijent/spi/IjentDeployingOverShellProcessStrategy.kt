@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.spi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.channels.EelChannelException
 import com.intellij.platform.eel.channels.EelReceiveChannelException
@@ -19,10 +20,10 @@ import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.async
@@ -41,7 +42,6 @@ import java.nio.file.StandardOpenOption
 import kotlin.io.path.fileSize
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.measureTime
 
 // The timeout is based on internal measurements done on CI (max: 21.5s, p98: 12.2s)
 private val DEFAULT_SHELL_INITIALIZATION_TIMEOUT: Duration =
@@ -88,6 +88,13 @@ abstract class IjentDeployingOverShellProcessStrategy(
   protected open suspend fun <T> withShellInitializationInterruption(block: suspend () -> T): T =
     withTimeout(DEFAULT_SHELL_INITIALIZATION_TIMEOUT) { block() }
 
+  private val communicationStartedImpl = CompletableDeferred<Unit>()
+
+  /**
+   * Signals that the process has actually started the process of deploying.
+   */
+  val communicationStarted: SafeDeferred<Unit> = SafeDeferred(communicationStartedImpl)
+
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
@@ -110,6 +117,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
           currentCoroutineContext().ensureActive()
           filterOutBanners()
         }
+        communicationStartedImpl.complete(Unit)
       })
     }
     context

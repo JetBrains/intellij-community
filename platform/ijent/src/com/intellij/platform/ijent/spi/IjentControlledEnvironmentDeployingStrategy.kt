@@ -89,9 +89,9 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix =
     try {
       val targetPlatform = getTargetPlatform()
-      val connectionStrategy = getConnectionStrategy()
       val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
+      val connectionStrategy = getConnectionStrategy()
 
       provider.connect(IjentConnectionContext(
         mediator = mediator,
