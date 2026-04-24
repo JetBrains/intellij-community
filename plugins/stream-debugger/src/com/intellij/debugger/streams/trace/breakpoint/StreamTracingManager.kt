@@ -23,6 +23,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.MethodExitEvent
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<StreamTracingManager>()
@@ -94,10 +95,19 @@ internal class StreamTracingManager(
                             ?: return@withDebugContext EvaluationStatus.EvaluationFinished(
                               TracingResult.Error(StreamDebuggerBundle.message("program.is.not.suspended")))
 
-    withDebugContext(evaluationContext.suspendContext) {
-      val mgr = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContext)
-      createRequestors(evaluationContext, chain, breakpointPositions, mgr).enable()
-      mgr
+    try {
+      withDebugContext(evaluationContext.suspendContext) {
+        val mgr = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContext)
+        createRequestors(evaluationContext, chain, breakpointPositions, mgr).enable()
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Failed to set up stream tracing", e)
+      return@withDebugContext EvaluationStatus.EvaluationFinished(
+        TracingResult.Error(StreamDebuggerBundle.message("stream.tracing.failed.due.to.internal.error"), e))
     }
 
     val resumer = SpuriousBreakpointResumer(evaluationContext.suspendContext.thread)
