@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.session
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -47,13 +48,13 @@ private suspend fun handleInputEvents(channel: ReceiveChannel<TerminalInputEvent
       throw e
     }
     catch (t: Throwable) {
-      BackendTerminalSession.LOG.error("Exception when handling input event: $event", t)
+      LOG.error("Exception when handling input event: $event", t)
     }
   }
 }
 
 private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServices) {
-  BackendTerminalSession.LOG.trace { "Input event received: $event" }
+  LOG.trace { "Input event received: $event" }
 
   val terminalStarter = services.terminalStarter
 
@@ -114,3 +115,5 @@ private fun isTypingBytes(bytes: ByteArray): Boolean {
   val char = string[0]
   return !Character.isISOControl(char) || char == '\r' || char.code == 127 // backspace (del)
 }
+
+private val LOG = fileLogger()

@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.session
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.jediterm.terminal.TtyConnector
@@ -84,13 +85,13 @@ private fun addHeuristicBasedCwdListener(
 
 private suspend fun doCalculateCurrentDirectory(ttyConnector: TtyConnector): String? {
   val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
-    BackendTerminalSession.LOG.warn("Failed to get process TTY connector: $ttyConnector. Working directory won't be updated.")
+    LOG.warn("Failed to get process TTY connector: $ttyConnector. Working directory won't be updated.")
     return null
   }
 
   return try {
     ProcessInfoUtil.getInstance().getCurrentWorkingDirectory(processTtyConnector.process) ?: run {
-      BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector")
+      LOG.warn("Failed to get current working directory: $processTtyConnector")
       null
     }
   }
@@ -98,7 +99,9 @@ private suspend fun doCalculateCurrentDirectory(ttyConnector: TtyConnector): Str
     throw e
   }
   catch (e: Exception) {
-    BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector", e)
+    LOG.warn("Failed to get current working directory: $processTtyConnector", e)
     null
   }
 }
+
+private val LOG = fileLogger()

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.session
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -128,14 +129,14 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
     terminalStarter.start()
   }
   catch (t: Throwable) {
-    BackendTerminalSession.LOG.error(t)
+    LOG.error(t)
   }
   finally {
     try {
       terminalStarter.ttyConnector.close()
     }
     catch (t: Throwable) {
-      BackendTerminalSession.LOG.error("Error closing TtyConnector", t)
+      LOG.error("Error closing TtyConnector", t)
     }
   }
 }
@@ -149,3 +150,5 @@ internal class JediTermServices(
   val ttyConnector: ObservableTtyConnector,
   val startupOptions: ShellStartupOptions,
 )
+
+private val LOG = fileLogger()

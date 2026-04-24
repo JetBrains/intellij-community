@@ -1,7 +1,5 @@
 package com.intellij.terminal.frontend.session
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -15,8 +13,4 @@ interface BackendTerminalSession : TerminalSession {
    * And if the process is terminated on its own, then the scope will be canceled as well.
    */
   val coroutineScope: CoroutineScope
-
-  companion object {
-    val LOG: Logger = logger<BackendTerminalSession>()
-  }
 }
