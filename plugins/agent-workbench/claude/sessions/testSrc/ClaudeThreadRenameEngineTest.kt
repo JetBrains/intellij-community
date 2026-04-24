@@ -209,7 +209,7 @@ class ClaudeThreadRenameEngineTest {
   }
 
   @Test
-  fun archiveThreadReturnsFalseWhenOpenTabDispatchDoesNotChangeObservedState() {
+  fun archiveThreadReturnsTrueWhenOpenTabDispatchSucceedsEvenIfObservedStateLags() {
     runBlocking(Dispatchers.Default) {
       var currentTime = 0L
       val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
@@ -229,7 +229,10 @@ class ClaudeThreadRenameEngineTest {
         },
       )
 
-      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isFalse()
+      // Once the open-tab dispatch succeeded, trust the `/rename` delivery and let the
+      // follow-up provider refresh reconcile the tab title asynchronously instead of
+      // surfacing a false failure to the user.
+      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
       assertThat(fallbackInvoked).isFalse()
     }
   }

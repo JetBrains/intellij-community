@@ -96,13 +96,29 @@ internal class ClaudeOpenTabAwareThreadRenameEngine(
       return fallbackEngine.rename(path = path, threadId = threadId, newTitle = normalizedTitle)
     }
 
-    return stateObserver.waitForObservedState(
+    // The `/rename` command was delivered to the open Claude tab's terminal. Claude CLI
+    // acknowledges the rename interactively (the user sees "session renamed to ..."),
+    // but the new title is not always persisted to the JSONL transcript synchronously:
+    // it can land later as an `agentName` field or via `sessions-index.json` updates.
+    // Treating that asynchrony as a rename failure would suppress the subsequent
+    // `refreshProviderForPath`, leaving the editor tab stuck on the old title even
+    // after the rename actually took effect. Observe the state on a best-effort basis
+    // for logging only, and trust the dispatch so the refresh pipeline + file watcher
+    // can update the tab title once the backend catches up.
+    val observed = stateObserver.waitForObservedState(
       path = path,
       threadId = threadId,
       archived = expectedState.archived,
       expectedTitle = expectedState.title,
       commandOutputTail = OPEN_TAB_RENAME_COMMAND_OUTPUT,
     )
+    if (!observed) {
+      LOG.info(
+        "Claude rename dispatched to open tab for $threadId but backend state did not reflect the new title within the observation window; " +
+        "relying on follow-up refresh to update the tab presentation"
+      )
+    }
+    return true
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
