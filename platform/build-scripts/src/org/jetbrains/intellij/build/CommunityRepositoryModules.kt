@@ -513,6 +513,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.layout-inspector.gradle", "android.jar")
       spec.withModule("intellij.android.layout-ui", "android.jar")
       spec.withModule("intellij.android.logcat", "android.jar")
+      spec.withModule("intellij.android.logcat.gradle", "android.jar")
       spec.withModule("intellij.android.mlkit", "android.jar")
       spec.withModule("intellij.android.nav.safeargs", "android.jar")
       spec.withModule("intellij.android.nav.safeargs.common", "android.jar")
