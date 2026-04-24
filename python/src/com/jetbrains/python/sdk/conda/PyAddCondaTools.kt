@@ -107,6 +107,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
+  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
   return PyResult.success(sdk)
 }
 
