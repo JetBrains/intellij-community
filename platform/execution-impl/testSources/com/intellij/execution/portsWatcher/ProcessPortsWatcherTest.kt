@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.portsWatcher
 
-import com.intellij.execution.portsWatcher.impl.PortForwardingProcessWatcher
+import com.intellij.execution.portsWatcher.impl.ProcessPortsWatcherImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.process.ProcessCloseUtil
@@ -30,7 +30,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class PortForwardingWatcherTest {
+class ProcessPortsWatcherTest {
 
   companion object {
 
@@ -133,7 +133,7 @@ class PortForwardingWatcherTest {
     val noopHandler = object : ListeningPortHandler {
       override fun onPortListeningStarted(port: ListeningPort) {}
     }
-    val watcher = PortForwardingProcessWatcher(
+    val watcher = ProcessPortsWatcherImpl(
       eelDescriptor = LocalEelDescriptor,
       pid = currentPid,
       handler = noopHandler,
@@ -144,7 +144,7 @@ class PortForwardingWatcherTest {
     Assertions.assertThat(ports).filteredOn { it == expectedListeningPort1 }.hasSize(1)
     Assertions.assertThat(ports).filteredOn { it == expectedListeningPort2 }.hasSize(1)
 
-    val watcherNoParent = PortForwardingProcessWatcher(
+    val watcherNoParent = ProcessPortsWatcherImpl(
       eelDescriptor = LocalEelDescriptor,
       pid = currentPid,
       handler = noopHandler,
@@ -188,7 +188,7 @@ class PortForwardingWatcherTest {
 
       val currentPid = ProcessHandle.current().pid()
 
-      val watcherNoParent = PortForwardingProcessWatcher(
+      val watcherNoParent = ProcessPortsWatcherImpl(
         eelDescriptor = LocalEelDescriptor,
         pid = currentPid,
         handler = object : ListeningPortHandler {
@@ -272,7 +272,7 @@ class PortForwardingWatcherTest {
         handler = handler,
         coroutineScope = coroutineScope,
         options = PortListeningOptions.INCLUDE_SELF_AND_CHILDREN
-      ) as PortForwardingProcessWatcher
+      ) as ProcessPortsWatcherImpl
       Assertions.assertThat(processWatcher.isProcessWatchForListeningPortsEnabled).isFalse()
 
       val startedBefore = handler.startedPorts

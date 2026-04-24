@@ -2,7 +2,7 @@
 package com.intellij.execution.portsWatcher
 
 import com.intellij.execution.portsWatcher.ProcessPortsWatcher.Companion.startWatching
-import com.intellij.execution.portsWatcher.impl.PortForwardingProcessWatcher
+import com.intellij.execution.portsWatcher.impl.ProcessPortsWatcherImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
@@ -52,7 +52,7 @@ interface ProcessPortsWatcher {
         LOG.warn("Non-local Windows target ($eelDescriptor) is not supported; port detection disabled")
         return NoOpProcessPortsWatcher
       }
-      return PortForwardingProcessWatcher(eelDescriptor, pid, handler, options).also {
+      return ProcessPortsWatcherImpl(eelDescriptor, pid, handler, options).also {
         it.startWatch(coroutineScope)
       }
     }

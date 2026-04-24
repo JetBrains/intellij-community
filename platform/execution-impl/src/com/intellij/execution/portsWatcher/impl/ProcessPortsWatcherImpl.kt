@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
-class PortForwardingProcessWatcher(
+class ProcessPortsWatcherImpl(
   private val eelDescriptor: EelDescriptor,
   private val pid: Long,
   private val handler: ListeningPortHandler,
