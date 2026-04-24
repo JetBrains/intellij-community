@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.view
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
@@ -107,6 +109,9 @@ interface TerminalView {
    */
   val startupOptionsDeferred: Deferred<TerminalStartupOptions>
 
+  @get:ApiStatus.Internal
+  val sessionDeferred: Deferred<TerminalSession>
+
   /*
    * Checks if the shell process has child processes.
    * For example, it can be a running command (even a background one).
@@ -142,6 +147,9 @@ interface TerminalView {
    * Creates the builder with additional options for sending text to the shell process.
    */
   fun createSendTextBuilder(): TerminalSendTextBuilder
+
+  @ApiStatus.Internal
+  fun setTopComponent(component: JComponent, disposable: Disposable)
 
   companion object {
     /**

@@ -129,7 +129,7 @@ class TerminalViewImpl(
   override val coroutineScope: CoroutineScope,
   sourceNavigationProjectPath: String? = null,
 ) : TerminalView {
-  private val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
+  override val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
   @VisibleForTesting
   val sessionModel: TerminalSessionModel
@@ -431,7 +431,7 @@ class TerminalViewImpl(
     terminalInput.sendText(options)
   }
 
-  fun setTopComponent(component: JComponent, disposable: Disposable) {
+  override fun setTopComponent(component: JComponent, disposable: Disposable) {
     val resizeListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
         // Update scroll position on top component size change
