@@ -19,7 +19,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
-import com.intellij.terminal.frontend.session.FrontendTerminalSession
+import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.session.TerminalTabsManager
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
@@ -354,7 +354,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     sessionId: TerminalSessionId,
     portForwardingId: TerminalPortForwardingId?,
   ) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    val session = FrontendTerminalSession(sessionId)
+    val session = TerminalSessionsManager.getInstance().getSession(sessionId)
+                  ?: error("Failed to find TerminalSession with ID: $sessionId")
     terminal.connectToSession(session)
 
     if (portForwardingId != null) {
