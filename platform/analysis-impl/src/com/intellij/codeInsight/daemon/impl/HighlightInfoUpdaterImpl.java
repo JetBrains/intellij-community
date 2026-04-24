@@ -834,9 +834,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   private static String debugRender(@NotNull List<? extends HighlightInfo> infos) {
-    List<? extends HighlightInfo> first = ContainerUtil.getFirstItems(infos, 100);
+    return debugRender(infos, BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+  }
+
+  public static <T> String debugRender(@NotNull List<? extends T> infos, @NotNull Comparator<? super T> comparator) {
+    List<? extends T> first = ContainerUtil.getFirstItems(infos, 100);
     return "("+infos.size()+"):"
-           +StringUtil.join(ContainerUtil.sorted(first, BY_OFFSETS_AND_HASH_ERRORS_FIRST), "\n")
+           +StringUtil.join(ContainerUtil.sorted(first, comparator), "\n")
            +(infos.size()>100 ? "..." : "");
   }
 
