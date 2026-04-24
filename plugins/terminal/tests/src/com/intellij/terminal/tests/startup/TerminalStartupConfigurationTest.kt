@@ -18,15 +18,17 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.setValueInTest
+import com.intellij.terminal.tests.reworked.util.withShellIntegration
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions
@@ -43,11 +45,9 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -63,33 +63,18 @@ import kotlin.time.Duration.Companion.seconds
 @ParameterizedClass
 internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder) {
 
-  companion object {
-    private val project: Project by projectFixture()
-  }
+  private val project: Project by projectFixture()
 
   @TestDisposable
   private lateinit var testDisposable: Disposable
 
-  private lateinit var tempDir: Path
+  private val tempDir: Path by tempPathFixture()
 
   private val eelApi: EelApi
     get() = eelHolder.eel
 
-  /**
-   * Manage the temporary directory manually. For some reason, a temp directory created as
-   * ```
-   * private val tempDir: Path by tempPathFixture()
-   * ```
-   * is never deleted.
-   */
-  @BeforeEach
-  fun setUp(): Unit = timeoutRunBlocking(TIMEOUT) {
-    tempDir = createTempDirectory(eelApi, testDisposable)
-  }
-
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
-  fun `bash on Unix`(allowShellIntegration: Boolean): Unit = timeoutRunBlocking(TIMEOUT) {
+  @TestFactory
+  fun `bash on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelApi.descriptor.osFamily.isPosix)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -102,9 +87,8 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
-  fun `zsh on Unix`(allowShellIntegration: Boolean): Unit = timeoutRunBlocking(TIMEOUT) {
+  @TestFactory
+  fun `zsh on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelApi.descriptor.osFamily.isPosix)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -117,9 +101,8 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
-  fun `powershell on Windows`(allowShellIntegration: Boolean): Unit = timeoutRunBlocking(TIMEOUT) {
+  @TestFactory
+  fun `powershell on Windows`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(OS.current() == OS.WINDOWS)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -132,9 +115,8 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
-  fun `convert wsl_exe to Linux command (WSL filesystem)`(allowShellIntegration: Boolean): Unit = timeoutRunBlocking(TIMEOUT) {
+  @TestFactory
+  fun `convert wsl_exe to Linux command (WSL filesystem)`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
     val bashInWsl = "/my/custom/bin/bash"
@@ -150,9 +132,8 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
-  fun `convert wsl_exe to Linux command (Windows drive mounted in WSL)`(allowShellIntegration: Boolean): Unit = timeoutRunBlocking(TIMEOUT) {
+  @TestFactory
+  fun `convert wsl_exe to Linux command (Windows drive mounted in WSL)`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
     val defaultShellInWsl = "/my/custom/bin/bash"
@@ -169,11 +150,9 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     ))
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
+  @TestFactory
   fun `LocalTerminalCustomizer is not applied when shell process is local and working directory is WSL`(
-    allowShellIntegration: Boolean,
-  ): Unit = timeoutRunBlocking(TIMEOUT) {
+  ) = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     var called = false
     register(localTerminalCustomizer { called = true })
@@ -193,11 +172,9 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     Assertions.assertThat(called).isFalse
   }
 
-  @ParameterizedTest(name = "shell integration: {0}")
-  @ValueSource(booleans = [true, false])
+  @TestFactory
   fun `LocalTerminalCustomizer is not applied when shell process is WSL and working directory is local`(
-    allowShellIntegration: Boolean,
-  ): Unit = timeoutRunBlocking(TIMEOUT) {
+  ) = withShellIntegration(TIMEOUT) { allowShellIntegration ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     var called = false
     register(localTerminalCustomizer { called = true })
@@ -266,6 +243,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     initial: InitialOptions,
     expected: ConfiguredOptions,
   ) {
+    Assertions.assertThat(project.getEelDescriptor()).isEqualTo(eelApi.descriptor)
     val runner = object : LocalTerminalDirectRunner(project) {
       override fun isGenTwoTerminalEnabled(): Boolean = true
     }
