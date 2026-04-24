@@ -189,10 +189,14 @@ object ProjectUtil {
     }
 
     // `isDirectory` test here is for backward compatibility with 252: in 252 we never entered this method with regular files - only with
-    // directories. The problem here is that any regular file now has a storeDescriptor (getStoreDescriptor return type is not nullable),
+    // directories or project files like `.ipr` or `build.gradle`. `build.gradle` is handled in a standard way via ProjectOpenProcessor.
+    // `.ipr` however does not have dedicated ProjectOpenProcessor yet.
+    // The problem here is that any regular file now has a storeDescriptor (getStoreDescriptor return type is not nullable),
     // which evaluates to `regularFile.parent.resolve(".idea")`, which, if exists, pushes IDE to open a new project, instead of a file in
     // the opened project. This is a tiny quick-fix for 253. We should rework the project open flow to avoid this strange check here.
-    if (Files.isDirectory(file) && isValidProjectPath(file)) {
+    val isDirectory = Files.isDirectory(file)
+    if ((!isDirectory && file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
+        (isDirectory && isValidProjectPath(file))) {
       val descriptor = withContext(Dispatchers.IO) {
         serviceAsync<ProjectStorePathManager>().getStoreDescriptor(file)
       }
