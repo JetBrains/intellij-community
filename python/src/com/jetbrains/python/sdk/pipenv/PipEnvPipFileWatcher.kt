@@ -5,7 +5,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -91,12 +92,16 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
       .setListener(NotificationListener { notification, event ->
         notification.expire()
         module.putUserData(notificationActive, null)
-        runInEdt { FileDocumentManager.getInstance().saveAllDocuments() }
-        when (event.description) {
-          PipEnvEvent.LOCK.description -> runPipEnvInBackground(module, listOf("lock"),
-                                                                PyBundle.message("python.sdk.pipenv.pip.file.notification.locking"))
-          PipEnvEvent.UPDATE.description -> runPipEnvInBackground(module, listOf("update", "--dev"),
-                                                                  PyBundle.message("python.sdk.pipenv.pip.file.notification.updating"))
+        PyPackageCoroutine.launch(module.project) {
+          writeAction {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
+          when (event.description) {
+            PipEnvEvent.LOCK.description -> runPipEnvInBackground(module, listOf("lock"),
+                                                                  PyBundle.message("python.sdk.pipenv.pip.file.notification.locking"))
+            PipEnvEvent.UPDATE.description -> runPipEnvInBackground(module, listOf("update", "--dev"),
+                                                                    PyBundle.message("python.sdk.pipenv.pip.file.notification.updating"))
+          }
         }
       })
     module.putUserData(notificationActive, true)

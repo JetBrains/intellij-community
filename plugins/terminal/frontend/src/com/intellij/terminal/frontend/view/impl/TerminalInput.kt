@@ -16,7 +16,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
@@ -34,15 +33,15 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeMark
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class TerminalInput(
-  private val terminalSessionFuture: CompletableFuture<TerminalSession>,
+  private val terminalSessionDeferred: Deferred<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
   startupFusInfo: TerminalStartupFusInfo?,
   coroutineScope: CoroutineScope,
@@ -64,8 +63,8 @@ internal class TerminalInput(
   )
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
-    coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
-      terminalSessionFuture.await().getInputChannel()
+    coroutineScope.async(CoroutineName("Get input channel")) {
+      terminalSessionDeferred.await().getInputChannel()
     }
 
   private val typingLatencyReporter = BatchLatencyReporter(batchSize = 50) { samples ->
@@ -178,7 +177,7 @@ internal class TerminalInput(
    * Note that resize events sent before the terminal session is initialized will be ignored.
    */
   fun sendResize(newSize: TerminalGridSize) {
-    terminalSessionFuture.getNow(null) ?: return
+    terminalSessionDeferred.getNow() ?: return
     val event = TerminalResizeEvent(newSize)
     sendEvent(InputEventSubmission(event))
   }

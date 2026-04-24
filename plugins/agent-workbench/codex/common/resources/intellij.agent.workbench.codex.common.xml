@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.agent.workbench.json"/>
     <module name="intellij.platform.compose"/>
   </dependencies>
   <!-- endregion -->

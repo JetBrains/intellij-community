@@ -20,6 +20,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.AmendCommitHandler
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.AmendCommitModeListener
 import com.intellij.vcs.commit.CommitAuthorListener
 import com.intellij.vcs.commit.CommitAuthorTracker
@@ -230,7 +231,7 @@ class GitCommitOptionsUi(
     commitRenamesSeparately.apply {
       text = providers.singleOrNull()?.description ?: GitBundle.message("commit.options.create.extra.commit.with.file.movements")
       isVisible = providers.isNotEmpty()
-      isEnabled = isVisible && !amendHandler.isAmendCommitMode
+      isEnabled = isVisible && amendHandler.commitToAmend is CommitToAmend.None
     }
   }
 

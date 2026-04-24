@@ -8,13 +8,13 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges.destructuringDeclarationParens
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.convertDestructuringToPositionalForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -64,7 +64,7 @@ internal class CustomComponentDestructuringMigrationInspection : AbstractKotlinI
 
         if (!usesCustomComponents) return
 
-        val highlightRange = destructuringDeclarationParens(declaration).singleOrNull() ?: return
+        val highlightRange = ApplicabilityRanges.destructuringDeclarationParens(declaration).singleOrNull() ?: return
 
         holder.registerProblem(
             declaration,
@@ -84,15 +84,6 @@ private class ConvertCustomComponentDestructuringToSquareBracketFix : KotlinModC
         element: KtDestructuringDeclaration,
         updater: ModPsiUpdater
     ) {
-        val lPar = element.lPar ?: return
-        val rPar = element.rPar ?: return
-
-        val psiFactory = KtPsiFactory(project)
-        val destructuringDecl = psiFactory.createDestructuringDeclaration("val [a] = null")
-        val lBracket = destructuringDecl.lPar ?: return
-        val rBracket = destructuringDecl.rPar ?: return
-
-        lPar.replace(lBracket)
-        rPar.replace(rBracket)
+        convertDestructuringToPositionalForm(element)
     }
 }

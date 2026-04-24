@@ -14,8 +14,10 @@ import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.engine.Filter;
 import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.junit.platform.launcher.TestIdentifier;
@@ -99,10 +101,13 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       else {
         selectors = Collections.singletonList(DiscoverySelectors.selectPackage(""));
       }
+      String includeTags = System.getProperty("intellij.build.test.tags");
+      List<Filter<?>> filters = new ArrayList<>(List.of(nameFilter, postDiscoveryFilter, performancePostDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)));
+      if (includeTags != null) filters.add(TagFilter.includeTags(includeTags.split(";")));
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
         .selectors(selectors)
-        .filters(nameFilter, postDiscoveryFilter, performancePostDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
+        .filters(filters.toArray(Filter[]::new)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
         if (LIST_CLASSES != null) {

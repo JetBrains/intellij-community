@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -50,4 +50,34 @@ interface GradleDslInspectionProvider {
    */
   fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean
   fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleAvoidApplyPluginMethodInspection
+   */
+  fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see AvoidRepositoriesInBuildGradleInspection
+   */
+  fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidRepositoriesInBuildGradleInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleAvoidDuplicateDependenciesInspection
+   */
+  fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleTaskMissingDescriptionInspection
+   */
+  fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean
+  fun getTaskMissingDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleAvoidDuplicateRepositoriesInspection
+   */
+  fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidDuplicateRepositoriesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 }

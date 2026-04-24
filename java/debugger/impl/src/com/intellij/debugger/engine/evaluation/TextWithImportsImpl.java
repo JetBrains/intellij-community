@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,5 +161,11 @@ public final class TextWithImportsImpl implements TextWithImports {
                                      StringUtil.notNullize(expression.getCustomInfo()),
                                      LanguageUtil.getLanguageFileType(expression.getLanguage()));
     }
+  }
+
+  @ApiStatus.Internal
+  public static TextWithImports convertToLanguage(PsiElement psiExpression, @NotNull Language language) {
+    var converter = DebuggerEvaluationExpressionConverter.forLanguage(language);
+    return (converter != null) ? converter.convert(psiExpression) : new TextWithImportsImpl(psiExpression);
   }
 }

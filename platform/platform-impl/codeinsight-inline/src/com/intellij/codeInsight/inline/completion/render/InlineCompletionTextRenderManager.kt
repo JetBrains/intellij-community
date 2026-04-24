@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.removeUserData
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -164,6 +165,8 @@ class InlineCompletionTextRenderManager private constructor(
     // TODO it doesn't take into account other inlays :(
     private val initialStartPoint = editor.offsetToXY(renderOffset)
 
+    private val lineEndOffset = editor.document.getLineEndOffset(editor.document.getLineNumber(renderOffset))
+
     fun append(text: String, attributes: TextAttributes, initialOffset: Int): RenderedInlineCompletionElementDescriptor {
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
       check(newLines.isNotEmpty())
@@ -208,6 +211,7 @@ class InlineCompletionTextRenderManager private constructor(
         }
       }
 
+      updateBreaksLineMarkersEverywhere()
       renderFoldedRange()
       updateDirtyInlays()
 
@@ -216,6 +220,7 @@ class InlineCompletionTextRenderManager private constructor(
       if (!foldingIsApplied && foldedRange != null) {
         // Folding wasn't there before soft-wrapping but appeared after.
         // So, it's the first time the folded range appeared, so we need to actually render it by manually calling it.
+        updateBreaksLineMarkersEverywhere()
         renderFoldedRange()
         updateDirtyInlays()
       }
@@ -251,6 +256,11 @@ class InlineCompletionTextRenderManager private constructor(
       foldLineEndIfNotFolded()
 
       val offset = foldingManager.firstNotFoldedOffset(this.renderOffset)
+
+      if (blockLineInlays.isEmpty() || lines.size > 1) {
+        // This condition means that we actually add a new \n (== break the current line)
+        markLastLineVisiblyBreaksLine()
+      }
 
       var linesToRender = lines
       val lastInlay = blockLineInlays.lastOrNull()
@@ -304,6 +314,7 @@ class InlineCompletionTextRenderManager private constructor(
       if (areFolded) {
         blocks.forEach { block -> block.data.putUserData(FOLDED_BLOCK_KEY, Unit) }
       }
+      blocks.forEach { block -> block.data.putUserData(REAL_TEXT_KEY, Unit) }
       when (state) {
         RenderState.RENDERING_INLINE -> {
           renderInline(blocks)
@@ -347,6 +358,35 @@ class InlineCompletionTextRenderManager private constructor(
       }
     }
 
+    private val offsetsMarkedWithBreakingLines = mutableSetOf<Int>()
+
+    /**
+     * When we insert multiline between the end of the current line, we shift everything to below.
+     * We'd like to mark such lines so that we can render them properly (in custom renderers).
+     *
+     * Within one single renderer, we may add inline completion at different offsets because we fold everything on the right.
+     *
+     * Basically, 'breaks a line' means that something on the right exists when we try to add a multiline.
+     */
+    private fun markLastLineVisiblyBreaksLine() {
+      val foldedRange = foldedRange?.takeIf { !it.isEmpty } ?: return
+      // the actual offset at which we'd like to render
+      val currentOffset = lineEndOffset - foldedRange.length
+      if (currentOffset in offsetsMarkedWithBreakingLines) {
+        // already marked
+        return
+      }
+      val inlay = blockLineInlays.lastOrNull() ?: inlineInlay // the last rendered inlay
+      if (inlay != null) {
+        inlay.renderer.blocks += InlineCompletionRenderTextBlock(
+          "",
+          TextAttributes(),
+          UserDataHolderBase().also { it.putUserData(BREAKS_LINE_BLOCK_KEY, Unit) }
+        )
+        offsetsMarkedWithBreakingLines += currentOffset
+      }
+    }
+
     private fun updateDirtyInlays() {
       inlineInlay?.updateIfNeeded()
       blockLineInlays.forEach { it.updateIfNeeded() }
@@ -361,11 +401,22 @@ class InlineCompletionTextRenderManager private constructor(
       blockLineInlays.forEach { it.removeFoldedBlocks() }
     }
 
+    private fun updateBreaksLineMarkersEverywhere() {
+      inlineInlay?.updateBreaksLineMarker()
+      blockLineInlays.forEach { it.updateBreaksLineMarker() }
+    }
+
     private fun Inlay<out InlineCompletionLineRenderer>.removeFoldedBlocks() {
       val blocks = renderer.blocks.filter { it.data.getUserData(FOLDED_BLOCK_KEY) == null }
       if (blocks.size != renderer.blocks.size) {
         renderer.blocks = blocks
       }
+    }
+
+    private fun Inlay<out InlineCompletionLineRenderer>.updateBreaksLineMarker() {
+      val blocks = renderer.blocks
+      val marker = blocks.firstOrNull { it.data.getUserData(BREAKS_LINE_BLOCK_KEY) != null } ?: return
+      renderer.blocks = blocks.filter { it.data.getUserData(BREAKS_LINE_BLOCK_KEY) == null } + marker
     }
 
     private fun getInlayForLine(line: Int): Inlay<out InlineCompletionLineRenderer>? {
@@ -453,9 +504,9 @@ class InlineCompletionTextRenderManager private constructor(
     }
 
     private inner class Descriptor(private val offset: Int) : RenderedInlineCompletionElementDescriptor {
-      override fun getStartOffset(): Int? = offset
+      override fun getStartOffset(): Int = offset
 
-      override fun getEndOffset(): Int? = offset
+      override fun getEndOffset(): Int = offset
 
       override fun getRectangle(): Rectangle? {
         return blockLineInlays.fold(inlineInlay?.bounds) { result, inlay ->
@@ -475,7 +526,25 @@ class InlineCompletionTextRenderManager private constructor(
 
     private val STORAGE_KEY = Key.create<Storage<Int, InlineCompletionTextRenderManager>>("inline.completion.text.render")
     private val FOLDED_BLOCK_KEY = Key.create<Unit>("inline.completion.folded.block.marker")
+    private val REAL_TEXT_KEY = Key.create<Unit>("inline.completion.real.text.marker")
+    private val BREAKS_LINE_BLOCK_KEY = Key.create<Unit>("inline.completion.breaks.line.block.marker")
     private val LOG = thisLogger()
+
+    /**
+     * Whether [block] renders already existent text which was folded. It is used when we insert multiline inside a line.
+     */
+    @ApiStatus.Internal
+    fun isRealTextBlock(block: InlineCompletionRenderTextBlock): Boolean {
+      return block.data.getUserData(REAL_TEXT_KEY) != null
+    }
+
+    /**
+     * Indicates that the current line was broken by multiline. Such is empty and located at the end of the rendering line.
+     */
+    @ApiStatus.Internal
+    fun whetherBlockBreaksLine(block: InlineCompletionRenderTextBlock): Boolean {
+      return block.data.getUserData(BREAKS_LINE_BLOCK_KEY) != null
+    }
 
     @ApiStatus.Experimental
     @RequiresEdt

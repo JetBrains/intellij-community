@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -115,11 +116,14 @@ object K2CreateFunctionFromUsageBuilder {
           val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass(container)
             if (defaultClassForReceiverOrFile != null) {
                 val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
+                val effectiveContainer = container ?: calleeExpression.containingFile
                 val modifiers = computeModifiers(
-                    container ?: calleeExpression.containingFile,
+                    effectiveContainer,
+                    CreateFromUsageUtil.isTopLevelScriptContainer(effectiveContainer),
                     calleeExpression,
                     callExpression,
-                    shouldCreateCompanionClass, false
+                    shouldCreateCompanionClass,
+                    false,
                 )
                 requests.add(defaultClassForReceiverOrFile to CreateMethodFromKotlinUsageRequest(
                     functionCall = callExpression,
@@ -157,7 +161,15 @@ object K2CreateFunctionFromUsageBuilder {
                 ?: calleeExpression.containingKtFile
             val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
             val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
-            val modifiers = computeModifiers(defaultContainers.firstOrNull() ?:calleeExpression.containingFile, calleeExpression, callExpression, shouldCreateCompanionClass, true)
+            val containerIsScript = CreateFromUsageUtil.isTopLevelScriptContainer(containerClassForExtension)
+            val modifiers = computeModifiers(
+                container = defaultContainers.firstOrNull() ?:calleeExpression.containingFile,
+                containerIsScript = containerIsScript,
+                calleeExpression = calleeExpression,
+                callExpression = callExpression,
+                shouldCreateCompanionClass = shouldCreateCompanionClass,
+                isExtension = true,
+            )
             val request = CreateMethodFromKotlinUsageRequest(
                 callExpression,
                 modifiers,
@@ -197,6 +209,7 @@ object K2CreateFunctionFromUsageBuilder {
     context(_: KaSession)
     private fun computeModifiers(
         container: PsiElement,
+        containerIsScript: Boolean,
         calleeExpression: KtSimpleNameExpression,
         callExpression: KtCallExpression,
         shouldCreateCompanionClass: Boolean,
@@ -222,6 +235,7 @@ object K2CreateFunctionFromUsageBuilder {
 
         val jvmModifier = CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
             container,
+            containerIsScript = containerIsScript,
             isAbstract = false,
             isExtension = isExtension,
             isConstructor = false,

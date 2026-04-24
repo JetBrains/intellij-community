@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -153,8 +153,8 @@ public final class RegionUrlMapper {
     var configUrl = getConfigUrl(reg);
     try (var client = PlatformHttpClient.client()) {
       var request = PlatformHttpClient.request(new URI(configUrl));
-      var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
-      return RegionMapping.fromJson(response.body());
+      var response = PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.ofString());
+      return RegionMapping.fromJson(response);
     }
   }
 

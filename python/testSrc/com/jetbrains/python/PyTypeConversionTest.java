@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -32,7 +32,7 @@ public final class PyTypeConversionTest extends PyTestCase {
   }
 
   public void testTupleToTypingIterable() {
-    doTest("typing.Iterable", "Iterable[int | str]", """
+    doTest("typing.Iterable", "Iterable[Literal[1, \"foo\"]]", """
       expr = (1, "foo")
       """);
   }

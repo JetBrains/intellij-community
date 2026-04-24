@@ -74,6 +74,11 @@ fun fun8(
   @McpDescription("Root nullable description on parameter") rootArgNullable: Root?
 ) {}
 
+@Suppress("unused", "UNUSED_PARAMETER")
+fun fun9(
+  @McpDescription("nullable enum description on parameter") nullableEnumArg: Kind?
+) {}
+
 class InputSchemaTest {
 
   companion object {
@@ -110,6 +115,7 @@ class InputSchemaTest {
     "type": "object",
     "properties": {
         "enumArg": {
+            "type": "string",
             "enum": [
                 "K1",
                 "K2",
@@ -152,6 +158,7 @@ class InputSchemaTest {
                     "description": "Field description b1"
                 },
                 "c": {
+                    "type": "string",
                     "enum": [
                         "K1",
                         "K2",
@@ -235,6 +242,7 @@ class InputSchemaTest {
                     "description": "Field description b1"
                 },
                 "c": {
+                    "type": "string",
                     "enum": [
                         "K1",
                         "K2",
@@ -285,6 +293,24 @@ class InputSchemaTest {
         }
     },
     "required": [],
+    "additionalProperties": false
+}"""),
+        Arguments.of(::fun9, /*language=JSON*/ """{
+    "type": "object",
+    "properties": {
+        "nullableEnumArg": {
+            "type": "string",
+            "enum": [
+                "K1",
+                "K2",
+                "K3"
+            ],
+            "description": "nullable enum description on parameter"
+        }
+    },
+    "required": [
+        "nullableEnumArg"
+    ],
     "additionalProperties": false
 }"""),
         // recursive types are rendered incorrectly now

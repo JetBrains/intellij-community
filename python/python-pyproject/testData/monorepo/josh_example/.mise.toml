@@ -1,0 +1,28 @@
+[settings]
+experimental = true
+disable_hints = ["python_multi"]
+python.uv_venv_auto = false
+python_compile = true
+env_shell_expand = true
+
+[env]
+_.python.venv = { path = ".venv" }
+PIP_REQUIRE_VIRTUALENV = "true"
+#DBT_PROJECT_DIR = "{{config_root}}/dbt"
+##DBT_PROFILES_DIR = "{{config_root}}/dbt"
+#DAGSTER_HOME = "{{config_root}}/dagster/dev"
+#LOOKOUT_POSTGRES_PATH = "/opt/homebrew/opt/postgresql@17/bin"
+#LOOKOUT_ANALYTICS_POSTGRES_PATH = "/opt/homebrew/opt/postgresql@17/bin/"
+#DBT_MACRO_DEBUGGING = 1
+#UV_COMPILE_BYTECODE = 1
+#UV_LINK_MODE = "copy"
+#
+# _.source = "{{env.HOME}}/work/lw/env/.envrc.localdev_secrets_btl_empty_local"
+
+#_.source = ".envrc.test"
+#[[env]]
+#_.source = { path = "{{config_root}}/.envrc.localdev_secrets_aws" }
+
+[tools]
+python = { version = '3.14.3', create = false }
+uv = { version = 'latest' }

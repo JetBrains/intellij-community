@@ -73,6 +73,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyABCUtil;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -96,6 +97,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
@@ -147,14 +150,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (PyNames.ALL.equals(getName())) {
       // no type for __all__, to avoid unresolved reference errors for expressions where a qualifier is a name
       // imported via __all__
-      return null;
+      return PyAnyType.getUnknown();
     }
     final Ref<PyType> pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
     if (pyType != null) {
       return pyType.get();
     }
     PyType type = getTypeFromDocString();
-    if (type != null) {
+    if (!isUnknown(type)) {
       return type;
     }
     if (!context.maySwitchToAST(this)) {
@@ -188,7 +191,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return PyUnionType.union(types);
     }
     type = getTypeFromComment(this);
-    if (type != null) {
+    if (!isUnknown(type)) {
       return type;
     }
     final PsiElement parent = PsiTreeUtil.skipParentsOfType(this, PyParenthesizedExpression.class);
@@ -203,7 +206,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
         return context.getType(assignedValue);
       }
-      return null;
+      return PyAnyType.getUnknown();
     }
     if (parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression) {
       PsiElement nextParent =
@@ -261,7 +264,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (excType != null) {
       return excType;
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PySequenceExpression topmostContainingTupleOrList,
@@ -297,7 +300,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override
@@ -342,7 +345,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       // Guess the return type of __enter__
       return PyUnionType.createWeakType(withType);
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   public @Nullable PyType getTypeFromDocString() {
@@ -367,7 +370,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (typeName != null) {
       return PyTypeParser.getTypeByName(this, typeName);
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   public static @Nullable PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
@@ -382,7 +385,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return PyTypeParser.getTypeByName(targetExpression, typeName);
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private @Nullable PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
@@ -421,7 +424,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return type;
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private static @Nullable PyType getIterationType(@Nullable PyType iterableType,
@@ -434,7 +437,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (type instanceof PyCollectionType collectionType) {
       return collectionType.getIteratedItemType();
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   // TODO migrate this to matching against typing.Iterable protocol with PyTypeUtil.convertToType
@@ -447,7 +450,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return ((PyUnionType)iterableType).map(member -> getIterationType(member, source, anchor, isAsync, context));
     }
     if (!isAsync) {
-      if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
+      if (!isUnknown(iterableType) && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
         final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
         if (iterateMethod != null) {
           final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
@@ -472,7 +475,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private static @Nullable PyType getIteratedItemType(@Nullable PyType type,
@@ -490,7 +493,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (type instanceof PyCollectionType) {
       return ((PyCollectionType)type).getIteratedItemType();
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private static @Nullable Ref<PyType> getNextMethodCallType(@Nullable PyType type,
@@ -572,7 +575,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   private @Nullable PyType getTypeFromExcept() {
     PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(this, PyExceptPart.class);
     if (exceptPart == null || exceptPart.getTarget() != this) {
-      return null;
+      return PyAnyType.getUnknown();
     }
     final PyExpression exceptClass = exceptPart.getExceptClass();
     if (exceptClass instanceof PyReferenceExpression) {
@@ -581,7 +584,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return new PyClassTypeImpl((PyClass)element, false);
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override

@@ -16,6 +16,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.inspections.InterpreterFixExecutor
@@ -26,6 +27,7 @@ import com.jetbrains.python.psi.PyFile
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 internal val RELEVANT_NON_PYTHON_FILES: Map<String, (Module) -> Boolean> = mapOf(
   PY_PROJECT_TOML to { _ -> true },
@@ -58,8 +60,8 @@ class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware 
         init {
           text = PyBundle.message("python.sdk.no.interpreter.configured.for.module", module.name)
           if (executor.isBusy.value) {
-            val label = javax.swing.JLabel(PyBundle.message("python.sdk.interpreter.fix.already.in.progress"))
-            label.foreground = com.intellij.util.ui.UIUtil.getInactiveTextColor()
+            val label = JLabel(PyBundle.message("python.sdk.interpreter.fix.already.in.progress"))
+            label.foreground = UIUtil.getInactiveTextColor()
             myLinksPanel.add(label)
             myLinksPanel.add(AsyncProcessIcon("interpreter fix"))
           }

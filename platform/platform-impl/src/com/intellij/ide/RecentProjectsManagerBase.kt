@@ -179,6 +179,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     check(updateDockRequests.tryEmit(Unit))
   }
 
+  @Internal
   final override fun getState(): RecentProjectManagerState = state
 
   @Internal
@@ -219,6 +220,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return key
   }
 
+  @Internal
   final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
@@ -403,6 +405,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  @Internal
   fun addRecentPath(path: Path, info: RecentProjectMetaInfo) {
     addRecentPath(path.invariantSeparatorsPathString, info)
   }
@@ -410,6 +413,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   /**
    * No-op if [path] is already present in recent projects
    */
+  @Internal
   fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
     synchronized(stateLock) {
       val presentInfo = state.additionalInfo.putIfAbsent(path, info)
@@ -419,6 +423,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  @Internal
   fun updateRecentMetadata(project: Project, metaInfoUpdater: RecentProjectMetaInfo.() -> Unit) {
     val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
@@ -450,6 +455,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       getProjectMetaInfo(projectFile)?.let { info ->
         effectiveOptions = effectiveOptions.copy(
           projectWorkspaceId = info.projectWorkspaceId,
+          projectFrameTypeId = info.projectFrameTypeId,
           implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
         )
       }
@@ -709,6 +715,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       forceOpenInNewFrame = true
       showWelcomeScreen = false
       projectWorkspaceId = value.projectWorkspaceId
+      projectFrameTypeId = value.projectFrameTypeId
       implOptions = OpenProjectImplOptions(recentProjectMetaInfo = value, frameInfo = value.frame)
     })
     val nextIndex = index + 1
@@ -753,6 +760,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
               forceOpenInNewFrame = true
               showWelcomeScreen = false
               projectWorkspaceId = info.projectWorkspaceId
+              projectFrameTypeId = info.projectFrameTypeId
               implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
             },
           )
@@ -907,6 +915,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         }
         info.displayName = getProjectDisplayName(project)
         info.projectWorkspaceId = workspaceId
+        info.projectFrameTypeId = frameHelper.projectFrameTypeId
         info.frameTitle = frame.title
         info.colorInfo = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
       }
@@ -1153,6 +1162,9 @@ val OpenProjectTask.frame: IdeFrameImpl?
 
 val OpenProjectTask.frameInfo: FrameInfo?
   @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+
+val OpenProjectTask.recentProjectMetaInfo: RecentProjectMetaInfo?
+  @Internal get() = (implOptions as OpenProjectImplOptions?)?.recentProjectMetaInfo
 
 @Internal
 interface SystemDock {

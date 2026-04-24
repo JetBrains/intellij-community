@@ -9,7 +9,7 @@ import java.util.function.Supplier
 
 const val AGENT_SESSIONS_BUNDLE: @NonNls String = "messages.AgentSessionsBundle"
 
-internal object AgentSessionsBundle {
+object AgentSessionsBundle {
   private val BUNDLE = DynamicBundle(AgentSessionsBundle::class.java, AGENT_SESSIONS_BUNDLE)
 
   fun message(key: @PropertyKey(resourceBundle = AGENT_SESSIONS_BUNDLE) String, vararg params: Any): @Nls String {

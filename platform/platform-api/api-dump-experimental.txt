@@ -88,6 +88,20 @@ f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 - f:isMac():Z
 - f:isWaylandToolkit():Z
 - f:isWindows():Z
+c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
+- *f:getProblematicPluginInfo():com.intellij.openapi.diagnostic.ProblematicPluginInfo
+*:com.intellij.openapi.diagnostic.ProblematicPluginInfo
+- a:getAllowsBundledUpdate():Z
+- a:getName():java.lang.String
+- a:getOrganization():java.lang.String
+- a:getPluginId():com.intellij.openapi.extensions.PluginId
+- a:getVendor():java.lang.String
+- a:getVendorEmail():java.lang.String
+- a:getVendorUrl():java.lang.String
+- a:getVersion():java.lang.String
+- a:isBundled():Z
+- a:isEssential():Z
+- a:isImplementationDetail():Z
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
@@ -925,6 +939,7 @@ com.intellij.util.net.JdkProxyCustomizer
 - s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
 - s:request(java.net.URI):java.net.http.HttpRequest
 - s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
+- s:send(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.lang.Object
 - s:userAgent():java.lang.String
 com.intellij.util.net.ProxySettings
 - *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V

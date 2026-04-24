@@ -6,5 +6,4 @@ data class User(val name: String, val age: Int)
 fun test(user: User) {
     user.let { (name, othe<caret>rName) -> }
 }
-
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RenameVariableToMatchPropertiesQuickFix

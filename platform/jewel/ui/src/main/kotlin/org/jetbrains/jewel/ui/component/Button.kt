@@ -70,9 +70,11 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stroke as PainterHintStroke
 import org.jetbrains.jewel.ui.theme.defaultButtonStyle
+import org.jetbrains.jewel.ui.theme.defaultSlimButtonStyle
 import org.jetbrains.jewel.ui.theme.defaultSplitButtonStyle
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.jewel.ui.theme.outlinedButtonStyle
+import org.jetbrains.jewel.ui.theme.outlinedSlimButtonStyle
 import org.jetbrains.jewel.ui.theme.outlinedSplitButtonStyle
 
 /**
@@ -151,6 +153,92 @@ public fun OutlinedButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = JewelTheme.outlinedButtonStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    ButtonImpl(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        forceFocused = false,
+        onStateChange = {},
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        content = content,
+    )
+}
+
+/**
+ * A compact button with reduced minimum height, ideal for toolbars and space-constrained UIs.
+ *
+ * Uses the default button visual treatment with compact metrics.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/button.html)
+ *
+ * **Usage example:**
+ * [`Buttons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Buttons.kt)
+ *
+ * @param onClick Will be called when the user clicks the button
+ * @param modifier Modifier to be applied to the button
+ * @param enabled Controls the enabled state of the button. When false, the button will not be clickable
+ * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s for this
+ *   button. Use this to observe state changes or customize interaction handling
+ * @param style The visual styling configuration for the button. Defaults to slim button style with default colors
+ * @param textStyle The typography style to be applied to the button's text content
+ * @param content The content to be displayed inside the button
+ * @see javax.swing.JButton
+ */
+@Composable
+public fun DefaultSlimButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ButtonStyle = JewelTheme.defaultSlimButtonStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    ButtonImpl(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        forceFocused = false,
+        onStateChange = {},
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        content = content,
+    )
+}
+
+/**
+ * A compact button with outlined visual style and reduced minimum height, ideal for toolbars and space-constrained UIs.
+ *
+ * Similar to [DefaultSlimButton] but with an outlined visual treatment, using compact metrics.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/button.html)
+ *
+ * **Usage example:**
+ * [`Buttons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Buttons.kt)
+ *
+ * @param onClick Will be called when the user clicks the button
+ * @param modifier Modifier to be applied to the button
+ * @param enabled Controls the enabled state of the button. When false, the button will not be clickable
+ * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s for this
+ *   button. Use this to observe state changes or customize interaction handling
+ * @param style The visual styling configuration for the button. Defaults to slim button style with outlined colors
+ * @param textStyle The typography style to be applied to the button's text content
+ * @param content The content to be displayed inside the button
+ * @see javax.swing.JButton
+ */
+@Composable
+public fun OutlinedSlimButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ButtonStyle = JewelTheme.outlinedSlimButtonStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     content: @Composable () -> Unit,
 ) {
@@ -758,6 +846,7 @@ private fun SplitButtonImpl(
                         content = secondaryContentMenu,
                     )
                 }
+
                 secondaryContent != null -> {
                     PopupContainer(
                         modifier = splitButtonPopupModifier,

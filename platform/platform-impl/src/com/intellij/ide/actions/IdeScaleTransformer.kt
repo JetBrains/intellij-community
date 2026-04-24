@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
 import com.intellij.ide.ui.LafManager
@@ -182,9 +183,14 @@ internal class IdeScaleTransformer {
   }
 }
 
+internal class IdeScaleAppLifecycleListener : AppLifecycleListener {
+  override fun appFrameCreated(commandLineArgs: List<String?>) {
+    IdeScaleTransformer.getInstance().setupLastSetScale()
+  }
+}
+
 internal class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    IdeScaleTransformer.getInstance().setupLastSetScale()
     IdeScaleIndicatorManager.getInstance(project)
   }
 }

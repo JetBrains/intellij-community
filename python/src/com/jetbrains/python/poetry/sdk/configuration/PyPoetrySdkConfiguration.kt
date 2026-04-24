@@ -128,7 +128,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       }
       val tomlFile = PyProjectToml.findFile(module)
       val versionSpecifiers = tomlFile?.let { vf ->
-        readAction { vf.findPsiFile(module.project) }?.resolvePythonVersionSpecifiers()
+        readAction { vf.findPsiFile(module.project)?.resolvePythonVersionSpecifiers() }
       } ?: PyVersionSpecifiers.ANY_SUPPORTED
 
       val baseSystemPython = getSystemPython(

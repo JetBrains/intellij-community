@@ -1,0 +1,6 @@
+[project]
+name = "django-react"
+version = "0.1.0"
+description = "Django React"
+readme = "README.md"
+requires-python = ">=3.11"

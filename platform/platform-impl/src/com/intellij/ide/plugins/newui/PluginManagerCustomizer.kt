@@ -32,6 +32,12 @@ interface PluginManagerCustomizer {
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
+  suspend fun getPopupMenuActions(
+    pluginModelFacade: PluginModelFacade,
+    selection: List<PluginPopupMenuActionData>,
+    modalityState: ModalityState,
+  ): List<AnAction> = emptyList()
+
   suspend fun getUpdateButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
@@ -86,6 +92,13 @@ data class OptionsButonCustomizationModel(
   val isVisible: Boolean = true,
   val mainAction: (() -> Unit)? = null,
   @param:NlsSafe val text: String? = null,
+)
+
+@ApiStatus.Internal
+data class PluginPopupMenuActionData(
+  val pluginModel: PluginUiModel,
+  val installedDescriptorForMarketplace: PluginUiModel?,
+  val descriptorForActions: PluginUiModel,
 )
 
 @ApiStatus.Internal

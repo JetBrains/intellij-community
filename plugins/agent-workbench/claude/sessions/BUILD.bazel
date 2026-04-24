@@ -1,3 +1,9 @@
+### auto-generated section `iml intellij.agent.workbench.claude.sessions` start
+exports_files([
+  "intellij.agent.workbench.claude.sessions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.claude.sessions` end
+
 ### auto-generated section `build intellij.agent.workbench.claude.sessions` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -15,46 +21,76 @@ jvm_library(
   resources = [":sessions_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/claude/common",
-    "//plugins/agent-workbench/sessions",
-  ]
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/json",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//libraries/jackson/jackson",
+    "@lib//:jna",
+  ],
+  runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"]
+)
+### auto-generated section `build intellij.agent.workbench.claude.sessions` end
+
+### auto-generated section `build intellij.agent.workbench.claude.sessions.tests` start
+jvm_library(
+  name = "agent-workbench-claude-sessions-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"]
 )
 
 jvm_library(
-  name = "sessions_test_lib",
+  name = "agent-workbench-claude-sessions-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":sessions"],
+  associates = ["//plugins/agent-workbench/claude/sessions"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
+    "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/claude/common",
-    "//plugins/agent-workbench/sessions",
-    "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/json",
+    "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//libraries/jackson/jackson",
+    "@lib//:jna",
     "//libraries/junit5",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-  ]
+  ],
+  runtime_deps = [":agent-workbench-claude-sessions-tests"]
 )
-### auto-generated section `build intellij.agent.workbench.claude.sessions` end
+### auto-generated section `build intellij.agent.workbench.claude.sessions.tests` end
 
-### auto-generated section `test intellij.agent.workbench.claude.sessions` start
+### auto-generated section `test intellij.agent.workbench.claude.sessions.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "sessions_test",
-  runtime_deps = [":sessions_test_lib"]
+  name = "agent-workbench-claude-sessions-tests_test",
+  runtime_deps = [":agent-workbench-claude-sessions-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.claude.sessions` end
+### auto-generated section `test intellij.agent.workbench.claude.sessions.tests` end

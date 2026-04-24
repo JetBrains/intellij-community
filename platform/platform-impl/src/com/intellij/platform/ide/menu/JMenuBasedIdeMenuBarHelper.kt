@@ -206,6 +206,7 @@ internal object WinAltKeyProcessor : KeyEventPostProcessor, AWTEventListener {
               ApplicationManager.getApplication().invokeLater {
                 helper.activateMenu()
               }
+              MainMenuCollector.logFocusedByAlt()
               break
             }
           }

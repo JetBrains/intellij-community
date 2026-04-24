@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.util.DelayedRunner;
 import com.intellij.ui.components.JBLabel;
@@ -183,6 +185,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     myNew = false;
     myAppliedButNeedsCheck = uncheckedApply;
     myInnerApplied = false;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RemoteServerListener.TOPIC).serverChanged(myServer);
   }
 
   @Override

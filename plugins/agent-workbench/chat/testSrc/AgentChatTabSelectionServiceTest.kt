@@ -2,16 +2,13 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
-import junit.framework.TestCase
-import java.beans.PropertyChangeListener
-import javax.swing.JComponent
-import javax.swing.JPanel
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class AgentChatTabSelectionServiceTest : TestCase() {
+class AgentChatTabSelectionServiceTest {
+  @Test
   fun testMapChatEditorToSelection() {
     val chatFile = AgentChatVirtualFile(
       projectPath = "/work/project-a",
@@ -21,41 +18,37 @@ class AgentChatTabSelectionServiceTest : TestCase() {
       threadTitle = "Fix auth",
       subAgentId = null,
     )
-    val selection = FakeEditor(chatFile).toAgentChatTabSelection()
+    val selection = LightweightTestFileEditor(chatFile).toAgentChatTabSelection()
 
-    assertNotNull(selection)
-    assertEquals("/work/project-a", selection?.projectPath)
-    assertEquals("CODEX:thread-1", selection?.threadIdentity)
-    assertEquals("thread-1", selection?.threadId)
-    assertNull(selection?.subAgentId)
+    assertThat(selection).isNotNull
+    assertThat(selection?.projectPath).isEqualTo("/work/project-a")
+    assertThat(selection?.threadIdentity).isEqualTo("CODEX:thread-1")
+    assertThat(selection?.threadId).isEqualTo("thread-1")
+    assertThat(selection?.subAgentId).isNull()
   }
 
+  @Test
   fun testMapReturnsNullForNonChatEditor() {
-    assertNull(FakeEditor(LightVirtualFile("notes.txt", "notes")).toAgentChatTabSelection())
-    assertNull((null as FileEditor?).toAgentChatTabSelection())
+    assertThat(LightweightTestFileEditor(LightVirtualFile("notes.txt", "notes")).toAgentChatTabSelection()).isNull()
+    assertThat((null as FileEditor?).toAgentChatTabSelection()).isNull()
   }
 
-  private class FakeEditor(private val virtualFile: VirtualFile) : UserDataHolderBase(), FileEditor {
-    private val component = JPanel()
+  @Test
+  fun testDetectOpenChatFiles() {
+    val nonChatFiles = arrayOf<VirtualFile>(LightVirtualFile("notes.txt", "notes"))
+    assertThat(hasOpenAgentChatFiles(nonChatFiles)).isFalse()
 
-    override fun getComponent(): JComponent = component
-
-    override fun getPreferredFocusedComponent(): JComponent = component
-
-    override fun getName(): String = "FakeEditor"
-
-    override fun setState(state: FileEditorState) = Unit
-
-    override fun isModified(): Boolean = false
-
-    override fun isValid(): Boolean = true
-
-    override fun addPropertyChangeListener(listener: PropertyChangeListener) = Unit
-
-    override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
-
-    override fun getFile(): VirtualFile = virtualFile
-
-    override fun dispose() = Unit
+    val chatFiles = arrayOf<VirtualFile>(
+      LightVirtualFile("notes.txt", "notes"),
+      AgentChatVirtualFile(
+        projectPath = "/work/project-a",
+        threadIdentity = "CODEX:thread-1",
+        shellCommand = emptyList(),
+        threadId = "thread-1",
+        threadTitle = "Fix auth",
+        subAgentId = null,
+      ),
+    )
+    assertThat(hasOpenAgentChatFiles(chatFiles)).isTrue()
   }
 }

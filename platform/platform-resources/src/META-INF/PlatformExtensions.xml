@@ -2076,6 +2076,8 @@ Android Studio: b/285867050 -->
     <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
                  description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
     <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.EditorHyperlinkUsageCollector"/>
   </extensions>
 
   <applicationListeners>
@@ -2159,6 +2161,8 @@ Android Studio: b/285867050 -->
 
     <listener class="com.intellij.ide.file.XdgTrashBinPreloader" topic="com.intellij.ide.AppLifecycleListener"
               os="unix" activeInTestMode="false" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.ide.actions.IdeScaleAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <projectListeners>

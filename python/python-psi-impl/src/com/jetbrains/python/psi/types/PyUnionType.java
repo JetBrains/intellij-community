@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 
 public class PyUnionType implements PyUnionLikeType {
 
@@ -113,7 +115,7 @@ public class PyUnionType implements PyUnionLikeType {
    * @return a PyType representing the union, or null if no valid members
    */
   public static @Nullable PyType union(@NotNull Collection<@Nullable PyType> members) {
-    return unionOrDefault(members, null);
+    return unionOrDefault(members, PyAnyType.getUnknown());
   }
 
   /**
@@ -155,8 +157,8 @@ public class PyUnionType implements PyUnionLikeType {
    * @see PyUnsafeUnionType
    */
   public static @Nullable PyType createWeakType(@Nullable PyType type) {
-    if (type == null) {
-      return null;
+    if (isUnknown(type)) {
+      return type;
     }
     else if (type instanceof PyUnionType unionType) {
       if (unionType.isWeak()) {
@@ -164,9 +166,9 @@ public class PyUnionType implements PyUnionLikeType {
       }
     }
     if (isStrictSemanticsEnabled()) {
-      return PyUnsafeUnionType.unsafeUnion(type, null);
+      return PyUnsafeUnionType.unsafeUnion(type, PyAnyType.getUnknown());
     }
-    return union(type, null);
+    return union(type, PyAnyType.getUnknown());
   }
 
   /**
@@ -196,7 +198,7 @@ public class PyUnionType implements PyUnionLikeType {
    */
   @Deprecated
   public boolean isWeak() {
-    return !isStrictSemanticsEnabled() && myMembers.contains(null);
+    return !isStrictSemanticsEnabled() && myMembers.contains(PyAnyType.getUnknown());
   }
 
   /**
@@ -220,7 +222,7 @@ public class PyUnionType implements PyUnionLikeType {
    * @return union with excluded types
    */
   public @Nullable PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type == null) return excludeNull();
+    if (isUnknown(type)) return excludeNull();
 
     final List<PyType> members = new ArrayList<>();
     for (PyType m : getMembers()) {

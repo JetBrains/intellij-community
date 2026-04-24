@@ -29,6 +29,9 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
+import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
+import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
+import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
@@ -284,8 +287,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     isAllTab: Boolean,
   ): Boolean {
     return providerIds.any { providerId ->
-      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
-      provider?.isPreviewEnabled() ?: false
+      val localProvider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      localProvider?.provider?.isPreviewEnabled() ?: false
     }
   }
 
@@ -296,8 +299,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     isAllTab: Boolean,
   ): Boolean {
     return providerIds.any { providerId ->
-      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
-      provider?.isExtendedInfoEnabled() ?: false
+      val localProvider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      localProvider?.provider?.isExtendedInfoEnabled() ?: false
     }
   }
 
@@ -308,8 +311,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     isAllTab: Boolean,
   ): Boolean {
     return providerIds.any { providerId ->
-      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
-      provider?.isCommandsSupported() ?: false
+      val localProvider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      localProvider?.provider?.areCommandsSupported() ?: false
     }
   }
 

@@ -215,7 +215,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final StringBuilder myTextBeforeStart = new StringBuilder();
 
-  protected Map<VirtualMachineProxyImpl, Method> myIsUnderBreakpointCheckFnMap = CollectionFactory.createWeakMap();
+  protected Map<VirtualMachineProxyImpl, EnterAndExitEvaluationCheck> myBreakpointCheckFnMap = CollectionFactory.createWeakMap();
 
   protected enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
 
@@ -574,7 +574,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    */
   @ApiStatus.Internal
   public void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
-                        RequestHint hint, Object commandToken) {
+                     RequestHint hint, Object commandToken) {
+    doStep(suspendContext, stepThread, size, depth, hint, commandToken, -1);
+  }
+
+  /**
+   * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
+   * @param hint may be null
+   */
+  @ApiStatus.Internal
+  public void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+                        RequestHint hint, Object commandToken, int explicitSuspendPolicy) {
     if (stepThread == null) {
       return;
     }
@@ -596,9 +606,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
       // if only event thread was suspended, then only this particular thread must be suspended during stepping
-      int policy = (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && !DebuggerSettings.SUSPEND_ALL.equals(policyFromRequestors))
+      int policy = explicitSuspendPolicy >= 0 ? explicitSuspendPolicy :
+        (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && !DebuggerSettings.SUSPEND_ALL.equals(policyFromRequestors))
                    ? EventRequest.SUSPEND_EVENT_THREAD
                    : EventRequest.SUSPEND_ALL;
+      //noinspection MagicConstant
       stepRequest.setSuspendPolicy(policy);
 
       stepRequest.addCountFilter(1);
@@ -3099,8 +3111,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @ApiStatus.Internal
-  public void setIsUnderBreakpointCheckFn(@NotNull Method isUnderBreakpointCheckFn) {
-    myIsUnderBreakpointCheckFnMap.put(VirtualMachineProxyImpl.getCurrent(), isUnderBreakpointCheckFn);
+  public void setIsUnderBreakpointCheckFn(@NotNull Method enterBreakpointCheckFn, @NotNull Method checkIsDoneFn) {
+    myBreakpointCheckFnMap.put(VirtualMachineProxyImpl.getCurrent(), new EnterAndExitEvaluationCheck(enterBreakpointCheckFn, checkIsDoneFn));
   }
 
   @ApiStatus.Internal

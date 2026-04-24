@@ -109,6 +109,7 @@ object PyNames {
   const val FUNCTION: String = "function"
 
   const val TYPES_FUNCTION_TYPE: String = "types.FunctionType"
+  const val TYPES_COROUTINE_TYPE: String = "types.CoroutineType"
   const val TYPES_METHOD_TYPE: String = "types.UnboundMethodType"
 
   const val FUTURE_MODULE: String = "__future__"
@@ -190,6 +191,10 @@ object PyNames {
   const val DELITEM: String = "__delitem__"
   const val POS: String = "__pos__"
   const val EQ: String = "__eq__"
+  const val LT: String = "__lt__"
+  const val LE: String = "__le__"
+  const val GT: String = "__gt__"
+  const val GE: String = "__ge__"
   const val NEG: String = "__neg__"
   const val DIV: String = "__div__"
   const val TRUEDIV: String = "__truediv__"
@@ -256,6 +261,9 @@ object PyNames {
 
   @NlsSafe
   const val UNKNOWN_TYPE: @NlsSafe String = "Unknown"
+
+  @NlsSafe
+  const val OVERLOAD_TYPE: @NlsSafe String = "Overload"
 
   @NlsSafe
   const val UNNAMED_ELEMENT: @NlsSafe String = "<unnamed>"

@@ -88,6 +88,8 @@ data class XDebugSessionDto(
   val editorsProviderDto: XDebuggerEditorsProviderDto,
   val initialSessionState: XDebugSessionState,
   val initialSuspendData: SuspendData?,
+  val initialStateMessage: @Nls String,
+  val currentStateMessageFlow: RpcFlow<String>?,
   val sessionName: String,
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
   val sessionDataDto: XDebugSessionDataDto,
@@ -178,6 +180,7 @@ data class XDebugSessionState(
   val isStepOverActionAllowed: Boolean,
   val isStepOutActionAllowed: Boolean,
   val isRunToCursorActionAllowed: Boolean,
+  val isForceStepIntoActionAllowed: Boolean,
 )
 
 @ApiStatus.Internal

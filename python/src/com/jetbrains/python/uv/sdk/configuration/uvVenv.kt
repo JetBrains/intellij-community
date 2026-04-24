@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.common.tools.ToolId
-import com.intellij.python.pyproject.model.api.SuggestedSdk
-import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -15,6 +13,7 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
+import com.jetbrains.python.sdk.configuration.getSdkAssociatedModule
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
@@ -72,10 +71,3 @@ internal suspend fun createUvSdk(module: Module, toolId: ToolId, venvsInModule: 
 private suspend fun getUvEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull {
   it.pyvenvContains("uv = ")
 }
-
-private suspend fun Module.getSdkAssociatedModule(toolId: ToolId) =
-  when (val r = suggestSdk()) {
-    // Workspace suggested by uv
-    is SuggestedSdk.SameAs -> if (r.accordingTo == toolId) r.parentModule else null
-    null, is SuggestedSdk.PyProjectIndependent -> null
-  } ?: this

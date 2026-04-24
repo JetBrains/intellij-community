@@ -59,6 +59,7 @@ jvm_library(
     "//platform/eel",
     "//java/java-indexing-api:indexing",
     "//java/openapi:java",
+    "//platform/polySymbols",
   ]
 )
 ### auto-generated section `build intellij.kotlin.devkit` end

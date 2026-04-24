@@ -60,6 +60,10 @@ fun createOrResetMvStore(file: Path?, readOnly: Boolean = false, logSupplier: ()
   catch (e: Throwable) {
     logSupplier().warn("Cannot open cache state storage, will be recreated", e)
   }
+  if (readOnly) {
+    // in read-only mode the store won't load without a file, so use in-memory store in such a case
+    return tryOpenMvStore(file = null, readOnly, logSupplier)
+  }
 
   Files.deleteIfExists(file)
   return tryOpenMvStore(file, readOnly, logSupplier)

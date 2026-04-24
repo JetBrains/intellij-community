@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/execution-impl",
+    "//plugins/agent-workbench/json",
     "//libraries/jackson/jackson",
     "//platform/platform-util-io:ide-util-io",
   ]

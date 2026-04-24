@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.idea.TestFor;
@@ -531,7 +531,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def foo(x):
                  await x
@@ -562,6 +562,18 @@ public class Py3TypeTest extends PyTestCase {
              
              async def bar():
                  expr = await foo()
+             """);
+  }
+
+  public void testAwaitOnTypingCoroutineAnnotation() {
+    doTest("int",
+           """
+             from typing import Any, Coroutine
+             
+             x: Coroutine[Any, Any, int]
+             
+             async def bar():
+                 expr = await x
              """);
   }
 
@@ -1553,7 +1565,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24067
   public void testAsyncFunctionReturnTypeInDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1565,7 +1577,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-27518
   public void testAsyncFunctionReturnTypeInNumpyDocstring() {
-    doTest("Coroutine[Any, Any, int]",
+    doTest("CoroutineType[Any, Any, int]",
            """
              async def f():
                  ""\"
@@ -1592,7 +1604,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-26643
   public void testReplaceSelfInCoroutine() {
-    doTest("Coroutine[Any, Any, B]",
+    doTest("CoroutineType[Any, Any, B]",
            """
              class A:
                  async def foo(self):
@@ -3066,7 +3078,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testTypeGuardResultIsAssignedButValIsReassigned() {
-    doTest("list[object]",
+    doTest("int",
            """
              from typing import List
              from typing import TypeGuard
@@ -3084,7 +3096,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
-    doTest("list[str] | list[object]",
+    doTest("list[str] | int",
            """
              from typing import List
              from typing import TypeGuard
@@ -3634,7 +3646,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-64474
   public void testTupleElementAccessedWithNegativeIndex() {
-    doTest("bool",
+    doTest("Literal[True]",
            """
              xs = (1, True, "foo")
              expr = xs[-2]
@@ -4606,6 +4618,21 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-81651")
+  public void testEqWithNewAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        class A:
+            def __eq__(self, other) -> Any:
+              return "hello :)"
+        
+        expr = A() == 1
+        """);
+    });
+  }
+
   @TestFor(issues = "PY-84524")
   public void testBuiltinsCallable() {
     doTest("(...) -> object", """
@@ -5124,6 +5151,13 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-57621")
+  public void testTupleWithLiteralValues() {
+    doTest("tuple[Literal[1]]", """
+      expr = (1,)
+      """);
+  }
+
   // PY-87575
   public void testIterDefinedInMetaclass() {
     doTest("set[int]", """
@@ -5200,6 +5234,122 @@ public class Py3TypeTest extends PyTestCase {
           def values(cls):
               expr = set(cls)
       """);
+  }
+
+  @TestFor(issues = "PY-88281")
+  public void testUnionPartialUnresolved() {
+    doTest("int | Any", """
+      expr: int | asdf
+      """);
+  }
+
+  @TestFor(issues = "PY-88281")
+  public void testIntersectionPartialUnresolved() {
+    doTest("int & Any", """
+      expr: int & asdf
+      """);
+  }
+
+  public void testRightHandOrClass() {
+    doTest("UnionType | type[str] | int", """
+      class M(type):
+          def __ror__(self, other: object) -> int:
+              return 1
+      
+      class A(metaclass=M): ...
+      
+      expr = str | A
+      """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInListWidens() {
+    doTest("list[tuple[int, str]]", """
+      t = (1, 'hello')
+      expr = [t]
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInTupleIsLiteral() {
+    var t = "tuple[Literal[1], Literal['hello']]";
+    doTest("tuple[" + t + ", " + t + "]", """
+      t = (1, 'hello')
+      expr = (t, t)
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInGenericWidens() {
+    doTest("list[tuple[int, str]]", """
+      def f[T](t: T) -> list[T]: ...
+      expr = f((1, "hello"))
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleAsGenericInTupleNarrows() {
+    var t = "tuple[Literal[1], Literal['hello']]";
+    doTest("tuple[list[tuple[int, str]], " + t + "]" + " | " + t, """
+      def f[T](t: T) -> tuple[list[T], T] | T: ...
+      expr = f((1, 'hello'))
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleAsBareTypeVariableIsLiteral() {
+    doTest("tuple[Literal[1], Literal[\"hello\"]]", """
+      def f[T](t: T) -> T: ...
+      expr = f((1, "hello"))
+    """);
+  }
+
+  public void testOverloadImpl() {
+    doTest("Overload[(x: int) -> str, (x: str) -> int]", """
+      from typing import overload
+      
+      @overload
+      def foo(x: int) -> str: ...
+      
+      @overload
+      def foo(x: str) -> int: ...
+      
+      def foo(x): ...
+      
+      expr = foo
+      """);
+  }
+
+  public void testOverloadStub() {
+    runWithAdditionalFileInLibDir(
+      "stub.pyi", """
+        from typing import overload
+        
+        @overload
+        def foo(x: int) -> str: ...
+        
+        @overload
+        def foo(x: str) -> int: ...
+        """, (x) -> {
+        doTest("Overload[(x: int) -> str, (x: str) -> int]", """
+          from stub import foo
+          
+          expr = foo
+          """);
+      }
+    );
+  }
+
+  // PY-88682
+  public void testIterateOverCollectionsNamedTuple() {
+    doTest("Instruction",
+           """
+             from collections import namedtuple
+             Instruction = namedtuple("Instruction", "direction distance")
+             def process(instructions: list[Instruction]) -> None:
+                 for instruction in instructions:
+                     expr = instruction
+             """);
   }
 
   private void doTest(final String expectedType, final String text) {

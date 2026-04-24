@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -43,7 +44,9 @@ public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
 
-    if (caretOffset.get() > 0) {
+    if (looksLikeSequenceMarkerWithTrailingSpace(editor.getDocument().getCharsSequence(), caretOffset.get())) {
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+
       PsiElement element = file.findElementAt(caretOffset.get() - 1);
       if (PsiUtilCore.getElementType(element) == TokenType.WHITE_SPACE &&
           element.getTextLength() == 1 &&
@@ -142,5 +145,13 @@ public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
 
   private static boolean shouldInsertAutomaticHyphen(@NotNull PsiFile file) {
     return CodeStyle.getCustomSettings(file, YAMLCodeStyleSettings.class).AUTOINSERT_SEQUENCE_MARKER;
+  }
+
+  private static boolean looksLikeSequenceMarkerWithTrailingSpace(@NotNull CharSequence chars, int caretOffset) {
+    if (caretOffset < 2 || chars.charAt(caretOffset - 1) != ' ' || chars.charAt(caretOffset - 2) != '-') {
+      return false;
+    }
+    int markerPrefixOffset = caretOffset - 3;
+    return markerPrefixOffset < 0 || Character.isWhitespace(chars.charAt(markerPrefixOffset));
   }
 }

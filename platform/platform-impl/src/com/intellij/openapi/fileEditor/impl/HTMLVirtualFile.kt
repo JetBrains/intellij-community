@@ -1,16 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ide.browsers.actions.WebPreviewFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.containers.WeakList
 
 
@@ -21,24 +21,33 @@ import com.intellij.util.containers.WeakList
  */
 internal class HTMLVirtualFile private constructor(
   title: @DialogTitle String,
-  private var htmlRequest: Request,
-) : LightVirtualFile(title, WebPreviewFileType.INSTANCE, /* text = */ "") {
+  fileType: FileType,
+  internal var htmlRequest: Request,
+  private val ignoreJcef: Boolean,
+) : LightVirtualFile(title, fileType, /* text = */ "") {
 
   companion object {
     private val DISPOSED_REQUEST: Request = Request.html("DISPOSED_REQUEST")
 
-    fun createFile(project: Project, title: @DialogTitle String, htmlRequest: Request): HTMLVirtualFile {
-      val file = HTMLVirtualFile(title, htmlRequest)
+    fun createFile(
+      project: Project,
+      title: @DialogTitle String,
+      htmlRequest: Request,
+      fileType: FileType,
+      ignoreJcef: Boolean,
+    ): HTMLVirtualFile {
+      val file = HTMLVirtualFile(title, fileType, htmlRequest, ignoreJcef)
       project.service<HTMLVirtualFileManager>().registerFile(file)
       return file
     }
   }
 
-  fun createEditor(project: Project): FileEditor {
-    require(!isDisposed()) {
-      "html request is already disposed"
-    }
-    return HTMLFileEditor(project, this, htmlRequest)
+  fun shouldUseMockEditor(): Boolean {
+    return ignoreJcef
+  }
+
+  fun isJcefSupported(): Boolean {
+    return JBCefApp.isSupported() || ignoreJcef
   }
 
   fun isDisposed(): Boolean {

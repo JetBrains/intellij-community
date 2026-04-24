@@ -118,7 +118,7 @@ class CheckerRunner(val text: TextContent) {
   }
 
   private fun filter(problems: Collection<TextProblem>): List<TextProblem> =
-    TextProblemAggregator.aggregate(text.toString(), problems.filterNot { shouldBeIgnored(it) })
+    TextProblemAggregator.aggregate(problems.filterNot { shouldBeIgnored(it) }, sentences, false)
 
   private fun shouldBeIgnored(problem: TextProblem): Boolean =
     isSuppressed(problem) ||

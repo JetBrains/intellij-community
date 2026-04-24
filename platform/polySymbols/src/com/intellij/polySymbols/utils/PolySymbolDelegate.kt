@@ -101,9 +101,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
 
   override fun createPointer(): Pointer<out PolySymbolDelegate<T>>
 
-  override fun getModificationCount(): Long =
-    (delegate as? PolySymbolScope)?.modificationCount ?: 0
-
   companion object {
 
     @JvmStatic

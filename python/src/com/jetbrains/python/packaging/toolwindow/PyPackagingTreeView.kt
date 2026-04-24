@@ -15,6 +15,7 @@ import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagingTreeGroup
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
+import org.jetbrains.annotations.Nls
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -80,6 +81,10 @@ internal class PyPackagingTreeView(
         installedPackages.tree.table.setRowSelectionInterval(installedPackageIndex, installedPackageIndex)
       }
     }
+  }
+
+  fun setSdkName(@Nls sdkName: String?) {
+    installedPackages.setSdkToHeader(sdkName)
   }
 
   fun resetSearch(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>, currentSdk: Sdk?) {

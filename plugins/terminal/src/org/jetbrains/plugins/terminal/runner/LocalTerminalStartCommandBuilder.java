@@ -33,6 +33,10 @@ public final class LocalTerminalStartCommandBuilder {
     });
   }
 
+  public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath, @NotNull EelDescriptor eelDescriptor) {
+    return convertShellPathToCommand(shellPath, shellCommand -> eelDescriptor);
+  }
+
   private static @NotNull List<String> convertShellPathToCommand(
     @NotNull String shellPath,
     @NotNull Function<List<String>, EelDescriptor> eelDescriptorProvider

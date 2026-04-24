@@ -23,7 +23,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,7 +83,8 @@ public final class GitConfigUtil {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
-    Map<String, List<String>> result = new HashMap<>();
+    // need to preserve the insertion order for values like "url.<smth>.insteadOf", "url.<smth>.pushInsteadOf"
+    Map<String, List<String>> result = new LinkedHashMap<>();
     while ((pos = output.indexOf('\n', start)) != -1) {
       String key = output.substring(start, pos);
       start = pos + 1;

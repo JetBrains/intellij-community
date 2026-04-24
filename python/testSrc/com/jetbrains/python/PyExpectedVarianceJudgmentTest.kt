@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
@@ -332,28 +333,51 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
       """)
   }
 
-  fun `test String literal type at return`() {
-    fixme("PY-87942: No AST in string literal of type annotation", AssertionFailedError::class.java) {
-      doTest("T\"", Variance.COVARIANT, """
+  fun `test String literal type at return inside callable`() {
+    doTest("T\"", Variance.COVARIANT, """
+      from typing import Callable
+      class A[T]:
+          def f(self, t: Callable[["T"],None]) : ...
+      """)
+  }
+
+  fun `test String literal type at function parameter`() {
+    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
+                                "expected:<COVARIANT> but was:<CONTRAVARIANT>"
+    ) {
+      doTest("T],", Variance.COVARIANT, """
+        from typing import Callable
         class A[T]:
-            def f(self, t: Callable[["T"],None]) : ...
+            def f(self, t: "Callable[[T],None]") : ...
         """)
     }
   }
 
-  // Expect null to avoid variance compatibility inspection check
-
-  fun `test Type alias for generic class`() {
-    doTest("T2]", null, """
+  fun `test Type alias use for generic class invariant`() {
+    doTest("T2]", Variance.INVARIANT, """
       from typing import TypeVar, Generic
-      T1 = TypeVar("T1", covariant=True)
-      class Box(Generic[T1]):
-          pass
-      Box_TA = Box[T1]
+      T1 = TypeVar("T1")
+      class Box(Generic[T1]): ...
+      Box_TA: TypeAlias = Box[T1]
       T2 = TypeVar("T2", covariant=True)
       my_box: Box_TA[T2]
       """)
   }
+
+  fun `test Type alias use for generic class covariant`() {
+    doTest("T_co] #", Variance.COVARIANT, """
+      from typing import Generic, TypeVar, TypeAlias
+      T_co = TypeVar("T_co", covariant=True)
+      class ClassA(Generic[T_co]): ...
+      
+      T = TypeVar("T")
+      A_Alias_1: TypeAlias = ClassA[T]
+      
+      obj: A_Alias_1[T_co] #
+      """)
+  }
+
+  // Expect null to avoid variance compatibility inspection check
 
   fun `test Generic class dunder init special case`() {
     // actually bivariant

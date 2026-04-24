@@ -3,21 +3,30 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 class CodexRolloutSessionBackendTest {
+  // Primary owner for rollout parser/activity/title mapping coverage.
   @TempDir
   lateinit var tempDir: Path
 
   @Test
-  fun mapsSessionMetaIdAndUnreadPrecedence() {
-    runBlocking {
+  fun mapsSessionMetaIdAndProcessingBeatsPassiveUnread() {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-a")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -43,13 +52,13 @@ class CodexRolloutSessionBackendTest {
       assertThat(thread.thread.id).isEqualTo("session-abc")
       assertThat(thread.thread.title).isEqualTo("Fix flaky test")
       assertThat(thread.thread.updatedAt).isEqualTo(Instant.parse("2026-02-13T10:00:30.000Z").toEpochMilli())
-      assertThat(thread.activity).isEqualTo(CodexSessionActivity.UNREAD)
+      assertThat(thread.activity).isEqualTo(CodexSessionActivity.PROCESSING)
     }
   }
 
   @Test
   fun ignoresRolloutWithoutSessionMetaId() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-no-id")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -69,20 +78,116 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun mapsReviewingFromReviewModeItems() {
-    runBlocking {
-      val projectDir = tempDir.resolve("project-b")
+  fun mapsCurrentCodexRolloutActivitySignals() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-activity")
+      Files.createDirectories(projectDir)
+
+      val activityCases = listOf(
+        ActivityCase(
+          id = "session-review",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}"""
+          ),
+          expected = CodexSessionActivity.REVIEWING,
+        ),
+        ActivityCase(
+          id = "session-processing",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}"""
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-pending-input",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"request_user_input"}}"""
+          ),
+          expected = CodexSessionActivity.UNREAD,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-pending-input-function-call",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:10.000Z",
+              callId = "call-request-user-input",
+            )
+          ),
+          expected = CodexSessionActivity.UNREAD,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-cleared-input-function-call-output",
+          eventLines = listOf(
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:02:20.000Z",
+              callId = "call-cleared-user-input",
+            ),
+            """{"timestamp":"2026-02-13T11:02:21.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-cleared-user-input","output":"ok"}}""",
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
+          id = "session-processing-over-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:03:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+            """{"timestamp":"2026-02-13T11:03:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Still working"}}"""
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-review-over-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:04:05.000Z","type":"event_msg","payload":{"type":"entered_review_mode"}}""",
+            """{"timestamp":"2026-02-13T11:04:06.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Review result draft"}}"""
+          ),
+          expected = CodexSessionActivity.REVIEWING,
+        ),
+      )
+
+      for ((index, testCase) in activityCases.withIndex()) {
+        writeRollout(
+          file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
+            .resolve("rollout-activity-$index.jsonl"),
+          lines = listOf(
+            sessionMetaLine(
+              timestamp = "2026-02-13T11:0$index:00.000Z",
+              id = testCase.id,
+              cwd = projectDir,
+            ),
+          ) + testCase.eventLines,
+        )
+      }
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threadsById = backend.listThreads(path = projectDir.toString(), openProject = null).associateBy { it.thread.id }
+
+      assertThat(threadsById).hasSize(activityCases.size)
+      for (testCase in activityCases) {
+        val thread = threadsById.getValue(testCase.id)
+        assertThat(thread.activity).isEqualTo(testCase.expected)
+        assertThat(thread.requiresResponse).isEqualTo(testCase.expectedRequiresResponse)
+      }
+    }
+  }
+
+  @Test
+  fun prefersSnakeCaseThreadNameUpdatedEventForTitle() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-thread-rename")
       Files.createDirectories(projectDir)
       writeRollout(
-        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
-          .resolve("rollout-2026-02-13T11-00-00-review.jsonl"),
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-thread-name-updated.jsonl"),
         lines = listOf(
           sessionMetaLine(
-            timestamp = "2026-02-13T11:00:00.000Z",
-            id = "session-review",
+            timestamp = "2026-02-14T12:00:00.000Z",
+            id = "session-title-updated",
             cwd = projectDir,
           ),
-          """{"timestamp":"2026-02-13T11:00:05.000Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"enteredReviewMode"}}}""",
+          """{"timestamp":"2026-02-14T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial fallback title"}}""",
+          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"thread_name_updated","thread_name":"  Renamed   from   Codex  "}}""",
         ),
       )
 
@@ -90,15 +195,13 @@ class CodexRolloutSessionBackendTest {
       val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
 
       assertThat(threads).hasSize(1)
-      val thread = threads.single()
-      assertThat(thread.thread.id).isEqualTo("session-review")
-      assertThat(thread.activity).isEqualTo(CodexSessionActivity.REVIEWING)
+      assertThat(threads.single().thread.title).isEqualTo("Renamed from Codex")
     }
   }
 
   @Test
   fun filtersByCwdAndMarksReadyAfterCompletedTask() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-c")
       val otherDir = tempDir.resolve("project-d")
       Files.createDirectories(projectDir)
@@ -137,60 +240,8 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun marksProcessingWhenTaskStartedWithoutCompletion() {
-    runBlocking {
-      val projectDir = tempDir.resolve("project-processing")
-      Files.createDirectories(projectDir)
-      writeRollout(
-        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
-          .resolve("rollout-processing.jsonl"),
-        lines = listOf(
-          sessionMetaLine(
-            timestamp = "2026-02-13T13:00:00.000Z",
-            id = "session-processing",
-            cwd = projectDir,
-          ),
-          """{"timestamp":"2026-02-13T13:00:05.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
-        ),
-      )
-
-      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
-      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
-
-      assertThat(threads).hasSize(1)
-      assertThat(threads.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
-    }
-  }
-
-  @Test
-  fun marksUnreadWhenPendingUserInputRequested() {
-    runBlocking {
-      val projectDir = tempDir.resolve("project-pending-input")
-      Files.createDirectories(projectDir)
-      writeRollout(
-        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
-          .resolve("rollout-pending-input.jsonl"),
-        lines = listOf(
-          sessionMetaLine(
-            timestamp = "2026-02-13T14:00:00.000Z",
-            id = "session-pending-input",
-            cwd = projectDir,
-          ),
-          """{"timestamp":"2026-02-13T14:00:02.000Z","type":"event_msg","payload":{"type":"requestUserInput"}}""",
-        ),
-      )
-
-      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
-      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
-
-      assertThat(threads).hasSize(1)
-      assertThat(threads.single().activity).isEqualTo(CodexSessionActivity.UNREAD)
-    }
-  }
-
-  @Test
   fun mapsBranchFromSessionMetaPayload() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-branch")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -210,8 +261,75 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun foldsSubAgentThreadSpawnUnderParentThread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-subagent")
+      Files.createDirectories(projectDir)
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-parent.jsonl"),
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-14T16:00:00.000Z", id = "session-parent", cwd = projectDir),
+          """{"timestamp":"2026-02-14T16:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Parent thread title"}}""",
+        ),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-subagent.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T16:01:00.000Z",
+            id = "session-subagent",
+            cwd = projectDir,
+            parentThreadId = "session-parent",
+          ),
+          """{"timestamp":"2026-02-14T16:01:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"review the agent threads for rollout nesting"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      val parentThread = threads.single()
+      assertThat(parentThread.thread.id).isEqualTo("session-parent")
+      assertThat(parentThread.thread.subAgents).hasSize(1)
+      val subAgent = parentThread.thread.subAgents.single()
+      assertThat(subAgent.id).isEqualTo("session-subagent")
+      assertThat(subAgent.name).isEqualTo("review the agent threads for rollout nesting")
+    }
+  }
+
+  @Test
+  fun keepsSubAgentThreadTopLevelWhenParentIsMissing() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-subagent-missing-parent")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-subagent-only.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T17:00:00.000Z",
+            id = "session-subagent-only",
+            cwd = projectDir,
+            parentThreadId = "missing-parent",
+          ),
+          """{"timestamp":"2026-02-14T17:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"sub-agent fallback thread"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.id).isEqualTo("session-subagent-only")
+      assertThat(threads.single().thread.subAgents).isEmpty()
+    }
+  }
+
+  @Test
   fun prefetchThreadsMapsPerResolvedPath() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-prefetch-a")
       val projectB = tempDir.resolve("project-prefetch-b")
       val projectC = tempDir.resolve("project-prefetch-c")
@@ -256,7 +374,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun refreshesCachedThreadsWhenRolloutFilesChangeAndDelete() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-cache")
       Files.createDirectories(projectDir)
 
@@ -309,7 +427,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun retriesPreviouslyUnparseableRolloutAfterRewrite() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-retry")
       Files.createDirectories(projectDir)
 
@@ -345,7 +463,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun usesFirstNonEnvironmentUserMessageAsTitle() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-title")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -373,7 +491,7 @@ class CodexRolloutSessionBackendTest {
 
   @Test
   fun skipsMalformedJsonLineAndKeepsParsingLaterEvents() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-malformed")
       Files.createDirectories(projectDir)
       writeRollout(
@@ -402,10 +520,248 @@ class CodexRolloutSessionBackendTest {
       assertThat(thread.activity).isEqualTo(CodexSessionActivity.UNREAD)
     }
   }
+
+  @Test
+  fun emitsUpdatesWhenExistingRolloutFileChanges() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-updates-modify")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-modify.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-modify", cwd = projectDir),
+          """{"timestamp":"2026-02-16T10:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial title"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-modify", cwd = projectDir),
+            """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
+          ),
+        )
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().thread.title).isEqualTo("Updated title")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUpdatesForNonRolloutSessionEventAndRefreshesByStatDiff() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-updates-refresh-ping")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-refresh-ping.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-refresh-ping", cwd = projectDir),
+          """{"timestamp":"2026-02-16T10:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Initial title"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("Initial title")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T10:00:00.000Z", id = "session-updates-refresh-ping", cwd = projectDir),
+            """{"timestamp":"2026-02-16T10:05:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Updated title"}}""",
+          ),
+        )
+
+        // Represents non-rollout file events (temp/rename artifacts) where path-level invalidation is unavailable.
+        sourceUpdates.emit(FileBackedSessionChangeSet())
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().thread.title).isEqualTo("Updated title")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUpdatesWhenRolloutFileCreatedInNewNestedSessionsDirectory() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-updates-create")
+      Files.createDirectories(projectDir)
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        val rollout = tempDir.resolve("sessions")
+          .resolve("2026")
+          .resolve("03")
+          .resolve("01")
+          .resolve("rollout-updates-create.jsonl")
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-03-01T09:00:00.000Z", id = "session-updates-create", cwd = projectDir),
+            """{"timestamp":"2026-03-01T09:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Created title"}}""",
+          ),
+        )
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads.map { it.thread.id }).contains("session-updates-create")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun refreshesThreadAfterSameSizeRewriteWhenLastModifiedTimeIsReset() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-updates-same-size")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-updates-same-size.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T11:00:00.000Z", id = "session-updates-same-size", cwd = projectDir),
+          """{"timestamp":"2026-02-16T11:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"AAAA"}}""",
+        ),
+      )
+      val originalLastModifiedTime = Files.getLastModifiedTime(rollout)
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().thread.title).isEqualTo("AAAA")
+
+        drainUpdateChannel(updates)
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T11:00:00.000Z", id = "session-updates-same-size", cwd = projectDir),
+            """{"timestamp":"2026-02-16T11:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"BBBB"}}""",
+          ),
+        )
+        Files.setLastModifiedTime(rollout, originalLastModifiedTime)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+
+        val updatedThreads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(updatedThreads).hasSize(1)
+        assertThat(updatedThreads.single().thread.title).isEqualTo("BBBB")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+}
+
+private val WATCHER_UPDATE_WAIT_TIMEOUT = 5.seconds
+
+private suspend fun awaitWatcherUpdate(
+  updates: Channel<Unit>,
+): Boolean {
+  val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) {
+    updates.receive()
+  }
+  return update != null
+}
+
+private fun drainUpdateChannel(updates: Channel<Unit>) {
+  while (true) {
+    if (!updates.tryReceive().isSuccess) {
+      break
+    }
+  }
 }
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+}
+
+private fun responseItemFunctionCall(timestamp: String, callId: String): String {
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"request_user_input","arguments":"{}","call_id":"$callId"}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {
@@ -413,7 +769,18 @@ private fun sessionMetaLineWithoutId(cwd: Path): String {
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
 }
 
+private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, parentThreadId: String): String {
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
+}
+
 private fun writeRollout(file: Path, lines: List<String>) {
   Files.createDirectories(file.parent)
   Files.write(file, lines)
 }
+
+private data class ActivityCase(
+  @JvmField val id: String,
+  @JvmField val eventLines: List<String>,
+  @JvmField val expected: CodexSessionActivity,
+  @JvmField val expectedRequiresResponse: Boolean = false,
+)

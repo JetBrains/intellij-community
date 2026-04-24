@@ -27,7 +27,6 @@ import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.awt.event.KeyEvent
 import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.resume
@@ -220,8 +219,8 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   @Test
   fun `check options are suggested on the next line after continuation and inserted correctly`() {
     doTest { fixture ->
-      fixture.type("Get-Content `")
-      fixture.pressKey(KeyEvent.VK_ENTER)
+    fixture.type("Get-Content `")
+      fixture.pressEnter()
       fixture.type("-")
 
       fixture.awaitOutputModelState(3.seconds) { model ->
@@ -392,7 +391,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("""
         dir "$tempDir/"
       """.trimIndent())
-      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt", "dir$separator")
@@ -414,7 +413,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("""
         dir '$tempDir/'
       """.trimIndent())
-      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt", "dir$separator")
@@ -436,7 +435,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("""
         dir "$tempDir/"
       """.trimIndent())
-      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt", "dir$separator")
@@ -458,7 +457,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("""
         dir '$tempDir/'
       """.trimIndent())
-      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.pressLeft()
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt", "dir$separator")

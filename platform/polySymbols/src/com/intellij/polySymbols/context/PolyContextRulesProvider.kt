@@ -6,7 +6,9 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.util.containers.MultiMap
 
-interface PolyContextRulesProvider : ModificationTracker {
+interface PolyContextRulesProvider {
+
+  val modificationTracker: ModificationTracker
 
   fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules>
 

@@ -24,9 +24,12 @@ object ClaudeCliSupport {
 
   fun buildNewSessionCommand(yolo: Boolean): List<String> =
     if (yolo) listOf(CLAUDE_COMMAND, "--dangerously-skip-permissions")
-    else listOf(CLAUDE_COMMAND)
+    else listOf(CLAUDE_COMMAND, PERMISSION_MODE_FLAG, PERMISSION_MODE_DEFAULT)
 
   fun buildResumeCommand(sessionId: String): List<String> =
     listOf(CLAUDE_COMMAND, "--resume", sessionId)
 }
 
+internal const val PERMISSION_MODE_FLAG: String = "--permission-mode"
+internal const val PERMISSION_MODE_DEFAULT: String = "default"
+internal const val PERMISSION_MODE_PLAN: String = "plan"

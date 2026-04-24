@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections
 
 import com.intellij.codeInspection.InspectionManager
@@ -13,10 +13,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.model.MavenDomParent
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.isMaven4
 
 class Maven4RedundantParentCoordinatesInspection : XmlSuppressableInspectionTool() {
 
@@ -27,8 +26,7 @@ class Maven4RedundantParentCoordinatesInspection : XmlSuppressableInspectionTool
     val project = file.project
 
     if (file is XmlFile && file.isPhysical()) {
-      val dist = MavenDistributionsCache.getInstance(file.project).getMavenDistribution(file.virtualFile)
-      if (!dist.isMaven4()) return null
+      if (!isAtLeastMaven4(file.virtualFile, file.project)) return null
       val dom =
         DomManager.getDomManager(file.getProject()).getFileElement(file, MavenDomProjectModel::class.java)
         ?: return null

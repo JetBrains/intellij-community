@@ -5,22 +5,28 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
+import com.intellij.agent.workbench.json.forEachJsonObjectField
+import com.intellij.agent.workbench.json.readJsonStringOrNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val CLAUDE_PROJECTS_DIR = "projects"
-private const val CLAUDE_INDEX_FILE = "sessions-index.json"
-private const val CLAUDE_INDEX_VERSION = 1L
-private const val MAX_JSONL_SCAN_OBJECTS = 240
 private const val MAX_TITLE_LENGTH = 120
 
+enum class ClaudeSessionActivity {
+  UNREAD,
+  PROCESSING,
+  READY,
+}
+
 data class ClaudeSessionThread(
-  val id: String,
-  val title: String,
-  val updatedAt: Long,
-  val gitBranch: String? = null,
+  @JvmField val id: String,
+  @JvmField val title: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val gitBranch: String? = null,
+  @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
 )
 
 class ClaudeSessionsStore(
@@ -28,162 +34,66 @@ class ClaudeSessionsStore(
 ) {
   private val jsonFactory = JsonFactory()
 
-  suspend fun listThreads(projectPath: String): List<ClaudeSessionThread> {
-    val normalizedProjectPath = normalizePath(projectPath) ?: return emptyList()
+  fun findMatchingDirectories(projectPath: String): Set<Path> {
+    val normalizedProjectPath = normalizePath(projectPath) ?: return emptySet()
     val projectsRoot = claudeHomeProvider().resolve(CLAUDE_PROJECTS_DIR)
-    if (!Files.isDirectory(projectsRoot)) return emptyList()
+    if (!Files.isDirectory(projectsRoot)) return emptySet()
 
-    val fromIndex = LinkedHashMap<String, ClaudeSessionThread>()
     val matchedDirectories = LinkedHashSet<Path>()
     val encodedDirectory = projectsRoot.resolve(encodeProjectPath(normalizedProjectPath))
     if (Files.isDirectory(encodedDirectory)) {
       matchedDirectories.add(encodedDirectory)
     }
 
-    Files.newDirectoryStream(projectsRoot).use { directories ->
-      for (dir in directories) {
-        if (!Files.isDirectory(dir)) continue
-        val indexFile = dir.resolve(CLAUDE_INDEX_FILE)
-        if (!Files.isRegularFile(indexFile)) continue
-        val index = parseSessionsIndex(indexFile) ?: continue
-        if (index.version != CLAUDE_INDEX_VERSION) continue
-        val entries = index.entries.filter { entry ->
-          matchesProjectPath(entry.projectPath, index.originalPath, normalizedProjectPath) && !entry.isSidechain
-        }
-        if (entries.isEmpty()) continue
-        matchedDirectories.add(dir)
-        for (entry in entries) {
-          val thread = entry.toThread()
-          if (thread != null) {
-            fromIndex[thread.id] = thread
-          }
-        }
-      }
-    }
-
-    val fromJsonl = LinkedHashMap<String, ClaudeSessionThread>()
-    for (directory in matchedDirectories) {
-      Files.newDirectoryStream(directory, "*.jsonl").use { files ->
-        for (file in files) {
-          if (!Files.isRegularFile(file)) continue
-          val fallback = parseJsonlFallback(file, normalizedProjectPath) ?: continue
-          if (fromIndex.containsKey(fallback.id)) continue
-          fromJsonl[fallback.id] = fallback
-        }
-      }
-    }
-
-    return buildList {
-      addAll(fromIndex.values)
-      addAll(fromJsonl.values)
-    }.sortedByDescending { it.updatedAt }
+    return matchedDirectories
   }
 
-  private fun parseSessionsIndex(path: Path): ClaudeSessionsIndex? {
-    Files.newBufferedReader(path).use { reader ->
-      jsonFactory.createParser(reader).use { parser ->
-        if (parser.nextToken() != JsonToken.START_OBJECT) return null
-        var version: Long? = null
-        var originalPath: String? = null
-        val entries = mutableListOf<ClaudeSessionsIndexEntry>()
-        forEachJsonObjectField(parser) { fieldName ->
-          when (fieldName) {
-            "version" -> version = readJsonLongOrNull(parser)
-            "originalPath" -> originalPath = readJsonStringOrNull(parser)
-            "entries" -> {
-              if (parser.currentToken == JsonToken.START_ARRAY) {
-                parseIndexEntries(parser, entries)
-              }
-              else {
-                parser.skipChildren()
-              }
-            }
-            else -> parser.skipChildren()
-          }
-          true
-        }
-        return ClaudeSessionsIndex(version = version, originalPath = originalPath, entries = entries)
-      }
-    }
-  }
+  fun parseJsonlFile(path: Path): ClaudeSessionThread? {
+    val headState = scanJsonlEvents(path)
 
-  private fun parseIndexEntries(parser: JsonParser, entries: MutableList<ClaudeSessionsIndexEntry>) {
-    while (true) {
-      val token = parser.nextToken() ?: return
-      if (token == JsonToken.END_ARRAY) return
-      if (token != JsonToken.START_OBJECT) {
-        parser.skipChildren()
-        continue
-      }
-      parseIndexEntry(parser)?.let(entries::add)
-    }
-  }
+    if (headState.isSidechain) return null
+    if (!headState.hasConversationSignal) return null
+    val normalizedSessionId = headState.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
 
-  private fun parseIndexEntry(parser: JsonParser): ClaudeSessionsIndexEntry? {
-    var sessionId: String? = null
-    var summary: String? = null
-    var firstPrompt: String? = null
-    var modified: String? = null
-    var fileMtime: Long? = null
-    var fullPath: String? = null
-    var projectPath: String? = null
-    var isSidechain = false
-    var gitBranch: String? = null
+    val tailState = scanJsonlTail(path)
+    val activityState: ActivityTrackingState = if (tailState.lastEventType != null) tailState else headState
 
-    forEachJsonObjectField(parser) { fieldName ->
-      when (fieldName) {
-        "sessionId" -> sessionId = readJsonStringOrNull(parser)
-        "summary" -> summary = readJsonStringOrNull(parser)
-        "firstPrompt" -> firstPrompt = readJsonStringOrNull(parser)
-        "modified" -> modified = readJsonStringOrNull(parser)
-        "fileMtime" -> fileMtime = readJsonLongOrNull(parser)
-        "fullPath" -> fullPath = readJsonStringOrNull(parser)
-        "projectPath" -> projectPath = readJsonStringOrNull(parser)
-        "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
-        "gitBranch" -> gitBranch = readJsonStringOrNull(parser)
-        else -> parser.skipChildren()
-      }
-      true
-    }
-
-    val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return ClaudeSessionsIndexEntry(
-      sessionId = normalizedSessionId,
-      summary = summary,
-      firstPrompt = firstPrompt,
-      modified = modified,
-      fileMtime = fileMtime,
-      fullPath = fullPath,
-      projectPath = projectPath,
-      isSidechain = isSidechain,
-      gitBranch = gitBranch,
-    )
-  }
-
-  private fun parseJsonlFallback(path: Path, targetProjectPath: String): ClaudeSessionThread? {
-    val parsed = parseJsonlMetadata(path, targetProjectPath) ?: return null
-    if (parsed.isSidechain) return null
+    val lastEventType = activityState.lastEventType ?: headState.lastEventType
+    val lastAssistantHadToolUse = if (activityState.lastEventType != null) activityState.lastAssistantHadToolUse else headState.lastAssistantHadToolUse
+    val activity = deriveActivity(lastEventType, lastAssistantHadToolUse)
+    val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
 
     val title = resolveThreadTitle(
-      summary = null,
-      firstPrompt = parsed.firstPrompt,
-      sessionId = parsed.sessionId,
+      firstPrompt = headState.firstPrompt,
+      sessionId = normalizedSessionId,
     )
-    val updatedAt = parsed.updatedAt
-      ?: Files.getLastModifiedTime(path).toMillis()
+    val resolvedUpdatedAt = updatedAt
+      ?: try { Files.getLastModifiedTime(path).toMillis() } catch (_: Throwable) { 0L }
 
     return ClaudeSessionThread(
-      id = parsed.sessionId,
+      id = normalizedSessionId,
       title = title,
-      updatedAt = updatedAt,
+      updatedAt = resolvedUpdatedAt,
+      activity = activity,
     )
   }
 
-  private fun parseJsonlMetadata(path: Path, targetProjectPath: String): ParsedJsonlMetadata? {
-    val state = WorkbenchJsonlScanner.scanJsonObjects(
+  private fun scanJsonlTail(path: Path): JsonlTailScanState {
+    return WorkbenchJsonlScanner.scanTailLines(
       path = path,
       jsonFactory = jsonFactory,
-      maxObjects = MAX_JSONL_SCAN_OBJECTS,
+      newState = ::JsonlTailScanState,
+    ) { parser, state ->
+      val lineData = parseJsonlLine(parser) ?: return@scanTailLines true
+      updateActivityFields(state, lineData)
+      true
+    }
+  }
+
+  private fun scanJsonlEvents(path: Path): JsonlMetadataScanState {
+    return WorkbenchJsonlScanner.scanJsonObjects(
+      path = path,
+      jsonFactory = jsonFactory,
       newState = ::JsonlMetadataScanState,
     ) { parser, scanState ->
       val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
@@ -200,210 +110,171 @@ class ClaudeSessionsStore(
       if (lineData.hasConversationSignal) {
         scanState.hasConversationSignal = true
       }
-      val lineTimestamp = lineData.timestampMillis
-      if (lineTimestamp != null) {
-        scanState.updatedAt = maxOf(scanState.updatedAt ?: 0L, lineTimestamp)
-      }
-      if (!lineData.cwd.isNullOrBlank()) {
-        scanState.hasPathSignal = true
-        val normalizedCwd = normalizePath(lineData.cwd)
-        if (normalizedCwd == targetProjectPath) {
-          scanState.pathMatches = true
-        }
-      }
-      true
-    }
-
-    if (state.hasPathSignal && !state.pathMatches) return null
-    if (!state.hasConversationSignal) return null
-    val normalizedSessionId = state.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return ParsedJsonlMetadata(
-      sessionId = normalizedSessionId,
-      firstPrompt = state.firstPrompt,
-      isSidechain = state.isSidechain,
-      updatedAt = state.updatedAt,
-    )
-  }
-
-  private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
-    return try {
-      if (parser.currentToken != JsonToken.START_OBJECT) return null
-      var sessionId: String? = null
-      var cwd: String? = null
-      var isSidechain = false
-      var timestampMillis: Long? = null
-      var firstPrompt: String? = null
-      var type: String? = null
-      var messageRole: String? = null
-      var messageContent: String? = null
-
-      forEachJsonObjectField(parser) { fieldName ->
-        when (fieldName) {
-          "sessionId" -> sessionId = readJsonStringOrNull(parser)
-          "cwd" -> cwd = readJsonStringOrNull(parser)
-          "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
-          "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
-          "type" -> type = readJsonStringOrNull(parser)
-          "message" -> {
-            if (parser.currentToken == JsonToken.START_OBJECT) {
-              val parsedMessage = readMessageObject(parser)
-              messageRole = parsedMessage.role
-              messageContent = parsedMessage.contentPreview
-            }
-            else {
-              parser.skipChildren()
-            }
-          }
-          else -> parser.skipChildren()
-        }
-        true
-      }
-      if (type == "user" && messageRole == "user") {
-        firstPrompt = sanitizeTitle(messageContent)
-      }
-      val hasConversationSignal = type == "user" || type == "assistant"
-      return ParsedJsonlLine(
-        sessionId = sessionId,
-        cwd = cwd,
-        isSidechain = isSidechain,
-        timestampMillis = timestampMillis,
-        firstPrompt = firstPrompt,
-        hasConversationSignal = hasConversationSignal,
-      )
-    }
-    catch (_: Throwable) {
-      null
+      updateActivityFields(scanState, lineData)
+      !(scanState.sessionId != null && scanState.hasConversationSignal && scanState.firstPrompt != null)
     }
   }
 
-  private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
-    var role: String? = null
-    var contentPreview: String? = null
+}
+
+private fun deriveActivity(lastEventType: String?, lastAssistantHadToolUse: Boolean?): ClaudeSessionActivity {
+  return when (lastEventType) {
+    "progress" -> if (lastAssistantHadToolUse == false) ClaudeSessionActivity.READY else ClaudeSessionActivity.PROCESSING
+    "assistant" -> if (lastAssistantHadToolUse == true) ClaudeSessionActivity.PROCESSING else ClaudeSessionActivity.READY
+    else -> ClaudeSessionActivity.READY
+  }
+}
+
+private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
+  return try {
+    if (parser.currentToken != JsonToken.START_OBJECT) return null
+    var sessionId: String? = null
+    var isSidechain = false
+    var timestampMillis: Long? = null
+    var firstPrompt: String? = null
+    var type: String? = null
+    var messageRole: String? = null
+    var messageContent: String? = null
+    var messageHasToolUse = false
+
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
-        "role" -> role = readJsonStringOrNull(parser)
-        "content" -> contentPreview = readContentPreview(parser)
+        "sessionId" -> sessionId = readJsonStringOrNull(parser)
+        "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
+        "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
+        "type" -> type = readJsonStringOrNull(parser)
+        "message" -> {
+          if (parser.currentToken == JsonToken.START_OBJECT) {
+            val parsedMessage = readMessageObject(parser)
+            messageRole = parsedMessage.role
+            messageContent = parsedMessage.contentPreview
+            messageHasToolUse = parsedMessage.hasToolUse
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
         else -> parser.skipChildren()
       }
       true
     }
-    return ParsedMessageObject(role = role, contentPreview = contentPreview)
-  }
-
-  private fun readContentPreview(parser: JsonParser): String? {
-    return when (parser.currentToken) {
-      JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
-      JsonToken.START_ARRAY -> readFirstTextFromArray(parser)
-      else -> {
-        parser.skipChildren()
-        null
-      }
+    if (type == "user" && messageRole == "user") {
+      firstPrompt = sanitizeTitle(messageContent)
     }
-  }
-
-  private fun readFirstTextFromArray(parser: JsonParser): String? {
-    while (true) {
-      val token = parser.nextToken() ?: return null
-      if (token == JsonToken.END_ARRAY) return null
-      if (token != JsonToken.START_OBJECT) {
-        parser.skipChildren()
-        continue
-      }
-      var itemType: String? = null
-      var itemText: String? = null
-      forEachJsonObjectField(parser) { fieldName ->
-        when (fieldName) {
-          "type" -> itemType = readJsonStringOrNull(parser)
-          "text" -> itemText = readJsonStringOrNull(parser)
-          else -> parser.skipChildren()
-        }
-        true
-      }
-      if (itemType == "text" && !itemText.isNullOrBlank()) {
-        return itemText
-      }
-    }
-  }
-
-  private fun ClaudeSessionsIndexEntry.toThread(): ClaudeSessionThread? {
-    val sessionId = sessionId.trim().takeIf { it.isNotEmpty() } ?: return null
-    val updatedAt = resolveUpdatedAt()
-    return ClaudeSessionThread(
-      id = sessionId,
-      title = resolveThreadTitle(summary = summary, firstPrompt = firstPrompt, sessionId = sessionId),
-      updatedAt = updatedAt,
-      gitBranch = gitBranch,
+    val hasConversationSignal = type == "user" || type == "assistant"
+    val hasToolUse = type == "assistant" && messageHasToolUse
+    return ParsedJsonlLine(
+      sessionId = sessionId,
+      isSidechain = isSidechain,
+      timestampMillis = timestampMillis,
+      firstPrompt = firstPrompt,
+      hasConversationSignal = hasConversationSignal,
+      eventType = type,
+      hasToolUse = hasToolUse,
     )
   }
-
-  private fun ClaudeSessionsIndexEntry.resolveUpdatedAt(): Long {
-    return parseIsoTimestamp(modified)
-      ?: fileMtime
-      ?: fullPath
-        ?.let(::parsePath)
-        ?.takeIf { Files.isRegularFile(it) }
-        ?.let { Files.getLastModifiedTime(it).toMillis() }
-      ?: 0L
+  catch (_: Throwable) {
+    null
   }
+}
 
-  private fun resolveThreadTitle(summary: String?, firstPrompt: String?, sessionId: String): String {
-    val summaryTitle = sanitizeTitle(summary)
-    if (!summaryTitle.isNullOrBlank()) return summaryTitle
-    val promptTitle = sanitizeTitle(firstPrompt).takeUnless { it.equals("No prompt", ignoreCase = true) }
-    if (!promptTitle.isNullOrBlank()) return promptTitle
-    return "Session ${sessionId.take(8)}"
-  }
-
-  private fun matchesProjectPath(entryProjectPath: String?, originalPath: String?, targetPath: String): Boolean {
-    val entryPath = normalizePath(entryProjectPath)
-    if (entryPath != null) return entryPath == targetPath
-    val indexPath = normalizePath(originalPath)
-    if (indexPath != null) return indexPath == targetPath
-    return false
-  }
-
-  private fun sanitizeTitle(value: String?): String? {
-    val normalized = value
-      ?.replace('\n', ' ')
-      ?.replace('\r', ' ')
-      ?.replace(Regex("\\s+"), " ")
-      ?.trim()
-      ?: return null
-    if (normalized.isEmpty()) return null
-    return if (normalized.length <= MAX_TITLE_LENGTH) normalized else normalized.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
-  }
-
-  private fun parseIsoTimestamp(value: String?): Long? {
-    val text = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return try {
-      Instant.parse(text).toEpochMilli()
+private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
+  var role: String? = null
+  var contentPreview: String? = null
+  var hasToolUse = false
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "role" -> role = readJsonStringOrNull(parser)
+      "content" -> {
+        val result = readContentWithToolUseCheck(parser)
+        contentPreview = result.first
+        hasToolUse = result.second
+      }
+      else -> parser.skipChildren()
     }
-    catch (_: Throwable) {
-      null
+    true
+  }
+  return ParsedMessageObject(role = role, contentPreview = contentPreview, hasToolUse = hasToolUse)
+}
+
+private fun readContentWithToolUseCheck(parser: JsonParser): Pair<String?, Boolean> {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> Pair(readJsonStringOrNull(parser), false)
+    JsonToken.START_ARRAY -> readFirstTextAndToolUseFromArray(parser)
+    else -> {
+      parser.skipChildren()
+      Pair(null, false)
     }
   }
+}
 
-  private fun encodeProjectPath(projectPath: String): String {
-    return projectPath.replace('/', '-')
+private fun readFirstTextAndToolUseFromArray(parser: JsonParser): Pair<String?, Boolean> {
+  var firstText: String? = null
+  var hasToolUse = false
+  while (true) {
+    val token = parser.nextToken() ?: return Pair(firstText, hasToolUse)
+    if (token == JsonToken.END_ARRAY) return Pair(firstText, hasToolUse)
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
+    }
+    var itemType: String? = null
+    var itemText: String? = null
+    forEachJsonObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "type" -> itemType = readJsonStringOrNull(parser)
+        "text" -> itemText = readJsonStringOrNull(parser)
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    if (itemType == "tool_use") {
+      hasToolUse = true
+    }
+    if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
+      firstText = itemText
+    }
   }
+}
 
-  private fun normalizePath(path: String?): String? {
-    val raw = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return try {
-      Path.of(raw).invariantSeparatorsPathString
-    }
-    catch (_: Throwable) {
-      raw.replace('\\', '/')
-    }
+private fun resolveThreadTitle(firstPrompt: String?, sessionId: String): String {
+  val promptTitle = sanitizeTitle(firstPrompt).takeUnless { it.equals("No prompt", ignoreCase = true) }
+  if (!promptTitle.isNullOrBlank()) return promptTitle
+  return "Session ${sessionId.take(8)}"
+}
+
+private fun sanitizeTitle(value: String?): String? {
+  val normalized = value
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(Regex("\\s+"), " ")
+    ?.trim()
+    ?: return null
+  if (normalized.isEmpty()) return null
+  return if (normalized.length <= MAX_TITLE_LENGTH) normalized else normalized.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
+}
+
+private fun parseIsoTimestamp(value: String?): Long? {
+  val text = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return try {
+    Instant.parse(text).toEpochMilli()
   }
+  catch (_: Throwable) {
+    null
+  }
+}
 
-  private fun parsePath(path: String): Path? {
-    return try {
-      Path.of(path)
-    }
-    catch (_: Throwable) {
-      null
-    }
+private fun encodeProjectPath(projectPath: String): String {
+  return projectPath.replace('/', '-').replace('.', '-')
+}
+
+private fun normalizePath(path: String?): String? {
+  val raw = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return try {
+    Path.of(raw).invariantSeparatorsPathString
+  }
+  catch (_: Throwable) {
+    raw.replace('\\', '/')
   }
 }
 
@@ -420,51 +291,55 @@ private fun readBooleanOrFalse(parser: JsonParser): Boolean {
   }
 }
 
-private data class ClaudeSessionsIndex(
-  val version: Long?,
-  val originalPath: String?,
-  val entries: List<ClaudeSessionsIndexEntry>,
-)
-
-private data class ClaudeSessionsIndexEntry(
-  val sessionId: String,
-  val summary: String?,
-  val firstPrompt: String?,
-  val modified: String?,
-  val fileMtime: Long?,
-  val fullPath: String?,
-  val projectPath: String?,
-  val isSidechain: Boolean,
-  val gitBranch: String? = null,
-)
-
 private data class ParsedJsonlLine(
-  val sessionId: String?,
-  val cwd: String?,
-  val isSidechain: Boolean,
-  val timestampMillis: Long?,
-  val firstPrompt: String?,
-  val hasConversationSignal: Boolean,
+  @JvmField val sessionId: String?,
+  @JvmField val isSidechain: Boolean,
+  @JvmField val timestampMillis: Long?,
+  @JvmField val firstPrompt: String?,
+  @JvmField val hasConversationSignal: Boolean,
+  @JvmField val eventType: String?,
+  @JvmField val hasToolUse: Boolean = false,
 )
 
 private data class ParsedMessageObject(
-  val role: String?,
-  val contentPreview: String?,
+  @JvmField val role: String?,
+  @JvmField val contentPreview: String?,
+  @JvmField val hasToolUse: Boolean = false,
 )
 
-private data class ParsedJsonlMetadata(
-  val sessionId: String,
-  val firstPrompt: String?,
-  val isSidechain: Boolean,
-  val updatedAt: Long?,
-)
+private interface ActivityTrackingState {
+  var lastEventType: String?
+  var lastAssistantHadToolUse: Boolean?
+  var updatedAt: Long?
+}
+
+private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJsonlLine) {
+  val eventType = lineData.eventType
+  if (eventType == "user" || eventType == "assistant" || eventType == "progress") {
+    state.lastEventType = eventType
+    when (eventType) {
+      "user" -> state.lastAssistantHadToolUse = null
+      "assistant" -> state.lastAssistantHadToolUse = lineData.hasToolUse
+    }
+  }
+  val lineTimestamp = lineData.timestampMillis
+  if (lineTimestamp != null) {
+    state.updatedAt = maxOf(state.updatedAt ?: 0L, lineTimestamp)
+  }
+}
+
+private data class JsonlTailScanState(
+  override var lastEventType: String? = null,
+  override var lastAssistantHadToolUse: Boolean? = null,
+  override var updatedAt: Long? = null,
+) : ActivityTrackingState
 
 private data class JsonlMetadataScanState(
-  var firstPrompt: String? = null,
-  var sessionId: String? = null,
-  var isSidechain: Boolean = false,
-  var hasPathSignal: Boolean = false,
-  var pathMatches: Boolean = false,
-  var updatedAt: Long? = null,
-  var hasConversationSignal: Boolean = false,
-)
+  @JvmField var firstPrompt: String? = null,
+  @JvmField var sessionId: String? = null,
+  @JvmField var isSidechain: Boolean = false,
+  override var updatedAt: Long? = null,
+  @JvmField var hasConversationSignal: Boolean = false,
+  override var lastEventType: String? = null,
+  override var lastAssistantHadToolUse: Boolean? = null,
+) : ActivityTrackingState

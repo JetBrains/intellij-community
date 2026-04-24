@@ -88,6 +88,7 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineName
@@ -123,6 +124,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Insets
 import java.awt.LayoutManager
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -138,6 +140,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.ToolTipManager
 import javax.swing.UIManager
+import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
@@ -229,7 +232,23 @@ open class IdeStatusBarImpl @Internal constructor(
     layout = BorderLayout()
     isOpaque = true
     border = (if (ExperimentalUI.isNewUI()) {
-      CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.StatusBar.BORDER_COLOR, 1, 0, 0, 0), JBUI.Borders.empty(0, 10))
+      CompoundBorder(object : Border {
+        override fun paintBorder(component: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+          val top = getTopWidth()
+          if (top > 0) {
+            g.color = JBUI.CurrentTheme.StatusBar.BORDER_COLOR
+            g.fillRect(x, y, width, JBUI.scale(top))
+          }
+        }
+
+        override fun getBorderInsets(component: Component): Insets {
+          return JBInsets(getTopWidth(), 0, 0, 0)
+        }
+
+        private fun getTopWidth(): Int = JBUI.getInt("StatusBar.topBorderWidth", 1)
+
+        override fun isBorderOpaque(): Boolean = true
+      }, JBUI.Borders.empty(0, 10))
     }
     else {
       JBUI.Borders.empty(1, 0, 0, 6)

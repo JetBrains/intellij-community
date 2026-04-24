@@ -329,6 +329,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Detekt Compose Rules", libraryName = "io.nlopez.compose.rules.detekt", url = "https://github.com/mrmans0n/compose-rules")
       .apache("https://github.com/mrmans0n/compose-rules/blob/main/LICENSE.md"),
 
+    LibraryLicense("Directory Watcher", libraryName = "directory-watcher", url = "https://github.com/gmethvin/directory-watcher")
+      .apache("https://github.com/gmethvin/directory-watcher/blob/master/LICENSE"),
+
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),
 

@@ -17,4 +17,12 @@ interface TargetPanelExtension {
   fun applyToTargetConfiguration()
 
   fun applyToAdditionalData(pyTargetAwareAdditionalData: PyTargetAwareAdditionalData)
+
+  /**
+   * When [required] is `true`, forces auto-upload of project files and prevents the user from disabling it.
+   * Used by environment managers (e.g., uv) that require project files to be present on the remote host.
+   */
+  fun setAutoUploadRequired(required: Boolean) {
+    // default no-op for extensions that don't have an auto-upload control
+  }
 }

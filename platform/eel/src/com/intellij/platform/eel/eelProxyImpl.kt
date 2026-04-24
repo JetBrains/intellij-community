@@ -138,7 +138,7 @@ private fun fakeListenAddress(
   if (acceptorPort == 0.toUShort() || acceptorPort == connectorPort) {
     check(connectorPort > 0u)
     return object : EelTunnelsApi.ResolvedSocketAddress.V4 {
-      override val bits: UInt = 127u shl 24 + 1
+      override val bits: UInt = (127u shl 24) + 1u
       override val port: UShort = connectorPort
     }
   }

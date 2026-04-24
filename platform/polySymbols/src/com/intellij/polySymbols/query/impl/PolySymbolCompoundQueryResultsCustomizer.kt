@@ -37,9 +37,6 @@ internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers:
     }
   }
 
-  override fun getModificationCount(): Long =
-    customizers.sumOf { it.modificationCount }
-
   override fun equals(other: Any?): Boolean =
     other === this ||
     other is PolySymbolCompoundQueryResultsCustomizer

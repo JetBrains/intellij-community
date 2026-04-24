@@ -3,12 +3,13 @@ package com.intellij.polySymbols.html.attributeValues
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
-import com.intellij.polySymbols.html.htmlAttributeValue
+import com.intellij.polySymbols.html.getHtmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -22,14 +23,15 @@ class HtmlAttributeValueSymbolsCompletionProvider : PolySymbolsCompletionProvide
 
   override fun addCompletions(
     parameters: CompletionParameters, result: CompletionResultSet, position: Int,
-    name: String, queryExecutor: PolySymbolQueryExecutor, context: XmlAttributeValue
+    name: String, queryExecutor: PolySymbolQueryExecutor, context: XmlAttributeValue,
   ) {
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
 
     val attribute = context.parent as? XmlAttribute ?: return
     val attributeDescriptor = attribute.descriptor.asSafely<HtmlAttributeSymbolDescriptor>() ?: return
 
-    val type = attributeDescriptor.symbol.htmlAttributeValue?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
+    val type = attributeDescriptor.symbol.getHtmlAttributeValue(CompletionUtil.getOriginalOrSelf(attribute))
+                 ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return
 
     val providedNames = mutableSetOf(attribute.name)

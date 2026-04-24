@@ -97,7 +97,11 @@ object PyExpectedVarianceJudgment {
   }
 
   private fun fromTypeDeclarationStatement(element: PyTypeDeclarationStatement, parent: PsiElement, context: TypeEvalContext): Variance? {
-    val parentClass = parent.parent as? PyClass ?: return null
+    val parentClass = parent.parent
+    if (parentClass !is PyClass) {
+      // assume that we are in a type alias: `My_Class_Int = My_Class[int]`
+      return BIVARIANT
+    }
     val targetExpr = element.target as? PyTargetExpression ?: return null
     if (attributeDoesNotAffectVarianceInference(targetExpr)) return null
     if (isEffectivelyReadOnly(targetExpr, parentClass, context)) return COVARIANT
@@ -110,7 +114,7 @@ object PyExpectedVarianceJudgment {
     context: TypeEvalContext,
   ): Variance? {
     val qualifier = subscriptionExpr.qualifier as? PyReferenceExpression ?: return null
-    var qualifierType = context.getType(qualifier)
+    var qualifierType = PyTypingTypeProvider.getType(qualifier, context)?.get()
     if (qualifierType is PyClassType && qualifierType !is PyCollectionType) {
       // convert raw types to generic types
       qualifierType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
@@ -129,7 +133,11 @@ object PyExpectedVarianceJudgment {
 
   private fun getTypeParameterVarianceAtIndex(qualifierType: PyClassType, index: Int, context: TypeEvalContext): Variance? {
     if (qualifierType is PyCollectionType) {
-      val typeParamType = qualifierType.elementTypes.getOrNull(index) as? PyTypeVarType ?: return null
+      // check definition type since generic type aliases are parameterized, i.e.: `A_Alias_1 = ClassA[T_co]` will be ClassA[Any]
+      val definitionType = PyTypeChecker.findGenericDefinitionType(qualifierType.pyClass, context) ?: qualifierType
+      val typeParamType = definitionType.elementTypes.getOrNull(index) as? PyTypeVarType
+        ?: qualifierType.elementTypes.getOrNull(index) as? PyTypeVarType
+        ?: return null
       return getInferredVariance(typeParamType, context)
     }
     return null

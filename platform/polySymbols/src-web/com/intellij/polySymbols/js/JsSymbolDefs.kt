@@ -26,5 +26,4 @@ val JS_STRING_LITERALS: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "string-li
 /**
  * One of [JsSymbolSymbolKind] enum values. By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
  **/
-@JvmField
-val PROP_JS_SYMBOL_KIND: PolySymbolProperty<JsSymbolSymbolKind> = PolySymbolProperty.Companion["js-symbol-kind"]
+object JsSymbolKindProperty : PolySymbolProperty<JsSymbolSymbolKind>("js-symbol-kind", JsSymbolSymbolKind::class.java)

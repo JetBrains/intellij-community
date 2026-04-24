@@ -20,7 +20,7 @@ internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
   }
 
   override fun getMetrics(): Set<MetricEvent> {
-    if (!WSLUtil.isSystemCompatible() || PlatformUtils.isJetBrainsClient()) return emptySet()
+    if (!WSLUtil.isSystemCompatible() || PlatformUtils.isJetBrainsClient() || PlatformUtils.isGateway()) return emptySet()
 
     val distributionsWithVersions = try {
       WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions()

@@ -79,7 +79,7 @@ open class ITNReporter internal constructor(private val postUrl: String?) : Erro
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 
   private fun createReportBean(event: IdeaLoggingEvent, comment: String?, autoReported: Boolean) = ErrorBean(
-    event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version,
+    event, comment, event.problematicPluginInfo?.pluginId?.idString, event.problematicPluginInfo?.name, event.problematicPluginInfo?.version,
     IdeaLogger.ourLastActionId, autoReported
   )
 

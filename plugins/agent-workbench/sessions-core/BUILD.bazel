@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.agent.workbench.sessions.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "agent-workbench-sessions-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "agent-workbench-sessions-core",
+  module_name = "intellij.agent.workbench.sessions.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":agent-workbench-sessions-core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.sessions.core` end

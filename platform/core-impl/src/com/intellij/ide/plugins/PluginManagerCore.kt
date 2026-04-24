@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -282,9 +283,15 @@ object PluginManagerCore {
 
   @JvmStatic
   fun isDevelopedByJetBrains(plugin: PluginDescriptor): Boolean {
-    return CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
-           isDevelopedByJetBrains(plugin.getVendor()) ||
-           isDevelopedByJetBrains(plugin.organization)
+    return isDevelopedByJetBrains(pluginId = plugin.pluginId, vendor = plugin.vendor, organization = plugin.organization)
+  }
+
+  @Internal
+  @JvmStatic
+  fun isDevelopedByJetBrains(pluginId: PluginId, vendor: @NlsSafe String?, organization: @NlsSafe String?): Boolean {
+    return CORE_ID == pluginId || SPECIAL_IDEA_PLUGIN_ID == pluginId ||
+           isDevelopedByJetBrains(vendor) ||
+           isDevelopedByJetBrains(organization)
   }
 
   @JvmStatic
@@ -652,8 +659,10 @@ object PluginManagerCore {
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          val disabledPlugin = fullIdMap.get(disabledDependencyId)!!
-          pluginsToEnable.put(disabledDependencyId, PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name))
+          val disabledPlugin = fullIdMap.get(disabledDependencyId)
+          if (disabledPlugin != null) {
+            pluginsToEnable.put(disabledDependencyId, PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name))
+          }
         }
       }
     }

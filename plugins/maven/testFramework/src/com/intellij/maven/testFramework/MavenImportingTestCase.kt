@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
@@ -386,13 +386,19 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Obsolete
   // use importProjectAsync(String)
-  protected open fun importProject(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-    createProjectPom(xml)
+  protected open fun importProject(
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ) {
+    createProjectPom(xml, omitModelVersionTag)
     importProject()
   }
 
-  protected suspend fun importProjectAsync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-    createProjectPom(xml)
+  protected suspend fun importProjectAsync(
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+    omitModelVersionTag: Boolean = false,
+  ) {
+    createProjectPom(xml, omitModelVersionTag)
     importProjectAsync()
   }
 

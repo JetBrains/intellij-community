@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -1152,7 +1139,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testCoroutineReturnsGenerator() {
-    doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
+    doTest("CoroutineType[Any, Any, Generator[int, Any, Any]]",
            """
              from typing import Generator
              
@@ -6171,6 +6158,19 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-57621")
+  public void testEnumTuple() {
+    doTest("tuple[int, str]", """
+      from enum import Enum
+      
+      class Color(Enum):
+        RED = 1, "red"
+        BLUE = 2, "blue"
+      
+      expr = Color.BLUE.value
+      """);
+  }
+
   // PY-76149
   public void testDataclassTransformConstructorSignatureWithFieldsAnnotatedWithDescriptor() {
     doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
@@ -6271,7 +6271,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-36416
   public void testReturnTypeOfNonAnnotatedAsyncOverride() {
-    doTest("Coroutine[Any, Any, str]", """
+    doTest("CoroutineType[Any, Any, str]", """
       class Base:
           async def get(self) -> str:
               ...
@@ -6938,6 +6938,93 @@ public class PyTypingTest extends PyTestCase {
       
       expr = x
       """);
+  }
+
+  public void testSimpleUnknown() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Unknown", "expr = asdf");
+    });
+  }
+
+  public void testPlainAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        expr: Any
+        """);
+    });
+  }
+
+  public void testTypeVarDefaultAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Any", """
+        from typing import Any
+        
+        def f[T=Any]() -> T: ...
+        
+        expr = f()
+        """);
+    });
+  }
+
+  public void testUnsolvedTypeVar() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Unknown", """
+        def f[T]() -> T: ...
+        
+        expr = f()
+        """);
+    });
+  }
+
+  public void testPsiStubbedAny() {
+    withNewAnyTypeEnabled(() -> {
+      runWithAdditionalFileInLibDir("other.py", """
+        from typing import Any
+        
+        x: Any
+        """, x -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, """
+          from other import x
+          
+          expr = x
+          """);
+        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+        final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+        assertType("Failed in code analysis context", "Any", expr, codeAnalysis);
+      });
+    });
+  }
+
+  public void testPsiStubbedUnknown() {
+    withNewAnyTypeEnabled(() -> {
+      runWithAdditionalFileInLibDir("other.py", """
+        x = asdf
+        """, x -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, """
+          from other import x
+          
+          expr = x
+          """);
+        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+        final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+        assertType("Failed in code analysis context", "Unknown", expr, codeAnalysis);
+      });
+    });
+  }
+
+  @TestFor(issues = "PY-84430")
+  public void testQuotedAny() {
+    fixme("quoted Any", AssertionError.class, "Failed in code analysis context expected:<[Any]> but was:<[Literal[0]]>", () ->
+      doTest("Any", """
+        from typing import Any
+        
+        any: "Any" = 1
+        
+        expr = any.imag
+        """)
+    );
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

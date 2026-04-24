@@ -73,24 +73,7 @@
     <orderEntry type="module" module-name="intellij.libraries.blockmap" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" />
-    <orderEntry type="module-library">
-      <library name="jetbrains.format.ripper" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.format-ripper:format-ripper:1.2.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar">
-              <sha256sum>7b47cc1b48092566eaf82c8cd6210151661423b755dc578613000cac90464eef</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="jetbrains.format.ripper" level="project" />
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" />

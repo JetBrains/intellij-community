@@ -18,6 +18,7 @@ import com.jetbrains.python.inspections.quickfix.PyQuickFixUtil;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,11 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    return new PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    return new PyInspectionVisitor(holder, context) {
+      {
+        downgradeHighlightForTypeEngine = context.getTypeEngine() != null;
+      }
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {
         if (function.getTypeComment() == null &&

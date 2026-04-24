@@ -8,7 +8,6 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/llm/llm-agg-api-model-jvm/0/llm-agg-api-model-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-feedback-jvm/0/model-feedback-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-indexing-jvm/0/model-indexing-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-sum-jvm/0/model-sum-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-llm-jvm/0/model-llm-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-bdg-jvm/0/model-bdg-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0/model-nlp-jvm-0.jar
@@ -32,7 +31,6 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nmt-jvm/0/model-nmt-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlc-jvm/0/model-nlc-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-syn-jvm/0/model-syn-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-qa-jvm/0/model-qa-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-task-jvm/0/model-task-jvm-0.jar
@@ -50,6 +48,11 @@
   files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/client/client-ktor-jvm/0/client-ktor-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-ktor-jvm/0/utils-ktor-jvm-0.jar
+- name: lib/ai.grazie.gec.util.jar
+  library: ai.grazie.gec.util
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0/gec-util-0.jar
 - name: lib/ai.grazie.model.ner.jvm.jar
   library: ai.grazie.model.ner.jvm
   module: intellij.grazie.core
@@ -117,12 +120,16 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0/nlp-phonetics-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
       ai.grazie.spell.hunspell.en:
       - name: $MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en/0/hunspell-en-0.jar
-      ai.grazie.nlp.detect:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
       ai.grazie.model.swagger.annotations.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
+- name: lib/io.github.oshai.kotlin.logging.jvm.jar
+  library: io.github.oshai.kotlin.logging.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
+  reason: <- intellij.grazie.core
 - name: lib/javax.measure-unit-api.jar
   library: javax.measure:unit-api:1.0
   module: intellij.grazie.core

@@ -50,7 +50,7 @@ internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, comm
   val root = repository.root
 
   val generatedEntries = repository.project.service<GitInteractiveRebaseEntriesProvider>()
-    .tryGetEntriesUsingLog(repository, commit, logData)
+    .tryGetEntriesForDialog(repository, commit, logData)
   if (generatedEntries == null) {
     startInteractiveRebase(repository, commit)
     return

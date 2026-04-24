@@ -242,7 +242,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("MERGE_EQUAL_STACKTRACES")
   var mergeEqualStackTraces: Boolean by property(true)
   @get:OptionTag("SHOW_VIRTUAL_THREAD_CONTAINERS")
-  var showVirtualThreadContainers: Boolean by property(true)
+  var showDumpItemsHierarchy: Boolean by property(true)
   @get:OptionTag("SHOW_ONLY_PLATFORM_THREADS")
   var showOnlyPlatformThreads: Boolean by property(false)
   @get:OptionTag("SORT_BOOKMARKS")

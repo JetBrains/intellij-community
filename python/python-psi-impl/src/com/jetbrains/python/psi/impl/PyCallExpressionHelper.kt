@@ -52,6 +52,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -78,6 +79,7 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.toolbox.Maybe
 import org.jetbrains.annotations.ApiStatus
@@ -231,7 +233,7 @@ private fun PyCallExpression.getExplicitResolveResults(resolveContext: PyResolve
   for (type in calleeType.toStream()) {
     // When invoking cls(), turn type[Self] into Self.
     // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
-    // as a call result, losing Self. 
+    // as a call result, losing Self.
     // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
     if (type is PySelfType) {
       result.add(type)
@@ -365,9 +367,9 @@ private fun PyCallSiteExpression.toCallableType(
       clarifiedResolved.getImplicitArgumentCount(resolvedModifier, isConstructorCall, isByInstance, isByClass)
 
     val clarifiedConstructorCallType =
-      if (PyUtil.isInitOrNewMethod(clarifiedResolved)) resolveResult.clarifyConstructorCallType(this, context) else null
+      if (PyUtil.isInitOrNewMethod(clarifiedResolved)) resolveResult.clarifyConstructorCallType(this, context) else PyAnyType.unknown
 
-    if (callableType.modifier == resolvedModifier && callableType.implicitOffset == resolvedImplicitOffset && clarifiedConstructorCallType == null) {
+    if (callableType.modifier == resolvedModifier && callableType.implicitOffset == resolvedImplicitOffset && clarifiedConstructorCallType.isUnknown) {
       return callableType
     }
 
@@ -601,14 +603,14 @@ private fun List<PyCallableType>.resolveOverloadsCallType(callSite: PyCallSiteEx
     return matchingOverloads[0].getCallType(context, callSite)
   }
   val someArgumentsHaveUnknownType = arguments.any {
-    context.getType(it) == null
+    context.getType(it).isUnknown
   }
   if (someArgumentsHaveUnknownType) {
     return matchingOverloads
       .map { it.getCallType(context, callSite) }
       .let { PyUnionType.union(it) }
   }
-  return matchingOverloads.firstOrNull()?.getCallType(context, callSite)
+  return matchingOverloads.firstOrNull()?.getCallType(context, callSite) ?: PyAnyType.unknown
 }
 
 private fun ClarifiedResolveResult.clarifyConstructorCallType(callSite: PyCallSiteExpression, context: TypeEvalContext): PyType? {
@@ -634,12 +636,12 @@ private fun ClarifiedResolveResult.clarifyConstructorCallType(callSite: PyCallSi
   if (initOrNewCallType is PyCollectionType) {
     return initOrNewCallType
   }
-  if (initOrNewCallType == null) {
+  if (initOrNewCallType.isUnknown) {
     // TODO requires weak union. See PyUnresolvedReferencesInspectionTest.testCustomNewReturnInAnotherModule
     return PyUnionType.createWeakType(PyClassTypeImpl(receiverClass, false))
   }
 
-  return null
+  return PyAnyType.unknown
 }
 
 private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<PyType?> {

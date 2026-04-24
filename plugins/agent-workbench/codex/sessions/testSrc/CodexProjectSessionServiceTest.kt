@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.codex.sessions
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
@@ -20,7 +21,7 @@ class CodexProjectSessionServiceTest {
   lateinit var tempDir: Path
 
   @Test
-  fun shutdownHookRunsOnCancellation() = runBlocking {
+  fun shutdownHookRunsOnCancellation() = runBlocking(Dispatchers.Default) {
     val parentJob = coroutineContext.job
     @Suppress("RAW_SCOPE_CREATION")
     val scope = CoroutineScope(coroutineContext + Job(parentJob))

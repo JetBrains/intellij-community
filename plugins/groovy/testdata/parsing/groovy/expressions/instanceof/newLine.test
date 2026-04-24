@@ -11,6 +11,6 @@ Groovy script
     Type element
       Reference element
         PsiElement(identifier)('b')
-    PsiElement(new line)('\n ')
-    GrPatternVariableImpl(PATTERN_VARIABLE)
-      PsiElement(identifier)('c')
+  PsiElement(new line)('\n ')
+  Reference expression
+    PsiElement(identifier)('c')

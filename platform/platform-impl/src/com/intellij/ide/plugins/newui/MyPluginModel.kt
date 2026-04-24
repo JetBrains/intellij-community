@@ -154,19 +154,15 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   fun clear(parentComponent: JComponent?) {
-    UiPluginManager.getInstance().resetSession(mySessionId.toString(), false,
-                                               parentComponent) {
+    UiPluginManager.getInstance().resetSession(mySessionId.toString(), false, parentComponent) {
       applyChangedStates(it)
-      updateAfterEnableDisable()
-      null
+      updateEnabledStateInUi()
     }
   }
 
   fun cancel(parentComponent: JComponent?, removeSession: Boolean) {
-    UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession,
-                                               parentComponent) {
+    UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession, parentComponent) {
       applyChangedStates(it)
-      null
     }
   }
 

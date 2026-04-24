@@ -101,6 +101,11 @@ class InstalledPluginsTab extends PluginsTab {
     for (InstalledSearchOption option : InstalledSearchOption.values()) {
       myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
     }
+
+    myUpdateAll.setVisible(false);
+    myUpdateAllBundled.setVisible(false);
+    myUpdateCounter.setVisible(false);
+    myUpdateCounterBundled.setVisible(false);
   }
 
   public @Nullable PluginsGroupComponentWithProgress getInstalledPanel() {
@@ -144,11 +149,6 @@ class InstalledPluginsTab extends PluginsTab {
 
     PluginsGroup userInstalled = new PluginsGroup(IdeBundle.message("plugins.configurable.userInstalled"), PluginsGroupType.INSTALLED);
     PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-
-    myUpdateAll.setVisible(false);
-    myUpdateAllBundled.setVisible(false);
-    myUpdateCounter.setVisible(false);
-    myUpdateCounterBundled.setVisible(false);
 
     LinkListener<Object> updateAllListener = new LinkListener<>() {
       @Override
@@ -208,19 +208,6 @@ class InstalledPluginsTab extends PluginsTab {
           ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
         userInstalled.addModels(nonBundledPlugins);
 
-        if (!userInstalled.getModels().isEmpty()) {
-          userInstalled.sortByName();
-
-          long enabledNonBundledCount = nonBundledPlugins.stream()
-            .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
-            .count();
-          userInstalled.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-          if (userInstalled.ui == null) {
-            myInstalledPanel.addGroup(userInstalled);
-          }
-          myPluginModelFacade.getModel().addEnabledGroup(userInstalled);
-        }
-
         String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
 
         Map<String, Supplier<JComponent>> promotionPanelSuppliers = new HashMap<>();
@@ -230,7 +217,7 @@ class InstalledPluginsTab extends PluginsTab {
           }
         }
 
-        visibleBundledPlugins
+        List<ComparablePluginsGroup> sortedBundledGroups = visibleBundledPlugins
           .stream()
           .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
           .entrySet()
@@ -268,12 +255,42 @@ class InstalledPluginsTab extends PluginsTab {
             if (defaultCategory.equals(o2.title)) return -1;
             return o1.compareTo(o2);
           })
-          .forEachOrdered(group -> {
+          .toList();
+
+        if (Registry.is("ide.plugins.category.promotion.enabled")) {
+          // Add priority groups with promotion panel before userInstalled
+          for (ComparablePluginsGroup group : sortedBundledGroups) {
+            if (group.promotionPanel != null) {
+              group.getPreloadedModel().setErrors(model.getErrors());
+              group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+              myInstalledPanel.addGroup(group);
+              myPluginModelFacade.getModel().addEnabledGroup(group);
+            }
+          }
+        }
+
+        if (!userInstalled.getModels().isEmpty()) {
+          userInstalled.sortByName();
+
+          long enabledNonBundledCount = nonBundledPlugins.stream()
+            .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
+            .count();
+          userInstalled.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+          if (userInstalled.ui == null) {
+            myInstalledPanel.addGroup(userInstalled);
+          }
+          myPluginModelFacade.getModel().addEnabledGroup(userInstalled);
+        }
+
+        // Add remaining groups (without promotion panel when flag is enabled, or all groups when disabled)
+        for (ComparablePluginsGroup group : sortedBundledGroups) {
+          if (!Registry.is("ide.plugins.category.promotion.enabled") || group.promotionPanel == null) {
             group.getPreloadedModel().setErrors(model.getErrors());
             group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
             myInstalledPanel.addGroup(group);
             myPluginModelFacade.getModel().addEnabledGroup(group);
-          });
+          }
+        }
 
         myPluginUpdatesService.calculateUpdates(updates -> {
           if (ContainerUtil.isEmpty(updates)) {
@@ -450,7 +467,17 @@ class InstalledPluginsTab extends PluginsTab {
         }
       }
       if (!myBundledUpdateGroup.getModels().isEmpty()) {
-        getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
+        int insertPosition = 0;
+        if (Registry.is("ide.plugins.category.promotion.enabled")) {
+          List<UIPluginGroup> groups = getInstalledPanel().getGroups();
+          for (int i = 0; i < groups.size(); i++) {
+            if (groups.get(i).promotionPanel != null) {
+              insertPosition = i + 1;
+              break;
+            }
+          }
+        }
+        getInstalledPanel().addGroup(myBundledUpdateGroup, insertPosition);
         myBundledUpdateGroup.ui.isBundledUpdatesGroup = true;
 
         for (PluginUiModel descriptor : updates) {
@@ -589,12 +616,14 @@ class InstalledPluginsTab extends PluginsTab {
   private final class ComparablePluginsGroup extends PluginsGroup
     implements Comparable<ComparablePluginsGroup> {
 
+    @NotNull private final Map<PluginId, Boolean> myPluginsRequiresUltimateButItsDisabled;
     private boolean myIsEnable = false;
 
     private ComparablePluginsGroup(@NotNull @NlsSafe String category,
                                    @NotNull List<PluginUiModel> descriptors,
                                    @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
       super(category, PluginsGroupType.INSTALLED);
+      myPluginsRequiresUltimateButItsDisabled = pluginsRequiresUltimate;
 
       this.addModels(descriptors);
       sortByName();
@@ -606,6 +635,20 @@ class InstalledPluginsTab extends PluginsTab {
         ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
       mainAction.setVisible(hasPluginsAvailableForEnableDisable);
       titleWithEnabled(myPluginModelFacade);
+    }
+
+    @Override
+    public void titleWithEnabled(@NotNull PluginModelFacade pluginModelFacade) {
+      int enabled = 0;
+      for (PluginUiModel descriptor : models) {
+        if (pluginModelFacade.isLoaded(descriptor) &&
+            pluginModelFacade.isEnabled(descriptor) &&
+            !myPluginsRequiresUltimateButItsDisabled.getOrDefault(descriptor.getPluginId(), false) &&
+            !descriptor.isIncompatible()) {
+          enabled++;
+        }
+      }
+      titleWithCount(enabled);
     }
 
     @Override

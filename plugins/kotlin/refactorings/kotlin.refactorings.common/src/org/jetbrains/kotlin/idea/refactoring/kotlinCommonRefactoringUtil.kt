@@ -86,6 +86,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.unpackFunctionLiteral
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.Collections
 import kotlin.math.min
 
@@ -412,7 +413,16 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
 
     return when (enclosingDeclaration) {
         is KtFile -> Collections.singletonList(enclosingDeclaration)
-        is KtScript -> Collections.singletonList(enclosingDeclaration)
+        is KtScript -> {
+            /**
+             * [KtScript] element is essentially a class, so it should always have
+             * a single child, which is a [KtBlockExpression]. Inserting an element as an immediate child
+             * of the [KtScript] element is a mistake.
+             */
+            Collections.singletonList(
+                enclosingDeclaration.children.firstIsInstanceOrNull<KtBlockExpression>() ?: enclosingDeclaration
+            )
+        }
         is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
         else -> {
             val targetContainer = when (enclosingDeclaration) {

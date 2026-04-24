@@ -156,6 +156,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: LookupImpl) : 
     if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
       selectedItem.getTerminalIcon()?.forceIcon(AllIcons.Actions.Execute)
       curSelectedItem = selectedItem
+      lookup.list.repaint()
     }
     else {
       resetSelectedItemIcon()
@@ -165,6 +166,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: LookupImpl) : 
   private fun resetSelectedItemIcon() {
     curSelectedItem?.getTerminalIcon()?.useDefaultIcon()
     curSelectedItem = null
+    lookup.list.repaint()
   }
 
   private fun LookupElement.getTerminalIcon(): TerminalStatefulDelegatingIcon? {

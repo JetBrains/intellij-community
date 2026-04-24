@@ -20,6 +20,8 @@ interface TerminalSession {
    * Use this flow to handle the output events of the Terminal session.
    *
    * Underlying logic should continue reading the PTYs output stream only if there is some collector of this flow.
+   * If the flow collector is too slow (can't handle event in 3 seconds), the flow can be terminated, and
+   * you need to request a new flow and receive a state snapshot.
    */
   suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>>
 

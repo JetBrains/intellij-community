@@ -25,14 +25,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
@@ -42,6 +46,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -71,6 +76,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
   public MavenTasksManager(@NotNull Project project) {
     super(project);
+    MavenProjectsManager.getInstance(project).addProjectsTreeListener(new TaskUpdatingTreeListener(), this);
   }
 
   @Override
@@ -124,6 +130,79 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   @Override
   public void dispose() {
     myListeners.clear();
+  }
+
+  private final class TaskUpdatingTreeListener implements MavenProjectsTree.Listener {
+    @Override
+    public void projectsUpdated(@NotNull List<? extends Pair<MavenProject, MavenProjectChanges>> updated,
+                                @NotNull List<MavenProject> deleted) {
+      if (!deleted.isEmpty()) {
+        Set<String> deletedPaths = deleted.stream()
+          .map(MavenProject::getPath)
+          .collect(Collectors.toSet());
+        removeTasksForProjects(deletedPaths);
+      }
+    }
+
+    @Override
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+      updateTasksForProject(projectWithChanges.first);
+    }
+  }
+
+  private void removeTasksForProjects(@NotNull Set<String> projectPaths) {
+    boolean changed = false;
+    synchronized (myStateLock) {
+      for (Phase phase : Phase.values()) {
+        changed |= myState.getTasks(phase).removeIf(task -> projectPaths.contains(task.getProjectPath()));
+      }
+    }
+    if (changed) fireTasksChanged();
+  }
+
+  private void updateTasksForProject(@NotNull MavenProject mavenProject) {
+    String projectPath = mavenProject.getPath();
+    boolean changed = false;
+
+    synchronized (myStateLock) {
+      for (Phase phase : Phase.values()) {
+        Set<MavenCompilerTask> tasks = myState.getTasks(phase);
+        for (MavenCompilerTask task : new ArrayList<>(tasks)) {
+          if (!projectPath.equals(task.getProjectPath())) continue;
+          String updatedGoal = computeUpdatedGoal(task.getGoal(), mavenProject);
+          if (updatedGoal == null) {
+            tasks.remove(task);
+            changed = true;
+          }
+          else if (!updatedGoal.equals(task.getGoal())) {
+            tasks.remove(task);
+            tasks.add(new MavenCompilerTask(projectPath, updatedGoal));
+            changed = true;
+          }
+        }
+      }
+    }
+
+    if (changed) fireTasksChanged();
+  }
+
+  @Nullable
+  private static String computeUpdatedGoal(@NotNull String goal, @NotNull MavenProject mavenProject) {
+    String[] parts = goal.split(":");
+    if (parts.length != 4) return goal;
+
+    String groupId = parts[0];
+    String artifactId = parts[1];
+    String version = parts[2];
+    String goalName = parts[3];
+
+    MavenPlugin plugin = mavenProject.findPlugin(groupId, artifactId, false);
+    if (plugin == null) return null;
+
+    String newVersion = plugin.getVersion();
+    if (newVersion == null || newVersion.equals(version)) return goal;
+
+    return groupId + ":" + artifactId + ":" + newVersion + ":" + goalName;
   }
 
   private boolean doExecute(boolean before, CompileContext context) {

@@ -1,0 +1,15 @@
+[project]
+name = "uv1"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = []
+
+[tool.uv]
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "my_uv1"
+module-root = "my_src"

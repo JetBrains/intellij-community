@@ -244,8 +244,6 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           }
           else emptyList()
         }
-
-        override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)
     doTest("html/elements/", 0, "vue", "nested-pattern")
   }

@@ -1,2 +1,9 @@
+*a:com.intellij.platform.compose.ComposeSearchableConfigurable
+- com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.SearchableConfigurable
+- sf:$stable:I
+- <init>():V
+- ComposeContent(androidx.compose.runtime.Composer,I):V
+- createComponent():javax.swing.JComponent
 f:com.intellij.platform.compose.JBComposePanelKt
 - *sf:JBComposePanel(kotlin.jvm.functions.Function2):javax.swing.JComponent

@@ -1,5 +1,6 @@
 package com.intellij.terminal.backend
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
@@ -13,13 +14,17 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
@@ -53,6 +58,7 @@ import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
@@ -172,12 +178,31 @@ internal class StateAwareTerminalSession(
   fun getHyperlinkFacade(isInAlternateBuffer: Boolean): BackendTerminalHyperlinkFacade? =
     if (isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
 
-  override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> = outputFlowProducer.getIncrementalUpdateFlow()
+  override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
+    return channelFlow {
+      try {
+        outputFlowProducer.getIncrementalUpdateFlow().collect { events ->
+          withTimeout(3.seconds) {
+            send(events)
+          }
+        }
+      }
+      catch (_: TimeoutCancellationException) {
+        // Downstream consumer is too slow, ending the flow to unblock the original session output flow processing.
+        // The collector should request a new flow and receive a state snapshot
+        LOG.info("Failed to emit output to the collector in 3 seconds, is there a connection problem? Terminating the output flow.")
+      }
+    }.buffer(Channel.RENDEZVOUS)
+  }
 
   override val isClosed: Boolean
     get() = delegate.isClosed
 
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
+
+  companion object {
+    private val LOG = logger<StateAwareTerminalSession>()
+  }
 
   private inner class State : MutableStateWithIncrementalUpdates<List<TerminalOutputEvent>> {
     override suspend fun applyUpdate(update: List<TerminalOutputEvent>): List<TerminalOutputEvent> {

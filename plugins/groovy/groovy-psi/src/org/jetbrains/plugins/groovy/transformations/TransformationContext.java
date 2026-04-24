@@ -108,10 +108,17 @@ public interface TransformationContext {
 
   void addMethods(@NotNull Collection<? extends PsiMethod> methods);
 
+  /**
+   * Removes non-synthetic method from the context class.
+   */
   void removeMethod(@NotNull PsiMethod codeMethod);
 
   void addField(@NotNull GrField field);
 
+  /**
+   * NB: the inner class addition is only supported for {@code LightAstTransformationSupport}
+   * @see org.jetbrains.plugins.groovy.transformations.singleton.LightAstTransformationSupport
+   */
   void addInnerClass(@NotNull PsiClass innerClass);
 
   void setSuperType(@NotNull String fqn);

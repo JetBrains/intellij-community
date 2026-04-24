@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -10,12 +10,14 @@ import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.IconsCache
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.MergeableToken
+import com.intellij.unscramble.serializeThreadDumpItem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
@@ -42,13 +44,11 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
             return (
-              if (!enabled) emptyList()
+              if (!enabled || suspendContext == null) emptyList()
               else {
-                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutinesWithHierarchy()
-                if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
-                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.id
-                    CoroutineDumpItem(info)
-                } + CoroutineRootDumpItem else emptyList()
+                  val coroutinesCache = CoroutineDebugProbesProxy(suspendContext).dumpCoroutinesWithHierarchy()
+                  val coroutineDumpItems = if (coroutinesCache.isOk()) coroutinesCache.cache.map { info -> CoroutineDumpItem(info) } else emptyList()
+                if (coroutineDumpItems.isNotEmpty()) coroutineDumpItems + CoroutineRootDumpItem else coroutineDumpItems
               })
               .also {
                 DebuggerStatistics.logCoroutineDump(context.project, it.size)
@@ -57,34 +57,47 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     }
 }
 
-private class CoroutineDumpItem(private val info: CoroutineInfoData) : MergeableDumpItem {
+@ApiStatus.Internal
+class CoroutineDumpItem internal constructor(
+    override val name: String,
+    override val treeId: Long?,
+    override val parentTreeId: Long?,
+    private val coroutineState: State,
+    private val coroutineContextInfo: DumpItemCoroutineContextInfo?,
+    private val stackTraceBody: String
+) : MergeableDumpItem {
 
-    override val name: String = info.name + ":" + info.id
+    constructor(info: CoroutineInfoData) : this(
+        name = "${info.name}:${info.id}",
+        treeId = info.jobId,
+        parentTreeId = info.parentJobId ?: CoroutineRootDumpItem.treeId,
+        coroutineState = info.state,
+        coroutineContextInfo = DumpItemCoroutineContextInfo.from(info),
+        stackTraceBody = buildStackTraceBody(info),
+    )
 
-    override val id: Long get() = info.jobId ?: info.hashCode().toLong()
+    override val stackTrace: @NlsSafe String = buildString {
+        val coroutineContext = coroutineContextInfo?.presentableString()
+        val header = buildString {
+            append("\"$name\" $coroutineState")
+            coroutineContextInfo?.runningThread?.let {
+                append(' ')
+                append("on thread $it")
+            }
+            coroutineContext?.let {
+                append(' ')
+                append(it)
+            }
+        }
+        append(header)
+        appendLine()
+        append(stackTraceBody)
+    }
 
-    override val parentId: Long? get() = info.parentJobId
-
-    override val stateDesc: String = " (${info.state.name.lowercase()})"
+    override val stateDesc: String = " (${coroutineState.name.lowercase()})"
 
     override val iconToolTip: String
         get() = KotlinDebuggerCoroutinesBundle.message("dump.item.coroutine.tooltip")
-
-    private val dispatcher = info.dispatcher
-
-    private val lastObservedStackTrace: String = info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") {
-        ThreadDumpAction.renderLocation(it)
-    }
-
-    override val stackTrace: String =
-        buildString {
-            appendLine(info.coroutineDescriptor)
-            appendLine(lastObservedStackTrace)
-            if (info.asyncStackTrace.isNotEmpty()) {
-                appendLine("\t--------- Async Stack Trace ---------")
-                appendLine(info.asyncStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) })
-            }
-        }
 
     override val interestLevel: Int = when {
         stackTrace.isEmpty() -> -10
@@ -99,14 +112,14 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
 
     override val icon: Icon =
         IconsCache.getIconWithVirtualOverlay(
-            when (info.state) {
+            when (coroutineState) {
                 State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
                 State.RUNNING -> AllIcons.Debugger.ThreadRunning
                 State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
             }
         )
 
-    override val attributes: SimpleTextAttributes = when (info.state) {
+    override val attributes: SimpleTextAttributes = when (coroutineState) {
         State.SUSPENDED -> DumpItem.SLEEPING_ATTRIBUTES
         State.RUNNING -> DumpItem.RUNNING_ATTRIBUTES
         State.CREATED, State.UNKNOWN -> DumpItem.UNINTERESTING_ATTRIBUTES
@@ -119,6 +132,21 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
 
     override val mergeableToken: MergeableToken get() = CoroutinesMergeableToken()
 
+    override fun serialize(): @NlsSafe String =
+        serializeThreadDumpItem(
+            itemHeader = buildString {
+                val coroutineName = if (treeId == null) name else "$name@$treeId"
+                append("\"$coroutineName\"")
+                append(" virtual tid=0x0 nid=NA ")
+                append(coroutineState.name.lowercase())
+            },
+            stackTraceBody = stackTraceBody,
+            id = treeId,
+            parentId = parentTreeId.takeUnless { it == CoroutineRootDumpItem.treeId },
+            type = COROUTINE_THREAD_DUMP_TYPE,
+            additionalMetadata = coroutineContextInfo?.toMetadata().orEmpty(),
+        )
+
     private inner class CoroutinesMergeableToken : MergeableToken {
         private val comparableStackTrace: String =
             stackTrace.substringAfter("\n")
@@ -129,7 +157,7 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
             if (other !is CoroutinesMergeableToken) return false
             val otherItem = other.item
             if (stateDesc != otherItem.stateDesc) return false
-            if (dispatcher != otherItem.dispatcher) return false
+            if (coroutineContextInfo?.dispatcher != otherItem.coroutineContextInfo?.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
             return true
         }
@@ -137,20 +165,40 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
         override fun hashCode(): Int {
             return Objects.hash(
                 stateDesc,
-                dispatcher,
+                coroutineContextInfo?.dispatcher,
                 comparableStackTrace
             )
         }
     }
 }
 
-private object CoroutineRootDumpItem : MergeableDumpItem {
+private fun buildStackTraceBody(info: CoroutineInfoData): String {
+    val lastObservedStackTrace = info.lastObservedStackTrace.joinToString(separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+    val asyncStackTrace = if (info.asyncStackTrace.isEmpty()) null else info.asyncStackTrace.joinToString(separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+    return buildString {
+        if (lastObservedStackTrace.isNotEmpty()) {
+            append('\t')
+            appendLine(lastObservedStackTrace)
+        }
+        if (asyncStackTrace != null) {
+            appendLine("\t--------- Async Stack Trace ---------")
+            append('\t')
+            append(asyncStackTrace)
+        }
+    }
+}
+
+internal object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val name: String = "Dumped Coroutines"
 
-    override val id: Long = Long.MIN_VALUE // todo: this item does not actually exist in the dump, and it's index is artificial
+    override val treeId: Long = Long.MIN_VALUE
 
-    override val parentId: Long? = null
+    override val parentTreeId: Long? = null
 
     override val stateDesc: String = ""
 
@@ -159,7 +207,7 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val stackTrace: String = ""
 
-    override val interestLevel: Int = 100 // for now kept on top
+    override val interestLevel: Int = Int.MAX_VALUE // for now kept on top
 
     override val isDeadLocked: Boolean
         get() = false
@@ -176,9 +224,15 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val canBeHidden: Boolean get() = true
 
-    override val mergeableToken: MergeableToken get() = object : MergeableToken {
-        override val item get() = this@CoroutineRootDumpItem
-        override fun equals(other: Any?) = other is MergeableToken && item == other.item
-        override fun hashCode() = item.hashCode()
-    }
+    override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+    override fun serialize(): String =
+        serializeThreadDumpItem(
+            itemHeader = "\"$name\" tid=0x0 nid=NA coroutineRoot",
+            // add "Carrying virtual thread" so old ThreadDumpParser will parse it as thread group, not as a runnable thread.
+            stackTraceBody = "   Carrying virtual thread #0",
+            id = null,
+            parentId = null,
+            type = COROUTINE_ROOT_THREAD_DUMP_TYPE,
+        )
 }

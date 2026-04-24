@@ -46,7 +46,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
   override fun doOKAction() {
     super.doOKAction()
     val addEnvironment = mainPanel.currentSdkManager
-    PyPackageCoroutine.launch(dialogPresenter.moduleOrProject.project, ModalityState.current().asContextElement()) {
+    PyPackageCoroutine.launch(dialogPresenter.moduleOrProject.project, ModalityState.stateForComponent(owner).asContextElement()) {
       dialogPresenter.okClicked(addEnvironment)
     }
   }

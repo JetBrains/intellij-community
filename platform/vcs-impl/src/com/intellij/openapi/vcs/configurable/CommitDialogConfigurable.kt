@@ -109,7 +109,7 @@ class CommitDialogConfigurable(private val project: Project)
     override fun getComponent() = null
     override fun getPreferredFocusedComponent() = null
 
-    override fun getCommitWorkflowHandler(): CommitWorkflowHandler = NullCommitWorkflowHandler
+    override fun getCommitWorkflowHandler(): CommitWorkflowHandler = NullCommitWorkflowHandler(project)
     override fun getProject() = project
 
     override fun vcsIsAffected(name: String) = false

@@ -1,7 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -11,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static java.util.Collections.singleton;
 
@@ -25,6 +28,13 @@ import static java.util.Collections.singleton;
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
+
+  /** NB: verify with {@link com.intellij.util.io.TrashBin#canMoveToTrash(VirtualFile)} before setting */
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOVE_TO_TRASH = Key.create("vfs.local.move-to-trash");
+
+  @ApiStatus.Internal
+  public static final Key<Consumer<Path>> DELETE_CALLBACK = Key.create("vfs.local.delete-callback");
 
   private static LocalFileSystem ourInstance;
 

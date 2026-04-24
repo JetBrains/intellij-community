@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
@@ -351,5 +351,80 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     override fun isApplicable(mavenProject: MavenProject): Boolean {
       return true
     }
+  }
+
+  @Test
+  fun testMultiModuleWithInferredModelVersionFromNamespace() = runBlocking {
+    assumeVersionAtLeast("4.0.0")
+    // with no explicit modelVersion tag
+    createProjectPom(
+      """
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0</version>
+        <packaging>pom</packaging>
+        <subprojects>
+          <subproject>module-a</subproject>
+          <subproject>module-b</subproject>
+        </subprojects>
+      """.trimIndent(),
+      omitModelVersionTag = true
+    )
+
+    // module-b: no dependencies, also without explicit modelVersion
+    createModulePom(
+      "module-b",
+      """
+        <parent>
+          <groupId>test</groupId>
+          <artifactId>parent</artifactId>
+          <version>1.0</version>
+        </parent>
+        <artifactId>module-b</artifactId>
+      """.trimIndent(),
+      omitModelVersionTag = true
+    )
+
+    // module-a: depends on module-b (inter-module dependency), without explicit modelVersion
+    createModulePom(
+      "module-a",
+      """
+        <parent>
+          <groupId>test</groupId>
+          <artifactId>parent</artifactId>
+          <version>1.0</version>
+        </parent>
+        <artifactId>module-a</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>test</groupId>
+            <artifactId>module-b</artifactId>
+            <version>1.0</version>
+          </dependency>
+        </dependencies>
+      """.trimIndent(),
+      omitModelVersionTag = true
+    )
+
+    importProjectAsync()
+
+    // All modules should be recognized
+    assertModules("parent", "module-a", "module-b")
+
+    // Inter-module dependency should be resolved locally (not as external artifact)
+    assertModuleModuleDeps("module-a", "module-b")
+
+    // Verify parent-child relationships
+    val parentProject = projectsManager.findProject(projectPom)
+    assertNotNull("Parent project should not be null", parentProject)
+
+    val moduleAProject = projectsManager.projectsTree.findProject(projectRoot.findFileByRelativePath("module-a/pom.xml")!!)
+    val moduleBProject = projectsManager.projectsTree.findProject(projectRoot.findFileByRelativePath("module-b/pom.xml")!!)
+    assertNotNull("module-a project should not be null", moduleAProject)
+    assertNotNull("module-b project should not be null", moduleBProject)
+
+    // Both modules should be children of the parent
+    val children = projectsManager.projectsTree.getModules(parentProject!!)
+    assertSameElements("Parent should have two children", children.map { it.mavenId.artifactId }, listOf("module-a", "module-b"))
   }
 }

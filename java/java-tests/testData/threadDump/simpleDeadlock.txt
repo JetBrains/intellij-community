@@ -1,0 +1,81 @@
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
+# Full thread dump
+
+"Thread-1@1010" prio=5 tid=0x26 nid=NA waiting for monitor entry ["id":1010]
+  java.lang.Thread.State: BLOCKED
+	 blocks Thread-2@1011
+	 waiting for Thread-2@1011 to release lock on <0x476> (a java.lang.Object)
+	at DeadlockExample.lambda$main$0(DeadlockExample.java:11)
+	  - locked <0x475> (a java.lang.Object)
+	at DeadlockExample$$Lambda/0x0000000301042210.run(Unknown Source:-1)
+	at java.lang.Thread.runWith(Thread.java:1487)
+	at java.lang.Thread.run(Thread.java:1474)
+
+"Thread-2@1011" prio=5 tid=0x27 nid=NA waiting for monitor entry ["id":1011]
+  java.lang.Thread.State: BLOCKED
+	 blocks Thread-1@1010
+	 waiting for Thread-1@1010 to release lock on <0x475> (a java.lang.Object)
+	at DeadlockExample.lambda$main$1(DeadlockExample.java:21)
+	  - locked <0x476> (a java.lang.Object)
+	at DeadlockExample$$Lambda/0x0000000301042438.run(Unknown Source:-1)
+	at java.lang.Thread.runWith(Thread.java:1487)
+	at java.lang.Thread.run(Thread.java:1474)
+
+"main@1" prio=5 tid=0x3 nid=NA waiting ["id":1]
+  java.lang.Thread.State: WAITING
+	at java.lang.Object.wait0(Object.java:-1)
+	at java.lang.Object.wait(Object.java:389)
+	at java.lang.Thread.join(Thread.java:1887)
+	at java.lang.Thread.join(Thread.java:1963)
+	at DeadlockExample.main(DeadlockExample.java:32)
+
+"CoarseTimer@1019" daemon prio=5 tid=0x28 nid=NA runnable ["id":1019]
+  java.lang.Thread.State: RUNNABLE
+	at jdk.internal.misc.Unsafe.park(Unsafe.java:-1)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:408)
+	at com.intellij.rt.debugger.agent.OverheadDetector$CoarseTimer$1.run(OverheadDetector.java:87)
+	at java.lang.Thread.runWith(Thread.java:1487)
+	at java.lang.Thread.run(Thread.java:1474)
+
+"IntelliJ Suspend Helper@966" daemon prio=5 tid=0x24 nid=NA sleeping ["id":966]
+  java.lang.Thread.State: TIMED_WAITING
+	at java.lang.Thread.sleepNanos0(Thread.java:-1)
+	at java.lang.Thread.sleepNanos(Thread.java:509)
+	at java.lang.Thread.sleep(Thread.java:540)
+	at com.intellij.rt.debugger.agent.SuspendHelper.suspendHelperLoopBody(SuspendHelper.java:29)
+	at com.intellij.rt.debugger.agent.SuspendHelper.access$000(SuspendHelper.java:5)
+	at com.intellij.rt.debugger.agent.SuspendHelper$1.run(SuspendHelper.java:15)
+	at java.lang.Thread.runWith(Thread.java:1487)
+	at java.lang.Thread.run(Thread.java:1474)
+
+"Reference Handler@1130" daemon prio=10 tid=0xf nid=NA runnable ["id":1130]
+  java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(Reference.java:-1)
+	at java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+
+"Finalizer@1131" daemon prio=8 tid=0x10 nid=NA waiting ["id":1131]
+  java.lang.Thread.State: WAITING
+	at java.lang.Object.wait0(Object.java:-1)
+	at java.lang.Object.wait(Object.java:389)
+	at java.lang.Object.wait(Object.java:351)
+	at java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:137)
+	at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:215)
+	at java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)
+
+"Common-Cleaner@831" daemon prio=8 tid=0x23 nid=NA waiting ["id":831]
+  java.lang.Thread.State: WAITING
+	at java.lang.Object.wait0(Object.java:-1)
+	at java.lang.Object.wait(Object.java:389)
+	at java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:123)
+	at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:201)
+	at jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)
+	at java.lang.Thread.runWith(Thread.java:1487)
+	at java.lang.Thread.run(Thread.java:1474)
+	at jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)
+
+"Signal Dispatcher@1132" daemon prio=9 tid=0x11 nid=NA runnable ["id":1132]
+  java.lang.Thread.State: RUNNABLE
+
+"Notification Thread@982" daemon prio=9 tid=0x25 nid=NA runnable ["id":982]
+  java.lang.Thread.State: RUNNABLE

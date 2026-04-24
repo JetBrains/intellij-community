@@ -13,6 +13,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
+    "//platform/project-frame",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/stream",

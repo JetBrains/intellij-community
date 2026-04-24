@@ -4,6 +4,9 @@ import com.intellij.mcpserver.util.TruncateMode
 
 object Constants {
   const val RELATIVE_PATH_IN_PROJECT_DESCRIPTION: String = "Path relative to the project root"
+  const val FILE_PATH_DESCRIPTION: String = "Path to the file. Supports project-relative paths, paths with '..', " +
+                                            "absolute paths, archive entries like '/path/lib.jar!/pkg/Foo.class', and URLs such as 'file://', 'jar://', and 'jrt://'. " +
+                                            "Any path returned from the other tools can be passed as is (e.g. paths from 'search_*' tools)."
   const val TIMEOUT_MILLISECONDS_DESCRIPTION: String = "Timeout in milliseconds"
   const val TIMED_OUT_DESCRIPTION: String = "Indicates whether the operation was timed out. 'true' value may mean that the results may be incomplete or partial. " +
                                             "'false', 'null' or missing value means that the operation has not been timed out."
@@ -14,5 +17,8 @@ object Constants {
   const val MAX_LINES_COUNT_VALUE: Int = 1000
   const val MAX_USAGE_TEXT_CHARS: Int = 1000
   const val TRUNCATE_MODE_DESCRIPTION: String = "How to truncate the text: from the start, in the middle, at the end, or don't truncate at all"
+  internal const val RUN_CONFIGURATION_PREVIEW_MAX_LENGTH: Int = 10 * 1000
+  internal const val RUN_CONFIGURATION_PREVIEW_MAX_LINE_LENGTH: Int = 1000
+  internal const val RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER: String = "<truncated>"
   internal val TRUCATE_MODE_VALUE: TruncateMode = TruncateMode.START
 }

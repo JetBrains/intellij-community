@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -99,8 +99,8 @@ public final class MavenModelDocumentationProvider implements DocumentationProvi
     var project = e.getProject();
     if (project.isDefault()) return null;
     var mavenVersion = MavenDistributionsCache.getInstance(project)
-      .getMavenDistribution(e.getContainingFile().getVirtualFile());
-    return MavenDomBundle.message("maven.version.tip", mavenVersion.getVersion());
+      .getMavenVersion(e.getContainingFile().getVirtualFile());
+    return MavenDomBundle.message("maven.version.tip", mavenVersion);
   }
 
   private static @NlsContexts.DetailedDescription String buildPropertyName(PsiElement e, boolean property) {

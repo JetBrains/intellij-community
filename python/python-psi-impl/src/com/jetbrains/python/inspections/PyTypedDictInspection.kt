@@ -51,13 +51,16 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypedDictInspection : PyInspection() {
-
   override fun buildVisitor(
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    return Visitor(holder, PyInspectionVisitor.getContext(session))
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.typeEngine != null) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
   }
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
@@ -71,7 +74,8 @@ class PyTypedDictInspection : PyInspection() {
       if (operandType !is PyTypedDictType) return
 
       val indexExpression = node.indexExpression
-      val indexExpressionValueOptions = PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(indexExpression, myTypeEvalContext, String::class.java)
+      val indexExpressionValueOptions =
+        PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(indexExpression, myTypeEvalContext, String::class.java)
       if (indexExpressionValueOptions.isEmpty()) {
         if (!operandType.isDefinition) {
           val keyList = operandType.fields.keys.joinToString(transform = { "'$it'" })
@@ -221,7 +225,9 @@ class PyTypedDictInspection : PyInspection() {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
           if (type is PyTypedDictType) {
-            for (index in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(expr.indexExpression, myTypeEvalContext, String::class.java)) {
+            for (index in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(expr.indexExpression,
+                                                                                        myTypeEvalContext,
+                                                                                        String::class.java)) {
               if (type.fields[index]?.qualifiers?.isRequired == true) {
                 registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
               }
@@ -301,7 +307,9 @@ class PyTypedDictInspection : PyInspection() {
         if (target !is PySubscriptionExpression) return@forEach
         val targetType = myTypeEvalContext.getType(target.operand)
         if (targetType !is PyTypedDictType) return@forEach
-        for (indexString in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression, myTypeEvalContext, String::class.java)) {
+        for (indexString in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression,
+                                                                                          myTypeEvalContext,
+                                                                                          String::class.java)) {
           if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
             registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
           }
@@ -405,7 +413,7 @@ class PyTypedDictInspection : PyInspection() {
       firstBaseField: PyTypedDictType.FieldTypeAndTotality,
       secondBaseField: PyTypedDictType.FieldTypeAndTotality,
       fieldName: String?,
-      errorElement: PyArgumentList?
+      errorElement: PyArgumentList?,
     ): Boolean {
       if (firstBaseField.isReadOnly != secondBaseField.isReadOnly ||
           !areFieldTypesCompatible(firstBaseField, secondBaseField)) {
@@ -439,7 +447,7 @@ class PyTypedDictInspection : PyInspection() {
 
     private fun areFieldTypesCompatible(
       first: PyTypedDictType.FieldTypeAndTotality,
-      second: PyTypedDictType.FieldTypeAndTotality
+      second: PyTypedDictType.FieldTypeAndTotality,
     ): Boolean {
       val bothReadOnly = first.isReadOnly && second.isReadOnly
 
@@ -454,7 +462,7 @@ class PyTypedDictInspection : PyInspection() {
     private fun validateTypedDictFieldOverride(
       expected: PyTypedDictType.FieldTypeAndTotality,
       actual: PyTypedDictType.FieldTypeAndTotality,
-      fieldElement: PyTargetExpression?
+      fieldElement: PyTargetExpression?,
     ): Boolean {
       val expectedIsReadOnly = expected.qualifiers.isReadOnly
       val actualIsReadOnly = actual.qualifiers.isReadOnly
@@ -508,7 +516,7 @@ class PyTypedDictInspection : PyInspection() {
 
     private fun areTypedDictFieldTypesCompatible(
       expected: PyTypedDictType.FieldTypeAndTotality,
-      actual: PyTypedDictType.FieldTypeAndTotality
+      actual: PyTypedDictType.FieldTypeAndTotality,
     ): Boolean {
       val expectedType = expected.type
       val actualType = actual.type
@@ -556,7 +564,11 @@ class PyTypedDictInspection : PyInspection() {
       return PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)
     }
 
-    private fun inspectUpdateSequenceArgument(updateCall: PyCallExpression, sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
+    private fun inspectUpdateSequenceArgument(
+      updateCall: PyCallExpression,
+      sequenceElements: Array<PyExpression>,
+      typedDictType: PyTypedDictType,
+    ) {
       sequenceElements.forEach {
         var key: PsiElement? = null
         var keyAsString: String? = null

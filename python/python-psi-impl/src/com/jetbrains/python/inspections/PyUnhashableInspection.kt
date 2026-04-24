@@ -117,6 +117,8 @@ class PyUnhashableInspection : PyInspection() {
       }
 
     private fun isHashableClass(classType: PyClassType): Boolean {
+      if (classType.isDefinition) return true // class objects are always hashable (type.__hash__)
+
       val dataclassParameters = parseDataclassParameters(classType.pyClass, context)
 
       val definesHash = classType.definesMethod(PyNames.HASH)

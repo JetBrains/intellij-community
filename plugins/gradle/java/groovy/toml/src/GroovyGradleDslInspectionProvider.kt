@@ -36,11 +36,31 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
     FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)
 
   override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-      GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
+    GroovyPsiElementVisitor(GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder))
 
   override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean =
     FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)
 
   override fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-      GroovyPsiElementVisitor(GroovyRedundantKotlinStdLibInspectionVisitor(holder))
+    GroovyPsiElementVisitor(GroovyRedundantKotlinStdLibInspectionVisitor(holder))
+
+  override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
+
+  override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
+
+  override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
+
+  override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getTaskMissingDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
+
+  override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidDuplicateRepositoriesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 }

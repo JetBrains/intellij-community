@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.google.common.collect.Sets;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
@@ -14,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,7 +26,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
-import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.ui.ExperimentalUI;
@@ -37,8 +34,8 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +47,11 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
+import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils;
 
 import javax.swing.JComponent;
 import java.awt.event.FocusEvent;
@@ -263,12 +263,6 @@ public final class TerminalToolWindowManager implements Disposable {
     return content;
   }
 
-  private static @Nls String generateUniqueName(@Nls String suggestedName, List<@Nls String> tabs) {
-    final Set<String> names = Sets.newHashSet(tabs);
-
-    return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
-  }
-
   /**
    * Creates the {@link Content} with the terminal implementation of the specified {@link TerminalEngine}.
    * Note that the created content is not added to the tool window's {@link ContentManager} yet.
@@ -303,7 +297,12 @@ public final class TerminalToolWindowManager implements Disposable {
       widget = startShellTerminalWidget(terminalRunner, startupOptions, preferredEngine, deferSessionStartUntilUiShown, content);
       widget.getTerminalTitle().change(state -> {
         if (state.getDefaultTitle() == null) {
-          state.setDefaultTitle(terminalRunner.getDefaultTabTitle());
+          String defaultName = Objects.requireNonNullElse(
+            terminalRunner.getDefaultTabTitle(),
+            TerminalOptionsProvider.getInstance().getTabName()
+          );
+          String uniqueName = TerminalTitleUtils.createDefaultTabName(toolWindow, defaultName);
+          state.setDefaultTitle(uniqueName);
         }
         return Unit.INSTANCE;
       });
@@ -321,11 +320,12 @@ public final class TerminalToolWindowManager implements Disposable {
         else {
           state.setDefaultTitle(tabState.myTabName);
         }
-        return null;
+        return Unit.INSTANCE;
       });
     }
-    updateTabTitle(widget, toolWindow, content);
-    setupTerminalWidget(toolWindow, terminalRunner, widget, content);
+
+    configureTabName(content, widget.getTerminalTitle());
+    setupTerminalWidget(widget, content);
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
@@ -344,23 +344,12 @@ public final class TerminalToolWindowManager implements Disposable {
     return content;
   }
 
-  private void setupTerminalWidget(@NotNull ToolWindow toolWindow,
-                                   @NotNull AbstractTerminalRunner<?> runner,
-                                   @NotNull TerminalWidget widget,
-                                   @NotNull Content content) {
-    MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
-    MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
-
-    widget.getTerminalTitle().addTitleListener(new TerminalTitleListener() {
-      @Override
-      public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          updateTabTitle(widget, toolWindow, content);
-        }, myProject.getDisposed());
-      }
-    }, content);
+  private void setupTerminalWidget(@NotNull TerminalWidget widget, @NotNull Content content) {
     JBTerminalWidget terminalWidget = JBTerminalWidget.asJediTermWidget(widget);
     if (terminalWidget == null) return;
+
+    MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
+    MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
 
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
@@ -470,19 +459,12 @@ public final class TerminalToolWindowManager implements Disposable {
     });
   }
 
-  private static void updateTabTitle(@NotNull TerminalWidget widget, @NotNull ToolWindow toolWindow, @NotNull Content content) {
-    TerminalTitle title = widget.getTerminalTitle();
-    String titleString = title.buildTitle();
-    List<String> tabs = toolWindow.getContentManager().getContentsRecursively().stream()
-      .filter(c -> c != content)
-      .map(c -> c.getDisplayName()).toList();
-    String generatedName = generateUniqueName(titleString, tabs);
+  private void configureTabName(Content content, TerminalTitle title) {
+    content.setDisplayName(TerminalTitleUtils.buildSettingsAwareTitle(title, false));
 
-    content.setDisplayName(generatedName);
-    title.change((state) -> {
-      state.setDefaultTitle(generatedName);
-      return Unit.INSTANCE;
-    });
+    // Listen for TerminalTitle changes and update the content display name
+    CoroutineScope scope = TerminalCoroutineKt.terminalProjectScopeBoundToDisposable(myProject, content, "tab name updating");
+    ClassicTerminalTitleUpdatingKt.updateTabNameOnTitleChange(title, content, scope);
   }
 
   public void register(@NotNull TerminalContainer terminalContainer) {

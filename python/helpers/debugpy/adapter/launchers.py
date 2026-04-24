@@ -120,6 +120,8 @@ def spawn_debuggee(
 
         if log.log_dir is not None:
             env[str("DEBUGPY_LOG_DIR")] = log.log_dir
+        if log.rolling:
+            env[str("DEBUGPY_LOG_ROLLING")] = "1"
         if log.stderr.levels != {"warning", "error"}:
             env[str("DEBUGPY_LOG_STDERR")] = str(" ".join(log.stderr.levels))
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
@@ -154,16 +156,31 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
   }
 
 /**
- * Detects conda binary in well-known locations on the local machine.
+ * Detects conda binary in PATH and then well-known locations on the local machine.
  */
-suspend fun suggestCondaPath(filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
-  return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest()), filter)
+suspend fun findConda(filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? = findConda(FileSystem.Eel(localEel), filter)
+
+/**
+ * Detects conda binary in PATH and then well-known locations on the provided FileSystem
+ */
+internal suspend fun findConda(fileSystem: FileSystem<*>, filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
+  val condaFromPath = fileSystem.which("conda")?.toString()?.takeIf(filter)
+  if (condaFromPath != null) return condaFromPath
+
+  // legacy slow fallback detection via the defined list of paths in case of there is no conda on the PATH (PY-85060),
+  // not sure if it is worth it to keep it, because if there is no conda on the PATH the installation might be broken
+  val request = when (fileSystem) {
+    is FileSystem.Eel -> LocalTargetEnvironmentRequest()
+    is FileSystem.Target -> fileSystem.targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
+  }
+
+  return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(request), filter)
 }
 
 /**
  * Detects conda binary in well-known locations on target
  */
-internal suspend fun suggestCondaPath(
+private suspend fun suggestCondaPath(
   targetCommandExecutor: TargetCommandExecutor,
   filter: (FullPathOnTarget) -> Boolean = { true },
 ): FullPathOnTarget? {

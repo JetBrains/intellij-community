@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.rpc
 
 import com.intellij.execution.filters.Filter
@@ -68,7 +68,8 @@ data class ThreadDumpWithAwaitingDependencies(
   val items: List<JavaThreadDumpItemDto>,
   val icons: List<IconId>,
   val attributes: List<SerializableSimpleTextAttributes>,
-  val stackTraces: List<@NlsSafe String>,
+  val stackTraceBodies: List<@NlsSafe String>,
+  val exportedStackTraceBodies: List<@NlsSafe String>,
   val stateDescriptions: List<@NlsSafe String>,
   val iconToolTips: List<@Nls String?>,
   val awaitingDependencies: Map<Int, IntArray>,
@@ -80,8 +81,10 @@ data class ThreadDumpWithAwaitingDependencies(
 data class JavaThreadDumpItemDto(
   val name: @NlsSafe String,
   val firstLine: @NlsSafe String,
+  val exportedFirstLine: @NlsSafe String,
   val stateDescriptionIndex: Int,
-  val stackTraceIndex: Int,
+  val stackTraceBodyIndex: Int,
+  val exportedStackTraceBodyIndex: Int,
   val iconToolTipIndex: Byte,
   val interestLevel: Int,
   val iconIndex: Byte,
@@ -89,6 +92,6 @@ data class JavaThreadDumpItemDto(
   val isDeadLocked: Boolean,
   val isContainer: Boolean,
   val canBeHidden: Boolean,
-  val id: Long,
-  val parentId: Long?,
+  val treeId: Long?,
+  val parentTreeId: Long?,
 )

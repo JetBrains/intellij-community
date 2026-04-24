@@ -10,13 +10,15 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
-import com.intellij.mcpserver.util.resolveInProject
+import com.intellij.mcpserver.util.isFileAccessible
+import com.intellij.mcpserver.util.resolveReadFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -50,7 +52,9 @@ internal class ReadToolset : McpToolset {
    */
   @McpTool
   @McpDescription("""
-        Reads a local file and returns numbered lines (1-indexed) as text.
+        Reads a file in the project directory or from any project dependency or other project source root.
+        Can read sources inside Jar/Jrt files and decompile Java class files inside Jar/Jrt files or on disk. 
+        Returns numbered lines (1-indexed) as text.
         Modes: slice, lines, line_columns, offsets, indentation.
         Slice uses start_line and max_lines. Lines uses start_line/end_line (inclusive).
         Line_columns uses start_line/start_column and end_line/end_column (end is exclusive; end_line defaults to start_line).
@@ -58,7 +62,7 @@ internal class ReadToolset : McpToolset {
         max_lines caps the total output in all modes; context_lines applies to range modes (per side).
     """)
   suspend fun read_file(
-    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    @McpDescription(Constants.FILE_PATH_DESCRIPTION)
     file_path: String,
     @McpDescription("Read mode: 'slice', 'lines', 'line_columns', 'offsets', or 'indentation'")
     mode: String = "slice",
@@ -87,13 +91,12 @@ internal class ReadToolset : McpToolset {
   ): String {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.reading.file", file_path))
     val project = currentCoroutineContext().project
-    val resolvedPath = project.resolveInProject(file_path)
-
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-               ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
-    val document = readAction {
-      if (file.fileType.isBinary) mcpFail("File $resolvedPath is binary")
-      FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
+    val file = withContext(Dispatchers.IO) { resolveReadFile(project, file_path) }
+    if (!readAction { isFileAccessible(project, virtualFile = file) }) {
+      mcpFail("File $file_path is outside project, library, and SDK roots")
+    }
+    val document = withContext(Dispatchers.Default) {
+      readAction { FileDocumentManager.getInstance().getDocument(file, project) ?: mcpFail("Could not get document for $file") }
     }
 
     val normalizedStartLine = requirePositive(start_line, "start_line")

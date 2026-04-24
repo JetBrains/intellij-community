@@ -1,12 +1,12 @@
 package com.intellij.python.processOutput.frontend
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.util.fastMaxOfOrDefault
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -153,10 +153,14 @@ object OutputFilter : Filter<OutputFilter.Item> {
         SHOW_TAGS(
             title = message("process.output.filters.output.tags"),
             testTag = OutputSectionTestTags.FILTERS_TAGS,
+        ),
+        WRAP_CONTENT(
+            title = message("process.output.filters.output.wrap"),
+            testTag = OutputSectionTestTags.FILTERS_WRAP,
         );
     }
 
-    override val defaultActive: Set<Item> = setOf(Item.SHOW_TAGS)
+    override val defaultActive: Set<Item> = setOf(Item.SHOW_TAGS, Item.WRAP_CONTENT)
 }
 
 @ApiStatus.Internal
@@ -164,7 +168,8 @@ data class OutputUiState(
     val filters: FilterActionGroupState<OutputFilter, OutputFilter.Item>,
     val isInfoExpanded: StateFlow<Boolean>,
     val isOutputExpanded: StateFlow<Boolean>,
-    val lazyListState: LazyListState,
+    val verticalScrollState: ScrollState,
+    val horizontalScrollState: ScrollState,
 )
 
 internal class InternalLoggedProcess(
@@ -201,7 +206,8 @@ internal class ProcessOutputControllerService(
         filters = FilterActionGroupState(OutputFilter),
         isInfoExpanded = processOutputInfoExpanded,
         isOutputExpanded = processOutputOutputExpanded,
-        lazyListState = LazyListState(),
+        verticalScrollState = ScrollState(0),
+        horizontalScrollState = ScrollState(0),
     )
 
     private val traceContextCache = boundedLinkedHashMap<TraceContextUuid, TraceContextDto>(
@@ -244,7 +250,17 @@ internal class ProcessOutputControllerService(
     }
 
     override fun selectProcess(process: LoggedProcess?) {
+        if (process?.data?.id == selectedProcess.value?.data?.id) {
+            return
+        }
+
         selectedProcess.value = process
+
+        coroutineScope.launch(Dispatchers.EDT) {
+            processOutputUiState.verticalScrollState.scrollTo(0)
+            processOutputUiState.horizontalScrollState.scrollTo(0)
+        }
+
         ProcessOutputUsageCollector.treeProcessSelected()
     }
 
@@ -284,18 +300,22 @@ internal class ProcessOutputControllerService(
         val showTags = processOutputUiState.filters.active.contains(OutputFilter.Item.SHOW_TAGS)
 
         val stringToCopy = buildString {
+            var lastTag: OutputTag? = null
+
             loggedProcess.lines.forEach { line ->
                 if (showTags) {
                     val tag = when (line.kind) {
-                        OutputKindDto.OUT -> Tag.OUTPUT
-                        OutputKindDto.ERR -> Tag.ERROR
+                        OutputKindDto.OUT -> OutputTag.OUTPUT
+                        OutputKindDto.ERR -> OutputTag.ERROR
                     }
 
-                    append("[$tag] ".padStart(Tag.maxLength + 3))
-                } else {
-                    repeat(Tag.maxLength + 3) {
-                        append(' ')
+                    if (lastTag == tag) {
+                        append(OutputTag.formatter.blankBracketTagString)
+                    } else {
+                        append(OutputTag.formatter.bracketedTagString(tag))
                     }
+
+                    lastTag = tag
                 }
 
                 appendLine(line.text)
@@ -307,7 +327,10 @@ internal class ProcessOutputControllerService(
             }
 
             exitData?.also { exitData ->
-                append("[${Tag.EXIT}] ".padStart(Tag.maxLength + 3))
+                if (showTags) {
+                    append(OutputTag.formatter.bracketedTagString(OutputTag.EXIT))
+                }
+
                 append(exitData.exitCode)
 
                 exitData.additionalMessageToUser?.also { message ->
@@ -397,9 +420,11 @@ internal class ProcessOutputControllerService(
             // wait until output has recomposed
             delay(100.milliseconds)
 
-            // scroll output all the way to the bottom
-            val index = processOutputUiState.lazyListState.layoutInfo.totalItemsCount
-            processOutputUiState.lazyListState.scrollToItem(index.coerceAtLeast(0))
+            // scroll output all the way to the bottom left
+            processOutputUiState.verticalScrollState.scrollTo(
+                processOutputUiState.verticalScrollState.maxValue,
+            )
+            processOutputUiState.horizontalScrollState.scrollTo(0)
         }
 
         ProcessOutputUsageCollector.toolwindowOpenedDueToError()
@@ -470,10 +495,10 @@ internal class ProcessOutputControllerService(
                                 val lines = internalProcess.lines
 
                                 lines += event.outputLine
-                                lines.sortBy { it.lineNo }
 
                                 if (lines.size > ProcessOutputControllerServiceLimits.MAX_LINES) {
-                                    lines.drop(
+                                    lines.removeRange(
+                                        0,
                                         lines.size - ProcessOutputControllerServiceLimits.MAX_LINES,
                                     )
                                 }
@@ -694,7 +719,9 @@ internal class ProcessOutputControllerService(
                 .collect { (canScrollBackwards, shouldScrollToTopValue) ->
                     if (canScrollBackwards && shouldScrollToTopValue) {
                         shouldScrollToTop.value = false
-                        processTreeUiState.selectableLazyListState.scrollToItem(0)
+                        launch {
+                            processTreeUiState.selectableLazyListState.scrollToItem(0)
+                        }
                     }
                 }
         }
@@ -736,16 +763,6 @@ internal class ProcessOutputControllerService(
     }
 }
 
-internal object Tag {
-    val ERROR = message("process.output.output.tag.stdout")
-    val OUTPUT = message("process.output.output.tag.stderr")
-    val EXIT = message("process.output.output.tag.exit")
-
-    val maxLength: Int =
-        Tag::class.java.declaredFields
-            .filter { it.type == String::class.java }
-            .fastMaxOfOrDefault(0) { (it.get(null) as String).length }
-}
 
 private fun <K, V> boundedLinkedHashMap(maxSize: Int): LinkedHashMap<K, V> =
     object : LinkedHashMap<K, V>(maxSize) {

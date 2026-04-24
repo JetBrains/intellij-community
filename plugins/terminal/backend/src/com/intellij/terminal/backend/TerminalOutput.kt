@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
+import com.intellij.util.asSafely
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
@@ -15,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
@@ -27,6 +32,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
@@ -67,7 +73,7 @@ internal fun createTerminalOutputFlow(
     isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
     windowTitle = terminalDisplay.windowTitleText,
     isShellIntegrationEnabled = false,
-    currentDirectory = null,
+    currentDirectory = getInitialWorkingDirectory(services),
   ))
 
   /**
@@ -239,14 +245,16 @@ internal fun createTerminalOutputFlow(
     }
   })
 
-  val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
-  addWorkingDirectoryListener(
-    services.ttyConnector,
-    shellIntegrationController,
-    workingDirectoryTrackingScope
-  ) { directory ->
-    textBuffer.withLock {
-      stateChangesTracker.updateState { it.copy(currentDirectory = directory) }
+  if (services.startupOptions.processType == TerminalProcessType.SHELL) {
+    val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
+    addWorkingDirectoryListener(
+      services.ttyConnector,
+      shellIntegrationController,
+      workingDirectoryTrackingScope
+    ) { directory ->
+      textBuffer.withLock {
+        stateChangesTracker.updateState { it.copy(currentDirectory = directory) }
+      }
     }
   }
 
@@ -258,3 +266,29 @@ private fun ensureEmulationActive(starter: TerminalStarterEx) {
     throw CancellationException("Terminal emulation was stopped")
   }
 }
+
+private fun getInitialWorkingDirectory(services: JediTermServices): String? {
+  if (services.startupOptions.processType == TerminalProcessType.SHELL) {
+    // Do not use a directory requested for a shell process as an initial directory.
+    // Because shell may actually decide to start in a different directory.
+    // For example, CMD starts in the home directory if the process is started with a WSL path.
+    return null
+  }
+  // But if it is a NON_SHELL process, it is safe to use the requested working directory.
+  // Because it shouldn't change.
+  val workingDirectory = services.startupOptions.workingDirectory ?: run {
+    LOG.warn("Working directory is not specified in startup options: ${services.startupOptions}")
+    return null
+  }
+
+  // Working directory should be relative to the EEL environment file system root.
+  val eelDescriptor = services.ttyConnector.connector.asSafely<LocalTerminalTtyConnector>()?.eelDescriptor ?: return workingDirectory
+  return try {
+    EelPath.parse(workingDirectory, eelDescriptor).toString()
+  }
+  catch (_: EelPathException) {
+    workingDirectory
+  }
+}
+
+private val LOG = fileLogger()

@@ -5,6 +5,7 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
@@ -28,8 +29,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.EmptyProjectMarker
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -46,6 +49,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -167,8 +171,21 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.SplashBecameVisibleEvent())
   }
 
+  fun isReopenStatEnabled(): Boolean {
+    if (AppMode.isMonolith()) return true
+    if (isRemDevTestWorkaround()) return true
+    return false
+  }
+
+  /**
+   * See IJPL-206077 and IJPL-200676
+   * For now this collector works in rem dev only for a client in integration tests;
+   * only one project marker - [EmptyProjectMarker] is used in that case.
+   */
+  private fun isRemDevTestWorkaround(): Boolean = PlatformUtils.isJetBrainsClient() && ApplicationManagerEx.isInIntegrationTest()
+
   fun getStartUpContextElementIntoIdeStarter(close: Boolean): CoroutineContext.Element? {
-    if (close) {
+    if (close || !isReopenStatEnabled()) {
       statsIsWritten = true
       channel.close()
       return null
@@ -200,6 +217,24 @@ object FUSProjectHotStartUpMeasurer {
   @Internal
   fun getContextElementWithEmptyProjectElementToPass(): CoroutineContext {
     return MyMarker + EmptyProjectMarker
+  }
+
+  /**
+   * For IJPL-206077 reopening projects in rem dev mode doesn't get marker from IdeStarter
+   * and uses this method as `I swear it's the project reopening part`. Passing that marker would be a cleaner solution,
+   * but it's still not implemented.
+   *
+   * The difference with [getStartUpContextElementIntoIdeStarter] is that this method doesn't notify about beginning of starting an IDE
+   *
+   * @see isRemDevTestWorkaround
+   */
+  fun getContextElementForRemDevWorkaround(): CoroutineContext {
+    return if (isRemDevTestWorkaround()) {
+      MyMarker
+    }
+    else {
+      EmptyCoroutineContext
+    }
   }
 
   private fun reportViolation(violation: Violation) {
@@ -237,6 +272,9 @@ object FUSProjectHotStartUpMeasurer {
   /**
    * Invokes [block] in coroutine context with project marker used in later reporting;
    * reports the existence of project settings to filter cases of importing which may need more resources.
+   *
+   * When invoked from the frontend, default [EmptyProjectMarker] would be used (see [getContextElementWithEmptyProjectElementToPass]),
+   * because there we can't distinguish between projects for editors, so only default one should be used for consistency. See IJPL-206077
    */
   suspend fun <T> withProjectContextElement(projectFile: Path, block: suspend () -> T): T {
     if (!currentThreadContext().isProperContext()) {
@@ -251,7 +289,13 @@ object FUSProjectHotStartUpMeasurer {
       reportWelcomeScreenShown()
     }
 
-    val projectId = ProjectId()
+    val projectId = if (IdeProductMode.isFrontend) {
+      EmptyProjectMarker.id
+    }
+    else {
+      ProjectId()
+    }
+
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))
     return withContext(MyProjectMarker(projectId)) {

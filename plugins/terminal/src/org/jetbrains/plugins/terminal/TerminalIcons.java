@@ -17,6 +17,13 @@ public final class TerminalIcons {
   private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, TerminalIcons.class.getClassLoader(), cacheKey, flags);
   }
+
+  public static final class Agents {
+    /** 16x16 */ public static final @NotNull Icon ClaudeCode = load("icons/agents/claude-code.svg", 1122203032, 2);
+    /** 16x16 */ public static final @NotNull Icon Codex = load("icons/agents/codex.svg", 588760173, 2);
+    /** 16x16 */ public static final @NotNull Icon Junie = load("icons/agents/junie.svg", -904787049, 2);
+  }
+
   /** 16x16 */ public static final @NotNull Icon Command = load("icons/command.svg", 957086477, 2);
   /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/expui/toolwindow/terminal.svg", "icons/OpenTerminal_13x13.svg", 1939257758, 2);
   /** 16x16 */ public static final @NotNull Icon Option = load("icons/option.svg", -1363443188, 2);

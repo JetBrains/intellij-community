@@ -310,7 +310,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   // PY-40634
   @Test
   public void testDocstringAtVariableDeclaration() {
-    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, "Py:SPACE, Py:TRIPLE_QUOTED_UNICODE, Py:LINE_BREAK", () -> doTest(LanguageLevel.getLatest(), """
              VAR = 2
                  ""\" variable declaration docstring ""\"
              """,
@@ -321,7 +321,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   // PY-40634
   @Test
   public void testDocstringAtVariableDeclarationWithTrailingComment() {
-    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, "Py:SPACE, Py:TRIPLE_QUOTED_UNICODE, Py:SPACE", () -> doTest(LanguageLevel.getLatest(), """
              VAR = 2
                  ""\" variable declaration docstring ""\" # trailing comment
              """,
@@ -332,7 +332,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   // PY-40634
   @Test
   public void testDocstringAtClassVariableDeclaration() {
-    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, "Py:SPACE, Py:TRIPLE_QUOTED_UNICODE, Py:LINE_BREAK", () -> doTest(LanguageLevel.getLatest(), """
              class C:
                def __init__(self):
                    self.thing = 42
@@ -347,7 +347,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   // PY-40634
   @Test
   public void testDocstringAtClassVariableDeclarationWithTrailingComment() {
-    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+    fixme("PY-40634", AssertionError.class, "Py:SPACE, Py:TRIPLE_QUOTED_UNICODE, Py:SPACE", () -> doTest(LanguageLevel.getLatest(), """
              class C:
                def __init__(self):
                    self.thing = 42

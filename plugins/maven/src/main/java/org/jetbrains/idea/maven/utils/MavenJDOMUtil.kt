@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jdom.IllegalNameException
+import org.jdom.Namespace
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -69,6 +70,8 @@ object MavenJDOMUtil {
     val stack = LinkedList<Element>()
 
     val result = arrayOf<Element?>(null)
+    // Capture xmlns from root element to support Maven 4's optional modelVersion inference
+    var pendingNamespace: String? = null
     val driver = XmlBuilderDriver(text)
     val builder: XmlBuilder = object : XmlBuilder {
       override fun doctype(publicId: CharSequence?, systemId: CharSequence?, startOffset: Int, endOffset: Int) {
@@ -81,14 +84,18 @@ object MavenJDOMUtil {
                             headerEndOffset: Int): XmlBuilder.ProcessingOrder {
         val name = localName.toString()
         if (name.isBlank()) return XmlBuilder.ProcessingOrder.TAGS
+        val isRootElement = stack.isEmpty()
         val newElement = try {
+          if (isRootElement && namespace.isNotEmpty()) {
+            pendingNamespace = namespace
+          }
           Element(name)
         }
         catch (e: IllegalNameException) {
           Element("invalidName")
         }
 
-        val parent = if (stack.isEmpty()) null else stack.last
+        val parent = if (isRootElement) null else stack.last
         if (parent == null) {
           result[0] = newElement
         }
@@ -132,6 +139,10 @@ object MavenJDOMUtil {
     }
 
     driver.build(builder)
+    // Apply captured namespace to root element
+    if (pendingNamespace != null && result[0] != null) {
+      result[0]!!.namespace = Namespace.getNamespace(pendingNamespace)
+    }
     return result[0]
   }
 

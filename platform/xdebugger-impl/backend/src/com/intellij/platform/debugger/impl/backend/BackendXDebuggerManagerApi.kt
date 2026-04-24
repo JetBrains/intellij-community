@@ -109,6 +109,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       debugProcess.editorsProvider.toRpc(cs),
       initialSessionState,
       currentSession.suspendData(),
+      debugProcess.currentStateMessage,
+      debugProcess.currentStateMessageFlow?.toRpc(),
       currentSession.sessionName,
       currentSession.getSessionEventsFlow(initialSessionState).toRpc(),
       sessionDataDto,
@@ -361,4 +363,5 @@ private fun XDebugSessionImpl.state(): XDebugSessionState = XDebugSessionState(
   isStepOverActionAllowed = isStepOverActionAllowed,
   isStepOutActionAllowed = isStepOutActionAllowed,
   isRunToCursorActionAllowed = isRunToCursorActionAllowed,
+  isForceStepIntoActionAllowed = isForceStepIntoActionAllowed,
 )

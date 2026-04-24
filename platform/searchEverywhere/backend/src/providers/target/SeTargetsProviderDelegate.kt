@@ -119,17 +119,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
       }) return null
 
     val rangeResult = readAction {
-      val range = usageInfo.smartPointer.psiRange ?: try {
-        usageInfo.navigationRange
-      }
-      catch (_: Exception) {
-        return@readAction null
-      }
-      range?.let { it.startOffset to it.endOffset }
+      SearchEverywherePreviewFetcher.readRangeFromUsageInfo(usageInfo)
     }
     val (startOffset, endOffset) = rangeResult ?: return null
 
-    return SePreviewInfoFactory().create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
+    return SePreviewInfoFactory.create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
   }
 
   /**

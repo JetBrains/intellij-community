@@ -242,6 +242,9 @@ class FrontendXValue private constructor(
   }
 
   private fun XValueNode.setPresentation(presentation: XValueSerializedPresentation) {
+    if (this is XValueNodeEx) {
+      setInlayIcon(presentation.inlayIcon())
+    }
     when (presentation) {
       is XValueSerializedPresentation.SimplePresentation -> {
         setPresentation(presentation.icon?.icon(), presentation.presentationType, presentation.value, presentation.hasChildren)
@@ -440,6 +443,12 @@ private fun XValueSerializedPresentation.rawText(): String = when (this) {
   is XValueSerializedPresentation.AdvancedPresentation -> parts.joinToString("")
   is XValueSerializedPresentation.ExtendedPresentation -> presentation.rawText()
   is XValueSerializedPresentation.SimplePresentation -> value
+}
+
+private fun XValueSerializedPresentation.inlayIcon() = when (this) {
+  is XValueSerializedPresentation.AdvancedPresentation -> inlayIcon?.icon()
+  is XValueSerializedPresentation.ExtendedPresentation -> presentation.inlayIcon?.icon()
+  is XValueSerializedPresentation.SimplePresentation -> inlayIcon?.icon()
 }
 
 private class FrontendXNamedValue(

@@ -124,6 +124,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myChanged;
   }
 
+  @Override
   public void setInlayIcon(@Nullable Icon icon) {
     myInlayIcon = icon;
   }

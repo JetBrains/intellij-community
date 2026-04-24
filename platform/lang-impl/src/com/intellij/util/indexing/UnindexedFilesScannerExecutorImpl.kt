@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressed
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
@@ -282,6 +283,14 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   private suspend fun runScanningTask(task: UnindexedFilesScanner, scanningParameters: ScanningIterators): ProjectScanningHistoryImpl {
+    if (isIndexingActivitiesSuppressed(project)) {
+      return ProjectScanningHistoryImpl(project, scanningParameters.indexingReason, scanningParameters.scanningType).apply {
+        scanningStarted()
+        setWasCancelled("Scanning is suppressed by project frame capabilities")
+        scanningFinished()
+      }
+    }
+
     val shouldShowProgress: StateFlow<Boolean> = if (task.shouldHideProgressInSmartMode()) {
       project.service<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
     }

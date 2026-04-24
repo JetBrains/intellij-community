@@ -1,3 +1,9 @@
+### auto-generated section `iml intellij.agent.workbench.chat` start
+exports_files([
+  "intellij.agent.workbench.chat.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.chat` end
+
 ### auto-generated section `build intellij.agent.workbench.chat` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -15,51 +21,76 @@ jvm_library(
   resources = [":chat_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//libraries/jackson/jackson",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
     "//plugins/terminal/frontend",
-  ]
-)
-
-jvm_library(
-  name = "chat_test_lib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":chat"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/core-ui",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core-impl",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/execution-impl",
-    "//plugins/terminal/frontend",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//libraries/junit4",
-    "//libraries/assertj-core",
+    "//plugins/terminal",
   ]
 )
 ### auto-generated section `build intellij.agent.workbench.chat` end
 
-### auto-generated section `test intellij.agent.workbench.chat` start
+### auto-generated section `build intellij.agent.workbench.chat.tests` start
+jvm_library(
+  name = "agent-workbench-chat-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-chat-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = ["//plugins/agent-workbench/chat"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
+    "//libraries/jackson/jackson",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/terminal/frontend",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/junit5",
+    "//libraries/assertj-core",
+    "//plugins/terminal",
+  ],
+  runtime_deps = [":agent-workbench-chat-tests"]
+)
+### auto-generated section `build intellij.agent.workbench.chat.tests` end
+
+### auto-generated section `test intellij.agent.workbench.chat.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "chat_test",
-  runtime_deps = [":chat_test_lib"]
+  name = "agent-workbench-chat-tests_test",
+  runtime_deps = [":agent-workbench-chat-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.chat` end
+### auto-generated section `test intellij.agent.workbench.chat.tests` end

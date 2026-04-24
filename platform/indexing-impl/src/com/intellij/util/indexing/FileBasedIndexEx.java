@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -70,6 +70,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_ENTRIES_LOOKUP;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupAllKeysStarted;
@@ -294,7 +295,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.keysWithAND(1)
         .withProject(project);
 
-      if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+      if (isIndexingActivitiesSuppressedSync(project)) return Collections.emptyIterator();
       @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
       if (restrictToFileIt != null) {
         VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
@@ -492,6 +493,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
+  @RequiresBackgroundThread(generateAssertion = false)
   public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
                                                      @NotNull Collection<? extends K> dataKeys,
                                                      @NotNull GlobalSearchScope filter,
@@ -588,7 +590,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * Consider iterating without a read action if you don't require a consistent snapshot.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
-    if (project instanceof LightEditCompatible) {
+    if (isIndexingActivitiesSuppressedSync(project)) {
       return Collections.emptyList();
     }
     return IndexingIteratorsProvider.getInstance(project).getIndexingIterators();

@@ -20,6 +20,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
@@ -145,7 +146,7 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
       if (ArrayUtil.contains(qName, "typing.Awaitable", PyTypingTypeProvider.GENERATOR)) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null))
       }
-      if (PyTypingTypeProvider.COROUTINE == qName) {
+      if (PyTypingTypeProvider.COROUTINE == qName || PyNames.TYPES_COROUTINE_TYPE == qName) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null))
       }
     }

@@ -20,6 +20,7 @@ interface LineFragmentPainter {
     int start,
     int end,
     TextAttributes attributes,
+    boolean isSelection,
     float xStart,
     float xEnd,
     int y

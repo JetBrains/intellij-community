@@ -4,6 +4,7 @@ package com.jetbrains.python.requirements.inspections.quickfixes
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
@@ -18,9 +19,10 @@ internal class InstallRequirementInTomlQuickFix(val requirement: PyRequirement) 
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
+    val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement)
 
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, pythonSdk).installPyRequirementsDetachedWithConfirmation(listOf(requirement))
+      PythonPackageManagerUI.forSdk(project, pythonSdk).installPyRequirementsWithConfirmation(listOf(requirement), module)
     }
   }
 

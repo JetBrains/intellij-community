@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
@@ -20,6 +21,7 @@ import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
+import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
@@ -80,14 +82,22 @@ class PyExternalSystemProjectAware private constructor(
 
     project.messageBus.syncAndPreloadPublisher(PROJECT_AWARE_TOPIC).apply {
       try {
+        log.debug {
+          "Reload project called"
+        }
         this.onProjectReloadStart()
-        val files = walkFileSystemWithTomlContent(projectRootDir).getOr {
+        val excludedPaths = collectExcludedPaths(project)
+        val files = walkFileSystemWithTomlContent(projectRootDir, excludedPaths).getOr {
           if (log.isTraceEnabled) {
             log.warn("Can't access $projectRootDir", it.error)
           }
           this.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
           return
         }
+        log.debug {
+          "Files found: ${files.tomlFiles.keys.joinToString(", ")}"
+        }
+
         rebuildProjectModel(project, files)
         this.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
         // Even though we have no entities, we still "rebuilt" the model, time to configure SDK

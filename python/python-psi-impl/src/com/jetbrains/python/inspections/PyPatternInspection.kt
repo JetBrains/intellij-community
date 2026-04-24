@@ -67,7 +67,8 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
         val invalidTypesUnion = PyUnionType.union(invalidTypes)
         val invalidTypeName = PythonDocumentationProvider.getTypeName(invalidTypesUnion, myTypeEvalContext)
         holder.problem(node.classNameReference,
-                       PyPsiBundle.message("INSP.patterns.not.a.class", node.classNameReference.text, invalidTypeName)).register()
+                       PyPsiBundle.message("INSP.patterns.not.a.class", node.classNameReference.text, invalidTypeName))
+          .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register()
         return
       }
     }
@@ -80,6 +81,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       node.argumentList.patterns.filterNot { it is PyKeywordPattern }.forEach { pattern ->
         holder.problem(pattern,
                        PyPsiBundle.message("INSP.patterns.class.does.not.support.pattern.matching.with.positional.arguments", pyClass.name))
+          .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           .fix(AddMatchArgsFix(pyClass))
           .register()
       }
@@ -90,6 +92,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
     for (pattern in positionalPatterns.drop(matchArgs.size)) {
       holder.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
+        .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         .fix(PyRemoveElementFix(pattern))
         .register()
     }
@@ -110,6 +113,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
                        PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position",
                                            keywordName,
                                            positionalIndex + 1))
+          .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           .fix(PyRemoveElementFix(keywordPattern))
           .register()
       }
@@ -130,7 +134,8 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     holder.problem(matchArgs, PyPsiBundle.message(
       "INSP.type.checker.expected.type.got.type.instead",
       PythonDocumentationProvider.getTypeName(goodTuple, myTypeEvalContext),
-      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext))).register()
+      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext)))
+      .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register()
   }
 }
 

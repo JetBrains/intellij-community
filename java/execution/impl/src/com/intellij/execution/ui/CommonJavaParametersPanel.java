@@ -6,10 +6,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.awt.BorderLayout;
@@ -18,8 +20,17 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParametersComponent;
   private ProgramInputRedirectPanel myInputRedirectPanel;
 
+  /**
+   * @deprecated Use {@link #CommonJavaParametersPanel(Project project)}, always pass the project explicitly, {@code null} only
+   * for deafault proejct.
+   */
+  @Deprecated
   public CommonJavaParametersPanel() {
-    super();
+    this(null);
+  }
+
+  public CommonJavaParametersPanel(@Nullable Project project) {
+    super(project);
   }
 
   @Override

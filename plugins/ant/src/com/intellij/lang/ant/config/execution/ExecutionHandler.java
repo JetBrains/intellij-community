@@ -31,6 +31,7 @@ import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -105,20 +106,20 @@ public final class ExecutionHandler {
     CompletableFuture<ProcessHandler> future = new CompletableFuture<>();
 
     MessageView.getInstance(project).runWhenInitialized(() -> {
-      final SimpleJavaParameters javaParameters;
       final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
       try {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        final AntCommandLineBuilder builder = new AntCommandLineBuilder();
+        final SimpleJavaParameters javaParameters = WriteIntentReadAction.computeThrowable(() -> {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          final AntCommandLineBuilder builder = new AntCommandLineBuilder();
 
-        builder.setBuildFile(buildFile.getAllOptions(), VfsUtilCore.virtualToIoFile(buildFile.getVirtualFile()));
-        builder.calculateProperties(dataContext, project, additionalProperties);
-        builder.addTargets(targets);
+          builder.setBuildFile(buildFile.getAllOptions(), VfsUtilCore.virtualToIoFile(buildFile.getVirtualFile()));
+          builder.calculateProperties(dataContext, project, additionalProperties);
+          builder.addTargets(targets);
 
-        builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
+          builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
-        javaParameters = builder.getCommandLine();
-
+          return builder.getCommandLine();
+        });
 
         final AntBuildMessageView messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
         project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));

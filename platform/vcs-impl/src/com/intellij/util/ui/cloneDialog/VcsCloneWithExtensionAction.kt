@@ -4,6 +4,7 @@ package com.intellij.util.ui.cloneDialog
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 
@@ -11,7 +12,7 @@ abstract class VcsCloneWithExtensionAction : DumbAwareAction() {
   abstract fun getExtension(): Class<out VcsCloneDialogExtension>
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = currentOrDefaultProject(e.project)
     val checkoutListener = ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener
 
     val dialog = VcsCloneDialog.Builder(project).forExtension(getExtension())

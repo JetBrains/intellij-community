@@ -72,14 +72,14 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
     }
 
     val module = manager.getOrDefault {
-      project.moduleFixture(name = context.uniqueId, moduleType = PyNames.PYTHON_MODULE_ID).also {
+      project.moduleFixture(project.pathInProjectFixture(Path.of(".")), moduleTypeId = PyNames.PYTHON_MODULE_ID).also {
         implicitFixtures += LookupFixture(DEFAULT_PY_MODULE, it, true)
       }
     }
 
     manager.getOrDefault {
       module.sourceRootFixture(
-        pathFixture = project.pathInProjectFixture(Path.of("")),
+        pathFixture = project.pathInProjectFixture(Path.of(".")),
         blueprintResourcePath = context.getTestClassInfo().testDataPath
       ).also {
         implicitFixtures += LookupFixture(DEFAULT_SOURCE_ROOT, it, true)

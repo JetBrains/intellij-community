@@ -166,7 +166,8 @@ object GrazieDynamic : DynamicPluginListener {
   fun getResourceBundle(baseName: String, locale: Locale): ResourceBundle {
     return forClassLoader {
       try {
-        DynamicBundle.getResourceBundle(GrazieBundle::class.java.classLoader, baseName)
+        DynamicBundle.getResourceBundle(it, baseName, locale)
+          .takeIf { bundle -> bundle.locale.language == locale.language }
       }
       catch (e: MissingResourceException) {
         null
@@ -174,11 +175,6 @@ object GrazieDynamic : DynamicPluginListener {
     } ?: throw MissingResourceException("Missing resource bundle for $baseName with locale $locale", GrazieDynamic.javaClass.name, baseName)
   }
 
-  private inline fun <T : Any> forClassLoader(crossinline body: (ClassLoader) -> T?): T? {
-    return body(GraziePlugin.classLoader) ?: dynClassLoaders
-      .asSequence()
-      .mapNotNull {
-        body(it)
-      }.firstOrNull()
-  }
+  private inline fun <T : Any> forClassLoader(crossinline body: (ClassLoader) -> T?): T? =
+    body(GraziePlugin.classLoader) ?: dynClassLoaders.firstNotNullOfOrNull { body(it) }
 }

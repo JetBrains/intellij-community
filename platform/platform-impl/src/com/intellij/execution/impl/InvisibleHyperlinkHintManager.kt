@@ -4,11 +4,14 @@ package com.intellij.execution.impl
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.execution.impl.EditorHyperlinkUsageCollector.HyperlinkFollowedPlace
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
@@ -29,9 +32,21 @@ import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
-internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
+internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentDisposable: Disposable) {
 
   private var hintInfo: HintInfo? = null
+
+  // As the editor is focused on mousePressed and popup is shown on mouseReleased,
+  // we need to capture the editor focus state.
+  private var wasEditorFocusedBeforePopupShown: Boolean = false
+
+  init {
+    editor.addEditorMouseListener(object: EditorMouseListener {
+      override fun mousePressed(event: EditorMouseEvent) {
+        wasEditorFocusedBeforePopupShown = editor.contentComponent.isFocusOwner
+      }
+    }, parentDisposable)
+  }
 
   fun isInsideHint(e: EditorMouseEvent): Boolean {
     val hint = getHintInfoIfVisible()?.hint
@@ -65,19 +80,25 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor) {
       return
     }
     hideIfVisible()
+    var linkFollowed = false
     val component = createHintLabel(object : HyperlinkAdapter() {
       override fun hyperlinkActivated(e: HyperlinkEvent) {
+        linkFollowed = true
         action()
         hideIfVisible()
+        EditorHyperlinkUsageCollector.logInvisibleHyperlinkFollowed(HyperlinkFollowedPlace.POPUP_LINK_CLICKED)
       }
     })
     val hint = showHint(editor, e.offset, component)
     hintInfo = HintInfo(hint, link, e)
+    val copyWasEditorFocusedBeforePopupShown = wasEditorFocusedBeforePopupShown
     hint.addHintListener {
       if (hintInfo?.hint == hint) {
         hintInfo = null
+        EditorHyperlinkUsageCollector.logInvisibleHyperlinkPopupHidden(copyWasEditorFocusedBeforePopupShown, linkFollowed)
       }
     }
+    EditorHyperlinkUsageCollector.logInvisibleHyperlinkPopupShown(wasEditorFocusedBeforePopupShown)
   }
 
   private fun createHintLabel(listener: HyperlinkListener): JComponent {

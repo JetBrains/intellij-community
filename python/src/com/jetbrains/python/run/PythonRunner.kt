@@ -4,6 +4,7 @@ package com.jetbrains.python.run
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -40,7 +41,11 @@ open class PythonRunner : AsyncProgramRunner<RunnerSettings>() {
       val executionResult = if (state is PythonCommandLineState) {
         // TODO [cloud-api.python] profile functionality must be applied here:
         //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
-        state.execute(environment.executor)
+        // Re-install the environment data context so that macro expansion
+        // ($FilePath$, etc.) works inside the project-scoped coroutine (PY-88858).
+        ExecutionManagerImpl.withEnvironmentDataContext(environment.dataContext) {
+          state.execute(environment.executor)
+        }
       }
       else {
         withContext(Dispatchers.EDT) {

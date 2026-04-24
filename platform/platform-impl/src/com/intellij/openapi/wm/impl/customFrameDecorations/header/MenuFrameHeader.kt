@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -24,6 +24,7 @@ internal class MenuFrameHeader(
   private val headerTitle: CustomHeaderTitle,
   private val ideMenu: IdeJMenuBar,
   private val isAlwaysCompact: Boolean,
+  private val projectFrameTypeIdProvider: () -> String?,
 ) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
@@ -68,7 +69,9 @@ internal class MenuFrameHeader(
   }
 
   override fun calcHeight(): Int {
-    val isCompactHeader = isAlwaysCompact || isCompactHeader { blockingComputeMainActionGroups() }
+    val isCompactHeader = isAlwaysCompact || isCompactHeader {
+      blockingComputeMainActionGroups(projectFrameTypeId = projectFrameTypeIdProvider())
+    }
     return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader)
   }
 

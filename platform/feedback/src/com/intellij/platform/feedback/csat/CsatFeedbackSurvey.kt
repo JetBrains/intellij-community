@@ -211,6 +211,7 @@ internal fun flipACoin(productCode: String, newUser: Boolean): Boolean {
       when (productCode) {
         "PC", "IU" -> 0.015
         "IC", "PY" -> 0.025
+        "RD" -> 0.25
         else -> 0.125
       }
     }

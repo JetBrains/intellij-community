@@ -53,7 +53,8 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  final @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, PyInspectionVisitor.getContext(session));
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    return new Visitor(holder, context);
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -154,17 +155,20 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           if (resolved != null && !PyUtil.inSameFile(node, resolved)) {
             return;
           }
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name));
+          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else if (scope.isGlobal(name)) {
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name));
+          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else if (isNonLocal) {
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.local.variable", name));
+          registerProblem(node, PyPsiBundle.message("INSP.unbound.local.variable", name),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
           registerProblem(node, PyPsiBundle.message("INSP.unbound.local.variable", node.getName()),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING),
                           null,
                           new AddGlobalQuickFix());
         }

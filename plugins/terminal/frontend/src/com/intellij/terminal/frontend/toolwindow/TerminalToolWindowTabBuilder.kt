@@ -78,6 +78,12 @@ interface TerminalToolWindowTabBuilder {
   fun contentManager(manager: ContentManager?): TerminalToolWindowTabBuilder
 
   /**
+   * Whether to close the tool window tab when the process terminates on its own.
+   * Default value depends on user settings: [org.jetbrains.plugins.terminal.TerminalOptionsProvider.closeSessionOnLogout].
+   */
+  fun closeOnProcessTermination(shouldClose: Boolean): TerminalToolWindowTabBuilder
+
+  /**
    * Whether to add the tab to the Terminal tool window or create the detached tab.
    * True by default.
    *

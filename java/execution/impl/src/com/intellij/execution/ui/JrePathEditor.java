@@ -69,6 +69,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   private String myPreviousCustomJrePath;
   private boolean myRemoteTarget;
 
+
+  /**
+   * @deprecated Use {@link #JrePathEditor(DefaultJreSelector defaultJreSelector, Project project)}.
+   * See comment for {@link #JrePathEditor(boolean editable)}
+   */
+  @Deprecated
   public JrePathEditor(DefaultJreSelector defaultJreSelector) {
     this();
     setDefaultJreSelector(defaultJreSelector);
@@ -76,12 +82,33 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   /**
    * This constructor can be used in UI forms. <strong>Don't forget to call {@link #setDefaultJreSelector(DefaultJreSelector)}!</strong>
+   *
+   * @deprecated Use {@link #JrePathEditor(Project project)}. See comment for {@link #JrePathEditor(boolean editable)}
    */
+  @Deprecated
   public JrePathEditor() {
     this(true);
   }
 
+  /**
+   * @deprecated Use {@link #JrePathEditor(boolean editable,Project project)}. Use {@code null} project only for global context without any
+   * currently open proejct. JRE is container-specific, and if a project is opened, for example, in WSL, local JREs must not be used.
+   */
+  @Deprecated
   public JrePathEditor(boolean editable) {
+    this(editable, null);
+  }
+
+  public JrePathEditor(DefaultJreSelector defaultJreSelector, @Nullable Project project) {
+    this(project);
+    setDefaultJreSelector(defaultJreSelector);
+  }
+
+  public JrePathEditor(@Nullable Project project) {
+    this(true, project);
+  }
+
+  public JrePathEditor(boolean editable, @Nullable Project project) {
     myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
       int result = Integer.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
@@ -93,7 +120,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       public void setSelectedItem(Object anItem) {
         if (anItem instanceof AddJreItem) {
           getComponent().hidePopup();
-          getBrowseRunnable().run();
+          getBrowseRunnable(project).run();
         }
         else {
           super.setSelectedItem(anItem);
@@ -123,7 +150,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     myComboboxEditor = new JreComboboxEditor(myComboBoxModel) {
       @Override
       protected JTextField createEditorComponent() {
-        JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null, false);
+        JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(project), null, false);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
           @Override
@@ -245,11 +272,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     return model;
   }
 
-  private Runnable getBrowseRunnable() {
+  private Runnable getBrowseRunnable(@Nullable Project project) {
     var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(ExecutionBundle.message("run.configuration.select.alternate.jre.label"))
       .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"));
-    return new BrowseFolderRunnable<>(null, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
+    return new BrowseFolderRunnable<>(project, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 
   public @Nullable String getJrePathOrName() {

@@ -437,7 +437,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @ApiStatus.Internal
-  public void setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+  public void setReadonlyFragmentModificationHandler(@Nullable ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 

@@ -13,6 +13,8 @@ import kotlin.time.Duration.Companion.minutes
 data class IDEStartResult(
   val runContext: IDERunContext,
   val executionTime: Duration = 0.minutes,
+  /** The process exit code, or `null` when not captured. */
+  val exitCode: Int? = null,
   val vmOptionsDiff: VMOptionsDiff? = null,
   val failureError: Throwable? = null,
   /** property is not null for split mode */

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -31,8 +32,10 @@ import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
@@ -422,8 +425,8 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
                                && event.getCode() != PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
 
     PsiFile file = event.getFile();
-    if (file == null || file.isPhysical()) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (file == null || PomModelImpl.shouldFirePhysicalPsiEvents(file)) {
+      ThreadingAssertions.assertWriteAccess();
     }
     if (isRealTreeChange) {
       LOG.assertTrue(!myTreeChangeEventIsFiring, "Changes to PSI are not allowed inside event processing");

@@ -14,10 +14,10 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilit
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.copyContainingFile
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.getAliasNameIfExists
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
@@ -62,7 +63,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
@@ -169,8 +169,12 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             symbol.containingSymbol?.staticScope?.let(scopesToCheck::add)
         }
 
-        context.expectedType?.symbol?.takeIf { it.modality == KaSymbolModality.SEALED }?.let(::addContainingScopesToCheck)
-        context.preferredSubtype?.symbol?.let(::addContainingScopesToCheck)
+        context.expectedType?.upperBoundIfFlexible()?.symbol
+            ?.takeIf { it.modality == KaSymbolModality.SEALED }
+            ?.let(::addContainingScopesToCheck)
+
+        context.preferredSubtype?.upperBoundIfFlexible()?.symbol
+            ?.let(::addContainingScopesToCheck)
 
         val scopeClassifiers = scopesToCheck
             .asSequence()
@@ -359,9 +363,7 @@ private class K2ClassifierLookupElementRenderer(
 
     @RequiresReadLock
     private fun collectPossibleReferenceShortenings(): ShortenCommandForIde? {
-        val file = position.element
-            ?.copy() as? KtFile
-            ?: return null
+        val file = position.element?.copyContainingFile() ?: return null
 
         val document = file.viewProvider
             .document

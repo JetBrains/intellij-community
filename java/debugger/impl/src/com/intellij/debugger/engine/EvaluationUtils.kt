@@ -16,7 +16,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
@@ -27,6 +27,12 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import kotlin.time.Duration
+
+
+internal class EnterAndExitEvaluationCheck(
+  @JvmField val enterBreakpointCheckFn: Method,
+  @JvmField val checkIsDoneFn: Method,
+)
 
 /**
  * Find some suspend context in which evaluation is possible.
@@ -163,7 +169,7 @@ fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> s
 
   val isLoggingBp = xB.logExpressionObject != null && xB.suspendPolicy == SuspendPolicy.NONE
   val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
-  return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
+  return isConditionalBp && !isLoggingBp
 }
 
 @ApiStatus.Internal

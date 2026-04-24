@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getRequiredContrastRatio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -44,17 +45,19 @@ object EmptyTextAttributesProvider : TextAttributesProvider {
 @ApiStatus.Internal
 class TextStyleAdapter(
   val style: TextStyle,
-  private val colorPalette: TerminalColorPalette,
+  val colorPalette: TerminalColorPalette,
   private val ignoreContrastAdjustment: Boolean = true,
 ) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes {
-    val requiredContrast = if (ignoreContrastAdjustment) {
+    val baseContrast = if (ignoreContrastAdjustment) {
       TerminalContrastRatio.MIN_VALUE
     }
     else {
       val options = TerminalOptionsProvider.instance
       if (options.enforceMinContrastRatio) options.minContrastRatio else TerminalContrastRatio.MIN_VALUE
     }
+
+    val requiredContrast = style.getRequiredContrastRatio(baseContrast)
     return style.toTextAttributes(colorPalette, requiredContrast)
   }
 

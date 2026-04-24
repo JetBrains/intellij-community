@@ -7,17 +7,24 @@ import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.xdebugger.impl.ui.RunnerLayoutUiBridge
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class XDebugTabLayouterModel(
+class XDebugTabLayouterModel internal constructor(
   val layouter: XDebugTabLayouter,
-  val ui: RunnerLayoutUi,
-  val events: Flow<XDebugTabLayouterEvent>,
-)
+  private val uiBridge: RunnerLayoutUiBridge,
+) {
+  val ui: RunnerLayoutUi get() = uiBridge
+  val events: Flow<XDebugTabLayouterEvent> get() = uiBridge.events
+
+  fun setSelection(contentUniqueId: Int, isSelected: Boolean) {
+    uiBridge.setSelection(contentUniqueId, isSelected)
+  }
+}
 
 @ApiStatus.Internal
 fun XDebugTabLayouterModel.storeGlobally(cs: CoroutineScope): XDebugTabLayouterId {

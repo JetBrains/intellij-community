@@ -21,5 +21,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor = PyStubAdvertiserVisitor(ignoredPackages, holder, session)
+  ): PsiElementVisitor {
+    return PyStubAdvertiserVisitor(ignoredPackages, holder, session)
+  }
 }

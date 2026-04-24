@@ -76,8 +76,7 @@ open class PyPackageRepository() {
     this.login = login
   }
 
-  private val serviceName: String
-    get() = generateServiceName(SUBSYSTEM_NAME, name)
+  private val cachedPassword = CachedPassword()
 
   val urlForInstallation: URL?
     get() {
@@ -91,20 +90,11 @@ open class PyPackageRepository() {
     URIBuilder(baseUrl).setUserInfo(login, password).build().toURL()
 
   @Transient
-  fun getPassword(): String? {
-    val attributes = CredentialAttributes(serviceName, login)
-    return PasswordSafe.instance.getPassword(attributes)
-  }
+  fun getPassword(): String? = cachedPassword.get()
 
-  fun setPassword(pass: String?) {
-    val attributes = CredentialAttributes(serviceName, login)
-    PasswordSafe.instance.set(attributes, Credentials(login, pass))
-  }
+  fun setPassword(pass: String?) = cachedPassword.set(Credentials(login, pass))
 
-  fun clearCredentials() {
-    val attributes = CredentialAttributes(serviceName, login)
-    PasswordSafe.instance.set(attributes, null)
-  }
+  fun clearCredentials() = cachedPassword.set(null)
 
   @ApiStatus.Internal
   fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
@@ -132,4 +122,39 @@ open class PyPackageRepository() {
   companion object {
     private const val SUBSYSTEM_NAME = "PyCharm"
   }
+
+  /**
+   * Thread-safe cached wrapper around [PasswordSafe] for a single credential.
+   *
+   * Caches the password on first [get] to prevent concurrent blocking calls to [PasswordSafe]
+   * from exhausting the thread pool (see PY-87597). In remote development, [PasswordSafe.getPassword]
+   * goes through `RemoteCredentialStore` which calls `runBlockingMaybeCancellable`, blocking the calling thread.
+   */
+  private inner class CachedPassword {
+    @Volatile
+    private var cached: CachedValue? = null
+
+    private fun credentialAttributes() = CredentialAttributes(generateServiceName(SUBSYSTEM_NAME, name), login)
+
+    fun get(): String? {
+      cached?.let { return it.value }
+      synchronized(this) {
+        cached?.let { return it.value }
+        val password = PasswordSafe.instance.getPassword(credentialAttributes())
+        cached = CachedValue(password)
+        return password
+      }
+    }
+
+    fun set(credentials: Credentials?) {
+      cached = null
+      PasswordSafe.instance[credentialAttributes()] = credentials
+    }
+  }
+
+  /**
+   * Wrapper to distinguish "not yet cached" (`null` reference) from "cached null password" ([CachedValue] with `null` inside).
+   */
+  @JvmInline
+  private value class CachedValue(val value: String?)
 }

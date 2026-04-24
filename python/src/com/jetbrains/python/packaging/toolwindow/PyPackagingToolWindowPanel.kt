@@ -43,6 +43,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
@@ -250,8 +251,11 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     this.packageListController.selectPackage(name)
   }
 
-  fun startLoadingSdk() {
+  fun startLoadingSdk(@Nls sdkName: String? = null) {
     this.descriptionController.setPackage(null)
+    if (sdkName != null) {
+      packageListController.setSdkName(sdkName)
+    }
     packageListController.startSdkInit()
   }
 

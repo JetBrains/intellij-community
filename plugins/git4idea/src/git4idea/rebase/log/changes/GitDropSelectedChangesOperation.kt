@@ -89,7 +89,7 @@ internal class GitDropSelectedChangesOperation(
       return GitCommitEditingOperationResult.Incomplete
     }
     val fixupCommit = try {
-      GitLogUtil.collectMetadata(project, repository.root, listOf(GitUtil.HEAD)).single()
+      GitLogUtil.collectMetadataForCommit(project, repository.root, GitUtil.HEAD) ?: error("No HEAD commit")
     }
     catch (e: VcsException) {
       notifyOperationFailed(e)

@@ -51,7 +51,7 @@ class BuildElementsEditorUi(
         indent {
           row(JavaUiBundle.message("module.paths.output.label")) {
             val descriptor = descriptor(JavaUiBundle.message("module.paths.output.title"))
-            compilerOutputPath = textFieldWithBrowseButton(descriptor)
+            compilerOutputPath = textFieldWithBrowseButton(descriptor, module.project)
               .applyToComponent {
                 InsertPathAction.addTo(textField, descriptor)
                 FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, null)
@@ -62,7 +62,7 @@ class BuildElementsEditorUi(
           }
           row(JavaUiBundle.message("module.paths.test.output.label")) {
             val descriptor = descriptor(JavaUiBundle.message("module.paths.test.output.title"))
-            testCompilerOutputPath = textFieldWithBrowseButton(descriptor)
+            testCompilerOutputPath = textFieldWithBrowseButton(descriptor, module.project)
               .applyToComponent {
                 InsertPathAction.addTo(textField, descriptor)
                 FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, null)

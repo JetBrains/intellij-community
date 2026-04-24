@@ -2,6 +2,7 @@
 package git4idea.rebase.log
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitUtil
@@ -79,6 +80,10 @@ internal sealed class GitCommitEditingOperationResult {
       object Possible : UndoPossibility()
     }
   }
+
+  data class Conflict(
+    val description: @NlsSafe String, // git output describing the merge conflict
+  ) : GitCommitEditingOperationResult()
 
   object Incomplete : GitCommitEditingOperationResult()
 }

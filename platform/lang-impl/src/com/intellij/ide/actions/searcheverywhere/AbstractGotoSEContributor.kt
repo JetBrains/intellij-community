@@ -71,7 +71,7 @@ internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]
 abstract class AbstractGotoSEContributor @ApiStatus.Internal protected constructor(
   event: AnActionEvent,
   @ApiStatus.Internal val contributorModules: List<SearchEverywhereContributorModule>?
-) : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
+) : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider, PossibleInternalCommandsContributor {
   @JvmField
   protected val myProject: Project = event.getRequiredData(CommonDataKeys.PROJECT)
   @JvmField
@@ -496,6 +496,16 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun getElementPriority(element: Any, searchPattern: String): Int = 50
+
+  @ApiStatus.Internal
+  override fun shouldTreatAsACommandQuery(string: String): Boolean {
+    return contributorModules?.any { it.shouldTreatAsACommandQuery(string) != false } ?: false
+  }
+
+  @ApiStatus.Internal
+  override fun shouldTreatAsACommandQueryWithArg(string: String): Boolean {
+    return contributorModules?.any { it.shouldTreatAsACommandQueryWithArg(string) != false } ?: false
+  }
 }
 
 private class MyViewModel(private val myProject: Project, private val myModel: ChooseByNameModel) : ChooseByNameViewModel {

@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
+    <module name="intellij.python.community.execService"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

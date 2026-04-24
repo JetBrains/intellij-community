@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase.log
 
+import com.intellij.dvcs.repo.isHead
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.VcsException
@@ -110,7 +111,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
       objectRepo.repository.update()
     }
 
-    if (objectRepo.repository.currentRevision!! != initialHeadPosition.asString()) {
+    if (!objectRepo.repository.isHead(initialHeadPosition)) {
       throw VcsException(GitBundle.message("in.memory.rebase.fail.head.move"))
     }
   }

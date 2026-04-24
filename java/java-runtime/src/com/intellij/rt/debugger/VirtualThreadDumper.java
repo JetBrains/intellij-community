@@ -17,6 +17,9 @@ public final class VirtualThreadDumper {
   private final MethodHandle containersRootHandle;
   private final MethodHandle containerChildrenHandle;
   private final MethodHandle containerThreadsHandle;
+  private final MethodHandle containerNameHandle;
+  private final MethodHandle containerOwnerHandle;
+  private final MethodHandle carrierThreadHandle;
 
   private final MethodHandle threadIsVirtualHandle;
   private final MethodHandle threadThreadState;
@@ -25,6 +28,7 @@ public final class VirtualThreadDumper {
   private final HashMap<String, ArrayList<Thread>> threadsGroupedByStackTrace = new HashMap<>();
 
   private final ArrayList<String> containerNames = new ArrayList<>();
+  private final ArrayList<Object> containerOwners = new ArrayList<>();
   private final ArrayList<Object> containerReferences = new ArrayList<>();
   private final ArrayList<Integer> containerParentOrdinals = new ArrayList<>();
 
@@ -32,12 +36,17 @@ public final class VirtualThreadDumper {
     // ThreadContainer & Co., since Java 21
     Class<?> threadContainersClass = Class.forName("jdk.internal.vm.ThreadContainers");
     Class<?> threadContainerClass = Class.forName("jdk.internal.vm.ThreadContainer");
+    Class<?> virtualThreadClass = Class.forName("java.lang.VirtualThread");
     containersRootHandle = lookup.findStatic(threadContainersClass, "root", MethodType.methodType(threadContainerClass));
     containerChildrenHandle = lookup.findVirtual(threadContainerClass, "children", MethodType.methodType(Stream.class));
     containerThreadsHandle = lookup.findVirtual(threadContainerClass, "threads", MethodType.methodType(Stream.class));
+    containerNameHandle = lookup.findVirtual(threadContainerClass, "name", MethodType.methodType(String.class));
+    containerOwnerHandle = lookup.findVirtual(threadContainerClass, "owner", MethodType.methodType(Thread.class));
 
     // VirtualThread & Co., since Java 21
     threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
+    // private field java.lang.VirtualThread#carrierThread
+    carrierThreadHandle = lookup.findGetter(virtualThreadClass, "carrierThread", Thread.class);
     // Thread, non-public method
     threadThreadState = lookup.findVirtual(Thread.class, "threadState", MethodType.methodType(Thread.State.class));
   }
@@ -57,8 +66,12 @@ public final class VirtualThreadDumper {
    *     </ul>
    *   </li>
    *   <li> {@code long[]} - thread IDs of threads from the first array in the corresponding order.</li>
+   *   <li> {@code long[]} - thread IDs of carriers of virtual threads (see {@code java.lang.VirtualThread#carrierThread}) if they are mounted
+   *     or -1 if a virtual thread is not mounted, in the same order as their IDs in the array above. </li>
    *   <li> {@code String[]} - names of all {@code jdk.internal.vm.ThreadContainer}s, they are referenced from the first array by ordinals.</li>
    *   <li> {@code Object[]} - {@code jdk.internal.vm.ThreadContainer} objects in the same order as their names in the array above.</li>
+   *   <li> {@code Object[]} - scope owners (see {@code jdk.internal.vm.StackableScope#owner}) of thread containers
+   *     as {@link com.sun.jdi.ThreadReference ThreadReferences}, in the same order as thread containers in the array above.</li>
    *   <li> {@code int[]} - ordinals of the parent container for every thread container or -1 if there is no parent.</li>
    * </ol>
    */
@@ -73,6 +86,7 @@ public final class VirtualThreadDumper {
 
     // Group threads by stack trace and compact them into arrays.
     long[] threadIds = new long[threadsCount];
+    long[] carrierThreadIds = new long[threadsCount];
     int tidIdx = 0;
     Object[] allStackTraceAndThreads = new Object[threadsCount + threadsGroupedByStackTrace.size() * 2];
     int stIdx = 0;
@@ -82,7 +96,9 @@ public final class VirtualThreadDumper {
       allStackTraceAndThreads[stIdx++] = st;
       for (Thread t : ts) {
         allStackTraceAndThreads[stIdx++] = t;
-        threadIds[tidIdx++] = t.getId();
+        threadIds[tidIdx] = t.getId();
+        carrierThreadIds[tidIdx] = getCarrierThreadId(t);
+        tidIdx++;
       }
       allStackTraceAndThreads[stIdx++] = null;
     }
@@ -92,8 +108,10 @@ public final class VirtualThreadDumper {
     return new Object[] {
       allStackTraceAndThreads,
       threadIds,
+      carrierThreadIds,
       containerNames.toArray(),
       containerReferences.toArray(),
+      containerOwners.toArray(),
       containerParentOrdinals.stream().mapToInt(Integer::intValue).toArray()
     };
   }
@@ -142,7 +160,8 @@ public final class VirtualThreadDumper {
   private int saveContainerInfo(Object container, int parentContainerOrdinal) throws Throwable {
     assert containerNames.size() == containerParentOrdinals.size();
     int ordinal = containerNames.size();
-    containerNames.add(container.toString());
+    containerNames.add(getContainerName(container));
+    containerOwners.add(containerOwnerHandle.invoke(container));
     containerReferences.add(container);
     containerParentOrdinals.add(parentContainerOrdinal);
     return ordinal;
@@ -154,5 +173,15 @@ public final class VirtualThreadDumper {
       Object childContainer = children.next();
       processContainer(childContainer, ordinal);
     }
+  }
+
+  private String getContainerName(Object container) throws Throwable {
+    String name = (String)containerNameHandle.invoke(container);
+    return name != null ? name : container.toString();
+  }
+
+  private long getCarrierThreadId(Thread t) throws Throwable {
+    Thread carrierThread = (Thread)carrierThreadHandle.invoke(t);
+    return carrierThread != null ? carrierThread.getId() : -1;
   }
 }

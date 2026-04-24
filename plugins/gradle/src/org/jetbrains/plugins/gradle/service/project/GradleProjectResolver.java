@@ -599,7 +599,11 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
     if (resolverContext.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
-    if (executionSettings.isParallelModelFetch()) {
+    boolean parallelModelFetch = executionSettings.isParallelModelFetch();
+    if (!parallelModelFetch) {
+      executionSettings.withArgument("-Dorg.gradle.tooling.parallel.ignore-legacy-default=true");
+    }
+    if (parallelModelFetch || GradleVersionUtil.isGradleAtLeast(resolverContext.getGradleVersion(), "9.4")) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!resolverContext.isBuildSrcProject()) {

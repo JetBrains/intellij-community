@@ -24,7 +24,9 @@ open class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDe
   }
 
   override fun sessionResumed() {
-    isEnabled = false
+    if (!consoleCommunication.isWaitingForInput) {
+      isEnabled = false
+    }
   }
 
   override fun sessionStopped() {

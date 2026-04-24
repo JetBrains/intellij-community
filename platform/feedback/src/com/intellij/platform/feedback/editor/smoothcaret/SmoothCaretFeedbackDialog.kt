@@ -31,7 +31,7 @@ class SmoothCaretFeedbackDialog(
   override suspend fun computeSystemInfoData(): SmoothCaretUsageData {
     val editorSettings = EditorSettingsExternalizable.getInstance()
     return SmoothCaretUsageData(
-      isAnimatedCaret = editorSettings.isAnimatedCaret,
+      isAnimatedCaret = editorSettings.isSmoothCaretMovement,
       caretEasing = editorSettings.caretEasing.name,
       smoothCaretBlinking = editorSettings.isSmoothBlinkCaret,
       systemInfo = CommonFeedbackSystemData.getCurrentData(),

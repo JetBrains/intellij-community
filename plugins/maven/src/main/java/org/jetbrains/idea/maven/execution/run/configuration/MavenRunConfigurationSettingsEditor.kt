@@ -506,7 +506,7 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.profiles.hint")
       override val settingsActionHint: String? = null
     },
-    { MavenProfilesFiled(project, workingDirectoryField, it) },
+    { MavenProfilesFiled(project, workingDirectoryField.getWorkingDirectoryVirtualFile(), it) },
     { it, c -> c.profiles = it.runnerParameters.profilesMap },
     { it, c -> it.runnerParameters.profilesMap = c.profiles }
   )

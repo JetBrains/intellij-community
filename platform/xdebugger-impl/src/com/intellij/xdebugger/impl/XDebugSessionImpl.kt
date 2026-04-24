@@ -192,6 +192,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myStepOverActionAllowed = MutableStateFlow(true)
   private val myStepOutActionAllowed = MutableStateFlow(true)
   private val myRunToCursorActionAllowed = MutableStateFlow(true)
+  private val myForceStepIntoActionAllowed = MutableStateFlow(true)
 
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
   private val myTabInitDataFlow = MutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
@@ -330,6 +331,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myRunToCursorActionAllowed.value
     set(value) {
       myRunToCursorActionAllowed.value = value
+    }
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isForceStepIntoActionAllowed: Boolean
+    get() = myForceStepIntoActionAllowed.value
+    set(value) {
+      myForceStepIntoActionAllowed.value = value
     }
 
   fun addRestartActions(vararg restartActions: AnAction) {
@@ -624,13 +633,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
         val disposable = localTabScope.asDisposable()
         addAdditionalTabsAndConsolesToManager(runTab.consoleManger, disposable)
 
-        val mockUi = runTab.ui
-        val layoutBridge = RunnerLayoutUiBridge(mockUi, disposable)
+        val layoutBridge = RunnerLayoutUiBridge(project, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           init {
-            runnerLayoutUi = if (AppMode.isRemoteDevHost()) layoutBridge else mockUi
+            runnerLayoutUi = if (AppMode.isRemoteDevHost()) layoutBridge else runTab.ui
           }
 
           override fun isHiddenContent(): Boolean = true
@@ -642,7 +650,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         mockDescriptor.id = descriptorId
 
         val tabLayouter = debugProcess.createTabLayouter()
-        val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge, layoutBridge.events).storeGlobally(localTabScope)
+        val tabLayouterId = XDebugTabLayouterModel(tabLayouter, layoutBridge).storeGlobally(localTabScope)
         tabLayouterDto.complete(XDebugTabLayouterDto(tabLayouterId, tabLayouter))
 
         debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {

@@ -4,12 +4,14 @@ Reports destructuring declarations where variable names don't match the original
 <p><b>Example:</b></p>
 <pre><code>
   data class Product(val id: String, val productName: String)
-  val (productId, name) = product
+  val (id, name) = product // warning on "name"
 </code></pre>
-<p>The quick-fix renames variables to match the original property names:</p>
+<p>The following quick-fixes are available:</p>
 <ul>
-<li><b>Rename variables to match properties:</b> <code>val (id, productName) = product</code></li>
+<li><b>Rename variable to match property:</b> <code>val (id, productName) = product</code></li>
+<li><b>Use positional destructuring with square brackets:</b> <code>val [id, name] = product</code></li>
 </ul>
-<p>This inspection prepares code for an upcoming Kotlin language feature change where <code>val (x, y) = e</code> syntax will flip from position-based to name-based destructuring. Ensuring variable names match property names now will prevent breaking changes when this language evolution occurs.</p>
+<p>For standard library classes like <code>Pair</code>, <code>Triple</code>, and <code>IndexedValue</code>, the inspection suggests using positional destructuring syntax since these types are designed for positional access rather than name-based matching.</p>
+<p>This inspection prepares code for an upcoming Kotlin language feature change where <code>val (x, y) = e</code> syntax will flip from position-based to name-based destructuring.</p>
 </body>
 </html>

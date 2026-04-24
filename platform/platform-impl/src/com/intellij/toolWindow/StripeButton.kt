@@ -98,7 +98,7 @@ class StripeButton internal constructor(@JvmField internal val toolWindow: ToolW
   private fun updateHelpTooltip() {
     HelpTooltip.dispose(this)
     val tooltip = HelpTooltip()
-    tooltip.setTitle(toolWindow.stripeTitleProvider)
+    tooltip.setPlainTextTitle(toolWindow.stripeTitleProvider)
     val activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId))
     tooltip.installOn(this)

@@ -19,4 +19,5 @@ enum class TerminalOpeningWay {
   SWITCH_ENGINE,
   SPLIT_TOOLWINDOW,
   DND_FILE_TO_TOOLWINDOW,
+  AI_AGENTS_BUTTON,
 }

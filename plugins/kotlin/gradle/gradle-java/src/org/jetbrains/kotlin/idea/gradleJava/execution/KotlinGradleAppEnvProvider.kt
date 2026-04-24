@@ -10,6 +10,7 @@ import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptParameters
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.isIncludedBuild
@@ -64,8 +65,8 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '${params.runAppTaskName}'
     def mainClassToRun = '${params.mainClass}'
-    def javaExePath = '${params.javaExePath}'
-    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "'${params.workingDirectory}'\n"}
+    def javaExePath = mapPath(${params.javaExePath.toGroovyStringLiteral()})
+    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "mapPath(${params.workingDirectory!!.toGroovyStringLiteral()})"}
     def sourceSetName = '${params.sourceSetName}'
     
     def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0

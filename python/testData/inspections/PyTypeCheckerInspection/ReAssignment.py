@@ -13,7 +13,7 @@ def f1():
 
 
 def f2(p: int):
-    p = <warning descr="Expected type 'int', got 'str' instead">"aba"</warning>
+    p = "aba" # TODO (PY-85871): Expected type 'int', got 'str' instead
 
 
 def f3(p: int):

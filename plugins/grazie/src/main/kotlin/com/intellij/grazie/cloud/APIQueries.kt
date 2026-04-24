@@ -2,6 +2,8 @@ package com.intellij.grazie.cloud
 
 import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.SentenceWithProblems
+import ai.grazie.gec.model.settings.StyleProfile
+import ai.grazie.gec.model.settings.UserSettings
 import ai.grazie.gen.tasks.text.rewrite.full.RewriteFullTaskDescriptor
 import ai.grazie.gen.tasks.text.rewrite.full.RewriteFullTaskParams
 import ai.grazie.gen.tasks.text.rewrite.selection.RewriteSelectionV2TaskDescriptor
@@ -15,11 +17,15 @@ import ai.grazie.model.cloud.sse.continuous.ContinuousSSEException
 import ai.grazie.ner.model.SentenceWithNERAnnotations
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.englishName
+import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.tree.TreeSupport
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import ai.grazie.tree.model.SentenceWithTreeDependencies
+import ai.grazie.utils.capitalize
 import ai.grazie.utils.text
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TreeRuleChecker
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
@@ -115,12 +121,30 @@ object APIQueries {
     }
 
   suspend fun spell(sentences: List<SentenceWithExclusions>, language: Language, project: Project): List<SentenceWithProblems>? {
-    if (language !in ruleEngineLanguages || findInstalledLang(language) == null) return null
+    if (language !in ruleEngineLanguages) return null
+    val lang = findInstalledLang(language)
+    if (lang == null) return null
     return handleExceptions(project, BackgroundCloudService.GEC) {
       withContext(Dispatchers.IO) {
-        GrazieCloudConnector.api()?.gec()?.problemsWithExclusions(language, sentences, setOf(CorrectionServiceType.SPELL))
+        GrazieCloudConnector.api()?.gec()?.problemsWithExclusions(
+          language, sentences, setOf(CorrectionServiceType.SPELL), getLanguageVariant(lang)
+        )
       }
     }
+  }
+
+
+  private fun getLanguageVariant(lang: Lang): UserSettings? {
+    val variant = TreeRuleChecker.getLanguageVariant(lang) ?: return null
+    val prefix = lang.iso.toString().capitalize()
+    return UserSettings(
+      customProfiles = arrayOf(
+        StyleProfile(
+          id = TextStyle.Unspecified.id,
+          paramValues = arrayOf(StyleProfile.ParamValue("$prefix.variant", variant))
+        )
+      )
+    )
   }
 
   @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)

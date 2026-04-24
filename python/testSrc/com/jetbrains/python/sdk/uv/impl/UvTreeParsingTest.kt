@@ -200,6 +200,40 @@ class UvTreeParsingTest {
     }
 
     @Test
+    fun `extras with spaces are handled correctly`() {
+      val input = """
+        repro v0.1.0
+        ├── faststream[cli, nats, otel] v0.6.7
+        ├── django-allauth[mfa, socialaccount] v65.14.3
+        ├── psycopg[binary, pool] v3.3.3
+        └── taskiq[metrics, orjson, reload] v0.12.1
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(4)
+      assertThat(packages.map { it.name }).containsExactly("faststream", "django-allauth", "psycopg", "taskiq")
+      assertThat(packages.map { it.version }).containsExactly("0.6.7", "65.14.3", "3.3.3", "0.12.1")
+    }
+
+    @Test
+    fun `extras with spaces and groups are handled correctly`() {
+      val input = """
+        myapp v1.0.0
+        ├── faststream[cli, nats, otel] v0.6.7
+        └── pytest-cov[extra1, extra2] v7.0.0 (group: dev)
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(2)
+      assertThat(packages.map { it.name }).containsExactly("faststream", "pytest-cov")
+      assertThat(packages.map { it.version }).containsExactly("0.6.7", "7.0.0")
+      assertThat(packages[0].dependencyGroup).isNull()
+      assertThat(packages[1].dependencyGroup).isEqualTo(PyDependencyGroupName("dev"))
+    }
+
+    @Test
     fun `trailing blank lines are ignored`() {
       val input = "myapp v1.0.0\n├── requests v2.31.0\n\n\n"
 

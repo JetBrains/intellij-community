@@ -25,7 +25,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dide.do.not.check.ls.on.startup=true",
   )
 
-private const val IS_EAP = true
+private const val IS_EAP = false
 
 /**
  * Represents a set of properties specific to the Qodana product.
@@ -46,6 +46,6 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
 }
 
 private fun isEap(productCode: String): Boolean = when (productCode) {
-  "QDCPP", "QDRST", "QDRUBY" -> true
+  "QDRST", "QDRUBY" -> true
   else -> IS_EAP
 }

@@ -920,6 +920,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                        node, new ReplaceWithOldStyleUnionQuickFix(), new AddFromFutureImportAnnotationsQuickFix());
       }
       else {
+        if (node.getLeftExpression().getType(context) == null) return;
         registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
                                        PyPsiBundle.message("INSP.compatibility.new.union.syntax.not.available.in.earlier.version"),
                                        node, new ReplaceWithOldStyleUnionQuickFix());

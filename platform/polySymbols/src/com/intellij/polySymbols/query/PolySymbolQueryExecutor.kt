@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -21,7 +20,7 @@ import com.intellij.psi.PsiElement
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbolQueryExecutor : ModificationTracker {
+interface PolySymbolQueryExecutor {
 
   val location: PsiElement?
 

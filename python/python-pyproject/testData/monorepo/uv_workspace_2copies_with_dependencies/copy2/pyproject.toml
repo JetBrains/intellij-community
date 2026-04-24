@@ -1,0 +1,19 @@
+# pyproject.toml (root)
+
+[project]
+name = "my-uv-monorepo"
+version = "0.1.0"
+description = "A UV monorepo example"
+requires-python = ">=3.12"
+dependencies = [
+    "requests",
+    "package_a"
+]
+
+[tool.uv.workspace]
+# Define the workspace members (subprojects)
+members = ["packages/*"]
+
+[tool.uv.sources]
+# Optional: If you have local dependencies between packages
+package_a = { workspace = true }

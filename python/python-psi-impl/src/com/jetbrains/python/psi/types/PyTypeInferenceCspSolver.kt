@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.ConstraintReducer.reduce
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getEffectiveBound
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.SubtypeJudgement.isRawSubtype
@@ -156,17 +157,18 @@ class CspBuilder(val context: TypeEvalContext) {
         val originalTypeVar = instantiatedType.typeVariable
         return when {
           keepUnconstrained -> originalTypeVar
-          originalTypeVar.defaultType != null -> originalTypeVar.defaultType?.get()
+          originalTypeVar.defaultType != null -> originalTypeVar.defaultType.derefOrUnknown()
           originalTypeVar.bound != null -> originalTypeVar.bound
-          else -> null
+          else -> PyAnyType.unknown
         }
       }
       is PyTypeVarType -> {
         // if the solution is another PyTypeVarType, check the declared default types
-        return when {
-          instantiatedType.defaultType?.get() != null -> instantiatedType.defaultType?.get()
-          inferenceVariable.typeVariable.defaultType?.get() != null -> inferenceVariable.typeVariable.defaultType?.get()
-          else -> instantiatedType
+        if (inferenceVariable.typeVariable.defaultType != null) {
+          return inferenceVariable.typeVariable.defaultType.derefOrUnknown()
+        }
+        else {
+          return instantiatedType
         }
       }
       else -> {
@@ -528,16 +530,18 @@ private object ConstraintReducer {
           return
         }
       }
-      Variance.INVARIANT, Variance.BIVARIANT -> {
+      Variance.INVARIANT -> {
         if (!sameTypes(left, right, cp.context)) {
           cp.fail()
           return
         }
       }
+      Variance.BIVARIANT -> {
+        // success
+      }
       Variance.INFER_VARIANCE -> {
         UNREACHABLE()
       }
-      Variance.BIVARIANT -> {}
     }
     // success
   }
@@ -1432,7 +1436,7 @@ private object TypeBoundResolver {
    */
   private fun collectLowerBounds(cp: ConstraintProblem, infVar: InferenceVariable, context: TypeEvalContext): Array<PyType?> {
     return collectBounds(cp, infVar, context) { b: TypeBound ->
-      (b.variance === Variance.INVARIANT) || (b.variance === Variance.CONTRAVARIANT && b.right != null)
+      (b.variance === Variance.INVARIANT) || (b.variance === Variance.CONTRAVARIANT && !b.right.isUnknown)
     }
   }
 
@@ -1561,8 +1565,8 @@ private object SubtypeJudgement {
 
   /** True iff left is a subtype of right */
   fun isSubtype(left: PyType?, right: PyType?, context: TypeEvalContext): Boolean {
-    val leftProper = if (left is PyUnconstrainedTypeVariable) left.typeVariable.defaultType?.get() else left
-    val rightProper = if (right is PyUnconstrainedTypeVariable) right.typeVariable.defaultType?.get() else right
+    val leftProper = if (left is PyUnconstrainedTypeVariable) left.typeVariable.defaultType.derefOrUnknown() else left
+    val rightProper = if (right is PyUnconstrainedTypeVariable) right.typeVariable.defaultType.derefOrUnknown() else right
     return PyTypeChecker.match(rightProper, leftProper, context)
   }
 
@@ -1673,7 +1677,7 @@ private fun substituteByInferenceVars(
 }
 
 private fun substitutePyTypeVarTypes(original: PyType?, inferenceVars: InferenceVariablePool, context: TypeEvalContext): PyType? {
-  if (original == null) {
+  if (original.isUnknown) {
     return original
   }
   return PyCloningTypeVisitor.clone(original, object : PyCloningTypeVisitor(context) {
@@ -1704,7 +1708,7 @@ private fun PyType?.isTopType(context: TypeEvalContext): Boolean {
 }
 
 private fun PyType?.isBottomType(): Boolean {
-  return this == null || this is PyNeverType // Any or Never
+  return this.isAnyOrUnknown || this is PyNeverType // Any or Never
 }
 
 private fun PyType?.isOptional(): Boolean {

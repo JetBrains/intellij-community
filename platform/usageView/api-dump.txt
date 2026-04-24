@@ -550,6 +550,7 @@ com.intellij.usages.rules.UsageFilteringRule
 - isVisible(com.intellij.usages.Usage):Z
 - isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
 com.intellij.usages.rules.UsageFilteringRuleProvider
+- sf:RULES_CHANGED:com.intellij.util.messages.Topic
 - createFilteringActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
 - getActiveRules(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageFilteringRule[]
 - getApplicableRules(com.intellij.openapi.project.Project):java.util.Collection

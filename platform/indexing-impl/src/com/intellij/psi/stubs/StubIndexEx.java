@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupStubEntriesStarted;
 
@@ -169,7 +169,7 @@ public abstract class StubIndexEx extends StubIndex {
     try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
-        if (project instanceof LightEditCompatible) return false;
+        if (isIndexingActivitiesSuppressedSync(project)) return false;
         DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
         if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
           // Do not disable this assertion.

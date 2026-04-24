@@ -75,6 +75,7 @@ jvm_library(
     "//platform/execution",
     "@lib//:opentelemetry",
     "//platform/diagnostic/telemetry",
+    "//platform/util/coroutines",
   ]
 )
 ### auto-generated section `build intellij.mcpserver` end

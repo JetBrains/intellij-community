@@ -148,6 +148,12 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myDebugSessionListener = new MyDebuggerSessionListener();
     debugSession.addSessionListener(myDebugSessionListener, this);
+    // In split architecture, the session tab init is asynchronous.
+    // This constructor might be called when the session is already running.
+    // Therefore, the first session pause event might be missed.
+    if (debugSession.isPaused()) {
+      myTime.incrementAndGet();
+    }
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));

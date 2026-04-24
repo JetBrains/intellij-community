@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
 
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -77,7 +78,7 @@ internal fun GitObjectRepository.mergeTrees(commit: GitObject.Commit, newParent:
 }
 
 internal class MergeConflictException(
-  val description: String,
+  val description: @NlsSafe String,
 ) : Exception("Merge conflict with git output:\n$description")
 
 internal fun GitObjectRepository.getTreeFromEntry(entry: GitObject.Tree.Entry?): GitObject.Tree {

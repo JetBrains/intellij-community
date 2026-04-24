@@ -146,12 +146,12 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testHighlightingFromTag() = runBlocking {
-    updateProjectPom("""
+    updateProjectPom($$"""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version><caret>1</version>
-                       <name>${'$'}{project.version}</name>
-                       <description>${'$'}{version}</description>
+                       <name>${project.version}</name>
+                       <description>${version}</description>
                        """.trimIndent())
 
     assertHighlighted(projectPom,

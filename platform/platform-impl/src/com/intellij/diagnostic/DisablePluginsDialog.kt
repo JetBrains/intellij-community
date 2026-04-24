@@ -2,12 +2,12 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -15,11 +15,11 @@ import java.nio.file.FileVisitResult
 
 internal object DisablePluginsDialog {
   @JvmStatic
-  internal fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<IdeaPluginDescriptor>) {
+  internal fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<ProblematicPluginInfo>) {
     if (pluginsToDisable.isEmpty()) {
       return
     }
-    val pluginIdsToDisable = pluginsToDisable.mapTo(HashSet()) { obj: IdeaPluginDescriptor -> obj.pluginId }
+    val pluginIdsToDisable = pluginsToDisable.mapTo(HashSet()) { it.pluginId }
     val hasDependents = morePluginsAffected(pluginIdsToDisable)
     val canRestart = ApplicationManager.getApplication().isRestartCapable
     val message =
@@ -57,7 +57,7 @@ internal object DisablePluginsDialog {
       (result == Messages.YES) to false
     }
     if (doDisable) {
-      PluginEnabler.HEADLESS.disable(pluginsToDisable)
+      UiPluginManager.getInstance().markPluginsAsDisabled(pluginIdsToDisable.toList())
       if (doRestart) {
         ApplicationManagerEx.getApplicationEx().restart(true)
       }

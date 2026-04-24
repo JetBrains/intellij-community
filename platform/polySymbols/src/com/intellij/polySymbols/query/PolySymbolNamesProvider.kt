@@ -5,7 +5,9 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbolQualifiedName
 
-interface PolySymbolNamesProvider : ModificationTracker {
+interface PolySymbolNamesProvider {
+
+  val modificationTracker: ModificationTracker
 
   fun createPointer(): Pointer<PolySymbolNamesProvider>
 

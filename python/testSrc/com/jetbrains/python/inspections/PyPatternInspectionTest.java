@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
@@ -141,7 +141,7 @@ def f(a):
 class D:
     def __init__(self):
         self.x = 0
-    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[str, int]' instead">"x", 1</warning>)
+    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[Literal[\\"x\\"], Literal[1]]' instead">"x", 1</warning>)
     """);
   }
 
@@ -278,7 +278,7 @@ class D:
   public void testMatchArgsInvalidTupleOfInts() {
     doTestByText("""
 class D:
-    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[int, int, int]' instead">1, 2, 3</warning>)
+    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[Literal[1], Literal[2], Literal[3]]' instead">1, 2, 3</warning>)
     """);
   }
 

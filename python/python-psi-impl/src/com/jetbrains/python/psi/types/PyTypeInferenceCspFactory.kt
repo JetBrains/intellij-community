@@ -75,10 +75,10 @@ object PyTypeInferenceCspFactory {
     val builder = CspBuilder(context)
 
 
-    for (typeVarEntry in substitutions.typeVars.entries) {
-      ensureInferenceVariables(builder, receiverType, typeVarEntry.key, context)
-      if (typeVarEntry.value != null) {
-        builder.addConstraint(typeVarEntry.key, typeVarEntry.value!!.get(), Variance.INVARIANT, ConstraintPriority.HIGH)
+    for ((key, value) in substitutions.typeVars) {
+      ensureInferenceVariables(builder, receiverType, key, context)
+      if (value != null) {
+        builder.addConstraint(key, value.get(), Variance.INVARIANT, ConstraintPriority.HIGH)
       }
     }
 
@@ -89,9 +89,7 @@ object PyTypeInferenceCspFactory {
     }
 
     // arguments
-    for (entry in mappedParameters) {
-      val argument = entry.key
-      val parameter: PyCallableParameter = entry.value
+    for ((argument, parameter) in mappedParameters) {
       if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
         throw NotSupportedException()
       }
@@ -99,7 +97,7 @@ object PyTypeInferenceCspFactory {
       val expectedParameterType = parameter.getArgumentType(context)
       val passedArgumentType = getArgumentType(parameter, argument, expectedParameterType, substitutions, context)
 
-      if (expectedParameterType != null
+      if (!expectedParameterType.isUnknown
           && (expectedParameterType.hasGenerics(context) || passedArgumentType.hasGenerics(context))
       ) {
         ensureInferenceVariables(builder, receiverType, expectedParameterType, context)
@@ -113,7 +111,7 @@ object PyTypeInferenceCspFactory {
     if (declaredReturn.hasGenerics(context)) {
       ensureInferenceVariables(builder, receiverType, declaredReturn, context)
       val expectedReturnType = getExpectedType(callSite, context)
-      if (expectedReturnType != null) {
+      if (!expectedReturnType.isUnknown) {
         val declaredReturn_selfBounded = substituteSelfTypes(declaredReturn, receiverType, context)
         // semantics: RT <: ExpectedReturnType
         builder.addConstraint(declaredReturn_selfBounded, expectedReturnType, Variance.COVARIANT, ConstraintPriority.LOW)
@@ -126,9 +124,6 @@ object PyTypeInferenceCspFactory {
     val isNestedCsp = isNestedCsp(callSite, context)
     val solution = builder.getSolution(isNestedCsp)
 
-    if (solution.instantiations.isEmpty() && substitutions.typeVars.isEmpty() && substitutions.typeVarTuples.isEmpty() && substitutions.paramSpecs.isEmpty() && substitutions.qualifierType == null) {
-      return null
-    }
     if (solution.failed) {
       if (solution.complete) {
         // since this solution is complete, we can return it as-is below
@@ -141,6 +136,9 @@ object PyTypeInferenceCspFactory {
         // fallback to the old approach
         throw NotSupportedException()
       }
+    }
+    if (solution.instantiations.isEmpty() && substitutions.typeVars.isEmpty() && substitutions.typeVarTuples.isEmpty() && substitutions.paramSpecs.isEmpty() && substitutions.qualifierType == null) {
+      return null
     }
 
     return substitutions.addToCopy(solution.instantiations, null, null)
@@ -198,7 +196,7 @@ object PyTypeInferenceCspFactory {
         val intersectionOfConstraints = PyIntersectionType.intersection(paramTypeConstraints)
         val unionOfConstraints = PyUnionType.union(paramTypeConstraints)
         // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
-        // CV_1 & CV_2 & ... & CV_n  <:  TV  <:  CV_1 | CV_2 | ... | CV_n
+        // CV_1 & CV_2 & ... & CV_n <: TV <: CV_1 | CV_2 | ... | CV_n
         builder.addConstraint(typeParam, intersectionOfConstraints, Variance.CONTRAVARIANT, ConstraintPriority.HIGH)
         builder.addConstraint(typeParam, unionOfConstraints, Variance.COVARIANT, ConstraintPriority.HIGH)
       }

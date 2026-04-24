@@ -10,10 +10,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
-import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
+import com.intellij.polySymbols.html.HtmlAttributeValueProperty
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
@@ -57,7 +56,7 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
 
   override val modifiers: Set<PolySymbolModifier>
     get() = setOf(
-      if (descriptor.isRequired) PolySymbolModifier.Companion.REQUIRED else PolySymbolModifier.Companion.OPTIONAL,
+      if (descriptor.isRequired) PolySymbolModifier.REQUIRED else PolySymbolModifier.OPTIONAL,
     )
 
   override val defaultValue: String?
@@ -66,10 +65,11 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
   override val source: PsiElement?
     get() = descriptor.declaration
 
+  @PolySymbol.Property(HtmlAttributeValueProperty::class)
   val attributeValue: PolySymbolHtmlAttributeValue
     get() {
       val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
-      return PolySymbolHtmlAttributeValue.Companion.create(
+      return PolySymbolHtmlAttributeValue.create(
         null,
         when {
           isBooleanAttribute -> PolySymbolHtmlAttributeValue.Type.BOOLEAN
@@ -80,12 +80,6 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
         descriptor.defaultValue,
         null,
       )
-    }
-
-  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    when (property) {
-      PROP_HTML_ATTRIBUTE_VALUE -> property.tryCast(attributeValue)
-      else -> super.get(property)
     }
 
   override fun getSymbols(

@@ -984,6 +984,11 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/multipleArgsItem/notFirstArgumentBrackets.kt");
         }
 
+        @TestMetadata("notForExistingNamedArguments2.kt")
+        public void testNotForExistingNamedArguments2() throws Exception {
+            runTest("../testData/smart/multipleArgsItem/notForExistingNamedArguments2.kt");
+        }
+
         @TestMetadata("shadowing.kt")
         public void testShadowing() throws Exception {
             runTest("../testData/smart/multipleArgsItem/shadowing.kt");

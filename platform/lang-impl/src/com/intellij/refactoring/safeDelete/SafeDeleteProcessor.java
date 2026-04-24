@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -20,13 +20,11 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -55,12 +53,10 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -405,7 +401,6 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     try {
       var pointerManager = SmartPointerManager.getInstance(myProject);
       var pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
-      var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
       for (var usage : usages) {
         if (usage instanceof SafeDeleteCustomUsageInfo info) {
@@ -425,18 +420,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
       for (var pointer : pointers) {
         var element = pointer.getElement();
         if (element != null) {
-          var file = (PsiFile)null;
-          try {
-            if (toBin) {
-              file = installTrashHandler(element);
-            }
-            element.delete();
-          }
-          finally {
-            if (file != null) {
-              PsiFileImplUtil.setCustomFileDeleteHandler(file, null);
-            }
-          }
+          DeleteHandler.deleteElementImpl(element);
         }
       }
 
@@ -444,31 +428,6 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
     catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
-    }
-  }
-
-  private static @Nullable PsiFile installTrashHandler(PsiElement element) {
-    try {
-      var psiFile = element.getContainingFile();
-      if (psiFile != null && psiFile.isPhysical()) {
-        var virtualFile = psiFile.getVirtualFile();
-        if (TrashBin.canMoveToTrash(virtualFile)) {
-          PsiFileImplUtil.setCustomFileDeleteHandler(psiFile, SafeDeleteProcessor::moveToTrash);
-          return psiFile;
-        }
-      }
-    }
-    catch (PsiInvalidElementAccessException ignored) { }
-    return null;
-  }
-
-  private static void moveToTrash(PsiFile psiFile) {
-    var virtualFile = psiFile.getVirtualFile();
-    try {
-      TrashBin.moveToTrash(virtualFile.toNioPath());
-    }
-    catch (IOException e) {
-      throw new IncorrectOperationException(e);
     }
   }
 

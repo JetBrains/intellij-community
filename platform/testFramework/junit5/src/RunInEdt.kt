@@ -7,14 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.annotation.Inherited
 
 /**
- * Instructs the framework to run methods in EDT.
- * If [allMethods] is set to `true` (default), then all test class methods will be run in EDT, including lifecycle methods.
- * If [allMethods] is set to `false`, then methods annotated with [RunMethodInEdt] will be run in EDT.
- * If [writeIntent] is set to `true`, then all test methods will be run with Write Intent Lock by default.
- * If [writeIntent] is set to `false` (default), then all test methods will be run without Write Intent Lock by default.
+ * Legacy JUnit5 extension that forces methods to run on EDT.
+ *
+ * Prefer coroutine-based tests, e.g. `timeoutRunBlocking(context = Dispatchers.UiWithModelAccess)`
+ * for model access.
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)
 @Inherited
 @ExtendWith(EdtInterceptorExtension::class)
+@Deprecated("Do not use. Consider using [com.intellij.testFramework.common.timeoutRunBlocking] with a proper context if needed.",
+            ReplaceWith("RunMethodInEdt"))
 annotation class RunInEdt(val allMethods: Boolean = true, val writeIntent: Boolean = false)

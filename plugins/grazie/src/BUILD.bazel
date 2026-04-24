@@ -44,6 +44,7 @@ jvm_library(
     "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
     "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
     "@lib//:grazie-core-ai-grazie-tasks-library-model-jvm",
+    "@lib//:grazie-core-ai-grazie-gec-util",
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
     "@lib//:grazie-core-net-loomchild-segment-2-0-1",
@@ -87,6 +88,7 @@ jvm_library(
     "//libraries/ktor/client-cio:libraries-ktor-client-cio",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/diff-impl",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
   ],
   exports = [
     "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",

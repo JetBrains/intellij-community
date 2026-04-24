@@ -25,24 +25,47 @@ import org.jetbrains.annotations.VisibleForTesting
 
 @Service(Service.Level.PROJECT)
 internal class GitInteractiveRebaseEntriesProvider {
-  suspend fun tryGetEntriesUsingLog(
+  /**
+   * Generate rebase entries using log for the dialog
+   * Fails when we can't build them identical to git, i.e.,
+   * we have fixup! commits that should be rearranged or there should be an update-ref entry
+   */
+  suspend fun tryGetEntriesForDialog(
     repository: GitRepository,
     commit: VcsCommitMetadata,
     logData: VcsLogData? = null,
   ): List<GitRebaseEntryGeneratedUsingLog>? {
+    return tryGetEntries(repository, logData) { actualLogData ->
+      getEntriesForDialog(repository, commit, actualLogData)
+    }
+  }
+
+  suspend fun tryGetEntriesForCommitEditing(
+    repository: GitRepository,
+    commit: VcsCommitMetadata,
+    logData: VcsLogData? = null,
+  ): List<GitRebaseEntryGeneratedUsingLog>? {
+    return tryGetEntries(repository, logData) { actualLogData ->
+      getEntriesForCommitEditing(repository, commit, actualLogData)
+    }
+  }
+
+  private suspend fun tryGetEntries(
+    repository: GitRepository,
+    logData: VcsLogData?,
+    entriesProvider: suspend (VcsLogData) -> GetEntriesUsingLogResult,
+  ): List<GitRebaseEntryGeneratedUsingLog>? {
     return withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.preparing.title")) {
-      val logData = logData ?: VcsProjectLog.awaitLogIsReady(repository.project)?.dataManager ?: run {
+      val actualLogData = logData ?: VcsProjectLog.awaitLogIsReady(repository.project)?.dataManager ?: run {
         LOG.warn("Couldn't use log for rebasing - log not available")
         return@withBackgroundProgress null
       }
 
-      val result = getEntriesUsingLog(repository, commit, logData)
-
-      when (result) {
+      when (val result = entriesProvider(actualLogData)) {
         is GetEntriesUsingLogResult.Success -> result.entries
         is GetEntriesUsingLogResult.Failure -> {
-          LOG.warn("Couldn't use log for rebasing: ${result.reason}")
           logCantRebaseUsingLog(repository.project, result.reason)
+          LOG.warn("Couldn't use log for rebasing: ${result.reason}")
           null
         }
       }
@@ -50,7 +73,25 @@ internal class GitInteractiveRebaseEntriesProvider {
   }
 
   @VisibleForTesting
-  suspend fun getEntriesUsingLog(
+  suspend fun getEntriesForDialog(
+    repository: GitRepository,
+    commit: VcsCommitMetadata,
+    logData: VcsLogData,
+  ): GetEntriesUsingLogResult {
+    val result = getEntriesForCommitEditing(repository, commit, logData)
+
+    if (result is GetEntriesUsingLogResult.Success) {
+      if (result.entries.any { entry -> GitSquashedCommitsMessage.isAutosquashCommitMessage(entry.commitDetails.subject) }) {
+        return GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.FIXUP_SQUASH)
+      }
+      if (isRebaseUpdateRefsEnabledCached(repository.project, repository.root)) {
+        return GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.UPDATE_REFS)
+      }
+    }
+    return result
+  }
+
+  private suspend fun getEntriesForCommitEditing(
     repository: GitRepository,
     commit: VcsShortCommitDetails,
     logData: VcsLogData,
@@ -78,14 +119,6 @@ internal class GitInteractiveRebaseEntriesProvider {
 
       if (details.last().id != commit.id) {
         return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.UNEXPECTED_HASH)
-      }
-
-      if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) }) {
-        return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.FIXUP_SQUASH)
-      }
-
-      if (isRebaseUpdateRefsEnabledCached(repository.project, repository.root)) {
-        return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.UPDATE_REFS)
       }
 
       return@coroutineScope GetEntriesUsingLogResult.Success(details.map { GitRebaseEntryGeneratedUsingLog(it) }.reversed())

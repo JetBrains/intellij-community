@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -16,7 +16,8 @@ import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1773,6 +1774,12 @@ public final class JBUI {
         return JBInsets.create(0, 12);
       }
 
+      @Internal
+      @Experimental
+      public static @NotNull Insets headerToolbarInsets() {
+        return insets("SearchEverywhere.Header.toolbarInsets", insets(2, 18, 2, 9));
+      }
+
       public static @NotNull Color selectedTabColor() {
         return JBColor.namedColor("SearchEverywhere.Tab.selectedBackground", 0xdedede);
       }
@@ -1804,7 +1811,7 @@ public final class JBUI {
       public static final @NotNull Color LIST_SETTINGS_BACKGROUND =
         JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
-      @ApiStatus.Internal
+      @Internal
       public static @NotNull Color getListSettingsBackground() {
         // For custom UI themes we need to keep the old behavior
         if (StartupUiUtil.isUnderDarcula() && UIManager.get("SearchEverywhere.List.settingsBackground") == null) {
@@ -2728,7 +2735,7 @@ public final class JBUI {
       }
     }
 
-    @ApiStatus.Internal
+    @Internal
     public static final class LicenseDialog {
       private static final @NotNull Color TERMS_AND_CONDITIONS_COLOR =
         JBColor.namedColor("LicenseDialog.termsAndConditionsForeground", 0x818594, 0x6F737A);

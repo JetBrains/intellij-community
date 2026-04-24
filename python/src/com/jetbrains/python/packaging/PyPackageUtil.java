@@ -221,8 +221,8 @@ public final class PyPackageUtil {
     var data = calledFromInspection
                ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class))
                : PySdkExtKt.getOrCreateAdditionalData(sdk);
-    if (!newUi
-        && data != null
+    if (!calledFromInspection
+        && !newUi
         && data.getFlavor() instanceof CondaEnvSdkFlavor
         && PySdkExtKt.getTargetEnvConfiguration(sdk) != null) {
       LOG.warn("Remote Conda package manager is disabled");

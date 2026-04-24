@@ -408,7 +408,8 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       KeyEvent.KEY_TYPED == e.id && isPressedWasProcessed -> true
       //see IDEADEV-8615
       KeyEvent.KEY_RELEASED == e.id && KeyEvent.VK_ALT == e.keyCode && isPressedWasProcessed -> true
-      KeyEvent.KEY_PRESSED == e.id -> true
+      //see PY-86725 (macOS generates three VK_MINUS events instead of one on non-English keyboards)
+      KeyEvent.KEY_PRESSED == e.id && KeyEvent.VK_MINUS == e.keyCode && isPressedWasProcessed && SystemInfoRt.isMac -> true
       else -> {
         state = KeyState.STATE_INIT
         isPressedWasProcessed = false

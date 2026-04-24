@@ -14,75 +14,106 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
-  override fun initializeMetadata() {
-    val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
+    override fun initializeMetadata() {
+        val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
 
-    var typeMetadata: StorageTypeMetadata
+        var typeMetadata: StorageTypeMetadata
 
-    typeMetadata =
-      FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinFwdWorkspaceEntitySource",
-                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                                isKey = false,
-                                                                                isOpen = false,
-                                                                                name = "virtualFileUrl",
-                                                                                valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                  isNullable = true,
-                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                                withDefault = false)),
-                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        typeMetadata = FinalClassMetadata.ObjectMetadata(
+            fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinFwdWorkspaceEntitySource",
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "virtualFileUrl",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                    ),
+                    withDefault = false
+                )
+            ),
+            supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
+        )
 
-    addMetadata(typeMetadata)
+        addMetadata(typeMetadata)
 
-    typeMetadata =
-      EntityMetadata(fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
-                     entityDataFqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl.KotlinForwardDeclarationsWorkspaceEntityData",
-                     supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
-                     properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                             isKey = false,
-                                                             isOpen = false,
-                                                             name = "entitySource",
-                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                 typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                   fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                                                             withDefault = false),
-                                         OwnPropertyMetadata(isComputable = false,
-                                                             isKey = false,
-                                                             isOpen = false,
-                                                             name = "forwardDeclarationRoots",
-                                                             valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                               ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                       typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                         fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                             primitive = primitiveTypeSetNotNullable),
-                                                             withDefault = false),
-                                         OwnPropertyMetadata(isComputable = false,
-                                                             isKey = false,
-                                                             isOpen = false,
-                                                             name = "library",
-                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                           entityFqName = "com.intellij.platform.workspace.jps.entities.LibraryEntity",
-                                                                                                           isChild = false,
-                                                                                                           isNullable = false),
-                                                             withDefault = false)),
-                     extProperties = listOf(ExtPropertyMetadata(isComputable = false,
-                                                                isOpen = false,
-                                                                name = "kotlinForwardDeclarationsWorkspaceEntity",
-                                                                receiverFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity",
-                                                                valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                              entityFqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
-                                                                                                              isChild = true,
-                                                                                                              isNullable = true),
-                                                                withDefault = false)),
-                     isAbstract = false)
+        typeMetadata = EntityMetadata(
+            fqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
+            entityDataFqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl.KotlinForwardDeclarationsWorkspaceEntityData",
+            supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "entitySource",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "forwardDeclarationRoots",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                            )
+                        ), primitive = primitiveTypeSetNotNullable
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "library",
+                    valueType = ValueTypeMetadata.EntityReference(
+                        connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                        entityFqName = "com.intellij.platform.workspace.jps.entities.LibraryEntity",
+                        isChild = false,
+                        isNullable = false
+                    ),
+                    withDefault = false
+                )
+            ),
+            extProperties = listOf(
+                ExtPropertyMetadata(
+                    isComputable = false,
+                    isOpen = false,
+                    name = "kotlinForwardDeclarationsWorkspaceEntity",
+                    receiverFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity",
+                    valueType = ValueTypeMetadata.EntityReference(
+                        connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                        entityFqName = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
+                        isChild = true,
+                        isNullable = true
+                    ),
+                    withDefault = false
+                )
+            ),
+            isAbstract = false
+        )
 
-    addMetadata(typeMetadata)
-  }
+        addMetadata(typeMetadata)
+    }
 
-  override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
-                    metadataHash = 220894800)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1012084332)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinFwdWorkspaceEntitySource",
-                    metadataHash = -372366786)
-  }
+    override fun initializeMetadataHash() {
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity",
+            metadataHash = 220894800
+        )
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1012084332)
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinFwdWorkspaceEntitySource",
+            metadataHash = -372366786
+        )
+    }
 }

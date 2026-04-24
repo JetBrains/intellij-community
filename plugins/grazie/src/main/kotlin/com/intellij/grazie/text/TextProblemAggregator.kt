@@ -5,9 +5,9 @@ import ai.grazie.gec.model.CorrectionServiceType.MLEC
 import ai.grazie.gec.model.CorrectionServiceType.OTHER
 import ai.grazie.gec.model.CorrectionServiceType.RULE
 import ai.grazie.gec.model.problem.Problem
-import ai.grazie.gec.model.problem.ProblemAggregator
 import ai.grazie.gec.model.problem.ProblemFix
-import ai.grazie.gec.model.problem.concedeToOtherGrammarCheckers
+import ai.grazie.gec.util.ProblemAggregator
+import ai.grazie.gec.util.concedeToOtherGrammarCheckers
 import ai.grazie.text.TextRange
 import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.utils.aiRange

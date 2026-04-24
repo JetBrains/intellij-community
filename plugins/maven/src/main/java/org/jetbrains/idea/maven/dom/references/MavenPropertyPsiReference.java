@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -592,7 +592,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   private @NotNull String getSchemaUrl() {
     if (isAtLeastMaven4(myVirtualFile, myProject)
         && myProjectDom != null
-        && MODEL_VERSION_4_1_0.equals(myProjectDom.getModelVersion().getValue())
+        && MODEL_VERSION_4_1_0.equals(myProjectDom.getEffectiveModelVersion())
     ) {
       return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
     }

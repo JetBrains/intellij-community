@@ -161,7 +161,7 @@
     <codeInsight.completion.command.factory language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesCommandCompletionFactory" />
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesRenameActionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesShowUsagesActionCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesFormatCodeCompletionCommandProvider" order="last"/>
 
   </extensions>

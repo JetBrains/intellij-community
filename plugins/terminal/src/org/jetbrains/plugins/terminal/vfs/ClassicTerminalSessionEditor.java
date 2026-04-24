@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -14,16 +13,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.terminal.TerminalTitle;
-import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
+import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
 
 import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 
 @ApiStatus.Internal
 public final class ClassicTerminalSessionEditor extends UserDataHolderBase implements FileEditor {
@@ -49,18 +48,13 @@ public final class ClassicTerminalSessionEditor extends UserDataHolderBase imple
       termWidget.addListener(myListener);
     }
 
-    terminalFile.getTerminalWidget().getTerminalTitle().addTitleListener(new TerminalTitleListener() {
-      @Override
-      public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
-        try {
-          terminalFile.rename(null, terminalTitle.buildTitle());
-        }
-        catch (IOException exception) {
-          throw new RuntimeException("Cannot rename");
-        }
-        FileEditorManager.getInstance(project).updateFilePresentation(terminalFile);
-      }
-    }, this);
+    CoroutineScope scope = TerminalCoroutineKt.terminalProjectScopeBoundToDisposable(project, this, "file name updating");
+    ClassicTerminalTitleUpdatingKt.updateFileNameOnTitleChange(
+      terminalFile.getTerminalWidget().getTerminalTitle(),
+      terminalFile,
+      myProject,
+      scope
+    );
   }
 
   @Override

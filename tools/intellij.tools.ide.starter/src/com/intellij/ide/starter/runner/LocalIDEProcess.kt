@@ -16,7 +16,6 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeKillEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeRunIdeProcessEvent
-import com.intellij.ide.starter.runner.events.IdeExceptionEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.runner.events.StopProfilerEvent
 import com.intellij.ide.starter.telemetry.TestTelemetryService
@@ -30,7 +29,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.nio.file.Path
-import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 class LocalIDEProcess : IDEProcess {
   override suspend fun run(runContext: IDERunContext): IDEStartResult {
@@ -42,7 +41,7 @@ class LocalIDEProcess : IDEProcess {
 
       val stdout = getStdout()
       val stderr = getStderr()
-      var ideProcessId = 0L
+      var ideProcessId: Long? = null
       var isRunSuccessful = true
       val ciFailureDetails = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)?.let { "Link on CI artifacts ${it}" }
 
@@ -75,7 +74,7 @@ class LocalIDEProcess : IDEProcess {
         val span = TestTelemetryService.spanBuilder("ide process").startSpan()
         EventsBus.postAndWaitProcessing(IdeBeforeRunIdeProcessEvent(runContext = this))
         val processPresentableName = "run-ide-$contextName"
-        val executionTime = measureTime {
+        val (exitCode, executionTime) = measureTimedValue {
           ProcessExecutor(
             presentableName = processPresentableName,
             workDir = startConfig.workDir,
@@ -87,22 +86,23 @@ class LocalIDEProcess : IDEProcess {
             stderrRedirect = stderr,
             onProcessCreated = { process, pid ->
               span.addEvent("process created")
-              EventsBus.subscribeOnce(process) { _: IdeExceptionEvent ->
-                if (process.isAlive) {
-                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext)
-                }
-              }
               runInterruptible {
                 EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
               }
-              ideProcessId = getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)
-              startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome, startConfig.workDir, ideProcessId, "ide")
+              getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
+                ideProcessId = it
+                startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome,
+                                            startConfig.workDir, it, "ide")
+              }
             },
             onBeforeKilled = { process, pid ->
               span.end()
               computeWithSpan("runIde post-processing before killed") {
                 logOutput("BeforeKilled: $processPresentableName")
-                captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext = this)
+                (ideProcessId ?: getIdeProcessIdWithRetry(process.toProcessInfo(), runContext))?.let {
+                  ideProcessId = it
+                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, it, snapshotsDir, runContext = this)
+                }
                 EventsBus.postAndWaitProcessing(IdeBeforeKillEvent(this, process, pid))
                 if (testContext.profilerType != ProfilerType.NONE) {
                   EventsBus.postAndWaitProcessing(StopProfilerEvent(listOf()))
@@ -110,12 +110,13 @@ class LocalIDEProcess : IDEProcess {
               }
             },
             expectedExitCode = expectedExitCode,
+            analyzeProcessExit = analyzeProcessExit,
           ).startCancellable()
         }
         span.end()
         logOutput("IDE run $contextName completed in $executionTime")
 
-        return IDEStartResult(runContext = this, executionTime = executionTime, vmOptionsDiff = startConfig.vmOptionsDiff())
+        return IDEStartResult(runContext = this, executionTime = executionTime, exitCode = exitCode, vmOptionsDiff = startConfig.vmOptionsDiff())
       }
       catch (_: ExecTimeoutException) {
         if (expectedKill) {
@@ -150,7 +151,7 @@ class LocalIDEProcess : IDEProcess {
             if (isRunSuccessful) {
               validateVMOptionsWereSet(this)
             }
-            testContext.collectJBRDiagnosticFiles(ideProcessId)
+            ideProcessId?.let { testContext.collectJBRDiagnosticFiles(it) }
 
             val link = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)
             TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())

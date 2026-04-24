@@ -46,6 +46,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.FileTypeWithDescriptor;
 import com.intellij.openapi.fileTypes.impl.RemovedMappingTracker.RemovedMapping;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -735,6 +736,19 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
+  }
+
+  public void testReadingDefaultFileTypesClearsRemovedPluginAdvertiserMappings() {
+    var extensionsStateService = PluginAdvertiserExtensionsStateService.Companion.getInstance();
+    var removedExtension = "*.obsolete-default-file-type";
+    extensionsStateService.registerLocalPlugin(List.of(new ExtensionFileNameMatcher("obsolete-default-file-type")),
+                                                               FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    assertNotNull(extensionsStateService.getLocalPlugin(removedExtension));
+
+    reInitFileTypeManagerComponent(myFileTypeManager.getState());
+
+    assertNull(extensionsStateService.getLocalPlugin(removedExtension));
+    assertNotNull(extensionsStateService.getLocalPlugin("*.idl"));
   }
 
   public void testRegisterConflictingExtensionMustBeReported() throws WriteExternalException, InvalidDataException {

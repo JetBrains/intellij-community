@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.conda
 
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
@@ -23,8 +22,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.conda.suggestCondaPath
+import com.jetbrains.python.sdk.conda.findConda
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -63,15 +61,8 @@ class CondaViewModel<P : PathHolder>(
         }
       }
 
-      fileSystem.which("conda")?.let { return@ToolValidator it }
-
-      // legacy slow fallback detection via the defined list of paths in case of there is no conda on the PATH (PY-85060),
-      // not sure if it is worth it to keep it, because if there is no conda on the PATH the installation might be broken
-      val targetEnvironmentConfiguration = (fileSystem as? FileSystem.Target)?.targetEnvironmentConfiguration
-      val request = targetEnvironmentConfiguration?.createEnvironmentRequest(project = null) ?: LocalTargetEnvironmentRequest()
-      val executor = TargetEnvironmentRequestCommandExecutor(request)
       val suggestedCondaPath = runCatching {
-        suggestCondaPath(targetCommandExecutor = executor)
+        findConda(fileSystem)
       }.getOrElse {
         rethrowControlFlowException(it)
         LOG.warn(it)

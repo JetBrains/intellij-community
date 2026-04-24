@@ -24,7 +24,7 @@ public class MyTestClass {
     reporter.publishEntry(map);
     Assertions.assertAll("2 errors",
       () -> Assertions.assertEquals("expected1", "actual1", "message1"),
-      () -> Assertions.assertEquals("expected2", "actual2", "message2")
+      () -> Assertions.assertEquals("expected2\nnew line", "actual2\nnew line", "message2")
     );
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
@@ -56,9 +56,15 @@ open class CoroutineInfoData(
         "[${this.dispatcher}${if (job == null) "" else ", $job"}]"
     }
 
+    internal val runningThread: String? by lazy {
+        if (!isRunning) {
+            return@lazy null
+        }
+        lastObservedThread?.name()?.substringBefore(" @${this.name}") ?: UNKNOWN_THREAD
+    }
+
     val coroutineDescriptor: String by lazy {
-        val threadName = lastObservedThread?.name()?.substringBefore(" @${this.name}") ?: UNKNOWN_THREAD
-        "\"${this.name}:$id\" $state ${if (isRunning) "on thread $threadName" else "" } $contextSummary"
+        "\"${this.name}:$id\" $state ${runningThread?.let { "on thread $it" } ?: "" } $contextSummary"
     }
 
     private val coroutineStackFrames: CoroutineStacksInfoData? by lazy {

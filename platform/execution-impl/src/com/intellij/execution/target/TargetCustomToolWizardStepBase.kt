@@ -99,6 +99,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(
 
       try {
         model.applyChanges()
+        model.prepareTarget()
         customTool = customToolPanel.createCustomTool()
         model.commit()
       }

@@ -190,4 +190,17 @@ internal class PyVarianceTest : PyTestCase() {
           t: ReadOnly[out_T]  # expect no error here
       """)
   }
+
+  fun `test Type alias for generic class covariant`() {
+    doTestByText("""
+      from typing import Generic, TypeVar, TypeAlias
+      T = TypeVar("T")
+      class ClassA(Generic[T]): ...
+      
+      T_co = TypeVar("T_co", covariant=True)
+      A_Alias_1: TypeAlias = ClassA[T_co]
+      
+      class ClassA_2(A_Alias_1[<warning descr="A covariant type variable cannot be used in this invariant position">T_co</warning>]): ...
+      """)
+  }
 }

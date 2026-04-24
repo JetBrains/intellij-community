@@ -14,8 +14,11 @@ class PydevdReprStrProvider(StrPresentationProvider):
                 and not DjangoFormStr.can_provide(self, type_object, type_name))
 
     def get_str_in_context(self, val: Any, context: str):
-        return self.get_str(val)
+        return self.get_str(val, context)
 
-    def get_str(self, val, do_trim=True):
-        return get_value_repr(val)
+    def get_str(self, val, context=None):
+        if context == 'variables':
+            return get_value_repr(val, False)
+        else:
+            return get_value_repr(val)
 

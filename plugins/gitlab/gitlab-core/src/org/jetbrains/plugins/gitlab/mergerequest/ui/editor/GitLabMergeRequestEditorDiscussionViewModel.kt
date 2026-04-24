@@ -76,7 +76,11 @@ class GitLabMergeRequestEditorNewDiscussionViewModel internal constructor(
   private val diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
 ) : NewGitLabNoteViewModelWithAdjustablePosition by base, CodeReviewInlayModel {
-  val location: StateFlow<GitLabNoteLocation?> = position.mapState { it.mapToLocation(diffData) }
+  val location: StateFlow<GitLabNoteLocation?> = position.mapState {
+    it.mapToLocation(diffData)?.takeIf { loc ->
+      loc.startSide == Side.RIGHT && loc.side == Side.RIGHT
+    }
+  }
   override val key: Any = "NEW_${UUID.randomUUID()}"
   override val line: StateFlow<Int?> = location.mapState { it?.lineIdx }
   override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }

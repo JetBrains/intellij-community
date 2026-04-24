@@ -104,7 +104,7 @@ internal class CliBasedHatchService private constructor(
   }
 
   override suspend fun findDefaultVirtualEnvironmentOrNull(): PyResult<HatchVirtualEnvironment?> =
-    findVirtualEnvironments().mapSuccess { envs -> envs.singleOrNull { it.hatchEnvironment == HatchEnvironment.DEFAULT } }
+    findVirtualEnvironments().mapSuccess { envs -> envs.singleOrNull { it.hatchEnvironment.isDefault() } }
 
 
   override suspend fun createNewProject(projectName: String): PyResult<ProjectStructure> {

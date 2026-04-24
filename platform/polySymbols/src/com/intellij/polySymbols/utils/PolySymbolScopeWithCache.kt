@@ -92,9 +92,6 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     ): List<PolySymbol>
   }
 
-  override fun getModificationCount(): Long =
-    PsiModificationTracker.getInstance(project).modificationCount
-
   override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
@@ -150,7 +147,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
       }
-      dependencies.add(namesProvider)
+      dependencies.add(namesProvider.modificationTracker)
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
@@ -164,7 +161,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
       }
-      dependencies.add(namesProvider)
+      dependencies.add(namesProvider.modificationTracker)
       CachedValueProvider.Result.create(
         PartiallyInitializedSearchMap(namesProvider, support, this::provides),
         dependencies.toList()
@@ -248,7 +245,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     fun getMap(
       namesProvider: PolySymbolNamesProvider,
     ): PolySymbolSearchMap? =
-      cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.value
+      cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.upToDateOrNull?.get()
 
     fun getOrCreatePartialMap(
       namesProvider: PolySymbolNamesProvider,

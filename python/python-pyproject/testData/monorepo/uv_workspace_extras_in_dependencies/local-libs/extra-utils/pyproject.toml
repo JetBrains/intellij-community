@@ -1,0 +1,9 @@
+[project]
+name = "extra-utils"
+version = "0.1.0"
+description = "Local utility library (not a workspace member, referenced by path)"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+some-group = ["requests"]

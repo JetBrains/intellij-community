@@ -253,6 +253,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
 
   @Test
   fun search_text_returns_snippet_details() = runBlocking {
+    awaitExternalChangesAndIndexing(project)
     val query = "Search Everywhere file content"
     testMcpTool(
       SearchToolset::search_text.name,
@@ -276,6 +277,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
 
   @Test
   fun search_text_returns_match_coordinates() = runBlocking {
+    awaitExternalChangesAndIndexing(project)
     val query = "Search Everywhere file content"
     testMcpTool(
       SearchToolset::search_text.name,
@@ -297,6 +299,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
 
   @Test
   fun search_regex_returns_match_coordinates() = runBlocking {
+    awaitExternalChangesAndIndexing(project)
     testMcpTool(
       SearchToolset::search_regex.name,
       buildJsonObject {

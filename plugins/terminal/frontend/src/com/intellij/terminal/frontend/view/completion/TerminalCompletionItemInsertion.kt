@@ -79,7 +79,7 @@ private fun calculateInsertionInfo(
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
 
-  if (baseInsertValue.isSurroundedByQuotes()) {
+  if (baseInsertValue.isEscaped()) {
     // Already escaped
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
@@ -104,7 +104,9 @@ private fun calculateInsertionInfo(
     // PowerShell prefers escaping by wrapping the token into quotes.
     // Let's wrap the whole token into single quotes.
     val addCursor = !baseInsertValue.contains(CURSOR_MARKER)
-    val insertValue = "'${tokenText}${baseInsertValue}${if (addCursor) CURSOR_MARKER else ""}'"
+    val escapedTokenText = tokenText.replace("'", "''")
+    val escapedBaseInsertValue = baseInsertValue.replace("'", "''")
+    val insertValue = "'${escapedTokenText}${escapedBaseInsertValue}${if (addCursor) CURSOR_MARKER else ""}'"
     val beforeReplacementLength = tokenText.length
     val textAfterCursor =
       outputModel.getText(outputModel.cursorOffset, (outputModel.cursorOffset + 1).coerceAtMost(outputModel.endOffset)).toString()
@@ -195,6 +197,14 @@ private data class CompletionItemInsertionInfo(
   val beforePrefixReplacementLength: Int,
   val afterPrefixReplacementLength: Int,
 )
+
+/**
+ * Returns true of the string is surrounded by quotes and does not contain any quotes inside
+ */
+private fun String.isEscaped(): Boolean {
+  return isSurroundedBy("'") && !removeSurrounding("'").contains("'")
+         || isSurroundedBy("\"") && !removeSurrounding("\"").contains("\"")
+}
 
 private const val CURSOR_MARKER = "{cursor}"
 

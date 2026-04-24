@@ -67,7 +67,7 @@ object DocMarkdownToHtmlConverter {
         // Inline text semantic
         "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr", "kbd", "samp",
         // Image and multimedia
-        "img",
+        "img", "picture", "source",
         // Svg and math
         "svg",
         // Obsolete

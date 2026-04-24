@@ -164,39 +164,48 @@ internal class IdeaFreezeReporter : PerformanceListener {
       return
     }
 
-    if (Registry.`is`("freeze.reporter.enabled", false)) {
-      if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
-        val dumps = ArrayList(currentDumps) // defensive copy
-        if (dumpTask.isValid() && dumps.size >= 2) {
-          val attachments = ArrayList<Attachment>()
-          addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
-          if (reportDir != null) {
-            EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
-          }
-
-          val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-          if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-            if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
-              MessagePool.getInstance().addIdeFatalMessage(loggingEvent)
-              return
+    try {
+      if (Registry.`is`("freeze.reporter.enabled", false)) {
+        if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
+          val dumps = ArrayList(currentDumps) // defensive copy
+          if (dumpTask.isValid() && dumps.size >= 2) {
+            val attachments = ArrayList<Attachment>()
+            addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
+            if (reportDir != null) {
+              EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
             }
-            else if (application.isEAP || application.isInternal) {
-              // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
-              report(loggingEvent)
-            }
-          }
 
-          if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
-            for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
-              notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+            val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
+            service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+              processDumps(dumps, reportDir, loggingEvent, durationMs)
             }
           }
         }
       }
     }
+    finally {
+      this.dumpTask = null
+      reset()
+    }
+  }
 
-    this.dumpTask = null
-    reset()
+  private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
+    if (loggingEvent != null && (application.isEAP || application.isInternal)) {
+      if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+        MessagePool.getInstance().addIdeFatalMessage(loggingEvent)
+        return
+      }
+      else if (application.isEAP || application.isInternal) {
+        // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
+        report(loggingEvent)
+      }
+    }
+
+    if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
+      for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
+        notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+      }
+    }
   }
 
   /**

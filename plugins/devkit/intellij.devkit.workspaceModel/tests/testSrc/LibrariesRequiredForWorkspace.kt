@@ -50,13 +50,13 @@ internal object LibrariesRequiredForWorkspace {
         listOf(intellijJava)
       }
       "intellij.rider.plugins.unity" -> {
-        listOf(riderUnityPlugin, rdCore)
+        listOf(riderUnityPlugin, rdCore, riderRdClient)
       }
       "intellij.rider" -> {
         listOf(riderRdClient)
       }
       "intellij.rider.rdclient.dotnet" -> {
-        listOf(rdFramework, rdCore, riderModelGenerated, riderUnityPlugin, rider, rdIdeModelGenerated)
+        listOf(rdFramework, rdCore, riderModelGenerated, rdIdeModelGenerated)
       }
       "intellij.kotlin.base.facet" -> {
         listOf(intellijJava, kotlinJpsCommon)
@@ -80,7 +80,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(cidrProjectModel)
       }
       "intellij.android.projectSystem.gradle" -> {
-        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform)
+        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform, gradle, gradleToolingExtension)
       }
       else -> {
         emptyList()

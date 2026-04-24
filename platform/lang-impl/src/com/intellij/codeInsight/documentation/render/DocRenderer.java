@@ -375,7 +375,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  void dispose() {
+  public void dispose() {
     clearCachedComponent();
   }
 

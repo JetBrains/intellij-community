@@ -456,7 +456,7 @@ public final class PythonSdkUpdater {
    */
   private static void updateLocalSdkVersionAndPaths(@NotNull Sdk sdk, @Nullable Project project)
     throws InvalidSdkException {
-    updateLocalSdkVersion(sdk);
+    updateSdkVersion(sdk);
     if (!PythonSdkUtil.isRemote(sdk)) {
       try {
         updateSdkPaths(sdk, evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject()), project);
@@ -472,12 +472,10 @@ public final class PythonSdkUpdater {
    * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
    */
-  private static void updateLocalSdkVersion(@NotNull Sdk sdk) {
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.version"));
-      final String versionString = sdk.getSdkType().getVersionString(sdk);
-      commitSdkVersionIfChanged(sdk, versionString);
-    }
+  private static void updateSdkVersion(@NotNull Sdk sdk) {
+    ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.version"));
+    final String versionString = sdk.getSdkType().getVersionString(sdk);
+    commitSdkVersionIfChanged(sdk, versionString);
   }
 
   private static void commitSdkVersionIfChanged(@NotNull Sdk sdk, @Nullable String versionString) {

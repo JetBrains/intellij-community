@@ -22,6 +22,9 @@ a:com.intellij.execution.runners.RunTab
 f:com.intellij.execution.util.EnvFilesUtilKt
 - *sf:configureEnvsFromFiles(com.intellij.execution.EnvFilesOptions,Z):java.util.Map
 - *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map
+f:com.intellij.terminal.TerminalTitle
+- *f:buildFullTitle(Z):java.lang.String
+- *f:buildTitle(Z):java.lang.String
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - *:getCurrentDirectory():java.lang.String

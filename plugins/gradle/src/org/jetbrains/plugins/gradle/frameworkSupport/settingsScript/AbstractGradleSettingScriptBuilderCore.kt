@@ -81,8 +81,8 @@ internal abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGr
     }
 
   override fun generateTree(): BlockElement = GradleScriptTreeBuilder.tree {
-    callIfNotEmpty("plugins", plugins)
     callIfNotEmpty("pluginManagement", pluginManagement)
+    callIfNotEmpty("plugins", plugins)
     assignIfNotNull("rootProject.name", projectName)
     join(script)
   }

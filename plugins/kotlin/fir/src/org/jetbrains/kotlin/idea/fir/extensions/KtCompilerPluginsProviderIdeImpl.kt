@@ -103,9 +103,16 @@ internal class KtCompilerPluginsProviderIdeImpl(
     /**
      * Throws away the cache for all the registered plugins, and executes all the disposables
      * registered in the corresponding [CompilerPluginRegistrar.ExtensionStorage]s.
+     *
+     * Note: we drop the [pluginsCacheCachedValue] synchronously, so that
+     * the [KtCompilerPluginsCache.new] call and all the calls to [KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar] in it
+     * either have not yet started, or have already completed.
+     *
+     * Otherwise, race conditions similar to KTIJ-37664 may occur.
      */
     private fun resetPluginsCache() {
-        pluginsCacheCachedValue.drop()?.dispose()
+        val cache = pluginsCacheCachedValue.dropSynchronously()
+        cache?.dispose()
     }
 
     companion object {

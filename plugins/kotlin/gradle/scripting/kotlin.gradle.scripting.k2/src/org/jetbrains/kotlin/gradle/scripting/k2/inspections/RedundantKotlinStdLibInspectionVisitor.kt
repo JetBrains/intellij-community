@@ -5,8 +5,8 @@ import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.gradle.java.toml.getResolvedDependency
-import com.intellij.gradle.java.toml.getResolvedPlugin
+import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedDependency
+import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedPlugin
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiMethod
@@ -87,11 +87,11 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val argNames = args.mapNotNull { it.getArgumentName()?.asName?.identifier }.toSet()
         if (!REQUIRED_NAMED_ARGS.containsAll(argNames)) return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
+        val group = argList.findNamedOrPositionalArgument("group", 0)?.evaluateString()
             ?: return null
-        val name = findNamedOrPositionalArgument(argList, "name", 1)?.evaluateString()
+        val name = argList.findNamedOrPositionalArgument("name", 1)?.evaluateString()
             ?: return null
-        val version = findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
+        val version = argList.findNamedOrPositionalArgument("version", 2)?.evaluateString()
             ?: return null
 
         return if (isKotlinStdLib(group, name)) version else null

@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.gradle.java.groovy.service.resolve.GradleDependencyHandlerContributor.Companion.dependencyMethodKind
-import com.intellij.gradle.java.toml.getResolvedDependency
-import com.intellij.gradle.java.toml.getResolvedPlugin
+import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedDependency
+import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedPlugin
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.diagnostic.debug

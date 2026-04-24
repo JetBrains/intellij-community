@@ -150,6 +150,7 @@ open class CommonStarterContext : UserDataHolderBase() {
   var includeExamples: Boolean = true
 }
 
+const val ENTITY_NAME_PROPERTY: String = "entityName"
 const val ARTIFACT_ID_PROPERTY: String = "artifactId"
 const val GROUP_ID_PROPERTY: String = "groupId"
 

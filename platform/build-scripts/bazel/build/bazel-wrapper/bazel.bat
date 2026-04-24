@@ -11,6 +11,8 @@ if exist "%AUTHORIZER%" call "%AUTHORIZER%"
 if errorlevel 1 exit /b %ERRORLEVEL%
 :skip_auth
 
+set BAZEL_SH=C:\do-not-use-bash-under-windows\bash.exe
+
 set OUTER_BAZEL_REAL=%BAZEL_REAL%
 set BAZEL_REAL=
 set BAZELISK_SKIP_WRAPPER=

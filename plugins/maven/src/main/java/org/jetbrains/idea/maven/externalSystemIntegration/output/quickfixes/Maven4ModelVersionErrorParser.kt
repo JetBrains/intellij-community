@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.build.events.BuildEvent
@@ -92,12 +92,17 @@ class Maven4ModelVersionErrorParser(
     val virtualFile = VfsUtil.findFile(path, false) ?: return null
     return runBlockingMaybeCancellable {
       readAction {
-        val modelVersion = MavenDomUtil.getMavenDomProjectModel(project, virtualFile)?.modelVersion
-                           ?: return@readAction null
-
-        val value = modelVersion.value ?: return@readAction null
-        val offset = modelVersion.xmlElement?.navigationElement?.textOffset ?: 0
-        return@readAction value to offset
+        val projectModel = MavenDomUtil.getMavenDomProjectModel(project, virtualFile) ?: return@readAction null
+        val modelVersion = projectModel.modelVersion
+        return@readAction if (modelVersion.exists()) {
+          val value = modelVersion.stringValue ?: return@readAction null
+          val offset = modelVersion.xmlElement?.navigationElement?.textOffset ?: 0
+          value to offset
+        }
+        else {
+          val value = projectModel.effectiveModelVersion ?: return@readAction null
+          value to 0
+        }
       }
     }
   }

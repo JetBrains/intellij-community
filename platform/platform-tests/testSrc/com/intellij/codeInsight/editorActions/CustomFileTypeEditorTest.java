@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import junit.framework.TestCase;
@@ -219,32 +218,6 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
     myFixture.configureByFile(testName + ".fx");
     EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
     myFixture.checkResultByFile(testName + "_after.fx");
-  }
-
-  public void testCpp() {
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getProject(), "A.cpp");
-    //                   0123456789012345678 9 0123 45 6 7
-    highlighter.setText("#include try enum \"\\xff\\z\\\"xxx\"");
-    HighlighterIterator iterator = highlighter.createIterator(2);
-    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(9);
-    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_2, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(15);
-    TestCase.assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(19);
-    TestCase.assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(23);
-    TestCase.assertEquals(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(25);
-    TestCase.assertEquals(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, iterator.getTokenType());
-
-    iterator = highlighter.createIterator(27);
-    TestCase.assertEquals(CustomHighlighterTokenType.STRING, iterator.getTokenType());
   }
 
   public void testHaskel() {

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.format.ripper" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.format-ripper:format-ripper:1.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.3.0/format-ripper-1.3.0.jar">
+          <sha256sum>5dd7e42087c6f149adbe71f1520a0c34155278ea7fc4bca2e795048904fac4f9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.3.0/format-ripper-1.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.3.0/format-ripper-1.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

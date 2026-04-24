@@ -984,6 +984,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/multipleArgsItem/notFirstArgumentBrackets.kt");
         }
 
+        @TestMetadata("notForExistingNamedArguments2.kt")
+        public void testNotForExistingNamedArguments2() throws Exception {
+            runTest("../../completion/testData/smart/multipleArgsItem/notForExistingNamedArguments2.kt");
+        }
+
         @TestMetadata("shadowing.kt")
         public void testShadowing() throws Exception {
             runTest("../../completion/testData/smart/multipleArgsItem/shadowing.kt");

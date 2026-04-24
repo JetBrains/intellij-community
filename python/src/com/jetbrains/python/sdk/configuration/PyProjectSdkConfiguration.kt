@@ -7,7 +7,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.model.api.SuggestedSdk
+import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.errorProcessing.PyResult
@@ -45,6 +48,7 @@ object PyProjectSdkConfiguration {
       return@withContext true
     }
 
+    module.getRootModuleOrNull(createSdkInfoWithTool.toolId)?.also { configurePythonSdk(it.project, it, sdk) }
     configurePythonSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
     true
@@ -74,3 +78,12 @@ object PyProjectSdkConfiguration {
     return lifetime
   }
 }
+
+private suspend fun Module.getRootModuleOrNull(toolId: ToolId): Module? =
+  when (val r = suggestSdk()) {
+    // Workspace suggested by uv
+    is SuggestedSdk.SameAs -> if (r.accordingTo == toolId) r.parentModule else null
+    null, is SuggestedSdk.PyProjectIndependent -> null
+  }
+
+internal suspend fun Module.getSdkAssociatedModule(toolId: ToolId): Module = getRootModuleOrNull(toolId) ?: this

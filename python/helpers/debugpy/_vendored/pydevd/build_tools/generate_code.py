@@ -146,6 +146,14 @@ DONT_TRACE['cp1252.py'] = LIB_FILE
 DONT_TRACE['utf_8.py'] = LIB_FILE
 DONT_TRACE['codecs.py'] = LIB_FILE
 
+# Don't trace JetBrains test runner helpers (PY-88433)
+DONT_TRACE['_jb_pytest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_unittest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_nosetest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_tox_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_trialtest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_runner_tools.py'] = PYDEV_FILE
+
 # fmt: on
 """
 

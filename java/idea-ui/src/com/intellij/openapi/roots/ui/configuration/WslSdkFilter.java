@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.execution.target.TargetBasedSdkAdditionalData;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslPath;
@@ -21,6 +22,9 @@ public final class WslSdkFilter {
     var projectOnLocalFs = distribution == null;
     return (Condition<Sdk>)sdk -> {
       if (projectOnLocalFs && sdk.getSdkType().allowWslSdkForLocalProject()) {
+        return true;
+      }
+      if (sdk.getSdkAdditionalData() instanceof TargetBasedSdkAdditionalData) {
         return true;
       }
       String sdkHomePath = sdk.getHomePath();

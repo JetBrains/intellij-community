@@ -216,7 +216,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         val painter =
             try {
                 loadingAction(url)
-            } catch (e: RuntimeException) {
+            } catch (e: Exception) {
                 val message = "Unable to load resource from $url\n${e.stackTraceToString()}"
                 logger.error(message)
                 return errorPainter

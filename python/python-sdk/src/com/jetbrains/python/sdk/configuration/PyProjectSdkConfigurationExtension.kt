@@ -42,6 +42,12 @@ interface PyProjectSdkConfigurationExtension {
     private val CONCURRENCY_LIMIT = Semaphore(permits = 5)
 
     /**
+     * Tool IDs of all the registered configurators.
+     */
+    val toolIds: List<ToolId>
+      get() = EP_NAME.extensionsIfPointIsRegistered.map { it.toolId }
+
+    /**
      * EPs associated by tool id
      */
     fun createMap(): Map<ToolId, PyProjectSdkConfigurationExtension> = EP_NAME.extensionList.associateBy { it.toolId }

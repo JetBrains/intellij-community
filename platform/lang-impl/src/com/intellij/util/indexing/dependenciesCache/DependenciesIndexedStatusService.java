@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.components.Service;
@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 
 /**
@@ -107,7 +108,12 @@ public final class DependenciesIndexedStatusService {
           lastIndexedStatus = (MyStatus)mark;
         }
         else {
-          LOG.error("Status of indexed iterators was not collected: " + message);
+          if (isIndexingActivitiesSuppressedSync(project)) {
+            LOG.info("Status of indexed iterators was not collected because indexing is suppressed: " + message);
+          }
+          else {
+            LOG.error("Status of indexed iterators was not collected: " + message);
+          }
         }
       }
       currentlyCollectedStatus = null;

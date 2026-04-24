@@ -14,6 +14,7 @@ sealed interface XValueSerializedPresentation {
   @Serializable
   data class SimplePresentation(
     val icon: IconId?,
+    val inlayIcon: IconId?,
     val presentationType: String?,
     val value: String,
     val hasChildren: Boolean,
@@ -23,6 +24,7 @@ sealed interface XValueSerializedPresentation {
   @Serializable
   data class AdvancedPresentation(
     val icon: IconId?,
+    val inlayIcon: IconId?,
     val hasChildren: Boolean,
     val separator: String,
     val isShownName: Boolean,

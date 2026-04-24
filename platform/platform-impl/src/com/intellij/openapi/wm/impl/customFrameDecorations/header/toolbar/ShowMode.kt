@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,6 +26,10 @@ enum class ShowMode {
     // Keeping the previous state is essential for scenarios where the mode was changed to SEPARATE_TOOLBAR on Linux,
     // but the system has not been restarted yet
     fun isMergedMainMenu(): Boolean {
+      if (!ExperimentalUI.isNewUI()) {
+        return false
+      }
+
       var showMode = ShowMode.getCurrent()
       if (!SystemInfoRt.isWindows && showMode == MENU) {
         showMode = ShowMode.getShowMode(UISettings.getInstance().mainMenuDisplayModePrev)

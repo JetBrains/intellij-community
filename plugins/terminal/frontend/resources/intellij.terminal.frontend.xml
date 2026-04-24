@@ -126,6 +126,7 @@
 
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.Engine"/>
+      <action id="Terminal.AiAgents.ToggleShowAiAgentsInToolbar" class="com.intellij.terminal.frontend.action.ToggleShowAiAgentsInToolbarAction"/>
       <action id="Terminal.Settings" class="com.intellij.terminal.frontend.action.TerminalSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="Terminal.Feedback" class="com.intellij.terminal.frontend.action.TerminalFeedbackAction">
         <override-text place="GoToAction"/>
@@ -158,6 +159,15 @@
               class="com.intellij.terminal.frontend.action.TerminalNewPredefinedSessionAction"
               icon="AllIcons.Toolbar.Expand"/>
     </group>
+
+    <action id="Terminal.AiAgents.AgentSelector" class="com.intellij.terminal.frontend.action.TerminalAgentsSelectorAction"/>
+    <action id="Terminal.AiAgents.ChevronSelector"
+            class="com.intellij.terminal.frontend.action.TerminalAgentsChevronSelectorAction"
+            icon="AllIcons.Toolbar.Expand"/>
+    <action id="Terminal.AiAgents.LaunchSelectedAgent" class="com.intellij.terminal.frontend.action.LaunchSelectedAgentAction"/>
+    <action id="Terminal.AiAgents.ResetJunieNewBadgeCounter"
+            class="com.intellij.terminal.frontend.action.ResetJunieNewBadgeCounterAction"
+            internal="true"/>
 
     <group id="Terminal.ReworkedTerminalContextMenu">
       <reference ref="Terminal.Find"/>

@@ -20,11 +20,6 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
@@ -98,7 +93,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    */
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
-  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>  {
+  @ApiStatus.Internal
+  suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
@@ -110,24 +106,6 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
     }
 
     return Result.success(sdk)
-  }
-
-  @ApiStatus.Internal
-  suspend fun getOrCreateSdkWithModal(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return withModalProgress(ModalTaskOwner.guess(),
-                             message("python.sdk.progress.setting.up.environment"),
-                             TaskCancellation.cancellable()) {
-      setupSdk(moduleOrProject)
-    }
-  }
-
-  @ApiStatus.Internal
-  suspend fun getOrCreateSdkWithBackground(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return withBackgroundProgress(moduleOrProject.project,
-                                  message("python.sdk.progress.setting.up.environment"),
-                                  TaskCancellation.cancellable()) {
-      setupSdk(moduleOrProject)
-    }
   }
 
   /**
@@ -178,15 +156,16 @@ enum class PythonSupportedEnvironmentManagers(
   val toolId: ToolId,
   val nameKey: String,
   val icon: Icon,
+  val sshAutoUploadRequired: Boolean,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, { true }),
-  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, { true }),
-  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
-  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
-  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, { true }),
-  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
-  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
+  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = false),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON, sshAutoUploadRequired = false),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, sshAutoUploadRequired = true, { true }),
+  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = false, { it is FileSystem.Eel }),
+  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {

@@ -54,8 +54,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     bridge = controls.bridge
     bridge.initialize(initMode)
     if (waitForInit) {
-      timeoutRunBlocking(200.seconds) {
-        while (!bridge.isInitialized) {
+      timeoutRunBlocking(2.seconds) {
+        while (!bridge.isAnyInitializePerformed.get()) {
           delay(10.milliseconds)
         }
       }
@@ -100,6 +100,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, DUMMY_USER_ID)
     authService.userData = null
     initSettingsSync()
+
+    // Wait for resetLoginData to be called and complete
+    waitUntil(timeout = 2.seconds) {
+      !SettingsSyncSettings.getInstance().syncEnabled
+    }
+
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, null)
     Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, null)
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
@@ -347,6 +353,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     suppressFailureOnLogError(exceptionToThrow) {
       timeoutRunBlocking {
         initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
+        waitUntil(timeout = 2.seconds) {
+          SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.Error
+        }
       }
     }
 
@@ -561,6 +570,50 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
         val blob = treeWalk.getObjectId(0)
         return String(objectReader.open(blob).bytes, StandardCharsets.UTF_8)
       }
+    }
+  }
+
+  @Test
+  fun `enable disable enable again - listeners work after re-enable`() = timeoutRunBlockingAndStopBridge {
+    // Initial setup: create initial settings and enable sync (first enable)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    // Mimic UI disable (handleDisableSync from SettingsSyncConfigurable)
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    bridge.waitForAllExecuted()
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+
+    // Mimic UI enable again (second enable via getSettingsFromServer)
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    timeoutRunBlocking(2.seconds) {
+      while (!bridge.isInitialized) {
+        delay(10.milliseconds)
+      }
+    }
+
+    // Verify that listeners are working by making a local change
+    writeToConfig {
+      fileState("options/laf.xml", "LaF after re-enable")
+    }
+
+    // Fire IdeChange event to simulate file watcher detecting the change
+    val changedSnapshot = settingsSnapshot {
+      fileState("options/laf.xml", "LaF after re-enable")
+    }
+    syncSettingsAndWait(SyncSettingsEvent.IdeChange(changedSnapshot))
+
+    // Verify the change was synced to server
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF after re-enable")
     }
   }
 }

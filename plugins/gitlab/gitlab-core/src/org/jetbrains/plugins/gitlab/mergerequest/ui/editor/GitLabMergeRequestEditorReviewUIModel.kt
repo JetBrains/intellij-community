@@ -121,7 +121,10 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.requestNewDiscussion(location, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange) = true
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    if (!fileVm.canAddMultilinePositionalNotes) return false
+    return true
+  }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()

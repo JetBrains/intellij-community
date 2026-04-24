@@ -2,6 +2,7 @@
   <extensionPoints>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.java.definitions" interface="com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.threadDumpItemFactory" interface="com.intellij.unscramble.ThreadDumpItemFactory" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

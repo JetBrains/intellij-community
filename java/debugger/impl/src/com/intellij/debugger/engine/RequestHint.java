@@ -20,6 +20,7 @@ import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.StepRequest;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +108,11 @@ public class RequestHint {
   @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   public int getSize() {
     return mySize;
+  }
+
+  @ApiStatus.Internal
+  public int getExplicitSuspendPolicy() {
+    return -1;
   }
 
   @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
@@ -263,7 +269,7 @@ public class RequestHint {
   }
 
   protected void doStep(@NotNull DebugProcessImpl debugProcess, SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, int size, int depth, Object commandToken) {
-    debugProcess.doStep(suspendContext, stepThread, size, depth, this, commandToken);
+    debugProcess.doStep(suspendContext, stepThread, size, depth, this, commandToken, getExplicitSuspendPolicy());
   }
 
   final @Nullable RequestHint getParentHint() {

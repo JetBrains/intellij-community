@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports usages of <code>JComponent.setToolTipText(String)</code>.
+<p>
+  Passing raw strings may cause accidental HTML injections because IntelliJ Platform interprets HTML markup when renders the tooltip text.
+  <code>com.intellij.ide.HelpTooltipKt.setToolTipText(HtmlChunk)</code> should be used instead of
+  <code>JComponent.setToolTipText(String)</code>.
+  Use <code>HtmlChunk.text()</code> to safely escape text, especially in cases when text can contain user input
+  or project content (for example, file names).
+  Or use <code>HtmlChunk.raw()</code> if the tooltip supposes to contain HTML.
+</p>
+<p>
+  Example:
+</p>
+<pre><code lang="kotlin">
+// Bad — raw string may contain HTML injection:
+component.setToolTipText(text)
+
+// Good — text is escaped:
+component.setToolTipText(HtmlChunk.text(text))
+</code></pre>
+</body>
+</html>

@@ -94,7 +94,7 @@ internal class ExpandableMenu(
     return !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal")
   }
 
-  private fun isShowing(): Boolean {
+  fun isShowing(): Boolean {
     return expandedMenuBar != null
   }
 

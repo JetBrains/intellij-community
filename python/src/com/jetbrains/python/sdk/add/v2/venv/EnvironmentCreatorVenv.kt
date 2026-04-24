@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.components.validationTooltip
+import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -125,7 +126,9 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val venv = model.venvViewModel.backProperty.get()?.pathHolder
                ?: return PyResult.localizedError(message("no.venv.path.specified"))
-    return model.setupVirtualenv(venv, moduleOrProject)
+    return withProgressText(message("python.sdk.progress.virtualenv.creating")) {
+      model.setupVirtualenv(venv, moduleOrProject)
+    }
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

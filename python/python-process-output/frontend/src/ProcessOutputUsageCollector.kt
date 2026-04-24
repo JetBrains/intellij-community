@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object ProcessOutputUsageCollector : CounterUsagesCollector() {
-    private val GROUP: EventLogGroup = EventLogGroup("pycharm.processOutputToolWindow", 3)
+    private val GROUP: EventLogGroup = EventLogGroup("pycharm.processOutputToolWindow", 4)
 
     private val TOGGLED_FIELD = EventFields.Boolean("enabled")
     private val TOGGLED_TREE_FILTER =

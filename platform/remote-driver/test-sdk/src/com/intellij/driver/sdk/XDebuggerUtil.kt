@@ -2,11 +2,14 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.RequiresLockSemantics
 import com.intellij.driver.client.service
+import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 
 @Remote(value = "com.intellij.xdebugger.XDebuggerUtil")
 interface XDebuggerUtil {
+  @RequiresLockSemantics(LockSemantics.READ_ACTION)
   fun toggleLineBreakpoint(project: Project,
                            file: VirtualFile,
                            line: Int,

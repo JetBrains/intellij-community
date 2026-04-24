@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
@@ -44,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -122,6 +124,25 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       isChanged.set(true)
     }
   }
+
+  fun clearLocalPlugins(pluginId: PluginId) {
+    var changed = false
+    val iterator = pluginCache.entries.iterator()
+    while (iterator.hasNext()) {
+      val entry = iterator.next()
+      if (entry.value.pluginIdString == pluginId.idString) {
+        iterator.remove()
+        changed = true
+      }
+    }
+
+    if (changed) {
+      isChanged.set(true)
+    }
+  }
+
+  @TestOnly
+  fun getLocalPlugin(extensionOrFileName: String): PluginData? = pluginCache[extensionOrFileName]
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence

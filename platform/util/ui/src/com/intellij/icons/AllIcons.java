@@ -247,6 +247,8 @@ public class AllIcons {
     /** 14x14 */ public static final @NotNull Icon BreakpointFieldUnsuspendentDisabled = load("expui/breakpoints/breakpointFieldUnsuspendentDisabled.svg", -1363984560, 2);
     /** 14x14 */ public static final @NotNull Icon BreakpointMethodUnsuspendentDisabled = load("expui/breakpoints/breakpointMethodUnsuspendentDisabled.svg", 2054364640, 2);
     /** 14x14 */ public static final @NotNull Icon BreakpointUnsuspendentDisabled = load("expui/breakpoints/breakpointUnsuspendentDisabled.svg", 1020097126, 2);
+    /** 14x14 */ public static final @NotNull Icon ConditionalInstrumentation = load("expui/breakpoints/conditionalInstrumentation.svg", -814054787, 2);
+    /** 14x14 */ public static final @NotNull Icon LoggingInstrumentation = load("expui/breakpoints/loggingInstrumentation.svg", -1997548618, 2);
     /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsDisabled = load("expui/breakpoints/multipleBreakpointsDisabled.svg", -358532645, 2);
     /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsMuted = load("expui/breakpoints/multipleBreakpointsMuted.svg", -1544664600, 2);
   }

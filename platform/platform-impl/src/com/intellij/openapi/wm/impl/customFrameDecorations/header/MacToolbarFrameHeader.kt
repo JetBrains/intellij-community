@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
+import com.intellij.openapi.wm.impl.getProjectFrameTypeId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.util.coroutines.childScope
@@ -146,7 +147,9 @@ internal class MacToolbarFrameHeader(
   }
 
   private suspend fun isCompactHeader(): Boolean {
-    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader { computeMainActionGroups() }
+    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader {
+      computeMainActionGroups(projectFrameTypeId = rootPane.getProjectFrameTypeId())
+    }
   }
 
   private fun createView(isCompactHeader: Boolean): HeaderView {

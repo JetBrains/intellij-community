@@ -35,12 +35,21 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PyInspectionVisitor extends PyElementVisitor {
   private final @Nullable ProblemsHolder myHolder;
   protected final TypeEvalContext myTypeEvalContext;
+  /**
+   * When set to {@code true}, all problems registered by this visitor will use
+   * {@link ProblemHighlightType#INFORMATION} instead of their original highlight type.
+   * This is used when an external type engine (e.g., Pyrefly) handles error highlighting,
+   * but we still want to keep quick fixes available.
+   */
+  @ApiStatus.Internal
+  protected boolean downgradeHighlightForTypeEngine = false;
 
   public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
 
@@ -51,7 +60,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Deprecated
   public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
     myHolder = holder;
-    myTypeEvalContext = PyInspectionVisitor.getContext(session);
+    myTypeEvalContext = getContext(session);
     PluginException.reportDeprecatedUsage("this constructor", "");
   }
 
@@ -84,13 +93,30 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     return myHolder;
   }
 
+  /**
+   * Returns {@link ProblemHighlightType#INFORMATION} when an external type engine handles highlighting,
+   * otherwise returns the original type. Use for specific checks that the type engine covers,
+   * in inspections where only some checks should be downgraded.
+   */
+  @ApiStatus.Internal
+  protected @NotNull ProblemHighlightType effectiveHighlightType(@NotNull ProblemHighlightType type) {
+    return myTypeEvalContext.getTypeEngine() != null ? ProblemHighlightType.INFORMATION : type;
+  }
+
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message) {
     if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
-      myHolder.registerProblem(element, message);
+      if (downgradeHighlightForTypeEngine) {
+        myHolder.registerProblem(
+          myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null,
+                                                        ProblemHighlightType.INFORMATION, myHolder.isOnTheFly()));
+      }
+      else {
+        myHolder.registerProblem(element, message);
+      }
     }
   }
 
@@ -101,7 +127,12 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
       return;
     }
     if (myHolder != null) {
-      myHolder.registerProblem(element, message, quickFixes);
+      if (downgradeHighlightForTypeEngine) {
+        registerProblem(element, message, ProblemHighlightType.INFORMATION, null, quickFixes);
+      }
+      else {
+        myHolder.registerProblem(element, message, quickFixes);
+      }
     }
   }
 
@@ -112,8 +143,9 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
       return;
     }
     if (myHolder != null) {
+      ProblemHighlightType effectiveType = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : type;
       myHolder.registerProblem(
-        myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, type, myHolder.isOnTheFly()));
+        myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, effectiveType, myHolder.isOnTheFly()));
     }
   }
 
@@ -156,7 +188,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @Nullable TextRange rangeInElement,
     @NotNull LocalQuickFix @NotNull ... fixes) {
     if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
-      myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
+      ProblemHighlightType effectiveType = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : highlightType;
+      myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, effectiveType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));
     }
   }

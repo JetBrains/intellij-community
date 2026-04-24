@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.ide.GeneralSettings
@@ -77,7 +77,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val projectDir = myDir!!.resolve(dir)
     projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml))
+    pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml, omitModelVersionTag = false))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 

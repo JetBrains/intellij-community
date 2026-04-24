@@ -50,6 +50,7 @@ class PluginDto(
   override var downloadUrl: String? = null
 
   override var releaseVersion: Int = 0
+  override var isEssential: Boolean = false
   override var displayCategory: String? = null
   override var isImplementationDetail: Boolean = false
   override var vendorDetails: PluginNodeVendorDetails? = null
@@ -179,6 +180,7 @@ class PluginDto(
         releaseDate = model.releaseDate
         isBundledUpdate = model.isBundledUpdate
         isImplementationDetail = model.isImplementationDetail
+        isEssential = model.isEssential
         isDisableAllowed = model.isDisableAllowed
       }
     }

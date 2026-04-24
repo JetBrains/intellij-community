@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -35,20 +36,20 @@ fun CoroutineContext.contextComponentManager(): ComponentManager {
 }
 
 private fun CoroutineContext.contextComponentManagerOrNull(): ComponentManager? {
-  return get(ComponentManagerElementKey)?.componentManager
+  return get(ComponentManagerElementKey)?.componentManager?.get()
 }
 
 internal fun ComponentManagerEx.asContextElement(): CoroutineContext.Element {
-  return ComponentManagerElement(this)
+  return ComponentManagerElement(WeakReference(this))
 }
 
 private class ComponentManagerElement(
-  val componentManager: ComponentManagerEx,
+  val componentManager: WeakReference<ComponentManagerEx>,
 ) : AbstractCoroutineContextElement(ComponentManagerElementKey), IntelliJContextElement {
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
-  override fun toString(): String = "ComponentManager(${componentManager.debugString()})"
+  override fun toString(): String = "ComponentManager(${componentManager.get()?.debugString() ?: "null"})"
 }
 
 private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManagerElement>, InternalCoroutineContextKey<ComponentManagerElement>

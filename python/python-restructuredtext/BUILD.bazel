@@ -57,6 +57,7 @@ jvm_library(
     "//platform/execution",
     "//platform/lang-api:lang",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-exec-service:community-execService",
     ":platform_lang-impl_provided",
     ":platform_execution-impl_provided",
     ":python-community-impl_provided",

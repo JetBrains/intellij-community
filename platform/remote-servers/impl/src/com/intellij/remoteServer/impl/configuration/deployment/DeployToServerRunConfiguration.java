@@ -139,7 +139,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       return null;
     }
 
-    return RemoteServersManager.getInstance().findByName(serverName, getServerType());
+    return RemoteServersManager.getInstance().findByName(getProject(), serverName, getServerType());
   }
 
   public void setServerName(String serverName) {

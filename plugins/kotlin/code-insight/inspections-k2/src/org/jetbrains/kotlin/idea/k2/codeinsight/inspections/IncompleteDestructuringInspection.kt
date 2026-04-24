@@ -50,7 +50,7 @@ internal class IncompleteDestructuringInspection :
     override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {
         val primaryParameters = extractPrimaryParameters(element) ?: return null
         val currentEntries = element.entries
-        if (currentEntries.size >= primaryParameters.size) return null
+        if (currentEntries.size == primaryParameters.size) return null
 
         val names = generateNames(element, primaryParameters)
         val types = generateTypesIfNeeded(element, primaryParameters)

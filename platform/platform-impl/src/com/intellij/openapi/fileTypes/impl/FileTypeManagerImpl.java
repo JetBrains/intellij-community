@@ -390,6 +390,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
       PluginAdvertiserExtensionsStateService.Companion.getInstance();
+    pluginAdvertiserExtensionsStateService.clearLocalPlugins(PluginManagerCore.CORE_ID);
     for (StandardFileType pair : standardFileTypes.values()) {
       if (schemeManager.findSchemeByName(pair.fileType.getName()) == null) {
         registerFileTypeWithoutNotification(pair.fileType,

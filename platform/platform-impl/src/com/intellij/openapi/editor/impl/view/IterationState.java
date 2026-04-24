@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.IslandsState;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -124,7 +125,7 @@ public final class IterationState {
   private Color myLastBackgroundColor;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
-  private boolean myIsInSelection = false;
+  private final boolean myShouldUseNewSelection;
 
   @ApiStatus.Internal
   public IterationState(
@@ -172,6 +173,11 @@ public final class IterationState {
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
     myGuardedBlocks =  buildGuardedBlocks(start, end);
     myEndOffset = myStartOffset;
+    if (editor instanceof EditorImpl impl) {
+      myShouldUseNewSelection = impl.shouldUseNewSelection();
+    } else {
+      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && IslandsState.Companion.isEnabled();
+    }
 
     advance();
   }
@@ -296,8 +302,8 @@ public final class IterationState {
   }
 
   @ApiStatus.Internal
-  public boolean isInSelection() {
-    return myIsInSelection;
+  public boolean hasPastLineEndExtension() {
+    return isInSelection(hasSoftWrap());
   }
 
   @ApiStatus.Internal
@@ -405,7 +411,7 @@ public final class IterationState {
     );
   }
 
-  private boolean isInSelection(boolean atBreak) {
+  boolean isInSelection(boolean atBreak) {
     return myCurrentSelectionIndex < myCaretData.selectionsSize() &&
            (myReverseIteration ? lessThan(myStartOffset, myCaretData.selectionEnd(myCurrentSelectionIndex, true), !atBreak)
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
@@ -527,7 +533,6 @@ public final class IterationState {
 
   private void setAttributes(TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
-    myIsInSelection = isInSelection;
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
       myReverseIteration || (atBreak && beforeBreak)
@@ -540,7 +545,7 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (!Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && selection != null) {
+    if (myShouldUseNewSelection && selection != null) {
       selection = selection.clone();
       selection.setBackgroundColor(null);
     }

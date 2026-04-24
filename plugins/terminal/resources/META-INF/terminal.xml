@@ -56,6 +56,9 @@
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
+    <registryKey key="terminal.agent.predefined.actions.enabled" defaultValue="true"
+                 description="Show AI agent actions in the terminal title and predefined terminal sessions"
+                 restartRequired="true"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
                  description="Whether to run autocompletion in the New Terminal"/>
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
@@ -135,6 +138,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <terminalAgentProvider implementation="org.jetbrains.plugins.terminal.agent.DefaultTerminalAgentProvider" order="first"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.PowerShellCommandSpecsProvider"/>
@@ -142,6 +146,8 @@
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
     <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
+
+    <shellsDetector implementation="org.jetbrains.plugins.terminal.shellDetection.LocalProjectShellsDetector"/>
   </extensions>
 
   <extensionPoints>
@@ -156,6 +162,8 @@
                     interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
                     interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalAgentProvider"
+                    interface="org.jetbrains.plugins.terminal.agent.TerminalAgentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpecsProvider"
                     interface="org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellSupport"
@@ -172,6 +180,10 @@
                     interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
                     interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.hyperlinkNavigationInterceptor" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellsDetector" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetector"/>
   </extensionPoints>
 
   <applicationListeners>

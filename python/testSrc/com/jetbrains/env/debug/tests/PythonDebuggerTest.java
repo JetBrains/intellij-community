@@ -31,6 +31,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class PythonDebuggerTest extends PyEnvTestCase {
@@ -574,7 +575,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testQuickEvaluationRangeForCalls() {
     runPythonTest(new PyDebuggerTask("/debug", "test_quick_eval_range_for_calls.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 13);
       }
 
@@ -582,6 +583,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
 
+        // Alt+click (quick evaluation): function name expands to call
         // f<caret>oo()
         assertEquals(new TextRange(142, 147), getQuickEvaluationTextRange(143));
         // b<caret>ar()
@@ -598,6 +600,98 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertEquals(new TextRange(142, 157), getQuickEvaluationTextRange(148));
         // foo() + bar()() <caret>+ baz()()()
         assertEquals(new TextRange(142, 169), getQuickEvaluationTextRange(158));
+
+        // Alt+click on opening parenthesis: evaluates the call
+        // foo<caret>()
+        assertEquals(new TextRange(142, 147), getQuickEvaluationTextRange(145));
+        // bar<caret>()()
+        assertEquals(new TextRange(150, 155), getQuickEvaluationTextRange(153));
+        // bar()<caret>()
+        assertEquals(new TextRange(150, 157), getQuickEvaluationTextRange(155));
+        // baz<caret>()()()
+        assertEquals(new TextRange(160, 165), getQuickEvaluationTextRange(163));
+        // baz()<caret>()()
+        assertEquals(new TextRange(160, 167), getQuickEvaluationTextRange(165));
+        // baz()()<caret>()
+        assertEquals(new TextRange(160, 169), getQuickEvaluationTextRange(167));
+
+        // Hover (no Alt): function name stays as reference, not expanded to call (PY-83446)
+        // f<caret>oo()
+        assertEquals(new TextRange(142, 145), getHoverEvaluationTextRange(143));
+        // b<caret>ar()
+        assertEquals(new TextRange(150, 153), getHoverEvaluationTextRange(151));
+        // b<caret>az()
+        assertEquals(new TextRange(160, 163), getHoverEvaluationTextRange(161));
+
+        // Hover on parentheses: no evaluation to avoid executing functions (PY-83446)
+        // foo(<caret>)
+        assertNull(getHoverEvaluationTextRange(146));
+        // bar()(<caret>)
+        assertNull(getHoverEvaluationTextRange(156));
+        // baz()()(<caret>)
+        assertNull(getHoverEvaluationTextRange(168));
+      }
+    });
+  }
+
+  @Test
+  public void testHoverEvaluationRangeForBinaryOps() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_hover_eval_range_for_binary_ops.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 8);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+
+        // Alt+click on binary operator: evaluates the binary expression
+        // foo() <caret>+ x
+        assertEquals(new TextRange(75, 84), getQuickEvaluationTextRange(81));
+
+        // Hover on binary operator: no evaluation to avoid side effects (PY-83446)
+        // foo() <caret>+ x
+        assertNull(getHoverEvaluationTextRange(81));
+
+        // Hover on operands: evaluates just the operand
+        // <caret>x (right operand)
+        assertEquals(new TextRange(83, 84), getHoverEvaluationTextRange(83));
+        // f<caret>oo() (left operand, function name only on hover)
+        assertEquals(new TextRange(75, 78), getHoverEvaluationTextRange(76));
+      }
+    });
+  }
+
+  @Test
+  public void testHoverEvaluationRangeForPrefixOps() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_hover_eval_range_for_prefix_ops.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+
+        // Alt+click on prefix operator: evaluates the full prefix expression
+        // <caret>-x
+        assertEquals(new TextRange(50, 52), getQuickEvaluationTextRange(50));
+        // <caret>not x
+        assertEquals(new TextRange(57, 62), getQuickEvaluationTextRange(57));
+
+        // Hover on prefix operator: no evaluation to avoid side effects (PY-83446)
+        // <caret>-x
+        assertNull(getHoverEvaluationTextRange(50));
+        // <caret>not x
+        assertNull(getHoverEvaluationTextRange(57));
+
+        // Hover on operand of prefix expression: just the variable
+        // -<caret>x
+        assertEquals(new TextRange(51, 52), getHoverEvaluationTextRange(51));
+        // not <caret>x
+        assertEquals(new TextRange(61, 62), getHoverEvaluationTextRange(61));
       }
     });
   }

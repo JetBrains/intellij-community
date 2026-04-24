@@ -903,7 +903,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       String fallbackSelectSubID = selectSubID;
       ActionCallback startupPaneSelection = changeViewCB(startupPaneId, null);
       if (startupPaneSelection.isRejected()) {
-        startupPaneApplied = startupPaneId.equals(currentViewId);
+        // currentViewId is null during the first call of this method,
+        // because `doAddUninitializedPanes` is called before `viewSelectionChanged` (which sets currentViewId)
+        // So, check if it is selected right in ContentManager
+        if (currentViewId == null) {
+          var selectedContent = contentManager.getSelectedContent();
+          if (selectedContent != null) {
+            startupPaneApplied = startupPaneId.equals(selectedContent.getUserData(ID_KEY));
+          }
+        } else {
+          startupPaneApplied = startupPaneId.equals(currentViewId);
+        }
       }
       else {
         startupPaneApplied = true;

@@ -12,6 +12,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -51,11 +52,13 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.system.OS
 import com.intellij.vcs.commit.AmendCommitAware
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.ToggleAmendCommitOption.Companion.isAmendCommitOptionSupported
+import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.commit.commitWithoutChangesRoots
-import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement
@@ -83,7 +86,7 @@ import javax.swing.JComponent
 @Service(Service.Level.PROJECT)
 class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment, AmendCommitAware {
   private var myNextCommitAuthor: VcsUser? = null // The author for the next commit
-  private var myNextCommitAmend = false // If true, the next commit is amended
+  private var myNextCommitToAmend: CommitToAmend = CommitToAmend.None
   private var myNextCommitAuthorDate: Date? = null
   private var myNextCommitSignOff = false
   private var myNextCommitSkipHook = false
@@ -126,19 +129,27 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     return amendService.isAmendCommitSupported()
   }
 
+  override fun isAmendSpecificCommitSupported(): Boolean {
+    return amendService.isAmendSpecificCommitSupported()
+  }
+
+  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Resolved> {
+    return amendService.getAmendSpecificCommitTargets(root)
+  }
+
   @Throws(VcsException::class)
   override fun getLastCommitMessage(root: VirtualFile): String {
     return amendService.getLastCommitMessage(root)
   }
 
-  override fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails> {
-    return amendService.getAmendCommitDetails(root)
+  override fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails> {
+    return amendService.getAmendCommitDetails(root, commitToAmend)
   }
 
   private val amendService: GitAmendCommitService get() = myProject.getService(GitAmendCommitService::class.java)
 
   private fun updateState(commitContext: CommitContext) {
-    myNextCommitAmend = commitContext.isAmendCommitMode
+    myNextCommitToAmend = commitContext.commitToAmend
     myNextCommitSkipHook = commitContext.isSkipHooks
     myNextCommitAuthor = commitContext.commitAuthor
     myNextCommitAuthorDate = commitContext.commitAuthorDate
@@ -163,6 +174,52 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     val commitOptions = createCommitOptions()
 
     val repositories = collectRepositories(sortedChanges.keys, commitWithoutChangesRoots)
+
+    runCommitPossiblyFreezingLog(commitOptions, repositories, sortedChanges, commitContext, commitMessage, exceptions)
+    return exceptions
+  }
+
+  private fun runCommitPossiblyFreezingLog(
+    commitOptions: GitCommitOptions,
+    repositories: List<GitRepository>,
+    sortedChanges: Map<GitRepository, Collection<Change>>,
+    commitContext: CommitContext,
+    commitMessage: @NonNls String,
+    exceptions: MutableList<VcsException>,
+  ) {
+    val commitAction = {
+      doCommit(repositories, sortedChanges, commitContext, commitMessage, commitOptions, exceptions)
+    }
+
+    val needsLogFreeze = commitOptions.commitToAmend is CommitToAmend.Specific
+    if (!needsLogFreeze) {
+      commitAction()
+      return
+    }
+
+    val repository = repositories.singleOrNull() ?: error("Freezing log is supported only for single repository commits")
+    val logManager = repository.let { VcsProjectLog.getInstance(it.project).logManager }
+    if (logManager == null) {
+      commitAction()
+      return
+    }
+
+    runBlockingCancellable {
+      logManager.runWithFreezing {
+        commitAction()
+      }
+    }
+  }
+
+  private fun doCommit(
+    repositories: List<GitRepository>,
+    sortedChanges: Map<GitRepository, Collection<Change>>,
+    commitContext: CommitContext,
+    commitMessage: @NonNls String,
+    commitOptions: GitCommitOptions,
+    exceptions: MutableList<VcsException>,
+  ) {
+
     for (repository in repositories) {
       val rootChanges: Collection<Change> = sortedChanges.getOrDefault(repository, ContainerUtil.emptyList())
       var toCommit: Collection<CommitChange> = collectChangesToCommit(rootChanges)
@@ -180,10 +237,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       exceptions.addAll(commitRepository(repository, toCommit, commitMessage, commitContext, commitOptions))
     }
 
-    if (commitContext.isPushAfterCommit && exceptions.isEmpty()) {
-      GitPushAfterCommitDialog.showOrPush(myProject, repositories)
+    if (exceptions.isEmpty()) {
+      if (commitContext.isPushAfterCommit) {
+        GitPushAfterCommitDialog.showOrPush(myProject, repositories)
+      }
     }
-    return exceptions
   }
 
   private fun collectRepositories(
@@ -200,7 +258,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   private fun createCommitOptions(): GitCommitOptions {
-    return GitCommitOptions(myNextCommitAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate,
+    return GitCommitOptions(myNextCommitToAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate,
                             myNextCleanupCommitMessage)
   }
 
@@ -942,7 +1000,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
 
     @Suppress("unused")
     fun isAmend(): Boolean {
-      return myOptionsUi.amendHandler.isAmendCommitMode
+      return myOptionsUi.amendHandler.commitToAmend is CommitToAmend.Last
     }
 
     override fun getComponent(): JComponent {

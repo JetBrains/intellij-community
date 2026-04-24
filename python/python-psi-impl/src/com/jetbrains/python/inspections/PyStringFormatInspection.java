@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -166,12 +167,15 @@ public final class PyStringFormatInspection extends PyInspection {
         else if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PyTupleType tupleType) {
-              matchEntireTupleTypes(problemTarget, tupleType);
-              return tupleType.getElementCount();
-            }
-            else {
-              checkExpressionType(rightExpression, s, problemTarget);
+
+            for (var member : PyTypeUtil.toStream(rightType)) {
+              if (member instanceof PyTupleType tupleType) {
+                matchEntireTupleTypes(problemTarget, tupleType);
+                return tupleType.getElementCount();
+              }
+              else {
+                checkExpressionType(rightExpression, s, problemTarget);
+              }
             }
           }
           return 1;

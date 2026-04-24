@@ -3184,7 +3184,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'do' mb_nl branch mb_nl 'while' '(' expression (mb_nl ')')
+  // 'do' mb_nl branch mb_nl 'while' '(' <<insideParentheses expression>> (mb_nl ')')
   public static boolean do_while_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "do_while_statement")) return false;
     if (!nextTokenIs(b, KW_DO)) return false;
@@ -3196,7 +3196,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, branch(b, l + 1)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeTokens(b, -1, KW_WHILE, T_LPAREN)) && r;
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, expression_parser_)) && r;
     r = p && do_while_statement_7(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -4126,7 +4126,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' mb_nl for_clause mb_nl ')'
+  // '(' mb_nl <<insideParentheses for_clause>> mb_nl ')'
   static boolean for_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_header")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -4135,7 +4135,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LPAREN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, for_clause(b, l + 1)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, GroovyGeneratedParser::for_clause)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);
@@ -4380,7 +4380,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' mb_nl expression_or_application mb_nl ')'
+  // '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')'
   static boolean if_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_header")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -4389,7 +4389,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LPAREN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, expression_or_application(b, l + 1)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, GroovyGeneratedParser::expression_or_application)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);
@@ -6301,7 +6301,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_element (mb_nl pattern_variable)?
+  // type_element (mb_nl_inside_parentheses pattern_variable)?
   static boolean pattern_test(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_test")) return false;
     boolean r;
@@ -6312,19 +6312,19 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (mb_nl pattern_variable)?
+  // (mb_nl_inside_parentheses pattern_variable)?
   private static boolean pattern_test_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_test_1")) return false;
     pattern_test_1_0(b, l + 1);
     return true;
   }
 
-  // mb_nl pattern_variable
+  // mb_nl_inside_parentheses pattern_variable
   private static boolean pattern_test_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_test_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
+    r = mb_nl_inside_parentheses(b, l + 1);
     r = r && pattern_variable(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -7425,7 +7425,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'switch' '(' expression ')' (mb_nl switch_body)
+  // 'switch' '(' <<insideParentheses expression>> ')' (mb_nl switch_body)
   public static boolean switch_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_statement")) return false;
     if (!nextTokenIs(b, KW_SWITCH)) return false;
@@ -7433,7 +7433,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, SWITCH_STATEMENT, null);
     r = consumeTokens(b, 1, KW_SWITCH, T_LPAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, insideParentheses(b, l + 1, expression_parser_));
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
     r = p && switch_statement_4(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
@@ -7452,7 +7452,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'synchronized' '(' expression mb_nl ')' (mb_nl lazy_block)
+  // 'synchronized' '(' <<insideParentheses expression>> mb_nl ')' (mb_nl lazy_block)
   public static boolean synchronized_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "synchronized_statement")) return false;
     if (!nextTokenIs(b, KW_SYNCHRONIZED)) return false;
@@ -7460,7 +7460,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, SYNCHRONIZED_STATEMENT, null);
     r = consumeTokens(b, 2, KW_SYNCHRONIZED, T_LPAREN);
     p = r; // pin = 2
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, insideParentheses(b, l + 1, expression_parser_));
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
     r = p && synchronized_statement_5(b, l + 1) && r;
@@ -8466,7 +8466,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' mb_nl expression mb_nl ')'
+  // '(' mb_nl <<insideParentheses expression>> mb_nl ')'
   static boolean while_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_header")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -8475,7 +8475,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, T_LPAREN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, expression_parser_)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && consumeToken(b, T_RPAREN) && r;
     exit_section_(b, l, m, r, p, null);
@@ -8806,7 +8806,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'switch' '(' mb_nl expression mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}')
+  // 'switch' '(' mb_nl <<insideParentheses expression>> mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}')
   public static boolean switch_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switch_expression")) return false;
     if (!nextTokenIsSmart(b, KW_SWITCH)) return false;
@@ -8815,7 +8815,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeTokensSmart(b, 1, KW_SWITCH, T_LPAREN);
     p = r; // pin = 1
     r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && report_error_(b, expression(b, l + 1, -1)) && r;
+    r = p && report_error_(b, insideParentheses(b, l + 1, expression_parser_)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
     r = p && report_error_(b, mb_nl(b, l + 1)) && r;

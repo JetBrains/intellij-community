@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.UnmodifiableView
 import java.util.Collections
 import java.util.stream.Collector
 import java.util.stream.Collectors
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Tools and wrappers around [PyType] inheritors
@@ -169,6 +172,12 @@ object PyTypeUtil {
   @Contract("null -> null; !null -> !null")
   fun PyType?.notNullToRef(): Ref<PyType>? =
     if (this == null) null else Ref(this)
+
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun Ref<out PyType?>?.derefOrUnknown(): PyType? =
+    if (this == null) PyAnyType.unknown
+    else this.get()
 
   /**
    * Returns a collector that combines a stream of `Ref<PyType>` back into a single `Ref<PyType>`
@@ -325,4 +334,54 @@ object PyTypeUtil {
 
     return Collections.unmodifiableSet(result)
   }
+}
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isAnyOrUnknown: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isAnyOrUnknown is PyAnyType?)
+      returns(false) implies (this@isAnyOrUnknown is PyType)
+    }
+
+    return if (PyAnyType.isEnabled) this is PyAnyType else this == null
+  }
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isAny: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isAny is PyAnyType.Any?)
+      returns(false) implies (this@isAny is PyType)
+    }
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
+  }
+
+@OptIn(ExperimentalContracts::class)
+val PyType?.isUnknown: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
+      returns(false) implies (this@isUnknown is PyType)
+    }
+
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
+}
+
+@ApiStatus.Internal
+fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =
+  PyLiteralType.getLiteralType(this, context)
+
+/**
+ * Widens literal types within a tuple type.
+ * When a tuple appears nested in a non-tuple container type (e.g., `list[tuple[Literal[1], Literal["a"]]]`),
+ * its literal element types should be widened to their base types (e.g., `list[tuple[int, str]]`).
+ */
+@ApiStatus.Experimental
+fun PyType?.widenTupleLiterals(): PyType? {
+  if (this !is PyTupleType || this is PyNamedTupleType) return this
+  val widenedElements = this.elementTypes.map { PyLiteralType.upcastLiteralToClass(it.widenTupleLiterals()) }
+  return PyTupleType(this.pyClass, widenedElements, this.isHomogeneous)
 }

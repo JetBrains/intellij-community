@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.project.modules
@@ -197,6 +198,64 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
          <version>1</version>
          <relativePath/>
          </parent>"""))
+  }
+
+  @Test
+  fun testChildrenProjectsOrder() = runBlocking {
+    createModulePom("module-c", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>project</artifactId>
+  <version>1</version>
+</parent>
+<artifactId>module-c</artifactId>
+""")
+    createModulePom("module-a", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>project</artifactId>
+  <version>1</version>
+</parent>
+<artifactId>module-a</artifactId>
+""")
+    createModulePom("module-d", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>project</artifactId>
+  <version>1</version>
+</parent>
+<artifactId>module-d</artifactId>
+""")
+    createModulePom("module-b", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>project</artifactId>
+  <version>1</version>
+</parent>
+<artifactId>module-b</artifactId>
+""")
+
+    importProjectAsync("""
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+<packaging>pom</packaging>
+
+<modules>
+  <module>module-c</module>
+  <module>module-a</module>
+  <module>module-d</module>
+  <module>module-b</module>
+</modules>
+""")
+
+    val artifactIds = readAction {
+      val model = MavenDomUtil.getMavenDomProjectModel(project, projectPom)!!
+      MavenDomProjectProcessorUtils.getChildrenProjects(model)
+        .map { it.artifactId.stringValue }
+    }
+
+    assertEquals(listOf("module-a", "module-b", "module-c", "module-d"), artifactIds)
   }
 
   private suspend fun checkGutters(virtualFile: VirtualFile, expectedFileContent: String, expectedProperties: Collection<String>) {

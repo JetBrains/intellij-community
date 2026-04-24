@@ -29,10 +29,17 @@ d[frozenset([1, 2])] = 0
 d[object()] = 0
 
 d[(1, (2, 3))] = 0
-d[<error descr="Cannot use unhashable type '(int, (int, list))' as a dict key">(1, (2, []))</error>] = 0
+d[<error descr="Cannot use unhashable type '(Literal[1], (Literal[2], list))' as a dict key">(1, (2, []))</error>] = 0
 
 unhashable_union: int | list = 5
 d[<error descr="Cannot use unhashable type 'int | list' as a dict key">unhashable_union</error>] = 0
 
 hashable_union: int | str = 5
 d[hashable_union] = 0
+
+# PY-88434 class objects are always hashable (type.__hash__)
+d[bytearray] = 0
+d[list] = 0
+d[UnhashableClass] = 0
+
+class_set = {str, bytes, bytearray}

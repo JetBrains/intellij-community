@@ -55,9 +55,9 @@ public class JUnit5EventsTest {
                               ##TC[rootName name='testClass' location='java:suite://testClass']
                               ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.testData.MyTestClass/test1' metainfo='']
                               ##TC[testStdOut id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' out='timestamp = ${timestamp}, key1 = value1, stdout = out1|n']
-                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='TRACE']
-                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='TRACE']
-                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']
+                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='org.opentest4j.AssertionFailedError: message1' expected='expected1' actual='actual1' details='TRACE']
+                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='org.opentest4j.AssertionFailedError: message2' expected='expected2' actual='actual2' details='TRACE']
+                              ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='org.opentest4j.MultipleFailuresError: 2 errors (2 failures)...' details='TRACE']
                               ##TC[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']
                               """.replace("${timestamp}", reportEntry.getTimestamp().toString()), builder.getNormalizedTestOutput());
   }
@@ -175,7 +175,7 @@ public class JUnit5EventsTest {
     var selectors = request.getSelectorsByType(DiscoverySelector.class);
     Assertions.assertFalse(selectors.isEmpty(), "Selectors should not be empty");
 
-    var selector = selectors.get(0);
+    var selector = selectors.getFirst();
     Assertions.assertInstanceOf(ClassSelector.class, selector);
     Assertions.assertEquals("com.intellij.junit5.testData.InitStaticField$MyTest", ((ClassSelector)selector).getClassName());
   }

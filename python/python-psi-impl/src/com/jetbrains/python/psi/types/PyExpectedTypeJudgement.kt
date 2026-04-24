@@ -202,6 +202,7 @@ object PyExpectedTypeJudgement {
            ?: fromAssignment(expr, ctx)
            ?: fromYield(expr, ctx)
            ?: fromReturn(expr, ctx)
+           ?: PyAnyType.unknown
   }
 
   private fun fromArgument(callArgument: PyExpression, ctx: TypeEvalContext): PyType? {

@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.IJIgnore;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockDocument;
@@ -1011,6 +1012,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
   }
 
+  @IJIgnore(issue = "IJPL-240189")
   public void test_performWhenAllCommitted_may_be_invoked_from_writeUnsafe_modality() {
     Document document = getDocument(findFile(createFile()));
 

@@ -63,6 +63,4 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
 
   abstract override fun createPointer(): Pointer<out PolySymbolCompoundScope>
 
-  final override fun getModificationCount(): Long = 0
-
 }

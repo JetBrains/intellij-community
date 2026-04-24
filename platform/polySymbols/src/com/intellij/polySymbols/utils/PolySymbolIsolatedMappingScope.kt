@@ -95,9 +95,6 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  final override fun getModificationCount(): Long =
-    PsiModificationTracker.getInstance(location.project).modificationCount
-
   final override fun equals(other: Any?): Boolean =
     other === this
     || (other != null

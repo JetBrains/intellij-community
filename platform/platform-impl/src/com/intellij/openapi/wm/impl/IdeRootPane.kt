@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -23,6 +23,8 @@ import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JRootPane
+
+private const val PROJECT_FRAME_TYPE_ID_KEY = "projectFrameTypeId"
 
 /**
  * A custom root pane that supports a custom frame title, macOS tabs and an additional toolbar below the menu bar
@@ -198,4 +200,13 @@ class IdeRootPane internal constructor() : JRootPane() {
 
     private fun isFixedMenu(): Boolean = !isFullScreen && !CustomWindowHeaderUtil.isDecoratedMenu(UISettings.getInstance())
   }
+}
+
+@RequiresEdt
+internal fun JRootPane.setProjectFrameTypeId(projectFrameTypeId: String?) {
+  putClientProperty(PROJECT_FRAME_TYPE_ID_KEY, projectFrameTypeId)
+}
+
+internal fun JRootPane.getProjectFrameTypeId(): String? {
+  return getClientProperty(PROJECT_FRAME_TYPE_ID_KEY) as? String
 }

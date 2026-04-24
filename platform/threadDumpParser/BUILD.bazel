@@ -9,9 +9,13 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//platform/platform-impl:ide-impl",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ]
 )
 
@@ -23,6 +27,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//platform/platform-impl:ide-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
@@ -30,6 +36,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:junit4",
   ]
 )

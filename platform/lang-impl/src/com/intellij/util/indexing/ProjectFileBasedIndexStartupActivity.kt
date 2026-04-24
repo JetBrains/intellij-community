@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -15,6 +15,7 @@ import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -42,6 +43,10 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
   }
 
   override fun runActivity(project: Project) {
+    if (isIndexingActivitiesSuppressedSync(project)) {
+      return
+    }
+
     ProgressManager.progress(IndexingBundle.message("progress.text.loading.indexes"))
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project)

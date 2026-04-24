@@ -41,7 +41,9 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
     if (r.exitCode == 0) Result.success(r) else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
   }).getOr { return@withContext it }
   // Python 2 might return version as stderr, see https://bugs.python.org/issue18338
-  val versionString = versionOutput.stdoutString.let { it.ifBlank { versionOutput.stderrString } }
+  val versionString = versionOutput.stdoutString.let { stdout ->
+    stdout.ifBlank { versionOutput.stderrString.lineSequence().lastOrNull { it.isNotBlank() } ?: "" }
+  }
   val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
     return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))

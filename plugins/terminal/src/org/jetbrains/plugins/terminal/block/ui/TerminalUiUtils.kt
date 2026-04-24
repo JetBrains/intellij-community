@@ -246,6 +246,12 @@ object TerminalUiUtils {
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
+  /**
+   * Computes the effective [TextAttributes] for this text style.
+   * Notes:
+   * 1. Background color can be null if it is not explicitly set in the text style.
+   * 2. Adjusts the foreground color to meet the [requiredContrast] ratio.
+   */
   @ApiStatus.Internal
   fun TextStyle.toTextAttributes(palette: TerminalColorPalette, requiredContrast: TerminalContrastRatio): TextAttributes {
     return TextAttributes().also { attr ->
@@ -286,14 +292,17 @@ object TerminalUiUtils {
     }
     else fg
 
-    val contrast = style.getEffectiveContrastRatio(requiredContrast)
-    return if (contrast == TerminalContrastRatio.MIN_VALUE) {
-      return dimmedFg
+    return if (requiredContrast == TerminalContrastRatio.MIN_VALUE) {
+      dimmedFg
     }
-    else ensureContrastRatio(bg, dimmedFg, contrast.value)
+    else ensureContrastRatio(bg, dimmedFg, requiredContrast.value)
   }
 
-  private fun TextStyle.getEffectiveContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
+  /**
+   * Adjusts the [base] contrast ratio taking into account foreground, background, and options of the text style.
+   * @return the contrast ratio that should be enforced between the effective foreground and background colors of this style.
+   */
+  internal fun TextStyle.getRequiredContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
     val effectiveFg = if (hasOption(TextStyle.Option.INVERSE)) background else foreground
     val effectiveBg = if (hasOption(TextStyle.Option.INVERSE)) foreground else background
     return when {

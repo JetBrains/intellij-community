@@ -52,6 +52,8 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
     "//libraries/hash4j",
     "//python/python-sdk:sdk",
+    "//platform/statistics",
+    "//libraries/hdr-histogram",
   ],
   exports = ["//python/python-syntax-core:syntax-core"]
 )

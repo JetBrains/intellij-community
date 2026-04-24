@@ -22,11 +22,10 @@ import com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntityBu
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExternalIndexedFileEntityData) : PyExternalIndexedFileEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExternalIndexedFileEntityData) : PyExternalIndexedFileEntity,
+                                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
-
 
     private val connections = listOf<ConnectionId>()
 
@@ -49,8 +48,9 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
   }
 
 
-  internal class Builder(result: PyExternalIndexedFileEntityData?) : ModifiableWorkspaceEntityBase<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityData>(
-    result), PyExternalIndexedFileEntityBuilder {
+  internal class Builder(result: PyExternalIndexedFileEntityData?) :
+    ModifiableWorkspaceEntityBase<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityData>(result),
+    PyExternalIndexedFileEntityBuilder {
     internal constructor() : this(PyExternalIndexedFileEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,16 +63,14 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
           error("Entity PyExternalIndexedFileEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "file", this.file)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -108,7 +106,6 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
         changedProperty.add("entitySource")
 
       }
-
     override var file: VirtualFileUrl
       get() = getEntityData().file
       set(value) {
@@ -121,6 +118,7 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
 
     override fun getEntityClass(): Class<PyExternalIndexedFileEntity> = PyExternalIndexedFileEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -148,8 +146,7 @@ internal class PyExternalIndexedFileEntityData : WorkspaceEntityData<PyExternalI
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -168,9 +165,7 @@ internal class PyExternalIndexedFileEntityData : WorkspaceEntityData<PyExternalI
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as PyExternalIndexedFileEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.file != other.file) return false
     return true
@@ -179,9 +174,7 @@ internal class PyExternalIndexedFileEntityData : WorkspaceEntityData<PyExternalI
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as PyExternalIndexedFileEntityData
-
     if (this.file != other.file) return false
     return true
   }

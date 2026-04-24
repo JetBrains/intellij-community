@@ -193,7 +193,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 - recentProjectsInDocSupported():Z
 c:com.intellij.ide.RecentProjectsManagerBase
-- f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
 - f:getDisplayName(java.nio.file.Path):java.lang.String
 - f:getProjectIcon(java.nio.file.Path,Z):javax.swing.Icon
 - f:getProjectIcon(java.nio.file.Path,Z,I,java.lang.String):javax.swing.Icon
@@ -1002,6 +1001,12 @@ com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
 - a:init(com.intellij.ui.dsl.builder.Panel):V
 com.intellij.openapi.vcs.impl.FileStatusProvider
 - a:getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
+f:com.intellij.openapi.vfs.DiskQueryRelay
+- <init>(java.util.function.Function):V
+- <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
+- accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:compute(com.intellij.openapi.util.ThrowableComputable,java.util.concurrent.ExecutorService):java.lang.Object
 com.intellij.openapi.vfs.impl.http.RemoteContentProvider$DownloadingCallback
 - a:errorOccurred(java.lang.String,Z):V
 - a:finished(com.intellij.openapi.fileTypes.FileType):V

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
@@ -375,8 +375,8 @@ public interface PyClass
    * @param context eval context
    * @return {@link PyType} casted if it has right type
    */
-  @Nullable
-  PyClassLikeType getType(@NotNull TypeEvalContext context);
+  @Override
+  @Nullable PyClassLikeType getType(@NotNull TypeEvalContext context);
 
   @Override
   default @Nullable PyStringLiteralExpression getDocStringExpression() {

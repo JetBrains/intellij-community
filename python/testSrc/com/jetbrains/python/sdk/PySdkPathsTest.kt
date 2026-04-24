@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
@@ -26,6 +27,7 @@ import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
+import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
@@ -273,6 +275,43 @@ class PySdkPathsTest {
                moduleRoots = listOf(moduleRoot1),
                sdkRoots = listOf(),
                moduleDependencies = listOf())
+  }
+
+  /**
+   * PY-88807: SDKs with remote home paths (Docker Compose, SFTP, etc.) that lost their
+   * additional data during upgrades must not crash [getOrCreateAdditionalData].
+   * Simulates the real scenario: an SDK is serialized with a remote home path, then
+   * deserialized — [PythonSdkType.loadAdditionalData] returns [PyInvalidSdk] for stale
+   * remote interpreters, and [getOrCreateAdditionalData] must recognize it.
+   */
+  @Test
+  fun getOrCreateAdditionalDataForRemoteSdkDoesNotCrash() {
+    mockPythonPluginDisposable()
+    val sdkType = PythonSdkType.getInstance()
+
+    for (remotePath in listOf(
+      "docker-compose://[/home/user/project/docker-compose.yml]:gossip//usr/local/bin/python",
+      "sftp://root@127.0.0.1:2222/virtualenv/bin/python",
+      "docker://python:latest/usr/local/bin/python",
+    )) {
+      val sdk = ProjectJdkTable.getInstance().createSdk("Remote SDK", sdkType) as ProjectJdkImpl
+      runWriteActionAndWait {
+        sdk.sdkModificator.apply {
+          // Simulate an old SDK that had remote additional data from a previous IDE version that doesn't exist anymore
+          // and one of non-local home paths
+          homePath = remotePath
+          sdkAdditionalData = PythonSdkAdditionalData()
+          commitChanges()
+        }
+      }
+      // Round-trip: serialize then deserialize — readExternal triggers loadAdditionalData
+      val element = Element("jdk")
+      sdk.writeExternal(element)
+      sdk.readExternal(element)
+
+      assertThat(sdk.sdkAdditionalData).isSameAs(PyInvalidSdk)
+      assertThat(sdk.getOrCreateAdditionalData()).isSameAs(PyInvalidSdk)
+    }
   }
 
   private fun registerSdk(it: Sdk) {

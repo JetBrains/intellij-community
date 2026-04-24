@@ -2,6 +2,7 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltipKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
@@ -35,13 +37,13 @@ import com.jetbrains.python.sdk.PyRenderedSdkType;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
+import com.jetbrains.python.sdk.PythonSdkConfigurationMutexKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -90,7 +92,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProject = project;
     myModule = module;
 
+    boolean sdkConfigurationInProgress = PythonSdkConfigurationMutexKt.isSdkConfigurationInProgress(project).getValue();
     mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
+    if (sdkConfigurationInProgress) {
+      HelpTooltipKt.setToolTipText(mySdkCombo, HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")));
+      mySdkCombo.setEnabled(false);
+    }
 
     final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
@@ -103,16 +110,27 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Pair<PyCustomSdkUiProvider, Disposable> customizer =
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
-    final JButton additionalAction;
-    additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
-                                          link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
-
+    final DropDownLink<?> additionalAction = getAddInterpreterDropDownLink(project, module, sdkConfigurationInProgress);
     myMainPanel =
       buildPanel(project, mySdkCombo, additionalAction, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel, packagesNotificationPanel,
                  customizer);
 
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
+  }
+
+  private @NotNull DropDownLink<?> getAddInterpreterDropDownLink(@NotNull Project project, @Nullable Module module, boolean sdkConfigurationInProgress) {
+    final DropDownLink<?> additionalAction = new DropDownLink<>(
+      PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
+      link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect)
+    );
+    if (sdkConfigurationInProgress) {
+      additionalAction.setAutoHideOnDisable(false);
+      additionalAction.setEnabled(false);
+      HelpTooltipKt.setToolTipText(additionalAction,
+                                   HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")));
+    }
+    return additionalAction;
   }
 
   @ApiStatus.Internal
@@ -290,7 +308,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @Nullable Sdk getSdk() {
-    Sdk sdk = null;
+    Sdk sdk;
     if (myModule == null) {
       sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }

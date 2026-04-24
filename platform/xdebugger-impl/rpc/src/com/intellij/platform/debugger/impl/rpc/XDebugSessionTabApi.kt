@@ -32,6 +32,8 @@ interface XDebugSessionTabApi : RemoteApi<Unit> {
   suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent>
   suspend fun tabLayouterEvents(tabLayouterId: XDebugTabLayouterId): Flow<XDebugTabLayouterEvent>
 
+  suspend fun updateTabSelection(tabLayouterId: XDebugTabLayouterId, contentUniqueId: Int, isSelected: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionTabApi {

@@ -3,11 +3,13 @@ package com.jetbrains.python.run.target
 
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.constantExplicit
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
+@ApiStatus.Internal
+internal class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
   override val targetEnvironmentRequest: TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
   override fun preparePyCharmHelpers(): PythonHelpersMappings =
@@ -16,4 +18,5 @@ class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentR
     )
 }
 
-private fun Path.mapToSelf(): PathMapping = PathMapping(localPath = this, targetPathFun = constant(absolutePathString()))
+private fun Path.mapToSelf(): PathPythonHelpersMapping =
+  PathPythonHelpersMapping(localPath = this, targetPathFun = constantExplicit(absolutePathString()))

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.isNullable
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -40,7 +41,8 @@ internal object ExpectedTypeWeigher {
 
     context(_: KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
-        val expectedType = context.expectedType
+        // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
+        val expectedType = context.expectedType?.upperBoundIfFlexible()
 
         // The expected type was already set elsewhere, we prefer these results
         if (lookupElement.matchesExpectedType != null) return

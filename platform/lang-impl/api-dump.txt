@@ -1191,6 +1191,8 @@ f:com.intellij.tools.ToolManager
 - sf:getInstance():com.intellij.tools.ToolManager
 f:com.intellij.tools.ToolManager$Companion
 - f:getInstance():com.intellij.tools.ToolManager
+f:com.intellij.unscramble.AnalyzeStacktraceUtil
+- sf:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
 c:com.intellij.util.indexing.IndexInfrastructureVersionBase

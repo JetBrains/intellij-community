@@ -1,0 +1,19 @@
+version = 1
+revision = 3
+requires-python = ">=3.13"
+
+[[package]]
+name = "poetry"
+version = "0.1.0"
+source = { editable = "../poetry" }
+
+[[package]]
+name = "uv"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "poetry" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "poetry", editable = "../poetry" }]

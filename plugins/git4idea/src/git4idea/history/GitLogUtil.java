@@ -163,6 +163,13 @@ public final class GitLogUtil {
     return new ArrayList<>(collectConsumer.getResult());
   }
 
+  public static @Nullable VcsCommitMetadata collectMetadataForCommit(@NotNull Project project,
+                                                                     @NotNull VirtualFile root,
+                                                                     @NotNull String commit)
+    throws VcsException {
+    return ContainerUtil.getOnlyItem(collectMetadata(project, root, Collections.singletonList(commit)));
+  }
+
   public static void collectMetadata(@NotNull Project project, @NotNull VirtualFile root,
                                      @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {

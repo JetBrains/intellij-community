@@ -24,6 +24,7 @@
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.libraries.kotlinTest"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>
   <!-- endregion -->

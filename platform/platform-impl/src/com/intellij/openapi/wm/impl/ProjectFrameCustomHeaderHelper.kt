@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
@@ -108,7 +108,7 @@ internal class ProjectFrameCustomHeaderHelper(
       toolbarInitJob = coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
         withContext(Dispatchers.UI) {
           toolbarCreator.getOrCreateToolbar().isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) {
-            computeMainActionGroups()
+            computeMainActionGroups(projectFrameTypeId = rootPane.getProjectFrameTypeId())
           }
         }
 
@@ -145,7 +145,9 @@ internal class ProjectFrameCustomHeaderHelper(
     coroutineScope.launch(CoroutineName("MainToolbar visibility updates") + ModalityState.any().asContextElement()) {
       toolbarInitJob?.join() // to avoid races with init
       toolbarVisibilityUpdateRequests.collectLatest {
-        val isToolbarVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() }
+        val isToolbarVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) {
+          computeMainActionGroups(projectFrameTypeId = rootPane.getProjectFrameTypeId())
+        }
         // This is more complicated than it seems.
         // There's one seemingly simple optimization: if we need to make the toolbar invisible, don't create it just for that.
         // But because toolbar creation is asynchronous, it can be in the process of creation already,
@@ -209,7 +211,9 @@ internal class ProjectFrameCustomHeaderHelper(
       else {
         val uiSettings = UISettings.shadowInstance
         !IdeFrameDecorator.isCustomDecorationActive() && uiSettings.showMainMenu && !hideNativeLinuxTitle(uiSettings) &&
-        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() }))
+        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader {
+          computeMainActionGroups(projectFrameTypeId = rootPane.getProjectFrameTypeId())
+        }))
       }
       if (visible != menuBar.isVisible) {
         menuBar.isVisible = visible
@@ -221,7 +225,7 @@ internal class ProjectFrameCustomHeaderHelper(
     if (frameHeaderHelper is FrameHeaderHelper.Decorated) {
       val wasCustomFrameHeaderVisible = frameHeaderHelper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible = isCustomFrameHeaderVisible(uiSettings, isFullScreen) {
-        blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
+        blockingComputeMainActionGroups(CustomActionsSchema.getInstance(), projectFrameTypeId = rootPane.getProjectFrameTypeId())
       }
       frameHeaderHelper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
       if (wasCustomFrameHeaderVisible != isCustomFrameHeaderVisible) {
@@ -231,7 +235,7 @@ internal class ProjectFrameCustomHeaderHelper(
     }
     else if (OS.isGenericUnix()) {
       toolbarCreator.getToolbarIfCreated()?.isVisible = isToolbarVisible(uiSettings, isFullScreen) {
-        blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
+        blockingComputeMainActionGroups(CustomActionsSchema.getInstance(), projectFrameTypeId = rootPane.getProjectFrameTypeId())
       }
     }
 
@@ -408,7 +412,7 @@ private fun installCustomHeader(
           MacToolbarFrameHeader(parentCs.childScope(), frame, rootPane, isAlwaysCompact)
         }
         else {
-          ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu as IdeJMenuBar, isAlwaysCompact, isFullScreen)
+          ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu as IdeJMenuBar, isAlwaysCompact, isFullScreen, rootPane::getProjectFrameTypeId)
         }
       }
       else {
@@ -416,7 +420,7 @@ private fun installCustomHeader(
 
         ideMenu = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup)
         selectedEditorFilePath = CustomDecorationPath(frame)
-        MenuFrameHeader(frame, headerTitle = selectedEditorFilePath, ideMenu, isAlwaysCompact)
+        MenuFrameHeader(frame, headerTitle = selectedEditorFilePath, ideMenu, isAlwaysCompact, rootPane::getProjectFrameTypeId)
       }
       val headerHelper = FrameHeaderHelper.Decorated(
         customFrameTitlePane,
@@ -430,7 +434,7 @@ private fun installCustomHeader(
     }
     else if (hideNativeLinuxTitle(uiSettings)) {
       val ideMenu = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup)
-      val customFrameTitlePane = ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu, isAlwaysCompact, isFullScreen)
+      val customFrameTitlePane = ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu, isAlwaysCompact, isFullScreen, rootPane::getProjectFrameTypeId)
       val headerHelper = FrameHeaderHelper.Decorated(
         customFrameTitlePane,
         selectedEditorFilePath = null,
@@ -504,17 +508,19 @@ private sealed interface FrameHeaderHelper {
   }
 
   class Decorated(
-    val customFrameTitlePane: MainFrameCustomHeader,
-    val selectedEditorFilePath: SelectedEditorFilePath?,
+    @JvmField val customFrameTitlePane: MainFrameCustomHeader,
+    @JvmField val selectedEditorFilePath: SelectedEditorFilePath?,
     override val ideMenu: ActionAwareIdeMenuBar,
     override val isFloatingMenuBarSupported: Boolean,
     private val isLightEdit: Boolean,
     private val isFullScreen: () -> Boolean,
   ) : FrameHeaderHelper {
     override val toolbarHolder: ToolbarHolder?
-      get() = (customFrameTitlePane as? ToolbarHolder)
-        ?.takeIf {
-          ExperimentalUI.isNewUI() && (CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen()) || isLightEdit)
-        }
+      get() {
+        return (customFrameTitlePane as? ToolbarHolder)
+          ?.takeIf {
+            ExperimentalUI.isNewUI() && (CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen()) || isLightEdit)
+          }
+      }
   }
 }

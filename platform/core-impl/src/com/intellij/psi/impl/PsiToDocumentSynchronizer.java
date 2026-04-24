@@ -187,7 +187,7 @@ public class PsiToDocumentSynchronizer {
     if (pair == null) {
       PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
-      if (scope.isPhysical()) {
+      if (PomModelImpl.shouldFirePhysicalPsiEvents(psiFile)) {
         myBus.syncPublisher(PsiDocumentTransactionListenerBackgroundable.TOPIC).transactionStarted(doc, psiFile);
       }
     }

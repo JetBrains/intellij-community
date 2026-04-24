@@ -4,6 +4,7 @@ package com.intellij.polySymbols.customElements
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.context.PolyContext
@@ -65,9 +66,9 @@ abstract class CustomElementsManifestScopeBase :
 
   override fun getNameConversionRulesProvider(context: PolyContext): PolySymbolNameConversionRulesProvider? =
     object : PolySymbolNameConversionRulesProvider {
+      override val modificationTracker: ModificationTracker = ModificationTracker.NEVER_CHANGED
       override fun getNameConversionRules(): PolySymbolNameConversionRules = PolySymbolNameConversionRules.empty()
       override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> = Pointer.hardPointer(this)
-      override fun getModificationCount(): Long = 0
     }
 
   protected class CustomElementsManifestJsonOriginImpl(

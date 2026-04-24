@@ -19,21 +19,31 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.threadDumpParser.ThreadState;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFactory {
   private final Project myProject;
-  private final List<ThreadState> myThreadDump;
+  private final ThreadDumpState myThreadDump;
 
   public ThreadDumpConsoleFactory(Project project, List<ThreadState> threadDump) {
+    this(project, new ThreadDumpState(threadDump, Collections.emptyList()));
+  }
+
+  @ApiStatus.Internal
+  public ThreadDumpConsoleFactory(Project project, ThreadDumpState threadDump) {
     myProject = project;
     myThreadDump = threadDump;
   }
 
   @Override
   public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
-    return new ThreadDumpPanel(myProject, consoleView, toolbarActions, myThreadDump);
+    List<MergeableDumpItem> dumpItems = new ArrayList<>(IntelliJThreadDumpParserKt.dumpItems(myThreadDump));
+    dumpItems.sort(DumpItem.BY_INTEREST);
+    return ThreadDumpPanel.createFromDumpItems(myProject, consoleView, toolbarActions, dumpItems);
   }
 }

@@ -188,7 +188,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
       }
     }.apply {
       if (focus) {
-        find { it.position.value == position.position }?.requestFocus()
+        find { it.position.value == position }?.requestFocus()
       }
     }
   }

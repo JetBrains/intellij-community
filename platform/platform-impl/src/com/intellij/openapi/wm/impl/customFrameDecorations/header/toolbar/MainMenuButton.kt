@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.platform.ide.menu.MainMenuCollector
 import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -166,10 +168,15 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
   inner class ShowMenuAction(icon: Icon, val getItemToSelect: () -> Int) : LightEditCompatible, DumbAwareAction(IdeBundle.messagePointer("main.toolbar.menu.button"), icon) {
 
     override fun actionPerformed(e: AnActionEvent) {
+      var isMenuOpening = true
       if (expandableMenu?.isEnabled() == true) {
+        isMenuOpening = !expandableMenu!!.isShowing()
         expandableMenu!!.switchState(itemInd = getItemToSelect.invoke())
       } else {
         showPopup(e.dataContext)
+      }
+      if (isMenuOpening && e.inputEvent is KeyEvent) {
+        MainMenuCollector.logOpenedByShortcut(e.inputEvent, e.place)
       }
     }
   }
@@ -207,11 +214,19 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
 
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
+        var isMenuOpening = true
         if (expandableMenu?.isEnabled() == true) {
+          isMenuOpening = !expandableMenu!!.isShowing()
           expandableMenu!!.switchState(actionMenu)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
+        }
+        if (isMenuOpening) {
+          // Need to use trueCurrentEvent instead of e because FusInputEvent.from(ActionEvent) uses EventQueue.getCurrentEvent()
+          // which can return a wrong event.
+          MainMenuCollector.logOpenedByMnemonic(IdeEventQueue.getInstance().trueCurrentEvent as? KeyEvent?,
+                                                ActionPlaces.KEYBOARD_SHORTCUT)
         }
       }
     }

@@ -318,7 +318,7 @@ private data class InlayDecorationImpl(
 private class EditorTextDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorTextDecorationApplier {
   private val highlightersById = hashMapOf<EditorTextDecorationId, RangeHighlighterEx>()
   private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
-  private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier())
+  private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier(), parentDisposable)
   private var hoveredHyperlink: HyperlinkDecoration? = null
 
   init {

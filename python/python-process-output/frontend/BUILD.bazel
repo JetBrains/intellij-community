@@ -1,3 +1,17 @@
+### auto-generated section `iml intellij.python.processOutput.frontend` start
+exports_files([
+  "intellij.python.processOutput.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.processOutput.frontend` end
+
+
+
+### auto-generated section `iml intellij.python.processOutput.frontend.tests` start
+exports_files([
+  "intellij.python.processOutput.frontend.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.processOutput.frontend.tests` end
+
 ### auto-generated section `build intellij.python.processOutput.frontend` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
@@ -47,6 +61,7 @@ jvm_library(
     "//platform/statistics",
     "//python/python-process-output/common",
     "//libraries/kotlin/reflect",
+    "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -101,6 +116,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/test",
     "//libraries/kotlin/reflect",
     "//python/python-test-env/junit5:junit5_test_lib",
+    "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

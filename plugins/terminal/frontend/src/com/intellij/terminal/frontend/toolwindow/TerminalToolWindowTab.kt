@@ -28,4 +28,9 @@ interface TerminalToolWindowTab {
    * (or to the nested content managers in case of tool window split).
    */
   val content: Content
+
+  /**
+   * Whether to close the tool window tab when the process terminates on its own.
+   */
+  val closeOnProcessTermination: Boolean
 }

@@ -13,9 +13,11 @@ import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
 import com.intellij.python.processOutput.frontend.CoroutineNames
 import com.intellij.python.processOutput.frontend.LoggedProcess
+import com.intellij.python.processOutput.frontend.OutputFilter
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerServiceLimits
 import com.intellij.python.processOutput.frontend.ProcessStatus
+import com.intellij.python.processOutput.frontend.ui.toggle
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -125,7 +127,7 @@ class ProcessOutputControllerServiceTest {
                     val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen)
                     val yLen = LoggingLimits.MAX_OUTPUT_SIZE
 
-                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $it", 0)))
+                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $it")))
                     assertNotNull(
                         find { elem ->
                             elem.text.startsWith("xxx") && elem.text.length == xLen
@@ -179,7 +181,7 @@ class ProcessOutputControllerServiceTest {
                     val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen)
                     val yLen = LoggingLimits.MAX_OUTPUT_SIZE
 
-                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $newIt", 0)))
+                    assertTrue(contains(OutputLineDto(OutputKindDto.OUT, "test $newIt")))
                     assertNotNull(
                         find { elem ->
                             elem.text.startsWith("xxx") && elem.text.length == xLen
@@ -375,6 +377,106 @@ class ProcessOutputControllerServiceTest {
     }
 
     @Test
+    fun `toolbar copy includes tags depending on whether the filter is enabled`(
+        @TempDir cwd: Path,
+        @PythonBinaryPath python: PythonBinary,
+    ): Unit = timeoutRunBlocking {
+        val service = projectFixture.get().service<ProcessOutputControllerService>()
+
+        val binOnEel = BinOnEel(python, cwd)
+        val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+
+        edtWriteAction {
+            mainPy.toFile().writeText(
+                """
+                    import sys 
+                    
+                    print("out1")
+                    print("out2")
+                    print("out3")
+                    print("out4")
+                    print("out5")
+                    print("out6")
+                    
+                    print("err7", file=sys.stderr)
+                    print("err8", file=sys.stderr)
+                    print("err9", file=sys.stderr)
+                    print("err10", file=sys.stderr)
+                """.trimIndent(),
+            )
+        }
+
+        val loggingProcess = withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+            ExecService().executeGetProcess(
+                binOnEel,
+                Args(MAIN_PY),
+                CoroutineScope(coroutineContext),
+            ).getOrThrow()
+        }
+
+        // reading all stdout
+        loggingProcess.inputStream.readAllBytes()
+
+        waitUntil {
+            service.loggedProcesses.value.lastOrNull()?.lines?.size == 6
+        }
+
+        val process = service.loggedProcesses.value.last()
+
+        // reading all stderr
+        loggingProcess.errorStream.readAllBytes()
+
+        waitUntil {
+            service.loggedProcesses.value.lastOrNull()?.lines?.size == 10
+        }
+
+        // copying output
+        service.copyOutputToClipboard(process)
+
+        // copied output should include tags
+        assertEquals(
+            """
+                [stdout] out1
+                         out2
+                         out3
+                         out4
+                         out5
+                         out6
+                [stderr] err7
+                         err8
+                         err9
+                         err10
+                  [exit] 0
+                
+            """.trimIndent(),
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
+        )
+
+        // toggling the show tags filter
+        service.processOutputUiState.filters.active.toggle(OutputFilter.Item.SHOW_TAGS)
+        service.copyOutputToClipboard(process)
+
+        // copied output should not include tags
+        waitUntil("output without tags") {
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor) ==
+                """
+                    out1
+                    out2
+                    out3
+                    out4
+                    out5
+                    out6
+                    err7
+                    err8
+                    err9
+                    err10
+                    0
+                    
+                """.trimIndent()
+        }
+    }
+
+    @Test
     fun `non-ascii output lines are reflected properly`(
         @TempDir cwd: Path,
         @PythonBinaryPath python: PythonBinary,
@@ -412,6 +514,46 @@ class ProcessOutputControllerServiceTest {
         }
 
         assertEquals(nonAsciiText, lines?.last()?.text)
+    }
+
+    @Test
+    fun `line limits are maintained`(
+        @TempDir cwd: Path,
+        @PythonBinaryPath python: PythonBinary,
+    ): Unit = timeoutRunBlocking {
+        val service = projectFixture.get().service<ProcessOutputControllerService>()
+
+        val binOnEel = BinOnEel(python, cwd)
+        val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+
+        edtWriteAction {
+            mainPy.toFile().writeText(
+                """
+                    import sys 
+                    
+                    for i in range(${ProcessOutputControllerServiceLimits.MAX_LINES} * 2):
+                        print("line " + str(i))
+                """.trimIndent(),
+            )
+        }
+
+        runBin(binOnEel, Args(MAIN_PY))
+
+        var process: LoggedProcess? = null
+
+        waitUntil {
+            process = service.loggedProcesses.value.find {
+                it.lines.getOrNull(0)?.text == "line ${ProcessOutputControllerServiceLimits.MAX_LINES}"
+            }
+            process != null
+        }
+
+        repeat(ProcessOutputControllerServiceLimits.MAX_LINES) {
+            assertEquals(
+                "line ${ProcessOutputControllerServiceLimits.MAX_LINES + it}",
+                process!!.lines[it].text,
+            )
+        }
     }
 
     private fun Map<Int, LoggedProcess>.remapByFirstLine(): Map<String?, LoggedProcess> =

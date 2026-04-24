@@ -27,9 +27,7 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Unstash", manager, actions);
 
     actions.add(Separator.getInstance());
-    add("Git.CreateNewWorkingTree", manager, actions);
     add("Git.Show.WorkingTrees", manager, actions);
-    actions.add(Separator.getInstance());
 
     add("ChangesView.AddUnversioned", manager, actions);
     add("Vcs.CopyCurrentBranchName", manager, actions);

@@ -58,14 +58,7 @@ open class InlineCompletionLineRenderer(
     }
   }
 
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    val result = InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
-      blocks.sumOf { block ->
-        if (block.text.isEmpty()) 0.0 else volumetricFactory.getVolumetric(block).widthInPixels
-      }
-    }
-    return maxOf(1, accumulatedWidthToInt(result))
-  }
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = getWidth(blocks)
 
   protected open fun beforePaint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
 
@@ -103,6 +96,23 @@ open class InlineCompletionLineRenderer(
     }
 
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, previousRenderingHint)
+  }
+
+  protected fun getWidth(textBlocks: List<InlineCompletionRenderTextBlock>): Int {
+    val result = getWidthAsDouble(textBlocks)
+    return maxOf(1, roundAccumulatedWidthToInt(result))
+  }
+
+  protected fun getWidthAsDouble(textBlocks: List<InlineCompletionRenderTextBlock>): Double {
+    return InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
+      textBlocks.sumOf { block ->
+        if (block.text.isEmpty()) 0.0 else volumetricFactory.getVolumetric(block).widthInPixels
+      }
+    }
+  }
+
+  protected fun roundAccumulatedWidthToInt(width: Double): Int {
+    return accumulatedWidthToInt(width)
   }
 
   private fun paintBackground(
@@ -144,6 +154,8 @@ open class InlineCompletionLineRenderer(
 
   private fun format(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
     val tabSize = editor.settings.getTabSize(editor.project)
-    return blocks.filter { it.text.isNotEmpty() }.map { it.copy(text = it.text.formatTabs(tabSize)) }
+    return blocks
+      .filter { it.text.isNotEmpty() || !it.data.isUserDataEmpty }
+      .map { it.copy(text = it.text.formatTabs(tabSize)) }
   }
 }

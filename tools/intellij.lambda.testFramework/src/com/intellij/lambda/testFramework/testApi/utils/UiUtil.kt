@@ -5,6 +5,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.awt.Robot
+import java.awt.event.InputEvent
+import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.text.JTextComponent
 
@@ -33,5 +36,17 @@ private fun Component.getText() : String? {
       frameworkLogger.info("No text support for $this")
       null
     }
+  }
+}
+
+fun JFrame.focusByClick() {
+  val frameBounds = bounds
+  val targetX = frameBounds.x + frameBounds.width / 2
+  val taretY = frameBounds.y + 1 // top center point, right below the frame edge
+  with(Robot()) {
+    autoDelay = 50
+    mouseMove(targetX, taretY)
+    mousePress(InputEvent.BUTTON1_DOWN_MASK)
+    mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
   }
 }

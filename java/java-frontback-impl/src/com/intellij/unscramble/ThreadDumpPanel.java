@@ -4,6 +4,7 @@ package com.intellij.unscramble;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.NoStackTraceFoldingPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -47,6 +48,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -70,7 +72,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeka
@@ -116,6 +119,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     myFilterField = createSearchTextField();
     myFilterPanel = createFilterPanel();
     myThreadTree = createThreadsTree(consoleView);
+    myThreadTree.getEmptyText().setText(JavaFrontbackBundle.message("thread.dump.nothing.to.show"));
 
     configureToolbar(project, consoleView, toolbarActions);
 
@@ -174,11 +178,11 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         if (threadTree.isPathSelected(path)) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
           if (node.getUserObject() instanceof DumpItem selection && selection != currentlySelectedItem) {
-            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
             currentlySelectedItem = selection;
           }
         } else {
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+          AnalyzeStacktraceUtil.printStacktrace(consoleView, "", ConsoleViewContentType.NORMAL_OUTPUT);
           currentlySelectedItem = null;
         }
         threadTree.repaint();
@@ -199,7 +203,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     toolbarActions.add(filterAction);
     toolbarActions.add(new CopyToClipboardAction(project));
     toolbarActions.add(new SortThreadsAction());
-    toolbarActions.add(new ExportToTextFileToolbarAction(createDumpToFileExporter(project, myThreadDump)));
+    toolbarActions.add(new ExportToTextFileToolbarAction(createDumpToFileExporter(project)));
     toolbarActions.add(new MergeStacktracesAction());
     toolbarActions.add(new ShowDumpItemGroups());
     toolbarActions.add(new ShowOnlyPlatformThreads());
@@ -229,15 +233,9 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
   }
 
   private void updateThreadsTree() {
-    String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
-    var path = myThreadTree.getSelectionPath();
-    var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
-    int selectedIndex = 0;
-    int index = 0;
-    ArrayList<DumpItem> filteredThreadStates = new ArrayList<>();
     var uiSettings = UISettings.getInstance().getState();
     boolean useMerged = uiSettings.getMergeEqualStackTraces();
-    boolean showVirtualThreadContainers = uiSettings.getShowVirtualThreadContainers();
+    boolean showDumpItemsHierarchy = uiSettings.getShowDumpItemsHierarchy();
     boolean showOnlyPlatformThreads = uiSettings.getShowOnlyPlatformThreads();
     List<DumpItem> threadStates = useMerged ? myMergedThreadDump : myThreadDump;
 
@@ -245,17 +243,25 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     var model = (DefaultTreeModel)myThreadTree.getModel();
     var treeRoot = ((DefaultMutableTreeNode)model.getRoot());
 
+    var path = myThreadTree.getSelectionPath();
+    var selection = path != null ? (DumpItem)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject() : null;
+    DefaultMutableTreeNode selectedNode = null;
+
     if (treeRoot != null) {
       treeRoot.removeAllChildren();
 
-      if (showVirtualThreadContainers && !showOnlyPlatformThreads) {
+      String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
+      var filteredThreadStates = threadStates.stream().filter(item -> matchesFilter(item, text)).toList();
+      var filteredTreeIds = filteredThreadStates.stream().map(DumpItem::getTreeId).collect(Collectors.toSet());
+
+      if (showDumpItemsHierarchy && !showOnlyPlatformThreads) {
         // Build map from parent item name to the list of it's child items
         var rootItems = new ArrayList<DumpItem>();
-        var parentItemToChildren = new HashMap<Long, List<DumpItem>>();
-        for (var item : threadStates) {
-          var parentId = item.getParentId();
-          if (parentId != null) {
-            parentItemToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
+        var parentIdToChildren = new HashMap<Long, List<DumpItem>>();
+        for (var item : filteredThreadStates) {
+          var parentId = item.getParentTreeId();
+          if (parentId != null && filteredTreeIds.contains(parentId)) {
+            parentIdToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
           } else {
             rootItems.add(item);
           }
@@ -265,26 +271,30 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         for (var rootItem : rootItems) {
           var rootNode = new DefaultMutableTreeNode(rootItem);
           treeRoot.add(rootNode);
-          if (!parentItemToChildren.isEmpty()) {
-            buildDumpItemsTree(rootNode, parentItemToChildren);
+          if (!parentIdToChildren.isEmpty()) {
+            buildDumpItemsTree(rootNode, parentIdToChildren);
+          }
+        }
+        // Find previously selected node in the hierarchical tree
+        if (selection != null) {
+          var enumeration = treeRoot.depthFirstEnumeration();
+          while (enumeration.hasMoreElements()) {
+            var node = (DefaultMutableTreeNode)enumeration.nextElement();
+            if (node.getUserObject() == selection) {
+              selectedNode = node;
+              break;
+            }
           }
         }
       } else {
         // Show flat dump
-        for (DumpItem state : threadStates) {
-          if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-            filteredThreadStates.add(state);
-            if (selection == state) {
-              selectedIndex = index;
-            }
-            index++;
-          }
-        }
+        for (DumpItem state : filteredThreadStates) {
+          if (state.isContainer()) continue;
+          if (showOnlyPlatformThreads && state.getCanBeHidden()) continue;
 
-        for (DumpItem threadState : filteredThreadStates) {
-          if (threadState.isContainer()) continue;
-          if (showOnlyPlatformThreads && threadState.getCanBeHidden()) continue;
-          treeRoot.add(new DefaultMutableTreeNode(threadState));
+          var node = new DefaultMutableTreeNode(state);
+          treeRoot.add(node);
+          if (selection == state) selectedNode = node;
         }
       }
     }
@@ -299,15 +309,23 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
       myNotificationPanel.setVisible(false);
     }
     if (treeRoot != null && treeRoot.getChildCount() > 0) {
-      myThreadTree.setSelectionRow(selectedIndex);
+      if (selectedNode != null) {
+        var selectionPath = new TreePath(selectedNode.getPath());
+        myThreadTree.expandPath(selectionPath);
+        myThreadTree.setSelectionPath(selectionPath);
+        myThreadTree.scrollPathToVisible(selectionPath);
+      }
+      else {
+        myThreadTree.setSelectionRow(0);
+      }
     }
     myThreadTree.revalidate();
     myThreadTree.repaint();
   }
 
-  private static void buildDumpItemsTree(DefaultMutableTreeNode currentNode, HashMap<Long, List<DumpItem>> parentToChildrenMap) {
+  private static void buildDumpItemsTree(DefaultMutableTreeNode currentNode, HashMap<Long, List<DumpItem>> parentIdToChildren) {
     var currentDumpItem = (DumpItem)currentNode.getUserObject();
-    var childItems = parentToChildrenMap.get(currentDumpItem.getId());
+    var childItems = parentIdToChildren.get(currentDumpItem.getTreeId());
     if (childItems == null) {
       if (currentDumpItem.isContainer()) currentNode.removeFromParent(); // do not add empty containers to the tree
       return;
@@ -315,8 +333,14 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     for (var item : childItems) {
       var childNode = new DefaultMutableTreeNode(item);
       currentNode.add(childNode);
-      buildDumpItemsTree(childNode, parentToChildrenMap);
+      buildDumpItemsTree(childNode, parentIdToChildren);
     }
+  }
+
+  private static boolean matchesFilter(DumpItem item, String text) {
+    return text.isEmpty() ||
+           StringUtil.containsIgnoreCase(item.getStackTrace(), text) ||
+           StringUtil.containsIgnoreCase(item.getName(), text);
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
@@ -419,13 +443,12 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       boolean isTruncated = myDumpItemsTruncated > 0;
-      StringBuilder buf = new StringBuilder();
-      String firstLine = isTruncated ? "Truncated thread dump" : "Full thread dump";
-      buf.append(firstLine).append("\n\n");
-      for (DumpItem state : myThreadDump) {
-        buf.append(state.getStackTrace()).append("\n\n");
-      }
-      CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
+      CopyPasteManager.getInstance().setContents(new StringSelection(
+        IntelliJThreadDumpSerializationKt.serializeIntelliJThreadDump(
+          new ArrayList<>(myThreadDump),
+          createAdditionalThreadDumpComments(isTruncated)
+        )
+      ));
 
       String message = isTruncated
                        ? JavaFrontbackBundle.message("notification.text.truncated.thread.dump.was.successfully.copied.to.clipboard")
@@ -493,7 +516,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return UISettings.getInstance().getState().getShowVirtualThreadContainers();
+      return UISettings.getInstance().getState().getShowDumpItemsHierarchy();
     }
 
     @Override
@@ -503,7 +526,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      UISettings.getInstance().getState().setShowVirtualThreadContainers(state);
+      UISettings.getInstance().getState().setShowDumpItemsHierarchy(state);
       updateThreadsTree();
     }
   }
@@ -531,30 +554,38 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     }
   }
 
-  private static ExporterToTextFile createDumpToFileExporter(Project project, List<DumpItem> dumpItems) {
-    return new MyToFileExporter(project, dumpItems);
+  private ExporterToTextFile createDumpToFileExporter(Project project) {
+    return new MyToFileExporter(project, myThreadDump, () -> myDumpItemsTruncated > 0);
   }
 
   public static ExporterToTextFile createToFileExporter(Project project, List<ThreadState> threadStates) {
-    return new MyToFileExporter(project, DumpItemKt.toDumpItems(threadStates));
+    return new MyToFileExporter(project, DumpItemKt.toDumpItems(threadStates), () -> false);
   }
 
-  private static final class MyToFileExporter implements ExporterToTextFile {
+  private static @NotNull List<String> createAdditionalThreadDumpComments(boolean isTruncated) {
+    return List.of(
+      isTruncated ? "Truncated thread dump" : "Full thread dump"
+    );
+  }
+
+  private static class MyToFileExporter implements ExporterToTextFile {
     private final Project myProject;
     private final List<? extends DumpItem> myThreadStates;
+    private final BooleanSupplier myIsTruncatedSupplier;
 
-    private MyToFileExporter(Project project, List<? extends DumpItem> threadStates) {
+    private MyToFileExporter(Project project, List<? extends DumpItem> threadStates, BooleanSupplier isTruncatedSupplier) {
       myProject = project;
       myThreadStates = threadStates;
+      myIsTruncatedSupplier = isTruncatedSupplier;
     }
 
     @Override
     public @NotNull String getReportText() {
-      StringBuilder sb = new StringBuilder();
-      for (DumpItem state : myThreadStates) {
-        sb.append(state.getStackTrace()).append("\n\n");
-      }
-      return sb.toString();
+      boolean isTruncated = myIsTruncatedSupplier.getAsBoolean();
+      return IntelliJThreadDumpSerializationKt.serializeIntelliJThreadDump(
+        new ArrayList<>(myThreadStates),
+        createAdditionalThreadDumpComments(isTruncated)
+      );
     }
 
     private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";

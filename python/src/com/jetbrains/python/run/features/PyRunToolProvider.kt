@@ -3,6 +3,7 @@ package com.jetbrains.python.run.features
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -50,6 +51,7 @@ data class PyRunToolParameters(
   val exe: String,
   val args: List<String>,
   val envs: Map<String, String>,
+  val includeOriginalExe: Boolean = true,
 )
 
 /**
@@ -93,4 +95,23 @@ interface PyRunToolProvider {
     @JvmStatic
     fun forSdk(sdk: Sdk): PyRunToolProvider? = EP.extensionList.firstOrNull { it.isAvailable(sdk) }
   }
+}
+
+/**
+ * Base class for [PyRunToolProvider] implementations that are bound to a specific [SdkAdditionalData] subtype.
+ */
+@ApiStatus.Internal
+abstract class PySdkRunToolProvider<T : SdkAdditionalData>(
+  private val additionalDataClass: Class<T>,
+) : PyRunToolProvider {
+
+  final override fun isAvailable(sdk: Sdk): Boolean =
+    additionalDataClass.isInstance(sdk.sdkAdditionalData)
+
+  final override suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters {
+    @Suppress("UNCHECKED_CAST") // Checked by isAvailable
+    return getRunToolParameters(sdk.sdkAdditionalData as T)
+  }
+
+  protected abstract suspend fun getRunToolParameters(data: T): PyRunToolParameters
 }

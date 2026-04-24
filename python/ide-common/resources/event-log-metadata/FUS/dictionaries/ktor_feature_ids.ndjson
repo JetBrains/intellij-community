@@ -30,6 +30,7 @@ khealth
 koin                              
 koog                              
 kotlinx-rpc                       
+kotlinx-rpc-grpc                  
 kotlinx-serialization             
 ktor-di                           
 ktor-gson                         
@@ -67,4 +68,4 @@ swagger
 thymeleaf                         
 velocity                          
 webjars                           
-{"blockSize":35,"length":2415,"version":"6155"}
+{"blockSize":35,"length":2450,"version":"7045"}

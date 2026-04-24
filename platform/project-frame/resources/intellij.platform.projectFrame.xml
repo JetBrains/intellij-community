@@ -12,5 +12,6 @@
 
   <extensionPoints>
     <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider"/>
+    <extensionPoint name="projectFrameActionExclusion" beanClass="com.intellij.openapi.wm.ex.ProjectFrameActionExclusionBean"/>
   </extensionPoints>
 </idea-plugin>

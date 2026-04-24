@@ -70,7 +70,7 @@ internal class TerminalTypeAheadOutputModelController(
   }
 
   private fun isTypeAheadEnabled(): Boolean {
-    if (!Registry.`is`("terminal.type.ahead", false)) return false
+    if (AppMode.isMonolith() || !Registry.`is`("terminal.type.ahead", false)) return false
     val shellIntegration = shellIntegrationDeferred.getNow() ?: return false
     val activeBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return false
     // Ensure that the active block has "commandStartOffset" set to protect prompt from deleting in typeahead logic.

@@ -2,14 +2,23 @@
 package com.intellij.terminal.backend
 
 import com.intellij.util.EventDispatcher
+import com.jediterm.core.Color
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.TerminalDisplay
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalSelection
+import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 
+/**
+ * Headless [TerminalDisplay] implementation which serves the following purpose:
+ * 1. Receiving terminal state updates from [com.jediterm.terminal.model.JediTerminal].
+ * 2. Allowing listening for updates using [TerminalDisplayListener].
+ * 3. Providing default background and foreground for "color query" (OSC 11).
+ */
 @ApiStatus.Internal
 class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : TerminalDisplay {
   private var cursorX: Int = 0
@@ -107,5 +116,13 @@ class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : Termi
 
   override fun ambiguousCharsAreDoubleWidth(): Boolean {
     return settings.ambiguousCharsAreDoubleWidth()
+  }
+
+  override fun getWindowForeground(): Color {
+    return AwtTransformers.fromAwtColor(TerminalUi.defaultForeground())!!
+  }
+
+  override fun getWindowBackground(): Color {
+    return AwtTransformers.fromAwtColor(TerminalUi.defaultBackground())!!
   }
 }

@@ -24,13 +24,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.psi.PsiFile
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DropDownLink
+import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
@@ -41,11 +42,11 @@ import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 /**
  * Executor that accepts at most one concurrent task.
@@ -133,11 +134,7 @@ internal fun createInterpreterCacheLoader(): suspend (Module) -> InspectionRunne
     getSuitableSdkFix(module, moduleCreateInfo)?.let { add(it) }
     moduleCreateInfo?.let { add(ConfigureInterpreterFix()) }
   }
-  val shouldCache = when (moduleCreateInfo) {
-    is ModuleCreateInfo.SameAs -> false
-    is ModuleCreateInfo.CreateSdkInfoWrapper, null -> true
-  }
-  InspectionRunnerResult(fixes, shouldCache)
+  InspectionRunnerResult(fixes, shouldCache = true)
 }
 
 private suspend fun getSuitableSdkFix(
@@ -175,13 +172,11 @@ internal class ConfigureInterpreterFix : InterpreterFix {
   }
 }
 
-private class UseProvidedInterpreterFix(
-  private val myCreateSdkInfo: CreateSdkInfoWithTool,
-  private val modulePath: Path?,
-) : InterpreterFix {
+private class UseProvidedInterpreterFix(private val myCreateSdkInfo: CreateSdkInfoWithTool) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
+        PyProjectTomlCollector.sdkCreatedFromNotification(myCreateSdkInfo.toolId)
         val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(module, myCreateSdkInfo.toolId.id)
         withBackgroundProgress(project, myCreateSdkInfo.createSdkInfo.intentionName, false) {
           lifetime.use { PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo(module, myCreateSdkInfo) }
@@ -220,7 +215,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         is CreateSdkInfo.ExistingEnv -> FindQuickFixResult.NoSuggestion // already handled by autoConfigureSdkIfNeeded
         is CreateSdkInfo.WillCreateEnv -> {
           logger.trace { "$this: Ask user as it is a heavy operation" }
-          FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(CreateSdkInfoWithTool(createSdkInfo, i.toolId), i.moduleDir))
+          FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(CreateSdkInfoWithTool(createSdkInfo, i.toolId)))
         }
         is CreateSdkInfo.WillInstallTool -> {
           logger.trace { "$this: Tool installation will be suggested to the user" }
@@ -228,7 +223,21 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         }
       }
     }
-    is ModuleCreateInfo.SameAs, null -> FindQuickFixResult.NoSuggestion // SameAs already handled by autoConfigureSdkIfNeeded
+    is ModuleCreateInfo.SameAs -> {
+      // If SDK wasn't applied automatically before, it means there was no SDK at the time
+      when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion(i.parentModule.getModuleInfo())) {
+        // This is the case when parent SDK was applied automatically (but it didn't exist at the time of autoConfigureSdkIfNeeded call),
+        // and now we need to apply it to our module
+        is FindQuickFixResult.SdkAppliedAutomatically -> {
+          val parentModuleSdk = parentResult.sdk
+          pythonSdk = parentModuleSdk
+          FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
+        }
+        // We should show the same suggestion as for a parent module
+        FindQuickFixResult.NoSuggestion, is FindQuickFixResult.ShowUserFix -> parentResult
+      }
+    }
+    null -> FindQuickFixResult.NoSuggestion
   }
 }
 

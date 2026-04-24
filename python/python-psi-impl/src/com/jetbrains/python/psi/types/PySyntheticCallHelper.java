@@ -60,7 +60,7 @@ public final class PySyntheticCallHelper {
                                                            @NotNull List<PyType> argumentTypes,
                                                            @NotNull TypeEvalContext context) {
     List<PyFunction> functions = resolveFunctionsByArgumentTypes(functionName, argumentTypes, receiverType, context);
-    if (functions.isEmpty()) return null;
+    if (functions.isEmpty()) return PyAnyType.getUnknown();
     return StreamEx.of(functions)
       .nonNull()
       .map(function -> getCallTypeOnTypesOnly(function, receiverType, argumentTypes, context))

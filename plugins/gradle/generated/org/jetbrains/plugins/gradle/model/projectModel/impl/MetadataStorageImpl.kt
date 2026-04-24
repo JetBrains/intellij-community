@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.projectModel.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -1087,6 +1087,45 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     addMetadata(typeMetadata)
 
+    typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity",
+                                  entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleExternalProjectEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "externalProject",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                        entityFqName = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "gradleVersion",
+                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false)),
+                                  extProperties = listOf(ExtPropertyMetadata(isComputable = false,
+                                                                             isOpen = false,
+                                                                             name = "gradleInfo",
+                                                                             receiverFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity",
+                                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                           entityFqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity",
+                                                                                                                           isChild = true,
+                                                                                                                           isNullable = false),
+                                                                             withDefault = false)),
+                                  isAbstract = false)
+
+    addMetadata(typeMetadata)
+
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleModuleEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -1503,6 +1542,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 1853164449)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity", metadataHash = -2026182677)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 418255750)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 650134225)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = -1616609179)

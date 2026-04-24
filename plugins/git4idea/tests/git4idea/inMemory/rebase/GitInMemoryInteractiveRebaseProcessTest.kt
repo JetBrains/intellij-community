@@ -10,7 +10,6 @@ import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
 import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.rebase.interactive.convertToModel
-import git4idea.rebase.log.GetEntriesUsingLogResult
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitInteractiveRebaseEntriesProvider
 import git4idea.rebase.log.GitRebaseEntryGeneratedUsingLog
@@ -555,7 +554,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
   }
 
   private fun getRebaseEntries(firstCommit: VcsFullCommitDetails): List<GitRebaseEntryGeneratedUsingLog> = runBlocking {
-    val result = project.service<GitInteractiveRebaseEntriesProvider>().getEntriesUsingLog(repo, firstCommit, logData) as GetEntriesUsingLogResult.Success
-    result.entries
+    val entries = project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesForDialog(repo, firstCommit, logData)
+    checkNotNull(entries)
+    entries
   }
 }

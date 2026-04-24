@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
@@ -67,39 +68,39 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.util.text.HtmlChunk.html;
 
 /**
- * Standard implementation of help context tooltip.
+ * Standard implementation of the help context tooltip.
  *
  * <h2>Overview</h2>
- * <p>UI design requires to have tooltips that contain detailed information about UI actions and controls.
- * Embedded context help tooltip functionality is incorporated this class.</p>
+ * <p>UI design requires having tooltips that contain detailed information about UI actions and controls.
+ * Embedded context help tooltip functionality is incorporated into this class.</p>
  *
  * <p>A simple example of the tooltip usage is the following:<br/>
  * <code>new HelpTooltip().<br/>
- *  &nbsp;&nbsp;&nbsp;&nbsp;setTitle("Title").<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;setPlainTextTitle("Title").<br/>
  *  &nbsp;&nbsp;&nbsp;&nbsp;setShortcut("Shortcut").<br/>
- *  &nbsp;&nbsp;&nbsp;&nbsp;setDescription("Description").<br/>
+ *  &nbsp;&nbsp;&nbsp;&nbsp;setDescription(HtmlChunk.text("Description").<br/>
  *  &nbsp;&nbsp;&nbsp;&nbsp;installOn(component);</code>
  * </p>
  *
  * <h2>Restrictions and field formats</h2>
- * <p>If you're creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
+ * <p>If you're creating a tooltip with a shortcut, then title is mandatory otherwise title, description, link are optional.
  * You can optionally set the tooltip relative location using {@link HelpTooltip#setLocation(Alignment)}.
  * The {@code Alignment} enum defines fixed relative locations according to the design document (see the link below).
- * More types of relative location will be added as needed but there won't be a way to choose the location on pixel basis.</p>
+ * More types of relative location will be added as needed, but there won't be a way to choose the location on a pixel basis.</p>
  *
- * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
- * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
- * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/&gt; or &lt;p&gt; tags between paragraphs.
- * Paragraphs will be rendered with the standard (10px) offset from the title, from one another and from the link.
- * To force the line break in a paragraph use &lt;br/&gt;. Standard font coloring and styling is also available.</p>
+ * <p>No HTML tagging is allowed in the shortcut, it is supposed to be a simple text string.</p>
+ * <p>Title and description can be HTML formatted. You can use all possible HTML tagging in description just without enclosing
+ * &lt;html&gt; and &lt;/html&gt; tags themselves. In description, it's allowed to have &lt;p/&gt; or &lt;p&gt; tags between paragraphs.
+ * Paragraphs will be rendered with the standard (10px) offset from the title, from one another, and from the link.
+ * To force the line break in a paragraph, use &lt;br/&gt;. Standard font coloring and styling are also available.</p>
  *
  * <h2>Timeouts</h2>
  *
  * <p>Single line tooltips auto close in 10 seconds, multiline in 30 seconds. You can optionally disable auto closing by
- * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default tooltips don't close after a timeout on help buttons
- * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
+ * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default, tooltips don't close after a timeout on help buttons
+ * (those having a round icon with question mark). Before setting this option to true, you should contact designers first.</p>
  *
- * <p>System wide tooltip timeouts are set through the registry:
+ * <p>System-wide tooltip timeouts are set through the registry:
  * <ul>
  * <li>&nbsp;ide.helptooltip.full.dismissDelay - multiline tooltip timeout (default 30 seconds)</li>
  * <li>&nbsp;ide.helptooltip.regular.dismissDelay - single line tooltip timeout (default 10 seconds)</li>
@@ -110,7 +111,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * The current design is that the action's popup menu should take over the help tooltip.
  * This is partly implemented in {@code AbstractPopup} class to track such cases. But this doesn't always work.
  * If the help tooltip shows up over the component's popup menu, you should make sure you set the master popup for the help tooltip.
- * This will prevent help tooltip from showing when the popup menu is opened.
+ * This will prevent the help tooltip from showing when the popup menu is opened.
  * The best way to do it is to take a source component from an {@code InputEvent}
  * and pass the source component along with the popup menu reference to {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
  *
@@ -136,8 +137,10 @@ public class HelpTooltip {
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
   private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
+  /** Can contain HTML text */
   private @Nullable Supplier<@NotNull @TooltipTitle String> title;
   private @NlsSafe String shortcut;
+  /** Can contain HTML text */
   private @Tooltip String description;
   private @Nullable ActionLink link;
   private @Nullable JBFontScaler linkOriginalFontScaler;
@@ -213,18 +216,61 @@ public class HelpTooltip {
   }
 
   /**
-   * Sets tooltip title.
+   * Sets tooltip title content.
+   * <p>
+   * Title is allowed to contain HTML markup. Construct the title using {@link HtmlChunk}.
+   * If your title doesn't suppose to contain HTML markup,
+   * prefer using {@link #setPlainTextTitle(String)} to avoid accidental HTML injections.
+   * <p>
    * If it's longer than two lines (fitting in 250 pixels each),
    * then the text is automatically stripped to the word boundary and dots are added to the end.
-   *
-   * @param title text for title.
-   * @return {@code this}
    */
+  public HelpTooltip setTitle(@Nullable HtmlChunk title) {
+    this.title = title != null ? () -> title.toString() : null;
+    return this;
+  }
+
+  /**
+   * @see #setTitle(HtmlChunk)
+   */
+  public HelpTooltip setTitleSupplier(@Nullable Supplier<@NotNull HtmlChunk> title) {
+    this.title = title != null ? () -> title.get().toString() : null;
+    return this;
+  }
+
+  /**
+   * Sets tooltip title content.
+   * <p>
+   * The provided title will be properly escaped and rendered as a plain text.
+   * If it's longer than two lines (fitting in 250 pixels each),
+   * then the text is automatically stripped to the word boundary and dots are added to the end.
+   */
+  public HelpTooltip setPlainTextTitle(@Nullable @TooltipTitle String title) {
+    this.title = title != null ? () -> StringUtil.escapeXmlEntities(title) : null;
+    return this;
+  }
+
+  /**
+   * @see #setPlainTextTitle(String)
+   */
+  public HelpTooltip setPlainTextTitle(@Nullable Supplier<@NotNull @TooltipTitle String> title) {
+    this.title = title != null ? () -> StringUtil.escapeXmlEntities(title.get()) : null;
+    return this;
+  }
+
+  /**
+   * @deprecated use {@link #setTitle(HtmlChunk)} or {@link #setPlainTextTitle(String)} instead to avoid accidental HTML injections.
+   */
+  @Deprecated
   public HelpTooltip setTitle(@Nullable @TooltipTitle String title) {
     this.title = title != null ? () -> title : null;
     return this;
   }
 
+  /**
+   * @deprecated use {@link #setTitleSupplier(Supplier)} or {@link #setPlainTextTitle(Supplier)} instead to avoid accidental HTML injections.
+   */
+  @Deprecated
   public HelpTooltip setTitle(@Nullable Supplier<@NotNull @TooltipTitle String> title) {
     this.title = title;
     return this;
@@ -277,11 +323,21 @@ public class HelpTooltip {
   }
 
   /**
-   * Sets description text.
-   *
-   * @param description text for description.
-   * @return {@code this}
+   * Sets tooltip description content.
+   * <p>
+   * Description is allowed to contain HTML markup. Construct the description using {@link HtmlChunk}.
+   * If your description doesn't suppose to contain HTML markup,
+   * prefer using {@link HtmlChunk#text(String)} to avoid accidental HTML injections.
    */
+  public HelpTooltip setDescription(@Nullable HtmlChunk description) {
+    this.description = description != null ? description.toString() : null;
+    return this;
+  }
+
+  /**
+   * @deprecated use {@link #setDescription(HtmlChunk)} instead to avoid accidental HTML injections.
+   */
+  @Deprecated
   public HelpTooltip setDescription(@Nullable @Tooltip String description) {
     this.description = description;
     return this;

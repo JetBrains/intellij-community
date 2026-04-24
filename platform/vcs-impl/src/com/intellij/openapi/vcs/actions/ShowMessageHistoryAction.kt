@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.editor.actions.ContentChooser.RETURN_SYMBOL
+import com.intellij.openapi.editor.actions.ContentChooser
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAwareAction
@@ -18,23 +18,19 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
-import com.intellij.openapi.util.text.StringUtil.first
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.vcs.commit.NonModalCommitPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
-import org.jetbrains.annotations.Nls
 import java.awt.Point
-import javax.swing.JList
 import javax.swing.ListSelectionModel.SINGLE_SELECTION
 
 /**
@@ -87,11 +83,10 @@ internal class ShowMessageHistoryAction : DumbAwareAction() {
         it?.let { preview(project, commitMessage, it, previewCommandGroup) }
       }
       .setItemChosenCallback { chosenMessage = it }
-      .setRenderer(object : ColoredListCellRenderer<String>() {
-        override fun customizeCellRenderer(list: JList<out String>, value: @Nls String, index: Int, selected: Boolean, hasFocus: Boolean) {
-          append(first(convertLineSeparators(value, RETURN_SYMBOL), rightMargin, false))
-
-          applySpeedSearchHighlighting(list, this, true, selected)
+      .setRenderer(listCellRenderer {
+        val text = StringUtil.first(StringUtil.convertLineSeparators(value, ContentChooser.RETURN_SYMBOL), rightMargin, false)
+        text(text) {
+          speedSearch {}
         }
       })
       .addListener(object : JBPopupListener {

@@ -13,11 +13,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.TerminalTitle
-import com.intellij.terminal.TerminalTitleListener
+import com.intellij.terminal.frontend.toolwindow.impl.updateFileNameOnTitleChange
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
+@OptIn(FlowPreview::class)
 internal class TerminalViewFileEditor(
   private val project: Project,
   private val file: TerminalViewVirtualFile,
@@ -36,23 +37,25 @@ internal class TerminalViewFileEditor(
     val coroutineScope = terminalProjectScope(project).childScope("TerminalViewFileEditor")
     Disposer.register(this) { coroutineScope.cancel() }
 
-    coroutineScope.launch {
-      terminalView.sessionState.collect { state ->
-        if (state == TerminalViewSessionState.Terminated) {
-          // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
-          terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            project.serviceAsync<FileEditorManager>().closeFile(file)
+    if (file.closeOnProcessTermination) {
+      coroutineScope.launch {
+        terminalView.sessionState.collect { state ->
+          if (state == TerminalViewSessionState.Terminated) {
+            // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
+            terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              project.serviceAsync<FileEditorManager>().closeFile(file)
+            }
           }
         }
       }
     }
 
-    terminalView.title.addTitleListener(object : TerminalTitleListener {
-      override fun onTitleChanged(terminalTitle: TerminalTitle) {
-        file.rename(null, terminalTitle.buildTitle())
-        FileEditorManager.getInstance(project).updateFilePresentation(file)
-      }
-    }, this)
+    updateFileNameOnTitleChange(
+      terminalView,
+      file,
+      project,
+      coroutineScope,
+    )
   }
 
   override fun getComponent(): JComponent {

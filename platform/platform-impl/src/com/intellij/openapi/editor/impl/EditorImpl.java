@@ -169,6 +169,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NewUI;
 import com.intellij.ui.components.JBLayeredPane;
@@ -3362,7 +3363,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean shouldSetCursorPositionImmediately() {
-    return !getSettings().isAnimatedCaret() ||
+    return !getSettings().isSmoothCaretMovement() ||
            gainedFocus.getAndSet(false) ||
            myMouseIsInDrag ||
            shouldDisableAnimations();
@@ -5405,6 +5406,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myProject != null && myVirtualFile != null && replace(CONTAINS_BIDI_TEXT, null, Boolean.TRUE)) {
       EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
     }
+  }
+
+  private boolean hasBidiText() {
+    return Boolean.TRUE.equals(getUserData(CONTAINS_BIDI_TEXT));
+  }
+
+  @ApiStatus.Internal
+  public boolean shouldUseNewSelection() {
+    return !Registry.is("editor.old.full.horizontal.selection.enabled")
+           && !isColumnMode()
+           && !hasBidiText()
+           && IslandsState.Companion.isEnabled();
   }
 
   @TestOnly

@@ -119,7 +119,7 @@ class NDArrayTypeResolveProvider(object):
                 # container is just a variable for display, it cannot be accessed
                 return ""
             else:
-                return key
+                return ".%s" % key
 
         lst = [(key, value, evaluate_name(key)) for (key, value) in lst]
         return lst

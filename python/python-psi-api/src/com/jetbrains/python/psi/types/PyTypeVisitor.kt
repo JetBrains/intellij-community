@@ -1,27 +1,27 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Similarly to [com.intellij.psi.PsiElementVisitor], implements double dispatching for the [PyType] hierarchy.
- * 
- * 
+ *
+ *
  * Because the "unknown" type is historically represented as `null` in the type system, `PyTypeVisitor.visitPyType(type, visitor)`
  * should be used instead of direct `type.acceptTypeVisitor(visitor)` to properly account for possible `null` values.
- * 
- * 
+ *
+ *
  * This class gives access only to the types declared in the <tt>intellij.python.psi</tt> module.
  * Most actual implementations should extend [PyTypeVisitorExt].
- * 
- * 
+ *
+ *
  * There are helper [PyRecursiveTypeVisitor] and [PyCloningTypeVisitor] for recursive type
  * traversal and deep cloning of a type respectively.
- * 
+ *
  * @see PyRecursiveTypeVisitor
- * 
+ *
  * @see PyCloningTypeVisitor
- * 
+ *
  * @see PyType.acceptTypeVisitor
  * @see .visit
  * @see .visitUnknownType
@@ -74,11 +74,11 @@ abstract class PyTypeVisitor<T> {
   }
 
   open fun visitAnyType(): T? {
-    return null
+    return if (PyAnyType.isEnabled) visitPyType(PyAnyType.Any) else null
   }
 
   open fun visitUnknownType(): T? {
-    return null
+    return if (PyAnyType.isEnabled) visitPyType(PyAnyType.Unknown) else null
   }
 
   companion object {

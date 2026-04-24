@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl.headertoolbar
@@ -18,12 +18,14 @@ import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -40,11 +42,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.ex.ProjectFrameActionExclusionService
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -52,6 +57,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isMenuButtonInToolbar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
+import com.intellij.openapi.wm.impl.getProjectFrameTypeId
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
@@ -201,7 +207,7 @@ class MainToolbar(
 
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
-    val actionGroups = computeMainActionGroups(schema)
+    val actionGroups = computeMainActionGroups(schema, projectFrameTypeId = frame.rootPane.getProjectFrameTypeId())
     val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
     val customizationGroupPopupHandler = customizationGroup?.let {
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
@@ -532,34 +538,72 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 }
 
-internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+internal suspend fun computeMainActionGroups(projectFrameTypeId: String? = null): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return span("toolbar action groups computing") {
-    computeMainActionGroups(CustomActionsSchema.getInstanceAsync())
+    computeMainActionGroups(CustomActionsSchema.getInstanceAsync(), projectFrameTypeId)
   }
 }
 
-private suspend fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+private suspend fun computeMainActionGroups(
+  customActionSchema: CustomActionsSchema,
+  projectFrameTypeId: String? = null,
+): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  val excludedActionIds = serviceAsync<ProjectFrameActionExclusionService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
   val result = ArrayList<Pair<ActionGroup, HorizontalLayout.Group>>(3)
   for (info in getMainToolbarGroups()) {
-    customActionSchema.getCorrectedActionAsync(info.id, info.name)?.let {
-      result.add(it to info.align)
+    customActionSchema.getCorrectedActionAsync(info.id, info.name)?.let { actionGroup ->
+      result.add(filterTopLevelMainToolbarActions(actionGroup, excludedActionIds) to info.align)
     }
   }
   return result
 }
 
-internal fun blockingComputeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
+internal fun blockingComputeMainActionGroups(projectFrameTypeId: String? = null): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return blockingComputeMainActionGroups(CustomActionsSchema.getInstance(), projectFrameTypeId)
 }
 
-internal fun blockingComputeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+internal fun blockingComputeMainActionGroups(
+  customActionSchema: CustomActionsSchema,
+  projectFrameTypeId: String? = null,
+): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  val excludedActionIds = service<ProjectFrameActionExclusionService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
   return getMainToolbarGroups()
     .mapNotNull { info ->
-      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
-        it to info.align
+      customActionSchema.getCorrectedAction(info.id, info.name)?.let { actionGroup ->
+        filterTopLevelMainToolbarActions(actionGroup, excludedActionIds) to info.align
       }
     }
     .toList()
+}
+
+private fun filterTopLevelMainToolbarActions(actionGroup: ActionGroup, excludedActionIds: Set<String>): ActionGroup {
+  if (excludedActionIds.isEmpty()) {
+    return actionGroup
+  }
+  return MainToolbarTopLevelActionGroupFilter(actionGroup, excludedActionIds)
+}
+
+private class MainToolbarTopLevelActionGroupFilter(
+  delegate: ActionGroup,
+  private val excludedActionIds: Set<String>,
+  private val actionManager: ActionManager = ActionManager.getInstance(),
+) : ActionGroupWrapper(delegate) {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    return delegate.getChildren(e)
+      .filterNot { action -> actionId(action)?.let(excludedActionIds::contains) == true }
+      .toTypedArray()
+  }
+
+  private fun actionId(action: AnAction): String? {
+    var current = action
+    while (true) {
+      current = when (current) {
+        is AnActionWrapper -> current.delegate
+        is ActionGroupWrapper -> current.delegate
+        else -> return actionManager.getId(current)
+      }
+    }
+  }
 }
 
 private fun getMainToolbarGroups(): Sequence<GroupInfo> {
@@ -598,9 +642,8 @@ private class HeaderIconUpdater {
 
 private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: HorizontalLayout.Group)
 
-@Internal
 @Suppress("HardCodedStringLiteral", "ActionPresentationInstantiatedInCtor")
-class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Remove Actions From Main Toolbar") {
+internal class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Remove Actions From Main Toolbar") {
   override fun actionPerformed(e: AnActionEvent) {
     val schema = CustomActionsSchema.getInstance()
     val groups = blockingComputeMainActionGroups(schema)
@@ -610,19 +653,20 @@ class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Re
 
     for (group in groups) {
       val actionsToRemove = group.first.getChildren(null)
-      val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
-      for (action in actionsToRemove) {
-        val actionId = ActionManager.getInstance().getId(action)
-        schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
+      if (actionsToRemove.isNotEmpty()) {
+        val actionManager = ActionManager.getInstance()
+        val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
+        for (action in actionsToRemove) {
+          val actionId = actionManager.getId(action)
+          schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
+        }
       }
     }
 
     schemaChanged()
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 private fun schemaChanged() {

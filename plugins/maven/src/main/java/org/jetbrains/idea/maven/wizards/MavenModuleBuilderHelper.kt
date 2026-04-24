@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.util.EditorHelper
@@ -175,8 +175,7 @@ open class MavenModuleBuilderHelper(
     // if any subprojects exist, add subproject; if modules exist, add module; if none exist, check modelVersion
     if (model.subprojects.subprojects.any()) return true
     if (model.modules.modules.any()) return false
-    val modelVersion = model.modelVersion.value
-    return VersionComparatorUtil.compare(modelVersion, MODEL_VERSION_4_1_0) >= 0
+    return VersionComparatorUtil.compare(model.effectiveModelVersion, MODEL_VERSION_4_1_0) >= 0
   }
 
   protected fun updateProjectPom(project: Project, pom: VirtualFile) {

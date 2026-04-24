@@ -58,7 +58,7 @@ jvm_library(
     "//libraries/blockmap",
     "//libraries/commons/io",
     "//libraries/bouncy-castle-provider",
-    "@lib//:platform-build_scripts-jetbrains-format-ripper",
+    "@lib//:jetbrains-format-ripper",
     "@lib//:jackson-datatype-joda",
     "//libraries/http-client",
     "//libraries/kotlinx/coroutines/slf4j",

@@ -32,7 +32,7 @@ object ExceptionUtil {
  * the result of a division. The result will then either be some `DivideByZeroException`
  * for instance, or a simple number.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface Either<out A, out B> {
   fun asLeftOrNull(): A? = if (this is Left) value else null
   fun asRightOrNull(): B? = if (this is Right) value else null

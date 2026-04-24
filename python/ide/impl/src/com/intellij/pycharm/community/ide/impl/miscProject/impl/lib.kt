@@ -14,9 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -34,7 +31,7 @@ import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -170,14 +167,8 @@ private suspend fun createOrOpenProjectAndSdk(
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
   // Even if the misc project might be already opened, it might not have sdk (if it was opened as a welcome project)
   val sdkResult = withContext(Dispatchers.EDT) {
-    runWithModalProgressBlocking(
-      owner = ModalTaskOwner.guess(),
-      title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
-      cancellation = TaskCancellation.cancellable()
-    ) {
-      project.pythonSdkConfigurationMutex.withLock {
-        createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
-      }
+    runWithSdkConfigurationLock(project) {
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
     }
   }
   val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }

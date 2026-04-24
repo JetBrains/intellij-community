@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -28,7 +27,7 @@ import com.intellij.polySymbols.utils.match
  * See also [Model Queries](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#model-queries) topic
  * to learn how queries are performed.
  */
-interface PolySymbolScope : ModificationTracker {
+interface PolySymbolScope {
 
   fun createPointer(): Pointer<out PolySymbolScope>
 

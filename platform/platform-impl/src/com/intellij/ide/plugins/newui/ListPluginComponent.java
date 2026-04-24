@@ -1316,6 +1316,18 @@ public final class ListPluginComponent extends JPanel {
     });
   }
 
+  @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @NotNull PluginModelFacade getModelFacade() {
+    return myModelFacade;
+  }
+
+  @Nullable PluginManagerCustomizer getCustomizer() {
+    return myCustomizer;
+  }
+
   static @NotNull JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }

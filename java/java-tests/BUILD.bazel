@@ -187,6 +187,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/navbar/testFramework",
     "//java/unscramble",
+    "//platform/threadDumpParser",
+    "//platform/threadDumpParser:threadDumpParser_test_lib",
     "//libraries/asm",
     "//plugins/gradle",
     "//platform/todo",

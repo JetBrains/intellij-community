@@ -122,6 +122,15 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   var enumClass: String = ""
 
   /**
+   * Whether the option is visible in the Advanced Settings UI.
+   * Useful setting to `false` when you need to migrate the setting to the other place, for example, to the regular settings.
+   * This way, the option won't be visible in the UI, but its state will be still available for the new option initialization.
+   */
+  @Attribute("visible")
+  @JvmField
+  var visible: Boolean = true
+
+  /**
    * Fully qualified name of the service class which stores the value of the setting.
    * Should be used only when migrating regular settings to advanced settings.
    */
@@ -158,6 +167,9 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   }
 
   fun isVisible(): Boolean {
+    if (!visible) {
+      return false
+    }
     if (visibilityCheckMethod != null && serviceInstance != null) {
       visibilityCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
     }

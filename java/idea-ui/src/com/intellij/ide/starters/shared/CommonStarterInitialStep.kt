@@ -110,7 +110,7 @@ abstract class CommonStarterInitialStep(
       textField()
         .accessibleName(UIBundle.message("label.project.wizard.new.project.name"))
         .bindText(entityNameProperty)
-        .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
+        .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT, *getCustomValidationRules(ENTITY_NAME_PROPERTY)),
                                createLocationWarningValidator(locationProperty))
         .columns(COLUMNS_MEDIUM)
         .gap(RightGap.SMALL)

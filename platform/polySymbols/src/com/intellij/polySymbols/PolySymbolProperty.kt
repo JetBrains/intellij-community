@@ -2,6 +2,7 @@
 package com.intellij.polySymbols
 
 abstract class PolySymbolProperty<T : Any>(
+  /** name can be used by static symbol providers to identify the property */
   val name: String,
   type: Class<T>,
 ) {

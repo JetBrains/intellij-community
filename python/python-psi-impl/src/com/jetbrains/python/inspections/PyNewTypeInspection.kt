@@ -25,7 +25,12 @@ import com.jetbrains.python.psi.types.PyTypingNewTypeFactoryType
 
 class PyNewTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return object : PyInspectionVisitor(holder, getContext(session)) {
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.typeEngine != null) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+
+    return object : PyInspectionVisitor(holder, context) {
       override fun visitPyTargetExpression(node: PyTargetExpression) {
         val assignedValue = node.findAssignedValue()
         if (assignedValue !is PyCallExpression) return
