@@ -37,12 +37,12 @@
     "sourceType": "org.springframework.boot.actuate.endpoint.EnvironmentEndpoint",
     "description": ""<error descr="',' or '}' expected, got 'ption'">p</error>tion<error descr="':' expected, got '\": \"'">"</error>: "<error descr="':' expected, got 'Keys'">K</error>eys<error descr="':' expected, got 'that'"> </error>that<error descr="':' expected, got 'should'"> </error>should<error descr="':' expected, got 'be'"> </error>be<error descr="':' expected, got 'sanitized.'"> </error>sanitized.<error descr="':' expected, got 'Keys'"> </error>Keys<error descr="':' expected, got 'can'"> </error>can<error descr="':' expected, got 'be'"> </error>be<error descr="':' expected, got 'simple'"> </error>simple<error descr="':' expected, got 'strings'"> </error>strings<error descr="':' expected, got 'that'"> </error>that<error descr="':' expected, got 'the'"> </error>the<error descr="':' expected, got 'property'"> </error>property<error descr="':' expected, got 'ends'"> </error>ends<error descr="':' expected, got 'with'"> </error>with<error descr="':' expected, got 'or'"> </error>or<error descr="':' expected, got 'regex'"> </error>regex<error descr="':' expected, got 'expressions.'"> </error>expressions.<error descr="Missing closing quote"><error descr="':' expected, got '\",'">"</error>,</error><EOLError descr="':' expected, got '\"defaultValue\"'"></EOLError>
     "defaultValue": [
-      <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error>
-      "secret"<error descr="':' expected, got ','">,</error>
-      "key"<error descr="':' expected, got ','">,</error>
-      "token"<error descr="':' expected, got ','">,</error>
-      ".*credentials.*"<error descr="':' expected, got ','">,</error>
-      "vcap_services"<EOLError descr="':' expected, got ']'"></EOLError>
+      <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error><EOLError descr="<value> or ']' expected, got 'DOUBLE_QUOTED_STRING'"></EOLError>
+      "secret"<error descr="',' unexpected">,</error>
+      "key"<error descr="',' unexpected">,</error>
+      "token"<error descr="',' unexpected">,</error>
+      ".*credentials.*"<error descr="',' unexpected">,</error>
+      "vcap_services"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "description": "Resource reference to a generated git info properties file.",
     "deprecation": {
       "replacement"<error descr="':' expected, got '\"hints\"'">"</error>hints": [
-  <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error>
+  <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error><EOLError descr="<value> or ']' expected, got '{'"></EOLError>
   {
     "name":<error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','"> </error>,
     "values": [false<EOLError descr="',' or ']' expected, got '{'"></EOLError>
@@ -214,14 +214,15 @@
       },
       <error descr="',' unexpected">,</error>
       CE<error descr="',' or ']' expected, got '\"'"><error descr="Missing closing quote">"</error></error><EOLError descr="',' or ']' expected, got '}'"></EOLError>
-      }
-    <error descr="']' unexpected">]</error>,
-    "providers"<error descr="':' unexpected">:</error> [
+      <error descr="<literal>, IDENTIFIER, '[', ']' or '{' expected, got '}'">}</error><EOLError descr="',' or '}' expected"></EOLError>
+    ]<error descr="',' unexpected">,</error>
+    "providers": [
       {
         "name": "any"
       }
     ]
-  }
+  }<EOLError descr="',' or '}' expected"></EOLError>
 <error descr="',' or '}' expected, got ']'">]</error>}<EOLError descr="',' or ']' expected"></EOLError>
 
 
+<EOLError descr="',' or '}' expected"></EOLError>
