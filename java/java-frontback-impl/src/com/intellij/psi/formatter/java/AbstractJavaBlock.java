@@ -865,8 +865,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (nodes.isEmpty()) {
       return new LeafBlock(node, blockWrap, alignment, indent);
     }
-    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings,
-                                            myFormattingMode, JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(node)).build(nodes);
+    boolean enforceSpaceIndent = JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(node)
+                                 && mySettings.ALIGN_MULTILINE_CHAINED_METHODS;
+    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode, enforceSpaceIndent)
+      .build(nodes);
   }
 
 
