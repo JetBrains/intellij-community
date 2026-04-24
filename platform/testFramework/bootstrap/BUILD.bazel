@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":tools-testsBootstrap_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//libraries/junit4",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",

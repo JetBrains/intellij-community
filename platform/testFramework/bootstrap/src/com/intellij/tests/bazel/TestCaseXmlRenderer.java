@@ -10,6 +10,7 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.listeners.LegacyReportingUtils;
+import org.opentest4j.AssertionFailedError;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -20,6 +21,9 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import static com.intellij.tests.bazel.SafeXml.escapeIllegalCharacters;
@@ -103,13 +107,85 @@ class TestCaseXmlRenderer {
       xml.writeAttribute("type", RuntimeException.class.getName());
       return;
     }
-
     xml.writeAttribute("message", escapeIllegalCharacters(String.valueOf(throwable.getMessage())));
     xml.writeAttribute("type", throwable.getClass().getName());
 
-    StringWriter stringWriter = new StringWriter();
-    throwable.printStackTrace(new PrintWriter(stringWriter));
+    StringWriter stringWriter =  new StringWriter();
+    PrintWriter printWriter = new PrintWriter(stringWriter);
+    if (throwable instanceof AssertionFailedError error) {
+      String expected = error.getExpected().getStringRepresentation();
+      String actual = error.getActual().getStringRepresentation();
+      printWriter.println("---- expected -------------------------------");
+      printWriter.print(expected);
+      printWriter.println("---- actual ---------------------------------");
+      printWriter.print(actual);
+      printWriter.println("---- diff -----------------------------------");
+      printWriter.println(computeLineDiff(expected, actual));
+      printWriter.println("---------------------------------------------");
+    }
+    throwable.printStackTrace(printWriter);
 
     writeCData(xml, stringWriter.toString());
+  }
+
+  /**
+   * Compares two strings line by line and returns a diff string similar to the Linux `diff` command.
+   * Uses the Longest Common Subsequence (LCS) algorithm to determine additions and deletions.
+   * <p>
+   * '<' indicates a line removed from the original text. '>' indicates a line added in the modified text.
+   *
+   * @param expected The original string.
+   * @param actual The modified string to compare against.
+   * @return A formatted diff string.
+   */
+  private static String computeLineDiff(String expected, String actual) {
+    if (expected.equals(actual)) {
+      return "";
+    }
+
+    // Using split with -1 to ensure trailing empty lines are preserved, mirroring Kotlin's lines()
+    String[] lines1 = expected.split("\\R", -1);
+    String[] lines2 = actual.split("\\R", -1);
+
+    int m = lines1.length;
+    int n = lines2.length;
+
+    // Step 1: Build the LCS matrix
+    int[][] dp = new int[m + 1][n + 1];
+
+    for (int i = 1; i <= m; i++) {
+      for (int j = 1; j <= n; j++) {
+        if (lines1[i - 1].equals(lines2[j - 1])) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    // Step 2: Backtrack through the matrix to construct the diff output
+    List<String> diffOutput = new ArrayList<>();
+    int i = m;
+    int j = n;
+
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && lines1[i - 1].equals(lines2[j - 1])) {
+        // Lines are identical; skip and move diagonally
+        i--;
+        j--;
+      } else if (j > 0 && (i == 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        // Addition
+        diffOutput.add("> " + lines2[j - 1]);
+        j--;
+      } else {
+        // Deletion
+        diffOutput.add("< " + lines1[i - 1]);
+        i--;
+      }
+    }
+
+    // Reverse the list since backtracking starts from the end
+    Collections.reverse(diffOutput);
+    return String.join("\n", diffOutput);
   }
 }
