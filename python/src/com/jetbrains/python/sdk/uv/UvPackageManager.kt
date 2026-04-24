@@ -273,6 +273,19 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
     return resolvePyProjectToml(uvWorkingDirectory)
   }
 
+  override suspend fun getDependencyFiles(): List<VirtualFile> {
+    val rootFile = getDependencyFile() ?: return emptyList()
+    val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
+    val memberModules = readAction {
+      val rootModule = ModuleManager.getInstance(project).modules.firstOrNull { module ->
+        ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPath() == uvWorkingDirectory }
+      } ?: return@readAction emptyList()
+      rootModule.getToolWorkspaceLayout(UV_TOOL_ID)?.memberModules.orEmpty()
+    }
+    val memberFiles = memberModules.mapNotNull { PyProjectToml.findFile(it) }
+    return listOf(rootFile) + memberFiles
+  }
+
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean = withContext(Dispatchers.IO) {
     val specification = repositoryManager.findPackageSpecification(requirement) ?: return@withContext false
     
