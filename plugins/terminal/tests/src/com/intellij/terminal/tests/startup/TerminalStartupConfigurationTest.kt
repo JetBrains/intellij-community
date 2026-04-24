@@ -1,6 +1,7 @@
 package com.intellij.terminal.tests.startup
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +11,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isMac
@@ -20,6 +23,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
@@ -74,7 +78,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     get() = eelHolder.eel
 
   @TestFactory
-  fun `bash on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  fun `bash on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration, _ ->
     Assumptions.assumeTrue(eelApi.descriptor.osFamily.isPosix)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -88,7 +92,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
   }
 
   @TestFactory
-  fun `zsh on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  fun `zsh on Unix`() = withShellIntegration(TIMEOUT) { allowShellIntegration, _ ->
     Assumptions.assumeTrue(eelApi.descriptor.osFamily.isPosix)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -102,7 +106,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
   }
 
   @TestFactory
-  fun `powershell on Windows`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  fun `powershell on Windows`() = withShellIntegration(TIMEOUT) { allowShellIntegration, _ ->
     Assumptions.assumeTrue(OS.current() == OS.WINDOWS)
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -116,7 +120,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
   }
 
   @TestFactory
-  fun `convert wsl_exe to Linux command (WSL filesystem)`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  fun `convert wsl_exe to Linux command (WSL filesystem)`() = withShellIntegration(TIMEOUT) { allowShellIntegration, _ ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
     val bashInWsl = "/my/custom/bin/bash"
@@ -133,7 +137,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
   }
 
   @TestFactory
-  fun `convert wsl_exe to Linux command (Windows drive mounted in WSL)`() = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  fun `convert wsl_exe to Linux command (Windows drive mounted in WSL)`() = withShellIntegration(TIMEOUT) { allowShellIntegration, _ ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
     val defaultShellInWsl = "/my/custom/bin/bash"
@@ -152,10 +156,10 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
 
   @TestFactory
   fun `LocalTerminalCustomizer is not applied when shell process is local and working directory is WSL`(
-  ) = withShellIntegration(TIMEOUT) { allowShellIntegration ->
+  ) = withShellIntegration(TIMEOUT) { allowShellIntegration, testDisposable ->
     Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
     var called = false
-    register(localTerminalCustomizer { called = true })
+    register(localTerminalCustomizer { called = true }, parentDisposable = testDisposable)
 
     configureStartupOptionsAndValidateResult(InitialOptions(
       tempDir,
@@ -174,24 +178,29 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
 
   @TestFactory
   fun `LocalTerminalCustomizer is not applied when shell process is WSL and working directory is local`(
-  ) = withShellIntegration(TIMEOUT) { allowShellIntegration ->
-    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
-    var called = false
-    register(localTerminalCustomizer { called = true })
+  ) = withShellIntegration(TIMEOUT) { allowShellIntegration, testDisposable ->
+    Assumptions.assumeTrue(eelHolder.type == EelType.Local)
+    Assumptions.assumeTrue(OS.current() == OS.WINDOWS)
+    val localWindowsDir = tempDir
+    Assertions.assertThat(localWindowsDir.getEelDescriptor()).isEqualTo(LocalEelDescriptor)
 
-    val distribName = WslPath.parseWindowsUncPath(tempDir.pathString)!!.distributionId
+    var called = false
+    register(localTerminalCustomizer { called = true }, parentDisposable = testDisposable)
+
     val defaultShellInWsl = "/my/custom/bin/zsh"
     registerShellForDetection(defaultShellInWsl)
 
-    val windowsTmpDir = createTempDirectory(localEel, testDisposable)
+    val (expectedWorkingDir, wslDistribName) = getWslEelPathByLocalWindowsDirectory(localWindowsDir)
+    val wslEelDescriptor = expectedWorkingDir.descriptor
+
     configureStartupOptionsAndValidateResult(InitialOptions(
-      windowsTmpDir,
-      "wsl.exe -d $distribName",
+      localWindowsDir,
+      "wsl.exe -d $wslDistribName",
       allowShellIntegration,
     ), ConfiguredOptions(
-      EelPath.parse(WSLDistribution(distribName).getWslPath(windowsTmpDir)!!, eelApi.descriptor),
-      expectedConfiguredZshCommand(listOf(defaultShellInWsl)),
-      ShellIntegration(ShellType.ZSH, expectedCommandBlocks(eelApi.descriptor)).takeIf { allowShellIntegration }
+      expectedWorkingDir,
+      expectedConfiguredZshCommand(listOf(defaultShellInWsl), wslEelDescriptor.toEelApi()),
+      ShellIntegration(ShellType.ZSH, expectedCommandBlocks(wslEelDescriptor)).takeIf { allowShellIntegration }
     ))
 
     // workingDir is on local Windows drive, but Zsh is launched in WSL via IJEnt
@@ -199,14 +208,25 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     Assertions.assertThat(called).isFalse
   }
 
+  private suspend fun getWslEelPathByLocalWindowsDirectory(localWindowsDir: Path): Pair<EelPath, String> {
+    val distrib = WslDistributionManager.getInstance().installedDistributions.firstOrNull()
+    Assumptions.assumeTrue(distrib != null)
+    checkNotNull(distrib) { "Null WSL distribution" }
+    val wslEelDescriptor = distrib.getUNCRootPath().getEelDescriptor()
+    val wslEelApi = wslEelDescriptor.toEelApi()
+    Assumptions.assumeTrue(wslEelApi is EelPosixApi)
+    return EelPath.parse(distrib.getWslPath(localWindowsDir)!!, wslEelDescriptor) to distrib.msId
+  }
+
   private fun register(
-    vararg customizers: org.jetbrains.plugins.terminal.LocalTerminalCustomizer // FQN to avoid importing deprecated class
+    vararg customizers: org.jetbrains.plugins.terminal.LocalTerminalCustomizer /* FQN to avoid importing deprecated class */,
+    parentDisposable: Disposable = testDisposable
   ) {
     @Suppress("DEPRECATION")
     ExtensionTestUtil.maskExtensions(
       org.jetbrains.plugins.terminal.LocalTerminalCustomizer.EP_NAME,
       customizers.toList(),
-      testDisposable
+      parentDisposable
     )
   }
 
@@ -243,7 +263,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
     initial: InitialOptions,
     expected: ConfiguredOptions,
   ) {
-    Assertions.assertThat(project.getEelDescriptor()).isEqualTo(eelApi.descriptor)
+    assertEelDescriptorsEqual(project.getEelDescriptor(), eelApi.descriptor)
     val runner = object : LocalTerminalDirectRunner(project) {
       override fun isGenTwoTerminalEnabled(): Boolean = true
     }
@@ -307,10 +327,11 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
 
   private fun expectedConfiguredZshCommand(
     initialZshCommand: List<String>,
+    eelApi: EelApi = this.eelApi
   ): List<String> {
     return buildList {
       addAll(initialZshCommand)
-      if (eelApi.platform.isMac || eelHolder.type in listOf(EelType.Wsl, EelType.Docker)) {
+      if (eelApi.platform.isMac || eelApi !is LocalEelApi) {
         add(LOGIN_CLI_OPTION)
       }
       add(INTERACTIVE_CLI_OPTION)
