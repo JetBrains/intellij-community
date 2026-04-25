@@ -110,7 +110,7 @@ Options:
   --help               Show this help message
 
 Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions
-  Example: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
+  Example: -Dintellij.build.test.debug.enabled=true -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
 ```
 
 ### Additional JVM options

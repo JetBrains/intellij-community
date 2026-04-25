@@ -72,7 +72,7 @@ open class TestingOptions {
   /**
    * Enables debug for a testing process
    */
-  var isDebugEnabled: Boolean = getBooleanProperty("intellij.build.test.debug.enabled", true)
+  var isDebugEnabled: Boolean = getBooleanProperty("intellij.build.test.debug.enabled")
 
   /**
    * Specifies address on which the testing process will listen for connections, by default a localhost will be used.

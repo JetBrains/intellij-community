@@ -24,7 +24,7 @@ show_help() {
   echo "  --help               Show this help message"
   echo ""
   echo "Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions"
-  echo "  Example: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005"
+  echo "  Example: -Dintellij.build.test.debug.enabled=true -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005"
 }
 
 set -eu
@@ -188,5 +188,5 @@ echo   --debug              Debug build scripts JVM process
 echo   --help               Show this help message
 echo.
 echo Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions
-echo   Example: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
+echo   Example: -Dintellij.build.test.debug.enabled=true -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
 exit /b 0
