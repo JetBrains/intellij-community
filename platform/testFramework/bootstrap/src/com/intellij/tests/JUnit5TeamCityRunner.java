@@ -729,11 +729,12 @@ public final class JUnit5TeamCityRunner {
         if (duration > 0) {
           attrs.put("duration", Long.toString(duration));
         }
+        if (ex != null) {
+          attrs.put("message", limit(ex.toString()));  // if empty reason
+          attrs.put("details", getTrace(ex, MAX_STACKTRACE_MESSAGE_LENGTH));
+        }
         if (reason != null) {
           attrs.put("message", limit(reason));
-        }
-        if (ex != null) {
-          attrs.put("details", getTrace(ex, MAX_STACKTRACE_MESSAGE_LENGTH));
         }
         if (ex != null) {
           if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
