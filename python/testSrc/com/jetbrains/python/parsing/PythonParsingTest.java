@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
 import com.intellij.lang.LanguageASTFactory;
@@ -1460,6 +1461,36 @@ public class PythonParsingTest extends ParsingTestCase {
   // PEP 798: unpacking (* and **) in comprehensions and generator expressions
   public void testUnpackingInComprehensions() {
     doTest(LanguageLevel.PYTHON315);
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testCommentIsTheOnlyLineOfBlock() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testCommentIsTheOnlyLineOfBlockAtEndOfFile() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testCommentIsTheOnlyLineOfMatchBlock() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testOverIndentedCommentBeforeBlockBody() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testCommentSeparatedByBlankLineFromBlock() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-78251")
+  public void testCommentOnlyBlockFollowedByDedentedStatement() {
+    doTest();
   }
 
   public void doTest() {

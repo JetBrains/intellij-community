@@ -603,6 +603,77 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK");
   }
 
+  // PY-78251
+  @Test
+  public void testCommentIsTheOnlyLineOfBlock() {
+    doTest("""
+             if a:
+                 # comment
+             """,
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-78251
+  @Test
+  public void testCommentIsTheOnlyLineOfBlockAtEndOfFile() {
+    doTest("if a:\n    # comment",
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:END_OF_LINE_COMMENT", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-78251
+  @Test
+  public void testOverIndentedCommentDoesNotSetBlockIndent() {
+    doTest("""
+             if a:
+                     # comment
+                 pass
+             """,
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT",
+           "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-78251
+  @Test
+  public void testCommentIndentIsKeptWhenBlockHasCode() {
+    doTest("""
+             if a:
+                 # comment
+                 pass
+             """,
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT",
+           "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-78251
+  @Test
+  public void testCommentAfterBlockIsNotIndented() {
+    doTest("""
+             if a:
+                 pass
+             # comment
+             """,
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
+  // PY-78251
+  @Test
+  public void testCommentOnlyBlockDoesNotSwallowNextStatement() {
+    doTest("""
+             if a:
+                 # comment
+             pass
+             """,
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -444,5 +445,63 @@ public class PyIndentTest extends PyTestCase {
                          ...
                      <caret>""")
     );
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlock() {
+    doTest(
+      """
+        if True:
+            if False:
+                # Comment<caret>""",
+      """
+        if True:
+            if False:
+                # Comment
+                <caret>""");
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentBeforeCommentInBlockOnSameLine() {
+    doTest(
+      """
+        if True:
+            if False:<caret> # Space before
+        """,
+      """
+        if True:
+            if False:
+                <caret># Space before
+        """);
+  }
+
+  // The formatter keeps a comment that starts in the first column. A space before the comment avoids that.
+  // This holds at every nesting level and does not depend on PY-78251.
+  @TestFor(issues = "PY-78251")
+  public void testIndentBeforeCommentInBlockOnSameLineWithoutSpace() {
+    doTest(
+      """
+        if True:
+            if False:<caret># No space before
+        """,
+      """
+        if True:
+            if False:
+        <caret># No space before
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterCommentInBlockOnSameLine() {
+    doTest(
+      """
+        if True:
+            if False: # Comment<caret>
+        """,
+      """
+        if True:
+            if False: # Comment
+                <caret>
+        """);
   }
 }

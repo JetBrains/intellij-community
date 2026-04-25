@@ -173,6 +173,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
       return false;
     }
+
     parseCaseClauses();
     mark.done(PyElementTypes.MATCH_STATEMENT);
     return true;
@@ -185,12 +186,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
+        skipEmptySuiteBreaks();
+        boolean caseClauseFound = false;
         while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          caseClauseFound = true;
           if (!parseCaseClause()) {
             SyntaxTreeBuilder.Marker illegalStatement = myBuilder.mark();
             parseStatement();
             illegalStatement.error(PyParsingBundle.message("PARSE.expected.case.clause"));
           }
+        }
+        if (!caseClauseFound) {
+          myBuilder.error(PyParsingBundle.message("indent.expected"));
         }
         if (!myBuilder.eof()) {
           assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
@@ -1029,6 +1036,17 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     parseSuite(null, null);
   }
 
+  /**
+   * Skips the statement breaks that start a suite with no code in it.
+   * A suite whose body is only a comment gets an INDENT and then the statement break of the last line.
+   * That break starts no statement.
+   */
+  protected void skipEmptySuiteBreaks() {
+    while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
+    }
+  }
+
   public void parseSuite(@Nullable SyntaxTreeBuilder.Marker endMarker, @Nullable IElementType elType) {
     if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
       myBuilder.advanceLexer();
@@ -1037,8 +1055,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
+        skipEmptySuiteBreaks();
+        boolean statementFound = false;
         while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          statementFound = true;
           parseStatement();
+        }
+        if (!statementFound) {
+          myBuilder.error(PyParsingBundle.message("indent.expected"));
         }
       }
       else {

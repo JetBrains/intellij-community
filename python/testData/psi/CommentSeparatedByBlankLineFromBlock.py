@@ -1,0 +1,4 @@
+if a:
+
+    # comment
+    pass

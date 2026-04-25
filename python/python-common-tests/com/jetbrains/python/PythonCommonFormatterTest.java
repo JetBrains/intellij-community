@@ -1396,6 +1396,16 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PY-78251
+  public void testCommentInBlockKept() {
+    doTest();
+  }
+
+  // PY-78251
+  public void testCommentSeparatedByBlankLineFromBlock() {
+    doTest();
+  }
+
   // PY-31689
   public void testListWrappingBracketsOnNewLine() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);

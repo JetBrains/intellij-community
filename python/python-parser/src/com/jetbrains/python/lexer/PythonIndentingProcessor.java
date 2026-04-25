@@ -22,6 +22,13 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected final IntArrayList myIndentStack = new IntArrayList();
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
+  protected IElementType myLastSignificantTokenType;
+  /**
+   * Indent of the first comment line of a new suite, or {@code -1}.
+   * The next line that holds code replaces it with the body indent.
+   */
+  protected int myDeferredSuiteIndent = -1;
+
   protected int myLastNewLineIndent = -1;
   protected int myCurrentNewLineIndent = 0;
 
@@ -227,6 +234,8 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     myBraceLevel = 0;
     adjustBraceLevel();
     myLineHasSignificantTokens = false;
+    myLastSignificantTokenType = null;
+    myDeferredSuiteIndent = -1;
     checkSignificantTokens();
     checkFString();
     if (isBaseAt(PyTokenTypes.SPACE)) {
@@ -269,6 +278,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     IElementType tokenType = getBaseTokenType();
     if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType()) {
       myLineHasSignificantTokens = true;
+      myLastSignificantTokenType = tokenType;
     }
   }
 
@@ -289,6 +299,9 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
           // Treat EOF as an indent of size 0
           else if (getBaseTokenType() == null) {
             closeDanglingSuitesWithComments(0, commentEnd);
+            // The comment is the last token of the file. The suite it opens has no body,
+            // so drop the deferred indent instead of opening the suite.
+            myDeferredSuiteIndent = -1;
           }
           else {
             break;
@@ -379,17 +392,36 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     int lastIndent = myIndentStack.topInt();
     int indent = getNextLineIndent();
     myLastNewLineIndent = indent;
-    // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
+    int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
+
     if (getBaseTokenType() == getCommentTokenType()) {
+      // This is the first comment line of a new suite. The compound clause before it ends with a colon.
+      // Defer the INDENT. The next line that holds code sets the body indent.
+      // An over-indented comment must not set it.
+      if (myLastSignificantTokenType == PyTokenTypes.COLON && myDeferredSuiteIndent < 0 && indent > lastIndent) {
+        myDeferredSuiteIndent = indent;
+        myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
+        return;
+      }
+      // For every other comment, generate no INDENT and no DEDENT.
       indent = lastIndent;
     }
-    int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
+    else if (myDeferredSuiteIndent >= 0) {
+      // The line that holds code sets the body indent. At the end of the file no such line exists,
+      // and the comment indent stays.
+      int deferredIndent = myDeferredSuiteIndent;
+      myDeferredSuiteIndent = -1;
+      if (getBaseTokenType() == null) {
+        indent = deferredIndent;
+      }
+      if (indent > lastIndent) {
+        openSuite(indent, whiteSpaceStart, whiteSpaceEnd, whitespaceTokenType);
+        return;
+      }
+    }
+
     if (indent > lastIndent) {
-      myIndentStack.push(indent);
-      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
-      int insertIndex = skipPrecedingCommentsWithIndent(indent, myTokenQueue.size() - 1);
-      int indentOffset = insertIndex == myTokenQueue.size() ? whiteSpaceEnd : myTokenQueue.get(insertIndex).getStart();
-      myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
+      openSuite(indent, whiteSpaceStart, whiteSpaceEnd, whitespaceTokenType);
     }
     else if (indent < lastIndent) {
       closeDanglingSuitesWithComments(indent, whiteSpaceStart);
@@ -398,6 +430,15 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     else {
       myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
     }
+  }
+
+  /** Opens a suite at {@code indent}. The INDENT goes before the comments that already have that indent. */
+  private void openSuite(int indent, int whiteSpaceStart, int whiteSpaceEnd, IElementType whitespaceTokenType) {
+    myIndentStack.push(indent);
+    myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
+    int insertIndex = skipPrecedingCommentsWithIndent(indent, myTokenQueue.size() - 1);
+    int indentOffset = insertIndex == myTokenQueue.size() ? whiteSpaceEnd : myTokenQueue.get(insertIndex).getStart();
+    myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
   }
 
   private void closeDanglingSuitesWithComments(int indent, int whiteSpaceStart) {
