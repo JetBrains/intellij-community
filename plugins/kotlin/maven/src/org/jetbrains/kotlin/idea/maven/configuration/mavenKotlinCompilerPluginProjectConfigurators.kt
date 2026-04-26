@@ -3,10 +3,13 @@ package org.jetbrains.kotlin.idea.maven.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.xml.XmlFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.kotlin.allopen.AllOpenPluginNames
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
@@ -17,6 +20,8 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Com
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.findModulePomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.findPomXmlByFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
+import org.jetbrains.kotlin.idea.maven.createChildTag
+import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
@@ -43,9 +48,15 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
                 pluginDependencyMavenId?.let {
                     pom.addPluginDependency(kotlinPlugin, it)
                 }
+                pom.customizeKotlinPlugin(kotlinPlugin)
                 configurationResultBuilder.configuredModule(module)
             }
         }
+    }
+
+    protected open fun PomFile.customizeKotlinPlugin(
+        kotlinPlugin: MavenDomPlugin
+    ) {
     }
 
     protected abstract val pluginDependencyMavenId: MavenId?
@@ -107,4 +118,33 @@ class JpaMavenKotlinCompilerPluginProjectConfigurator : AbstractMavenKotlinCompi
     override val pluginDependencyMavenId: MavenId
         get() = MavenId(GROUP_ID, "kotlin-maven-noarg", $$"${$$KOTLIN_VERSION_PROPERTY}")
 
+    override fun PomFile.customizeKotlinPlugin(kotlinPlugin: MavenDomPlugin) {
+        val propertyTag = this.findProperty(KOTLIN_VERSION_PROPERTY) ?: return
+        val version = IdeKotlinVersion.get(propertyTag.value.text)
+        if (version.kotlinVersion.isAtLeast(2, 3, 20)) return
+
+        addAllOpenKotlinCompilerPluginPreset(kotlinPlugin, kotlinCompilerPluginId)
+    }
+}
+@ApiStatus.Internal
+internal fun PomFile.addAllOpenKotlinCompilerPluginPreset(kotlinPlugin: MavenDomPlugin, kotlinCompilerPluginId: String) {
+    val allOpenPluginName = "all-open"
+
+    val allOpenPluginMavenId = MavenId(GROUP_ID, "kotlin-maven-allopen", $$"${$$KOTLIN_VERSION_PROPERTY}")
+    addKotlinCompilerPlugin(allOpenPluginName)
+    addPluginDependency(kotlinPlugin, allOpenPluginMavenId)
+
+    val configurationElement = kotlinPlugin.configuration.ensureTagExists()
+    val pluginOptions = configurationElement.findSubTagOrCreate("pluginOptions")
+    val options = AllOpenPluginNames.SUPPORTED_PRESETS[kotlinCompilerPluginId] ?: return
+    val optionTagName = "option"
+
+    for (option in options) {
+        val value = "${allOpenPluginName}:${AllOpenPluginNames.ANNOTATION_OPTION_NAME}=$option"
+        val firstOrNull = pluginOptions.findSubTags(optionTagName).firstOrNull { it.value.text == value }
+        firstOrNull?.let { continue }
+
+        val optionTag = pluginOptions.createChildTag(optionTagName, value)
+        pluginOptions.add(optionTag)
+    }
 }

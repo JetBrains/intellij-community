@@ -777,10 +777,12 @@ fun PomFile.changeFeatureConfiguration(
 private fun MavenDomElement.createChildTag(name: String, value: String? = null): XmlTag? =
     xmlTag?.createChildTag(name, value)
 
-private fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
+@ApiStatus.Internal
+internal fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
     createChildTag(name, namespace, value, false)!!
 
-private fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
+@ApiStatus.Internal
+internal fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
     findSubTags(name).firstOrNull() ?: run {
         val childTag = createChildTag(name)
         add(childTag) as XmlTag

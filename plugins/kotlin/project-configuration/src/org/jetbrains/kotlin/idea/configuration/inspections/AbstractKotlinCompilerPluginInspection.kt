@@ -111,9 +111,7 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
                 scope.hasKotlinJvmRuntime(module.project)
             })
 
-            if (!hasKotlinJvmRuntime) return false
-
-            return isAvailableForFileInModule(ktFile, module)
+            return hasKotlinJvmRuntime && isAvailableForFileInModule(ktFile, module)
         }
 
         fun configureCompilerPlugin(project: Project, module: Module, kotlinCompilerPluginId: String) {

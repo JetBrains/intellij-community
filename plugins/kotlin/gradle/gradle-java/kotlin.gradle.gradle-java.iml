@@ -96,5 +96,9 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
   </component>
 </module>
