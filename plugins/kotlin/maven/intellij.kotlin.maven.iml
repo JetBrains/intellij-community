@@ -48,5 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
   </component>
 </module>

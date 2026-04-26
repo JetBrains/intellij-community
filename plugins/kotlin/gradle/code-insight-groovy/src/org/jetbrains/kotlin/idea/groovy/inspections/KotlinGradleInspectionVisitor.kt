@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
-const val KOTLIN_PLUGIN_CLASSPATH_MARKER = "${KotlinGradleConstants.GROUP_ID}:${KotlinGradleConstants.GRADLE_PLUGIN_ID}:"
+const val KOTLIN_PLUGIN_CLASSPATH_MARKER: String = "${KotlinGradleConstants.GROUP_ID}:${KotlinGradleConstants.GRADLE_PLUGIN_ID}:"
 
 abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
     override fun visitFile(file: GroovyFileBase) {
@@ -26,12 +26,13 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
 
         val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
 
+        val virtualFile = file.virtualFile ?: return
         if (!isUnitTestMode()) {
-            val module = fileIndex.getModuleForFile(file.virtualFile) ?: return
+            val module = fileIndex.getModuleForFile(virtualFile) ?: return
             if (!module.isGradleModule) return
         }
 
-        if (fileIndex.isExcluded(file.virtualFile)) return
+        if (fileIndex.isExcluded(virtualFile)) return
 
         super.visitFile(file)
     }
