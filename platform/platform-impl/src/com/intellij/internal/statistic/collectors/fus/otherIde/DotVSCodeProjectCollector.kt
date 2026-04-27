@@ -123,16 +123,25 @@ private fun detectCppInVsCodeSettings(vsCodeDir: VirtualFile): Boolean {
   }
 }
 
+private const val configurationNodeKey = "configurations"
+
 private fun reportLaunchJsonDetected(rootNode: JsonNode): MetricEvent {
   val hasCompounds = rootNode.has("compounds")
-  val configurationsNode = rootNode.get("configurations")
-  val numberOfConfigurations = if (configurationsNode.isArray) {
-    configurationsNode.count { it.isObject } // filter some garbage like null
-  }
-  else {
-    LOG.info("\"configurations\" field is expected to be an array of objects, but the actual type is ${configurationsNode.nodeType}")
-    -1 // incorrect launch.json
-  }
+
+  val numberOfConfigurations = getNumberOfConfigurations(rootNode)
 
   return launchJsonDetectedEvent.metric(numberOfConfigurations, hasCompounds)
+}
+
+private fun getNumberOfConfigurations(rootNode: JsonNode): Int {
+  if (rootNode.has(configurationNodeKey)) {
+    val configurationsNode = rootNode.get(configurationNodeKey)
+    if (configurationsNode.isArray) {
+      return configurationsNode.count { it.isObject } // filter some garbage like null
+    } else {
+      return -1;
+    }
+  }
+
+  return 0;
 }
