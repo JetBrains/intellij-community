@@ -51,18 +51,22 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
     }
 
     private fun createPopup(link: DropDownLink<CommitToAmend>, amendHandler: AmendCommitHandler): JBPopup {
-      val items = listOf<CommitToAmend>(CommitToAmend.Last.Unknown)
+      CommitSessionCollector.getInstance(amendHandler.project).logAmendPopupShown()
+
+      val initialItems: List<IndexedValue<CommitToAmend>> = listOf(IndexedValue(0, CommitToAmend.Last.Unknown))
       val subjectMaxLength = getSubjectRightMargin(amendHandler.project)
+
       val builder = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(items)
+        .createPopupChooserBuilder(initialItems)
         .setNamerForFiltering {
-          itemToString(it)
+          itemToString(it.value)
         }
         .setRenderer(listCellRenderer {
-          val isSelected = value == link.selectedItem || (value is CommitToAmend.Last && link.selectedItem is CommitToAmend.Last)
+          val commit = value.value
+          val isSelected = commit == link.selectedItem || (commit is CommitToAmend.Last && link.selectedItem is CommitToAmend.Last)
           icon(if (isSelected) AllIcons.Actions.Checked else AllIcons.Empty)
 
-          val lastKnown = value as? CommitToAmend.Last.Known
+          val lastKnown = commit as? CommitToAmend.Last.Known
           if (lastKnown != null) {
             text(VcsBundle.message("dropdown.link.amend")) {
               attributes = REGULAR_BOLD_ATTRIBUTES
@@ -75,18 +79,18 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
             toolTipText = lastKnown.subject.takeIf { formattedSubject != it }
           }
           else {
-            val fullText = itemToString(value)
-            val popupText = itemToText(value, subjectMaxLength)
+            val fullText = itemToString(commit)
+            val popupText = itemToText(commit, subjectMaxLength)
             text(popupText) {
               speedSearch {}
             }
             toolTipText = fullText.takeIf { popupText != it }
           }
         })
-        .setSelectedValue(link.selectedItem, true)
         .setVisibleRowCount(5)
         .setItemChosenCallback {
-          amendHandler.commitToAmend = it
+          amendHandler.commitToAmend = it.value
+          CommitSessionCollector.getInstance(amendHandler.project).logAmendCommitSelected(it.index)
         }
 
       val popup = builder.createPopup()
@@ -94,7 +98,7 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
 
       popup.content.launchOnShow("Amend targets fetcher") {
         updater.paintBusy(true)
-        val loaded = amendHandler.getAmendSpecificCommitTargets().ifEmpty { listOf(CommitToAmend.Last.Unknown) }
+        val loaded = amendHandler.getAmendSpecificCommitTargets().withIndex().toList().ifEmpty { initialItems }
         updater.replaceModel(loaded)
         updater.paintBusy(false)
         withContext(Dispatchers.UI) {

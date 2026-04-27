@@ -38,7 +38,7 @@ import java.util.WeakHashMap
 import javax.swing.JTree
 
 internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("commit.interactions", 5)
+  val GROUP = EventLogGroup("commit.interactions", 6)
 
   val FILES_TOTAL = EventFields.RoundedInt("files_total")
   val FILES_INCLUDED = EventFields.RoundedInt("files_included")
@@ -53,6 +53,7 @@ internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   val IS_SUCCESS = EventFields.Boolean("is_success")
   private val WARNINGS_COUNT = EventFields.RoundedInt("warnings_count")
   private val ERRORS_COUNT = EventFields.RoundedInt("errors_count")
+  private val COMMIT_TO_AMEND_ORDINAL = EventFields.RoundedInt("commit_to_amend_ordinal")
 
   val SESSION = GROUP.registerIdeActivity("session",
                                           startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
@@ -76,6 +77,8 @@ internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   val VIEW_COMMIT_PROBLEM = GROUP.registerEvent("view.commit.problem", COMMIT_PROBLEM_CLASS, COMMIT_PROBLEM_PLACE)
   val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
   val COMMIT_DUMB_BLOCKED = GROUP.registerEvent("commit.dumb.blocked")
+  val AMEND_POPUP_SHOWN = GROUP.registerEvent("amend.popup.shown")
+  val COMMIT_TO_AMEND_SELECTED = GROUP.registerEvent("commit.to.amend.selected", COMMIT_TO_AMEND_ORDINAL)
 
   override fun getGroup(): EventLogGroup = GROUP
 }
@@ -195,6 +198,14 @@ class CommitSessionCollector(val project: Project) {
 
   internal fun logSmartCommitCheckBlocked() {
     CommitSessionCounterUsagesCollector.COMMIT_DUMB_BLOCKED.log(project)
+  }
+
+  internal fun logAmendPopupShown() {
+    CommitSessionCounterUsagesCollector.AMEND_POPUP_SHOWN.log(project)
+  }
+
+  internal fun logAmendCommitSelected(ordinal: Int) {
+    CommitSessionCounterUsagesCollector.COMMIT_TO_AMEND_SELECTED.log(project, ordinal)
   }
 
   internal fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitProblemPlace) {
