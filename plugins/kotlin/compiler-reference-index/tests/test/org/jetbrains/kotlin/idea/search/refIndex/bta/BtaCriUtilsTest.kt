@@ -2,13 +2,17 @@
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.testFramework.rules.TempDirectory
+import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
+import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
+@OptIn(ExperimentalBuildToolsApi::class)
 class BtaCriUtilsTest {
     @Rule
     @JvmField
@@ -37,6 +41,36 @@ class BtaCriUtilsTest {
         createGradleKotlinPath(modulePath, "compileMetadata")
 
         assertEquals(emptyList<String>(), getGradleCriPaths(modulePath).map { it.toString() })
+    }
+
+    @Test
+    fun `test CRI paths return empty when build kotlin directory does not exist`() {
+        val modulePath = createModulePath()
+
+        assertEquals(emptyList<String>(), getGradleCriPaths(modulePath).map { it.toString() })
+    }
+
+    @Test
+    fun `test CRI paths return empty when build kotlin directory is empty`() {
+        val modulePath = createModulePath()
+        (modulePath / "build" / "kotlin").createDirectories()
+
+        assertEquals(emptyList<String>(), getGradleCriPaths(modulePath).map { it.toString() })
+    }
+
+    @Test
+    fun `test Maven CRI path found when artifacts exist`() {
+        val modulePath = createModulePath()
+        val expectedCriPath = (modulePath / "target" / "kotlin-ic" / "compile" / CriToolchain.DATA_PATH).createDirectories()
+
+        assertEquals(expectedCriPath.toString(), getMavenCriPath(modulePath)?.toString())
+    }
+
+    @Test
+    fun `test Maven CRI path returns null when target directory does not exist`() {
+        val modulePath = createModulePath()
+
+        assertNull(getMavenCriPath(modulePath))
     }
 
     private fun createModulePath(): Path = tempDir.newDirectoryPath("module")

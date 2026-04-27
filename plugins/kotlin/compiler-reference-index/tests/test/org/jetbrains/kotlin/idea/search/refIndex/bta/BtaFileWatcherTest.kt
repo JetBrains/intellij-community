@@ -10,6 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import kotlin.io.path.div
 import kotlin.io.path.setLastModifiedTime
 
 @OptIn(ExperimentalBuildToolsApi::class)
@@ -44,6 +45,13 @@ class BtaFileWatcherTest {
         createCriArtifact("unrelated.table", timestamp = 30)
 
         assertEquals(FileTime.fromMillis(10), getCriArtifactTimestamp(criPath))
+    }
+
+    @Test
+    fun `test CRI artifact timestamp returns null for nonexistent directory`() {
+        val nonexistentPath = tempDir.newDirectoryPath("parent") / "nonexistent"
+
+        assertNull(getCriArtifactTimestamp(nonexistentPath))
     }
 
     private fun createCriPath(): Path = tempDir.newDirectoryPath(CriToolchain.DATA_PATH)

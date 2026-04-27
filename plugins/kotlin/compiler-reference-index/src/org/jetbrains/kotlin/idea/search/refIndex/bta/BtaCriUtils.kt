@@ -62,7 +62,8 @@ fun getGradleCriPaths(modulePath: Path): Collection<Path> {
         .toSet()
 }
 
-private fun getMavenCriPath(modulePath: Path): Path? {
+@ApiStatus.Internal
+fun getMavenCriPath(modulePath: Path): Path? {
     val criPath = modulePath / "target" / "kotlin-ic" / "compile" / CriToolchain.DATA_PATH
     return criPath.takeIf { it.exists() }
 }
