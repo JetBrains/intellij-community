@@ -29,6 +29,7 @@ import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
+import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -365,6 +366,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         terminal.setTopComponent(component, disposable)
       }
     }
+
+    installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
   }
 
   private fun getToolWindow(): ToolWindow {

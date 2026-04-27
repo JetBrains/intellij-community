@@ -890,7 +890,6 @@ class TerminalViewImpl(
 internal fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()
 
 @get:ApiStatus.Internal
-@get:VisibleForTesting
 val TerminalOutputModel.cursorOffsetFlow: Flow<TerminalOffset>
   get() = callbackFlow {
     addListener(asDisposable(), object : TerminalOutputModelListener {

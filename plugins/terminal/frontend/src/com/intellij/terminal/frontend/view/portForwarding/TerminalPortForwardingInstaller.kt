@@ -1,0 +1,156 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.frontend.view.portForwarding
+
+import com.intellij.execution.portsWatcher.ListeningPort
+import com.intellij.execution.portsWatcher.ListeningPortHandler
+import com.intellij.execution.portsWatcher.PortListeningOptions
+import com.intellij.execution.portsWatcher.ProcessPortsWatcher
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.provider.resolveEelMachine
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.impl.cursorOffsetFlow
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * Installs a port-forwarding panel above the terminal output for [terminalView].
+ *
+ * Waits for the terminal session to be ready, then (only if the started process is a
+ * [TerminalProcessType.SHELL]):
+ * 1. Starts a [ProcessPortsWatcher] against the shell's EEL environment
+ * and PID.
+ * 2. Once listening port is detected, checks if port forwarding is already set up using [TerminalPortForwardingManager].
+ * 3. Updates the [PortForwardingViewModel], so the [PortForwardingWidget] can render available ports.
+ *
+ * Lifecycle of all related logic is bound to the [coroutineScope].
+ * Once it is canceled, watcher stops, all established forwardings are stopped, and the top component is removed.
+ */
+internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: CoroutineScope) {
+  coroutineScope.launch {
+    val session = terminalView.sessionDeferred.await()
+    val startupOptions = terminalView.startupOptionsDeferred.await()
+    if (startupOptions.processType != TerminalProcessType.SHELL) {
+      // Install port forwarding only for shell processes
+      return@launch
+    }
+
+    val eelDescriptor = session.eelDescriptor
+    val eelMachine = try {
+      eelDescriptor.resolveEelMachine()
+    }
+    catch (e: EelUnavailableException) {
+      LOG.error("Failed to resolve EEL machine for $eelDescriptor", e)
+      return@launch
+    }
+
+    val model = PortForwardingViewModel(eelDescriptor)
+    val watcher = installPortsWatcher(
+      eelMachine = eelMachine,
+      processId = session.processId,
+      model = model,
+      coroutineScope = coroutineScope
+    )
+    resetWatcherOnCursorLineChange(terminalView, watcher, coroutineScope)
+    installCleanupJob(eelMachine, model, coroutineScope)
+
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      val panelScope = coroutineScope.childScope("TerminalPortForwardingPanel")
+      val panel = PortForwardingWidget(model, panelScope)
+      terminalView.setTopComponent(panel, panelScope.asDisposable())
+    }
+  }
+}
+
+private fun installPortsWatcher(
+  eelMachine: EelMachine,
+  processId: Long,
+  model: PortForwardingViewModel,
+  coroutineScope: CoroutineScope,
+): ProcessPortsWatcher {
+  val handler = object : ListeningPortHandler {
+    override fun onPortListeningStarted(port: ListeningPort) {
+      // Do not auto-forward, only check if port forwarding is already set up.
+      val existingLocalPort = TerminalPortForwardingManager.getInstance().getForwardedLocalPort(eelMachine, port.port)
+      if (existingLocalPort != null) {
+        model.setForwarded(port.port, existingLocalPort)
+      }
+      else {
+        model.setNotForwarded(port.port)
+      }
+    }
+
+    override fun onPortListeningEnded(port: ListeningPort) {
+      TerminalPortForwardingManager.getInstance().stopForwarding(eelMachine, port.port)
+      model.removePort(port.port)
+    }
+  }
+
+  return ProcessPortsWatcher.startWatching(
+    eelDescriptor = model.eelDescriptor,
+    pid = processId,
+    handler = handler,
+    coroutineScope = coroutineScope,
+    options = PortListeningOptions.INCLUDE_CHILDREN,
+  )
+}
+
+/**
+ * [ProcessPortsWatcher] is based on polling approach, so we need to reset its delay heuristically.
+ * This method resets the delay when the cursor is moved to a different line.
+ */
+@OptIn(FlowPreview::class)
+private fun resetWatcherOnCursorLineChange(
+  terminalView: TerminalView,
+  watcher: ProcessPortsWatcher,
+  coroutineScope: CoroutineScope,
+) {
+  coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("TerminalPortsWatcher reset job")) {
+    val outputModel = terminalView.outputModels.regular
+    var curCursorLine = outputModel.getLineByOffset(outputModel.cursorOffset)
+    outputModel.cursorOffsetFlow
+      .sample(300.milliseconds)
+      .collect { cursorOffset ->
+        val newLine = outputModel.getLineByOffset(cursorOffset)
+        if (newLine != curCursorLine) {
+          curCursorLine = newLine
+          watcher.resetDelay()
+        }
+      }
+  }
+}
+
+/**
+ * When the [coroutineScope] is canceled (e.g., tab closed) tears down every forwarding this tab established.
+ */
+private fun installCleanupJob(
+  eelMachine: EelMachine,
+  model: PortForwardingViewModel,
+  coroutineScope: CoroutineScope,
+) {
+  coroutineScope.coroutineContext.job.invokeOnCompletion {
+    val ports = model.items.value.map { it.remotePort }
+    if (ports.isEmpty()) return@invokeOnCompletion
+
+    val manager = TerminalPortForwardingManager.getInstance()
+    for (port in ports) {
+      manager.stopForwarding(eelMachine, port)
+    }
+  }
+}
+
+private val LOG = fileLogger()
