@@ -8,12 +8,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
@@ -88,7 +90,7 @@ public final class JBCefApp {
   private static final int    SETTINGS_CEF_VERSION_DEFAULT_VAL = 137;  // NOTE: this check is appeared when CEF 137 is used.
   private static final String SETTINGS_CEF_VERSION_KEY = "cef_version_last_used";
   private static final String SETTINGS_CEF_TEMP_CACHE_KEY = "cef_cleanup_temporary_cache_folder";
-
+  private static final String SETTINGS_IS_CLEARED_2026_1_2 = "cef_is_cleared_caches_2026_1_2";
   private static final String MIN_SUPPORTED_GLIBC_DEFAULT = "2.28.0";
 
   private static final AtomicInteger CEFAPP_INSTANCE_COUNT = new AtomicInteger(0);
@@ -248,19 +250,28 @@ public final class JBCefApp {
     final PropertiesComponent props = PropertiesComponent.getInstance();
     final int cefVersionLast = props.getInt(SETTINGS_CEF_VERSION_KEY, SETTINGS_CEF_VERSION_DEFAULT_VAL);
     final int cefVersionCurrent = version.cefVersion.major;
-    if (cefVersionCurrent != cefVersionLast) {
+    final boolean isCleared2026_1_2 = props.getBoolean(SETTINGS_IS_CLEARED_2026_1_2);
+    final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    final boolean doClearCacheFor2026_1_2 = SystemInfoRt.isMac && appInfo.getFullVersion().startsWith("2026.1.2") && !isCleared2026_1_2;
+    final boolean isVersionChanged = cefVersionCurrent != cefVersionLast;
+    if (isVersionChanged || doClearCacheFor2026_1_2) {
       // NOTE: settings.cache_path is always not null
       Path cache_path = Path.of(settings.cache_path);
       Path tmp_cache_path = cache_path.getParent().resolve("jcef_cache_temp");
       settings.cache_path = tmp_cache_path.toString();
-      LOG.info(String.format(
-        "JCEF: CEF version has been updated from %d to %d. Cache folder '%s' will be cleared in bg thread, CEF will be started with temporary cache folder '%s'",
-        cefVersionLast, cefVersionCurrent, cache_path, tmp_cache_path));
+      if (isVersionChanged)
+        LOG.info(String.format(
+          "JCEF: CEF version has been updated from %d to %d. Cache folder '%s' will be cleared in bg thread, CEF will be started with temporary cache folder '%s'",
+          cefVersionLast, cefVersionCurrent, cache_path, tmp_cache_path));
+      else
+        LOG.info(String.format(
+          "JCEF: CEF cache folder '%s' will be cleared in bg thread (since ide version 2026.1.2), CEF will be started with temporary cache folder '%s'", cache_path, tmp_cache_path));
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         props.setValue(SETTINGS_CEF_VERSION_KEY, cefVersionCurrent, SETTINGS_CEF_VERSION_DEFAULT_VAL);
         props.setValue(SETTINGS_CEF_TEMP_CACHE_KEY, tmp_cache_path.toString());
-
+        if (doClearCacheFor2026_1_2)
+          props.setValue(SETTINGS_IS_CLEARED_2026_1_2, true);
         try {
           NioFiles.deleteRecursively(cache_path);
         } catch (IOException e) {
