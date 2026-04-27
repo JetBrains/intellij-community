@@ -163,6 +163,7 @@ internal suspend fun performInMemoryRebase(
   objectRepo: GitObjectRepository,
   entries: List<GitRebaseEntry>,
   model: GitRebaseTodoModel<out GitRebaseEntry>,
+  origin: InMemoryRebaseOrigin,
   notifySuccess: Boolean = true,
 ): GitCommitEditingOperationResult {
   if (!isInMemoryRebaseSupported(objectRepo.repository)) {
@@ -172,7 +173,7 @@ internal suspend fun performInMemoryRebase(
 
   val rebaseData = createRebaseData(model, entries, objectRepo.repository, showFailureNotification)
                    ?: return GitCommitEditingOperationResult.Incomplete
-  val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(objectRepo.repository.project)
+  val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(objectRepo.repository.project, origin)
   val operationResult = executeRebase(objectRepo, rebaseData, showFailureNotification, rebaseActivity)
 
   when (operationResult) {
@@ -336,4 +337,11 @@ internal enum class InMemoryRebaseResult {
   CONFLICT,
   CANCELED,
   ERROR
+}
+
+internal enum class InMemoryRebaseOrigin {
+  INTERACTIVE_REBASE,
+  SQUASH,
+  DROP,
+  AMEND_COMMIT
 }

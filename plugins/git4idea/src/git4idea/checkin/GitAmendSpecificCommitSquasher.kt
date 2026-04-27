@@ -15,6 +15,7 @@ import git4idea.GitDisposable
 import git4idea.GitUtil
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
+import git4idea.inMemory.rebase.InMemoryRebaseOrigin
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
 import git4idea.inMemory.rebase.log.RebaseEntriesSource
 import git4idea.rebase.GitSquashedCommitsMessage
@@ -47,8 +48,11 @@ internal object GitAmendSpecificCommitSquasher {
         throw VcsException(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"))
       }
 
-      val result =
-        InMemoryRebaseOperations.squash(repository, listOf(amendCommit, targetCommit), newMessage, RebaseEntriesSource.Entries(entries))
+      val result = InMemoryRebaseOperations.squash(repository,
+                                                   listOf(amendCommit, targetCommit),
+                                                   newMessage,
+                                                   RebaseEntriesSource.Entries(entries),
+                                                   InMemoryRebaseOrigin.AMEND_COMMIT)
 
       when (result) {
         is GitCommitEditingOperationResult.Complete -> return@runBlockingCancellable

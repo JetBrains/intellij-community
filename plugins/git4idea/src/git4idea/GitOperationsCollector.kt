@@ -11,6 +11,7 @@ import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.config.GitIncomingRemoteCheckStrategy
+import git4idea.inMemory.rebase.InMemoryRebaseOrigin
 import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.merge.GitMergeOption
 import git4idea.pull.GitPullOption
@@ -24,7 +25,7 @@ import git4idea.repo.GitRepository
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 11)
+  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 12)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -55,9 +56,10 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
                                                                       finishEventAdditionalFields = arrayOf(
                                                                         INTERACTIVE_REBASE_WAS_SUCCESSFUL))
   private val IN_MEMORY_REBASE_RESULT = EventFields.Enum<InMemoryRebaseResult>("in_memory_rebase_result")
+  private val IN_MEMORY_REBASE_ORIGIN = EventFields.Enum<InMemoryRebaseOrigin>("in_memory_rebase_origin")
   private val IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("in.memory.interactive.rebase",
-                                                                                finishEventAdditionalFields = arrayOf(
-                                                                                  IN_MEMORY_REBASE_RESULT))
+                                                                                startEventAdditionalFields = arrayOf(IN_MEMORY_REBASE_ORIGIN),
+                                                                                finishEventAdditionalFields = arrayOf(IN_MEMORY_REBASE_RESULT))
 
   private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<GetEntriesUsingLogResult.FailureReason>("cant_rebase_using_log_reason")
   private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log",
@@ -122,8 +124,10 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     }
   }
 
-  fun startInMemoryInteractiveRebase(project: Project): StructuredIdeActivity {
-    return IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY.started(project)
+  fun startInMemoryInteractiveRebase(project: Project, origin: InMemoryRebaseOrigin): StructuredIdeActivity {
+    return IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY.started(project) {
+      listOf(IN_MEMORY_REBASE_ORIGIN with origin)
+    }
   }
 
   fun endInMemoryInteractiveRebase(activity: StructuredIdeActivity, result: InMemoryRebaseResult) {

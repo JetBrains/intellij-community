@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.inMemory.GitObjectRepository
+import git4idea.inMemory.rebase.InMemoryRebaseOrigin
 import git4idea.inMemory.rebase.performInMemoryRebase
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.GitRebaseTodoModel
@@ -28,8 +29,9 @@ internal object InMemoryRebaseOperations {
     commitsToSquash: List<VcsCommitMetadata>,
     newMessage: String,
     entriesSource: RebaseEntriesSource,
+    origin: InMemoryRebaseOrigin = InMemoryRebaseOrigin.SQUASH,
   ): GitCommitEditingOperationResult {
-    return executeInMemoryCommitModification(repository, commitsToSquash, entriesSource) { model, toSquashIndices ->
+    return executeInMemoryCommitModification(repository, commitsToSquash, entriesSource, origin) { model, toSquashIndices ->
       val uniteRoot = model.unite(toSquashIndices)
       model.reword(uniteRoot.index, newMessage)
     }
@@ -39,8 +41,9 @@ internal object InMemoryRebaseOperations {
     repository: GitRepository,
     commitsToDrop: List<VcsCommitMetadata>,
     entriesSource: RebaseEntriesSource,
+    origin: InMemoryRebaseOrigin = InMemoryRebaseOrigin.DROP,
   ): GitCommitEditingOperationResult {
-    return executeInMemoryCommitModification(repository, commitsToDrop, entriesSource) { model, toDropIndices ->
+    return executeInMemoryCommitModification(repository, commitsToDrop, entriesSource, origin) { model, toDropIndices ->
       model.drop(toDropIndices)
     }
   }
@@ -49,6 +52,7 @@ internal object InMemoryRebaseOperations {
     repository: GitRepository,
     commits: List<VcsCommitMetadata>,
     entriesSource: RebaseEntriesSource,
+    origin: InMemoryRebaseOrigin,
     modelModifier: (GitRebaseTodoModel<out GitRebaseEntry>, List<Int>) -> Unit,
   ): GitCommitEditingOperationResult {
     val generatedEntries = when (entriesSource) {
@@ -73,6 +77,6 @@ internal object InMemoryRebaseOperations {
     modelModifier(model, targetIndices)
 
     val objectRepo = GitObjectRepository(repository)
-    return performInMemoryRebase(objectRepo, generatedEntries, model, notifySuccess = false)
+    return performInMemoryRebase(objectRepo, generatedEntries, model, origin, notifySuccess = false)
   }
 }

@@ -30,6 +30,7 @@ import git4idea.rebase.log.GitInteractiveRebaseEntriesProvider
 import git4idea.rebase.log.GitRebaseEntryGeneratedUsingLog
 import git4idea.repo.GitRepository
 import com.intellij.openapi.vcs.VcsException
+import git4idea.inMemory.rebase.InMemoryRebaseOrigin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -73,7 +74,7 @@ internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, comm
     withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.title")) {
       if (!hasEditActions && shouldTryInMemory) {
         val objectRepo = GitObjectRepository(repository)
-        val inMemoryResult = performInMemoryRebase(objectRepo, generatedEntries, model)
+        val inMemoryResult = performInMemoryRebase(objectRepo, generatedEntries, model, InMemoryRebaseOrigin.INTERACTIVE_REBASE)
         if (inMemoryResult is GitCommitEditingOperationResult.Complete) return@withBackgroundProgress
       }
 
