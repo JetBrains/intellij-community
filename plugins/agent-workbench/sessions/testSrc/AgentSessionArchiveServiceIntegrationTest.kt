@@ -322,6 +322,7 @@ class AgentSessionArchiveServiceIntegrationTest {
     val sessionSource = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
+      listFromClosedProject = { path -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
     )
     val bridge = testCodexBridge(
       sessionSource = sessionSource,

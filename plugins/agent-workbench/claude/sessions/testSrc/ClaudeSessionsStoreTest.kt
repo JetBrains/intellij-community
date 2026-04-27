@@ -563,9 +563,6 @@ class ClaudeSessionsStoreTest {
     private fun systemEvent(ts: String): String =
       """{"type":"system","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
 
-    private fun queueOp(ts: String): String =
-      """{"type":"queue-operation","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts"}"""
-
     private fun toolResult(ts: String): String =
       """{"type":"user","sessionId":"$S","cwd":"$C","isSidechain":false,"timestamp":"$ts","message":{"role":"user","content":[{"tool_use_id":"tu_1","type":"tool_result","content":"ok"}]}}"""
 
@@ -581,7 +578,11 @@ class ClaudeSessionsStoreTest {
       Arguments.of("full tool cycle + trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), progress("2026-02-08T01:00:02.000Z"), toolResult("2026-02-08T01:00:03.000Z"), assistant("2026-02-08T01:00:04.000Z"), progress("2026-02-08T01:00:05.000Z"), systemEvent("2026-02-08T01:00:06.000Z")), ClaudeSessionActivity.READY),
       Arguments.of("multi-turn re-ask → PROCESSING", listOf(user("2026-02-08T01:00:00.000Z"), assistantToolUse("2026-02-08T01:00:01.000Z"), toolResult("2026-02-08T01:00:02.000Z"), assistant("2026-02-08T01:00:03.000Z"), user("2026-02-08T01:00:04.000Z", "follow up"), progress("2026-02-08T01:00:05.000Z")), ClaudeSessionActivity.PROCESSING),
       Arguments.of("trailing system → READY", listOf(user("2026-02-08T01:00:00.000Z"), systemEvent("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
-      Arguments.of("trailing queue-operation → READY", listOf(user("2026-02-08T01:00:00.000Z"), queueOp("2026-02-08T01:00:01.000Z")), ClaudeSessionActivity.READY),
+      Arguments.of(
+        "trailing queue-operation while awaiting assistant → PROCESSING",
+        listOf(user("2026-02-08T01:00:00.000Z"), claudeQueueOperationLine("2026-02-08T01:00:01.000Z", S, C, "task-123")),
+        ClaudeSessionActivity.PROCESSING,
+      ),
     )
   }
 }
