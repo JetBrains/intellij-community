@@ -69,7 +69,7 @@ public class MutationsStorageImpl implements MutationsStorage {
     if (!isValid(row, column)) return;
     allocateSpace(row, column);
     countModifications(value, row, column);
-    myValues[row.asInteger()][column.asInteger()] = value == null ? null : new MutationData(value.getValue());
+    myValues[row.asInteger()][column.asInteger()] = value == null ? null : new MutationData(value.getValue(), value.getMetadata());
   }
 
   protected void allocateSpace(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {

@@ -151,4 +151,16 @@ public interface DataGridSettings {
   }
 
   default void setShowGeoAsBinary(boolean value) { }
+
+  default boolean isEditArrayAsText() {
+    return false;
+  }
+
+  default void setEditArrayAsText(boolean value) { }
+
+  default boolean isHideDeletedInArrayGrid() {
+    return false;
+  }
+
+  default void setHideDeletedInArrayGrid(boolean value) { }
 }

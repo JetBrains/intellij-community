@@ -12,9 +12,11 @@ public interface ColumnDescriptor {
   // and possible, for example, that the type of Double column will be Int or the type of String column will be Long.
   int getType();
 
-  @NlsSafe String getName();
+  @NlsSafe
+  String getName();
 
-  @NlsSafe @Nullable String getTypeName();
+  @NlsSafe
+  @Nullable String getTypeName();
 
   default @NotNull Set<Attribute> getAttributes() {
     return Collections.emptySet();
@@ -25,6 +27,7 @@ public interface ColumnDescriptor {
     ROW_ID,
     HIDDEN,
     INDEX,
-    VIRTUAL
+    VIRTUAL,
+    MULTI_DIMENSIONAL_ARRAY
   }
 }

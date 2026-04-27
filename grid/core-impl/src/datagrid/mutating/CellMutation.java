@@ -13,6 +13,7 @@ import java.util.Collections;
 public class CellMutation extends Mutation {
   private final ModelIndex<GridColumn> myColumn;
   private final Object myNewValue;
+  private @Nullable Object myMetadata;
 
   public CellMutation(@NotNull ModelIndex<GridRow> row,
                       @NotNull ModelIndex<GridColumn> column,
@@ -20,6 +21,15 @@ public class CellMutation extends Mutation {
     super(row);
     myColumn = column;
     myNewValue = newValue;
+  }
+
+  public @Nullable Object getMetadata() {
+    return myMetadata;
+  }
+
+  public @NotNull CellMutation withMetadata(@Nullable Object metadata) {
+    myMetadata = metadata;
+    return this;
   }
 
   public boolean canMergeByRowWith(@NotNull CellMutation mutation) {

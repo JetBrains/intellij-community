@@ -1,6 +1,8 @@
 package com.intellij.database.datagrid
 
 import com.intellij.database.DatabaseDataKeys
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.datagrid.mutating.ColumnDescriptor
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.sql.Types
 import javax.swing.JTable
 import javax.swing.SwingUtilities
 
@@ -37,7 +40,8 @@ private fun getOuterFileEditor(grid: DataGrid?): FileEditor? {
 fun setPageSize(hookUp: GridDataHookUp<GridRow, GridColumn>, helper: GridHelper) {
   hookUp.pageModel.pageSize = if (helper.properties.defaultLimitPageSize) {
     helper.properties.defaultPageSize
-  } else {
+  }
+  else {
     GridPagingModel.UNLIMITED_PAGE_SIZE
   }
 }
@@ -78,3 +82,10 @@ fun setHeatmapColoringEnable(project: Project, value: Boolean) {
   PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
 }
 
+fun isArrayCell(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, grid: DataGrid): Boolean {
+  val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
+  val col = model.getColumn(column)
+  if (col == null) return false
+  if (col.type == Types.ARRAY && !col.attributes.contains(ColumnDescriptor.Attribute.MULTI_DIMENSIONAL_ARRAY)) return true
+  return false;
+}
