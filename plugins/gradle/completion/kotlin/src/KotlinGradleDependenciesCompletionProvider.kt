@@ -31,6 +31,7 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.T
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
+import com.intellij.gradle.completion.lookup.DependencyReturningMethodLookupProvider
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
@@ -54,8 +55,8 @@ import icons.GradleIcons
 import kotlinx.coroutines.flow.flowOf
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        if (!isGradleDependenciesCompletionEnabled(parameters)) return
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    if (!isGradleDependenciesCompletionEnabled(parameters)) return
 
     val positionElement = parameters.position
     when {
@@ -110,6 +111,10 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           SimpleLookupStringProvider,
           invokePosition = GAV
         )
+
+      // implementation(pl<caret>) -> implementation(platform(<caret>))
+      positionElement.isSingleDependencyArgumentWithoutQuotesAndDots() ->
+          result.addAllElements(DependencyReturningMethodLookupProvider.getElements())
     }
   }
 

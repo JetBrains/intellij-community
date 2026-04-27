@@ -186,6 +186,17 @@ internal fun PsiElement.isDependencyArgumentInsideQuotes(): Boolean {
            || callExpr.acceptsStringCoordinatesArgument()
 }
 
+// Matches: implementation(<caret>), implementation(platf<caret>)
+internal fun PsiElement.isSingleDependencyArgumentWithoutQuotesAndDots(): Boolean {
+    val valueArgumentList = this.asSafely<LeafPsiElement>()
+        ?.parent.asSafely<KtNameReferenceExpression>()
+        ?.parent.asSafely<KtValueArgument>()
+        ?.parent.asSafely<KtValueArgumentList>() ?: return false
+    if (valueArgumentList.arguments.size > 1) return false
+    val callExpr = valueArgumentList.parent.asSafely<KtCallExpression>() ?: return false
+    return callExpr.isDependencyConfiguration()
+}
+
 internal fun PsiElement.isDependencyArgumentWithoutQuotes(): Boolean {
     val refExpr = this.asSafely<LeafPsiElement>()
         ?.parent.asSafely<KtNameReferenceExpression>() ?: return false

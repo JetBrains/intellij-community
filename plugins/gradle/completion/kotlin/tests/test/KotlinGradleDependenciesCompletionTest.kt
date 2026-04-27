@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradlePro
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
@@ -113,6 +114,119 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
                     "interface",
                     "iter",
                 )
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun `test scope argument - suggest version catalogs and Dependency-returning methods`(gradleVersion: GradleVersion) {
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            writeTextAndCommit(
+                "gradle/libs.versions.toml", """ 
+                    [libraries]
+                    foo-bar-lib = { module = "org.junit.jupiter:junit-jupiter", version.ref = "6.0.0"  }
+                """.trimIndent()
+            )
+            val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation(<caret>) }")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                codeInsightFixture.completeBasic()
+                codeInsightFixture.assertPreferredCompletionItems(
+                    0,
+                    // catalog names are always on top
+                    "libs",
+                    // version catalog entries might be mixed with Dependency-returning methods, dependening on ML ranking
+                    "libs.foo.bar.lib",
+                    // methods returning Dependency
+                    "embeddedKotlin",
+                    "enforcedPlatform",
+                    "files",
+                    "fileTree",
+                    "gradleApi",
+                    "gradleTestKit",
+                    "kotlin",
+                    "platform",
+                    "project",
+                    "testFixtures",
+                    "variantOf"
+                )
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun `test scope argument - when quoted, don't suggest Dependency-returning methods`(gradleVersion: GradleVersion) {
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            val file = writeTextAndCommit("build.gradle.kts", """dependencies { implementation("<caret>") }""")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                codeInsightFixture.completeBasic()
+                val suggestions = codeInsightFixture.lookupElementStrings ?: emptyList()
+                val unexpectedSuggestions = listOf(
+                    "platform", "enforcedPlatform", "project", "kotlin", "embeddedKotlin", "testFixtures",
+                    "files", "fileTree", "variantOf", "gradleApi", "gradleTestKit"
+                )
+                val filtered = suggestions.filter { it in unexpectedSuggestions }
+                assertTrue(filtered.isEmpty(), "Unexpected suggestions: $filtered")
+            }
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, `{1}` -> `{2}`")
+    @BaseGradleVersionSource(
+        """
+        platfo<caret>           : platform(<caret>),
+        enforcedPlatfo<caret>   : enforcedPlatform(<caret>),
+        proje<caret>            : project(<caret>),
+        kotl<caret>             : kotlin(<caret>),
+        embeddedKotl<caret>     : embeddedKotlin(<caret>),
+        testFixtur<caret>       : testFixtures(<caret>),
+        fil<caret>              : files(<caret>),
+        fileTr<caret>           : fileTree(<caret>),
+        variant<caret>          : variantOf(<caret>)
+        """
+    )
+    fun `test scope argument - complete Dependency-returning method with args and put caret inside brackets`(
+        gradleVersion: GradleVersion,
+        input: String,
+        expected: String,
+    ) {
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                val isAutocompleted = codeInsightFixture.completeBasic() == null
+                if (!isAutocompleted) {
+                    codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+                }
+                codeInsightFixture.checkResult("dependencies { implementation($expected) }")
+            }
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, `{1}` -> `{2}`")
+    @BaseGradleVersionSource(
+        """ 
+        gradleA<caret>  : gradleApi()<caret>,
+        gradleTe<caret> : gradleTestKit()<caret>
+        """
+    )
+    fun `test scope argument - complete Dependency-returning method without args and put caret after brackets`(
+        gradleVersion: GradleVersion,
+        input: String,
+        expected: String
+    ) {
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            val file = writeTextAndCommit("build.gradle.kts", "dependencies { implementation($input) }")
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                val elements = codeInsightFixture.completeBasic()
+                assertNull(elements) {
+                    "The only element was expected to be autocompleted, but there are multiple suggestions: ${elements.contentToString()}"
+                }
+                codeInsightFixture.checkResult("dependencies { implementation($expected) }")
             }
         }
     }
