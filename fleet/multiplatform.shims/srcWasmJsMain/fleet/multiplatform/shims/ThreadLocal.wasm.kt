@@ -7,15 +7,24 @@ import fleet.util.multiplatform.Actual
 internal fun threadLocalImplWasmJs(supplier: () -> Any?): ThreadLocal<Any?> = threadLocal(supplier)
 
 private fun <T> threadLocal(supplier: () -> T) = object : ThreadLocal<T> {
-  var value: T? = null
+  private var value: Any? = null
 
-  override fun get(): T = value ?: supplier().also { value = it }
+  @Suppress("UNCHECKED_CAST")
+  override fun get(): T {
+    return when (val currentValue = value) {
+      null -> supplier().also { set(it) }
+      NullValue -> null as T
+      else -> currentValue as T
+    }
+  }
 
   override fun remove() {
     value = null
   }
 
   override fun set(value: T) {
-    this.value = value
+    this.value = value ?: NullValue
   }
 }
+
+private object NullValue
