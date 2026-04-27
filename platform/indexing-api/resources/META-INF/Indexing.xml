@@ -20,6 +20,7 @@
       <with attribute="implementationClass" implements="com.intellij.util.indexing.flavor.FileIndexingFlavorProvider"/>
     </extensionPoint>
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
+    <extensionPoint name="searchCandidateBatcher" interface="com.intellij.psi.search.SearchCandidateBatcher" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
     <extensionPoint name="binaryFileSourceProvider" interface="com.intellij.platform.indexing.BinaryFileSourceProvider" dynamic="true"/>
 
