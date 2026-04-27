@@ -2,11 +2,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
-resourcegroup(
-  name = "noria-compiler-plugin_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
 
 create_kotlinc_options(
   name = "noria-compiler-plugin_kotlinc_options",
@@ -18,10 +13,11 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/noria/plugin/gradle/NoriaGradlePlugin.kt"]),
   kotlinc_opts = ":noria-compiler-plugin_kotlinc_options",
   visibility = ["//visibility:public"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   deps = [
     "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
   ],
-  resources = [":noria-compiler-plugin_resources"],
 )
 
 kt_compiler_plugin(

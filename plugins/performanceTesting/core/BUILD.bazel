@@ -1,12 +1,6 @@
 ### skip generation section `build intellij.performanceTesting`
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-resourcegroup(
-  name = "performanceTesting_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_provided_library(
   name = "libraries_cli-parser_provided",
   lib = "//libraries/cli-parser"
@@ -17,7 +11,8 @@ jvm_library(
   module_name = "intellij.performanceTesting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":performanceTesting_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
