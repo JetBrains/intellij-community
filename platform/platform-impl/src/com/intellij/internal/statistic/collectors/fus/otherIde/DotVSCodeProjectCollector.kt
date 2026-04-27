@@ -13,8 +13,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.findFileOrDirectory
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import org.jetbrains.annotations.VisibleForTesting
 
 private val OBJECT_MAPPER = JsonMapper.builder()
   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -23,55 +24,32 @@ private val OBJECT_MAPPER = JsonMapper.builder()
   .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
   .build()
 
-internal class DotVSCodeProjectCollector : ProjectUsagesCollector() {
-  companion object {
-    private val LOG = logger<DotVSCodeProjectCollector>()
-  }
+private val LOG = logger<DotVSCodeProjectCollector>()
 
+internal class DotVSCodeProjectCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): Set<MetricEvent> {
+  @VisibleForTesting
+  public override fun getMetrics(project: Project): Set<MetricEvent> {
     val projectDir = project.guessProjectDir() ?: return emptySet()
-    return buildSet {
-      val vsCodeDir = projectDir.findFileOrDirectory(".vscode") ?: return@buildSet
-      if (!vsCodeDir.isDirectory) {
-        LOG.warn(".vscode is not a directory")
-      }
-      if (!vsCodeDir.isValid) return@buildSet
-      add(vsCodeFolderDetectedEvent.metric())
+    val events = mutableSetOf<MetricEvent>()
 
-      val launchJsonFile = vsCodeDir.findChild("launch.json") ?: return@buildSet
-      if (!launchJsonFile.isFile) return@buildSet
-      val rootNode = try {
-        OBJECT_MAPPER.readTree(launchJsonFile.inputStream)
-      }
-      catch (e: Throwable) {
-        LOG.warn("Cannot parse \"launch.json\" file", e)
-        return@buildSet
-      }
+    val vsCodeDir = projectDir.findChild(".vscode")
 
-      add(reportLaunchJsonDetected(rootNode))
-      addAll(reportJSConfigurations(rootNode))
-    }
-  }
+    val vsCodeDirExists = vsCodeDir != null && vsCodeDir.isValid && vsCodeDir.isDirectory
+    events.add(vsCodeFolderDetectedEvent.metric(vsCodeDirExists))
 
-  private fun reportLaunchJsonDetected(rootNode: JsonNode): MetricEvent {
-    val hasCompounds = rootNode.has("compounds")
-    val configurationsNode = rootNode.get("configurations")
-    val numberOfConfigurations = if (configurationsNode.isArray) {
-      configurationsNode.count { it.isObject } // filter some garbage like null
-    }
-    else {
-      LOG.info("\"configurations\" field is expected to be an array of objects, but the actual type is ${configurationsNode.nodeType}")
-      -1 // incorrect launch.json
+    if (vsCodeDirExists) {
+      processLaunchJson(vsCodeDir, events)
+      reportCppSettings(vsCodeDir, events)
     }
 
-    return launchJsonDetectedEvent.metric(numberOfConfigurations, hasCompounds)
+    return events
   }
 }
 
-private val GROUP = EventLogGroup("other.ide.vscode", version = 1)
-private val vsCodeFolderDetectedEvent = GROUP.registerEvent("folder.detected")
+private val GROUP = EventLogGroup("other.ide.vscode", version = 3)
+private val vsCodeFolderDetectedEvent = GROUP.registerEvent("folder.detected", EventFields.Boolean("exists"))
 private val numberOfConfigurationsField = EventFields.Int("numberOfConfigurations")
 
 // WebStorm: we want to know should we hide by default 'Before launch' section
@@ -97,3 +75,64 @@ internal val jsConfigurationEvent: VarargEventId = GROUP.registerVarargEvent(
   JavaScriptConfigurationFields.hasCustomWebRoot,
   JavaScriptConfigurationFields.pauseForSourceMapEnabled,
 )
+
+private val hasCppPropertiesField = EventFields.Boolean("has_cpp_properties")
+private val hasCppSettingsField = EventFields.Boolean("has_cpp_settings")
+private val cppConfigurationEvent = GROUP.registerEvent(
+  "cpp.configuration", hasCppPropertiesField, hasCppSettingsField
+)
+
+private fun reportCppSettings(
+  vsCodeDir: VirtualFile,
+  events: MutableSet<MetricEvent>,
+) {
+  val hasCppProperties = vsCodeDir.findChild("c_cpp_properties.json")?.isFile == true
+  val hasCppSettings = detectCppInVsCodeSettings(vsCodeDir)
+  if (!hasCppProperties && !hasCppSettings) return
+  events.add(cppConfigurationEvent.metric(hasCppProperties, hasCppSettings))
+}
+
+private fun processLaunchJson(
+  vsCodeDir: VirtualFile,
+  events: MutableSet<MetricEvent>,
+) {
+  val launchJsonFile = vsCodeDir.findChild("launch.json")
+  if (launchJsonFile != null && launchJsonFile.isFile) {
+    try {
+      val rootNode = OBJECT_MAPPER.readTree(launchJsonFile.inputStream)
+      events.add(reportLaunchJsonDetected(rootNode))
+      events.addAll(reportJSConfigurations(rootNode))
+    }
+    catch (e: Throwable) {
+      LOG.warn("Cannot parse \"launch.json\" file", e)
+    }
+  }
+}
+
+private fun detectCppInVsCodeSettings(vsCodeDir: VirtualFile): Boolean {
+  val settingsFile = vsCodeDir.findChild("settings.json") ?: return false
+  if (!settingsFile.isFile) return false
+  val rootNode = try {
+    OBJECT_MAPPER.readTree(settingsFile.inputStream)
+  }
+  catch (_: Throwable) {
+    return false
+  }
+  return rootNode.isObject && rootNode.properties().any { (key, _) ->
+    key.startsWith("C_Cpp.")
+  }
+}
+
+private fun reportLaunchJsonDetected(rootNode: JsonNode): MetricEvent {
+  val hasCompounds = rootNode.has("compounds")
+  val configurationsNode = rootNode.get("configurations")
+  val numberOfConfigurations = if (configurationsNode.isArray) {
+    configurationsNode.count { it.isObject } // filter some garbage like null
+  }
+  else {
+    LOG.info("\"configurations\" field is expected to be an array of objects, but the actual type is ${configurationsNode.nodeType}")
+    -1 // incorrect launch.json
+  }
+
+  return launchJsonDetectedEvent.metric(numberOfConfigurations, hasCompounds)
+}
