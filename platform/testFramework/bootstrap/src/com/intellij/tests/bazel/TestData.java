@@ -88,7 +88,7 @@ class TestData {
       return false;
     }
 
-    return result.getThrowable().map(thr -> thr instanceof AssertionError).orElse(false);
+    return result.getThrowable().map(thr -> !(thr instanceof AssertionError)).orElse(false);
   }
 
   public boolean isFailure() {
@@ -102,7 +102,7 @@ class TestData {
       return true;
     }
 
-    return result.getThrowable().map(thr -> (!(thr instanceof AssertionError))).orElse(false);
+    return result.getThrowable().map(thr -> thr instanceof AssertionError).orElse(false);
   }
 
   public boolean isDisabled() {
