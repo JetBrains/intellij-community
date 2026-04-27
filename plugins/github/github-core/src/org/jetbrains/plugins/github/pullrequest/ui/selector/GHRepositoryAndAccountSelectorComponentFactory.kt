@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.selector
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -72,7 +73,7 @@ class GHRepositoryAndAccountSelectorComponentFactory(
         bindDisabledIn(scope, vm.busyState)
       },
 
-      ActionLink(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+      ActionLink(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
         if (loginToGithub(false, AuthorizationType.TOKEN)) {
           vm.submitSelection()
         }
@@ -106,7 +107,7 @@ class GHRepositoryAndAccountSelectorComponentFactory(
         override fun actionPerformed(e: ActionEvent?) {
           loginToGithub(true, AuthorizationType.OAUTH)
         }
-      }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+      }, object : AbstractAction(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
         override fun actionPerformed(e: ActionEvent?) {
           loginToGithub(true, AuthorizationType.TOKEN)
         }

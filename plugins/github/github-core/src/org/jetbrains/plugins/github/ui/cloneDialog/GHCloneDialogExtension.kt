@@ -111,10 +111,10 @@ private class GHCloneDialogLoginPanel(
       row {
         cell(HorizontalListPanel().apply {
           val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }
-          val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
+          val useTokenLink = ActionLink(CollaborationToolsBundle.message("login.label.use.token")) { setTokenUi() }
 
           add(loginViaGHButton)
-          add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
+          add(JBLabel(CollaborationToolsBundle.message("login.option.separator.label")).apply { border = empty(0, 6, 0, 4) })
           add(useTokenLink)
         })
       }

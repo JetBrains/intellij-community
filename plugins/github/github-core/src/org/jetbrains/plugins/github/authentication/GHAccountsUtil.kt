@@ -127,8 +127,8 @@ object GHAccountsUtil {
 
   @ApiStatus.Internal
   fun createTokenLoginAction(
-    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData
-  ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData,
+  ): AnAction = DumbAwareAction.create(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
     loginViaToken(model, project, parentComponent, loginData)
   }
 
