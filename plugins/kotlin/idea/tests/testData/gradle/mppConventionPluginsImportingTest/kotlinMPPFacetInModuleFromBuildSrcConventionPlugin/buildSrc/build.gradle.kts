@@ -7,5 +7,5 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:{{kotlin_plugin_version}}")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:{{kgp_version}}")
 }
