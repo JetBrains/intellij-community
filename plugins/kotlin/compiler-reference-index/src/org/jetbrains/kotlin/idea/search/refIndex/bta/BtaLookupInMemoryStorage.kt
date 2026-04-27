@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
@@ -12,7 +13,8 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 
-internal class BtaLookupInMemoryStorage private constructor(
+@ApiStatus.Internal
+class BtaLookupInMemoryStorage private constructor(
     // TODO KTIJ-37735: use persistent hash map to avoid retaining all CRI data in memory
     private val lookups: Map<Int, Set<Int>>,
     private val fileIdsToPaths: Map<Int, String>,
@@ -82,5 +84,6 @@ internal class BtaLookupInMemoryStorage private constructor(
 }
 
 @OptIn(ExperimentalBuildToolsApi::class)
-internal fun Path.hasLookupData(): Boolean = resolve(CriToolchain.LOOKUPS_FILENAME).exists() &&
+@ApiStatus.Internal
+fun Path.hasLookupData(): Boolean = resolve(CriToolchain.LOOKUPS_FILENAME).exists() &&
         resolve(CriToolchain.FILE_IDS_TO_PATHS_FILENAME).exists()

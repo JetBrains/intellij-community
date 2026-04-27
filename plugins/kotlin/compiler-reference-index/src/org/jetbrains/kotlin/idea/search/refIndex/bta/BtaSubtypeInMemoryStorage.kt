@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.generateRecursiveSequence
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
@@ -13,7 +14,8 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 
-internal class BtaSubtypeInMemoryStorage private constructor(
+@ApiStatus.Internal
+class BtaSubtypeInMemoryStorage private constructor(
     // TODO KTIJ-37735: use persistent hash map to avoid retaining all CRI data in memory
     private val subtypes: Map<Int, Collection<String>>,
 ) {
@@ -68,4 +70,5 @@ internal class BtaSubtypeInMemoryStorage private constructor(
 }
 
 @OptIn(ExperimentalBuildToolsApi::class)
-internal fun Path.hasSubtypeData(): Boolean = resolve(CriToolchain.SUBTYPES_FILENAME).exists()
+@ApiStatus.Internal
+fun Path.hasSubtypeData(): Boolean = resolve(CriToolchain.SUBTYPES_FILENAME).exists()
