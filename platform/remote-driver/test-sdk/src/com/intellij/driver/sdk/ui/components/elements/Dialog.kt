@@ -66,4 +66,3 @@ open class DialogUiComponent(data: ComponentData) : WindowUiComponent(data) {
     super.dispose()
   }
 }
-
