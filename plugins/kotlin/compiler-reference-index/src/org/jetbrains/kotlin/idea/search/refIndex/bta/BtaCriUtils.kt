@@ -9,12 +9,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.util.io.toNioPathOrNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isMavenModule
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -49,7 +50,12 @@ fun getGradleCriPaths(modulePath: Path): Collection<Path> {
     if (!kotlinBuildDirectory.exists() || !kotlinBuildDirectory.isDirectory()) return emptyList()
 
     // Gradle writes CRI into a separate build/kotlin/<compile task>/cacheable/cri directory per compilation task
-    return kotlinBuildDirectory.listDirectoryEntries()
+    val entries = try {
+        kotlinBuildDirectory.listDirectoryEntries()
+    } catch (_: IOException) {
+        return emptyList()
+    }
+    return entries
         .asSequence()
         .map { it / "cacheable" / CriToolchain.DATA_PATH }
         .filter { it.exists() }

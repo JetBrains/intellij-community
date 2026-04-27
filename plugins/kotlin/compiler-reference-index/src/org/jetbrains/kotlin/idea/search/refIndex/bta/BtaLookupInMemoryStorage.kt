@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain.Companion.cri
 import org.jetbrains.kotlin.name.FqName
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
@@ -34,8 +35,18 @@ internal class BtaLookupInMemoryStorage private constructor(
         fun create(criRoot: Path, projectPath: String): BtaLookupInMemoryStorage? {
             if (!criRoot.hasLookupData()) return null
 
-            val lookupsData = criRoot.resolve(CriToolchain.LOOKUPS_FILENAME).readBytes()
-            val fileIdsToPathsData = criRoot.resolve(CriToolchain.FILE_IDS_TO_PATHS_FILENAME).readBytes()
+            val lookupsData = try {
+                criRoot.resolve(CriToolchain.LOOKUPS_FILENAME).readBytes()
+            } catch (e: IOException) {
+                LOG.warn("Failed to read CRI lookups data in $criRoot", e)
+                return null
+            }
+            val fileIdsToPathsData = try {
+                criRoot.resolve(CriToolchain.FILE_IDS_TO_PATHS_FILENAME).readBytes()
+            } catch (e: IOException) {
+                LOG.warn("Failed to read CRI file IDs to paths data in $criRoot", e)
+                return null
+            }
 
             val toolchains = try {
                 KotlinToolchains.loadImplementation(BtaLookupInMemoryStorage::class.java.classLoader)

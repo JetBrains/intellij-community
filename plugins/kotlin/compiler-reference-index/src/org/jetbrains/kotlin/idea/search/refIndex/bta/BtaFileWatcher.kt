@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
@@ -42,7 +43,12 @@ internal class BtaFileWatcher(private val project: Project) {
         coroutineScope.launch(Dispatchers.IO) {
             while (true) {
                 delay(POLLING_INTERVAL)
-                checkForExternalCompilation(onModulesCompiled)
+                try {
+                    checkForExternalCompilation(onModulesCompiled)
+                } catch (e: Exception) {
+                    ensureActive()
+                    LOG.warn("Error during CRI polling", e)
+                }
             }
         }
     }

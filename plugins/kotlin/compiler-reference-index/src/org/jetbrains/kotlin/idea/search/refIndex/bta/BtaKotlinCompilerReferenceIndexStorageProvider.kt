@@ -18,8 +18,9 @@ internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerRe
     override fun hasIndex(project: Project): Boolean = project.getCriPaths().any { it.hasLookupData() || it.hasSubtypeData() }
 
     override fun createStorage(project: Project, projectPath: String): KotlinCompilerReferenceIndexStorage? {
+        if (project.isDisposed) return null
         val criRoots = project.getCriPaths()
-        if (project.isDisposed || criRoots.isEmpty()) return null
+        if (criRoots.isEmpty()) return null
 
         val lookupStoragesByRoot = buildMap {
             for (root in criRoots) {

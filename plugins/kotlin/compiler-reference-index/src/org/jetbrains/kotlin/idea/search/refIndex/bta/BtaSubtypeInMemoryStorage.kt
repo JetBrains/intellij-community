@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain.Companion.cri
 import org.jetbrains.kotlin.name.FqName
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
@@ -34,7 +35,12 @@ internal class BtaSubtypeInMemoryStorage private constructor(
         fun create(criRoot: Path): BtaSubtypeInMemoryStorage? {
             if (!criRoot.hasSubtypeData()) return null
 
-            val subtypesData = criRoot.resolve(CriToolchain.SUBTYPES_FILENAME).readBytes()
+            val subtypesData = try {
+                criRoot.resolve(CriToolchain.SUBTYPES_FILENAME).readBytes()
+            } catch (e: IOException) {
+                LOG.warn("Failed to read CRI subtype data in $criRoot", e)
+                return null
+            }
 
             val toolchains = try {
                 KotlinToolchains.loadImplementation(BtaSubtypeInMemoryStorage::class.java.classLoader)
