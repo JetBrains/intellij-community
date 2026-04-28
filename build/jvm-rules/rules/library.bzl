@@ -82,5 +82,7 @@ jvm_library = rule(
     host_fragments = ["java"],  # required fragments of the host configuration
     implementation = _jvm_library,
     provides = [_JavaInfo, _KtJvmInfo],
-    cfg = jvm_platform_transition,
+    # Android Studio (b/507454037, b/507462421): this configuration transition is a Bazel remote-cache optimization
+    # but it does not play well with our own Java toolchain definitions.
+    # cfg = jvm_platform_transition,
 )
