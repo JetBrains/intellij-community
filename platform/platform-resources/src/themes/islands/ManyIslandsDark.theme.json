@@ -590,6 +590,23 @@
       "EvaluateExpression.background": "container-tool-window-bg"
     },
 
+    "LineProfiler": {
+      "Line": {
+        "labelBackground": "#FFFFFF17",
+        "foreground": "#9FA2A8",
+        "hoverBackground": "#FFFFFF29"
+      },
+      "HotLine": {
+        "labelBackground": "#371B1C",
+        "foreground": "#DB5C5C",
+        "hoverBackground": "#56272B"
+      },
+      "IgnoredLine": {
+        "labelBackground": "#FFFFFF29",
+        "foreground": "#73767C"
+      }
+    },
+
     "FileColor": {
       "Yellow": "#291f1c",
       "Green": "#1c261c",
