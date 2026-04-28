@@ -11,15 +11,23 @@ import com.intellij.openapi.diagnostic.UnhandledFreezeReport
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginExceptionReportData
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginFreezeReportData
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
+
+private const val MAX_EXCEPTIONS_PER_PLUGIN = 10_000
 
 internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : UnhandledReportSinkService {
-  private val flow = MutableSharedFlow<Pair<ErrorReportSink, UnhandledErrorReport>>()
+  private val flow = MutableSharedFlow<Pair<ErrorReportSink, UnhandledErrorReport>>(
+    extraBufferCapacity = 100,
+    onBufferOverflow = BufferOverflow.DROP_LATEST,
+  )
+  private val exceptionCountPerPlugin = ConcurrentHashMap<PluginId, Int>()
 
   init {
     coroutineScope.launch(Dispatchers.IO) {
@@ -28,7 +36,7 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
           sink.submit(report)
         }
         catch (e: Exception) {
-          logger<UnhandledErrorReport>().warn("Failed to submit unhandled error report to " + sink.javaClass, e)
+          thisLogger().warn("Failed to submit unhandled error report to " + sink.javaClass, e)
         }
       }
     }
@@ -47,11 +55,14 @@ internal class UnhandledReportSinkServiceImpl(coroutineScope: CoroutineScope) : 
   override fun report(data: PluginExceptionReportData) {
     if (isPluginFromDistribution(data.pluginId)) return
 
-    for (it in ErrorReportSinkBean.EP_NAME.extensionList) {
-      if (it.pluginDescriptor.pluginId == data.pluginId) {
-        flow.tryEmit(Pair(it.instance, UnhandledExceptionReport(data.t)))
-      }
+    val count = exceptionCountPerPlugin.merge(data.pluginId, 1, Int::plus) ?: return
+    if (count > MAX_EXCEPTIONS_PER_PLUGIN) return
+    if (count == MAX_EXCEPTIONS_PER_PLUGIN) {
+      thisLogger().warn("Exception report limit reached for plugin ${data.pluginId}, further reports will be dropped")
     }
+
+    ErrorReportSinkBean.EP_NAME.findFirstSafe { it.pluginDescriptor.pluginId == data.pluginId }
+      ?.let { flow.tryEmit(Pair(it.instance, UnhandledExceptionReport(data.t))) }
   }
 
   private fun isPluginFromDistribution(pluginId: PluginId?): Boolean {
