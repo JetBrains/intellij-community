@@ -5,7 +5,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.tree.TokenSet
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.LanguageLevel
@@ -46,7 +46,7 @@ class SimplifyBooleanCheckQuickFix(binaryExpression: PyBinaryExpression) : PsiUp
       val leftExpression = leftExpression
       val rightExpression = rightExpression!!
       val positiveCondition =
-        (operator !in TokenSet.create(PyTokenTypes.NE, PyTokenTypes.NE_OLD)) xor (leftExpression.isFalsey || rightExpression.isFalsey)
+        (operator === PyTokenTypes.EQEQ || isOperator(PyNames.IS)) xor (leftExpression.isFalsey || rightExpression.isFalsey)
       val resultExpression = if (leftExpression.isTrue || leftExpression.isFalsey)
         rightExpression
       else leftExpression

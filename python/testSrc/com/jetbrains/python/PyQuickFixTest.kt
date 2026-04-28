@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.text.StringUtil
@@ -322,6 +323,17 @@ class PyQuickFixTest : PyTestCase() {
       true,
       true
     )
+  }
+
+  @TestFor(issues = ["PY-89366"])
+  fun testSimplifyBooleanCheckNegative() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      doInspectionTest<PySimplifyBooleanCheckInspection>(
+        PyPsiBundle.message("QFIX.simplify.boolean.expression", "not b"),
+        true,
+        true,
+      )
+    }
   }
 
   fun testMoveFromFutureImport() {
@@ -1354,6 +1366,13 @@ class PyQuickFixTest : PyTestCase() {
 
   @NonNls
   override fun getTestDataPath(): String = PythonTestUtil.getTestDataPath() + "/inspections/"
+
+  private inline fun <reified TLocalInspectionTool: LocalInspectionTool> doInspectionTest(
+    quickFixName: String,
+    applyFix: Boolean,
+    available: Boolean,
+  ) =
+    doInspectionTest(getTestName(false) + ".py", TLocalInspectionTool::class.java, quickFixName, applyFix, available)
 
   private fun doInspectionTest(
     inspectionClass: Class<out LocalInspectionTool>,
