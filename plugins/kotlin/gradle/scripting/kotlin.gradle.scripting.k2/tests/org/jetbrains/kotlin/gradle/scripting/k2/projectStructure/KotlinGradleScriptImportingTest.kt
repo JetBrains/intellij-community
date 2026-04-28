@@ -7,6 +7,7 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertSingle
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.useProjectAsync
@@ -23,7 +24,6 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.BASE_SCRIPT_MODEL_PHASE
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Companion.SCRIPT_MODEL_PHASE
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 @UseK2PluginMode
-@GradleTestApplication
+@TestApplication
 @AssertKotlinPluginMode
 class KotlinGradleScriptImportingTest {
 

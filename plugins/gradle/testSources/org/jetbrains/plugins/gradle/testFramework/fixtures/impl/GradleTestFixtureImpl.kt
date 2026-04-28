@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificat
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.Project
@@ -49,6 +50,8 @@ class GradleTestFixtureImpl: GradleTestFixture {
     runAll(
       { Disposer.dispose(testDisposable) },
       { syncLeakTracker.tearDown() },
+      { ExternalSystemProgressNotificationManagerImpl.assertListenersReleased() },
+      { ExternalSystemProgressNotificationManagerImpl.cleanupListeners() }
     )
   }
 

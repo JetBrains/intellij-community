@@ -4,19 +4,19 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 
-@GradleTestApplication
+@TestApplication
 abstract class GradleBaseTestCase {
 
   val gradleVersion: GradleVersion = GradleVersion.current()
