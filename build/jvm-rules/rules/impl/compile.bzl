@@ -26,7 +26,6 @@ load("//:rules/common-attrs.bzl", "add_dicts")
 load("//:rules/impl/associates.bzl", "get_associates")
 load("//:rules/impl/builder-args.bzl", "init_builder_args")
 load("//:rules/impl/compiler-plugins.bzl", "collect_compiler_plugins_for_export", "compiler_plugins_from", "exported_compiler_plugins_from")
-load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
 load("//:rules/resource.bzl", "ResourceGroupInfo")
 
 visibility("private")
@@ -194,9 +193,6 @@ def _run_jvm_builder(
     kotlin_cri_storage_file = None
 
     kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
-    if kotlin_inc_threshold == -1:
-        kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
-        kotlin_inc_threshold = kotlinc_options.inc_threshold
     java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
     args = init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
