@@ -89,7 +89,7 @@
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
 
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Whether to check that the PR list is up-to-date using ETags"
                  key="github.pr.list.automatic.refresh.enabled"/>
     <registryKey defaultValue="30"
