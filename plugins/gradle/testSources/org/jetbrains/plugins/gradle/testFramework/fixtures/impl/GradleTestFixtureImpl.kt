@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
+import com.intellij.openapi.externalSystem.testFramework.fixtures.MultiProjectTestFixture
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.Project
@@ -15,12 +15,9 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.openProjectAsync
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
-import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -29,6 +26,7 @@ import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
 class GradleTestFixtureImpl(
+  private val multiProjectFixture: MultiProjectTestFixture,
   private val gradleJvmFixture: GradleJvmTestFixture,
 ) : GradleTestFixture {
 
@@ -64,19 +62,19 @@ class GradleTestFixtureImpl(
   }
 
   override suspend fun openProject(projectPath: Path, numProjectSyncs: Int): Project {
-    return awaitOpenProjectConfiguration(numProjectSyncs) {
-      openProjectAsync(projectPath, UnlinkedProjectStartupActivity())
+    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+      multiProjectFixture.openProject(projectPath)
     }
   }
 
   override suspend fun linkProject(project: Project, projectPath: Path) {
-    awaitProjectConfiguration(project) {
-      linkAndSyncGradleProject(project, projectPath.toCanonicalPath())
+    return syncLeakTracker.withAllowedOperationAsync(1) {
+      multiProjectFixture.linkProject(project, projectPath, GradleConstants.SYSTEM_ID)
     }
   }
 
   override suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
-    awaitProjectConfiguration(project) {
+    awaitProjectConfiguration(project, numProjectSyncs = 1) {
       ExternalSystemUtil.refreshProject(
         projectPath.toCanonicalPath(),
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
@@ -86,10 +84,8 @@ class GradleTestFixtureImpl(
   }
 
   override suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int, openProject: suspend () -> Project): Project {
-    return closeOpenedProjectsIfFailAsync {
-      syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
-        awaitOpenProjectActivity(openProject)
-      }
+    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+      awaitOpenProjectActivity(openProject)
     }
   }
 
