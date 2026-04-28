@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -28,6 +27,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitCreateWorkingTreeService
@@ -36,7 +36,6 @@ import git4idea.i18n.GitBundle
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.ComponentOrientation
@@ -73,13 +72,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     toolbar.setOrientation(SwingConstants.VERTICAL)
 
-    GitWorkingTreesService.getInstance(project).coroutineScope.launch {
+    list.launchOnShow("worktree list") {
       GitRepositoriesHolder.getInstance(project).updates.collect { event ->
         if (event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED) {
-          ApplicationManager.getApplication().invokeLater {
             model.reload(project)
             updateEmptyText(list, model)
-          }
         }
       }
     }
