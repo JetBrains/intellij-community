@@ -41,7 +41,7 @@ class GradleSyncOutputTest {
     projectRoot.createSettingsFile(gradleVersion) {
       setProjectName(project.name)
     }
-    gradleFixture.reloadProject(project, projectRoot)
+    gradleFixture.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
@@ -56,7 +56,7 @@ class GradleSyncOutputTest {
         }
       }
     }
-    gradleFixture.reloadProject(project, projectRoot)
+    gradleFixture.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
@@ -74,7 +74,7 @@ class GradleSyncOutputTest {
         }
       }
     }
-    gradleFixture.reloadProject(project, projectRoot)
+    gradleFixture.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)

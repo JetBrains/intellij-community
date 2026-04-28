@@ -12,7 +12,7 @@ interface GradleTestFixture : IdeaTestFixture {
 
   suspend fun linkProject(project: Project, projectPath: Path)
 
-  suspend fun reloadProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit = {})
+  suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit = {})
 
   suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project
 

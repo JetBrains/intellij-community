@@ -28,13 +28,13 @@ import java.nio.file.Path
 
 class GradleTestFixtureImpl: GradleTestFixture {
 
-  private lateinit var reloadLeakTracker: OperationLeakTracker
+  private lateinit var syncLeakTracker: OperationLeakTracker
 
   private lateinit var testDisposable: Disposable
 
   override fun setUp() {
-    reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
-    reloadLeakTracker.setUp()
+    syncLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
+    syncLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()
 
@@ -48,7 +48,7 @@ class GradleTestFixtureImpl: GradleTestFixture {
   override fun tearDown() {
     runAll(
       { Disposer.dispose(testDisposable) },
-      { reloadLeakTracker.tearDown() },
+      { syncLeakTracker.tearDown() },
     )
   }
 
@@ -64,7 +64,7 @@ class GradleTestFixtureImpl: GradleTestFixture {
     }
   }
 
-  override suspend fun reloadProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
+  override suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
     awaitProjectConfiguration(project) {
       ExternalSystemUtil.refreshProject(
         projectPath.toCanonicalPath(),
@@ -76,14 +76,14 @@ class GradleTestFixtureImpl: GradleTestFixture {
 
   override suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int, openProject: suspend () -> Project): Project {
     return closeOpenedProjectsIfFailAsync {
-      reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+      syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
         awaitOpenProjectActivity(openProject)
       }
     }
   }
 
   override suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int, action: suspend () -> R): R {
-    return reloadLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
       awaitProjectActivity(project, action)
     }
   }

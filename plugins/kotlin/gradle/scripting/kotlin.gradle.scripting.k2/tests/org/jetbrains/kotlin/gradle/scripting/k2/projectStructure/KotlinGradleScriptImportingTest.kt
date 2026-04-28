@@ -163,7 +163,7 @@ class KotlinGradleScriptImportingTest {
             })
 
             entitiesAtPhases.clear()
-            gradleFixture.reloadProject(project, projectRoot)
+            gradleFixture.syncProject(project, projectRoot)
 
             assertEntitiesAtPhase(SCRIPT_MODEL_PHASE, object : Predicate<GradleSyncPhase> {
                 override fun toString(): String = "during re-sync before $BASE_SCRIPT_MODEL_PHASE"
