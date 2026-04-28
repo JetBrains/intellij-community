@@ -463,9 +463,20 @@
     },
 
     "LineProfiler": {
-      "HotLine.foreground": "#db5c5c",
-      "IgnoredLine.foreground": "#4e5157",
-      "Line.foreground": "#6f737a"
+      "Line": {
+        "labelBackground": "#FFFFFF17",
+        "foreground": "#9FA2A8",
+        "hoverBackground": "#FFFFFF29"
+      },
+      "HotLine": {
+        "labelBackground": "#402929",
+        "foreground": "#DB5C5C",
+        "hoverBackground": "#5E3838"
+      },
+      "IgnoredLine": {
+        "labelBackground": "#FFFFFF17",
+        "foreground": "#73767C"
+      }
     },
 
     "PresentationAssistant": {
