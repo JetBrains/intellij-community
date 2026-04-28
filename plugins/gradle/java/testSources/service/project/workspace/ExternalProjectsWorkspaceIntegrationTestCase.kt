@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
 import java.io.ByteArrayOutputStream
 import java.util.jar.JarOutputStream
@@ -34,13 +33,12 @@ import kotlin.io.path.writeText
 abstract class ExternalProjectsWorkspaceIntegrationTestCase {
 
   private val gradleVersion = GradleVersion.current()
-  private val javaVersion = JavaVersionRestriction.NO
 
   val testRoot by tempPathFixture()
 
   private val testDisposable by disposableFixture()
 
-  private val gradleJvmFixture by gradleJvmFixture(gradleVersion, javaVersion)
+  private val gradleJvmFixture by gradleJvmFixture(gradleVersion)
 
   private val multiProjectFixture by multiProjectFixture()
 

@@ -40,7 +40,7 @@ class GradleJvmTestFixture(
 
   fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
-    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable, javaVersionRestriction)
+    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, javaVersionRestriction, fixtureDisposable)
     gradleJvm = sdk.name
     gradleJvmPath = sdk.homePath!!
     gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)!!

@@ -3,9 +3,16 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import java.nio.file.Path
 
 interface GradleTestFixture {
+
+  val gradleJvm: String
+
+  val gradleJvmPath: String
+
+  val gradleJvmInfo: JdkVersionInfo
 
   suspend fun openProject(projectPath: Path, numProjectSyncs: Int = 1): Project
 

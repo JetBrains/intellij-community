@@ -19,7 +19,6 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
@@ -33,7 +32,6 @@ import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestPr
 import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleNodes
 import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleSdkNode
 import org.jetbrains.plugins.gradle.testFramework.projectModel.projectSdkNode
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions
@@ -48,7 +46,7 @@ class GradleJavaProjectResolverPerformanceTest {
   @Nested
   inner class SdkData {
 
-    private val gradleJvmFixture = gradleJvmFixture(GradleVersion.current(), JavaVersionRestriction.NO)
+    private val gradleJvmFixture = gradleJvmFixture()
     private val gradleJvm get() = gradleJvmFixture.get().gradleJvm
 
     //private val project by projectFixture()

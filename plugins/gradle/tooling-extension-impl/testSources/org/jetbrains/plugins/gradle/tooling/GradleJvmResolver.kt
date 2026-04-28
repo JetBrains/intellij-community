@@ -108,7 +108,7 @@ class GradleJvmResolver(
   companion object {
 
     @JvmStatic
-    fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable, javaVersionRestriction: JavaVersionRestriction): Sdk {
+    fun resolveGradleJvm(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction, parentDisposable: Disposable): Sdk {
       return GradleJvmResolver(gradleVersion, javaVersionRestriction)
         .resolveGradleJvmImpl(parentDisposable)
     }

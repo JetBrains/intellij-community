@@ -18,6 +18,7 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObse
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.openProjectAsync
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
@@ -27,11 +28,17 @@ import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
-class GradleTestFixtureImpl: GradleTestFixture {
+class GradleTestFixtureImpl(
+  private val gradleJvmFixture: GradleJvmTestFixture,
+) : GradleTestFixture {
 
   private lateinit var syncLeakTracker: OperationLeakTracker
 
   private lateinit var testDisposable: Disposable
+
+  override val gradleJvm: String by gradleJvmFixture::gradleJvm
+  override val gradleJvmPath: String by gradleJvmFixture::gradleJvmPath
+  override val gradleJvmInfo: JdkVersionInfo by gradleJvmFixture::gradleJvmInfo
 
   fun setUp() {
     syncLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
@@ -42,6 +49,7 @@ class GradleTestFixtureImpl: GradleTestFixture {
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
     ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
+    gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
 
     setSystemProperty(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY, true.toString(), testDisposable)
   }

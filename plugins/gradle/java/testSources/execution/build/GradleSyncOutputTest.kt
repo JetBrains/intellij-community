@@ -4,44 +4,47 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.intellij.util.asDisposable
+import com.intellij.testFramework.junit5.fixture.testFixture
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
-import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
 @TestApplication
-class GradleSyncOutputTest {
+@ParameterizedClass
+@AllGradleVersionsSource
+class GradleSyncOutputTest(private val gradleVersion: GradleVersion) {
+
+  private val gradleFixture = gradleFixture(gradleVersion)
+  private val gradle by gradleFixture
 
   private val projectRootFixture = tempPathFixture()
   private val projectRoot by projectRootFixture
 
-  private val projectFixture = projectFixture(projectRootFixture, openAfterCreation = true)
+  private val projectFixture = testFixture {
+    // Keep the project fixture dependent on the Gradle fixture, so the project is closed before Gradle listener leak checks run.
+    gradleFixture.init()
+    val project = projectFixture(projectRootFixture, openAfterCreation = true).init()
+    initialized(project) {}
+  }
   private val project by projectFixture
-
-  private val gradleFixture by gradleFixture()
 
   private val buildViewFixture by buildViewFixture(projectFixture)
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test sync with lazy task configuration`(gradleVersion: GradleVersion): Unit = runBlocking {
-    gradleJvmFixture(gradleVersion, JavaVersionRestriction.NO, asDisposable())
-      .installProjectSettingsConfigurator(asDisposable())
-
+  @Test
+  fun `test sync with lazy task configuration`(): Unit = runBlocking {
     projectRoot.createGradleWrapper(gradleVersion)
     projectRoot.createSettingsFile(gradleVersion) {
       setProjectName(project.name)
     }
-    gradleFixture.syncProject(project, projectRoot)
+    gradle.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
@@ -56,7 +59,7 @@ class GradleSyncOutputTest {
         }
       }
     }
-    gradleFixture.syncProject(project, projectRoot)
+    gradle.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
@@ -74,7 +77,7 @@ class GradleSyncOutputTest {
         }
       }
     }
-    gradleFixture.syncProject(project, projectRoot)
+    gradle.syncProject(project, projectRoot)
     buildViewFixture.assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
