@@ -139,17 +139,13 @@ internal class McpSessionHandler(
    * Only created when invocationMode is VIA_ROUTER.
    * Contains tools that are invoked via the router rather than directly.
    */
-  val routerToolsProvider: McpFilteredToolsListProvider? =
-    if (invocationMode == McpSessionInvocationMode.VIA_ROUTER)
-      McpFilteredToolsListProvider(
-        sessionScope,
-        sessionOptions,
-        mcpServerService,
-        useFiltersFromEP,
-        invocationMode = McpToolInvocationMode.VIA_ROUTER
-      )
-    else
-      null
+  val routerToolsProvider: McpFilteredToolsListProvider = McpFilteredToolsListProvider(
+    sessionScope,
+    sessionOptions,
+    mcpServerService,
+    useFiltersFromEP,
+    invocationMode = McpToolInvocationMode.VIA_ROUTER,
+  )
 
   val mcpTools = toolsProvider.mcpTools
 

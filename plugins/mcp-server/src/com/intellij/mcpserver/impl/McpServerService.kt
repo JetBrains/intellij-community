@@ -426,15 +426,13 @@ open class McpServerService(val cs: CoroutineScope) {
     }
 
     val routerToolName = UniversalToolset::execute_tool.name
+    val shouldExposeRouterTool = invocationMode != McpToolInvocationMode.VIA_ROUTER
     if (!useFiltersFromEP) {
       return allTools.filter { tool ->
         val isRouterTool = tool.descriptor.name == routerToolName
-        val shouldIncludeRouter = invocationMode == McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
-        val shouldExcludeRouter = invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER
-        
+
         when {
-          isRouterTool && shouldExcludeRouter -> false
-          isRouterTool && shouldIncludeRouter -> true
+          isRouterTool -> shouldExposeRouterTool
           else -> filterAdjusted.shouldInclude(tool)
         }
       }
@@ -442,12 +440,7 @@ open class McpServerService(val cs: CoroutineScope) {
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
     val context = McpToolFilterProvider.McpToolFilterContext(allTools)
-    if (invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER) {
-      context.updateState(enabled = false) { it.descriptor.name == routerToolName }
-    }
-    else {
-      context.updateState(enabled = true, routerOnly = false) { it.descriptor.name == routerToolName }
-    }
+    context.updateState(enabled = shouldExposeRouterTool) { it.descriptor.name == routerToolName }
     
     // Apply filter providers
     for (filterProvider in filterProviders) {
@@ -458,8 +451,14 @@ open class McpServerService(val cs: CoroutineScope) {
     // Tools that pass the filter are included, tools already in ON state are also included
     val includedRouterOnlyTools = context.routerOnlyTools.filter { filterAdjusted.shouldInclude(it) }
     
-    // Return tools that are either ON or ON_DEMAND and pass the filter
-    return (context.onTools + includedRouterOnlyTools).toList()
+    // Return tools that are enabled and pass the filter
+    val filteredTools = linkedSetOf<McpTool>()
+    filteredTools += context.onTools
+    filteredTools += includedRouterOnlyTools
+    if (shouldExposeRouterTool) {
+      allTools.firstOrNull { it.descriptor.name == routerToolName }?.let { filteredTools += it }
+    }
+    return filteredTools.toList()
   }
 
 }
