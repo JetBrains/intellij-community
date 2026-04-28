@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
@@ -39,9 +37,6 @@ abstract class GradleBaseTestCase {
   @BeforeEach
   fun setUpGradleBaseTestCase() {
     gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
-    AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
-    AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
-    ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
   }
 
   suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {

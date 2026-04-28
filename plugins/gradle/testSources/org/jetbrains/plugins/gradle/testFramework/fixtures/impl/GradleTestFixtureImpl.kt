@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -10,6 +11,7 @@ import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
@@ -35,6 +37,10 @@ class GradleTestFixtureImpl: GradleTestFixture {
     reloadLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()
+
+    AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
+    AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
+    ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
 
     setSystemProperty(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY, true.toString(), testDisposable)
   }

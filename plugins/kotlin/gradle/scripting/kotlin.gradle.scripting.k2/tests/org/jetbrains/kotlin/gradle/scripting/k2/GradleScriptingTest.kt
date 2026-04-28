@@ -7,7 +7,6 @@ import com.intellij.openapi.observable.operation.core.awaitOperation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.testFramework.DumbModeTestUtils.startEternalDumbModeTask
 import com.intellij.testFramework.junit5.SystemProperty
@@ -36,6 +35,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 @AssertKotlinPluginMode
 class GradleScriptingTest {
+
     val gradleVersion: GradleVersion = GradleVersion.current()
     val javaVersion = JavaVersionRestriction.NO
 
@@ -47,7 +47,6 @@ class GradleScriptingTest {
     @BeforeEach
     fun setUpTests() {
         gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
-        ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
     }
 
     @Test

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.projectStructure
 
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertSingle
@@ -52,7 +51,6 @@ class KotlinGradleScriptImportingTest {
     @BeforeEach
     fun setUpTests() {
         gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
-        ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
     }
 
     @Test
