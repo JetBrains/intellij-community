@@ -24,15 +24,16 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
   STATE,
   SERVICE extends PyDefaultProjectAwareService<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE>,
   APP_SERVICE extends SERVICE,
-  MODULE_SERVICE extends SERVICE> implements PyDefaultProjectAwareServiceModuleConfigurator {
-  private final @NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> myClasses;
+  MODULE_SERVICE extends SERVICE,
+  MODULE_SERVICE_FACTORY extends PyModuleServiceFactory<MODULE_SERVICE>> implements PyDefaultProjectAwareServiceModuleConfigurator {
+  private final @NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE, MODULE_SERVICE_FACTORY> myClasses;
   private final @Nullable Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> myAutoDetector;
 
-  public PyDefaultProjectAwareModuleConfiguratorImpl(@NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> classes) {
+  public PyDefaultProjectAwareModuleConfiguratorImpl(@NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE, MODULE_SERVICE_FACTORY> classes) {
     this(classes, null);
   }
 
-  public PyDefaultProjectAwareModuleConfiguratorImpl(@NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> classes,
+  public PyDefaultProjectAwareModuleConfiguratorImpl(@NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE, MODULE_SERVICE_FACTORY> classes,
                                                      @Nullable Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> autoDetector) {
     myClasses = classes;
     myAutoDetector = autoDetector;

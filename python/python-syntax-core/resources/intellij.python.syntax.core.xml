@@ -7,10 +7,11 @@
     <lang.whiteSpaceFormattingStrategy language="Python"
                                        implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
 
-    <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService"
                         serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="com.jetbrains.python.documentation.PyDocumentationSettingsImlComponentNameContributor"/>
 
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>

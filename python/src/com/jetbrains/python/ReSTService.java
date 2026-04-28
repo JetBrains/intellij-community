@@ -15,17 +15,26 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ReSTService extends PyDefaultProjectAwareService<
   ReSTService.ServiceState, ReSTService, ReSTService.AppService, ReSTService.ModuleService> {
 
-  private static final PyDefaultProjectAwareServiceClasses<ServiceState, ReSTService, AppService, ModuleService> SERVICE_CLASSES =
-    new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
+  static final String MODULE_STATE_COMPONENT = "ReSTService";
+
+  private static final PyDefaultProjectAwareServiceClasses<ServiceState, ReSTService, AppService, ModuleService, ReSTServiceFactory> SERVICE_CLASSES =
+    new PyDefaultProjectAwareServiceClasses<>(AppService.class, ReSTServiceFactory.class);
 
 
   protected ReSTService() {
     super(new ServiceState());
   }
 
+  protected ReSTService(Module module) {
+    super(new ServiceState(), MODULE_STATE_COMPONENT, ReSTService.ServiceState.class, module);
+  }
 
   public final void setWorkdir(String workDir) {
-    getState().DOC_DIR = workDir;
+    var state = getState();
+    state.DOC_DIR = workDir;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
   public static ReSTService getInstance(@Nullable Module module) {
@@ -46,7 +55,11 @@ public abstract class ReSTService extends PyDefaultProjectAwareService<
   }
 
   public final void setTxtIsRst(boolean isRst) {
-    getState().TXT_IS_RST = isRst;
+    var state = getState();
+    state.TXT_IS_RST = isRst;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
   public static final class ServiceState {
@@ -58,7 +71,9 @@ public abstract class ReSTService extends PyDefaultProjectAwareService<
   public static final class AppService extends ReSTService {
   }
 
-  @State(name = "ReSTService")
   public static final class ModuleService extends ReSTService {
+    ModuleService(Module module) {
+      super(module);
+    }
   }
 }

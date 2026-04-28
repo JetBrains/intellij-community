@@ -14,15 +14,17 @@ public final class PyDefaultProjectAwareServiceClasses<
   STATE,
   SERVICE extends PyDefaultProjectAwareService<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE>,
   APP_SERVICE extends SERVICE,
-  MODULE_SERVICE extends SERVICE> {
+  MODULE_SERVICE extends SERVICE,
+  MODULE_SERVICE_FACTORY extends PyModuleServiceFactory<MODULE_SERVICE>> {
 
   private final @NotNull Class<APP_SERVICE> myAppServiceClass;
 
-  private final @NotNull Class<MODULE_SERVICE> myModuleServiceClass;
+  private final @NotNull Class<MODULE_SERVICE_FACTORY> myServiceFactory;
 
-  public PyDefaultProjectAwareServiceClasses(@NotNull Class<APP_SERVICE> appServiceClass, @NotNull Class<MODULE_SERVICE> moduleServiceClass) {
+  public PyDefaultProjectAwareServiceClasses(@NotNull Class<APP_SERVICE> appServiceClass,
+                                             @NotNull Class<MODULE_SERVICE_FACTORY> serviceFactory) {
     myAppServiceClass = appServiceClass;
-    myModuleServiceClass = moduleServiceClass;
+    myServiceFactory = serviceFactory;
   }
   /**
    * Use it for "getInstance" function. Returns module-level if module is set, app level otherwise
@@ -39,12 +41,11 @@ public final class PyDefaultProjectAwareServiceClasses<
   }
 
   public MODULE_SERVICE getModuleService(@NotNull Module module) {
-    return module.getService(myModuleServiceClass);
+    return module.getProject().getService(myServiceFactory).getService(module);
   }
 
   @ApiStatus.Internal
   public void copyFromAppToModule(@NotNull Module module) {
     getModuleService(module).loadState(getAppService().getState());
   }
-
 }

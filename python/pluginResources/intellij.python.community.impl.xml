@@ -259,8 +259,8 @@
     <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
-    <moduleService serviceImplementation="com.jetbrains.python.ReSTService$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
+    <workspaceModel.customImlComponentNameContributor implementation="com.jetbrains.python.ReSTServiceImlComponentNameContributor"/>
 
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
@@ -543,12 +543,14 @@
     <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
 
     <!-- TestRunnerService -->
-    <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="com.jetbrains.python.testing.TestRunnerServiceImlComponentNameContributor"/>
 
     <!-- Packaging -->
-    <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
 
     <!-- Namespace packages -->
     <moduleService serviceImplementation="com.jetbrains.python.namespacePackages.PyNamespacePackagesService"/>

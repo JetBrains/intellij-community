@@ -16,14 +16,19 @@ public abstract class TestRunnerService
   extends
   PyDefaultProjectAwareService<TestRunnerService.ServiceState, TestRunnerService, TestRunnerService.AppService, TestRunnerService.ModuleService> {
 
-  private static final PyDefaultProjectAwareServiceClasses<ServiceState, TestRunnerService, AppService, ModuleService>
-    SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
+  static final String MODULE_STATE_COMPONENT = "TestRunnerService";
+
+  private static final PyDefaultProjectAwareServiceClasses<ServiceState, TestRunnerService, AppService, ModuleService, TestRunnerServiceFactory>
+    SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, TestRunnerServiceFactory.class);
   private static final TestRunnerDetector DETECTOR = new TestRunnerDetector();
 
   protected TestRunnerService() {
     super(new ServiceState());
   }
 
+  TestRunnerService(Module module) {
+    super(new ServiceState(), MODULE_STATE_COMPONENT, ServiceState.class, module);
+  }
 
   public final @NotNull PyAbstractTestFactory<?> getSelectedFactory() {
     return PyTestsSharedKt.getFactoryByIdOrDefault(getProjectConfiguration());
@@ -45,7 +50,11 @@ public abstract class TestRunnerService
    * Use {@link #setSelectedFactory(PyAbstractTestFactory)} (String)}
    */
   public final void setProjectConfiguration(@NotNull String projectConfiguration) {
-    getState().PROJECT_TEST_RUNNER = projectConfiguration;
+    var state = getState();
+    state.PROJECT_TEST_RUNNER = projectConfiguration;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
   /**
@@ -73,7 +82,9 @@ public abstract class TestRunnerService
   static final class AppService extends TestRunnerService {
   }
 
-  @State(name = "TestRunnerService")
   static final class ModuleService extends TestRunnerService {
+    ModuleService(Module module) {
+      super(module);
+    }
   }
 }

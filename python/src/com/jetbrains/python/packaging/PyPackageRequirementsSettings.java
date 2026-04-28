@@ -28,16 +28,24 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   PyPackageRequirementsSettings.AppService,
   PyPackageRequirementsSettings.ModuleService> {
 
+
+  static final String MODULE_STATE_COMPONENT = "PackageRequirementsSettings";
+
   private static final PyDefaultProjectAwareServiceClasses<
     ServiceState,
     PyPackageRequirementsSettings,
     AppService,
-    ModuleService> SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
+    ModuleService,
+    PyPackageRequirementsSettingsFactory> SERVICE_CLASSES =
+    new PyDefaultProjectAwareServiceClasses<>(AppService.class, PyPackageRequirementsSettingsFactory.class);
 
   protected PyPackageRequirementsSettings() {
     super(new ServiceState());
   }
 
+  protected PyPackageRequirementsSettings(Module module) {
+    super(new ServiceState(), MODULE_STATE_COMPONENT, ServiceState.class, module);
+  }
   /**
    * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
    */
@@ -51,7 +59,11 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
    */
   @Deprecated(forRemoval = true)
   public void setRequirementsPath(@NotNull String path) {
-    getState().myRequirementsPath = path;
+    var state = getState();
+    state.myRequirementsPath = path;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
   public boolean getSpecifyVersion() {
@@ -63,7 +75,11 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   public final void setVersionSpecifier(PyRequirementsVersionSpecifierType versionSpecifier) {
-    getState().myVersionSpecifier = versionSpecifier;
+    ServiceState state = getState();
+    state.myVersionSpecifier = versionSpecifier;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
   public final boolean getRemoveUnused() {
@@ -71,7 +87,12 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   public final boolean setRemoveUnused(boolean removeUnused) {
-    return getState().myRemoveUnused = removeUnused;
+    ServiceState state = getState();
+    state.myRemoveUnused = removeUnused;
+    if (myModule != null) {
+      loadState(state);
+    }
+    return state.myRemoveUnused;
   }
 
   public final boolean getModifyBaseFiles() {
@@ -79,7 +100,12 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   public final boolean setModifyBaseFiles(boolean modifyBaseFiles) {
-    return getState().myModifyBaseFiles = modifyBaseFiles;
+    ServiceState state = getState();
+    state.myModifyBaseFiles = modifyBaseFiles;
+    if (myModule != null) {
+      loadState(state);
+    }
+    return state.myModifyBaseFiles;
   }
 
   public final boolean getKeepMatchingSpecifier() {
@@ -87,7 +113,11 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   public final void setKeepMatchingSpecifier(boolean forceUpdateVersionSpecifier) {
-    getState().myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
+    ServiceState state = getState();
+    state.myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
+    if (myModule != null) {
+     loadState(state);
+    }
   }
 
   public static @NotNull PyPackageRequirementsSettings getInstance(@Nullable Module module) {
@@ -123,7 +153,9 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
   }
 
-  @State(name = "PackageRequirementsSettings")
   public static final class ModuleService extends PyPackageRequirementsSettings {
+    ModuleService(Module module) {
+      super(module);
+    }
   }
 }
