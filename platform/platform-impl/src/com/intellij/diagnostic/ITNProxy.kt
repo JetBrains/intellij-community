@@ -309,10 +309,11 @@ object ITNProxy {
 
       append(builder, "error.description", errorBean.comment)
 
-      PluginManagerCore.loadedPlugins
-        .filter { !it.isBundled }
+      PluginManagerCore.loadedPlugins.asSequence()
+        .filter { !it.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(it) }
         .map { it.pluginId }
         .filter { getPluginInfoById(it).isSafeToReport() }
+        .toList()
         .takeIf { it.isNotEmpty() }
         ?.joinToString(",") { it.idString }
         ?.let { append(builder, "plugins.nonbundled", it) }

@@ -2029,6 +2029,7 @@ e:com.intellij.openapi.diagnostic.SubmittedReportInfo$SubmissionStatus
 - sf:NEW_ISSUE:com.intellij.openapi.diagnostic.SubmittedReportInfo$SubmissionStatus
 - s:valueOf(java.lang.String):com.intellij.openapi.diagnostic.SubmittedReportInfo$SubmissionStatus
 - s:values():com.intellij.openapi.diagnostic.SubmittedReportInfo$SubmissionStatus[]
+com.intellij.openapi.diagnostic.UnhandledErrorReport
 c:com.intellij.openapi.editor.DisposableEditorPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable

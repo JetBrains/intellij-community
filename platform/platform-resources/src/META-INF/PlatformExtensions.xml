@@ -21,6 +21,9 @@
     />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <applicationService serviceInterface="com.intellij.openapi.diagnostic.UnhandledReportSinkService"
+                        serviceImplementation="com.intellij.diagnostic.UnhandledReportSinkServiceImpl"/>
+
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
     <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>

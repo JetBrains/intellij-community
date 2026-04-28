@@ -18,6 +18,8 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.UnhandledException;
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService;
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginExceptionReportData;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
@@ -120,6 +122,20 @@ public final class IdeaLogger extends JulLogger {
       var pluginId = pluginUtil.findPluginId(t);
       var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
       LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+
+      if (pluginId != null) {
+        @Nullable UnhandledReportSinkService sinkService;
+        try {
+          sinkService = UnhandledReportSinkService.getInstance();
+        }
+        catch (CancellationException e) {
+          return; // application disposed already
+        }
+
+        if (sinkService != null) { // might be null in CLI utils
+          sinkService.report(new PluginExceptionReportData(pluginId, t));
+        }
+      }
     }
   }
 
