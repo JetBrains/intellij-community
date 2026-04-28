@@ -10,6 +10,5 @@ import org.junit.jupiter.params.provider.ArgumentsSource
  * and respects `gradle.versions.to.run` system property.
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
 @ArgumentsSource(AllGradleVersionArgumentsProcessor::class)
 annotation class AllGradleVersionsSource(vararg val value: String)

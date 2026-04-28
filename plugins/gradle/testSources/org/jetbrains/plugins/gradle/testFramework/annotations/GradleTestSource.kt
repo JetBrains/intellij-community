@@ -42,6 +42,5 @@ import org.junit.jupiter.params.provider.ArgumentsSource
  * @see org.junit.jupiter.params.ParameterizedTest
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
 @ArgumentsSource(GradleTestArgumentsProcessor::class)
 annotation class GradleTestSource(val value: String, vararg val values: String, val separator: Char = ',', val delimiter: Char = ':')

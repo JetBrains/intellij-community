@@ -9,6 +9,5 @@ import org.junit.jupiter.params.provider.ArgumentsSource
  * [org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.BASE_GRADLE_VERSION].
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
 @ArgumentsSource(BaseGradleVersionArgumentsProcessor::class)
 annotation class BaseGradleVersionSource(vararg val value: String)
