@@ -13,7 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
-  public static final TokenSet COMMENT_TOKEN_SET = TokenSet.create(MarkdownElementTypes.COMMENT_VALUE);
+  public static final TokenSet COMMENT_TOKEN_SET = TokenSet.create(
+    MarkdownElementTypes.COMMENT_VALUE
+  );
 
   @Override
   public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {

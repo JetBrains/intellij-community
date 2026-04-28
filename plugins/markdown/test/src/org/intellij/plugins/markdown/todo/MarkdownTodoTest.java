@@ -39,6 +39,17 @@ public class MarkdownTodoTest extends BasePlatformTestCase {
     doTest("todo comment", 0);
   }
 
+  public void testTodoInHtmlComment() {
+    doTest("<!-- todo comment -->", 1);
+  }
+
+  public void testTodoInsideHtmlBlock() {
+    doTest("<div>\n  <!-- todo inside html block -->\n</div>", 1);
+  }
+
+  public void testNoTodoInsideHtmlText() {
+    doTest("<div>todo not in comment</div>", 0);
+  }
   private void doTest(@NotNull String text, int expectedTodos) {
     myFixture.configureByText(MarkdownFileType.INSTANCE, text);
     assertEquals(expectedTodos, PsiTodoSearchHelper.getInstance(getProject()).findTodoItems(myFixture.getFile()).length);
