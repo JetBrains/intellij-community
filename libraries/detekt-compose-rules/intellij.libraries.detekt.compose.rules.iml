@@ -9,97 +9,76 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="io.nlopez.compose.rules.detekt" type="repository">
-        <properties maven-id="io.nlopez.compose.rules:detekt:0.4.27">
+        <properties maven-id="io.nlopez.compose.rules:detekt:0.5.8">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.4.27/detekt-0.4.27.jar">
-              <sha256sum>3ebb866359b8ec9ba06e45eb27b1b88ee84dab7b052c3ddef57a0e5d12433fb5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.5.8/detekt-0.5.8.jar">
+              <sha256sum>2582d294c76e45acc3878059fcd6d55e82acaa01ba4b413e614f94c785f351af</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-core/1.23.8/detekt-core-1.23.8.jar">
-              <sha256sum>1981dea8e4e2e8541af2d83e4f8d3581ce647cfe63175b9eb9ac2a07849d74c9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.5.8/common-detekt-0.5.8.jar">
+              <sha256sum>195ea5bd60ff80b72e5b51246ce14921e0845355d41a2e05d5bdfff626383428</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8.jar">
-              <sha256sum>dd5b84d420904d5c564aab115d36e6290a9d7daf6955923099015618f2b5c83f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-core/2.0.0-alpha.3/detekt-core-2.0.0-alpha.3.jar">
+              <sha256sum>407ad81b13154539cbfd693b9b1105053b318af28790a5437c784495f479b228</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1.jar">
-              <sha256sum>940e6d50445bc6b0ae26ad414ec7b953a3e4e802dc7756cc14d56958bc97cc31</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-api/2.0.0-alpha.3/detekt-api-2.0.0-alpha.3.jar">
+              <sha256sum>d699f04ca4250e8cdf57b30f63ee7e4f943a311a9154f8becaefa9437ccdb86f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.8/detekt-parser-1.23.8.jar">
-              <sha256sum>5cdf45a0172d934d6e7401cd43838e7b954f7adb117eed8358fcae0b177e90e5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-parser/2.0.0-alpha.3/detekt-parser-2.0.0-alpha.3.jar">
+              <sha256sum>c091e4e792094172c1f1051c95af91f09300585161b8492606ec0125a3f440b3</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0.jar">
-              <sha256sum>672cbebb5d45a72b35dd81fd6127e187451bb6fb7fba35315bbdf2f57cfce835</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-tooling/2.0.0-alpha.3/detekt-tooling-2.0.0-alpha.3.jar">
+              <sha256sum>3d20dad5418b4c21644b8b5ce8a72e7acb08d43bb3fd3ac61482c678c7bfffbe</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-tooling/1.23.8/detekt-tooling-1.23.8.jar">
-              <sha256sum>7e93e9a23b478f70128893b06748673f912100b7ef03040d7d0331e26d30d092</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-metrics/2.0.0-alpha.3/detekt-metrics-2.0.0-alpha.3.jar">
+              <sha256sum>9511b07cafd03484ce3c62f6d7616fa657d4cc5ea9d728094d3dfa2513ac0ccc</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7.jar">
-              <sha256sum>4053f878c171692aab8782f53a3974f43e55e2b6ed12c3682b36a46968c5ded1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-psi-utils/2.0.0-alpha.3/detekt-psi-utils-2.0.0-alpha.3.jar">
+              <sha256sum>b39c1811cb3c4f5d21fb9d40a63ce6c05d475cee33f4330698c84be92c08a812</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-metrics/1.23.8/detekt-metrics-1.23.8.jar">
-              <sha256sum>718e8f71f5872986e4f5cd4887a41e26aa0aeff42e99cf4a42582291b8738cc4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-utils/2.0.0-alpha.3/detekt-utils-2.0.0-alpha.3.jar">
+              <sha256sum>af458b4487cd004e8d943b81ce867a4ec6d858f8765c7d53df622f2b70374385</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8.jar">
-              <sha256sum>9505fa9d4f9a771d256a5d415b5d51ffd7a24e5019f6a60e5a69a12633dcf7ba</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/detekt/detekt-kotlin-analysis-api-standalone/2.0.0-alpha.3/detekt-kotlin-analysis-api-standalone-2.0.0-alpha.3-all.jar">
+              <sha256sum>c9790f0ffc9be1af96e5ae56a9aa930b8df3551415316af8fdd789d006a32525</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8.jar">
-              <sha256sum>f75fd7e924b9267d9ec661859ca913102de4a8f5895b09685ce10797dc26d056</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.22.0/poko-annotations-jvm-0.22.0.jar">
+              <sha256sum>436dedf6cd63d1c10f052d3e3422dfc088f2aa16576117708a967e77a7a5e7c6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27.jar">
-              <sha256sum>fa0b6f2a76b7c3768d5f3b6095b3deb756840a9251f8f750e344c5213382f2fd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.10/snakeyaml-engine-2.10.jar">
+              <sha256sum>c99d9fd66c7c251d881a9cd95089b7c8044c29a1b02983d7036981bd4354ec37</sha256sum>
             </artifact>
           </verification>
           <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-compiler-embeddable" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-compiler" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-report-html" />
-            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-report-md" />
-            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-report-txt" />
-            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-report-xml" />
-            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-report-sarif" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.4.27/detekt-0.4.27.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-core/1.23.8/detekt-core-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.8/detekt-parser-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-tooling/1.23.8/detekt-tooling-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-metrics/1.23.8/detekt-metrics-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.5.8/detekt-0.5.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.5.8/common-detekt-0.5.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-core/2.0.0-alpha.3/detekt-core-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-api/2.0.0-alpha.3/detekt-api-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-parser/2.0.0-alpha.3/detekt-parser-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-tooling/2.0.0-alpha.3/detekt-tooling-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-metrics/2.0.0-alpha.3/detekt-metrics-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-psi-utils/2.0.0-alpha.3/detekt-psi-utils-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-utils/2.0.0-alpha.3/detekt-utils-2.0.0-alpha.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-kotlin-analysis-api-standalone/2.0.0-alpha.3/detekt-kotlin-analysis-api-standalone-2.0.0-alpha.3-all.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.22.0/poko-annotations-jvm-0.22.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.10/snakeyaml-engine-2.10.jar!/" />
         </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.4.27/detekt-0.4.27-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-core/1.23.8/detekt-core-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.8/detekt-parser-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-tooling/1.23.8/detekt-tooling-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-metrics/1.23.8/detekt-metrics-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27-javadoc.jar!/" />
-        </JAVADOC>
+        <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/detekt/0.4.27/detekt-0.4.27-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-core/1.23.8/detekt-core-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.8/detekt-api-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.17.1/poko-annotations-jvm-0.17.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.8/detekt-parser-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-tooling/1.23.8/detekt-tooling-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-metrics/1.23.8/detekt-metrics-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.8/detekt-psi-utils-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.8/detekt-utils-1.23.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/nlopez/compose/rules/common-detekt/0.4.27/common-detekt-0.4.27-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-api/2.0.0-alpha.3/detekt-api-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-core/2.0.0-alpha.3/detekt-core-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-parser/2.0.0-alpha.3/detekt-parser-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-tooling/2.0.0-alpha.3/detekt-tooling-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-metrics/2.0.0-alpha.3/detekt-metrics-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-psi-utils/2.0.0-alpha.3/detekt-psi-utils-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/detekt/detekt-utils/2.0.0-alpha.3/detekt-utils-2.0.0-alpha.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.22.0/poko-annotations-jvm-0.22.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.10/snakeyaml-engine-2.10-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

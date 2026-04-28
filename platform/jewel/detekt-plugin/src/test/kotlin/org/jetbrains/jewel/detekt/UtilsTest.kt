@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.gitlab.arturbosch.detekt.test.TestConfig
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.test.TestConfig
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
@@ -25,7 +25,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing methods, which means the rule ran
         assertThat(findings).hasSize(1)
     }
@@ -44,7 +44,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing methods, which means the rule ran
         assertThat(findings).hasSize(1)
     }
@@ -63,7 +63,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing methods, which means the rule ran
         assertThat(findings).hasSize(1)
     }
@@ -80,7 +80,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing methods, which means the rule ran
         assertThat(findings).hasSize(1)
     }
@@ -99,7 +99,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should NOT find anything, which means the rule didn't run
         assertThat(findings).isEmpty()
     }
@@ -118,7 +118,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing @ApiStatus.Internal annotation
         assertThat(findings).hasSize(1)
     }
@@ -137,7 +137,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing @ApiStatus.Internal annotation
         assertThat(findings).hasSize(1)
     }
@@ -154,7 +154,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should find the missing @ApiStatus.Internal annotation
         assertThat(findings).hasSize(1)
     }
@@ -173,7 +173,7 @@ class UtilsTest {
             """
                 .trimMargin()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Should NOT find anything because the rule shouldn't run
         assertThat(findings).isEmpty()
     }

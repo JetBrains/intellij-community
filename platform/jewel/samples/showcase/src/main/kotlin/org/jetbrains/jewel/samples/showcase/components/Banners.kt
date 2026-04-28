@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.MarkdownText
 import org.jetbrains.jewel.ui.component.CheckboxRow
@@ -209,7 +210,9 @@ public fun Banners(modifier: Modifier = Modifier) {
                     icon = null,
                     iconActions = { iconAction(AllIconsKeys.General.Refresh, "Restart", onClick = { restart += 1 }) },
                     style = JewelTheme.inlineBannerStyle.information,
-                    content = { MarkdownText("Timer — **${"%.2f".format(timer)}** _seconds remaining_.") },
+                    content = {
+                        MarkdownText("Timer — **${"%.2f".format(Locale.ENGLISH, timer)}** _seconds remaining_.")
+                    },
                 )
 
                 InlineInformationBanner(

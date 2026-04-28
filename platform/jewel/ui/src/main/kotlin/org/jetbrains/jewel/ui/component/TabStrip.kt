@@ -234,6 +234,7 @@ public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = M
     TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })
 }
 
+@Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
 @Immutable
 public sealed class TabData {
     public abstract val selected: Boolean

@@ -410,8 +410,8 @@ private fun MenuItem(
         currentSetSelectedSubMenu(null)
     }
 
-    fun selectSubmenu(item: SubmenuItem) {
-        currentSetSelectedSubMenu(item)
+    fun selectSubmenu(submenuItem: SubmenuItem) {
+        currentSetSelectedSubMenu(submenuItem)
     }
 
     when (item) {

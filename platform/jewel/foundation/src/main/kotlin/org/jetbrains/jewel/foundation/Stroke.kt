@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.unit.Dp
 
+@Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
 public sealed class Stroke {
     @Immutable
     public object None : Stroke() {

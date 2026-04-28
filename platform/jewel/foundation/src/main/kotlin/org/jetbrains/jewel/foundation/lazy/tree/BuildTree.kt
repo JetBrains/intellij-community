@@ -7,6 +7,7 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 public fun <T> buildTree(builder: TreeBuilder<T>.() -> Unit): Tree<T> = TreeBuilder<T>().apply(builder).build()
 
 public class TreeBuilder<T> : TreeGeneratorScope<T> {
+    @Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
     public sealed class Element<T> {
         public abstract val id: Any?
 

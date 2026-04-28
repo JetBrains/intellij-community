@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UnusedImport") // Member extension properties from companion objects are not tracked by detekt
+
 package org.jetbrains.jewel.ui.component.search
 
 import androidx.compose.foundation.gestures.FlingBehavior
@@ -293,7 +295,9 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
         val currentKeysValue = snapshotFlow { currentKeys.value }
         val indicesForKeys =
             currentSelection
-                .combine(currentKeysValue) { selectedKeys, keys -> keys.indicesForKeys(selectedKeys) to keys }
+                .combine(currentKeysValue) { selectedKeys, currentKeys ->
+                    currentKeys.indicesForKeys(selectedKeys) to currentKeys
+                }
                 .distinctUntilChanged()
 
         // Sync lastActiveItemIndex back to the selected item when search is dismissed

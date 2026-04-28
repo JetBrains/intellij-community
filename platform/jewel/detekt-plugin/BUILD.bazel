@@ -15,7 +15,7 @@ java_binary(
     runtime_deps = [
       "@lib//:kotlin-stdlib",
       "@lib//:kotlinx-coroutines-core",
-      "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
+      "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler",
     ],
 )
 
@@ -33,8 +33,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
-    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
+    "@lib//:platform-jewel-detekt_plugin-jetbrains-kotlin-compiler",
+    "@lib//:platform-jewel-detekt_plugin-dev-detekt-api",
   ]
 )
 
@@ -47,12 +47,14 @@ jvm_library(
   runtime_deps = [
     ":detekt-plugin",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util-class-loader:util-classLoader_test_lib",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
-    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
-    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",
+    "@lib//:platform-jewel-detekt_plugin-dev-detekt-test",
+    "@lib//:platform-jewel-detekt_plugin-dev-detekt-core",
   ]
 )
 ### auto-generated section `build intellij.platform.jewel.detektPlugin` end
@@ -87,14 +89,16 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform-jewel-detekt_plugin-tests-jetbrains-kotlin-compiler-embeddable",
-    "@lib//:platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-api",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "@lib//:platform-jewel-detekt_plugin-tests-jetbrains-kotlin-compiler",
+    "@lib//:platform-jewel-detekt_plugin-tests-dev-detekt-api",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
     "//libraries/assertj-core:assertj-core_test_lib",
-    "@lib//:platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-test",
-    "@lib//:platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-core",
+    "@lib//:platform-jewel-detekt_plugin-tests-dev-detekt-test",
+    "@lib//:platform-jewel-detekt_plugin-tests-dev-detekt-core",
   ],
   runtime_deps = [":detektPlugin-tests"]
 )

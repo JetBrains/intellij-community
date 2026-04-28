@@ -1,2 +1,2 @@
-io/gitlab/arturbosch/detekt/**
+dev/detekt/**
 org/jetbrains/kotlin/psi/**
