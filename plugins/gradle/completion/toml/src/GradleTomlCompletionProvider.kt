@@ -11,9 +11,11 @@ import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -114,7 +116,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
   }
 
   private fun CompletionResultSet.addElement(
-    lookupObject: Any,
+    lookupObject: BaseDependencyCompletionResult,
     lookupString: String,
     pos: GradleTomlLibraryCompletionPosition,
     isAutoPopup: Boolean,
@@ -122,6 +124,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     val lookupElement = LookupElementBuilder
       .create(lookupObject, lookupString)
       .withPresentableText(lookupString)
+      .withIcon(lookupObject.icon)
       .withInsertHandler(FullStringInsertHandler)
     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
     lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, isAutoPopup)

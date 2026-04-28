@@ -28,6 +28,7 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.O
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.TOP_LEVEL
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
@@ -176,6 +177,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           val lookupElement = LookupElementBuilder
             .create(item, lookupString)
             .withPresentableText(lookupString)
+            .withIcon(item.icon)
             .withInsertHandler(insertHandler)
           lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
           lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
@@ -243,6 +245,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       itemFlow.collect { item ->
         val lookupElement = LookupElementBuilder.create(item, item.result)
           .withPresentableText(item.result)
+          .withIcon(item.icon)
           .withInsertHandler(FullStringInsertHandler)
         lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
         lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)

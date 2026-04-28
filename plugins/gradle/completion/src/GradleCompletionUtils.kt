@@ -3,11 +3,16 @@ package com.intellij.gradle.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.icons.AllIcons
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import javax.swing.Icon
 
 @ApiStatus.Internal
 fun removeDummySuffix(value: String?): String {
@@ -26,3 +31,10 @@ fun removeDummySuffix(value: String?): String {
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
   DependencyCompletionContextImpl(originalFile.virtualFile.toNioPath().getEelDescriptor(), GradleConstants.SYSTEM_ID)
+
+@get:ApiStatus.Internal
+val BaseDependencyCompletionResult.icon: Icon
+  get() = when(source) {
+    LOCAL -> AllIcons.Actions.OfflineMode
+    SERVER -> AllIcons.Webreferences.Server
+  }
