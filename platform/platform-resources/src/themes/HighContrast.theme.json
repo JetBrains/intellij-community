@@ -696,18 +696,18 @@
     },
     "LineProfiler" : {
       "Line" : {
-        "labelBackground" : "#43474A",
-        "foreground" : "#787878",
-        "hoverBackground" : "#4A4E52"
+        "labelBackground" : "#212326",
+        "foreground" : "#D1D3D9",
+        "hoverBackground" : "#33353B"
       },
       "HotLine" : {
-        "labelBackground" : "#593D41",
-        "foreground" : "#FF5261",
-        "hoverBackground" : "#704745"
+        "labelBackground" : "#3F1E21",
+        "foreground" : "#F57E84",
+        "hoverBackground" : "#56272B"
       },
       "IgnoredLine" : {
-        "labelBackground" : "#43474A",
-        "foreground" : "#5F5F5F"
+        "labelBackground" : "#33353B",
+        "foreground" : "#9FA2A8"
       }
     },
     "Recap": {
