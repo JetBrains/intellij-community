@@ -48,6 +48,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -474,6 +475,7 @@ class AnalysisToolset : McpToolset {
     val more: Boolean = false,
   )
 
+  @ApiStatus.Internal
   @Serializable
   data class FileProblem(
     @JvmField val severity: String,
@@ -483,6 +485,7 @@ class AnalysisToolset : McpToolset {
     @JvmField val column: Int,
   )
 
+  @ApiStatus.Internal
   @Serializable
   data class FileProblemsResult(
     val filePath: String,
