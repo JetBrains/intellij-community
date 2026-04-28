@@ -27,7 +27,6 @@ class McpToolFilterConfigurableTest {
     val filterSettings = McpToolFilterSettings.getInstance()
     filterSettings.toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
     filterSettings.invocationMode = McpSessionInvocationMode.DIRECT
-    filterSettings.managedSessionToolRouterEnabled = true
   }
 
   @Test
@@ -53,7 +52,7 @@ class McpToolFilterConfigurableTest {
       .fullyQualifiedName
 
     McpToolDisallowListSettings.getInstance().toolStates = mapOf(
-      toolKey to ToolState(enabled = false, onDemand = false),
+      toolKey to ToolState(enabled = false, routerOnly = false),
     )
 
     val configurable = McpToolFilterConfigurable()
@@ -77,14 +76,14 @@ class McpToolFilterConfigurableTest {
       .fullyQualifiedName
 
     McpToolDisallowListSettings.getInstance().toolStates = mapOf(
-      toolKey to ToolState(enabled = true, onDemand = true),
+      toolKey to ToolState(enabled = true, routerOnly = true),
     )
 
     val configurable = McpToolFilterConfigurable()
 
     try {
       configurable.createComponent()
-      editableToolStates(configurable)[toolKey] = ToolState(enabled = true, onDemand = false)
+      editableToolStates(configurable)[toolKey] = ToolState(enabled = true, routerOnly = false)
 
       assertThat(configurable.isModified()).isFalse()
 
@@ -111,7 +110,7 @@ class McpToolFilterConfigurableTest {
     try {
       configurable.createComponent()
 
-      editableToolStates(configurable)[toolKey] = ToolState(enabled = false, onDemand = true)
+      editableToolStates(configurable)[toolKey] = ToolState(enabled = false, routerOnly = true)
       assertThat(configurable.isModified()).isTrue()
 
       editableToolStates(configurable)[toolKey] = ToolState()
@@ -154,15 +153,15 @@ class McpToolFilterConfigurableTest {
     val disabledTool = testTool(name = "duplicate_name", fullyQualifiedName = "test.disabled")
 
     try {
-      editableToolStates(configurable)[enabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = true, onDemand = true)
-      editableToolStates(configurable)[disabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = false, onDemand = false)
+      editableToolStates(configurable)[enabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = true, routerOnly = true)
+      editableToolStates(configurable)[disabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = false, routerOnly = false)
 
-      assertThat(calculateCategoryOnDemandState(configurable, listOf(enabledTool, disabledTool)))
+      assertThat(calculateCategoryRouterOnlyState(configurable, listOf(enabledTool, disabledTool)))
         .isEqualTo(ThreeStateCheckBox.State.SELECTED)
 
-      editableToolStates(configurable)[enabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = false, onDemand = true)
+      editableToolStates(configurable)[enabledTool.descriptor.fullyQualifiedName] = ToolState(enabled = false, routerOnly = true)
 
-      assertThat(calculateCategoryOnDemandState(configurable, listOf(enabledTool, disabledTool)))
+      assertThat(calculateCategoryRouterOnlyState(configurable, listOf(enabledTool, disabledTool)))
         .isEqualTo(ThreeStateCheckBox.State.NOT_SELECTED)
     }
     finally {
@@ -225,8 +224,8 @@ class McpToolFilterConfigurableTest {
     return enabledCheckBoxField.get(toolRowView) as JBCheckBox
   }
 
-  private fun calculateCategoryOnDemandState(configurable: McpToolFilterConfigurable, tools: List<McpTool>): ThreeStateCheckBox.State {
-    val method = McpToolFilterConfigurable::class.java.getDeclaredMethod("calculateCategoryOnDemandState", List::class.java)
+  private fun calculateCategoryRouterOnlyState(configurable: McpToolFilterConfigurable, tools: List<McpTool>): ThreeStateCheckBox.State {
+    val method = McpToolFilterConfigurable::class.java.getDeclaredMethod("calculateCategoryRouterOnlyState", List::class.java)
     method.isAccessible = true
     return method.invoke(configurable, tools) as ThreeStateCheckBox.State
   }

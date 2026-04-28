@@ -22,6 +22,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.platform.commons.annotation.Testable
 
+private const val ROUTER_TOOL = "execute_tool"
+
 @Testable
 @TestApplication
 class McpToolFilterIntegrationTest {
@@ -57,12 +59,12 @@ class McpToolFilterIntegrationTest {
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
-      // Should only have allowed tools
-      assertThat(tools).hasSize(2)
+      // Should have allowed tools + router tool (which is always available)
+      assertThat(tools).hasSize(3)
 
-      // Verify only allowed tools are present
+      // Verify allowed tools and router tool are present
       val toolNames = tools.map { it.name }.toSet()
-      assertThat(toolNames).isEqualTo(allowedTools)
+      assertThat(toolNames).isEqualTo(allowedTools + ROUTER_TOOL)
 
       // Verify filtered tools are not present
       assertThat(tools).noneMatch { it.name == tool3 }
@@ -76,11 +78,11 @@ class McpToolFilterIntegrationTest {
     withConnectionUsingHeader(allowedToolsHeader = allowedToolsHeader) { client ->
       val tools = client.listTools().tools
 
-      // Should only have tools from header
-      assertThat(tools).hasSize(3)
+      // Should have tools from header + router tool (which is always available)
+      assertThat(tools).hasSize(4)
 
       val toolNames = tools.map { it.name }.toSet()
-      assertThat(toolNames).isEqualTo(setOf(tool1, tool2, tool3))
+      assertThat(toolNames).isEqualTo(setOf(tool1, tool2, tool3, ROUTER_TOOL))
     }
   }
 
@@ -92,11 +94,11 @@ class McpToolFilterIntegrationTest {
     withConnectionUsingHeader(allowedToolsHeader = allowedToolsHeader) { client ->
       val tools = client.listTools().tools
 
-      // Should filter out empty entries and trim spaces
-      assertThat(tools).hasSize(2)
+      // Should filter out empty entries and trim spaces, plus router tool (always available)
+      assertThat(tools).hasSize(3)
 
       val toolNames = tools.map { it.name }.toSet()
-      assertThat(toolNames).isEqualTo(setOf(tool1, tool2))
+      assertThat(toolNames).isEqualTo(setOf(tool1, tool2, ROUTER_TOOL))
     }
   }
 
@@ -107,8 +109,9 @@ class McpToolFilterIntegrationTest {
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
-      // Should have no tools
-      assertThat(tools).isEmpty()
+      // Should have only router tool (which is always available)
+      assertThat(tools).hasSize(1)
+      assertThat(tools).allMatch { it.name == ROUTER_TOOL }
     }
   }
 
@@ -119,9 +122,10 @@ class McpToolFilterIntegrationTest {
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
-      // Only list_directory_tree should be available
-      assertThat(tools).hasSize(1)
-      assertThat(tools.first().name).isEqualTo(tool1)
+      // Should have list_directory_tree and router tool (which is always available)
+      assertThat(tools).hasSize(2)
+      assertThat(tools).anyMatch { it.name == tool1 }
+      assertThat(tools).anyMatch { it.name == ROUTER_TOOL }
 
       // Attempting to call a filtered-out tool should fail
       // (The tool won't be registered, so the SDK should return an error result)

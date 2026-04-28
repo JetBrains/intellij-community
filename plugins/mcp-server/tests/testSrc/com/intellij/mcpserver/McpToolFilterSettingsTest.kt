@@ -19,7 +19,6 @@ class McpToolFilterSettingsTest {
     McpToolFilterSettings.getInstance().apply {
       toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
       invocationMode = McpSessionInvocationMode.DIRECT
-      managedSessionToolRouterEnabled = true
     }
   }
 
@@ -83,7 +82,9 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertThat(tools).isEmpty()
+    // Router tool (execute_tool) is always available
+    assertThat(tools).hasSize(1)
+    assertThat(tools).allMatch { it.descriptor.name == "execute_tool" }
   }
 
   @Test
@@ -94,10 +95,14 @@ class McpToolFilterSettingsTest {
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
-      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
+      val isRouterTool = tool.descriptor.name == "execute_tool"
+      val isTextToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
+      assertThat(isRouterTool || isTextToolsetTool).isTrue()
     }
-    assertThat(tools).hasSize(1)
-    assertThat(tools).allMatch { it.descriptor.name == "replace_text_in_file" }
+    // Router tool (execute_tool) is always available, plus TextToolset tool
+    assertThat(tools).hasSize(2)
+    assertThat(tools).anyMatch { it.descriptor.name == "execute_tool" }
+    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
   }
 
   @Test
@@ -125,7 +130,9 @@ class McpToolFilterSettingsTest {
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
-      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
+      val isRouterTool = tool.descriptor.name == "execute_tool"
+      val isTextToolsetTool = tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
+      assertThat(isRouterTool || isTextToolsetTool).isTrue()
     }
   }
 
@@ -141,17 +148,4 @@ class McpToolFilterSettingsTest {
     assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
   }
 
-  @Test
-  fun `managed session router is enabled by default`() {
-    assertThat(McpManagedSessionToolRouter.isEnabled()).isTrue()
-    assertThat(McpManagedSessionToolRouter.invocationModeOverride()).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
-  }
-
-  @Test
-  fun `managed session router can be disabled`() {
-    McpToolFilterSettings.getInstance().managedSessionToolRouterEnabled = false
-
-    assertThat(McpManagedSessionToolRouter.isEnabled()).isFalse()
-    assertThat(McpManagedSessionToolRouter.invocationModeOverride()).isNull()
-  }
 }

@@ -36,7 +36,7 @@ internal class IndividualRegistryKeyMcpToolFilterProvider : McpToolFilterProvide
       .map { (toolFqn, _) -> toolFqn }
       .toSet()
     if (disabledToolNames.isNotEmpty()) {
-      context.turnOff { it.descriptor.name in disabledToolNames }
+      context.updateState(enabled = false) { it.descriptor.name in disabledToolNames }
     }
   }
 

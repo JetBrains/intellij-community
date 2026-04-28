@@ -13,13 +13,21 @@ internal class DisallowListBasedMcpToolFilterProvider : McpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
     val settings = McpToolDisallowListSettings.getInstance()
     val toolStates = settings.toolStates
-    context.turnOn { tool ->
-      toolStates[tool.descriptor.name]?.let { toolState ->
-        toolState.enabled && !toolState.onDemand
-      } == true
+
+    context.updateState(enabled = true) { tool ->
+      toolStates[tool.descriptor.name]?.enabled == true
     }
-    context.turnOff { tool ->
+
+    context.updateState(enabled = false) { tool ->
       toolStates[tool.descriptor.name]?.enabled == false
+    }
+
+    context.updateState(routerOnly = true) { tool ->
+      toolStates[tool.descriptor.name]?.routerOnly == true
+    }
+
+    context.updateState(routerOnly = false) { tool ->
+      toolStates[tool.descriptor.name]?.routerOnly == false
     }
   }
 

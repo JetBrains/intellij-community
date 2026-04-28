@@ -6,6 +6,7 @@ package com.intellij.mcpserver
 import com.intellij.mcpserver.settings.ToolCategoryGroup
 import com.intellij.mcpserver.settings.buildCategoryGroups
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -47,7 +48,7 @@ class McpToolFilterConfigurableTest {
         inputSchema = McpToolSchema.ofPropertiesSchema(buildJsonObject { }, emptySet(), emptyMap()),
       )
 
-      override suspend fun call(args: kotlinx.serialization.json.JsonObject): McpToolCallResult {
+      override suspend fun call(args: JsonObject): McpToolCallResult {
         error("Not needed for tests")
       }
     }

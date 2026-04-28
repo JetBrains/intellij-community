@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
 import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.applyMaskFilter
 import com.intellij.openapi.util.registry.Registry
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.map
 
 internal class RegistryKeyMcpToolFilterProvider : McpToolFilterProvider {
   override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
-    McpToolFilterProvider.applyMaskFilter(context, Registry.stringValue("mcp.server.tools.filter"))
+    applyMaskFilter(context, Registry.stringValue("mcp.server.tools.filter"))
   }
 
   override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {

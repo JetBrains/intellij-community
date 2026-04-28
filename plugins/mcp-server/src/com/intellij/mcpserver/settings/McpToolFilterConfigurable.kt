@@ -154,16 +154,17 @@ private fun wrapTextIntoRows(text: String, availableWidth: Int, textWidth: (Stri
   var currentRow = ""
   for (word in words) {
     val candidate = if (currentRow.isEmpty()) word else "$currentRow $word"
-    if (textWidth(candidate) <= availableWidth) {
-      currentRow = candidate
-    }
-    else if (currentRow.isNotEmpty()) {
-      rows += currentRow
-      currentRow = word
-    }
-    else {
-      rows += splitLongWord(word, availableWidth, textWidth)
-      currentRow = ""
+    when {
+      textWidth(candidate) <= availableWidth -> currentRow = candidate
+      currentRow.isNotEmpty() && textWidth(word) <= availableWidth -> {
+        rows += currentRow
+        currentRow = word
+      }
+      else -> {
+        if (currentRow.isNotEmpty()) rows += currentRow
+        rows += splitLongWord(word, availableWidth, textWidth)
+        currentRow = ""
+      }
     }
   }
   if (currentRow.isNotEmpty()) {
@@ -193,16 +194,12 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   // region Types
 
   private enum class ManagedSessionRouterMode(
-    private val messageKey: String,
+    @param:Nls val displayName: String,
     val invocationMode: McpSessionInvocationMode,
   ) {
-    ACP_ONLY("configurable.mcp.tool.filter.managed.router.acp.only", McpSessionInvocationMode.DIRECT),
-    ALL_AGENTS("configurable.mcp.tool.filter.managed.router.all.agents", McpSessionInvocationMode.VIA_ROUTER),
+    ACP_ONLY(McpServerBundle.message("configurable.mcp.tool.filter.managed.router.acp.only"), McpSessionInvocationMode.DIRECT),
+    ALL_AGENTS(McpServerBundle.message("configurable.mcp.tool.filter.managed.router.all.agents"), McpSessionInvocationMode.VIA_ROUTER),
     ;
-
-    @get:Nls
-    val displayName: String
-      get() = McpServerBundle.message(messageKey)
 
     override fun toString(): String = displayName
   }
@@ -248,7 +245,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     val contentPanel: JPanel,
     val separator: CollapsibleTitledSeparatorImpl,
     val enabledCheckBox: ThreeStateCheckBox,
-    val onDemandCheckBox: ThreeStateCheckBox,
+    val routerOnlyCheckBox: ThreeStateCheckBox,
     val toolRows: List<ToolRowView>,
   )
 
@@ -257,7 +254,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     val tool: McpTool,
     val panel: JPanel,
     val enabledCheckBox: JBCheckBox,
-    val onDemandCheckBox: JBCheckBox,
+    val routerOnlyCheckBox: JBCheckBox,
   )
 
   // endregion
@@ -306,7 +303,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       row(McpServerBundle.message("configurable.mcp.tool.filter.managed.router.label")) {
         val comboBox = comboBox(ManagedSessionRouterMode.entries)
           .onChanged {
-            updateOnDemandControls()
+            updateRouterOnlyControls()
           }
           .applyToComponent {
             selectedItem = currentManagedSessionRouterMode(initialInvocationMode)
@@ -332,7 +329,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
         val checkbox = checkBox(McpServerBundle.message("configurable.mcp.tool.filter.router.checkbox"))
           .selected(initialInvocationMode == McpSessionInvocationMode.VIA_ROUTER)
           .onChanged {
-            updateOnDemandControls()
+            updateRouterOnlyControls()
           }
         useUniversalToolRouterCheckBox = checkbox.component
       }.rowComment(McpServerBundle.message("configurable.mcp.tool.filter.router.comment"))
@@ -400,9 +397,6 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     val filterSettings = McpToolFilterSettings.getInstance()
     filterSettings.invocationMode = currentInvocationMode()
     initialInvocationMode = filterSettings.invocationMode
-    if (hasManagedSessionSupport) {
-      filterSettings.managedSessionToolRouterEnabled = true
-    }
 
     val filterChanged = if (showAdvancedFilterUi) {
       val newFilter = toolsFilterTextArea?.text ?: ""
@@ -505,7 +499,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       panel.add(emptyState)
     }
 
-    updateOnDemandControls()
+    updateRouterOnlyControls()
     updateToolGroupsVisibility()
     panel.revalidate()
     panel.repaint()
@@ -537,13 +531,13 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       font = font.deriveFont(Font.BOLD)
     }
     val enabledCheckBox = JBCheckBox(McpServerBundle.message("mcp.tool.state.column.enabled"), state.enabled)
-    val onDemandCheckBox = JBCheckBox(McpServerBundle.message("mcp.tool.state.column.on.demand"), state.onDemand).apply {
+    val routerOnlyCheckBox = JBCheckBox(McpServerBundle.message("mcp.tool.state.column.on.demand"), state.routerOnly).apply {
       isEnabled = state.enabled
     }
 
     val controlsPanel = NonOpaquePanel(HorizontalLayout(UIUtil.DEFAULT_HGAP)).apply {
       add(enabledCheckBox)
-      add(onDemandCheckBox)
+      add(routerOnlyCheckBox)
     }
     val titleRow = NonOpaquePanel(HorizontalLayout(UIUtil.DEFAULT_HGAP)).apply {
       add(toolNameLabel)
@@ -558,15 +552,15 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       add(titleRow)
       add(descriptionRow)
     }
-    val toolRowView = ToolRowView(toolId, tool, panel, enabledCheckBox, onDemandCheckBox)
+    val toolRowView = ToolRowView(toolId, tool, panel, enabledCheckBox, routerOnlyCheckBox)
     enabledCheckBox.addActionListener {
       handleToolRowStateChange(toolId, toolRowView, onCategoryStateChanged) {
         it.copy(enabled = enabledCheckBox.isSelected)
       }
     }
-    onDemandCheckBox.addActionListener {
+    routerOnlyCheckBox.addActionListener {
       handleToolRowStateChange(toolId, toolRowView, onCategoryStateChanged) {
-        it.copy(onDemand = onDemandCheckBox.isSelected)
+        it.copy(routerOnly = routerOnlyCheckBox.isSelected)
       }
     }
     return toolRowView
@@ -610,7 +604,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     val enabledCheckBox = ThreeStateCheckBox(McpServerBundle.message("mcp.tool.state.column.enabled")).apply {
       isOpaque = false
     }
-    val onDemandCheckBox = ThreeStateCheckBox(McpServerBundle.message("mcp.tool.state.column.on.demand")).apply {
+    val routerOnlyCheckBox = ThreeStateCheckBox(McpServerBundle.message("mcp.tool.state.column.on.demand")).apply {
       isOpaque = false
     }
 
@@ -640,17 +634,17 @@ class McpToolFilterConfigurable : SearchableConfigurable {
         it.copy(enabled = enabled)
       }
     }
-    onDemandCheckBox.addActionListener {
+    routerOnlyCheckBox.addActionListener {
       val enabledTools = categoryView.group.tools.filter { currentToolState(it).enabled }
       handleCategoryStateChange(categoryView, enabledTools) {
-        val onDemand = onDemandCheckBox.state != ThreeStateCheckBox.State.NOT_SELECTED
-        it.copy(onDemand = onDemand)
+        val routerOnly = routerOnlyCheckBox.state != ThreeStateCheckBox.State.NOT_SELECTED
+        it.copy(routerOnly = routerOnly)
       }
     }
 
     val controlsPanel = NonOpaquePanel(HorizontalLayout(UIUtil.DEFAULT_HGAP)).apply {
       add(enabledCheckBox)
-      add(onDemandCheckBox)
+      add(routerOnlyCheckBox)
     }
     val headerPanel = NonOpaquePanel(BorderLayout(UIUtil.DEFAULT_HGAP, 0)).apply {
       add(separator, BorderLayout.CENTER)
@@ -667,7 +661,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       contentPanel = contentPanel,
       separator = separator,
       enabledCheckBox = enabledCheckBox,
-      onDemandCheckBox = onDemandCheckBox,
+      routerOnlyCheckBox = routerOnlyCheckBox,
       toolRows = toolRows,
     )
     categoryViews[categoryKey] = categoryView
@@ -692,10 +686,10 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     return toThreeStateCheckBoxState(commonState(tools) { currentToolState(it).enabled })
   }
 
-  private fun calculateCategoryOnDemandState(tools: List<McpTool>): ThreeStateCheckBox.State {
+  private fun calculateCategoryRouterOnlyState(tools: List<McpTool>): ThreeStateCheckBox.State {
     val enabledTools = tools.filter { currentToolState(it).enabled }
     if (enabledTools.isEmpty()) return ThreeStateCheckBox.State.NOT_SELECTED
-    return toThreeStateCheckBoxState(commonState(enabledTools) { currentToolState(it).onDemand })
+    return toThreeStateCheckBoxState(commonState(enabledTools) { currentToolState(it).routerOnly })
   }
 
   private fun commonState(tools: List<McpTool>, valueProvider: (McpTool) -> Boolean): Boolean? {
@@ -740,11 +734,11 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   }
 
   private fun statesToPersist(): Map<String, ToolState> {
-    val includeOnDemand = isOnDemandAvailable()
-    val initialOnDemandStates = normalizeToolStateKeys(initialToolStates).mapValues { (_, state) -> state.onDemand }
+    val includeRouterOnly = isRouterOnlyAvailable()
+    val initialRouterOnlyStates = normalizeToolStateKeys(initialToolStates).mapValues { (_, state) -> state.routerOnly }
     return normalizeToolStateKeys(allToolStates)
       .mapValues { (toolName, state) ->
-        if (includeOnDemand) state else state.copy(onDemand = initialOnDemandStates[toolName] ?: ToolState().onDemand)
+        if (includeRouterOnly) state else state.copy(routerOnly = initialRouterOnlyStates[toolName] ?: ToolState().routerOnly)
       }
       .filterValues { it != ToolState() }
   }
@@ -764,15 +758,15 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   private fun updateCountLabel() {
     val visibleToolKeys = currentVisibleToolKeys
     val enabledCount = visibleToolKeys.count { currentToolState(it).enabled }
-    val onDemandCount = visibleToolKeys.count {
+    val routerOnlyCount = visibleToolKeys.count {
       val toolState = currentToolState(it)
-      toolState.enabled && toolState.onDemand
+      toolState.enabled && toolState.routerOnly
     }
     countLabel?.let { label ->
       label.text = McpServerBundle.message(
         "configurable.mcp.tool.filter.section.counts",
         enabledCount,
-        onDemandCount,
+        routerOnlyCount,
       )
       label.repaint()
     }
@@ -799,7 +793,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     }
   }
 
-  private fun isOnDemandAvailable(): Boolean {
+  private fun isRouterOnlyAvailable(): Boolean {
     return hasManagedSessionSupport || currentInvocationMode() == McpSessionInvocationMode.VIA_ROUTER
   }
 
@@ -826,7 +820,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     toolsContainerPanel?.repaint()
   }
 
-  private fun updateOnDemandControls() {
+  private fun updateRouterOnlyControls() {
     var layoutChanged = false
     toolRowViews.values.forEach { toolRowView ->
       layoutChanged = refreshToolRowState(toolRowView) || layoutChanged
@@ -843,30 +837,30 @@ class McpToolFilterConfigurable : SearchableConfigurable {
 
   private fun refreshToolRowState(toolRowView: ToolRowView): Boolean {
     val state = currentToolState(toolRowView.tool)
-    val showOnDemandControls = isOnDemandAvailable()
+    val showRouterOnlyControls = isRouterOnlyAvailable()
     var layoutChanged = false
     withUiStateUpdate {
       toolRowView.enabledCheckBox.isSelected = state.enabled
-      toolRowView.onDemandCheckBox.isSelected = state.onDemand
-      toolRowView.onDemandCheckBox.isEnabled = state.enabled && showOnDemandControls
-      layoutChanged = toolRowView.onDemandCheckBox.isVisible != showOnDemandControls
-      toolRowView.onDemandCheckBox.isVisible = showOnDemandControls
+      toolRowView.routerOnlyCheckBox.isSelected = state.routerOnly
+      toolRowView.routerOnlyCheckBox.isEnabled = state.enabled && showRouterOnlyControls
+      layoutChanged = toolRowView.routerOnlyCheckBox.isVisible != showRouterOnlyControls
+      toolRowView.routerOnlyCheckBox.isVisible = showRouterOnlyControls
     }
     toolRowView.panel.repaint()
     return layoutChanged
   }
 
   private fun refreshCategoryState(categoryView: CategoryView): Boolean {
-    val showOnDemandControls = isOnDemandAvailable()
+    val showRouterOnlyControls = isRouterOnlyAvailable()
     var layoutChanged = false
     withUiStateUpdate {
       val enabledState = calculateCategoryEnabledState(categoryView.group.tools)
       updateCategoryCheckBox(categoryView.enabledCheckBox, enabledState)
-      val onDemandEditable = showOnDemandControls && categoryView.group.tools.any { currentToolState(it).enabled }
-      val onDemandState = calculateCategoryOnDemandState(categoryView.group.tools)
-      updateCategoryCheckBox(categoryView.onDemandCheckBox, onDemandState, onDemandEditable)
-      layoutChanged = categoryView.onDemandCheckBox.isVisible != showOnDemandControls
-      categoryView.onDemandCheckBox.isVisible = showOnDemandControls
+      val routerOnlyEditable = showRouterOnlyControls && categoryView.group.tools.any { currentToolState(it).enabled }
+      val routerOnlyState = calculateCategoryRouterOnlyState(categoryView.group.tools)
+      updateCategoryCheckBox(categoryView.routerOnlyCheckBox, routerOnlyState, routerOnlyEditable)
+      layoutChanged = categoryView.routerOnlyCheckBox.isVisible != showRouterOnlyControls
+      categoryView.routerOnlyCheckBox.isVisible = showRouterOnlyControls
     }
     categoryView.panel.repaint()
     return layoutChanged

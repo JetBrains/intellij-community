@@ -441,26 +441,25 @@ open class McpServerService(val cs: CoroutineScope) {
     }
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
-    // Start with all tools in ON_DEMAND state
     val context = McpToolFilterProvider.McpToolFilterContext(allTools)
     if (invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER) {
-      context.turnOff { it.descriptor.name == routerToolName }
+      context.updateState(enabled = false) { it.descriptor.name == routerToolName }
     }
     else {
-      context.turnOn { it.descriptor.name == routerToolName }
+      context.updateState(enabled = true, routerOnly = false) { it.descriptor.name == routerToolName }
     }
     
-    // Apply filter providers (can move ON_DEMAND → ON/OFF, or ON → OFF)
+    // Apply filter providers
     for (filterProvider in filterProviders) {
       filterProvider.applyFilters(context, clientInfo, sessionOptions, invocationMode)
     }
     
-    // Apply the filter parameter ONLY to ON_DEMAND tools
+    // Apply the filter parameter ONLY to router-only tools
     // Tools that pass the filter are included, tools already in ON state are also included
-    val includedOnDemandTools = context.onDemandTools.filter { filterAdjusted.shouldInclude(it) }
+    val includedRouterOnlyTools = context.routerOnlyTools.filter { filterAdjusted.shouldInclude(it) }
     
     // Return tools that are either ON or ON_DEMAND and pass the filter
-    return (context.onTools + includedOnDemandTools).toList()
+    return (context.onTools + includedRouterOnlyTools).toList()
   }
 
 }
