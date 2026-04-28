@@ -57,9 +57,9 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
-# --@rules_jvm//:koltin_inc_threshold=100
+# --@rules_jvm//:kotlin_inc_threshold=100
 int_flag(
-    name = "koltin_inc_threshold",
+    name = "kotlin_inc_threshold",
     build_setting_default = -1,
 )
 
