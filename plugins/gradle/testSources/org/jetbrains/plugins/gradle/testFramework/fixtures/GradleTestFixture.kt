@@ -21,6 +21,4 @@ interface GradleTestFixture {
   suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit = {})
 
   suspend fun <R> withAllowedProjectSyncs(numProjectSyncs: Int = 1, action: suspend () -> R): R
-
-  fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean)
 }

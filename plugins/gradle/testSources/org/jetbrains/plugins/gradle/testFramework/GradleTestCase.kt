@@ -14,6 +14,8 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.AutoSyncStatus
+import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.assertAutoSyncStatus
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +69,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
-    assertNotificationIsVisible(project, false)
+    assertAutoSyncStatus(project, AutoSyncStatus.SYNCHRONIZED)
     assertProjectStructure(project, *projectsInfo)
     assertProjectClasspathSaved(project)
     for (projectInfo in projectsInfo) {

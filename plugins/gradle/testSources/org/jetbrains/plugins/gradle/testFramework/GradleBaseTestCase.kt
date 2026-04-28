@@ -40,8 +40,4 @@ abstract class GradleBaseTestCase {
   suspend fun <R> withAllowedProjectSyncs(numProjectSyncs: Int = 1, action: suspend () -> R): R {
     return gradleFixture.withAllowedProjectSyncs(numProjectSyncs, action)
   }
-
-  fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {
-    gradleFixture.assertNotificationIsVisible(project, isNotificationVisible)
-  }
 }

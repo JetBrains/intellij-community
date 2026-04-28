@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.AutoSyncStatus
+import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.assertAutoSyncStatus
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -296,7 +298,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
             PlatformTestUtil.saveProject(project)
           }
         }
-        assertNotificationIsVisible(project, false)
+        assertAutoSyncStatus(project, AutoSyncStatus.SYNCHRONIZED)
         assertModules(project, "project", "project.main", "project.test")
       }
   }

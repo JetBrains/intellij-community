@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
@@ -21,7 +20,6 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
-import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
 class GradleTestFixtureImpl(
@@ -85,13 +83,6 @@ class GradleTestFixtureImpl(
             .apply(configure)
         )
       }
-    }
-  }
-
-  override fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {
-    val notificationAware = AutoImportProjectNotificationAware.getInstance(project)
-    Assertions.assertEquals(isNotificationVisible, notificationAware.isNotificationVisible()) {
-      notificationAware.getProjectsWithNotification().toString()
     }
   }
 }
