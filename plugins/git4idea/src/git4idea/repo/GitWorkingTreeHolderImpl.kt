@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitWorkingTree
 import git4idea.commands.Git
 import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
@@ -14,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) : GitWorkingTreeHolder {
   private val cs = repository.coroutineScope.childScope("GitWorkingTreeHolderImpl")
@@ -25,18 +26,17 @@ internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) :
   override fun getWorkingTrees(): Collection<GitWorkingTree> = _state.value
 
   override fun scheduleReload() {
-    cs.launch { updateState() }
+    cs.launch(Dispatchers.IO) {
+      updateState()
+    }
   }
 
-  fun reloadBlocking() {
-    runBlockingCancellable { updateState() }
-  }
-
+  //NB: it's the caller's responsibility to ensure a correct BGT dispatcher
+  @RequiresBackgroundThread
   suspend fun updateState() {
+    ThreadingAssertions.assertBackgroundThread()
     updateSemaphore.withPermit {
-      _state.value = withContext(Dispatchers.IO) {
-        readWorkingTreesFromGit()
-      }
+      _state.value = readWorkingTreesFromGit()
       repository.project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).workingTreesLoaded(repository)
     }
   }
