@@ -41,6 +41,18 @@ class Object2(
   @property:McpDescription("Bool nullable EncodeDefault ALWAYS") @EncodeDefault(EncodeDefault.Mode.ALWAYS) val boolNullableEncodeAlways: Boolean? = null,
 )
 
+@Serializable
+class OutputWithNestedItems(
+  val items: List<NestedOutputItem>,
+)
+
+@Serializable
+class NestedOutputItem(
+  val value: String,
+  @Suppress("unused")
+  val defaultFlag: Boolean = true,
+)
+
 fun output_fun1(): Object { TODO() }
 fun output_fun2(): String { TODO() }
 fun output_fun3(): Unit { TODO() }
@@ -53,6 +65,7 @@ fun output_fun9(): McpToolCallResult { TODO() }
 fun output_fun10(): McpToolCallResultContent { TODO() }
 fun output_fun11(): Kind { TODO() }
 fun output_fun12(): Object2 { TODO() }
+fun output_fun13(): OutputWithNestedItems { TODO() }
 
 class OutputSchemaTest {
   companion object {
@@ -328,6 +341,32 @@ class OutputSchemaTest {
         "listField",
         "nestedField",
         "enumField"
+    ],
+    "additionalProperties": false
+}"""),
+        Arguments.of(::output_fun13, /**language=JSON*/ """{
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "value"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    },
+                    "defaultFlag": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "items"
     ],
     "additionalProperties": false
 }"""),
