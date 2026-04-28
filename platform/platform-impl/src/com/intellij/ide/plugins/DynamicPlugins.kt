@@ -88,12 +88,10 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
-import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.xmlb.clearPropertyCollectorCache
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -1563,17 +1561,4 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
     }
   }
   return null
-}
-
-internal class FallbackPluginVetoer : DynamicPluginVetoer {
-  override fun vetoPluginUnload(pluginDescriptor: IdeaPluginDescriptor): @Nls String? {
-    val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, ApplicationManager.getApplication().messageBus)
-    if (vetoMessage != null) return vetoMessage
-
-    for (project in ProjectManager.getInstance().openProjects) {
-      val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, project.messageBus)
-      if (vetoMessage != null) return vetoMessage
-    }
-    return null
-  }
 }
