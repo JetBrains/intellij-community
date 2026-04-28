@@ -108,6 +108,7 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - a:isBundled():Z
 - a:isEssential():Z
 - a:isImplementationDetail():Z
+*:com.intellij.openapi.diagnostic.UnhandledErrorReport
 *f:com.intellij.openapi.diagnostic.UnhandledExceptionReport
 - com.intellij.openapi.diagnostic.UnhandledErrorReport
 - <init>(java.lang.Class,java.util.List):V
