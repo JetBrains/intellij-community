@@ -9,8 +9,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.portAccessibleLocally.EelPortAccessibleLocally
 import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
@@ -30,8 +33,7 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Installs a port-forwarding panel above the terminal output for [terminalView].
  *
- * Waits for the terminal session to be ready, then (only if the started process is a
- * [TerminalProcessType.SHELL]):
+ * Waits for the terminal session to be ready, then (if port forwarding is required):
  * 1. Starts a [ProcessPortsWatcher] against the shell's EEL environment
  * and PID.
  * 2. Once listening port is detected, checks if port forwarding is already set up using [TerminalPortForwardingManager].
@@ -50,6 +52,11 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
     }
 
     val eelDescriptor = session.eelDescriptor
+    if (arePortsAccessibleLocally(session.eelDescriptor)) {
+      // No port forwarding required
+      return@launch
+    }
+
     val eelMachine = try {
       eelDescriptor.resolveEelMachine()
     }
@@ -74,6 +81,17 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
       terminalView.setTopComponent(panel, panelScope.asDisposable())
     }
   }
+}
+
+/**
+ * Returns true if application running on "localhost:<port>" inside [eelDescriptor] is accessible locally
+ * using the same "localhost:<port>" address. I.e., port forwarding is not required.
+ */
+private suspend fun arePortsAccessibleLocally(eelDescriptor: EelDescriptor): Boolean {
+  // TODO: Had to use internal implementation-detail API. Public API required for this scenario.
+  //  The port is chosen randomly. This check relies on the fact that if single port is accessible - other ones are accessible as well.
+  return eelDescriptor == LocalEelDescriptor
+         || EelPortAccessibleLocally.isEelPortAccessibleLocally(8080.toUShort(), 8080.toUShort(), eelDescriptor)
 }
 
 private fun installPortsWatcher(
