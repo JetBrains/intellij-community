@@ -1,0 +1,49 @@
+PsiJavaFile:ForInitExpressionList.java
+  PsiForStatement
+    PsiKeyword:for('for')
+    PsiJavaToken:LPARENTH('(')
+    PsiExpressionListStatement
+      PsiExpressionList
+        PsiMethodCallExpression:foo()
+          PsiReferenceExpression:foo
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:foo('foo')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+        PsiJavaToken:COMMA(',')
+        PsiWhiteSpace(' ')
+        PsiMethodCallExpression:bar()
+          PsiReferenceExpression:bar
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:bar('bar')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiBinaryExpression:i < 3
+      PsiReferenceExpression:i
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:i('i')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LT('<')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:3
+        PsiJavaToken:INTEGER_LITERAL('3')
+    PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiExpressionStatement
+      PsiPostfixExpression:i++
+        PsiReferenceExpression:i
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:i('i')
+        PsiJavaToken:PLUSPLUS('++')
+    PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiEmptyStatement
+      PsiJavaToken:SEMICOLON(';')

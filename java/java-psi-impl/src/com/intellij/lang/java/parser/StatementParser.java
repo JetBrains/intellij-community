@@ -398,7 +398,9 @@ public class StatementParser {
       builder.advanceLexer();
     }
     builder.advanceLexer();
-    boolean isRecordPattern = builder.getTokenType() != JavaTokenType.SEMICOLON && builder.getTokenType() != JavaTokenType.DOT;
+    boolean isRecordPattern = builder.getTokenType() != JavaTokenType.SEMICOLON &&
+                              builder.getTokenType() != JavaTokenType.DOT &&
+                              builder.getTokenType() != JavaTokenType.COMMA;
     patternStart.rollbackTo();
     return isRecordPattern;
   }

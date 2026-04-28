@@ -99,6 +99,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInheritFinal() { doTest(false); }
   public void testBreakOutside() { doTest(false); }
   public void testLoop() { doTest(false); }
+  public void testForInitWithMultipleExpressions() { doTest(false); }
   public void testIllegalModifiersCombination() { doTest(false); }
   public void testModifierAllowed() { doTest(false); }
   public void testAbstractMethods() { doTest(false); }

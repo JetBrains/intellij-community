@@ -361,7 +361,9 @@ open class StatementParser(
       builder.advanceLexer()
     }
     builder.advanceLexer()
-    val isRecordPattern = builder.tokenType !== JavaSyntaxTokenType.SEMICOLON && builder.tokenType !== JavaSyntaxTokenType.DOT
+    val isRecordPattern = builder.tokenType !== JavaSyntaxTokenType.SEMICOLON &&
+                          builder.tokenType !== JavaSyntaxTokenType.DOT &&
+                          builder.tokenType !== JavaSyntaxTokenType.COMMA
     patternStart.rollbackTo()
     return isRecordPattern
   }

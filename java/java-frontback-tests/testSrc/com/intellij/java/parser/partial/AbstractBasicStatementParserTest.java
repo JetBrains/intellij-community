@@ -74,6 +74,7 @@ public abstract class AbstractBasicStatementParserTest extends AbstractBasicJava
   public void testForNormal4() { doParserTest("for(foo();;) ;"); }
   public void testForNormal5() { doParserTest("for(((foo()));;) ;"); }
   public void testForNormal6() { doParserTest("for (getI(getS()); a; b = true)"); }
+  public void testForInitExpressionList() { doParserTest("for(foo(), bar(); i < 3; i++) ;"); }
   public void testForIncorrect() { doParserTest("for ((Point(var x, var y)) : pointArray) ;"); } // pattern with parens can't be parsed
   public void testForIncomplete0() { doParserTest("for"); }
   public void testForIncomplete1() { doParserTest("for("); }
