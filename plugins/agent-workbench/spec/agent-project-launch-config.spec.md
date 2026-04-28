@@ -31,7 +31,7 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
 - Keep launch augmentation environment-aware for local, WSL, and other EEL-backed execution contexts.
 
 ## Non-goals
-- Redefining canonical provider commands or replacing bare executable names with absolute paths.
+- Redefining canonical provider commands. Provider bridges (not project launch config) resolve provider executables to absolute paths via the shared `TerminalAgentResolver` — see `spec/agent-core-contracts.spec.md`.
 - Defining provider-specific prompt construction rules.
 - Providing live UI editing or validation for project launch config.
 
@@ -70,7 +70,7 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
   [@test] ../sessions/testSrc/AgentSessionChatOpenPayloadTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Canonical provider command mapping must remain bare and provider-owned. Project launch config must augment `PATH` lookup and shim lookup only; it must not redefine canonical provider commands or pre-resolve provider executables to absolute paths.
+- Canonical provider command mapping is provider-owned (`spec/agent-core-contracts.spec.md`). Project launch config must augment `PATH` lookup and shim lookup only; it must not redefine canonical provider commands. Provider bridges may pre-resolve the provider executable token to an absolute path via the shared `TerminalAgentResolver`; project launch config must not perform its own pre-resolution and must not depend on the resolved value being a bare command name.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../sessions/testSrc/AgentSessionChatOpenPayloadTest.kt
 
@@ -126,6 +126,7 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
 ## Open Questions / Risks
 - Current implementation caches parsed project launch config for the service lifetime and does not specify live reload semantics for `.agent-workbench.yaml` edits during the same IDE session.
 - If additional providers are added, examples and provider-id coverage in this spec should be extended without moving canonical command mapping ownership out of `agent-core-contracts.spec.md`.
+- Provider-bridge absolute-path resolution (via `TerminalAgentResolver`) runs before launch-spec augmentation. A `commandShims` entry whose key matches the provider's own command (`claude`/`codex`) is therefore bypassed for the launched provider process — the bridge already passed the absolute resolved path to the shell. Repositories that need to redirect the provider binary itself must place the redirection target on `PATH` (so `TerminalAgentResolver` finds it) rather than relying on `commandShims` for the provider command. `commandShims` for sub-tools that the provider invokes internally remain effective.
 
 ## References
 - `spec/agent-core-contracts.spec.md`

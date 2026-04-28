@@ -28,9 +28,19 @@ import javax.swing.JComponent
 internal class ClaudeAgentSessionProviderDescriptor(
   private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   override val sessionSource: AgentSessionSource = ClaudeSessionSource(backend = backend),
+  /**
+   * Resolves the `claude` executable for terminal launch specs and rename PTY launches. Defaults to
+   * [ClaudeCliSupport.resolveExecutableOrDefaultViaTerminalResolver], which delegates to the shared
+   * `TerminalAgentResolver` so agent-workbench launches and the terminal "Run AI agent" gutter pick the
+   * same `claude` binary; falls back to the bare `claude` command when the binary cannot be located so
+   * the existing `cliMissingMessageKey` UI guard remains in charge of explaining the missing CLI. Tests
+   * inject a fixed resolver so assertions remain deterministic regardless of the host's PATH.
+   */
+  private val executableResolver: suspend () -> String = ClaudeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val renameEngine: ClaudeThreadRenameEngine = ClaudeOpenTabAwareThreadRenameEngine(
     backend = backend,
-    fallbackEngine = PtyClaudeThreadRenameEngine(backend = backend),
+    fallbackEngine = PtyClaudeThreadRenameEngine(backend = backend, executableResolver = executableResolver),
+    executableResolver = executableResolver,
   ),
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
@@ -98,12 +108,12 @@ internal class ClaudeAgentSessionProviderDescriptor(
 
   override fun isCliAvailable(): Boolean = ClaudeCliSupport.isAvailable()
 
-  override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
-    return buildClaudeResumeLaunchSpec(sessionId)
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return buildClaudeResumeLaunchSpec(sessionId, executableResolver())
   }
 
-  override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    return buildClaudeNewSessionLaunchSpec(mode)
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    return buildClaudeNewSessionLaunchSpec(mode, executableResolver())
   }
 
   override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
@@ -188,16 +198,22 @@ internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): Li
   return result
 }
 
-internal fun buildClaudeResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+internal fun buildClaudeResumeLaunchSpec(
+  sessionId: String,
+  executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
+): AgentSessionTerminalLaunchSpec {
   return AgentSessionTerminalLaunchSpec(
-    command = ClaudeCliSupport.buildResumeCommand(sessionId),
+    command = ClaudeCliSupport.buildResumeCommand(sessionId, executable),
     envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
   )
 }
 
-internal fun buildClaudeNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+internal fun buildClaudeNewSessionLaunchSpec(
+  mode: AgentSessionLaunchMode,
+  executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
+): AgentSessionTerminalLaunchSpec {
   return AgentSessionTerminalLaunchSpec(
-    command = ClaudeCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO),
+    command = ClaudeCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO, executable = executable),
     envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
   )
 }

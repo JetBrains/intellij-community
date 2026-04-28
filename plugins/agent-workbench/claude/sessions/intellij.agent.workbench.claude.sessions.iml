@@ -47,6 +47,10 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.terminal.backend" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="library" name="jna" level="project" />

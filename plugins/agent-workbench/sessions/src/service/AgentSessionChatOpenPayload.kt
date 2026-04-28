@@ -23,7 +23,7 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  resumeLaunchSpecProvider: ((AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec)? = null,
+  resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec)? = null,
 ): AgentSessionChatOpenPayload {
   val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id

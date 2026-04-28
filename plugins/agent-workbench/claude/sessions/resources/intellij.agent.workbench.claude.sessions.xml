@@ -3,6 +3,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.claude.common"/>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.filewatch"/>
@@ -10,6 +11,7 @@
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->
 

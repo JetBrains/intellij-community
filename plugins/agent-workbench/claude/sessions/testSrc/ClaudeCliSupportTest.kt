@@ -22,5 +22,16 @@ class ClaudeCliSupportTest {
     assertThat(ClaudeCliSupport.buildResumeCommand("sess-1"))
       .containsExactly("claude", "--resume", "sess-1")
   }
-}
 
+  @Test
+  fun buildNewSessionCommandUsesProvidedAbsoluteExecutable() {
+    assertThat(ClaudeCliSupport.buildNewSessionCommand(yolo = false, executable = "/opt/tools/claude"))
+      .containsExactly("/opt/tools/claude", "--permission-mode", "default")
+  }
+
+  @Test
+  fun buildResumeCommandUsesProvidedAbsoluteExecutable() {
+    assertThat(ClaudeCliSupport.buildResumeCommand("sess-1", executable = "/opt/tools/claude"))
+      .containsExactly("/opt/tools/claude", "--resume", "sess-1")
+  }
+}

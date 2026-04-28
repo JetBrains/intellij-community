@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.util
 
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -15,18 +14,6 @@ internal class AgentSessionProviderUnavailableException(provider: AgentSessionPr
 private fun requireAgentSessionProviderDescriptor(provider: AgentSessionProvider) =
   AgentSessionProviders.find(provider)
   ?: throw AgentSessionProviderUnavailableException(provider)
-
-internal fun buildAgentSessionResumeLaunchSpec(
-  provider: AgentSessionProvider,
-  sessionId: String,
-): AgentSessionTerminalLaunchSpec =
-  requireAgentSessionProviderDescriptor(provider).buildResumeLaunchSpec(sessionId)
-
-internal fun buildAgentSessionNewLaunchSpec(
-  provider: AgentSessionProvider,
-  mode: AgentSessionLaunchMode,
-): AgentSessionTerminalLaunchSpec =
-  requireAgentSessionProviderDescriptor(provider).buildNewSessionLaunchSpec(mode)
 
 internal fun buildAgentSessionEntryLaunchSpec(provider: AgentSessionProvider): AgentSessionTerminalLaunchSpec {
   return requireAgentSessionProviderDescriptor(provider).buildNewEntryLaunchSpec()

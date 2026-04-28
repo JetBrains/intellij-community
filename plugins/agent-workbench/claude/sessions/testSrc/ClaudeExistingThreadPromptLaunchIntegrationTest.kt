@@ -53,7 +53,8 @@ private fun descriptor(): ClaudeAgentSessionProviderDescriptor {
           emptyList()
         }
       },
-    )
+    ),
+    executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
   )
 }
 

@@ -78,11 +78,11 @@ class AgentSessionArchiveServiceIntegrationTest {
         get() = "toolwindow.error.claude.cli"
 
       override fun isCliAvailable(): Boolean = true
-      override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+      override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", sessionId))
       }
 
-      override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+      override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
         return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
       }
 
@@ -853,11 +853,11 @@ private fun testCodexBridge(
 
     override fun isCliAvailable(): Boolean = true
 
-    override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", sessionId))
     }
 
-    override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
     }
 
@@ -917,11 +917,11 @@ private fun testClaudeBridge(
 
     override fun isCliAvailable(): Boolean = true
 
-    override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", sessionId))
     }
 
-    override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
       return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
     }
 

@@ -36,7 +36,7 @@ object AgentSessionLaunchSpecs {
     projectPath: String,
     provider: AgentSessionProvider,
     sessionId: String,
-    baseLaunchSpecProvider: (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec,
+    baseLaunchSpecProvider: suspend (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec,
   ): AgentSessionTerminalLaunchSpec {
     val baseLaunchSpec = runCatching {
       baseLaunchSpecProvider(provider, sessionId)
@@ -51,7 +51,7 @@ object AgentSessionLaunchSpecs {
   }
 }
 
-private fun buildDefaultResumeLaunchSpec(
+private suspend fun buildDefaultResumeLaunchSpec(
   provider: AgentSessionProvider,
   sessionId: String,
 ): AgentSessionTerminalLaunchSpec {

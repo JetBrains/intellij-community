@@ -7,6 +7,10 @@ targets:
   - ../sessions/src/AgentSessionCli.kt
   - ../sessions/src/AgentSessionModels.kt
   - ../chat/src/AgentChatEditorTabActionContext.kt
+  - ../claude/sessions/src/ClaudeAgentSessionProviderDescriptor.kt
+  - ../claude/sessions/src/ClaudeCliSupport.kt
+  - ../codex/sessions/src/CodexAgentSessionProviderDescriptor.kt
+  - ../codex/common/src/CodexCliUtils.kt
   - ../sessions/src/service/AgentSessionLaunchService.kt
   - ../sessions/src/AgentSessionsToolWindow.kt
   - ../sessions/src/SessionTree.kt
@@ -50,21 +54,26 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
-- Resume command mapping is canonical:
-  - Codex: `codex resume <threadId>`
-  - Claude: `claude --resume <threadId>`
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-
-- New-thread command mapping is canonical:
-  - Codex default: `codex`
-  - Codex YOLO: `codex --full-auto`
-  - Claude default: `claude`
-  - Claude YOLO: `claude --dangerously-skip-permissions`
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+- Resume command mapping is canonical (argument structure after the executable token):
+  - Codex: `<codex-exe> -c check_for_update_on_startup=false resume <threadId>`
+  - Claude: `<claude-exe> --resume <threadId>`
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
-- Canonical provider command mapping must keep bare executable names; executable lookup is resolved by terminal startup environment and provider mapping must not pre-resolve absolute executable paths.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+- New-thread command mapping is canonical (argument structure after the executable token):
+  - Codex default: `<codex-exe> -c check_for_update_on_startup=false`
+  - Codex YOLO: `<codex-exe> -c check_for_update_on_startup=false --full-auto`
+  - Claude default: `<claude-exe> --permission-mode default`
+  - Claude YOLO: `<claude-exe> --dangerously-skip-permissions`
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+
+- Provider bridges must resolve `<claude-exe>`/`<codex-exe>` at launch time through the shared `TerminalAgentResolver` (the same resolver that powers the terminal "Run AI agent" gutter), returning an absolute path when the binary is located on `PATH` or in known-location candidates (POSIX: `$HOME/.local/bin`, `/usr/local/bin`; Windows: `$HOME\AppData\Roaming\npm`, `$HOME\.local\bin` for Claude). When resolution fails, the bridge must fall back to the bare command name (`claude`/`codex`) so the existing `cliMissingMessageKey` UI guard remains responsible for explaining a missing CLI. Tests inject a fixed bare-command `executableResolver` so launch-spec assertions stay deterministic regardless of the host's PATH.
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+
+- Provider bridge launch-spec construction is suspending: `buildResumeLaunchSpec` and `buildNewSessionLaunchSpec` are `suspend fun` so the executable resolver can run EEL-backed lookups (e.g. fetching environment variables on Windows) without blocking the caller. `isCliAvailable()` remains synchronous and is allowed to use a sync local PATH check for menu enable/disable gating.
+  [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
 - New-thread prompt bootstrap — startup command format: provider bridges may build one-shot startup commands by appending `-- <prompt>` to canonical command.

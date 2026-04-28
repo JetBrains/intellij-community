@@ -27,6 +27,15 @@ import javax.swing.Icon
 internal class CodexAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
   private val threadMutationBackend: CodexThreadMutationBackend = SharedServiceCodexThreadMutationBackend,
+  /**
+   * Resolves the `codex` executable for terminal launch specs. Defaults to
+   * [CodexCliUtils.resolveExecutableOrDefaultViaTerminalResolver], which delegates to the shared
+   * `TerminalAgentResolver` so agent-workbench launches and the terminal "Run AI agent" gutter pick the
+   * same `codex` binary; falls back to the bare `codex` command when the binary cannot be located so
+   * the existing `cliMissingMessageKey` UI guard remains in charge of explaining the missing CLI. Tests
+   * inject a fixed resolver so assertions remain deterministic regardless of the host's PATH.
+   */
+  private val executableResolver: suspend () -> String = CodexCliUtils::resolveExecutableOrDefaultViaTerminalResolver,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.CODEX
@@ -103,18 +112,20 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
-  override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    val executable = executableResolver()
     return AgentSessionTerminalLaunchSpec(
-      command = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId),
+      command = listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId),
     )
   }
 
-  override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    val executable = executableResolver()
     val command = if (mode == AgentSessionLaunchMode.YOLO) {
-      listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "--full-auto")
+      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--full-auto")
     }
     else {
-      listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG)
+      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG)
     }
     return AgentSessionTerminalLaunchSpec(command = command)
   }

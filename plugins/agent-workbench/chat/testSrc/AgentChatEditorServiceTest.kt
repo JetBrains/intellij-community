@@ -544,7 +544,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-3")
     assertThat(file.threadId).isEqualTo("thread-3")
-    assertThat(file.shellCommand).containsExactlyElementsOf(resolvedCodexResumeCommand("thread-3"))
+    assertCodexResumeShellCommand(file.shellCommand, "thread-3")
     assertThat(file.threadTitle).isEqualTo("Recovered thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
 
@@ -618,7 +618,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(file.threadIdentity).isEqualTo("CLAUDE:thread-3")
     assertThat(file.threadId).isEqualTo("thread-3")
-    assertThat(file.shellCommand).containsExactly("claude", "--resume", "thread-3")
+    assertClaudeResumeShellCommand(file.shellCommand, "thread-3")
     assertThat(file.threadTitle).isEqualTo("Recovered Claude thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
 
@@ -713,7 +713,7 @@ class AgentChatEditorServiceTest {
       .isEqualTo(AgentChatConcreteTabRebindStatus.REBOUND)
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-2")
     assertThat(file.threadId).isEqualTo("thread-2")
-    assertThat(file.shellCommand).containsExactlyElementsOf(resolvedCodexResumeCommand("thread-2"))
+    assertCodexResumeShellCommand(file.shellCommand, "thread-2")
     assertThat(file.threadTitle).isEqualTo("New thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(file.newThreadRebindRequestedAtMs).isNull()
@@ -1504,6 +1504,26 @@ private data class EditorServiceSentTerminalText(
 
 private fun resolvedCodexResumeCommand(threadId: String): List<String> {
   return listOf("codex", "-c", "check_for_update_on_startup=false", "resume", threadId)
+}
+
+/**
+ * Asserts a Codex resume command without binding the leading executable token to a literal value.
+ * The launch path resolves the executable through `TerminalAgentResolver`, so on hosts where Codex is
+ * installed the first element is an absolute path (e.g. `/opt/homebrew/bin/codex`); on CI hosts without
+ * Codex it falls back to the bare `codex` command. Both shapes are valid; only the trailing arguments are
+ * canonical.
+ */
+private fun assertCodexResumeShellCommand(actual: List<String>, threadId: String) {
+  assertThat(actual).hasSize(5)
+  assertThat(actual.first()).endsWith("codex")
+  assertThat(actual.drop(1)).containsExactly("-c", "check_for_update_on_startup=false", "resume", threadId)
+}
+
+/** See [assertCodexResumeShellCommand]; same rationale for the Claude bridge. */
+private fun assertClaudeResumeShellCommand(actual: List<String>, threadId: String) {
+  assertThat(actual).hasSize(3)
+  assertThat(actual.first()).endsWith("claude")
+  assertThat(actual.drop(1)).containsExactly("--resume", threadId)
 }
 
 private suspend fun <T> runInUi(action: suspend () -> T): T {

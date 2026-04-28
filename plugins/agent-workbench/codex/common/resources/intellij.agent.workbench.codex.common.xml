@@ -1,8 +1,10 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.platform.compose"/>
+    <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

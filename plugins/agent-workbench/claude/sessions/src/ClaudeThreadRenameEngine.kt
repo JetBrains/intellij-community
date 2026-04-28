@@ -61,6 +61,14 @@ internal class ClaudeOpenTabAwareThreadRenameEngine(
   private val pollIntervalMs: Long = DEFAULT_CLAUDE_THREAD_RENAME_POLL_INTERVAL_MS,
   private val currentTimeMs: () -> Long = System::currentTimeMillis,
   private val delayFn: suspend (Duration) -> Unit = { delay(it) },
+  /**
+   * Resolves the `claude` executable for the rename PTY launch. Defaults to the bare command name so unit tests
+   * stay deterministic regardless of what is installed on the host. Production callers (notably
+   * [ClaudeAgentSessionProviderDescriptor]) should forward
+   * [ClaudeCliSupport.resolveExecutableOrDefaultViaTerminalResolver] so the launch uses an absolute path when
+   * one can be located.
+   */
+  private val executableResolver: suspend () -> String = { ClaudeCliSupport.CLAUDE_COMMAND },
 ) : ClaudeThreadRenameEngine {
   private val stateObserver = ClaudeThreadRenameStateObserver(
     backend = backend,
@@ -78,7 +86,7 @@ internal class ClaudeOpenTabAwareThreadRenameEngine(
       return true
     }
 
-    val resumeLaunchSpec = buildClaudeResumeLaunchSpec(threadId)
+    val resumeLaunchSpec = buildClaudeResumeLaunchSpec(threadId, executableResolver())
     val dispatchedToOpenTab = try {
       openTabDispatcher.dispatch(
         path = path,
@@ -140,6 +148,8 @@ internal class PtyClaudeThreadRenameEngine(
   private val pollIntervalMs: Long = DEFAULT_CLAUDE_THREAD_RENAME_POLL_INTERVAL_MS,
   private val currentTimeMs: () -> Long = System::currentTimeMillis,
   private val delayFn: suspend (Duration) -> Unit = { delay(it) },
+  /** See the matching parameter on [ClaudeOpenTabAwareThreadRenameEngine] for the test/production contract. */
+  private val executableResolver: suspend () -> String = { ClaudeCliSupport.CLAUDE_COMMAND },
 ) : ClaudeThreadRenameEngine {
   private val stateObserver = ClaudeThreadRenameStateObserver(
     backend = backend,
@@ -156,7 +166,7 @@ internal class PtyClaudeThreadRenameEngine(
     if (currentThread.archived == expectedState.archived && currentThread.title == expectedState.title) {
       return true
     }
-    val resumeLaunchSpec = buildClaudeResumeLaunchSpec(threadId)
+    val resumeLaunchSpec = buildClaudeResumeLaunchSpec(threadId, executableResolver())
     val launchSpec = resumeLaunchSpec.copy(
       command = replaceOrAddPermissionMode(resumeLaunchSpec.command, PERMISSION_MODE_DEFAULT) +
                 listOf(CLAUDE_PRINT_FLAG, CLAUDE_NAME_FLAG, normalizedTitle, CLAUDE_PROMPT_SEPARATOR, CLAUDE_RENAME_PROMPT),
