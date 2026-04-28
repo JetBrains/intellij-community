@@ -1,5 +1,5 @@
 // "Import extension function 'Other.foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo' on receiver of type 'Other'.
 package p
 
 class Other

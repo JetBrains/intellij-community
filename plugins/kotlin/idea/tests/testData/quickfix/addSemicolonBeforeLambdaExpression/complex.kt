@@ -5,7 +5,7 @@
 // K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
 // K2_ERROR: Expression is treated as a trailing lambda argument; consider separating it from the call with semicolon.
 // K2_ERROR: No value passed for parameter 'value'.
-// K2_ERROR: Unresolved reference 'invoke'.
+// K2_ERROR: Unresolved reference 'invoke' on receiver of type 'Unit'.
 
 fun foo() {}
 fun String.withLambda(lambda: (String) -> Unit) {}

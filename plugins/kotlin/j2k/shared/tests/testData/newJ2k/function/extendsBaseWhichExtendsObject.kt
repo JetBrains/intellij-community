@@ -1,4 +1,4 @@
-// ERROR: Unresolved reference 'finalize'.
+// ERROR: Unresolved reference 'finalize' on receiver of type 'Cloneable'.
 internal class Test : Base() {
     override fun hashCode(): Int {
         return super.hashCode()

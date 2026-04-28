@@ -1,5 +1,5 @@
 // "Create member function 'A.plusAssign'" "true"
-// K2_ERROR: Unresolved reference 'plusAssign'.
+// K2_ERROR: Unresolved reference 'plusAssign' on receiver of type 'A<Int>'.
 
 class A<T>(val n: T)
 

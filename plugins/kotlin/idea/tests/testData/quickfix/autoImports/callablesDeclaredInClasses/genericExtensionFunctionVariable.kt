@@ -1,5 +1,5 @@
 // "Import extension function 'ext'" "true"
-// K2_ERROR: Unresolved reference 'ext'.
+// K2_ERROR: Unresolved reference 'ext' on receiver of type 'Int'.
 package p
 
 open class A {

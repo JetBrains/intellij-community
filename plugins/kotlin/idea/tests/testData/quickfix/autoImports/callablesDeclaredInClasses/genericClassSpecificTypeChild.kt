@@ -1,5 +1,5 @@
 // "Import extension function 'String.genericExt'" "true"
-// K2_ERROR: Unresolved reference 'genericExt'.
+// K2_ERROR: Unresolved reference 'genericExt' on receiver of type 'String'.
 package p
 
 open class Base<T> {
