@@ -24,6 +24,9 @@
     />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <applicationService serviceInterface="com.intellij.openapi.diagnostic.UnhandledReportSinkService"
+                        serviceImplementation="com.intellij.diagnostic.UnhandledReportSinkServiceImpl"/>
+
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication" bundle="messages.IdeBundle" key="diff.help"/>
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication" bundle="messages.IdeBundle" key="merge.help"/>
     <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>

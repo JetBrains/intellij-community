@@ -88,6 +88,12 @@ f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 - f:isMac():Z
 - f:isWaylandToolkit():Z
 - f:isWindows():Z
+*:com.intellij.openapi.diagnostic.ErrorReportSink
+- a:submit(com.intellij.openapi.diagnostic.UnhandledErrorReport,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.openapi.diagnostic.ErrorReportSinkBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementation:java.lang.String
+- <init>():V
 c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - *f:getProblematicPluginInfo():com.intellij.openapi.diagnostic.ProblematicPluginInfo
 *:com.intellij.openapi.diagnostic.ProblematicPluginInfo
@@ -102,6 +108,19 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - a:isBundled():Z
 - a:isEssential():Z
 - a:isImplementationDetail():Z
+*f:com.intellij.openapi.diagnostic.UnhandledExceptionReport
+- com.intellij.openapi.diagnostic.UnhandledErrorReport
+- <init>(java.lang.Class,java.util.List):V
+- <init>(java.lang.Throwable):V
+- f:getExceptionClass():java.lang.Class
+- f:getStackTrace():java.util.List
+*f:com.intellij.openapi.diagnostic.UnhandledFreezeReport
+- com.intellij.openapi.diagnostic.UnhandledErrorReport
+- <init>(java.lang.String,J,java.util.Collection,java.util.Collection):V
+- f:getAttachments():java.util.Collection
+- f:getDurationMs():J
+- f:getMessage():java.lang.String
+- f:getThreadDumps():java.util.Collection
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

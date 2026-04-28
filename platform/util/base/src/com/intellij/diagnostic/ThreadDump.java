@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +9,6 @@ import java.lang.management.ThreadInfo;
 /**
  * Represents thread dump of the IDE captured by its performance diagnostic tool.
  */
-@Internal
 public final class ThreadDump {
   private final String myRawDump;
   private final StackTraceElement[] myEdtStack;

@@ -12,6 +12,8 @@ import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginFreezeReportData
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -40,8 +42,15 @@ internal class PluginFreezeNotifier : FreezeNotifier {
       val reason = freezeWatcher.dumpedThreads(event, dump, durationMs)
       if (reason != null) {
         LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs, reason.reportToUser)
-
         reportFreeze()
+
+        UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
+          reason.pluginId,
+          reason.event.message,
+          durationMs,
+          reason.event.allAttachments,
+          currentDumps
+        ))
         break
       }
     }
