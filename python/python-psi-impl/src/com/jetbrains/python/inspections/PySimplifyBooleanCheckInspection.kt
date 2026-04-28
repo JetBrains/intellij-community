@@ -13,151 +13,122 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.inspections;
+package com.jetbrains.python.inspections
 
-import com.google.common.collect.ImmutableList;
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyConditionalStatementPart;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyNoneTypeKt;
-import com.jetbrains.python.psi.types.PyUnionType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyConditionalStatementPart
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isNoneType
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+class PySimplifyBooleanCheckInspection : PyInspection() {
+  var ignoreComparisonToZero: Boolean = true
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
-
-public final class PySimplifyBooleanCheckInspection extends PyInspection {
-  private static final List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
-
-  public boolean ignoreComparisonToZero = true;
-
-  @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                 boolean isOnTheFly,
-                                                 @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session));
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor {
+    return Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session))
   }
 
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    return pane(checkbox("ignoreComparisonToZero", PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero")));
+  override fun getOptionsPane(): OptPane {
+    return OptPane.pane(
+      OptPane.checkbox(
+        "ignoreComparisonToZero",
+        PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero")
+      )
+    )
   }
 
-  private static class Visitor extends PyInspectionVisitor {
-    private final boolean myIgnoreComparisonToZero;
-
-    Visitor(@Nullable ProblemsHolder holder,
-            boolean ignoreComparisonToZero,
-            @NotNull TypeEvalContext context) {
-      super(holder, context);
-      myIgnoreComparisonToZero = ignoreComparisonToZero;
-    }
-
-    @Override
-    public void visitPyConditionalStatementPart(@NotNull PyConditionalStatementPart node) {
-      super.visitPyConditionalStatementPart(node);
-      final PyExpression condition = node.getCondition();
-      if (condition != null) {
-        condition.accept(new PyBinaryExpressionVisitor(getHolder(), myTypeEvalContext, myIgnoreComparisonToZero));
-      }
+  private class Visitor(
+    holder: ProblemsHolder?,
+    private val myIgnoreComparisonToZero: Boolean,
+    context: TypeEvalContext,
+  ) : PyInspectionVisitor(holder, context) {
+    override fun visitPyConditionalStatementPart(node: PyConditionalStatementPart) {
+      super.visitPyConditionalStatementPart(node)
+      node.condition?.accept(PyBinaryExpressionVisitor(holder, myTypeEvalContext, myIgnoreComparisonToZero))
     }
   }
 
-  private static class PyBinaryExpressionVisitor extends PyInspectionVisitor {
-    private final boolean myIgnoreComparisonToZero;
-
-    PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
-                              @NotNull TypeEvalContext context,
-                              boolean ignoreComparisonToZero) {
-      super(holder, context);
-      myIgnoreComparisonToZero = ignoreComparisonToZero;
-    }
-
-    @Override
-    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-      super.visitPyBinaryExpression(node);
-      final PyElementType operator = node.getOperator();
-      final var leftExpression = node.getLeftExpression();
-      final PyExpression rightExpression = node.getRightExpression();
-      if (rightExpression == null || rightExpression instanceof PyBinaryExpression ||
-          leftExpression instanceof PyBinaryExpression) {
-        return;
+  private class PyBinaryExpressionVisitor(
+    holder: ProblemsHolder?,
+    context: TypeEvalContext,
+    private val myIgnoreComparisonToZero: Boolean,
+  ) : PyInspectionVisitor(holder, context) {
+    override fun visitPyBinaryExpression(node: PyBinaryExpression) {
+      super.visitPyBinaryExpression(node)
+      val operator = node.operator
+      val leftExpression = node.leftExpression
+      val rightExpression = node.rightExpression
+      if (rightExpression == null || rightExpression is PyBinaryExpression ||
+          leftExpression is PyBinaryExpression
+      ) {
+        return
       }
 
-      final var leftType = myTypeEvalContext.getType(leftExpression);
-      final var rightType = myTypeEvalContext.getType(rightExpression);
+      val leftType = myTypeEvalContext.getType(leftExpression)
+      val rightType = myTypeEvalContext.getType(rightExpression)
 
-      final var isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot");
+      val isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot")
 
       // if no type and `is`, then it's unsafe
       if ((leftType == null || rightType == null) && isIdentity) {
-        return;
+        return
       }
 
       // because we are comparing to literal values, there will only ever be a union on one side
-      final var unionMembers = (leftType instanceof PyUnionType unionType)
-                               ? unionType.getMembers()
-                               : (rightType instanceof PyUnionType unionType)
-                                 ? unionType.getMembers()
-                                 : null;
+      val unionMembers = (leftType as? PyUnionType)?.members ?: (rightType as? PyUnionType)?.members
 
-      final var isOptional = unionMembers != null && ContainerUtil.exists(unionMembers, PyNoneTypeKt::isNoneType);
+      val isOptional = unionMembers?.any { it.isNoneType } == true
 
       // if the union is `X | Y | None` or just `X | Y` then it is unsafe to simplify
-      if (isOptional && unionMembers.size() > 2 || !isOptional && unionMembers != null) {
-        return;
+      if (isOptional && unionMembers.size > 2 || !isOptional && unionMembers != null) {
+        return
       }
 
-      if (!isIdentity
-          && !PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
-        return;
+      if (!isIdentity && !PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
+        return
       }
 
-      final var compareWithZero = !myIgnoreComparisonToZero && operandsEqualTo(node, Collections.singleton("0"));
-      boolean compareWithFalsey = operandsEqualTo(node, ImmutableList.of(PyNames.FALSE, "[]"));
+      val compareWithZero = !myIgnoreComparisonToZero && node.operandsEqualTo(setOf("0"))
+      val compareWithFalsey = node.operandsEqualTo(listOf(PyNames.FALSE, "[]"))
 
       // 'x is falsey' where `x` is `T | None`, then it is unsafe to simplify
       //  because the falsey value will evaluate to `False` which will be ambiguous with `None`
       if (isOptional && (compareWithFalsey || compareWithZero)) {
-        return;
+        return
       }
 
-      if (operandsEqualTo(node, COMPARISON_LITERALS) || compareWithZero) {
-        registerProblem(node);
+      if (node.operandsEqualTo(COMPARISON_LITERALS) || compareWithZero) {
+        registerProblem(node)
       }
     }
 
-    private static boolean operandsEqualTo(@NotNull PyBinaryExpression expr, @NotNull Collection<String> literals) {
-      final String leftExpressionText = expr.getLeftExpression().getText();
-      final PyExpression rightExpression = expr.getRightExpression();
-      final String rightExpressionText = rightExpression != null ? rightExpression.getText() : null;
-      for (String literal : literals) {
-        if (literal.equals(leftExpressionText) || literal.equals(rightExpressionText)) {
-          return true;
-        }
-      }
-      return false;
+    fun registerProblem(binaryExpression: PyBinaryExpression) {
+      registerProblem(
+        binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"),
+        SimplifyBooleanCheckQuickFix(binaryExpression)
+      )
     }
 
-    private void registerProblem(PyBinaryExpression binaryExpression) {
-      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"),
-                      new SimplifyBooleanCheckQuickFix(binaryExpression));
+    companion object {
+      private fun PyBinaryExpression.operandsEqualTo(literals: Collection<String>): Boolean {
+        val leftExpressionText = leftExpression.text
+        val rightExpressionText = rightExpression?.text
+        return literals.any { it == leftExpressionText || it == rightExpressionText }
+      }
     }
   }
 }
+
+private val COMPARISON_LITERALS = listOf("True", "False", "[]")
