@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.operation.core.awaitOperation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.testFramework.DumbModeTestUtils.startEternalDumbModeTask
 import com.intellij.testFramework.junit5.SystemProperty
@@ -58,10 +59,12 @@ class GradleScriptingTest(private val gradleVersion: GradleVersion) {
         gradle.openProject(projectRoot).withProjectAsync { project ->
             val reloadOperation = getGradleProjectReloadOperation(project, this@runBlocking.asDisposable())
 
-            gradle.awaitProjectConfiguration(project) {
-                dumbMode(project) {
-                    reloadOperation.awaitOperation(10.seconds, DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT) {
-                        launchReloadProject(project, projectRoot)
+            gradle.withAllowedProjectSyncs {
+                awaitProjectActivity(project) {
+                    dumbMode(project) {
+                        reloadOperation.awaitOperation(10.seconds, DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT) {
+                            launchReloadProject(project, projectRoot)
+                        }
                     }
                 }
             }

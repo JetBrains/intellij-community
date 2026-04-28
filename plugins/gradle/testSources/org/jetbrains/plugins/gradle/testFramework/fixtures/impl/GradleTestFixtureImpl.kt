@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
@@ -61,37 +60,31 @@ class GradleTestFixtureImpl(
     )
   }
 
+  override suspend fun <R> withAllowedProjectSyncs(numProjectSyncs: Int, action: suspend () -> R): R {
+    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs, action)
+  }
+
   override suspend fun openProject(projectPath: Path, numProjectSyncs: Int): Project {
-    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
+    return withAllowedProjectSyncs(numProjectSyncs) {
       multiProjectFixture.openProject(projectPath)
     }
   }
 
   override suspend fun linkProject(project: Project, projectPath: Path) {
-    return syncLeakTracker.withAllowedOperationAsync(1) {
+    withAllowedProjectSyncs {
       multiProjectFixture.linkProject(project, projectPath, GradleConstants.SYSTEM_ID)
     }
   }
 
   override suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
-    awaitProjectConfiguration(project, numProjectSyncs = 1) {
-      ExternalSystemUtil.refreshProject(
-        projectPath.toCanonicalPath(),
-        ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-          .apply(configure)
-      )
-    }
-  }
-
-  override suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int, openProject: suspend () -> Project): Project {
-    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
-      awaitOpenProjectActivity(openProject)
-    }
-  }
-
-  override suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int, action: suspend () -> R): R {
-    return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs) {
-      awaitProjectActivity(project, action)
+    withAllowedProjectSyncs {
+      awaitProjectActivity(project) {
+        ExternalSystemUtil.refreshProject(
+          projectPath.toCanonicalPath(),
+          ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+            .apply(configure)
+        )
+      }
     }
   }
 

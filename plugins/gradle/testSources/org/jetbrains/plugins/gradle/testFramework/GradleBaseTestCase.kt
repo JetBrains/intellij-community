@@ -37,12 +37,8 @@ abstract class GradleBaseTestCase {
     gradleFixture.syncProject(project, testPath.resolve(relativePath), configure)
   }
 
-  suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project {
-    return gradleFixture.awaitOpenProjectConfiguration(numProjectSyncs, openProject)
-  }
-
-  suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int = 1, action: suspend () -> R): R {
-    return gradleFixture.awaitProjectConfiguration(project, numProjectSyncs, action)
+  suspend fun <R> withAllowedProjectSyncs(numProjectSyncs: Int = 1, action: suspend () -> R): R {
+    return gradleFixture.withAllowedProjectSyncs(numProjectSyncs, action)
   }
 
   fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {

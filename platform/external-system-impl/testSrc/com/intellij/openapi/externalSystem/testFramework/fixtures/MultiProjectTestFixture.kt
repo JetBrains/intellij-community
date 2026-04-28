@@ -12,8 +12,4 @@ interface MultiProjectTestFixture {
   suspend fun linkProject(project: Project, projectPath: Path, systemId: ProjectSystemId)
 
   suspend fun unlinkProject(project: Project, projectPath: Path, systemId: ProjectSystemId)
-
-  suspend fun awaitOpenProjectConfiguration(openProject: suspend () -> Project): Project
-
-  suspend fun <R> awaitProjectConfiguration(project: Project, action: suspend () -> R): R
 }

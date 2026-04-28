@@ -16,6 +16,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
@@ -64,12 +66,14 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
     configure: NewProjectWizardStep.() -> Unit,
   ): Project {
     val wizard = createAndConfigureWizard(group = group, project = null, configure = configure)
-    return awaitOpenProjectConfiguration(numProjectSyncs) {
-      val project = createProjectFromWizardImpl(wizard = wizard, projectFile = Path.of(wizard.newProjectFilePath), projectToClose = null)
-      withContext(Dispatchers.EDT) {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    return withAllowedProjectSyncs(numProjectSyncs) {
+      awaitOpenProjectActivity {
+        val project = createProjectFromWizardImpl(wizard = wizard, projectFile = Path.of(wizard.newProjectFilePath), projectToClose = null)
+        withContext(Dispatchers.EDT) {
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        }
+        project!!
       }
-      project!!
     }
   }
 
@@ -80,11 +84,13 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
     configure: NewProjectWizardStep.() -> Unit,
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
-    return awaitProjectConfiguration(project, numProjectSyncs) {
-      withContext(Dispatchers.EDT) {
-        val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-        module
+    return withAllowedProjectSyncs(numProjectSyncs) {
+      awaitProjectActivity(project) {
+        withContext(Dispatchers.EDT) {
+          val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+          module
+        }
       }
     }
   }

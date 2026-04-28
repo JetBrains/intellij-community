@@ -16,7 +16,7 @@ import java.nio.file.Path
 class MultiProjectTestFixtureImpl: MultiProjectTestFixture {
 
   override suspend fun openProject(projectPath: Path): Project {
-    return awaitOpenProjectConfiguration {
+    return awaitOpenProjectActivity {
       openProjectAsync(projectPath, UnlinkedProjectStartupActivity())
     }
   }
@@ -26,7 +26,7 @@ class MultiProjectTestFixtureImpl: MultiProjectTestFixture {
     Assertions.assertNotNull(extension) {
       "Cannot find applicable extension to link $systemId project"
     }
-    awaitProjectConfiguration(project) {
+    awaitProjectActivity(project) {
       extension!!.linkAndLoadProjectAsync(project, projectPath.toCanonicalPath())
     }
   }
@@ -36,16 +36,8 @@ class MultiProjectTestFixtureImpl: MultiProjectTestFixture {
     Assertions.assertNotNull(extension) {
       "Cannot find applicable extension to link $systemId project"
     }
-    awaitProjectConfiguration(project) {
+    awaitProjectActivity(project) {
       extension!!.unlinkProject(project, projectPath.toCanonicalPath())
     }
-  }
-
-  override suspend fun awaitOpenProjectConfiguration(openProject: suspend () -> Project): Project {
-    return awaitOpenProjectActivity(openProject)
-  }
-
-  override suspend fun <R> awaitProjectConfiguration(project: Project, action: suspend () -> R): R {
-    return awaitProjectActivity(project, action)
   }
 }

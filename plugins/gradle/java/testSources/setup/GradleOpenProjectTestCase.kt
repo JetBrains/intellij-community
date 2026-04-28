@@ -9,6 +9,8 @@ import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.testFramework.utils.vfs.getFile
@@ -22,24 +24,28 @@ import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
   suspend fun importProject(projectInfo: ProjectInfo, numProjectSyncs: Int = 1): Project {
-    return awaitOpenProjectConfiguration(numProjectSyncs) {
-      performOpenAction(
-        action = ImportProjectAction(),
-        systemId = GradleConstants.SYSTEM_ID,
-        selectedFile = testRoot.getDirectory(projectInfo.relativePath)
-          .getFile(getSettingsScriptName(projectInfo.gradleDsl))
-      )
+    return withAllowedProjectSyncs(numProjectSyncs) {
+      awaitOpenProjectActivity {
+        performOpenAction(
+          action = ImportProjectAction(),
+          systemId = GradleConstants.SYSTEM_ID,
+          selectedFile = testRoot.getDirectory(projectInfo.relativePath)
+            .getFile(getSettingsScriptName(projectInfo.gradleDsl))
+        )
+      }
     }
   }
 
   suspend fun attachProject(project: Project, relativePath: String) {
-    awaitProjectConfiguration(project) {
-      performAction(
-        action = AttachExternalProjectAction(),
-        project = project,
-        systemId = GradleConstants.SYSTEM_ID,
-        selectedFile = testRoot.getDirectory(relativePath)
-      )
+    withAllowedProjectSyncs {
+      awaitProjectActivity(project) {
+        performAction(
+          action = AttachExternalProjectAction(),
+          project = project,
+          systemId = GradleConstants.SYSTEM_ID,
+          selectedFile = testRoot.getDirectory(relativePath)
+        )
+      }
     }
   }
 
@@ -53,13 +59,15 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   }
 
   suspend fun attachProjectFromScript(project: Project, relativePath: String) {
-    awaitProjectConfiguration(project) {
-      performAction(
-        action = ImportProjectFromScriptAction(),
-        project = project,
-        systemId = GradleConstants.SYSTEM_ID,
-        selectedFile = testRoot.getDirectory(relativePath)
-      )
+    withAllowedProjectSyncs {
+      awaitProjectActivity(project) {
+        performAction(
+          action = ImportProjectFromScriptAction(),
+          project = project,
+          systemId = GradleConstants.SYSTEM_ID,
+          selectedFile = testRoot.getDirectory(relativePath)
+        )
+      }
     }
   }
 

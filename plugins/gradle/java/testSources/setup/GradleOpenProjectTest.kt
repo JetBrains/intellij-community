@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -268,30 +269,32 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     openProject("project", numProjectSyncs = 0)
       .useProjectAsync { project ->
         assertModules(project, "project")
-        awaitProjectConfiguration(project) {
-          edtWriteAction {
-            testRoot.createFile("project/.idea/gradle.xml")
-              .writeText("""
-                  |<?xml version="1.0" encoding="UTF-8"?>
-                  |<project version="4">
-                  |    <component name="GradleSettings">
-                  |        <option name="linkedExternalProjectsSettings">
-                  |            <GradleProjectSettings>
-                  |                <option name="externalProjectPath" value="${'$'}PROJECT_DIR${'$'}" />
-                  |                <option name="gradleHome" value="" />
-                  |                <option name="gradleJvm" value="$gradleJvm" />
-                  |                <option name="modules">
-                  |                    <set>
-                  |                        <option value="${'$'}PROJECT_DIR${'$'}" />
-                  |                    </set>
-                  |                </option>
-                  |            </GradleProjectSettings>
-                  |        </option>
-                  |    </component>
-                  |</project>
-                """.trimMargin())
+        withAllowedProjectSyncs {
+          awaitProjectActivity(project) {
+            edtWriteAction {
+              testRoot.createFile("project/.idea/gradle.xml")
+                .writeText("""
+                    |<?xml version="1.0" encoding="UTF-8"?>
+                    |<project version="4">
+                    |    <component name="GradleSettings">
+                    |        <option name="linkedExternalProjectsSettings">
+                    |            <GradleProjectSettings>
+                    |                <option name="externalProjectPath" value="${'$'}PROJECT_DIR${'$'}" />
+                    |                <option name="gradleHome" value="" />
+                    |                <option name="gradleJvm" value="$gradleJvm" />
+                    |                <option name="modules">
+                    |                    <set>
+                    |                        <option value="${'$'}PROJECT_DIR${'$'}" />
+                    |                    </set>
+                    |                </option>
+                    |            </GradleProjectSettings>
+                    |        </option>
+                    |    </component>
+                    |</project>
+                  """.trimMargin())
+            }
+            PlatformTestUtil.saveProject(project)
           }
-          PlatformTestUtil.saveProject(project)
         }
         assertNotificationIsVisible(project, false)
         assertModules(project, "project", "project.main", "project.test")
