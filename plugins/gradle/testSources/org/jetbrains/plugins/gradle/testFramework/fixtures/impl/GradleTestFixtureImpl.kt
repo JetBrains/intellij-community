@@ -33,7 +33,7 @@ class GradleTestFixtureImpl: GradleTestFixture {
 
   private lateinit var testDisposable: Disposable
 
-  override fun setUp() {
+  fun setUp() {
     syncLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     syncLeakTracker.setUp()
 
@@ -46,7 +46,7 @@ class GradleTestFixtureImpl: GradleTestFixture {
     setSystemProperty(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY, true.toString(), testDisposable)
   }
 
-  override fun tearDown() {
+  fun tearDown() {
     runAll(
       { Disposer.dispose(testDisposable) },
       { syncLeakTracker.tearDown() },

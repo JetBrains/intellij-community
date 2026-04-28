@@ -3,10 +3,9 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.fixtures.IdeaTestFixture
 import java.nio.file.Path
 
-interface GradleTestFixture : IdeaTestFixture {
+interface GradleTestFixture {
 
   suspend fun openProject(projectPath: Path, numProjectSyncs: Int = 1): Project
 
