@@ -4794,3 +4794,26 @@ diff --git a/tests/rule_based_toolchain/toolchain_config/toolchain_config_test.b
      "//tests/rule_based_toolchain/actions:c_compile",
      "//tests/rule_based_toolchain/actions:cpp_compile",
      ":builtin_feature",
+Index: cc/private/rules_impl/cc_toolchain.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cc/private/rules_impl/cc_toolchain.bzl b/cc/private/rules_impl/cc_toolchain.bzl
+--- a/cc/private/rules_impl/cc_toolchain.bzl	(revision 59b791d06ac059e1801b95b2595814dceccb33c3)
++++ b/cc/private/rules_impl/cc_toolchain.bzl	(revision 59b791d06ac059e1801b95b2595814dceccb33c3)
+@@ -392,6 +392,14 @@
+             cfg = "exec",
+             providers = [ToolConfigInfo],
+         ),
+         "_builtin_features": attr.label(default = "//cc/toolchains/features:all_builtin_features", providers = [FeatureSetInfo]),
++        "_compiler_known_features": attr.label_list(default = [
++            "//cc/toolchains/compiler:clang",
++            "//cc/toolchains/compiler:clang-cl",
++            "//cc/toolchains/compiler:gcc",
++            "//cc/toolchains/compiler:mingw-gcc",
++            "//cc/toolchains/compiler:msvc-cl",
++            "//cc/toolchains/compiler:emscripten",
++        ]),
+     } | semantics.cpp_modules_tools(),  # buildifier: disable=unsorted-dict-items
+ )
