@@ -982,9 +982,15 @@ f:com.intellij.openapi.keymap.impl.ui.KeymapPanel
 f:com.intellij.openapi.observable.util.BindUtilKt
 - sf:bindSelected(com.intellij.ui.CardLayoutPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.CardLayoutPanel
 a:com.intellij.openapi.options.BeanConfigurable
-- bpf:checkBox(java.lang.String,java.lang.String):V
 c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:init():V
+c:com.intellij.openapi.options.newEditor.SettingsFrameFactory
+- sf:Companion:com.intellij.openapi.options.newEditor.SettingsFrameFactory$Companion
+- <init>():V
+- sf:getInstance():com.intellij.openapi.options.newEditor.SettingsFrameFactory
+- show(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable,java.lang.String):V
+f:com.intellij.openapi.options.newEditor.SettingsFrameFactory$Companion
+- f:getInstance():com.intellij.openapi.options.newEditor.SettingsFrameFactory
 com.intellij.openapi.progress.util.ProgressIndicatorListener
 - cancelled():V
 - installToProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx):V
@@ -1015,6 +1021,7 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - java.lang.Enum
 - sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:BREW:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:FLATPAK:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:SNAP:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:TOOLBOX:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - sf:UNKNOWN:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
@@ -1042,12 +1049,6 @@ com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
 - a:init(com.intellij.ui.dsl.builder.Panel):V
 com.intellij.openapi.vcs.impl.FileStatusProvider
 - a:getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-f:com.intellij.openapi.vfs.DiskQueryRelay
-- <init>(java.util.function.Function):V
-- <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
-- accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
-- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- s:compute(com.intellij.openapi.util.ThrowableComputable,java.util.concurrent.ExecutorService):java.lang.Object
 com.intellij.openapi.vfs.impl.http.RemoteContentProvider$DownloadingCallback
 - a:errorOccurred(java.lang.String,Z):V
 - a:finished(com.intellij.openapi.fileTypes.FileType):V
@@ -1734,6 +1735,9 @@ com.intellij.ui.popup.list.ComboBoxPopup$Context
 com.intellij.ui.popup.list.FilterableListPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStep
 - a:updateFilter(java.lang.String):V
+c:com.intellij.ui.popup.list.PopupListElementRenderer
+- isReserveSpaceForExtraButtons():Z
+- setReserveSpaceForExtraButtons(Z):V
 f:com.intellij.ui.render.RenderingHelper
 - sf:RESIZE_EDITOR_TO_RENDERER_SIZE:com.intellij.openapi.util.Key
 - sf:SHRINK_LONG_RENDERER:com.intellij.openapi.util.Key
@@ -1870,6 +1874,20 @@ com.intellij.util.ui.ListItemEditor
 com.intellij.util.ui.ReloadablePanel$DataProvider
 - a:getCachedValues():java.util.Set
 - a:updateValuesAsynchronously():V
+c:com.intellij.util.ui.SwingTextTrimmer
+- sf:ELLIPSIS_AT_LEFT:com.intellij.util.ui.SwingTextTrimmer
+- sf:ELLIPSIS_AT_RIGHT:com.intellij.util.ui.SwingTextTrimmer
+- sf:ELLIPSIS_IN_CENTER:com.intellij.util.ui.SwingTextTrimmer
+- sf:KEY:com.intellij.openapi.util.Key
+- sf:THREE_DOTS_AT_LEFT:com.intellij.util.ui.SwingTextTrimmer
+- sf:THREE_DOTS_AT_RIGHT:com.intellij.util.ui.SwingTextTrimmer
+- sf:THREE_DOTS_IN_CENTER:com.intellij.util.ui.SwingTextTrimmer
+- s:createCenterTrimmer(F):com.intellij.util.ui.SwingTextTrimmer
+- s:createCustomTrimmer(com.intellij.util.ui.SwingTextTrimmerStrategy):com.intellij.util.ui.SwingTextTrimmer
+- isTrimmed():Z
+- trim(java.lang.String,java.awt.FontMetrics,I):java.lang.String
+com.intellij.util.ui.SwingTextTrimmerStrategy
+- a:trim(java.lang.String,java.awt.FontMetrics,I):java.lang.String
 com.intellij.util.ui.ValidatingTableEditor$RowHeightProvider
 - a:getRowHeight():I
 com.intellij.util.ui.table.JBTableRow

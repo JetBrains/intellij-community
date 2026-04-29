@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.FrameWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
@@ -228,16 +229,23 @@ internal class SettingsFrame private constructor(
         private var savedDefaultButton: JButton? = null
 
         override fun windowDeactivated(e: WindowEvent) {
-          savedDefaultButton = rootPane.defaultButton ?: return
-          rootPane.defaultButton = null
-          window.repaint()
+          val button = rootPane.defaultButton
+          if (button != null) {
+            savedDefaultButton = button
+            rootPane.defaultButton = null
+            window.repaint()
+          }
+          editor.recordWindowLeaveState()
         }
 
         override fun windowActivated(e: WindowEvent) {
-          val button = savedDefaultButton ?: return
-          rootPane.defaultButton = button
-          savedDefaultButton = null
-          window.repaint()
+          val button = savedDefaultButton
+          if (button != null) {
+            rootPane.defaultButton = button
+            savedDefaultButton = null
+            window.repaint()
+          }
+          editor.resetUnmodifiedOnWindowFocus()
         }
       })
     }
@@ -247,6 +255,15 @@ internal class SettingsFrame private constructor(
     // Handle current-project closure
     bus.connect(frameDisposable)
       .subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        // Fires before the project saves and closes. Handle unsaved settings here so
+        // isModified is already false by the time projectClosing → close() → onCloseHandler fires.
+        // No Cancel option: the project close cannot be vetoed at this point.
+        override fun projectClosingBeforeSave(project: Project) {
+          if (project == this@SettingsFrame.project) {
+            promptUnsavedOnClose()
+          }
+        }
+
         override fun projectClosed(project: Project) {
           if (project == this@SettingsFrame.project) {
             val remaining = openProjects()
@@ -268,6 +285,7 @@ internal class SettingsFrame private constructor(
       .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
         override fun evaluated(deferred: DeferredIcon, result: Icon) = projectWidget.repaint()
       })
+
   }
 
   // ── Editor factory ────────────────────────────────────────────────────────────
@@ -386,6 +404,25 @@ internal class SettingsFrame private constructor(
       // Messages.NO → discard, fall through
     }
     doSwitchProject(newProject, toSelect)
+  }
+
+  /**
+   * If there are unsaved settings, asks the user whether to apply or discard them.
+   * Called from [ProjectCloseListener.projectClosingBeforeSave]; no Cancel option since the
+   * project close cannot be vetoed at that point.
+   */
+  private fun promptUnsavedOnClose() {
+    if (!editor.isModified) return
+
+    val apply = MessageDialogBuilder.yesNo(
+      ApplicationBundle.message("settings.switch.project.unsaved.title"),
+      ApplicationBundle.message("settings.close.project.unsaved.message", project.name),
+    )
+      .yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .icon(Messages.getWarningIcon())
+      .ask(getFrame())
+    if (apply) editor.apply() else editor.cancel(null)
   }
 
   /** Unconditionally replaces the editor with one for [newProject]. */

@@ -263,6 +263,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         Set<String> modifiedIds = new HashSet<>() ;
         Map<Configurable, ConfigurationException> map = new LinkedHashMap<>();
         for (Configurable configurable : SettingsEditor.this.filter.context.getModified()) {
+          if (myLeaveState.get(configurable) == Boolean.FALSE) {
+            // User did not explicitly modify this configurable; skip applying its stale component
+            // values to avoid overwriting external or background changes.
+            // Cascade: the user-modified configurable (e.g., Color Scheme Font) handles shared
+            // state through its own apply(); its sibling (Console Font) must not clobber it.
+            continue;
+          }
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
           if (exception != null) {
             map.put(configurable, exception);
@@ -576,6 +583,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     }
     for (Configurable configurable : filter.context.getModified()) {
       configurable.cancel();
+      filter.context.fireReset(configurable);
     }
     return super.cancel(source);
   }
@@ -635,6 +643,33 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   public boolean isModified() {
     return !filter.context.getModified().isEmpty();
+  }
+
+  /**
+   * Records the current configurable's modified state at window deactivation time.
+   * Call this when the settings window loses focus so the result can be used on reactivation.
+   */
+  public void recordWindowLeaveState() {
+    Configurable current = filter.context.getCurrentConfigurable();
+    if (current != null) {
+      myLeaveState.put(current, current.isModified());
+    }
+  }
+
+  /**
+   * Resets the current configurable if it had no user edits when the window lost focus
+   * (myLeaveState=false) but is now isModified=true (external/background change).
+   * Call this when the settings window regains focus so external changes become visible.
+   * Non-current configurables are handled lazily: reset on navigation via postUpdateCurrent,
+   * and protected at apply time by the myLeaveState skip in the apply loop.
+   */
+  public void resetUnmodifiedOnWindowFocus() {
+    Configurable current = filter.context.getCurrentConfigurable();
+    if (current == null) return;
+    if (myLeaveState.get(current) == Boolean.FALSE && current.isModified()) {
+      current.reset();
+      filter.context.fireReset(current);
+    }
   }
 
   public String getSelectedConfigurableId() {
