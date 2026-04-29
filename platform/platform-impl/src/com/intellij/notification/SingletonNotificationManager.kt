@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.openapi.project.Project
@@ -14,10 +14,12 @@ class SingletonNotificationManager(private val groupId: String, private val type
   fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?): Unit =
     notify(title, content, project) { }
 
-  fun notify(@NotificationTitle title: String,
-             @NotificationContent content: String,
-             project: Project?,
-             customizer: Consumer<Notification>) {
+  fun notify(
+    @NotificationTitle title: String,
+    @NotificationContent content: String,
+    project: Project?,
+    customizer: Consumer<Notification>,
+  ) {
     val oldNotification = notification.get()
     if (oldNotification != null) {
       if (isVisible(oldNotification, project)) {
@@ -34,7 +36,7 @@ class SingletonNotificationManager(private val groupId: String, private val type
     }
     customizer.accept(newNotification)
 
-    if (notification.compareAndSet(oldNotification, newNotification)) {
+    if (notification.compareAndSet(oldNotification, newNotification) || notification.compareAndSet(null, newNotification)) {
       newNotification.notify(project)
     }
     else {
