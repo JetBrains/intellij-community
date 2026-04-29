@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -33,6 +34,7 @@ import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
+import git4idea.workingTrees.GitWorkingTreePrunableVfsListener
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.GitWorktreeSupportStatus
@@ -249,6 +251,9 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
         }
       }
     })
+
+    //preload vfs listener
+    project.service<GitWorkingTreePrunableVfsListener>()
   }
 }
 

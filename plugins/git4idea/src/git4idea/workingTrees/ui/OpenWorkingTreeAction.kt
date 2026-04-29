@@ -25,9 +25,11 @@ internal class OpenWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?): Boolean {
-    if (project == null || trees == null || trees.size != 1 || trees[0].isCurrent) return false
+    if (project == null || trees == null || trees.size != 1 || trees[0].isCurrent) {
+      return false
+    }
     val workingTree = trees[0]
-    if (GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree)) {
+    if (GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree) || workingTree.isPrunable) {
       return false
     }
     val treePath = workingTree.path.path
