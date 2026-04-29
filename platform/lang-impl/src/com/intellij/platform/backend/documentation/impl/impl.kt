@@ -24,6 +24,7 @@ import com.intellij.platform.backend.documentation.LinkResolveResult
 import com.intellij.platform.backend.documentation.ResolvedTarget
 import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -201,6 +202,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 }
 
 @TestOnly
+@RequiresBackgroundThread(generateAssertion = false)
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
   return runBlockingMaybeCancellable {
     withTimeout(60.seconds) {
