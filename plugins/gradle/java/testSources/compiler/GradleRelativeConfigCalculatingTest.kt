@@ -16,14 +16,8 @@ class GradleRelativeConfigCalculatingTest : GradleRelativeConfigCalculatingTestC
   @Test
   fun testGradleRelativeConfigEquality() {
     runBlocking {
-      val projectInfo1 = projectInfo("project1/project") {
-        withSettingsFile { setProjectName("project") }
-        withBuildFile { withJavaPlugin() }
-      }
-      val projectInfo2 = projectInfo("project2/project") {
-        withSettingsFile { setProjectName("project") }
-        withBuildFile { withJavaPlugin() }
-      }
+      val projectInfo1 = simpleJavaProjectInfo("project1/project")
+      val projectInfo2 = simpleJavaProjectInfo("project2/project")
       initProject(projectInfo1)
       initProject(projectInfo2)
 

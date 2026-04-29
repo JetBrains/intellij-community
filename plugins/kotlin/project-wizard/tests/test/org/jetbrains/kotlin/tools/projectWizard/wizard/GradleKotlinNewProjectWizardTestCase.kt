@@ -14,10 +14,12 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.setup.GradleNewProjectWizardTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -68,34 +70,34 @@ abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTest
         kotlinGradleData!!.version = version
     }
 
-    fun ModuleInfo.Builder.withKotlinSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit = {}) {
-        withSettingsFile {
+    fun GradleModuleInfoBuilder.simpleKotlinSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit = {}) {
+        settingsFile {
             withFoojayPlugin()
             setProjectName(name)
             configure()
         }
     }
 
-    fun ModuleInfo.Builder.withKotlinBuildFile(
-        kotlinJvmPluginVersion: String? = "2.3.21",
-        configure: GradleBuildScriptBuilder<*>.() -> Unit = {}
-    ) {
-        withBuildFile {
+    fun GradleProjectInfoBuilder.simpleKotlinRootModuleInfo(): Unit =
+        rootModuleInfo { configureSimpleKotlinModuleInfo() }
+
+    fun GradleProjectInfoBuilder.simpleKotlinModuleInfo(
+        ideName: String,
+        relativePath: String,
+        gradleDsl: GradleDsl? = null,
+        kotlinJvmPluginVersion: String? = "2.3.21"
+    ): Unit =
+        moduleInfo(ideName, relativePath, gradleDsl) { configureSimpleKotlinModuleInfo(kotlinJvmPluginVersion) }
+
+    private fun GradleModuleInfoBuilder.configureSimpleKotlinModuleInfo(kotlinJvmPluginVersion: String? = "2.3.21") {
+        sourceSetInfo("main")
+        sourceSetInfo("test")
+        buildFile {
             addGroup(groupId)
             addVersion(version)
             withKotlinJvmPlugin(kotlinJvmPluginVersion)
             withKotlinTest()
             withKotlinJvmToolchain(gradleJvmInfo.version.feature)
-            configure()
-        }
-    }
-
-    fun ModuleInfo.Builder.withJavaBuildFile() {
-        withBuildFile {
-            addGroup(groupId)
-            addVersion(version)
-            withJavaPlugin()
-            withJUnit()
         }
     }
 

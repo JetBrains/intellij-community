@@ -12,20 +12,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.withProjectAsync
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
-import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleModuleInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions
 
 abstract class GradleJavaNewProjectWizardTestCase : GradleNewProjectWizardTestCase() {
 
-  suspend fun createProjectByWizard(projectInfo: ProjectInfo): Project {
+  suspend fun createProjectByWizard(projectInfo: GradleProjectInfo): Project {
     Assertions.assertTrue(projectInfo.composites.isEmpty(), "NPW cannot create composite projects please use initProject instead.")
     val rootModuleInfo = projectInfo.rootModule
     return createProjectByWizard(JAVA) {
       configureWizardStepSettings(this, rootModuleInfo, parentData = null)
     }.withProjectAsync { project ->
-      val parentPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
+      val parentPath = testPath.resolve(projectInfo.projectRelativePath).toCanonicalPath()
       val parentData = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, parentPath)!!
       for (moduleInfo in projectInfo.modules) {
         if (moduleInfo != rootModuleInfo) {
@@ -37,7 +37,7 @@ abstract class GradleJavaNewProjectWizardTestCase : GradleNewProjectWizardTestCa
     }
   }
 
-  fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
+  fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: GradleModuleInfo, parentData: ProjectData?) {
     step.baseData!!.name = moduleInfo.name
     step.baseData!!.path = testPath.resolve(moduleInfo.relativePath).normalize().parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
@@ -47,14 +47,5 @@ abstract class GradleJavaNewProjectWizardTestCase : GradleNewProjectWizardTestCa
     step.javaGradleData!!.artifactId = moduleInfo.artifactId
     step.javaGradleData!!.version = moduleInfo.version
     step.javaGradleData!!.addSampleCode = false
-  }
-
-  fun ModuleInfo.Builder.withJavaBuildFile() {
-    withBuildFile {
-      addGroup(groupId)
-      addVersion(version)
-      withJavaPlugin()
-      withJUnit()
-    }
   }
 }

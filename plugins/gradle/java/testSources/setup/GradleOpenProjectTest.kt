@@ -41,7 +41,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test project open`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
+    val projectInfo = complexJavaProjectInfo("project")
     initProject(projectInfo)
 
     openProject("project")
@@ -52,7 +52,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test project import`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
+    val projectInfo = complexJavaProjectInfo("project")
     initProject(projectInfo)
 
     importProject(projectInfo)
@@ -63,8 +63,8 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test project re-open`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
-    val linkedProjectInfo = getComplexProjectInfo("linked_project")
+    val projectInfo = complexJavaProjectInfo("project")
+    val linkedProjectInfo = complexJavaProjectInfo("linked_project")
     initProject(projectInfo)
     initProject(linkedProjectInfo)
 
@@ -84,7 +84,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test project re-open with invalidated workspace model cache`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
+    val projectInfo = complexJavaProjectInfo("project")
     initProject(projectInfo)
 
     WorkspaceModelCacheImpl.forceEnableCaching(asDisposable())
@@ -103,8 +103,8 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test project re-import deprecation`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
-    val linkedProjectInfo = getComplexProjectInfo("linked_project")
+    val projectInfo = complexJavaProjectInfo("project")
+    val linkedProjectInfo = complexJavaProjectInfo("linked_project")
     initProject(projectInfo)
     initProject(linkedProjectInfo)
 
@@ -124,9 +124,9 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test attach project`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
-    val linkedProjectInfo1 = getComplexProjectInfo("linked_project1")
-    val linkedProjectInfo2 = getComplexProjectInfo("linked_project2")
+    val projectInfo = complexJavaProjectInfo("project")
+    val linkedProjectInfo1 = complexJavaProjectInfo("linked_project1")
+    val linkedProjectInfo2 = complexJavaProjectInfo("linked_project2")
     initProject(projectInfo)
     initProject(linkedProjectInfo1)
     initProject(linkedProjectInfo2)
@@ -145,8 +145,8 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test attach project to Gradle and Maven`(): Unit = runBlocking {
-    val projectInfo = getComplexProjectInfo("project")
-    val linkedProjectInfo = getComplexProjectInfo("linked_project")
+    val projectInfo = complexJavaProjectInfo("project")
+    val linkedProjectInfo = complexJavaProjectInfo("linked_project")
     initProject(projectInfo)
     initProject(linkedProjectInfo)
 
@@ -187,7 +187,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test auto-link project without project model`(): Unit = runBlocking {
-    val projectInfo = getSimpleProjectInfo("project")
+    val projectInfo = simpleJavaProjectInfo("project")
     initProject(projectInfo)
 
     testPath.createFile("project/.idea/compiler.xml")
@@ -209,7 +209,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test don't auto-link project with project model`(): Unit = runBlocking {
-    val projectInfo = getSimpleProjectInfo("project")
+    val projectInfo = simpleJavaProjectInfo("project")
     initProject(projectInfo)
 
     testPath.createFile("project/.idea/compiler.xml")
@@ -242,7 +242,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test auto-link project from new gradle_xml`(): Unit = runBlocking {
-    val projectInfo = getSimpleProjectInfo("project")
+    val projectInfo = simpleJavaProjectInfo("project")
     initProject(projectInfo)
 
     testPath.createFile("project/project.iml")
@@ -306,7 +306,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test open project with inspection profiles`(): Unit = runBlocking {
-    val projectInfo = getSimpleProjectInfo("project")
+    val projectInfo = simpleJavaProjectInfo("project")
     initProject(projectInfo)
 
     testPath.createFile("project/.idea/inspectionProfiles/myInspections.xml")

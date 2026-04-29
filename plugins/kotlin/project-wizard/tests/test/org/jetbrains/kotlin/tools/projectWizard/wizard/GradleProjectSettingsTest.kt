@@ -21,8 +21,8 @@ class GradleProjectSettingsTest : GradleKotlinNewProjectWizardTestCase() {
             setGradleWizardData("project", gradleDsl = gradleDsl)
         }.withProjectAsync { project ->
             assertProjectState(project, projectInfo("project", gradleDsl) {
-                withKotlinBuildFile()
-                withKotlinSettingsFile()
+                simpleKotlinSettingsFile()
+                simpleKotlinRootModuleInfo()
             })
 
             val settings = GradleSettings.getInstance(project)

@@ -17,20 +17,20 @@ import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 
 abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
-  suspend fun importProject(projectInfo: ProjectInfo, numProjectSyncs: Int = 1): Project {
+  suspend fun importProject(projectInfo: GradleProjectInfo, numProjectSyncs: Int = 1): Project {
     return withAllowedProjectSyncs(numProjectSyncs) {
       awaitOpenProjectActivity {
         performOpenAction(
           action = ImportProjectAction(),
           systemId = GradleConstants.SYSTEM_ID,
-          selectedFile = testPath.resolve(projectInfo.relativePath)
-            .resolve(getSettingsScriptName(projectInfo.gradleDsl))
+          selectedFile = testPath.resolve(projectInfo.rootModule.relativePath)
+            .resolve(getSettingsScriptName(projectInfo.rootModule.gradleDsl))
             .refreshAndGetVirtualFile()
         )
       }

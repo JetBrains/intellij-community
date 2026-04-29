@@ -25,14 +25,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
@@ -132,24 +130,6 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
       "$currentStepObject is not validated"
     }
     return this
-  }
-
-  override fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
-    for (projectInfo in projectsInfo) {
-      assertBuildFiles(projectInfo)
-    }
-    super.assertProjectState(project, *projectsInfo)
-  }
-
-  fun assertBuildFiles(projectInfo: ProjectInfo) {
-    for (compositeInfo in projectInfo.composites) {
-      assertBuildFiles(compositeInfo)
-    }
-    for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = testPath.resolve(moduleInfo.relativePath)
-        .refreshAndGetVirtualDirectory()
-      moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
-    }
   }
 
   fun assertDaemonJvmProperties(project: Project) {

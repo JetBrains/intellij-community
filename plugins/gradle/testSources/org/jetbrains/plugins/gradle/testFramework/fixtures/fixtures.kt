@@ -3,14 +3,19 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
+import java.nio.file.Path
 
 fun gradleJvmFixture(
   gradleVersion: GradleVersion = GradleVersion.current(),
@@ -33,6 +38,25 @@ fun gradleFixture(
   fixture.setUp()
   initialized(fixture) {
     fixture.tearDown()
+  }
+}
+
+fun gradleProjectRootFixture(
+  projectInfo: GradleProjectInfo,
+): TestFixture<Path> = testFixture {
+  val testRoot = tempPathFixture().init()
+  val projectRoot = initProject(testRoot, projectInfo)
+  initialized(projectRoot) {}
+}
+
+fun TestFixture<GradleTestFixture>.projectFixture(
+  projectRootFixture: TestFixture<Path>,
+): TestFixture<Project> = testFixture {
+  val gradle = this@projectFixture.init()
+  val projectRoot = projectRootFixture.init()
+  val project = gradle.openProject(projectRoot)
+  initialized(project) {
+    project.closeProjectAsync()
   }
 }
 

@@ -15,6 +15,10 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsFile
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
+import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -26,18 +30,13 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
   @Test
   fun `test project re-create`(): Unit = runBlocking {
     val projectInfo = projectInfo("project") {
-      withJavaBuildFile()
-      withSettingsFile {
-        setProjectName("project")
+      simpleSettingsFile {
         include("module")
         includeFlat("flat-module")
       }
-      moduleInfo("project.module", "module") {
-        withJavaBuildFile()
-      }
-      moduleInfo("project.flat-module", "../flat-module") {
-        withJavaBuildFile()
-      }
+      simpleJavaRootModuleInfo()
+      simpleJavaModuleInfo("project.module", "module")
+      simpleJavaModuleInfo("project.flat-module", "../flat-module")
     }
 
     WorkspaceModelCacheImpl.forceEnableCaching(asDisposable())
@@ -59,12 +58,7 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
   @ParameterizedTest
   @EnumSource(GradleDsl::class)
   fun `test project setting generation`(gradleDsl: GradleDsl): Unit = runBlocking {
-    val projectInfo = projectInfo("project", gradleDsl) {
-      withJavaBuildFile()
-      withSettingsFile {
-        setProjectName("project")
-      }
-    }
+    val projectInfo = simpleJavaProjectInfo("project", gradleDsl)
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
@@ -75,18 +69,13 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
   @EnumSource(GradleDsl::class)
   fun `test project setting generation with groovy-kotlin scripts`(gradleDsl: GradleDsl): Unit = runBlocking {
     val projectInfo = projectInfo("project", gradleDsl) {
-      withJavaBuildFile()
-      withSettingsFile {
-        setProjectName("project")
+      simpleSettingsFile {
         include("module1")
         include("module2")
       }
-      moduleInfo("project.module1", "module1", GradleDsl.KOTLIN) {
-        withJavaBuildFile()
-      }
-      moduleInfo("project.module2", "module2", GradleDsl.GROOVY) {
-        withJavaBuildFile()
-      }
+      simpleJavaRootModuleInfo()
+      simpleJavaModuleInfo("project.module1", "module1", GradleDsl.KOTLIN)
+      simpleJavaModuleInfo("project.module2", "module2", GradleDsl.KOTLIN)
     }
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
@@ -98,15 +87,13 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
   @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
   fun `test project generation with Gradle daemon JVM criteria`(): Unit = runBlocking {
     val projectInfo = projectInfo("project") {
-      withJavaBuildFile()
-      withSettingsFile {
+      settingsFile {
         withFoojayPlugin()
         setProjectName("project")
         include("module")
       }
-      moduleInfo("project.module", "module") {
-        withJavaBuildFile()
-      }
+      simpleJavaRootModuleInfo()
+      simpleJavaModuleInfo("project.module", "module")
     }
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->

@@ -10,10 +10,10 @@ class GradleUntrustedProjectTest : GradleUntrustedProjectTestCase() {
   @Test
   fun `test untrusted project opening`() {
     runBlocking {
-      val project1 = getSimpleProjectInfo("project1")
-      val project2 = getSimpleProjectInfo("project2")
-      val project3 = getSimpleProjectInfo("project1/project3")
-      val project4 = getSimpleProjectInfo("project4")
+      val project1 = simpleJavaProjectInfo("project1")
+      val project2 = simpleJavaProjectInfo("project2")
+      val project3 = simpleJavaProjectInfo("project1/project3")
+      val project4 = simpleJavaProjectInfo("project4")
 
       assertTrustedLocations(emptyList())
       initProject(project1)
