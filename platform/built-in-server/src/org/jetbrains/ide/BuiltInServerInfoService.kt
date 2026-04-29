@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.jackson.writeNumberField
@@ -48,6 +49,7 @@ internal class BuiltInServerDiscoveryService(private val coroutineScope: Corouti
     fun getInstance(): BuiltInServerDiscoveryService = service()
   }
 
+  private val enabled = Registry.`is`("ij.platform.experimental.discoverability", false)
   private val ready = CompletableDeferred<Unit>()
   private lateinit var jsonFile: Path
   private lateinit var serverAddress: InetAddress
@@ -55,7 +57,7 @@ internal class BuiltInServerDiscoveryService(private val coroutineScope: Corouti
   private val writeMutex = Mutex()
 
   init {
-    coroutineScope.launch(Dispatchers.IO) {
+    if (enabled) coroutineScope.launch(Dispatchers.IO) {
       try {
         val serverManager = BuiltInServerManager.getInstance()
         serverManager.waitForStart()
@@ -82,12 +84,14 @@ internal class BuiltInServerDiscoveryService(private val coroutineScope: Corouti
   }
 
   fun scheduleNotifyUpdate() {
+    if (!enabled) return
     coroutineScope.launch {
       notifyUpdate()
     }
   }
 
   suspend fun notifyUpdate() {
+    if (!enabled) return
     try {
       ready.await()
     }
