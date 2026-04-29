@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.session.rpc
 
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -46,6 +47,17 @@ interface TerminalPortForwardingApi : RemoteApi<Unit> {
    * Tears down the forwarding for [remotePort] on the backend host. Idempotent.
    */
   suspend fun stopForwarding(remotePort: Int)
+
+  /**
+   * Persists [remotePort] for [projectId] so that the backend automatically restores the forwarding
+   * the next time the project is opened. No-op if [remotePort] is not currently forwarded.
+   */
+  suspend fun persistPort(projectId: ProjectId, remotePort: Int)
+
+  /**
+   * Removes [remotePort] from persistence for [projectId]. Idempotent.
+   */
+  suspend fun deletePersistedPort(projectId: ProjectId, remotePort: Int)
 
   companion object {
     suspend fun getInstance(): TerminalPortForwardingApi {
