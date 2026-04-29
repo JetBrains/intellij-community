@@ -157,16 +157,6 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
   @Test
   fun `test nio path and vfs integration`() {
     runBlocking {
-      assertNioPath { nioRoot.resolve("file.txt") }
-        .doesNotExist()
-      assertNioPath { nioRoot.resolve("directory") }
-        .doesNotExist()
-
-      assertVirtualFile { nioRoot.resolve("file.txt").refreshAndFindVirtualFile() }
-        .doesNotExist()
-      assertVirtualFile { nioRoot.resolve("directory").refreshAndFindVirtualDirectory() }
-        .doesNotExist()
-
       assertNioPath { nioRoot.findOrCreateFile("file.txt") }
         .isExistedFile()
       assertNioPath { nioRoot.findOrCreateDirectory("directory") }
@@ -176,6 +166,31 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
         .isExistedFile()
       assertVirtualFile { nioRoot.resolve("directory").refreshAndFindVirtualDirectory() }
         .isExistedDirectory()
+
+      assertVirtualFile { nioRoot.resolve("directory").refreshAndFindVirtualFile() }
+        .isFailedWithException<IOException>("Expected file instead of directory: .*")
+      assertVirtualFile { nioRoot.resolve("file.txt").refreshAndFindVirtualDirectory() }
+        .isFailedWithException<IOException>("Expected directory instead of file: .*")
+
+      assertVirtualFile { nioRoot.resolve("dir/../file.txt").refreshAndFindVirtualFile() }
+        .isExistedFile()
+      assertVirtualFile { nioRoot.resolve("dir/../directory").refreshAndFindVirtualDirectory() }
+        .isExistedDirectory()
+    }
+  }
+
+  @Test
+  fun `test nio path and vfs integration (non-existent)`() {
+    runBlocking {
+      assertNioPath { nioRoot.resolve("file.txt") }
+        .doesNotExist()
+      assertNioPath { nioRoot.resolve("directory") }
+        .doesNotExist()
+
+      assertVirtualFile { nioRoot.resolve("file.txt").refreshAndFindVirtualFile() }
+        .doesNotExist()
+      assertVirtualFile { nioRoot.resolve("directory").refreshAndFindVirtualDirectory() }
+        .doesNotExist()
     }
   }
 
