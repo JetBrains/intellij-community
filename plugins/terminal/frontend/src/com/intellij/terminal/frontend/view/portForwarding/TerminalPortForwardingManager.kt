@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Application-level service that performs TCP port forwarding from the IDE host environment to any
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.Flow
  *
  * It is assumed that implementation is thread-safe, so all operations can be called from any thread.
  */
-internal interface TerminalPortForwardingManager {
+@ApiStatus.Internal
+interface TerminalPortForwardingManager {
   /**
    * Emits whenever the set of currently forwarded ports changes for any environment
    * (a new forwarding is started or an existing one is stopped).

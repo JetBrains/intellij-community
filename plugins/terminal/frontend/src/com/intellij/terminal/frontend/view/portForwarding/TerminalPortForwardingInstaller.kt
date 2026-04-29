@@ -43,6 +43,10 @@ import kotlin.time.Duration.Companion.milliseconds
  * Once it is canceled, watcher stops, all established forwardings are stopped, and the top component is removed.
  */
 internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: CoroutineScope) {
+  // Trigger eager init.
+  // It is required for ThinClientTerminalPortForwardingManager to receive port forwarding data from the backend before any interaction.
+  TerminalPortForwardingManager.getInstance()
+
   coroutineScope.launch {
     val session = terminalView.sessionDeferred.await()
     val startupOptions = terminalView.startupOptionsDeferred.await()

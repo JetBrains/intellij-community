@@ -23,6 +23,8 @@ import com.intellij.util.ui.WrapLayout
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -32,6 +34,7 @@ import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * UI component listing the currently detected ports for one terminal session.
@@ -60,9 +63,12 @@ internal class PortForwardingWidget(
     layoutComponents()
 
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      model.items.collect { items ->
-        renderPorts(items)
-      }
+      @OptIn(FlowPreview::class)
+      model.items
+        .debounce(300.milliseconds)
+        .collect { items ->
+          renderPorts(items)
+        }
     }
   }
 

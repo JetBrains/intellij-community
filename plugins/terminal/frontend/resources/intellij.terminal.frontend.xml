@@ -57,7 +57,8 @@
       open="true"/>
     <applicationService
       serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"/>
+      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"
+      open="true"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>
