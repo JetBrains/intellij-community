@@ -55,9 +55,7 @@ import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowInitializer
 import org.jetbrains.plugins.terminal.TerminalToolWindowPanel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -318,12 +316,12 @@ internal class TerminalToolWindowTabsManagerImpl(
   ) = terminal.coroutineScope.launch {
     if (builder.sessionId != null) {
       // Session is already started for this tab, reuse it
-      connectSessionToTerminal(terminal, builder.sessionId!!, builder.portForwardingId)
+      connectSessionToTerminal(terminal, builder.sessionId!!)
     }
     else {
       val options = prepareStartupOptions(terminal, builder, calculateSizeFromComponent)
       val sessionTab = TerminalTabsManager.getInstance(project).startTerminalSessionForTab(backendTabId, options)
-      connectSessionToTerminal(terminal, sessionTab.sessionId!!, sessionTab.portForwardingId)
+      connectSessionToTerminal(terminal, sessionTab.sessionId!!)
     }
   }
 
@@ -353,19 +351,10 @@ internal class TerminalToolWindowTabsManagerImpl(
   private suspend fun connectSessionToTerminal(
     terminal: TerminalViewImpl,
     sessionId: TerminalSessionId,
-    portForwardingId: TerminalPortForwardingId?,
   ) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
     val session = TerminalSessionsManager.getInstance().getSession(sessionId)
                   ?: error("Failed to find TerminalSession with ID: $sessionId")
     terminal.connectToSession(session)
-
-    if (portForwardingId != null) {
-      val disposable = terminal.coroutineScope.asDisposable()
-      val component = TerminalPortForwardingUiProvider.getInstance(project).createComponent(portForwardingId, disposable)
-      if (component != null) {
-        terminal.setTopComponent(component, disposable)
-      }
-    }
 
     installPortForwarding(terminal, terminal.coroutineScope.childScope("PortForwarding"))
   }
@@ -429,7 +418,6 @@ internal class TerminalToolWindowTabsManagerImpl(
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
           sessionId(tab.sessionId)
-          portForwardingId(tab.portForwardingId)
           requestFocus(false)  // Otherwise it may trigger the tool window showing
         }
         builder.createTab()
@@ -476,8 +464,6 @@ internal class TerminalToolWindowTabsManagerImpl(
     var backendTabId: Int? = null
       private set
     var sessionId: TerminalSessionId? = null
-      private set
-    var portForwardingId: TerminalPortForwardingId? = null
       private set
 
     override fun workingDirectory(directory: String?): TerminalToolWindowTabBuilder {
@@ -552,11 +538,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     fun sessionId(id: TerminalSessionId?): TerminalToolWindowTabBuilder {
       sessionId = id
-      return this
-    }
-
-    fun portForwardingId(id: TerminalPortForwardingId?): TerminalToolWindowTabBuilder {
-      portForwardingId = id
       return this
     }
 

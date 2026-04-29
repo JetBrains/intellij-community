@@ -62,7 +62,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       envVariables = null,
       processType = null,
       sessionId = null,
-      portForwardingId = null,
     )
     updateTabsAndStore { tabs ->
       tabs[newTab.id] = newTab
@@ -87,19 +86,12 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         TerminalSessionsManager.getInstance().startSession(options, project, scope)
       }
 
-      // But init Port Forwarding session under the remote client ID, because Port Forwarding API relies on it.
-      val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(
-        ttyConnector = result.ttyConnector,
-        coroutineScope = scope.childScope("PortForwarding")
-      )
-
       val updatedTab = tab.copy(
         shellCommand = result.configuredOptions.initialShellCommand?.command ?: options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
         envVariables = options.envVariables,  // Remember env variables requested by the client, not the resulting ones.
         processType = result.configuredOptions.processType,
         sessionId = result.sessionId,
-        portForwardingId = portForwardingId,
       )
       tabs[tabId] = updatedTab
 
@@ -238,7 +230,6 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       envVariables = envVariables,
       processType = processType,
       sessionId = null,
-      portForwardingId = null,
     )
   }
 

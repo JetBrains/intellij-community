@@ -51,10 +51,6 @@
       serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
       serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
       open="true"/>
-    <projectService
-      serviceInterface="com.intellij.terminal.frontend.session.TerminalPortForwardingManager"
-      serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoPortForwardingManager"
-      open="true"/>
     <applicationService
       serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"
       serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"
