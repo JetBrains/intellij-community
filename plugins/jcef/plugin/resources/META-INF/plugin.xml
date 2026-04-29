@@ -12,7 +12,7 @@
     <plugin id="com.intellij.modules.platform"/>
   </dependencies>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <cefNativeBundleProvider implementation="com.intellij.jcef.plugin.PluggableCefNativeBundleProvider"/>
-  </extensions>
+  <content>
+    <module name="intellij.jcef.frontend"/>
+  </content>
 </idea-plugin>

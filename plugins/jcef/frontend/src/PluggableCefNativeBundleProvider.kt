@@ -1,4 +1,4 @@
-package com.intellij.jcef.plugin
+package com.intellij.jcef.frontend
 
 import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.ui.jcef.JBCefNativeBundleProvider

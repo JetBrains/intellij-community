@@ -1111,6 +1111,7 @@ plugins/javaFX/common
 plugins/javaFX/community
 plugins/javaFX/jps
 plugins/javaFX/sceneBuilder
+plugins/jcef/frontend
 plugins/jcef/plugin
 plugins/jshell
 plugins/jshell/console

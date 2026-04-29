@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.frontend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <cefNativeBundleProvider implementation="com.intellij.jcef.frontend.PluggableCefNativeBundleProvider"/>
+  </extensions>
+</idea-plugin>
