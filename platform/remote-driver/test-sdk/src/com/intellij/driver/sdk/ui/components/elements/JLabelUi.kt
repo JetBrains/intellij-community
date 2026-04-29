@@ -4,6 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.Icon
 
 fun Finder.linkLabel(labelText: String): JLabelUiComponent =
   x(JLabelUiComponent::class.java) { and(byType("com.intellij.ui.components.labels.LinkLabel"), byAccessibleName(labelText)) }
@@ -32,6 +33,7 @@ open class TabLabelUi(data: ComponentData) : UiComponent(data) {
 @Remote("javax.swing.JLabel")
 interface JLabelRef {
   fun getText(): String?
+  fun getIcon(): Icon?
 }
 
 @Remote("com.intellij.ui.tabs.impl.TabLabel")

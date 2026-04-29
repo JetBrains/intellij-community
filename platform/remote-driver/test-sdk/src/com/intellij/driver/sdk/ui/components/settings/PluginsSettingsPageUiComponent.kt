@@ -17,7 +17,9 @@ import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
+import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
@@ -68,6 +70,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName("Marketplace")) }
   val gearButton = x { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
   val searchOptionsButton = x { byAccessibleName("Search Options") }
+  val updateAllButton = x { byAccessibleName("Update all") }
 
   fun waitLoaded(timeout: Duration = 40.seconds) {
     waitFor("no progress indicators on plugins page", timeout) {
@@ -88,6 +91,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   fun openInstalledTab(): PluginsSettingsPageUiComponent {
     step("Go to the Installed tab") {
       installedTab.click()
+      waitLoaded()
     }
     return this
   }
@@ -160,7 +164,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val ultimateTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
     val proTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
-    val updateButton = x { byAccessibleName("Update") }
+    val updatePluginButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
     val errorComponent = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
 
@@ -175,8 +179,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     fun updatePlugin(): ListPluginComponent {
-      step("Wait for update btn and click") {
-        updateButton.waitFound(30.seconds).click()
+      step("Wait for update plugin btn and click") {
+        updatePluginButton.waitFound(30.seconds).click()
       }
       return this
     }
@@ -219,9 +223,14 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     fun uninstallPluginByHotkey(): ListPluginComponent {
-      step("Click on plugin and press hotkey") {
-        click()
+      step("Press hotkey to uninstall plugin") {
         keyboard { key(if (SystemInfo.isMac) KeyEvent.VK_BACK_SPACE else KeyEvent.VK_DELETE) }
+      }
+      step("Confirm plugin uninstallation in the dialog") {
+        driver.ui.dialog(title = "Uninstall Plugin?") {
+          waitFound(1.minutes)
+          button("Yes").click()
+        }
       }
       return this
     }
