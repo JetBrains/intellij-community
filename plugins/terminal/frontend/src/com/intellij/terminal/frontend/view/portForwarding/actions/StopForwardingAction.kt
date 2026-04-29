@@ -18,8 +18,6 @@ internal class StopForwardingAction : DumbAwareAction(TerminalBundle.messagePoin
     e.coroutineScope.launch {
       val eelMachine = model.eelDescriptor.resolveEelMachine()
       TerminalPortForwardingManager.getInstance().stopForwarding(eelMachine, item.remotePort)
-      // The port is still listening; only the tunnel is gone, so flip back to "not forwarded".
-      model.setNotForwarded(item.remotePort)
     }
   }
 

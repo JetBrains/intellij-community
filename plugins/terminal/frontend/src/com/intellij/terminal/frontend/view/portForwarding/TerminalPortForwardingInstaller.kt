@@ -66,6 +66,8 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
     }
 
     val model = PortForwardingViewModel(eelDescriptor)
+    installViewModelUpdating(eelMachine, model, coroutineScope)
+
     val watcher = installPortsWatcher(
       eelMachine = eelMachine,
       processId = session.processId,
@@ -94,6 +96,31 @@ private suspend fun arePortsAccessibleLocally(eelDescriptor: EelDescriptor): Boo
          || EelPortAccessibleLocally.isEelPortAccessibleLocally(8080.toUShort(), 8080.toUShort(), eelDescriptor)
 }
 
+/**
+ * Keeps each [PortForwardingItem]'s forwarded/not-forwarded state in sync with the [TerminalPortForwardingManager]
+ * when its state changes (e.g., via [TerminalPortForwardingManager.forwardPort] or [TerminalPortForwardingManager.stopForwarding]).
+ */
+private fun installViewModelUpdating(
+  eelMachine: EelMachine,
+  model: PortForwardingViewModel,
+  coroutineScope: CoroutineScope,
+) {
+  coroutineScope.launch(CoroutineName("")) {
+    val manager = TerminalPortForwardingManager.getInstance()
+    manager.stateChangedFlow.collect {
+      for (item in model.items.value) {
+        val localPort = manager.getForwardedLocalPort(eelMachine, item.remotePort)
+        if (localPort != null) {
+          model.setForwarded(item.remotePort, localPort)
+        }
+        else {
+          model.setNotForwarded(item.remotePort)
+        }
+      }
+    }
+  }
+}
+
 private fun installPortsWatcher(
   eelMachine: EelMachine,
   processId: Long,
@@ -102,7 +129,11 @@ private fun installPortsWatcher(
 ): ProcessPortsWatcher {
   val handler = object : ListeningPortHandler {
     override fun onPortListeningStarted(port: ListeningPort) {
-      // Do not auto-forward, only check if port forwarding is already set up.
+      // Add the entry first so that setForwarded/setNotForwarded can mutate it.
+      model.addPort(port.port)
+
+      // Then resolve the initial forwarded/not-forwarded state from the manager.
+      // Subsequent state changes are handled by the logic in [installViewModelUpdating].
       val existingLocalPort = TerminalPortForwardingManager.getInstance().getForwardedLocalPort(eelMachine, port.port)
       if (existingLocalPort != null) {
         model.setForwarded(port.port, existingLocalPort)
@@ -113,8 +144,8 @@ private fun installPortsWatcher(
     }
 
     override fun onPortListeningEnded(port: ListeningPort) {
-      TerminalPortForwardingManager.getInstance().stopForwarding(eelMachine, port.port)
       model.removePort(port.port)
+      TerminalPortForwardingManager.getInstance().stopForwarding(eelMachine, port.port)
     }
   }
 

@@ -18,14 +18,14 @@ internal class PortForwardingViewModel(val eelDescriptor: EelDescriptor) {
   private val mutableItems = MutableStateFlow<List<PortForwardingItem>>(emptyList())
   val items: StateFlow<List<PortForwardingItem>> = mutableItems
 
-  /** Records that [remotePort] is currently forwarded to [localPort]. */
-  fun setForwarded(remotePort: Int, localPort: Int) {
-    replaceOrAppend(PortForwardingItem.Forwarded(remotePort, localPort))
-  }
-
-  /** Records that [remotePort] is detected but not (or no longer) forwarded. */
-  fun setNotForwarded(remotePort: Int) {
-    replaceOrAppend(PortForwardingItem.NotForwarded(remotePort))
+  /** Adds [remotePort] to the model as [PortForwardingItem.NotForwarded]. No-op if already present. */
+  fun addPort(remotePort: Int) {
+    mutableItems.update { current ->
+      if (current.any { it.remotePort == remotePort }) {
+        current
+      }
+      else current + PortForwardingItem.NotForwarded(remotePort)
+    }
   }
 
   /** Drops [remotePort] from the model. */
@@ -33,13 +33,29 @@ internal class PortForwardingViewModel(val eelDescriptor: EelDescriptor) {
     mutableItems.update { current -> current.filter { it.remotePort != remotePort } }
   }
 
-  private fun replaceOrAppend(newItem: PortForwardingItem) {
+  /**
+   * Records that [remotePort] is currently forwarded to [localPort].
+   * Only mutates the model if [remotePort] is already present (added via [addPort]).
+   */
+  fun setForwarded(remotePort: Int, localPort: Int) {
+    replaceIfPresent(PortForwardingItem.Forwarded(remotePort, localPort))
+  }
+
+  /**
+   * Records that [remotePort] is detected but not (or no longer) forwarded.
+   * Only mutates the model if [remotePort] is already present (added via [addPort]).
+   */
+  fun setNotForwarded(remotePort: Int) {
+    replaceIfPresent(PortForwardingItem.NotForwarded(remotePort))
+  }
+
+  private fun replaceIfPresent(newItem: PortForwardingItem) {
     mutableItems.update { current ->
       val index = current.indexOfFirst { it.remotePort == newItem.remotePort }
-      if (index >= 0) {
-        current.toMutableList().also { it[index] = newItem }
+      if (index < 0) {
+        current
       }
-      else current + newItem
+      else current.toMutableList().also { it[index] = newItem }
     }
   }
 

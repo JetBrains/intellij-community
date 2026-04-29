@@ -15,6 +15,10 @@ import com.intellij.platform.eel.provider.utils.acceptOnTcpPort
 import com.intellij.platform.eel.provider.utils.connectToTcpPort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -53,6 +57,13 @@ internal class TerminalPortForwardingManagerImpl(private val coroutineScope: Cor
    */
   private val startProxyMutex = Mutex()
 
+  private val mutableStateChangedFlow = MutableSharedFlow<Unit>(
+    replay = 0,
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+  )
+  override val stateChangedFlow: Flow<Unit> = mutableStateChangedFlow.asSharedFlow()
+
   override fun getForwardedLocalPort(eelMachine: EelMachine, remotePort: Int): Int? {
     return environments.get()
       .firstOrNull { it.eelMachine == eelMachine }
@@ -75,6 +86,7 @@ internal class TerminalPortForwardingManagerImpl(private val coroutineScope: Cor
       val newForwarding = startProxy(remoteApi, remotePort, preferredLocal = remotePort)
                           ?: return@withLock null
       addForwarding(eelMachine, newForwarding)
+      mutableStateChangedFlow.emit(Unit)
       LOG.debug { "Started forwarding from ${newForwarding.localPort} to remote ${newForwarding.remotePort} in ${eelMachine.internalName}" }
       newForwarding.localPort
     }
@@ -83,6 +95,7 @@ internal class TerminalPortForwardingManagerImpl(private val coroutineScope: Cor
   override fun stopForwarding(eelMachine: EelMachine, remotePort: Int) {
     val removed = removeForwarding(eelMachine, remotePort) ?: return
     removed.job.cancel()
+    mutableStateChangedFlow.tryEmit(Unit)
     LOG.debug { "Stopping forwarding from ${removed.localPort} to remote ${removed.remotePort} in ${eelMachine.internalName}" }
   }
 

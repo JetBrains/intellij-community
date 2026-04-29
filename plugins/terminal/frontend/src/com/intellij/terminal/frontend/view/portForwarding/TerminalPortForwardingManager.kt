@@ -4,6 +4,7 @@ package com.intellij.terminal.frontend.view.portForwarding
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Application-level service that performs TCP port forwarding from the IDE host environment to any
@@ -13,6 +14,14 @@ import com.intellij.platform.eel.EelMachine
  * It is assumed that implementation is thread-safe, so all operations can be called from any thread.
  */
 internal interface TerminalPortForwardingManager {
+  /**
+   * Emits whenever the set of currently forwarded ports changes for any environment
+   * (a new forwarding is started or an existing one is stopped).
+   *
+   * Subscribers should re-query [getForwardedLocalPort] for the ports they care about.
+   */
+  val stateChangedFlow: Flow<Unit>
+
   /**
    * Returns the currently bound local port for [remotePort] in [eelMachine], or `null` if not forwarded.
    */

@@ -15,8 +15,7 @@ internal class ForwardPortAction : DumbAwareAction(TerminalBundle.messagePointer
     val item = e.getData(PortForwardingItem.KEY) as? PortForwardingItem.NotForwarded ?: return
     val model = e.getData(PortForwardingViewModel.KEY) ?: return
     e.coroutineScope.launch {
-      val localPort = TerminalPortForwardingManager.getInstance().forwardPort(model.eelDescriptor, item.remotePort) ?: return@launch
-      model.setForwarded(item.remotePort, localPort)
+      TerminalPortForwardingManager.getInstance().forwardPort(model.eelDescriptor, item.remotePort)
     }
   }
 
