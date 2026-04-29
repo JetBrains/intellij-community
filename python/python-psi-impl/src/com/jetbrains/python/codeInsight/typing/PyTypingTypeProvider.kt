@@ -2793,6 +2793,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
 
       if (scopeOwner != null && qualifiedName != null) {
+        val unqualifiedName = qualifiedName.firstComponent
+        val shouldPreferFileScopeForBuiltinGenericAlias = qualifiedName.componentCount == 1 &&
+                                                          unqualifiedName in TYPING_BUILTINS_GENERIC_ALIASES.keys &&
+                                                          pyFile != null &&
+                                                          scopeOwner is PyClass
+
+        if (shouldPreferFileScopeForBuiltinGenericAlias) {
+          val fileLevelResults = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, pyFile, context)
+          if (fileLevelResults.isNotEmpty()) {
+            return fileLevelResults
+          }
+        }
+
         return PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, scopeOwner, context)
       }
       return mutableListOf(expression)

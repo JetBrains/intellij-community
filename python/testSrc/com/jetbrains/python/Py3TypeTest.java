@@ -5903,6 +5903,26 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-89253")
+  public void testBuiltinGenericAliasInStubbedClassAttributeAnnotationDoesNotResolveToInheritedMethod() {
+    doMultiFileTest("dict[int, str]", """
+      from sample import A
+  
+      a = A()
+      expr = a.b
+      """);
+  }
+
+  @TestFor(issues = "PY-89253")
+  public void testQualifiedSubscriptionAnnotationDoesNotUseBuiltinAliasWorkaround() {
+    doMultiFileTest("Any", """
+      from sample import A
+  
+      a = A()
+      expr = a.b
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
