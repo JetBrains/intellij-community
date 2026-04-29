@@ -17,9 +17,10 @@ import git4idea.GitUtil
 import git4idea.isCommitPublished
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,21 +30,37 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.measureTimedValue
 
+/**
+ * A caching loader for recent commits in Git repositories
+ *
+ * It retrieves commit metadata asynchronously and offers options
+ * to filter commits based on specific criteria.
+ *
+ * @param limit The maximum number of commits to retrieve per repository.
+ * @param userScope Specifies whether to filter commits by the user
+ * @param stopAtFirstMergeCommit If true, only return commits from HEAD until (but not including) the first merge commit
+ * @param unpublishedOnly If true, only return commits that haven't been pushed to a protected remote branch
+ * @param preload If true, preload cache entries for existing and newly created repositories
+ */
 @ApiStatus.Experimental
 class GitRecentCommitsProvider(
   private val project: Project,
   private val scope: CoroutineScope,
   private val limit: Int,
   private val userScope: UserScope = UserScope.CURRENT_USER,
-  private val stopAtFirstMergeCommit: Boolean = false, // If true, only return commits from HEAD until (but not including) the first merge commit
-  private val unpublishedOnly: Boolean = false, // If true, only return commits that haven't been pushed to a protected remote branch
+  private val stopAtFirstMergeCommit: Boolean = false,
+  private val unpublishedOnly: Boolean = false,
+  private val preload: Boolean = false,
 ) {
   enum class UserScope {
     CURRENT_USER,
     ALL_USERS,
   }
 
+  private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
+
   private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
+    .maximumSize(MAX_REPOSITORIES.toLong())
     .buildAsync { root, _ ->
       scope.future {
         readRecentCommits(root)
@@ -51,18 +68,38 @@ class GitRecentCommitsProvider(
     }
 
   init {
-    project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
-      LOG.debug { "Repository changed, refreshing cache entry for ${repository.root}" }
-      cache.synchronous().refresh(repository.root)
+    project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+      override fun repositoryCreated(repository: GitRepository, info: GitRepoInfo) {
+        if (preload && cache.asMap().size < MAX_REPOSITORIES) {
+          cache.synchronous().refresh(repository.root)
+        }
+      }
+
+      override fun repositoryChanged(
+        repository: GitRepository,
+        previousInfo: GitRepoInfo,
+        info: GitRepoInfo,
+      ) {
+        if (preload) {
+          LOG.debug { "Repository changed, refreshing cache entry for ${repository.root}" }
+          cache.synchronous().refresh(repository.root)
+        }
+        else {
+          cache.synchronous().invalidate(repository.root)
+        }
+      }
     })
-    cache.synchronous().refreshAll(GitRepositoryManager.getInstance(project).repositories.map { it.root })
+    if (preload) {
+      val repositories = GitRepositoryManager.getInstance(project).repositories
+      cache.synchronous().refreshAll(repositories.take(MAX_REPOSITORIES).map { it.root })
+    }
   }
 
   suspend fun getRecentCommits(root: VirtualFile): List<VcsCommitMetadata> {
     return cache.get(root).await()
   }
 
-  private suspend fun readRecentCommits(root: VirtualFile): List<VcsCommitMetadata> = withContext(Dispatchers.IO) {
+  private suspend fun readRecentCommits(root: VirtualFile): List<VcsCommitMetadata> = withContext(limitedDispatcher) {
     LOG.debug("Reading recent commits for $root (limit: $limit, userScope: $userScope, stopAtFirstMergeCommit: $stopAtFirstMergeCommit, filterNotPublished: $unpublishedOnly)")
 
     val commits = loadCommits(root)
@@ -132,5 +169,6 @@ class GitRecentCommitsProvider(
 
   companion object {
     private val LOG = logger<GitRecentCommitsProvider>()
+    private const val MAX_REPOSITORIES = 10
   }
 }

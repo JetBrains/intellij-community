@@ -27,7 +27,8 @@ internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : 
     limit = COMMITS_LIMIT,
     userScope = GitRecentCommitsProvider.UserScope.ALL_USERS,
     stopAtFirstMergeCommit = true,
-    unpublishedOnly = true
+    unpublishedOnly = true,
+    preload = true,
   )
 
   override fun isAmendCommitSupported(): Boolean = true
