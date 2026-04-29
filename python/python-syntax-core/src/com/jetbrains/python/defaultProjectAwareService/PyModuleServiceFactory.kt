@@ -3,6 +3,7 @@ package com.jetbrains.python.defaultProjectAwareService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -19,11 +20,13 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * However, if there are specific needs for instancing, it is not required to use this interface.
  */
+@ApiStatus.Internal
 interface PyModuleServiceFactory<T> {
 
   fun getService(module: Module): T
 }
 
+@ApiStatus.Internal
 class PyModuleServiceFactoryImpl<T : Any>(
   private val serviceFactory: (Module) -> T,
 ) : PyModuleServiceFactory<T> {

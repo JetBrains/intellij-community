@@ -99,9 +99,6 @@
     <lang.parserDefinition language="PyTypeHint"
                            implementationClass="com.jetbrains.python.codeInsight.typeHints.PyTypeHintParserDefinition"/>
 
-    <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
-                   serviceImplementation="com.jetbrains.python.psi.resolve.PythonModulePathCache"/>
-
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider" id="pythonDocumentationProvider"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
