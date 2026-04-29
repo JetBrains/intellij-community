@@ -104,13 +104,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
   @Override
   protected @NotNull List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-    group.add(new MyToggleExpandByDefaultAction());
-    group.add(new MyToggleAutoScrollAction());
-    group.addAll(myTextDiffProvider.getDiffSettingsActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getDiffSettingsActions());
 
     group.add(Separator.getInstance());
     group.addAll(super.createPopupActions());
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
 
     return group;
   }
@@ -125,11 +125,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(new ReplaceSelectedChangesAction(ThreeSide.BASE, ThreeSide.RIGHT));
 
     group.add(Separator.getInstance());
-    group.add(new MyToggleExpandByDefaultAction());
-    group.add(new MyToggleAutoScrollAction());
+    group.addAll(super.createEditorPopupActions());
 
     group.add(Separator.getInstance());
-    group.addAll(super.createEditorPopupActions());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
 
     return group;
   }

@@ -6,13 +6,13 @@ import com.intellij.diff.tools.util.base.HighlightingLevel
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -39,103 +39,23 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
 
   private var syncScrollSupport: SyncScrollSupport.Support? = null
   private val editors get() = editorsSupplier()
-  private var diffActions = emptyList<AnAction>()
+  private val _appearanceGroup = AppearanceGroup()
+  protected val appearanceGroup: ActionGroup = _appearanceGroup
+
+  private var toolbarActions = emptyList<AnAction>()
   private var gutterActions = emptyList<AnAction>()
-
-  protected val actions: List<AnAction> = buildList {
-    add(object : EditorSettingToggleAction("EditorToggleShowWhitespaces") {
-      override var isSelected: Boolean
-        get() = textSettings.isShowWhitespaces
-        set(value) {
-          textSettings.isShowWhitespaces = value
-        }
-
-      override fun apply(editor: Editor, value: Boolean) {
-        if (editor.getSettings().isWhitespacesShown() != value) {
-          editor.getSettings().setWhitespacesShown(value)
-          editor.getComponent().repaint()
-        }
-      }
-    })
-    add(object : EditorSettingToggleAction("EditorToggleShowLineNumbers") {
-      override var isSelected: Boolean
-        get() = textSettings.isShowLineNumbers
-        set(value) {
-          textSettings.isShowLineNumbers = value
-        }
-
-      override fun apply(editor: Editor, value: Boolean) {
-        if (editor.getSettings().isLineNumbersShown() != value) {
-          editor.getSettings().setLineNumbersShown(value)
-          editor.getComponent().repaint()
-        }
-      }
-    })
-    add(object : EditorSettingToggleAction("EditorToggleShowIndentLines") {
-      override var isSelected: Boolean
-        get() = textSettings.isShowIndentLines
-        set(value) {
-          textSettings.isShowIndentLines = value
-        }
-
-      override fun apply(editor: Editor, value: Boolean) {
-        if (editor.getSettings().isIndentGuidesShown() != value) {
-          editor.getSettings().setIndentGuidesShown(value)
-          editor.getComponent().repaint()
-        }
-      }
-    })
-    add(object : EditorSettingToggleAction("EditorToggleUseSoftWraps") {
-      private var isSoftWrapForced = false
-
-      override var isSelected: Boolean
-        get() {
-          val hasForcedSoftWraps = editors.any { it.getUserData(EditorImpl.FORCED_SOFT_WRAPS) == true }
-          return isSoftWrapForced || textSettings.isUseSoftWraps || hasForcedSoftWraps
-        }
-        set(value) {
-          isSoftWrapForced = false
-          textSettings.isUseSoftWraps = value
-        }
-
-      override fun apply(editor: Editor, value: Boolean) {
-        if (editor.getSettings().isUseSoftWraps() == value) return
-
-        syncScrollSupport?.enterDisableScrollSection()
-        try {
-          AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, value)
-        }
-        finally {
-          syncScrollSupport?.exitDisableScrollSection()
-        }
-      }
-
-      override fun applyDefaults(editors: List<Editor>) {
-        if (!textSettings.isUseSoftWraps) {
-          editors.forEach {
-            isSoftWrapForced = isSoftWrapForced || (it as? EditorImpl)?.softWrapModel?.shouldSoftWrapsBeForced() ?: false
-          }
-        }
-        super.applyDefaults(editors)
-      }
-    })
-    if (Registry.`is`("diff.highlighting.level.visible")) {
-    add(EditorHighlightingLayerGroup())
-    }
-    add(EditorBreadcrumbsPlacementGroup())
-  }
 
   init {
     installGutterPopup()
   }
 
-  fun setDiffActions(gutterActions: List<AnAction>, diffActions: List<AnAction>) {
-    this@SetEditorSettingsActionGroup.diffActions = diffActions
-    this@SetEditorSettingsActionGroup.gutterActions = gutterActions
+  fun setDiffActions(gutterActions: List<AnAction>, toolbarActions: List<AnAction>) {
+    this.gutterActions = gutterActions
+    this.toolbarActions = toolbarActions
   }
 
   fun setSyncScrollSupport(syncScrollSupport: SyncScrollSupport.Support?) {
-    this@SetEditorSettingsActionGroup.syncScrollSupport = syncScrollSupport
+    this.syncScrollSupport = syncScrollSupport
   }
 
   fun installGutterPopup() {
@@ -148,7 +68,7 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     if (!Registry.`is`("diff.highlighting.level.visible")) {
       textSettings.highlightingLevel = HighlightingLevel.INSPECTIONS
     }
-    actions.filterIsInstance<EditorSettingAction>().forEach { it.applyDefaults(editors) }
+    _appearanceGroup.applyDefaults(editors)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -159,36 +79,124 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     e.presentation.isPopupGroup = e.isFromActionToolbar
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val appearanceGroup = createAppearanceGroup()
-    val actions = buildList {
-      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS)
-      )
-      addAll(diffActions)
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
+    if (e.isFromToolbar()) {
+      add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
+      addAll(toolbarActions)
       add(Separator.getInstance())
       add(appearanceGroup)
       add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
     }
-
-    if (e?.place?.contains(ActionPlaces.DIFF_TOOLBAR) == true) {
-      return actions.toArray<AnAction>(EMPTY_ARRAY)
-    }
-
-    return buildList {
+    else {
       add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP))
-      add(Separator.getInstance())
       addAll(gutterActions)
-      add(Separator.getInstance())
       add(appearanceGroup)
-      add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
-    }.toArray<AnAction>(EMPTY_ARRAY)
+    }
+  }.toArray(EMPTY_ARRAY)
+
+  private inner class AppearanceGroup : ActionGroup(), DumbAware, EditorSettingAction {
+    private val actions: Array<AnAction> = arrayOf(
+      object : EditorSettingToggleAction("EditorToggleShowWhitespaces") {
+        override var isSelected: Boolean
+          get() = textSettings.isShowWhitespaces
+          set(value) {
+            textSettings.isShowWhitespaces = value
+          }
+
+        override fun apply(editor: Editor, value: Boolean) {
+          if (editor.getSettings().isWhitespacesShown() != value) {
+            editor.getSettings().setWhitespacesShown(value)
+            editor.getComponent().repaint()
+          }
+        }
+      },
+      object : EditorSettingToggleAction("EditorToggleShowLineNumbers") {
+        override var isSelected: Boolean
+          get() = textSettings.isShowLineNumbers
+          set(value) {
+            textSettings.isShowLineNumbers = value
+          }
+
+        override fun apply(editor: Editor, value: Boolean) {
+          if (editor.getSettings().isLineNumbersShown() != value) {
+            editor.getSettings().setLineNumbersShown(value)
+            editor.getComponent().repaint()
+          }
+        }
+      },
+      object : EditorSettingToggleAction("EditorToggleShowIndentLines") {
+        override var isSelected: Boolean
+          get() = textSettings.isShowIndentLines
+          set(value) {
+            textSettings.isShowIndentLines = value
+          }
+
+        override fun apply(editor: Editor, value: Boolean) {
+          if (editor.getSettings().isIndentGuidesShown() != value) {
+            editor.getSettings().setIndentGuidesShown(value)
+            editor.getComponent().repaint()
+          }
+        }
+      },
+      object : EditorSettingToggleAction("EditorToggleUseSoftWraps") {
+        private var isSoftWrapForced = false
+
+        override var isSelected: Boolean
+          get() {
+            val hasForcedSoftWraps = editors.any { it.getUserData(EditorImpl.FORCED_SOFT_WRAPS) == true }
+            return isSoftWrapForced || textSettings.isUseSoftWraps || hasForcedSoftWraps
+          }
+          set(value) {
+            isSoftWrapForced = false
+            textSettings.isUseSoftWraps = value
+          }
+
+        override fun apply(editor: Editor, value: Boolean) {
+          if (editor.getSettings().isUseSoftWraps() == value) return
+
+          syncScrollSupport?.enterDisableScrollSection()
+          try {
+            AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, value)
+          }
+          finally {
+            syncScrollSupport?.exitDisableScrollSection()
+          }
+        }
+
+        override fun applyDefaults(editors: List<Editor>) {
+          if (!textSettings.isUseSoftWraps) {
+            editors.forEach {
+              isSoftWrapForced = isSoftWrapForced || (it as? EditorImpl)?.softWrapModel?.shouldSoftWrapsBeForced() ?: false
+            }
+          }
+          super.applyDefaults(editors)
+        }
+      },
+      EditorHighlightingLayerGroup(),
+      EditorBreadcrumbsPlacementGroup())
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.text = DiffBundle.message("settings.appearance")
+      e.presentation.isPopupGroup = e.isFromToolbar()
+    }
+
+    override fun getChildren(e: AnActionEvent?) =
+      if (e.isFromToolbar()) {
+        actions
+      }
+      else {
+        arrayOf<AnAction>(Separator.create(DiffBundle.message("settings.appearance"))) + actions
+      }
+
+    override fun applyDefaults(editors: List<Editor>) {
+      actions.filterIsInstance<EditorSettingAction>().forEach { it.applyDefaults(editors) }
+    }
   }
 
-  protected fun createAppearanceGroup(): DefaultActionGroup {
-    return DefaultActionGroup.createPopupGroup { DiffBundle.message("settings.appearance") }.apply { addAll(actions) }
-  }
-
-  private abstract inner class EditorSettingToggleAction(@NonNls actionId: @NonNls String) : ToggleAction(), DumbAware,
+  private abstract inner class EditorSettingToggleAction(@NonNls actionId: @NonNls String) : ToggleAction(),
+                                                                                             DumbAware,
                                                                                              EditorSettingAction {
     init {
       copyFrom(this, actionId)
@@ -219,12 +227,24 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     }
   }
 
-  private inner class EditorHighlightingLayerGroup : ActionGroup(DiffBundle.message("highlighting.level"), false), EditorSettingAction,
+  private inner class EditorHighlightingLayerGroup : ActionGroup(DiffBundle.message("highlighting.level"), false),
+                                                     EditorSettingAction,
                                                      DumbAware {
+
     private val options = HighlightingLevel.entries.map { OptionAction(it) }
 
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      if (!Registry.`is`("diff.highlighting.level.visible")) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+      e.presentation.isPopupGroup = !e.isFromToolbar()
+    }
+
     override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
-      add(Separator.create(getTemplatePresentation().text))
+      if (e.isFromToolbar()) add(Separator.create(getTemplatePresentation().text))
       addAll(options)
     }.toArray(EMPTY_ARRAY)
 
@@ -255,19 +275,21 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     }
   }
 
-  private inner class EditorBreadcrumbsPlacementGroup : ActionGroup(), EditorSettingAction, DumbAware {
+  private inner class EditorBreadcrumbsPlacementGroup : ActionGroup(ActionsBundle.message("group.EditorBreadcrumbsSettings.text"), false),
+                                                        EditorSettingAction,
+                                                        DumbAware {
     private val options = BreadcrumbsPlacement.entries.map { OptionAction(it) }
 
-    init {
-      copyFrom(this, IdeActions.BREADCRUMBS_OPTIONS_GROUP)
-      setPopup(false)
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isPopupGroup = !e.isFromToolbar()
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> = buildList {
-      add(Separator.create(getTemplatePresentation().text))
+      if (e.isFromToolbar()) add(Separator.create(getTemplatePresentation().text))
       addAll(options)
     }.toArray<AnAction>(EMPTY_ARRAY)
-
 
     override fun applyDefaults(editors: List<Editor>) {}
 
@@ -294,10 +316,6 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
     fun applyDefaults(editors: List<Editor>)
   }
 
-  protected fun <T> replaceOrAppend(list: MutableList<T?>, from: T?, to: T?) {
-    var index = list.indexOf(from)
-    if (index == -1) index = list.size
-    list.remove(from)
-    list.add(index, to)
-  }
+  private fun AnActionEvent?.isFromToolbar() =
+    this?.place != null && (this.place.contains(ActionPlaces.DIFF_TOOLBAR) || this.place.contains(ActionPlaces.DIFF_RIGHT_TOOLBAR))
 }

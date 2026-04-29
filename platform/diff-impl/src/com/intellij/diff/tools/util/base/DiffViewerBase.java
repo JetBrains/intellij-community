@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -214,9 +214,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
   }
 
   protected List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-    group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP));
-    return group;
+    return List.of(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_POPUP));
   }
 
   protected @Nullable JComponent getStatusPanel() {

@@ -174,18 +174,17 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
 
     return buildList<AnAction> {
       if (isGutterPlace) {
-        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
-        add(Separator.create(message("settings.appearance")))
-        addAll(actions.toList())
+        add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP))
+        add(appearanceGroup)
         add(Separator.getInstance())
         add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
       }
       else {
         if (isRightToolbarPlace) {
           add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES))
+          add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS))
         }
         add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
-        add(Separator.getInstance())
         add(CombinedIgnorePolicySettingAction(settings).actions.apply {
           add(Separator.create(message("option.ignore.policy.group.name")), Constraints.FIRST)
         })
@@ -194,7 +193,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
           add(Separator.create(message("option.highlighting.policy.group.name")), Constraints.FIRST)
         })
         add(Separator.getInstance())
-        add(createAppearanceGroup())
+        add(appearanceGroup)
         add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
       }
     }.toTypedArray()

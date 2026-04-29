@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -71,8 +70,6 @@ public final class TextDiffViewerUtil {
   public static @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
-
-    result.add(Separator.getInstance());
     ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;

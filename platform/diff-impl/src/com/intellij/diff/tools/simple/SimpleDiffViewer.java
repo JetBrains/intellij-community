@@ -150,7 +150,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> gutterActions = new ArrayList<>();
     gutterActions.add(new MyToggleExpandByDefaultAction());
-    gutterActions.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
+    ContainerUtil.addIfNotNull(gutterActions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
     gutterActions.add(new MyToggleAutoScrollAction());
 
     List<AnAction> diffActions = new ArrayList<>(gutterActions);
@@ -169,14 +169,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @Override
   protected @NotNull List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-    group.add(new MyToggleExpandByDefaultAction());
-    group.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
-    group.add(new MyToggleAutoScrollAction());
-    group.addAll(myTextDiffProvider.getDiffSettingsActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getDiffSettingsActions());
 
     group.add(Separator.getInstance());
     group.addAll(super.createPopupActions());
+    group.add(Separator.getInstance());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
 
     return group;
   }
@@ -191,12 +190,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new AppendSelectedChangesAction(Side.RIGHT));
 
     group.add(Separator.getInstance());
-    group.add(new MyToggleExpandByDefaultAction());
-    group.add(ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
-    group.add(new MyToggleAutoScrollAction());
+    group.addAll(super.createEditorPopupActions());
 
     group.add(Separator.getInstance());
-    group.addAll(super.createEditorPopupActions());
+    group.add(new MyToggleExpandByDefaultAction());
+    group.add(new MyToggleAutoScrollAction());
 
     return group;
   }
