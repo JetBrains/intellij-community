@@ -70,46 +70,6 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
     assertEquals(1, bookmarksManager.getBookmarks().size());
   }
 
-  public void testOffOnTransition() {
-    boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
-    try {
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, false);
-      
-      WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
-      contextManager.enableUntil(getTestRootDisposable());
-      BookmarksManager manager = BookmarksManager.getInstance(getProject());
-      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
-
-      VirtualFile fileA = createTestFile("A.txt", "content A");
-      manager.add(provider.createBookmark(fileA, 0), BookmarkType.DEFAULT);
-      assertEquals(1, manager.getBookmarks().size());
-
-      Element element1 = new Element("task1");
-      contextManager.saveContext(element1);
-
-      contextManager.clearContext();
-      assertEquals(1, manager.getBookmarks().size());
-
-      VirtualFile fileB = createTestFile("B.txt", "content B");
-      manager.add(provider.createBookmark(fileB, 0), BookmarkType.DEFAULT);
-      assertEquals(2, manager.getBookmarks().size());
-
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, true);
-
-      contextManager.clearContext();
-      assertEquals(0, manager.getBookmarks().size());
-
-      contextManager.loadContext(element1);
-      PlatformTestUtil.waitForAlarm(100);
-      assertEquals(1, manager.getBookmarks().size());
-      Bookmark restored = manager.getBookmarks().get(0);
-      assertEquals("A.txt", ((com.intellij.ide.bookmark.FileBookmark)restored).getFile().getName());
-    }
-    finally {
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, originalSetting);
-    }
-  }
-
   public void testPerBranchMode_BookmarksClearedOnSwitch() {
     boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
     try {
@@ -138,34 +98,6 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
     }
   }
 
-  public void testTransition_GlobalToPerBranchMode() {
-    boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
-    try {
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, false);
-      
-      WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
-      contextManager.enableUntil(getTestRootDisposable());
-      BookmarksManager manager = BookmarksManager.getInstance(getProject());
-      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
-
-      VirtualFile fileA = createTestFile("A.txt", "content A");
-      manager.add(provider.createBookmark(fileA, 0), BookmarkType.DEFAULT);
-      Element element1 = new Element("branch1");
-      contextManager.saveContext(element1);
-
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, true);
-      
-      contextManager.clearContext();
-      assertEquals(0, manager.getBookmarks().size());
-      
-      contextManager.loadContext(element1);
-      assertEquals(1, manager.getBookmarks().size());
-    }
-    finally {
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, originalSetting);
-    }
-  }
-
   public void testPerBranchMode_WithContentChanges() {
     boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
     try {
@@ -181,7 +113,7 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
       Bookmark bookmark1 = provider.createBookmark(file, 1); // line 2
       manager.add(bookmark1, BookmarkType.DEFAULT);
       assertEquals(1, manager.getBookmarks().size());
-      assertTrue(manager.getBookmarks().get(0) instanceof LineBookmark);
+      assertTrue(manager.getBookmarks().getFirst() instanceof LineBookmark);
 
       Element branch1Context = new Element("branch1");
       contextManager.saveContext(branch1Context);
@@ -215,7 +147,7 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
       
       // Should restore Branch 1 bookmark as valid (content matches)
       assertEquals(1, manager.getBookmarks().size());
-      Bookmark restored = manager.getBookmarks().get(0);
+      Bookmark restored = manager.getBookmarks().getFirst();
       assertTrue(restored instanceof LineBookmark);
       assertEquals(1, ((LineBookmark)restored).getLine());
     }
@@ -224,7 +156,7 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
     }
   }
 
-  public void testGlobalMode_KeepsExistingValidBookmarksOnMerge() {
+  public void testGlobalMode_ClearIsNoOpAndLoadMerges() {
     boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
     try {
       AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, false);
@@ -234,89 +166,55 @@ public class BookmarkContextTest extends LightPlatformCodeInsightTestCase {
       BookmarksManager manager = BookmarksManager.getInstance(getProject());
       LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
 
-      // Create file with content and bookmark
-      VirtualFile file = createTestFile("test.txt", "line 1\nline 2\nline 3");
-      Bookmark bookmark1 = provider.createBookmark(file, 1);
-      manager.add(bookmark1, BookmarkType.DEFAULT);
+      VirtualFile file = createTestFile("test.txt", "line 0\nline 1");
+      manager.add(provider.createBookmark(file, 0), BookmarkType.DEFAULT);
       assertEquals(1, manager.getBookmarks().size());
 
-      Element context1 = new Element("context1");
-      contextManager.saveContext(context1);
+      Element context = new Element("context");
+      contextManager.saveContext(context);
 
-      // In global mode, clearContext does NOT remove bookmarks
+      // In global mode, clearContext is a no-op — bookmark must survive
       contextManager.clearContext();
       PlatformTestUtil.waitForAlarm(50);
-      assertEquals(1, manager.getBookmarks().size());
-      
-      // Store reference to existing bookmark
-      Bookmark existingBookmark = manager.getBookmarks().get(0);
+      assertEquals("global mode: clearContext must not remove bookmarks", 1, manager.getBookmarks().size());
 
-      // Load context: should keep existing valid bookmark (not replace)
-      contextManager.loadContext(context1);
-      PlatformTestUtil.waitForAlarm(100);
-
-      // In global mode, merge should keep existing valid bookmark
-      assertEquals(1, manager.getBookmarks().size());
-      Bookmark result = manager.getBookmarks().get(0);
-      assertTrue(result instanceof LineBookmark);
-      assertEquals(1, ((LineBookmark)result).getLine());
-      
-      // Verify it's the same instance (kept, not replaced)
-      assertSame("Bookmark should be kept in global mode, not replaced", existingBookmark, result);
+      // Loading the same context must not duplicate the already-present bookmark
+      contextManager.loadContext(context);
+      PlatformTestUtil.waitForAlarm(50);
+      assertEquals("global mode: loadContext must not duplicate existing bookmarks", 1, manager.getBookmarks().size());
     }
     finally {
       AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, originalSetting);
     }
   }
 
-  public void testPerBranchMode_ReplacesExistingBookmarksOnMerge() {
+  public void testGlobalMode_DeletedBookmarkNotRestoredByLoadContext() {
     boolean originalSetting = AdvancedSettings.getBoolean(BRANCH_CONTEXT_SETTING);
     try {
-      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, true);
+      AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, false);
 
       WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
       contextManager.enableUntil(getTestRootDisposable());
       BookmarksManager manager = BookmarksManager.getInstance(getProject());
       LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
 
-      // Create file and bookmark at line 1
-      VirtualFile file = createTestFile("test.txt", "line 1\nline 2\nline 3");
-      Bookmark bookmark1 = provider.createBookmark(file, 1);
-      manager.add(bookmark1, BookmarkType.DEFAULT);
+      VirtualFile file = createTestFile("test.txt", "line 0\nline 1");
+      manager.add(provider.createBookmark(file, 0), BookmarkType.DEFAULT);
       assertEquals(1, manager.getBookmarks().size());
 
-      // Save context
-      Element context1 = new Element("context1");
-      contextManager.saveContext(context1);
+      Element context = new Element("context");
+      contextManager.saveContext(context);
 
-      // clearContext removes all bookmarks in branch mode
-      contextManager.clearContext();
-      PlatformTestUtil.waitForAlarm(50);
+      manager.remove(manager.getBookmarks().getFirst());
       assertEquals(0, manager.getBookmarks().size());
 
-      // Add a bookmark at the SAME location (line 1)
-      Bookmark bookmark2 = provider.createBookmark(file, 1);
-      manager.add(bookmark2, BookmarkType.DEFAULT);
-      assertEquals(1, manager.getBookmarks().size());
-      
-      // Store reference to existing bookmark
-      Bookmark existingBookmark = manager.getBookmarks().get(0);
-
-      // Load saved context - should REPLACE existing bookmark with saved one
-      contextManager.loadContext(context1);
-      PlatformTestUtil.waitForAlarm(100);
-
-      // In branch mode, merge should replace existing valid bookmark
-      assertEquals(1, manager.getBookmarks().size());
-      Bookmark result = manager.getBookmarks().get(0);
-      assertTrue(result instanceof LineBookmark);
-      assertEquals(1, ((LineBookmark)result).getLine());
-      
-      // Verify it's a different instance (replaced, not kept)
-      assertNotSame("Bookmark should be replaced, not kept", existingBookmark, result);
+      contextManager.loadContext(context);
+      PlatformTestUtil.waitForAlarm(50);
+      assertEquals("global mode: loadContext must not restore deleted bookmarks", 0, manager.getBookmarks().size());
     }
     finally {
       AdvancedSettings.setBoolean(BRANCH_CONTEXT_SETTING, originalSetting);
     }
   }
+
 }

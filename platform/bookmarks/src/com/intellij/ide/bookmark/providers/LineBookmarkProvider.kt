@@ -113,17 +113,11 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     }
   }
 
-  /**
-   * Restores a bookmark from serialized state (XML).
-   * 
-   * Always creates InvalidBookmark, which will be converted to LineBookmarkImpl
-   * by async validation if the file exists and content matches.
-   */
   override fun createBookmark(map: Map<String, String>): Bookmark? {
     val url = map["url"] ?: return null
     val line = StringUtil.parseInt(map["line"], -1)
     val lineText = map["lineText"]
-    return InvalidBookmark(this, url, line, lineText)
+    return createValidBookmark(url, line, lineText) ?: InvalidBookmark(this, url, line, lineText)
   }
 
   override fun createBookmark(context: Any?): Bookmark? = when (context) {
@@ -154,24 +148,12 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     return createBookmark(file, line ?: editor.caretModel.logicalPosition.line)
   }
 
-  /**
-   * Creates a validated bookmark from URL.
-   * 
-   * This method is used during async validation to convert InvalidBookmark to LineBookmarkImpl.
-   * It validates that:
-   * - The file exists
-   * - If expectedText is provided, it matches the actual line content
-   * 
-   * @return LineBookmarkImpl if validation succeeds, null otherwise
-   */
   internal fun createValidBookmark(url: String, line: Int = -1, expectedText: String? = null): Bookmark? {
     val file = VirtualFileManager.getInstance().findFileByUrl(url) ?: return null
     if (expectedText != null && line >= 0) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
       val currentText = Util.readLineText(document, line)
-      if (expectedText != currentText) {
-        return null
-      }
+      if (expectedText != currentText) return null
     }
     return createBookmark(file, line, expectedText)
   }
@@ -435,12 +417,6 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     .restartTimerOnAdd(true)
     .runLatest { validateAndUpdate() }
 
-  /**
-   * Requests asynchronous validation of all line bookmarks.
-   * 
-   * This validates all bookmarks and converts InvalidBookmark to LineBookmarkImpl 
-   * where the file exists and content matches, or vice versa if content has changed.
-   */
   fun requestValidation() {
     validateQueue.queue(Unit)
   }
@@ -456,42 +432,20 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
 
   private suspend fun validateAndUpdate() {
     val manager = BookmarksManager.getInstance(project) ?: return
-    
-    if (LOG.isDebugEnabled) {
-      LOG.debug("=== LineBookmarkProvider.validateAndUpdate START ===")
-      LOG.debug("Total bookmarks to validate: ${manager.bookmarks.size}")
-    }
-    
     val bookmarks = readAction {
       val indexBuilderCache = mutableMapOf<String, LineTextIndexBuilder>()
-      
       hashMapOf<Bookmark, Bookmark?>().apply {
         manager.bookmarks.forEach { validate(it, indexBuilderCache)?.run { this@apply[it] = this } }
       }
     }
-    
-    if (bookmarks.isNotEmpty()) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Updating ${bookmarks.size} bookmarks after validation")
-      }
-      manager.update(bookmarks)
-    }
-    
-    if (LOG.isDebugEnabled) {
-      LOG.debug("=== LineBookmarkProvider.validateAndUpdate END ===")
-    }
+    if (bookmarks.isNotEmpty()) manager.update(bookmarks)
   }
 
   private fun validate(bookmark: Bookmark, indexBuilderCache: MutableMap<String, LineTextIndexBuilder>): Bookmark? {
     return when (bookmark) {
       is InvalidBookmark -> {
         val created = createValidBookmark(bookmark.url, bookmark.line, bookmark.expectedText)
-        if (created != null) {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("  [VALIDATE] Recovered invalid bookmark at line ${bookmark.line}")
-          }
-          return created
-        }
+        if (created != null) return created
 
         if (bookmark.expectedText != null && bookmark.line >= 0) {
           val indexBuilder = indexBuilderCache.getOrPut(bookmark.url) {
@@ -500,14 +454,8 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
             LineTextIndexBuilder(document)
           }
           val foundLine = indexBuilder.findLineByText(bookmark.expectedText, bookmark.line)
-          if (foundLine >= 0) {
-            if (LOG.isDebugEnabled) {
-              LOG.debug("  [VALIDATE] Recovered invalid bookmark using line search: $foundLine (was ${bookmark.line})")
-            }
-            return createValidBookmark(bookmark.url, foundLine, bookmark.expectedText)
-          }
+          if (foundLine >= 0) return createValidBookmark(bookmark.url, foundLine, bookmark.expectedText)
         }
-        
         null
       }
       is FileBookmarkImpl -> bookmark.file.run { if (isValid) null else InvalidBookmark(this@LineBookmarkProvider, url, -1, null) }
