@@ -46,7 +46,7 @@ class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompl
   }
 
   companion object {
-    private const val MAX_SHOWN_TIME_MS = 10_000L
+    private const val MAX_SHOWN_TIME_MS = 3000L
 
     fun getInstance(): InlineCompletionOnboardingComponent = service()
   }
