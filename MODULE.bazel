@@ -11,7 +11,7 @@ archive_override(
     url = "https://github.com/JetBrains/rules_kotlin/archive/2f7b666442f78bfcb5fd6360a3150b2938233cef.zip",
 )
 
-bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_java", version = "9.6.1")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
 bazel_dep(name = "protobuf", version = "33.4")
 single_version_override(
@@ -116,8 +116,8 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 http_archive(
     name = "remote_java_tools_windows_with_vc_redist",
-    sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
+    sha256 = "82203dfae9f75a268e5e0e643ce5696a7c035ce9626938601fb410ee11849b1b",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist.zip",
 )
 
 override_repo(
