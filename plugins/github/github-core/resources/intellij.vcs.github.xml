@@ -116,6 +116,8 @@
     <projectSettings service="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectSettings service="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
     <projectSettings service="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
+
+    <advancedSetting default="github.com" id="github.aliases" groupKey="advanced.setting.github"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

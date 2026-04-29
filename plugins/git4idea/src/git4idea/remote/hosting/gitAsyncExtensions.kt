@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.supervisorScope
+import org.jetbrains.annotations.ApiStatus
 
 fun GitRepository.changesSignalFlow(): Flow<Unit> = channelFlow {
   project.messageBus
@@ -130,6 +131,18 @@ fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers
   combine(serversState) { remotes, servers ->
     remotes.asSequence().mapNotNull { remote ->
       servers.find { GitHostingUrlUtil.match(it.toURI(), remote.url) }?.let { mapper(it, remote) }
+    }.toSet()
+  }
+
+@ApiStatus.Internal
+fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers(
+  serversState: Flow<Set<S>>,
+  defaultServerAliasesFlow: Flow<Set<String>>,
+  mapper: (Set<S>, Set<String>, GitRemoteUrlCoordinates) -> M?,
+): Flow<Set<M>> =
+  combine(this, serversState, defaultServerAliasesFlow) { remotes, servers, aliases ->
+    remotes.asSequence().mapNotNull { remote ->
+      return@mapNotNull mapper(servers, aliases, remote)
     }.toSet()
   }
 
