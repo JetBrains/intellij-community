@@ -56,6 +56,7 @@
   <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
+  <technology name="exposed" class="org.jetbrains.exposed.v1.jdbc.Query"/>
   <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
   <technology name="fastutil" class="it.unimi.dsi.fastutil.Function"/>
   <technology name="finagle" class="com.twitter.finagle.Client"/>
