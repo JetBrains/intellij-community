@@ -517,7 +517,7 @@ final class RefreshWorker {
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(child) : null;
     ioTime.addAndGet(System.nanoTime() - t);
     int nameId = vfsPeer.getNameId(name);
-    return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget, isEmptyDir);
   }
 
   private void generateDeleteEvents(List<VFileEvent> events,
@@ -660,7 +660,7 @@ final class RefreshWorker {
     // the stack contains a list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     int nameId = vfsPeer.getNameId("");
-    ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null);
+    ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null, false);
     stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
       private int checkCanceledCount;
@@ -691,7 +691,7 @@ final class RefreshWorker {
         FileAttributes attributes = FileAttributes.fromNio(file, attrs);
         String symLinkTarget = attrs.isSymbolicLink() ? FileUtilRt.toSystemIndependentName(file.toRealPath().toString()) : null;
         int nameId = vfsPeer.getNameId(file.getFileName().toString());
-        ChildInfo info = new ChildInfoImpl(nameId, attributes, null, symLinkTarget);
+        ChildInfo info = new ChildInfoImpl(nameId, attributes, null, symLinkTarget, false);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
@@ -703,7 +703,7 @@ final class RefreshWorker {
         // store children back
         ChildInfo parentInfo = ContainerUtil.getLastItem(parentInfos);
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
-        ChildInfo newInfo = ((ChildInfoImpl)parentInfo).withChildren(children);
+        ChildInfo newInfo = ((ChildInfoImpl)parentInfo).withChildren(children, true);
         parentInfos.set(parentInfos.size() - 1, newInfo);
         return FileVisitResult.CONTINUE;
       }

@@ -21,6 +21,7 @@ public final class VFileCreateEvent extends VFileEvent {
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
   private final ChildInfo[] myChildren;
+  private final boolean myAllChildren;
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
@@ -34,6 +35,20 @@ public final class VFileCreateEvent extends VFileEvent {
     @Nullable String symlinkTarget,
     ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children
   ) {
+    this(requestor, parent, childName, isDirectory, attributes, symlinkTarget, children, children != null);
+  }
+
+  @ApiStatus.Internal
+  public VFileCreateEvent(
+    Object requestor,
+    @NotNull VirtualFile parent,
+    @NotNull String childName,
+    boolean isDirectory,
+    @Nullable("null means should read from the created file") FileAttributes attributes,
+    @Nullable String symlinkTarget,
+    ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children,
+    boolean allChildren
+  ) {
     super(requestor);
     if (!parent.isDirectory()) {
       throw new IllegalArgumentException("parent[" + parent + "] must be directory");
@@ -43,6 +58,7 @@ public final class VFileCreateEvent extends VFileEvent {
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
     myChildren = children;
+    myAllChildren = children != null && allChildren;
     myChildNameId = VirtualFileManager.getInstance().storeName(childName);
   }
 
@@ -68,7 +84,7 @@ public final class VFileCreateEvent extends VFileEvent {
 
   /** @return {@code true} if the newly created file is a directory that has no children. */
   public boolean isEmptyDirectory() {
-    return isDirectory() && myChildren != null && myChildren.length == 0;
+    return isDirectory() && myAllChildren && myChildren != null && myChildren.length == 0;
   }
 
   @Override
@@ -91,12 +107,18 @@ public final class VFileCreateEvent extends VFileEvent {
    * Children of the created file if it's a directory.
    * <br/>
    * <code>null</code> is returned if the file is not a directory or the children are not known.
+   * If {@link #isAllChildren()} returns {@code false}, the returned array contains only some children.
    *
    * @return children of the created file if it's a directory
    */
   @ApiStatus.Internal
   public ChildInfo @Nullable [] getChildren() {
     return myChildren;
+  }
+
+  @ApiStatus.Internal
+  public boolean isAllChildren() {
+    return myAllChildren;
   }
 
   public void resetCache() {

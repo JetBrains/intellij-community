@@ -820,7 +820,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           ChildInfo info = added.get(i);
           assert info.getId() > 0 : info;
           @Attributes int attributes = info.getFileAttributeFlags();
-          boolean isEmptyDirectory = (info.getChildren() != null) && (info.getChildren().length == 0);
+          ChildInfo[] children = info.getChildren();
+          boolean isEmptyDirectory = info.isAllChildren() && children != null && children.length == 0;
 
           //We look for existing child in children by-id because, likely, linear O(N) search in int[] is still faster than
           // O(logN) binary search in a sorted array, but with much more expensive (by-file-name)comparator. In the second
@@ -876,7 +877,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         if (mergeResult == ContainerUtil.MergeResult.COPIED_FROM_LIST2) {
           assert nextInfo.getId() > 0 : nextInfo;
           @Attributes int attributes = nextInfo.getFileAttributeFlags();
-          boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
+          ChildInfo[] children = nextInfo.getChildren();
+          boolean isEmptyDirectory = nextInfo.isAllChildren() && children != null && children.length == 0;
           directoryData.removeAdoptedName(nextInfo.getName());
           VirtualFileSystemEntry child = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
           callback.accept(child, nextInfo);

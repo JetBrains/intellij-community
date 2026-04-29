@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -86,6 +87,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -678,6 +680,60 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testCreateNewDirectoryCanLoadOnlySomeChildren() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+    Path loaded = Files.writeString(target.resolve("loaded.txt"), "loaded");
+    Files.writeString(target.resolve("skipped.txt"), "skipped");
+
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    ChildInfo loadedInfo = new ChildInfoImpl(pfs.peer().getNameId("loaded.txt"), fileAttributes(loaded), null, null, false);
+    processEvent(new VFileCreateEvent(this, vTemp, "target", true, fileAttributes(target), null, new ChildInfo[]{loadedInfo}, false));
+
+    VirtualDirectoryImpl vTarget = (VirtualDirectoryImpl)vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertFalse(vTarget.allChildrenLoaded());
+    assertFalse(pfs.areChildrenLoaded(vTarget));
+    VirtualFile vLoaded = assertOneElement(vTarget.getCachedChildren());
+    assertEquals("loaded.txt", vLoaded.getName());
+  }
+
+  @Test
+  public void testPartialEmptyChildrenDoNotMarkDirectoryLoaded() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+    PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    processEvent(new VFileCreateEvent(this, vTemp, "target", true, fileAttributes(target), null, ChildInfo.EMPTY_ARRAY, false));
+
+    VirtualDirectoryImpl vTarget = (VirtualDirectoryImpl)vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertFalse(vTarget.allChildrenLoaded());
+    assertFalse(pfs.areChildrenLoaded(vTarget));
+    assertEmpty(vTarget.getCachedChildren());
+  }
+
+  @Test
+  public void testCompleteEmptyChildrenMarkDirectoryLoaded() throws Exception {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
+    assertNotNull(vTemp);
+    assertEmpty(vTemp.getChildren());
+
+    Path target = Files.createDirectory(tempDirectory.getRootPath().resolve("target"));
+    processEvent(new VFileCreateEvent(this, vTemp, "target", true, fileAttributes(target), null, ChildInfo.EMPTY_ARRAY));
+
+    VirtualFile vTarget = vTemp.findChild("target");
+    assertNotNull(vTarget);
+    assertChildrenAreLoaded(vTarget);
+    assertEmpty(((VirtualDirectoryImpl)vTarget).getCachedChildren());
+  }
+
+  @Test
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
     assumeFalse("Case-insensitive OS expected, can't run on " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
 
@@ -1201,6 +1257,14 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
 
     assertEquals(expectedEvents, log.toString());
+  }
+
+  private static void processEvent(VFileEvent event) {
+    WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, List.of(event)));
+  }
+
+  private static FileAttributes fileAttributes(Path file) throws IOException {
+    return FileAttributes.fromNio(file, Files.readAttributes(file, BasicFileAttributes.class));
   }
 
   private static void assertChildrenAreLoaded(VirtualFile file) {
