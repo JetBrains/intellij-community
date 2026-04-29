@@ -30,13 +30,13 @@ cp $top/tools/idea/native/restarter/Cargo.toml $work_dir/cargo/restarter/
 cp $top/tools/idea/native/restarter/Cargo.lock $work_dir/cargo/restarter/
 
 cd $work_dir
-sudo docker build -t linux_tools:dev .
+docker build -t linux_tools:dev .
 
 
 # Build Rust binaries in docker
 mkdir out && chmod 777 out
 mkdir dist && chmod 777 dist
-sudo docker run -it --rm \
+docker run -it --rm \
   -v $top/tools/idea/native:/home/builder/tools/idea/native \
   -v $script_dir:/home/builder/tools/idea/platform/build-scripts/native \
   -v $work_dir/out:/home/builder/out \
