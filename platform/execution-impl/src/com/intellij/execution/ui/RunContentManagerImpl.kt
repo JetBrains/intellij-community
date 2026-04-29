@@ -507,16 +507,25 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
-    val dashboardManager = RunDashboardUiManager.getInstance(project) // initialize RunDashboardContentManager before getting content manger
-    val contentManager = getContentManagerByToolWindowId(id)
-    if (contentManager != null) {
-      updateToolWindowDecoration(id, executor)
-      return contentManager
-    }
+    val dashboardManager = RunDashboardUiManager.getInstance(project) // initialize RunDashboardContentManager before getting content manager
 
     if (dashboardManager.toolWindowId == id) {
+      val contentManager = getContentManagerByToolWindowId(id)
+      if (contentManager != null) {
+        updateToolWindowDecoration(id, executor)
+        return contentManager
+      }
+
       initToolWindow(null, dashboardManager.toolWindowId, dashboardManager.toolWindowIcon, dashboardManager.dashboardContentManager)
       return dashboardManager.dashboardContentManager
+    }
+
+    if (id == executor.toolWindowId || toolWindowIdToBaseIcon.containsKey(id)) {
+      val contentManager = getContentManagerByToolWindowId(id)
+      if (contentManager != null) {
+        updateToolWindowDecoration(id, executor)
+        return contentManager
+      }
     }
 
     // Handle external toolwindows: if a toolwindow with this ID exists but wasn't registered
