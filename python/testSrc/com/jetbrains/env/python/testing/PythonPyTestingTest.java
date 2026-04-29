@@ -39,6 +39,7 @@ import com.jetbrains.python.testing.PyTestFixtureAndParametrizedTest;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -1316,6 +1317,32 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       });
   }
 
+  @Test
+  public void testProgressFormat() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/progress_format", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_progress.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText.split("\n|(\r\n)"))
+          .containsSubsequence(
+            "test_progress.py::test_one PASSED    [ 50%]",
+            "test_progress.py::test_two FAILED    [100%]",
+            "Here's some failing test output."
+          );
+      }
+    });
+  }
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;
