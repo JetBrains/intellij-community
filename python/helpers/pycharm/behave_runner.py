@@ -10,7 +10,6 @@ See https://pythonhosted.org/behave/behave.html#tag-expression
 
 import functools
 import glob
-import importlib.machinery
 import re
 import sys
 import traceback
@@ -26,7 +25,14 @@ from _jb_utils import VersionAgnosticUtils
 
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
-_EXT_SUFFIXES = tuple(importlib.machinery.EXTENSION_SUFFIXES)  # .pyd, .so, ABI-tagged variants
+try:
+    # Python 3.3+
+    from importlib.machinery import EXTENSION_SUFFIXES as _EXTENSION_SUFFIXES
+    _EXT_SUFFIXES = tuple(_EXTENSION_SUFFIXES)  # .pyd, .so, ABI-tagged variants
+except ImportError:
+    # Python 2.7 fallback: imp.get_suffixes() yields (suffix, mode, type) tuples
+    import imp
+    _EXT_SUFFIXES = tuple(s for s, _, t in imp.get_suffixes() if t == imp.C_EXTENSION)
 
 __author__ = 'Ilya.Kazakevich'
 
