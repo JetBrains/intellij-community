@@ -21,6 +21,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
@@ -50,10 +51,21 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
   }
 
   override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                                       envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                                                       passParentEnvs: Boolean) {
+                                                        envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+                                                        passParentEnvs: Boolean) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
+  }
+
+  override fun addAfterParameters(cmd: GeneralCommandLine) {
+    cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameter(PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG)
+    cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameter(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG)
+  }
+
+  override fun addAfterParameters(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                  testScriptExecution: PythonScriptExecution) {
+    testScriptExecution.addParameter(constant(PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG))
+    testScriptExecution.addParameter(constant(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG))
   }
 }
 
@@ -150,3 +162,5 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"
+private const val PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG: String = "--jb-skippassedoutput-default"
+private const val PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG: String = "--jb-report-logs-as-test-log"
