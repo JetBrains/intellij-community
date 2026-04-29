@@ -100,6 +100,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.iml" filepath="$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.tests.iml" filepath="$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/build-common/intellij.android.buildCommon.iml" filepath="$PROJECT_DIR$/android/build-common/intellij.android.buildCommon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/cli-server/server/intellij.android.cli-server.server.iml" filepath="$PROJECT_DIR$/android/cli-server/server/intellij.android.cli-server.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/codenavigation/intellij.android.codenavigation.iml" filepath="$PROJECT_DIR$/android/codenavigation/intellij.android.codenavigation.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/android/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-common/intellij.android.common.tests.iml" filepath="$PROJECT_DIR$/android/android-common/intellij.android.common.tests.iml" />
