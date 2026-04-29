@@ -10,6 +10,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.removeUserData
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
@@ -19,12 +21,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object InlineCompletionTooltip {
-  private val tooltipKey = Key<Unit>("EDITOR_HAS_INLINE_TOOLTIP")
+
+  private val tooltipHintKey = Key<LightweightHint>("intellij.platform.inline.completion.tooltip.hint")
+  private val sessionDisposerRegisteredKey = Key<Unit>("intellij.platform.inline.completion.tooltip.disposer.registered")
 
   @RequiresEdt
   fun show(session: InlineCompletionSession) {
     val editor = session.context.editor
-    if (tooltipKey.isIn(editor)) {
+    if (tooltipHintKey.isIn(session.dataHolder)) {
       return
     }
 
@@ -45,7 +49,7 @@ object InlineCompletionTooltip {
 
       override fun onPopupCancel() {
         // on hint hide
-        editor.putUserData(tooltipKey, null)
+        session.dataHolder.putUserData(tooltipHintKey, null)
 
         // This method might be called several times
         if (!hintTimeRegistered) {
@@ -72,10 +76,26 @@ object InlineCompletionTooltip {
       0, false,
       HintManagerImpl.createHintHint(editor, location, hint, HintManager.ABOVE).setContentActive(false)
     )
-    editor.putUserData(tooltipKey, Unit)
+    session.dataHolder.putUserData(tooltipHintKey, hint)
 
-    Disposer.register(session) {
-      hint.hide()
+    // The user may show/hide the tooltip many times during a session; register the disposer
+    // only on the first show so we don't accumulate dead disposables on the session.
+    if (!sessionDisposerRegisteredKey.isIn(session.dataHolder)) {
+      session.dataHolder.putUserData(sessionDisposerRegisteredKey, Unit)
+      Disposer.register(session) {
+        session.dataHolder.getUserData(tooltipHintKey)?.hide()
+        session.dataHolder.removeUserData(sessionDisposerRegisteredKey)
+        session.dataHolder.removeUserData(tooltipHintKey)
+      }
     }
   }
+
+  @RequiresEdt
+  fun hide(session: InlineCompletionSession) {
+    // The user data is removed in the `onPopupCancel`
+    session.dataHolder.getUserData(tooltipHintKey)?.hide()
+  }
+
+  private val InlineCompletionSession.dataHolder: UserDataHolder
+    get() = request
 }
