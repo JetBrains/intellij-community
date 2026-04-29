@@ -1413,6 +1413,97 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testLoggingCapturedForFailingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_logging", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_logging_fail.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText.split("\n|(\r\n)"))
+          .containsSubsequence(
+            "test_logging_fail.py::test_fail_with_logging FAILED                      [100%]",
+            "WARNING  test_logging_fail:test_logging_fail.py:6 warning_from_failing_test"
+          );
+        MatcherAssert.assertThat("Captured logs should use a dedicated service message",
+                                  all, containsString("[testLog"));
+        MatcherAssert.assertThat("Captured logs should not be reported as stdout",
+                                  all, not(containsString("[testStdOut")));
+      }
+    });
+  }
+
+  @Test
+  public void testLoggingSkippedForPassingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_logging_default", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_logging_pass.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText)
+          .doesNotContain("warning_from_passing_test");
+        MatcherAssert.assertThat("Captured logs from passing tests should not leak into the process output",
+                                 all, not(containsString("warning_from_passing_test")));
+      }
+    });
+  }
+
+  @Test
+  public void testLoggingCapturedForPassingTestWhenConfigured() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_logging", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_logging_pass.py", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setAdditionalArguments("-c pytest.ini");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var consoleText = runner.getAllConsoleText();
+        Assertions.assertThat(consoleText.split("\n|(\r\n)"))
+          .containsSubsequence(
+            "test_logging_pass.py::test_pass_with_logging PASSED                      [100%]",
+            "WARNING  test_logging_pass:test_logging_pass.py:6 warning_from_passing_test"
+          );
+        MatcherAssert.assertThat("Captured logs should use a dedicated service message",
+                                  all, containsString("[testLog"));
+        MatcherAssert.assertThat("Captured logs should not be reported as stdout",
+                                  all, not(containsString("[testStdOut")));
+      }
+    });
+  }
+
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;
