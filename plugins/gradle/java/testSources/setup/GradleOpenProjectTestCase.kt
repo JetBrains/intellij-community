@@ -9,11 +9,11 @@ import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
-import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.testFramework.utils.vfs.getDirectory
-import com.intellij.testFramework.utils.vfs.getFile
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
@@ -29,8 +29,9 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
         performOpenAction(
           action = ImportProjectAction(),
           systemId = GradleConstants.SYSTEM_ID,
-          selectedFile = testRoot.getDirectory(projectInfo.relativePath)
-            .getFile(getSettingsScriptName(projectInfo.gradleDsl))
+          selectedFile = testPath.resolve(projectInfo.relativePath)
+            .resolve(getSettingsScriptName(projectInfo.gradleDsl))
+            .refreshAndGetVirtualFile()
         )
       }
     }
@@ -43,7 +44,8 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
           action = AttachExternalProjectAction(),
           project = project,
           systemId = GradleConstants.SYSTEM_ID,
-          selectedFile = testRoot.getDirectory(relativePath)
+          selectedFile = testPath.resolve(relativePath)
+            .refreshAndGetVirtualDirectory()
         )
       }
     }
@@ -65,7 +67,8 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
           action = ImportProjectFromScriptAction(),
           project = project,
           systemId = GradleConstants.SYSTEM_ID,
-          selectedFile = testRoot.getDirectory(relativePath)
+          selectedFile = testPath.resolve(relativePath)
+            .refreshAndGetVirtualDirectory()
         )
       }
     }

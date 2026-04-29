@@ -16,8 +16,11 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
+import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.util.asDisposable
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
@@ -25,6 +28,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.io.path.writeText
 
 @RegistryKey("ide.activity.tracking.enable.debug", "true")
 @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
@@ -146,20 +150,22 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     initProject(projectInfo)
     initProject(linkedProjectInfo)
 
-    edtWriteAction {
-      testRoot.createFile("linked_project/pom.xml")
-        .writeText("""
-            <?xml version="1.0"?>
-            <project xmlns="http://maven.apache.org/POM/4.0.0"
-                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-              <modelVersion>4.0.0</modelVersion>
-              <groupId>test</groupId>
-              <artifactId>maven_project</artifactId>
-              <version>1</version>
-            </project>
-          """.trimIndent())
-    }
+    testPath.createFile("linked_project/pom.xml")
+      .writeText("""
+          <?xml version="1.0"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>test</groupId>
+            <artifactId>maven_project</artifactId>
+            <version>1</version>
+          </project>
+        """.trimIndent())
+
+    // Maven linking scans the project directory via VFS.
+    // So refresh after the NIO write to make pom.xml visible to the importer.
+    testPath.refreshVfs("linked_project")
 
     openProject("project")
       .useProjectAsync { it ->
@@ -184,17 +190,15 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     val projectInfo = getSimpleProjectInfo("project")
     initProject(projectInfo)
 
-    edtWriteAction {
-      testRoot.createFile("project/.idea/compiler.xml")
-        .writeText("""
-            |<?xml version="1.0" encoding="UTF-8"?>
-            |<project version="4">
-            |  <component name="CompilerConfiguration">
-            |    <bytecodeTargetLevel target="14" />
-            |  </component>
-            |</project>
-          """.trimMargin())
-    }
+    testPath.createFile("project/.idea/compiler.xml")
+      .writeText("""
+          |<?xml version="1.0" encoding="UTF-8"?>
+          |<project version="4">
+          |  <component name="CompilerConfiguration">
+          |    <bytecodeTargetLevel target="14" />
+          |  </component>
+          |</project>
+        """.trimMargin())
 
     openProject("project")
       .useProjectAsync { project ->
@@ -208,28 +212,26 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     val projectInfo = getSimpleProjectInfo("project")
     initProject(projectInfo)
 
-    edtWriteAction {
-      testRoot.createFile("project/.idea/compiler.xml")
-        .writeText("""
-            |<?xml version="1.0" encoding="UTF-8"?>
-            |<project version="4">
-            |  <component name="CompilerConfiguration">
-            |    <bytecodeTargetLevel target="14" />
-            |  </component>
-            |</project>
-          """.trimMargin())
-      testRoot.createFile("project/.idea/modules.xml")
-        .writeText("""
-            |<?xml version="1.0" encoding="UTF-8"?>
-            |<project version="4">
-            |  <component name="ProjectModuleManager">
-            |    <modules>
-            |      <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
-            |    </modules>
-            |  </component>
-            |</project>
-          """.trimMargin())
-    }
+    testPath.createFile("project/.idea/compiler.xml")
+      .writeText("""
+          |<?xml version="1.0" encoding="UTF-8"?>
+          |<project version="4">
+          |  <component name="CompilerConfiguration">
+          |    <bytecodeTargetLevel target="14" />
+          |  </component>
+          |</project>
+        """.trimMargin())
+    testPath.createFile("project/.idea/modules.xml")
+      .writeText("""
+          |<?xml version="1.0" encoding="UTF-8"?>
+          |<project version="4">
+          |  <component name="ProjectModuleManager">
+          |    <modules>
+          |      <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
+          |    </modules>
+          |  </component>
+          |</project>
+        """.trimMargin())
 
     openProject("project", numProjectSyncs = 0)
       .useProjectAsync { project ->
@@ -243,30 +245,28 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     val projectInfo = getSimpleProjectInfo("project")
     initProject(projectInfo)
 
-    edtWriteAction {
-      testRoot.createFile("project/project.iml")
-        .writeText("""
-            |<?xml version="1.0" encoding="UTF-8"?>
-            |<module type="GENERAL_MODULE" version="4">
-            |  <component name="NewModuleRootManager" inherit-compiler-output="true">
-            |    <exclude-output />
-            |    <content url="file://${'$'}MODULE_DIR${'$'}" />
-            |    <orderEntry type="sourceFolder" forTests="false" />
-            |  </component>
-            |</module>
-          """.trimMargin())
-      testRoot.createFile("project/.idea/modules.xml")
-        .writeText("""
-            |<?xml version="1.0" encoding="UTF-8"?>
-            |<project version="4">
-            |  <component name="ProjectModuleManager">
-            |    <modules>
-            |      <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
-            |    </modules>
-            |  </component>
-            |</project>
-          """.trimMargin())
-    }
+    testPath.createFile("project/project.iml")
+      .writeText("""
+          |<?xml version="1.0" encoding="UTF-8"?>
+          |<module type="GENERAL_MODULE" version="4">
+          |  <component name="NewModuleRootManager" inherit-compiler-output="true">
+          |    <exclude-output />
+          |    <content url="file://${'$'}MODULE_DIR${'$'}" />
+          |    <orderEntry type="sourceFolder" forTests="false" />
+          |  </component>
+          |</module>
+        """.trimMargin())
+    testPath.createFile("project/.idea/modules.xml")
+      .writeText("""
+          |<?xml version="1.0" encoding="UTF-8"?>
+          |<project version="4">
+          |  <component name="ProjectModuleManager">
+          |    <modules>
+          |      <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
+          |    </modules>
+          |  </component>
+          |</project>
+        """.trimMargin())
 
     openProject("project", numProjectSyncs = 0)
       .useProjectAsync { project ->
@@ -274,7 +274,8 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
         withAllowedProjectSyncs {
           awaitProjectActivity(project) {
             edtWriteAction {
-              testRoot.createFile("project/.idea/gradle.xml")
+              testPath.refreshAndGetVirtualDirectory()
+                .createFile("project/.idea/gradle.xml")
                 .writeText("""
                     |<?xml version="1.0" encoding="UTF-8"?>
                     |<project version="4">
@@ -308,27 +309,25 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
     val projectInfo = getSimpleProjectInfo("project")
     initProject(projectInfo)
 
-    edtWriteAction {
-      testRoot.createFile("project/.idea/inspectionProfiles/myInspections.xml")
-        .writeText("""
-            |<component name="InspectionProjectProfileManager">
-            |  <profile version="1.0">
-            |    <option name="myName" value="myInspections" />
-            |    <option name="myLocal" value="true" />
-            |    <inspection_tool class="MultipleRepositoryUrls" enabled="true" level="ERROR" enabled_by_default="true" />
-            |  </profile>
-            |</component>
-          """.trimMargin())
-      testRoot.createFile("project/.idea/inspectionProfiles/profiles_settings.xml")
-        .writeText("""
-            |<component name="InspectionProjectProfileManager">
-            |  <settings>
-            |    <option name="PROJECT_PROFILE" value="myInspections" />
-            |    <version value="1.0" />
-            |  </settings>
-            |</component>
-          """.trimMargin())
-    }
+    testPath.createFile("project/.idea/inspectionProfiles/myInspections.xml")
+      .writeText("""
+          |<component name="InspectionProjectProfileManager">
+          |  <profile version="1.0">
+          |    <option name="myName" value="myInspections" />
+          |    <option name="myLocal" value="true" />
+          |    <inspection_tool class="MultipleRepositoryUrls" enabled="true" level="ERROR" enabled_by_default="true" />
+          |  </profile>
+          |</component>
+        """.trimMargin())
+    testPath.createFile("project/.idea/inspectionProfiles/profiles_settings.xml")
+      .writeText("""
+          |<component name="InspectionProjectProfileManager">
+          |  <settings>
+          |    <option name="PROJECT_PROFILE" value="myInspections" />
+          |    <version value="1.0" />
+          |  </settings>
+          |</component>
+        """.trimMargin())
 
     openProject("project")
       .useProjectAsync { project ->

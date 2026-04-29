@@ -3,10 +3,8 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
@@ -17,9 +15,7 @@ abstract class GradleBaseTestCase {
 
   val gradleVersion: GradleVersion = GradleVersion.current()
 
-  private val testPathFixture = tempPathFixture()
-  val testPath: Path by testPathFixture
-  val testRoot: VirtualFile get() = testPath.refreshAndGetVirtualDirectory()
+  val testPath: Path by tempPathFixture()
 
   private val gradleFixture by gradleFixture(gradleVersion)
   val gradleJvm: String get() = gradleFixture.gradleJvm

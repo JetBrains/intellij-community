@@ -18,6 +18,7 @@ import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.Aut
 import com.intellij.platform.externalSystem.testFramework.AutoSyncAssertions.assertAutoSyncStatus
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -38,7 +39,7 @@ import kotlin.io.path.name
 abstract class GradleTestCase : GradleBaseTestCase() {
 
   suspend fun initProject(projectInfo: ProjectInfo) =
-    initProject(testRoot, projectInfo)
+    initProject(testPath.refreshAndGetVirtualDirectory(), projectInfo)
 
   private suspend fun initProject(root: VirtualFile, projectInfo: ProjectInfo) {
     for (compositeInfo in projectInfo.composites) {
@@ -53,7 +54,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   suspend fun deleteProject(projectInfo: ProjectInfo) =
-    deleteProject(testRoot, projectInfo)
+    deleteProject(testPath.refreshAndGetVirtualDirectory(), projectInfo)
 
   private suspend fun deleteProject(root: VirtualFile, projectInfo: ProjectInfo) {
     for (compositeInfo in projectInfo.composites) {

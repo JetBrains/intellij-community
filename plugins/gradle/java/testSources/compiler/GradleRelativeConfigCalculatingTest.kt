@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -28,10 +28,10 @@ class GradleRelativeConfigCalculatingTest : GradleRelativeConfigCalculatingTestC
       initProject(projectInfo2)
 
       edtWriteAction {
-        testRoot.createFile("project1/project/src/main/resources/dir/file-main.properties")
-        testRoot.createFile("project1/project/src/test/resources/dir/file-test.properties")
-        testRoot.createFile("project2/project/src/main/resources/dir/file-main.properties")
-        testRoot.createFile("project2/project/src/test/resources/dir/file-test.properties")
+        testPath.createFile("project1/project/src/main/resources/dir/file-main.properties")
+        testPath.createFile("project1/project/src/test/resources/dir/file-test.properties")
+        testPath.createFile("project2/project/src/main/resources/dir/file-main.properties")
+        testPath.createFile("project2/project/src/test/resources/dir/file-test.properties")
       }
 
       val configFiles1 = openProject("project1/project")

@@ -16,16 +16,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.utils.vfs.getDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -146,7 +146,8 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
       assertBuildFiles(compositeInfo)
     }
     for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
+      val moduleRoot = testPath.resolve(moduleInfo.relativePath)
+        .refreshAndGetVirtualDirectory()
       moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
     }
   }
