@@ -29,6 +29,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -311,10 +313,12 @@ data class JdkPredicate(
       return JdkPredicate(buildNumber, platform)
     }
 
-    val currentOS: String = when {
-      SystemInfo.isWindows -> "windows"
-      SystemInfo.isMac -> "macOS"
-      SystemInfo.isLinux -> "linux"
+    @OptIn(LowLevelLocalMachineAccess::class)
+    val currentOS: String = when (OS.CURRENT) {
+      OS.Windows -> "windows"
+      OS.macOS -> "macOS"
+      OS.Linux -> "linux"
+      OS.OHOS -> "harmonyos"
       else -> error("Unsupported OS")
     }
 

@@ -38,6 +38,7 @@ import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.annotations.VisibleForTesting
@@ -98,9 +99,14 @@ internal class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.
 
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
-  override val userInfo: EelUserPosixInfo = run {
-    val unix = UnixSystem()
-    EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt(), home = getLocalUserHome())
+  @OptIn(LowLevelLocalMachineAccess::class)
+  override val userInfo: EelUserPosixInfo = when (OS.CURRENT) {
+    OS.OHOS -> EelUserPosixInfoImpl(uid = 0, gid = 0, home = getLocalUserHome())
+    OS.macOS, OS.Linux, OS.FreeBSD, OS.Other -> run {
+      val unix = UnixSystem()
+      EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt(), home = getLocalUserHome())
+    }
+    OS.Windows -> error("Unexpected LocalPosixEelApi on Windows")
   }
 
   override val exec: EelExecPosixApi = EelLocalExecPosixApi(platform, userInfo)
