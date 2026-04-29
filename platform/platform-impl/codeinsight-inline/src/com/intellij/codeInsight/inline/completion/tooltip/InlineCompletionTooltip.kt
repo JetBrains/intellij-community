@@ -16,8 +16,10 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 object InlineCompletionTooltip {
@@ -26,11 +28,19 @@ object InlineCompletionTooltip {
   private val sessionDisposerRegisteredKey = Key<Unit>("intellij.platform.inline.completion.tooltip.disposer.registered")
 
   @RequiresEdt
+  fun isShown(session: InlineCompletionSession): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+    return tooltipHintKey.isIn(session.dataHolder)
+  }
+
+  @RequiresEdt
   fun show(session: InlineCompletionSession) {
-    val editor = session.context.editor
-    if (tooltipHintKey.isIn(session.dataHolder)) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (isShown(session)) {
       return
     }
+
+    val editor = session.context.editor
 
     if (!application.currentSession.isLocal && !System.getProperty("inline.completion.tooltip.remote.dev").toBoolean()) {
       return
@@ -43,25 +53,10 @@ object InlineCompletionTooltip {
 
     val panel = InlineCompletionTooltipComponent().create(session)
 
-    val hint = object : LightweightHint(panel) {
-      private val hintShownMs = System.currentTimeMillis()
-      private var hintTimeRegistered = false
-
-      override fun onPopupCancel() {
-        // on hint hide
-        session.dataHolder.putUserData(tooltipHintKey, null)
-
-        // This method might be called several times
-        if (!hintTimeRegistered) {
-          val hintHiddenMs = System.currentTimeMillis()
-          InlineCompletionOnboardingComponent.getInstance().fireTooltipLivedFor(hintHiddenMs - hintShownMs)
-          hintTimeRegistered = true
-        }
-      }
-    }.apply {
-      setForceShowAsPopup(true)
-      setBelongsToGlobalPopupStack(false)
-    }
+    val hint = InlineCompletionTooltipHint(
+      component = panel,
+      onHide = { session.dataHolder.putUserData(tooltipHintKey, null) }
+    )
 
     val offset = runReadAction { editor.caretModel.offset }
     val location = HintManagerImpl.getHintPosition(
@@ -92,10 +87,56 @@ object InlineCompletionTooltip {
 
   @RequiresEdt
   fun hide(session: InlineCompletionSession) {
+    ThreadingAssertions.assertEventDispatchThread()
     // The user data is removed in the `onPopupCancel`
     session.dataHolder.getUserData(tooltipHintKey)?.hide()
   }
 
   private val InlineCompletionSession.dataHolder: UserDataHolder
     get() = request
+
+  /**
+   * The hint used by [InlineCompletionTooltip].
+   *
+   * Vetoes hiding for one EDT tick after being shown. Without this, a platform-level listener
+   * (e.g. one of `HintManagerImpl`'s global AWT listeners) would react to the very same click that
+   * opened the tooltip — or any click that immediately follows it — and close the hint before the
+   * user gets to see it. The veto is released on the next EDT tick, after the originating mouse
+   * event has been fully processed.
+   *
+   * On cancel, invokes [onHide] and reports the tooltip's visible duration to
+   * [InlineCompletionOnboardingComponent] exactly once — `onPopupCancel` may fire multiple times.
+   */
+  private class InlineCompletionTooltipHint(
+    component: JComponent,
+    private val onHide: () -> Unit,
+  ) : LightweightHint(component) {
+    private val hintShownMs = System.currentTimeMillis()
+    private var hintTimeRegistered = false
+    private var myVetoesHiding = true
+
+    init {
+      setForceShowAsPopup(true)
+      setBelongsToGlobalPopupStack(false)
+
+      // Release the veto on the next EDT tick — by then the mouse event that opened the hint has been fully processed.
+      application.invokeLater {
+        myVetoesHiding = false
+      }
+    }
+
+    override fun vetoesHiding(): Boolean {
+      return super.vetoesHiding() || myVetoesHiding
+    }
+
+    override fun onPopupCancel() {
+      onHide()
+
+      if (!hintTimeRegistered) {
+        val hintHiddenMs = System.currentTimeMillis()
+        InlineCompletionOnboardingComponent.getInstance().fireTooltipLivedFor(hintHiddenMs - hintShownMs)
+        hintTimeRegistered = true
+      }
+    }
+  }
 }

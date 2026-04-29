@@ -25,6 +25,12 @@ internal class InlineCompletionTooltipProvokerMouseListener : EditorMouseListene
     }
 
     event.consume()
-    InlineCompletionTooltip.show(session)
+
+    if (InlineCompletionTooltip.isShown(session)) {
+      InlineCompletionTooltip.hide(session)
+    }
+    else {
+      InlineCompletionTooltip.show(session)
+    }
   }
 }
