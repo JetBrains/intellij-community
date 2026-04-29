@@ -44,7 +44,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
     "types.NoneType", "_io.TextIOWrapper",
     // the definitions for these types don't include their `__str__`/`__repr__`, so we have to explicitly ignore them
     "str", "int", "float", "complex", "set", "frozenset", "bytes", "bytearray", "memoryview",
-    "slice", "list", "dict", "bool", "range", "tuple", "pathlib.PurePath"
+    "slice", "list", "dict", "bool", "range", "tuple", "pathlib.PurePath", "uuid.UUID"
   )
 
   @JvmField
