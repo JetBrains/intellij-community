@@ -706,7 +706,8 @@ class KotlinBuildScriptManipulator(
                 postfix = if (text.endsWith("))")) { // It may be in the case `addAll(listOf(<...>))`
                     "))"
                 } else {
-                    ")"
+                    val regex = Regex("\\)\\s*\\)")
+                    regex.find(text)?.value ?: ")"
                 }
             }
             val newText = text.replaceLanguageFeature(
