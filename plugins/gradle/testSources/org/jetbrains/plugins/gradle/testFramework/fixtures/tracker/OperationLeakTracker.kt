@@ -4,9 +4,11 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.tracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationCompleted
+import com.intellij.openapi.observable.operation.core.waitForOperationCompletion
 import com.intellij.openapi.observable.operation.core.whenOperationScheduled
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.externalSystem.testFramework.DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.dumpThreads
@@ -43,7 +45,7 @@ class OperationLeakTracker(
   override fun tearDown() {
     runAll(
       { eventLeakTracker.tearDown() },
-      { assertOperationState() },
+      { operation.waitForOperationCompletion(DEFAULT_EXTERNAL_SYSTEM_TEST_TIMEOUT) },
       { Disposer.dispose(fixtureDisposable) }
     )
   }
