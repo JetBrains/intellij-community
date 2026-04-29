@@ -499,6 +499,43 @@ interface EelExecWindowsApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
   @ApiStatus.Experimental
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
+
+  @ApiStatus.Experimental
+  override fun environmentVariables(
+    @GeneratedBuilder(WindowsEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
+  ): EelExecApi.EnvironmentVariablesDeferred
+
+  interface WindowsEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions {
+    val mode: Mode get() = Mode.DEFAULT
+
+    enum class Mode {
+      /**
+       * On remote Windows Eel: behaves like [LOGIN_NON_INTERACTIVE] (registry view).
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+       */
+      DEFAULT,
+
+      /**
+       * Inherited environment of the IJent process. Fastest path, no shell, no registry.
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+       */
+      MINIMAL,
+
+      /**
+       * Fresh-logon snapshot from the Windows registry: `HKLM\...\Session Manager\Environment`
+       * merged with `HKCU\Environment`. No shell profile.
+       */
+      LOGIN_NON_INTERACTIVE,
+
+      /**
+       * PowerShell with the user's `$PROFILE` loaded.
+       * Falls back to the registry view if PowerShell is unavailable or fails within the timeout.
+       */
+      LOGIN_INTERACTIVE,
+    }
+  }
 }
 
 @ApiStatus.Experimental

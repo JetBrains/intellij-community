@@ -5,6 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
+import com.intellij.platform.eel.EelExecWindowsApi.WindowsEnvironmentVariablesOptions
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -23,6 +24,13 @@ fun EelExecWindowsApi.spawnProcess(
   EelExecWindowsApiHelpers.SpawnProcess(
     owner = this,
     exe = exe,
+  )
+
+@GeneratedBuilder.Result
+@ApiStatus.Experimental
+fun EelExecWindowsApi.environmentVariables(): EelExecWindowsApiHelpers.EnvironmentVariables =
+  EelExecWindowsApiHelpers.EnvironmentVariables(
+    owner = this,
   )
 
 @ApiStatus.Experimental
@@ -126,6 +134,77 @@ object EelExecWindowsApiHelpers {
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
           workingDirectory = workingDirectory,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecWindowsApi.environmentVariables].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Experimental
+  class EnvironmentVariables(
+    private val owner: EelExecWindowsApi,
+  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
+    private var mode: WindowsEnvironmentVariablesOptions.Mode = WindowsEnvironmentVariablesOptions.Mode.DEFAULT
+
+    private var onlyActual: Boolean = false
+
+    fun mode(arg: WindowsEnvironmentVariablesOptions.Mode): EnvironmentVariables = apply {
+      this.mode = arg
+    }
+
+    /**
+     * On remote Windows Eel: behaves like [LOGIN_NON_INTERACTIVE] (registry view).
+     *
+     * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+     */
+    fun default(): EnvironmentVariables =
+      mode(WindowsEnvironmentVariablesOptions.Mode.DEFAULT)
+
+    /**
+     * PowerShell with the user's `$PROFILE` loaded.
+     * Falls back to the registry view if PowerShell is unavailable or fails within the timeout.
+     */
+    fun loginInteractive(): EnvironmentVariables =
+      mode(WindowsEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
+
+    /**
+     * Fresh-logon snapshot from the Windows registry: `HKLM\...\Session Manager\Environment`
+     * merged with `HKCU\Environment`. No shell profile.
+     */
+    fun loginNonInteractive(): EnvironmentVariables =
+      mode(WindowsEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE)
+
+    /**
+     * Inherited environment of the IJent process. Fastest path, no shell, no registry.
+     *
+     * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+     */
+    fun minimal(): EnvironmentVariables =
+      mode(WindowsEnvironmentVariablesOptions.Mode.MINIMAL)
+
+    /**
+     * The implementation MAY cache the environment variables by default because they rarely change in real life.
+     * By setting this value to `true`, the cache will be refreshed, and the result will contain the freshest environment variables.
+     *
+     * Makes sense only for remote Eels (via IJent)
+     * or with such [EelExecPosixApi.PosixEnvironmentVariablesOptions.mode] that invoke a shell.
+     * In other cases this option has no effect.
+     */
+    fun onlyActual(arg: Boolean): EnvironmentVariables = apply {
+      this.onlyActual = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecWindowsApi.environmentVariables]
+     * with an instance of [com.intellij.platform.eel.EelExecWindowsApi.WindowsEnvironmentVariablesOptions].
+     */
+    override suspend fun eelIt(): EelExecApi.EnvironmentVariablesDeferred =
+      owner.environmentVariables(
+        WindowsEnvironmentVariablesOptionsImpl(
+          mode = mode,
+          onlyActual = onlyActual,
         )
       )
   }
