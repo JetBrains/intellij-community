@@ -17,13 +17,13 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 
 internal object AIReviewCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("agent.workbench.ai.review", 2)
+  private val group = EventLogGroup("agent.workbench.ai.review", 3)
 
   private val REQUEST_ID = EventFields.Long("request_id", "ID of the review request.")
   private val RATING = EventFields.Enum("rating", ReviewRating::class.java)
   private val feedbackEvent = group.registerVarargEvent("feedback", RATING, REQUEST_ID)
 
-  private val FILES_COUNT = EventFields.Int("files_count")
+  private val FILES_COUNT = EventFields.RoundedInt("files_count")
   private val LANGUAGES_COUNT = EventFields.Int("languages_count")
   private val LANGUAGE1 = EventFields.Language("language1")
   private val LANGUAGE_PERCENTAGE1 = EventFields.Int("lang_percentage1")
