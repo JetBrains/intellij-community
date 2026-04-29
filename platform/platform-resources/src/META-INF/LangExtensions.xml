@@ -1520,8 +1520,6 @@
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElementManipulator"
       order="last"/>
-    <editorFactoryMouseMotionListener
-      implementation="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltipProvokerMouseMotionListener"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory"/>
