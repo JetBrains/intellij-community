@@ -24,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -79,7 +78,6 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
       coroutineScope = coroutineScope
     )
     resetWatcherOnCursorLineChange(terminalView, watcher, coroutineScope)
-    installCleanupJob(eelMachine, model, coroutineScope)
 
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val panelScope = coroutineScope.childScope("TerminalPortForwardingPanel")
@@ -148,8 +146,9 @@ private fun installPortsWatcher(
     }
 
     override fun onPortListeningEnded(port: ListeningPort) {
+      // Let's remove port from the model only and do not stop actual port-forwarding in the TerminalPortForwardingManager
+      // So, when a user starts the application listening on the same port, they won't need to forward it again.
       model.removePort(port.port)
-      TerminalPortForwardingManager.getInstance().stopForwarding(eelMachine, port.port)
     }
   }
 
@@ -184,25 +183,6 @@ private fun resetWatcherOnCursorLineChange(
           watcher.resetDelay()
         }
       }
-  }
-}
-
-/**
- * When the [coroutineScope] is canceled (e.g., tab closed) tears down every forwarding this tab established.
- */
-private fun installCleanupJob(
-  eelMachine: EelMachine,
-  model: PortForwardingViewModel,
-  coroutineScope: CoroutineScope,
-) {
-  coroutineScope.coroutineContext.job.invokeOnCompletion {
-    val ports = model.items.value.map { it.remotePort }
-    if (ports.isEmpty()) return@invokeOnCompletion
-
-    val manager = TerminalPortForwardingManager.getInstance()
-    for (port in ports) {
-      manager.stopForwarding(eelMachine, port)
-    }
   }
 }
 
