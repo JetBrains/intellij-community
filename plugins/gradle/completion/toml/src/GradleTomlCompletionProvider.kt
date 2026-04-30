@@ -4,11 +4,15 @@ package com.intellij.gradle.completion.toml
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
-import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.getCompletionContext
@@ -16,12 +20,15 @@ import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
@@ -53,9 +60,11 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     val completionService = service<DependencyCompletionService>()
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
 
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer()
+    var index = 0
     when {
       key == moduleKey -> {
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
@@ -68,6 +77,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
                 it.groupId + ":" + it.artifactId,
                 GradleTomlLibraryCompletionPosition.MODULE,
                 parameters.isAutoPopup,
+                index++,
               )
             }
         }
@@ -80,7 +90,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
           completionService.suggestGroupCompletions(request)
             .collect {
               loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup, index++)
             }
         }
       }
@@ -92,7 +102,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
           completionService.suggestArtifactCompletions(request)
             .collect {
               loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup, index++)
             }
         }
       }
@@ -104,7 +114,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
           completionService.suggestVersionCompletions(request)
             .collect {
               loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup)
+              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup, index++)
             }
         }
       }
@@ -121,6 +131,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
                 it.groupId + ":" + it.artifactId + ":" + it.version,
                 GradleTomlLibraryCompletionPosition.GAV,
                 parameters.isAutoPopup,
+                index++,
               )
             }
         }
@@ -134,19 +145,21 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     lookupString: String,
     pos: GradleTomlLibraryCompletionPosition,
     isAutoPopup: Boolean,
+    index: Int,
   ) {
     val lookupElement = LookupElementBuilder
-      .create(lookupObject, lookupString)
+      .create(lookupString)
       .withPresentableText(lookupString)
       .withIcon(lookupObject.icon)
-      .withInsertHandler(FullStringInsertHandler)
+      .withInsertHandler(TomlStringInsertHandler)
     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+    lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(lookupObject.source, index))
     lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, isAutoPopup)
     lookupElement.putUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY, pos)
     lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
     lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
-    this.addElement(lookupElement)
+    this.addElement(MLRankingIgnorable.wrap(lookupElement))
   }
 
   private fun TomlLiteral.getGroupAndArtifactForVersion(): Pair<String, String> {
@@ -156,5 +169,19 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     val group = getSiblingValue(groupKey)
     val artifact = getSiblingValue(artifactKey)
     return group to artifact
+  }
+}
+
+private object TomlStringInsertHandler : InsertHandler<LookupElement> {
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val value = item.getObject() as? String ?: return
+    context.commitDocument()
+    val psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(context.document) ?: return
+    val element = psiFile.findElementAt(context.startOffset) ?: return
+    val text = element.text
+    val range = element.textRange
+    val contentStart = range.startOffset + if (text.startsWith('"') || text.startsWith('\'')) 1 else 0
+    val contentEnd = range.endOffset - if (text.endsWith('"') || text.endsWith('\'')) 1 else 0
+    context.document.replaceString(contentStart, contentEnd, value)
   }
 }
