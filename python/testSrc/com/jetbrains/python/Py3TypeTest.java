@@ -6033,6 +6033,28 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-89265")
+  public void testExplicitNoneAttribute() {
+    doTest("None", """
+      class A:
+          x: None
+      
+      def f(a: A):
+          expr = a.x
+      """);
+  }
+
+  @TestFor(issues = "PY-89265")
+  public void testExplicitNoneGeneric() {
+    doTest("None", """
+      class A[T]:
+          x: T
+      
+      def f(a: A[None]):
+          expr = a.x
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

@@ -138,7 +138,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-1425
   public void testNone() {
-    doTest("Any",
+    doTest("UnsafeUnion[None, Any]",
            """
              class C:
                  def __init__(self): self.foo = None
@@ -2434,12 +2434,12 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-21175
   public void testLazyAttributeInitialization() {
-    doTest("Union[int, Any]",
+    doTest("Union[UnsafeUnion[None, Any], int]",
            """
              class C:
                  def __init__(self):
                      self.attr = None
-                \s
+             
                  def m(self):
                      if self.attr is None:
                          self.attr = 42

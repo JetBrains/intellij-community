@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyAnnotationOwner;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -63,7 +64,6 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -258,8 +258,26 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // like `var: Any` earlier, so we know not to use __getattr__ later
     final Ref<PyType> typeFromTargetsRef = getTypeFromTargets(context);
     final PyType typeFromTargets = PyTypeUtil.derefOrUnknown(typeFromTargetsRef);
-    if (qualified && isNoneType(typeFromTargets)) {
-      return PyAnyType.getUnknown();
+    if (qualified && isNoneType(typeFromTargets) && !isTargetAnnotated(context)) {
+      /* we support a special case where we convert an unannotated attribute of `None` to `UnsafeUnion[None, Unknown]`
+        this is because there are frequently cases in real code where inferring `None` would lead to undesirable false positives:
+        ```py
+        class C:
+            def __init__(self):
+                self.a = None  # user intends `int | None` / `late int`
+            def set_a(self):
+                self.a = 1
+        def f(c: C):
+            c.a + 1  # FP here
+        ```
+
+        we use `UnsafeUnion` to avoid cases where the `None` doesn't typically surface to usages,
+        if the user is interested in typing they should always annotate an attribute that is initialised with `None`
+
+        there is also a consideration for the case where a base class sets an attribute with `None`, expecting it to be
+        overridden with a value
+      */
+      return PyUnsafeUnionType.unsafeUnion(typeFromTargets, PyAnyType.getUnknown());
     }
 
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
@@ -354,6 +372,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     return null;
+  }
+
+  private boolean isTargetAnnotated(@NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+    for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
+      if (target instanceof PyAnnotationOwner owner && owner.getAnnotation() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
