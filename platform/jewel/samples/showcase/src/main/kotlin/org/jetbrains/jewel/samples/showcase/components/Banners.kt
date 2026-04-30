@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Locale
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.MarkdownText
 import org.jetbrains.jewel.ui.component.CheckboxRow
@@ -41,6 +40,7 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.defaultBannerStyle
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
+import java.util.Locale
 
 private const val LONG_IPSUM =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" +

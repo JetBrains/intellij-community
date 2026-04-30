@@ -345,10 +345,9 @@ package org.jetbrains.jewel.ui.component {
   public final class ContextMenuItemOption extends androidx.compose.foundation.ContextMenuItem {
     ctor public ContextMenuItemOption(optional org.jetbrains.jewel.ui.icon.IconKey? icon, optional org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType, optional boolean enabled, String label, kotlin.jvm.functions.Function0<kotlin.Unit> action);
     method public org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? getActionType();
-    method public boolean getEnabled();
     method public org.jetbrains.jewel.ui.icon.IconKey? getIcon();
     property public org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType;
-    property public boolean enabled;
+    property @Deprecated public boolean enabledCompat;
     property public org.jetbrains.jewel.ui.icon.IconKey? icon;
   }
 

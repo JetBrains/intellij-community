@@ -36,9 +36,9 @@ public object TextContextMenu : TextContextMenu {
                             ContextMenuItemOption(
                                 icon = AllIconsKeys.Actions.MenuCut,
                                 actionType = CutMenuItemOptionAction,
-                                enabled = textManager.selectedText.isNotEmpty(),
+                                enabled = it.enabled,
                                 label = localization.cut,
-                                action = it,
+                                action = it.execute,
                             )
                         }
 
@@ -47,9 +47,9 @@ public object TextContextMenu : TextContextMenu {
                             ContextMenuItemOption(
                                 icon = AllIconsKeys.Actions.Copy,
                                 actionType = CopyMenuItemOptionAction,
-                                enabled = textManager.selectedText.isNotEmpty(),
+                                enabled = it.enabled,
                                 label = localization.copy,
-                                action = it,
+                                action = it.execute,
                             )
                         }
 
@@ -62,8 +62,9 @@ public object TextContextMenu : TextContextMenu {
                                 ContextMenuItemOption(
                                     icon = AllIconsKeys.Actions.MenuPaste,
                                     actionType = PasteMenuItemOptionAction,
+                                    enabled = it.enabled,
                                     label = localization.paste,
-                                    action = it,
+                                    action = it.execute,
                                 )
                             }
                         } else {
@@ -79,7 +80,8 @@ public object TextContextMenu : TextContextMenu {
                             ContextMenuItemOption(
                                 actionType = SelectAllMenuItemOptionAction,
                                 label = localization.selectAll,
-                                action = it,
+                                enabled = it.enabled,
+                                action = it.execute,
                             )
                         }
 
