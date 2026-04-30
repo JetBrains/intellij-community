@@ -49,15 +49,15 @@ bazel_dep(name = "rules_swift", version = "3.4.1")  # same as above
 # bazel tool to be used in jvm builder tests
 test_bazel_tool = use_extension("//:test_bazel_tool.bzl", "extension")
 
-test_bazel_version = "8.5.1-jb_20260304_104"
+test_bazel_version = "9.1.0-jb_20260505_126"
 
 test_bazel_tool.config(
-    sha256_darwin_arm64 = "51f42e106a8b261b09aaa1982b21f430152763ac14a080e655755ca551cba8db",
-    sha256_darwin_x86_64 = "d3bedc58ec12d3b2f2b26711be6bb5c2bd7e4ef693c83561631c20cc4efecff9",
-    sha256_linux_arm64 = "10f6f09284858a556adfe17752a612158a6d7d86576dca32a9df88b971ce0cdf",
-    sha256_linux_x86_64 = "4cd2845811b1b8697f38f45323973b2554944078ed2bd747503711fbefacf3f1",
-    sha256_windows_arm64 = "8a955c29bc307d62f7cb0d798f4f3f9d0eb9a3b98035b29debd0f37e596e391a",
-    sha256_windows_x86_64 = "62bca4283de9aa3d924d6859ba3548effaff46e605be3f95f135513c66e8742b",
+    sha256_darwin_arm64 = "40e5eb5ed845fcc7830cbbbf3c2401d2cb394fd7313ec8716a7bf58f9a6bb134",
+    sha256_darwin_x86_64 = "20d7ab7344a1455a9be7823e1ded3437b0dc41e6bfced53b1496715da7dbb498",
+    sha256_linux_arm64 = "f8c01f3a711fabac2ae48d7c3aab6449f0ada5710b380020a62cb774460d0df2",
+    sha256_linux_x86_64 = "f56d370e050010239fb01c70cc78e33986b537dc2a5adb1aec535b8e81e07bd8",
+    sha256_windows_arm64 = "2ed65ae86995434f4bf7694bef7b2fa2b22ba490b9e95238f78b8872afe18b63",
+    sha256_windows_x86_64 = "c6420dea77223ea77e775eb1bf3f701cb43f719aa2b8bb76043a1bc7c4b3d021",
     url_darwin_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-arm64".format(ver = test_bazel_version),
     url_darwin_x86_64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-darwin-x86_64".format(ver = test_bazel_version),
     url_linux_arm64 = "https://github.com/JetBrains/bazel/releases/download/{ver}/bazel-{ver}-linux-arm64".format(ver = test_bazel_version),
