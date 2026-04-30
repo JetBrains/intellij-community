@@ -44,6 +44,30 @@ ag
 agave
 age
 agent
+agent --continue
+agent --force
+agent --list-models
+agent --mode
+agent --model
+agent --plan
+agent --print
+agent --resume
+agent --sandbox
+agent --workspace
+agent --worktree
+agent --yolo
+agent -f
+agent -p
+agent create-chat
+agent create-rule
+agent create-skill
+agent install-shell-integration
+agent ls
+agent mcp
+agent models
+agent prompt
+agent resume
+agent uninstall-shell-integration
 aggregate
 aglio
 agrippa
@@ -161,6 +185,7 @@ auggie
 aurora
 authchanger
 autoexpect
+autohand
 autojump
 automake
 automysqlbackup
@@ -466,6 +491,30 @@ clang-tidy
 clangd
 class-dump
 claude
+claude --allow-dangerously-skip-permissions
+claude --continue
+claude --dangerously-skip-permissions
+claude --fork-session
+claude --from-pr
+claude --ide
+claude --name
+claude --no-session-persistence
+claude --print
+claude --resume
+claude --session-id
+claude -c
+claude -n
+claude -p
+claude -r
+claude agents
+claude doctor
+claude install
+claude mcp
+claude plugin
+claude plugins
+claude ultrareview
+claude update
+claude upgrade
 claudia
 claws-mail
 clay
@@ -515,6 +564,7 @@ cmd
 cmdtest
 cmocka
 cmus
+cn
 cni
 cobalt
 cobaltstrike
@@ -522,9 +572,29 @@ cocoapods
 coda
 code
 code-insiders
+codebuddy
 codeceptjs
 codesign
 codex
+codex --ask-for-approval
+codex --dangerously-bypass-approvals-and-sandbox
+codex --full-auto
+codex --no-alt-screen
+codex --sandbox
+codex -a
+codex -s
+codex app
+codex app-server
+codex cloud
+codex exec
+codex exec-server
+codex fork
+codex mcp
+codex mcp-server
+codex plugin
+codex resume
+codex review
+codex sandbox
 codium
 cody
 coffee
@@ -640,6 +710,7 @@ cron
 crontab
 crossplane
 crow
+crow-cli
 crush
 cry
 cryfs
@@ -716,6 +787,7 @@ debug
 debug-job
 debugfs
 decipher
+deepagents
 defaultbrowser
 defaults
 degit
@@ -915,6 +987,7 @@ draft
 drag
 drain
 drawio
+droid
 drone
 dropbox
 drush
@@ -1074,6 +1147,7 @@ fail2ban
 fakeroot
 fasd
 fast
+fast-agent
 fastapi
 fastboot
 fastlane
@@ -1246,6 +1320,29 @@ gem push
 gem uninstall
 gem update
 gemini
+gemini --approval-mode
+gemini --delete-session
+gemini --extensions
+gemini --list-extensions
+gemini --list-sessions
+gemini --resume
+gemini --sandbox
+gemini --screen-reader
+gemini --worktree
+gemini --yolo
+gemini -e
+gemini -l
+gemini -p
+gemini -prompt
+gemini -r
+gemini -s
+gemini -w
+gemini -y
+gemini extensions
+gemini gemma
+gemini hooks
+gemini mcp
+gemini skills
 genkernel
 genymotion
 geoiplookup
@@ -1449,6 +1546,7 @@ gometalinter.v2
 gomobile
 gomplate
 googler
+goose
 gopherjs
 gopls
 goproxy
@@ -1721,6 +1819,14 @@ juju
 jules
 julia
 junie
+junie --brave
+junie --project
+junie --resume
+junie --review
+junie --session-id
+junie --task
+junie --use-local-cache
+junie -p
 jupyter
 jupyter notebook
 just
@@ -1749,7 +1855,9 @@ keytool
 kibana
 kill
 killall
+kilo
 kilocode
+kimi
 kind
 kindctl
 kinit
@@ -1950,6 +2058,7 @@ mblaze
 mbuffer
 mc
 mcedit
+mcode
 md
 md5sum
 mdadm
@@ -2277,6 +2386,20 @@ open-vm-tools
 openapi
 openapi-generator-cli
 opencode
+opencode --continue
+opencode --fork
+opencode --prompt
+opencode --session
+opencode -c
+opencode -s
+opencode export
+opencode import
+opencode plugin
+opencode pr
+opencode run
+opencode session
+opencode uninstall
+opencode upgrade
 openconnect
 opencpu
 openebs
@@ -2542,6 +2665,7 @@ q
 qemu
 qmake
 qodana
+qodercli
 qrcode
 qri
 qtcreator
@@ -2862,6 +2986,7 @@ st2
 sta
 stack
 staff
+stakpak
 stardog
 start
 start-job
