@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.session.hyperlinks
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,22 +20,35 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEven
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
 import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade(
   private val project: Project,
   coroutineScope: CoroutineScope,
-  outputModel: TerminalOutputModel,
+  private val outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
   filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer, filterContext)
+  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, isInAlternateBuffer, filterContext)
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow
   private val pendingUpdateEvents = MutableStateFlow(0)
+
+  init {
+    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        val snapshot = event.model.takeSnapshot()
+        val startLine = if (event.isTrimming) null else snapshot.getLineByOffset(event.offset)
+        val contentUpdate = TerminalOutputContentUpdate(snapshot, startLine)
+        highlighter.updatePendingTask(contentUpdate)
+      }
+    })
+  }
 
   fun collectResultsAndMaybeStartNewTask(): TerminalHyperlinksChangedEvent? {
     // The event is immediately passed to updateModelState(),
@@ -42,7 +56,8 @@ class BackendTerminalHyperlinkFacade(
     // This flow works as a latch: it's locked before we even retrieve the event,
     // and unlocked only after it's applied (or if it's null).
     pendingUpdateEvents.update { it + 1 }
-    val modelUpdateEvent = highlighter.collectResultsAndMaybeStartNewTask()
+    val snapshot = outputModel.takeSnapshot()
+    val modelUpdateEvent = highlighter.collectResultsAndMaybeStartNewTask(snapshot)
     if (modelUpdateEvent == null) {
       pendingUpdateEvents.update { it - 1 }
     }
