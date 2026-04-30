@@ -19,8 +19,11 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
@@ -29,16 +32,18 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.FrameWrapper
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowState
+import com.intellij.openapi.wm.IdeFrame
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.ui.ComboBoxWithWidePopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.DeferredIconListener
@@ -86,7 +91,7 @@ internal class SettingsFrame private constructor(
   groups: List<ConfigurableGroup>,
   configurable: Configurable?,
   filter: String?,
-) : FrameWrapper(project, "SettingsEditor"), UiDataProvider {
+) : FrameWrapper(null, "SettingsEditor"), UiDataProvider {
 
   companion object {
     /** Single app-wide instance. */
@@ -252,18 +257,9 @@ internal class SettingsFrame private constructor(
 
     val bus = ApplicationManager.getApplication().messageBus
 
-    // Handle current-project closure
+    // Handle current-project closure.
     bus.connect(frameDisposable)
       .subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        // Fires before the project saves and closes. Handle unsaved settings here so
-        // isModified is already false by the time projectClosing → close() → onCloseHandler fires.
-        // No Cancel option: the project close cannot be vetoed at this point.
-        override fun projectClosingBeforeSave(project: Project) {
-          if (project == this@SettingsFrame.project) {
-            promptUnsavedOnClose()
-          }
-        }
-
         override fun projectClosed(project: Project) {
           if (project == this@SettingsFrame.project) {
             val remaining = openProjects()
@@ -285,6 +281,44 @@ internal class SettingsFrame private constructor(
       .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
         override fun evaluated(deferred: DeferredIcon, result: Icon) = projectWidget.repaint()
       })
+
+    // When the IDE application loses OS focus (user switches to browser/terminal), clear
+    // isAlwaysOnTop so the settings window drops behind other apps. Restore it when the IDE
+    // regains focus. This makes "pin" mean "float above the IDE only, not every app".
+    if (window is JFrame) {
+      bus.connect(frameDisposable)
+        .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+          override fun applicationActivated(ideFrame: IdeFrame) {
+            if (isPinned) getFrame().isAlwaysOnTop = true
+          }
+          override fun applicationDeactivated(ideFrame: IdeFrame) {
+            getFrame().isAlwaysOnTop = false
+          }
+        })
+    }
+
+    // canExitApplication fires before any frame is hidden — the settings window is still visible
+    // and the editor context is intact. Shows Apply / Don't Save / Cancel; returning false vetoes
+    // the exit. canClose (below) handles the project-close-without-IDE-exit case the same way.
+    ApplicationManagerEx.getApplicationEx().addApplicationListener(object : ApplicationListener {
+      override fun canExitApplication(): Boolean =
+        promptUnsavedChangesOrCancel(ApplicationBundle.message("settings.close.application.unsaved.message"))
+    }, frameDisposable)
+
+    // canClose fires before the project-close sequence begins, so the settings window is still
+    // visible and the editor context is intact. Must be registered directly (not via message bus)
+    // for VetoableProjectManagerListener to be honored. In the IDE-exit path, canExitApplication
+    // (above) already cleared isModified, so canClose returns true without showing another dialog.
+    val projectManager = ProjectManager.getInstance()
+    val closeVetoer = object : VetoableProjectManagerListener {
+      override fun canClose(project: Project): Boolean {
+        if (project != this@SettingsFrame.project) return true
+        return promptUnsavedChangesOrCancel(
+          ApplicationBundle.message("settings.close.project.unsaved.message", project.name))
+      }
+    }
+    projectManager.addProjectManagerListener(closeVetoer)
+    Disposer.register(frameDisposable) { projectManager.removeProjectManagerListener(closeVetoer) }
 
   }
 
@@ -407,22 +441,25 @@ internal class SettingsFrame private constructor(
   }
 
   /**
-   * If there are unsaved settings, asks the user whether to apply or discard them.
-   * Called from [ProjectCloseListener.projectClosingBeforeSave]; no Cancel option since the
-   * project close cannot be vetoed at that point.
+   * Shows Apply / Don't Save / Cancel when there are unsaved settings.
+   * Returns true if it is safe to proceed (changes applied or discarded),
+   * false if the user canceled.
    */
-  private fun promptUnsavedOnClose() {
-    if (!editor.isModified) return
-
-    val apply = MessageDialogBuilder.yesNo(
+  private fun promptUnsavedChangesOrCancel(@NlsContexts.DialogMessage message: String): Boolean {
+    if (!editor.isModified) return true
+    return when (Messages.showYesNoCancelDialog(
+      getFrame(),
+      message,
       ApplicationBundle.message("settings.switch.project.unsaved.title"),
-      ApplicationBundle.message("settings.close.project.unsaved.message", project.name),
-    )
-      .yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
-      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
-      .icon(Messages.getWarningIcon())
-      .ask(getFrame())
-    if (apply) editor.apply() else editor.cancel(null)
+      ApplicationBundle.message("settings.switch.project.button.apply"),
+      ApplicationBundle.message("settings.switch.project.button.dont.save"),
+      CommonBundle.getCancelButtonText(),
+      Messages.getWarningIcon(),
+    )) {
+      Messages.YES -> { editor.apply(); true }
+      Messages.NO -> { editor.cancel(null); true }
+      else -> false
+    }
   }
 
   /** Unconditionally replaces the editor with one for [newProject]. */
