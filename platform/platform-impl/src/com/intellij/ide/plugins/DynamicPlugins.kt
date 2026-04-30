@@ -63,6 +63,10 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(descriptor, baseDescriptor, context)
   }
 
+  fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
+    return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
+  }
+
   /**
    * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
    * plugins settings, without pressing the Apply button.
@@ -71,10 +75,6 @@ object DynamicPlugins {
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
     return DynamicPluginsLegacyImpl.allowLoadUnloadSynchronously(module)
-  }
-
-  fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
-    return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
   }
 
   fun runAfter(callback: Runnable) {
