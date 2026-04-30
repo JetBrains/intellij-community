@@ -4,18 +4,27 @@ package git4idea.workingTrees
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.application
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
@@ -25,14 +34,25 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import java.awt.Window
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
 internal class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
-
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
+      scheduleBackgroundRefresh()
+
       coroutineScope.launch {
         GitRepositoriesHolder.getInstance(project).updates.collect { updateType ->
           if (updateType == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED ||
@@ -46,10 +66,59 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
   }
 
+  private fun scheduleBackgroundRefresh() {
+    val ideActiveFlow = callbackFlow {
+      application.messageBus.connect(this).subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+        override fun applicationActivated(ideFrame: IdeFrame) {
+          trySend(true)
+        }
+        override fun delayedApplicationDeactivated(window: Window) {
+          trySend(false)
+        }
+      })
+      send(true)
+      awaitClose()
+    }.distinctUntilChanged()
+
+    val twVisibleFlow = callbackFlow {
+      fun update(toolWindowManager: ToolWindowManager) {
+        val isVisible = toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible
+        trySend(isVisible == true)
+      }
+
+      application.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun stateChanged(toolWindowManager: ToolWindowManager) {
+          update(toolWindowManager)
+        }
+      })
+      update(ToolWindowManager.getInstance(project))
+      awaitClose()
+    }.flowOn(Dispatchers.UI).distinctUntilChanged()
+
+    coroutineScope.launch {
+      combine(ideActiveFlow, twVisibleFlow) { ideActive, toolWindowVisible ->
+        ideActive && toolWindowVisible
+      }.collectLatest { shouldRefresh ->
+        if (shouldRefresh) {
+          while (true) {
+            val status = getWorktreeSupportStatus(project)
+            when (status) {
+              is GitWorktreeSupportStatus.SingleRepository -> status.repository.workingTreeHolder.scheduleReload()
+              is GitWorktreeSupportStatus.MultipleRepository -> status.repositories.forEach { it.workingTreeHolder.scheduleReload() }
+              else -> {}
+            }
+            delay(WORKING_TREES_REFRESH_INTERVAL)
+          }
+        }
+      }
+    }
+  }
+
   companion object {
     private const val WORKING_TREE_TAB_STATUS_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
     private const val WORKING_TREE_TAB_STATUS_OPENED_BY_USER: String = "opened"
     private const val WORKING_TREE_TAB_STATUS_CLOSED_BY_USER: String = "closed"
+    internal val WORKING_TREES_REFRESH_INTERVAL = 5.minutes
 
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
 
@@ -127,6 +196,21 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
   fun openWorkingTreeProject(tree: GitWorkingTree) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
+      if (!Path(tree.path.path).exists()) {
+        VcsNotifier.getInstance(project).notifyMinorWarning(
+          GitNotificationIdsHolder.WORKING_TREE_DIRECTORY_NOT_FOUND, "",
+          GitBundle.message("Git.WorkingTrees.open.directory.not.found", tree.path.presentableUrl)
+        )
+
+        val status = getWorktreeSupportStatus(project)
+        when (status) {
+          is GitWorktreeSupportStatus.SingleRepository -> status.repository.workingTreeHolder.scheduleReload()
+          is GitWorktreeSupportStatus.MultipleRepository -> status.repositories.forEach { it.workingTreeHolder.scheduleReload() }
+          else -> {}
+        }
+
+        return@launch
+      }
       ProjectUtil.openOrImportAsync(Path(tree.path.path))
     }
   }
