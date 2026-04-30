@@ -11,19 +11,16 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 object DynamicPlugins {
-  @JvmStatic
-  @JvmOverloads
-  fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
-                                    baseDescriptor: IdeaPluginDescriptorImpl? = null,
-                                    context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
-    return DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(descriptor, baseDescriptor, context)
-  }
-
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?): Boolean {
     return DynamicPluginsLegacyImpl.loadPlugins(plugins, project)
+  }
+
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
+    return DynamicPluginsLegacyImpl.loadPlugin(pluginDescriptor, project)
   }
 
   /**
@@ -38,12 +35,54 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.unloadPlugins(plugins, project, parentComponent, options)
   }
 
-  fun runAfter(runAlways: Boolean, callback: Runnable) {
-    return DynamicPluginsLegacyImpl.runAfter(runAlways, callback)
+  @Deprecated("use overload with PluginMainDescriptor parameter")
+  @JvmOverloads
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
+                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
+  }
+
+  @JvmOverloads
+  fun unloadPlugin(pluginDescriptor: PluginMainDescriptor,
+                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
+  }
+
+  fun unloadPluginWithProgress(project: Project? = null,
+                               parentComponent: JComponent?,
+                               pluginDescriptor: PluginMainDescriptor,
+                               options: UnloadPluginOptions): Boolean {
+    return DynamicPluginsLegacyImpl.unloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
+                                    baseDescriptor: IdeaPluginDescriptorImpl? = null,
+                                    context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
+    return DynamicPluginsLegacyImpl.allowLoadUnloadWithoutRestart(descriptor, baseDescriptor, context)
+  }
+
+  /**
+   * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
+   * plugins settings, without pressing the Apply button.
+   */
+  // TODO migrate to isUIOnlyDynamicPlugin
+  @JvmStatic
+  fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
+    return DynamicPluginsLegacyImpl.allowLoadUnloadSynchronously(module)
   }
 
   fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
+  }
+
+  fun runAfter(runAlways: Boolean, callback: Runnable) {
+    return DynamicPluginsLegacyImpl.runAfter(runAlways, callback)
+  }
+
+  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
+    return DynamicPluginsLegacyImpl.notify(text, notificationType, *actions)
   }
 
   /**
@@ -61,21 +100,8 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.isUIOnlyExtension(extensionFqn)
   }
 
-  /**
-   * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
-   * plugins settings, without pressing the Apply button.
-   */
-  // TODO migrate to isUIOnlyDynamicPlugin
-  @JvmStatic
-  fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    return DynamicPluginsLegacyImpl.allowLoadUnloadSynchronously(module)
-  }
-
-  fun unloadPluginWithProgress(project: Project? = null,
-                               parentComponent: JComponent?,
-                               pluginDescriptor: PluginMainDescriptor,
-                               options: UnloadPluginOptions): Boolean {
-    return DynamicPluginsLegacyImpl.unloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
+  fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
+    return DynamicPluginsLegacyImpl.onPluginUnload(parentDisposable, callback)
   }
 
   data class UnloadPluginOptions(
@@ -87,6 +113,7 @@ object DynamicPlugins {
     var checkImplementationDetailDependencies: Boolean = true,
     var unloadWaitTimeout: Int? = null,
   ) {
+
     fun withUpdate(isUpdate: Boolean): UnloadPluginOptions = also {
       this.isUpdate = isUpdate
     }
@@ -110,35 +137,8 @@ object DynamicPlugins {
     fun withSave(save: Boolean): UnloadPluginOptions = also {
       this.save = save
     }
-
     fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean): UnloadPluginOptions = also {
       this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
-  }
-
-  @Deprecated("use overload with PluginMainDescriptor parameter")
-  @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
-                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
-  }
-
-  @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: PluginMainDescriptor,
-                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
-  }
-
-  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    return DynamicPluginsLegacyImpl.notify(text, notificationType, *actions)
-  }
-
-  @JvmOverloads
-  fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
-    return DynamicPluginsLegacyImpl.loadPlugin(pluginDescriptor, project)
-  }
-
-  fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
-    return DynamicPluginsLegacyImpl.onPluginUnload(parentDisposable, callback)
   }
 }
