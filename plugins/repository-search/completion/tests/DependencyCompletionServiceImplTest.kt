@@ -90,18 +90,59 @@ class DependencyCompletionServiceImplTest {
   }
 
   @Test
-  fun `suggestGroupCompletions applies distinctUntilChanged deduplication`() = runBlocking {
-    // Two contributors return the same groups; with distinctUntilChanged the flow removes consecutive dupes
+  fun `suggestGroupCompletions deduplicates results from LOCAL and SERVER contributors`(): Unit = runBlocking {
     val service = withContributors(
-      fakeContributor(groupResults = listOf("com.example", "org.junit")),
-      fakeContributor(groupResults = listOf("com.example", "org.junit")),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.SERVER,
+                      groupResults = listOf("org.springframework", "com.google")),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.LOCAL,
+                      groupResults = listOf("org.springframework", "org.apache")),
     )
-    val results = service.suggestGroupCompletions(groupRequest).toList()
-    // Result should have no consecutive duplicates (distinctUntilChanged guarantee)
-    val resultStrings = results.map { it.result }
-    for (i in 0 until resultStrings.size - 1) {
-      assertThat(resultStrings[i]).isNotEqualTo(resultStrings[i + 1])
-    }
+    val results = service.suggestGroupCompletions(groupRequest).toList().map { it.result }
+    assertThat(results).containsExactlyInAnyOrder("org.springframework", "com.google", "org.apache")
+  }
+
+  @Test
+  fun `suggestArtifactCompletions deduplicates results from LOCAL and SERVER contributors`(): Unit = runBlocking {
+    val artifactRequest = DependencyArtifactCompletionRequest("org.springframework", "spring-b", gradleContext)
+    val service = withContributors(
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.SERVER,
+                      artifactResults = listOf("spring-beans", "spring-boot")),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.LOCAL,
+                      artifactResults = listOf("spring-beans", "spring-context")),
+    )
+    val results = service.suggestArtifactCompletions(artifactRequest).toList().map { it.result }
+    assertThat(results).containsExactlyInAnyOrder("spring-beans", "spring-boot", "spring-context")
+  }
+
+  @Test
+  fun `suggestVersionCompletions deduplicates results from LOCAL and SERVER contributors`(): Unit = runBlocking {
+    val versionRequest = DependencyVersionCompletionRequest("org.springframework", "spring-beans", "6.", gradleContext)
+    val service = withContributors(
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.SERVER,
+                      versionResults = listOf("6.1.0", "6.0.0")),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.LOCAL,
+                      versionResults = listOf("6.1.0", "5.3.0")),
+    )
+    val results = service.suggestVersionCompletions(versionRequest).toList().map { it.result }
+    assertThat(results).containsExactlyInAnyOrder("6.1.0", "6.0.0", "5.3.0")
+  }
+
+  @Test
+  fun `suggestCompletions deduplicates results from LOCAL and SERVER contributors`(): Unit = runBlocking {
+    val serverResult = DependencyCompletionResult("org.springframework", "spring-beans", "6.1.0",
+                                                  source = DependencyCompletionContributionSource.SERVER)
+    val localDuplicate = DependencyCompletionResult("org.springframework", "spring-beans", "6.1.0",
+                                                    source = DependencyCompletionContributionSource.LOCAL)
+    val localUnique = DependencyCompletionResult("org.springframework", "spring-beans", "5.3.0",
+                                                 source = DependencyCompletionContributionSource.LOCAL)
+    val service = withContributors(
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.SERVER,
+                      searchResults = listOf(serverResult)),
+      fakeContributor(contributorSource = DependencyCompletionContributionSource.LOCAL,
+                      searchResults = listOf(localDuplicate, localUnique)),
+    )
+    val results = service.suggestCompletions(searchRequest).toList()
+    assertThat(results).containsExactlyInAnyOrder(serverResult, localUnique)
   }
 
   @Test
@@ -167,6 +208,8 @@ private fun fakeContributor(
   delayMs: Long = 0L,
   searchResults: List<DependencyCompletionResult> = emptyList(),
   groupResults: List<String> = emptyList(),
+  artifactResults: List<String> = emptyList(),
+  versionResults: List<String> = emptyList(),
   failWith: Exception? = null,
 ): DependencyCompletionContributor = object : DependencyCompletionContributor {
   override val buildSystemId: ProjectSystemId get() = systemId
@@ -186,11 +229,11 @@ private fun fakeContributor(
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
     if (failWith != null) throw failWith
-    return emptyList()
+    return artifactResults.map { testPartResult(it) }
   }
 
   override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
     if (failWith != null) throw failWith
-    return emptyList()
+    return versionResults.map { testPartResult(it) }
   }
 }

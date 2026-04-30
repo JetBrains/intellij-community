@@ -16,7 +16,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -34,18 +34,19 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
 
   override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
     parallelStream(contributors(request)) { it.search(request) }
+      .distinctBy { listOf(it.groupId, it.artifactId, it.version, it.scope) }
 
   override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getGroups(request) }
-      .distinctUntilChanged()
+      .distinctBy { it.result }
 
   override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getArtifacts(request) }
-      .distinctUntilChanged()
+      .distinctBy { it.result }
 
   override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getVersions(request) }
-      .distinctUntilChanged()
+      .distinctBy { it.result }
 
   private fun <C : DependencyCompletionContributor, R> parallelStream(
     contributors: List<C>,
@@ -118,5 +119,12 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
         }
       }
     }
+  }
+}
+
+private fun <T, K> Flow<T>.distinctBy(keySelector: (T) -> K): Flow<T> = flow {
+  val seen = HashSet<K>()
+  collect { value ->
+    if (seen.add(keySelector(value))) emit(value)
   }
 }
