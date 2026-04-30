@@ -88,6 +88,7 @@ android/bleak
 android/bleak-config
 android/build-attribution
 android/build-common
+android/cli-server/command-handler
 android/cli-server/server
 android/codenavigation
 android/completion
