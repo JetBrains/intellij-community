@@ -65,10 +65,6 @@ object BazelRunfiles {
    */
   @JvmStatic
   fun findRunfilesDirectoryUnderCommunityOrUltimate(relativePath: String): Path {
-    // Android Studio (b/458767289): our test data is always in the main runfiles tree,
-    // and we tolerate missing platform test data in many cases (e.g. missing mock JDK).
-    return Path.of(relativePath)
-
     val (root1, root2) = if (runfilesManifestOnly) {
       val root1key = "community+/${relativePath}"
       val root2key = "_main/${relativePath}"
@@ -81,6 +77,10 @@ object BazelRunfiles {
 
     val root1exists = root1.isDirectory()
     val root2exists = root2.isDirectory()
+    // Android Studio (b/458767289, b/504638878): some of the platform test fixtures expect
+    // to find associated test data (e.g. the mock JDK) but we do not hook up this test data
+    // on the Studio side yet (and our tests currently tolerate the missing data without error).
+    /*
     if (!root1exists && !root2exists) {
       error("Cannot find runfiles directory $relativePath under community+ or _main. " +
             "JAVA_RUNFILES (runfiles root) = ${bazelJavaRunfilesPath}. " +
@@ -93,6 +93,7 @@ object BazelRunfiles {
             "This ambitious setup might cause problems. " +
             "Please remove $root1 or $root2 or use a different relative path for test rule")
     }
+    */
     return if (root1exists) root1 else root2
   }
 
