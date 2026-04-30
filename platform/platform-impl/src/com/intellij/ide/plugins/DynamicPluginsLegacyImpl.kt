@@ -202,16 +202,14 @@ internal object DynamicPluginsLegacyImpl {
     }
   }
 
-  fun runAfter(runAlways: Boolean, callback: Runnable) {
+  fun runAfter(callback: Runnable) {
     synchronized(myLock) {
       if (myProcessRun > 0) {
         myProcessCallbacks.add(callback)
         return
       }
     }
-    if (runAlways) {
-      callback.run()
-    }
+    callback.run()
   }
 
   private fun getDescriptorsToUpdateWithoutRestart(plugins: Collection<PluginMainDescriptor>, load: Boolean): List<PluginMainDescriptor> {

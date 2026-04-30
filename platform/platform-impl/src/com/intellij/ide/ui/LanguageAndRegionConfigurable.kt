@@ -207,8 +207,8 @@ object LanguageAndRegionUi {
     }
   }
 
-  fun showRestartDialog(runAlways: Boolean = true) {
-    DynamicPlugins.runAfter(runAlways) {
+  fun showRestartDialog() {
+    DynamicPlugins.runAfter {
       application.invokeLater {
         application.service<RestartDialog>().showRestartRequired()
       }

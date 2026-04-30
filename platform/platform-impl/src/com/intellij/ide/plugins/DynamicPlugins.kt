@@ -77,8 +77,8 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.checkCanUnloadWithoutRestart(module)
   }
 
-  fun runAfter(runAlways: Boolean, callback: Runnable) {
-    return DynamicPluginsLegacyImpl.runAfter(runAlways, callback)
+  fun runAfter(callback: Runnable) {
+    return DynamicPluginsLegacyImpl.runAfter(callback)
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
