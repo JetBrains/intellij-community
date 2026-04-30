@@ -280,7 +280,5 @@
     <module name="intellij.kotlin.internal"/>
 
     <module name="intellij.kotlin.performanceExtendedPlugin"/>
-
-    <module name="intellij.debugger.logpoints.kotlin"/>
   </content>
 </idea-plugin>

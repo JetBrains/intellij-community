@@ -98,8 +98,10 @@
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.debugger.jvm.advanced.java"/>
-    <module name="intellij.debugger.logpoints"/>
-    <module name="intellij.debugger.logpoints.java"/>
+    <module name="intellij.debugger.logpoints.shared"/>
+    <module name="intellij.debugger.logpoints.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.debugger.logpoints.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.debugger.logpoints.java" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
   </content>
