@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -115,7 +116,9 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
         super.applyDefaults(editors)
       }
     })
+    if (Registry.`is`("diff.highlighting.level.visible")) {
     add(EditorHighlightingLayerGroup())
+    }
     add(EditorBreadcrumbsPlacementGroup())
   }
   private var diffActions = emptyList<AnAction>()
@@ -139,6 +142,9 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
   }
 
   fun applyDefaults() {
+    if (!Registry.`is`("diff.highlighting.level.visible")) {
+      textSettings.highlightingLevel = HighlightingLevel.INSPECTIONS
+    }
     actions.filterIsInstance<EditorSettingAction>().forEach { it.applyDefaults(editors) }
   }
 
