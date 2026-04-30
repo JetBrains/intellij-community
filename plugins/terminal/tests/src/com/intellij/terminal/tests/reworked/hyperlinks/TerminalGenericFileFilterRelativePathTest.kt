@@ -8,11 +8,13 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.FILENAME_MAX
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalOpenFileHyperlinkInfo
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
@@ -24,8 +26,7 @@ internal class TerminalGenericFileFilterRelativePathTest {
   private val localFileSystem: LocalFileSystem = Mockito.mock()
   private val project: Project = Mockito.mock()
   private val filterContext: TerminalHyperlinkFilterContext = Mockito.mock()
-  private val eelDescriptor: EelDescriptor = Mockito.mock()
-  private val osFamily: EelOsFamily = EelOsFamily.Posix
+  private val eelDescriptor: EelDescriptor = LocalEelDescriptor
 
   // Mock virtual file system structure
   private val rootDir: NewVirtualFile = Mockito.mock()
@@ -41,8 +42,7 @@ internal class TerminalGenericFileFilterRelativePathTest {
 
   @Before
   fun setUp() {
-    // setup Unix-like system
-    whenever(eelDescriptor.osFamily).thenReturn(osFamily)
+    Assume.assumeTrue(eelDescriptor.osFamily == EelOsFamily.Posix)
     whenever(filterContext.eelDescriptor).thenReturn(eelDescriptor)
 
     setupVirtualFile(rootDir, "/project", true)
