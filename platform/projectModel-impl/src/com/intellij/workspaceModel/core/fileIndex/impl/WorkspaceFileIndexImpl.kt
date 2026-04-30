@@ -112,6 +112,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
   override fun isUrlInContent(url: String): ThreeState {
     var currentUrl = url
+    var includeNonRecursive = true
     val fileManager = VirtualFileManager.getInstance()
     val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     while (currentUrl.isNotEmpty()) {
@@ -121,7 +122,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       }
       val virtualFileUrl = urlManager.findByUrl(currentUrl)
       if (virtualFileUrl != null) {
-        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl)
+        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, includeNonRecursive)
         if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
           return ThreeState.NO
         }
@@ -131,8 +132,12 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
         if (NonExistingFileSetKind.INCLUDED_CONTENT in kinds) {
           return ThreeState.YES
         }
+        if (NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds) {
+          return ThreeState.YES
+        }
       }
       currentUrl = PathUtil.getParentPath(currentUrl)
+      includeNonRecursive = false
     }
     return ThreeState.NO
   }

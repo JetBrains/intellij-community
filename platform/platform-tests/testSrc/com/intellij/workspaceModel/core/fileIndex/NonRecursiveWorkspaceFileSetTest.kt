@@ -7,6 +7,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -15,6 +16,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
+import com.intellij.util.ThreeState
 import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonRecursiveFileCustomData
@@ -23,6 +25,7 @@ import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -30,6 +33,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.io.path.invariantSeparatorsPathString
 
 @TestApplication
 class NonRecursiveWorkspaceFileSetTest {
@@ -74,6 +78,23 @@ class NonRecursiveWorkspaceFileSetTest {
       assertNull(fileSet)
       val nonRecursiveDirFileSet = workspaceFileIndex.findFileSetWithCustomData(nonRecursiveDir, true, true, true, true, true, true, true, NonRecursiveFileCustomData::class.java)
       assertNotNull(nonRecursiveDirFileSet)
+    }
+  }
+
+  @Test
+  fun `non-existing non-recursive file set is in content only by exact url`() = runBlocking {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
+
+    val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
+    val rootUrl = VfsUtilCore.pathToUrl(projectModel.baseProjectDir.rootPath.resolve("nonRecursiveRoot").invariantSeparatorsPathString)
+    workspaceModel.update {
+      val url = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(rootUrl)
+      it.addEntity(NonRecursiveTestEntity(url, NonPersistentEntitySource))
+    }
+
+    readAction {
+      assertEquals(ThreeState.YES, fileIndex.isUrlInContent(rootUrl))
+      assertEquals(ThreeState.NO, fileIndex.isUrlInContent("$rootUrl/a.txt"))
     }
   }
 

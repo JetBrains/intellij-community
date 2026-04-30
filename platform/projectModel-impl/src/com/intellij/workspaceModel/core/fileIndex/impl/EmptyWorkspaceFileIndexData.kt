@@ -40,7 +40,7 @@ class EmptyWorkspaceFileIndexData private constructor(private val debugName: Str
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun getFilesByPackageName(packageName: String): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun resetCustomContributors() {}
-  override fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind> = emptySet()
+  override fun getNonExistentFileSetKinds(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind> = emptySet()
 
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? = null
   override fun onLowMemory() {}

@@ -76,7 +76,7 @@ interface WorkspaceFileIndexData {
   /**
    * Returns kinds of workspace file sets registered for [url] if the corresponding file doesn't exist. If [url] exists, return an empty set.
    */
-  fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind>
+  fun getNonExistentFileSetKinds(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind>
   
   fun onLowMemory()
   fun clearPackageDirectoryCache()
