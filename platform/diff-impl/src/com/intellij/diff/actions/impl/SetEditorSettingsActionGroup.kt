@@ -161,7 +161,7 @@ open class SetEditorSettingsActionGroup @ApiStatus.Internal constructor(
       add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
     }
 
-    if (e != null && ActionPlaces.DIFF_TOOLBAR == e.place) {
+    if (e?.place?.contains(ActionPlaces.DIFF_TOOLBAR) == true) {
       return actions.toArray<AnAction>(EMPTY_ARRAY)
     }
 
