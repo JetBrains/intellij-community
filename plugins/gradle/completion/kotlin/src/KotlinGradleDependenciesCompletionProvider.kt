@@ -246,8 +246,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       else -> flowOf()
     }
 
+    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer()
+    var index = 0
     runBlockingCancellable {
       itemFlow.collect { item ->
         loadingAdvertiser.onResultReceived(item)
@@ -257,6 +261,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           .withInsertHandler(FullStringInsertHandler)
         lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
         lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+        lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
         lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
         lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
@@ -264,7 +269,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
         lookupElement.putUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY, invokePosition)
 
-        result.addElement(MLRankingIgnorable.wrap(lookupElement))
+        resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
       }
     }
     loadingAdvertiser.onComplete()
