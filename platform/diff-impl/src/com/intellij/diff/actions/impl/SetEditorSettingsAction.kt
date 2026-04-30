@@ -32,7 +32,7 @@ import javax.swing.SwingConstants
             replaceWith = ReplaceWith("SetEditorSettingsActionGroup", "com.intellij.diff.actions.impl.SetEditorSettingsActionGroup"))
 class SetEditorSettingsAction @ApiStatus.Internal constructor(
   settings: TextDiffSettingsHolder.TextDiffSettings,
-  editors: List<Editor?>,
+  editors: List<Editor>,
 ) : DumbAwareAction(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain) {
 
   private val editorSettingsActionGroup = SetEditorSettingsActionGroup(settings, editors)

@@ -88,7 +88,7 @@ internal class PatchDiffViewer(
 
   override fun getPreferredFocusedComponent(): JComponent = editor.getContentComponent()
 
-  override fun getEditors(): List<Editor?> = listOf(editor)
+  override fun getEditors(): List<Editor> = listOf(editor)
 
   override fun getDifferenceIterable(): PrevNextDifferenceIterable = prevNextDifferenceIterable
 
