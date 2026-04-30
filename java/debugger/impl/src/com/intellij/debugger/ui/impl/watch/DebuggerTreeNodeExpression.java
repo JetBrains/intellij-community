@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -34,6 +35,14 @@ import java.util.Set;
 public final class DebuggerTreeNodeExpression {
   public static @Nullable PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
+    return substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue, null);
+  }
+
+  public static @Nullable PsiExpression substituteThis(@Nullable PsiElement expressionWithThis,
+                                                       PsiExpression howToEvaluateThis,
+                                                       Value howToEvaluateThisValue,
+                                                       @Nullable String howToEvaluateThisDeclaredType)
+    throws EvaluateException {
     if (!(expressionWithThis instanceof PsiExpression)) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
 
@@ -53,6 +62,11 @@ public final class DebuggerTreeNodeExpression {
 
     if (thisClass != null) {
       PsiType type = howToEvaluateThis.getType();
+      if (type == null && howToEvaluateThisDeclaredType != null) {
+        // If Java resolver cannot get the type of the expression,
+        // try to find the type by ValueDescriptorImpl#getDeclaredType obtained from JDI.
+        type = DebuggerUtils.getType(howToEvaluateThisDeclaredType, howToEvaluateThis.getProject());
+      }
       if (type != null) {
         if (type instanceof PsiClassType) {
           PsiClass psiClass = ((PsiClassType)type).resolve();
