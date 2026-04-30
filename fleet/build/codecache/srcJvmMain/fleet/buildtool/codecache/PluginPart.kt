@@ -35,10 +35,10 @@ sealed class PluginPart {
 
 fun PluginDescriptor.fsdaemonCoordinates(platform: Platform): Coordinates? = metaAsCoordinates(fsdaemonCoordinatesMetadataAttributeOf(platform))
 fun fsdaemonCoordinatesMetadataAttributeOf(platform: Platform): String = when (platform) {
-  Platform.Linux.LinuxAarch64 -> "fsd-binaries-linux_aarch64"
-  Platform.Linux.LinuxX64 -> "fsd-binaries-linux_x64"
-  Platform.MacOs.MacOsAarch64 -> "fsd-binaries-macos_aarch64"
-  Platform.MacOs.MacOsX64 -> "fsd-binaries-macos_x64"
-  Platform.Windows.WindowsAarch64 -> "fsd-binaries-windows_aarch64"
-  Platform.Windows.WindowsX64 -> "fsd-binaries-windows_x64"
+  Platform.Linux.LinuxAarch64 -> "fsd-archives-linux_aarch64"
+  Platform.Linux.LinuxX64 -> "fsd-archives-linux_x64"
+  Platform.MacOs.MacOsAarch64 -> "fsd-archives-macos_aarch64"
+  Platform.MacOs.MacOsX64 -> "fsd-archives-macos_x64"
+  Platform.Windows.WindowsAarch64 -> "fsd-archives-windows_aarch64"
+  Platform.Windows.WindowsX64 -> "fsd-archives-windows_x64"
 }
