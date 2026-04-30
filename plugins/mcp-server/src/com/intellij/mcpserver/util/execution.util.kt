@@ -73,6 +73,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Action
@@ -287,6 +288,33 @@ suspend fun executeRunConfiguration(
   envs: Map<String, String>?,
   isDebug: Boolean,
 ): RunConfigurationExecutionOutput {
+  return executeRunConfiguration(
+    configurationName = configurationName,
+    filePath = filePath,
+    line = line,
+    timeout = timeout,
+    waitForExit = waitForExit,
+    programArguments = programArguments,
+    workingDirectory = workingDirectory,
+    envs = envs,
+    isDebug = isDebug,
+    processCallbackDelegate = null,
+  )
+}
+
+@ApiStatus.Internal
+suspend fun executeRunConfiguration(
+  configurationName: String? = null,
+  filePath: String? = null,
+  line: Int? = null,
+  timeout: Int,
+  waitForExit: Boolean,
+  programArguments: String?,
+  workingDirectory: String?,
+  envs: Map<String, String>?,
+  isDebug: Boolean,
+  processCallbackDelegate: ProgramRunner.Callback?,
+): RunConfigurationExecutionOutput {
   val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
   currentCoroutineContext().reportToolActivity(
     McpServerBundle.message(
@@ -319,6 +347,7 @@ suspend fun executeRunConfiguration(
     timeout = timeout,
     waitForExit = waitForExit,
     isDebug = isDebug,
+    processCallbackDelegate = processCallbackDelegate,
   )
 }
 
@@ -328,6 +357,7 @@ internal suspend fun executeResolvedRunConfiguration(
   timeout: Int,
   waitForExit: Boolean,
   isDebug: Boolean,
+  processCallbackDelegate: ProgramRunner.Callback? = null,
 ): RunConfigurationExecutionOutput {
   val executor = if (isDebug) {
     DefaultDebugExecutor.getDebugExecutorInstance() ?: mcpFail("Debugging is not available in this environment or IDE.")
@@ -339,6 +369,7 @@ internal suspend fun executeResolvedRunConfiguration(
     project = project,
     resolvedConfiguration = resolvedConfiguration,
     executor = executor,
+    processCallbackDelegate = processCallbackDelegate,
   )
   val exitCode = if (waitForExit) awaitExitCode(startedExecution.exitCodeDeferred, timeout) else null
   if (exitCode != null) {
@@ -375,6 +406,7 @@ private suspend fun startResolvedRunConfiguration(
   project: Project,
   resolvedConfiguration: ResolvedRunConfiguration,
   executor: Executor,
+  processCallbackDelegate: ProgramRunner.Callback?,
 ): StartedRunConfigurationExecution {
   val startedDeferred = CompletableDeferred<StartedRunConfigurationExecution>()
 
@@ -391,6 +423,7 @@ private suspend fun startResolvedRunConfiguration(
       executorId = executor.id,
       sessionName = resolvedConfiguration.settings.name,
       startedDeferred = startedDeferred,
+      processCallbackDelegate = processCallbackDelegate,
     )
     ProgramRunnerUtil.executeConfigurationAsync(environment, false, true, callback)
   }
@@ -411,8 +444,10 @@ private fun createProcessCallback(
   executorId: String,
   sessionName: String,
   startedDeferred: CompletableDeferred<StartedRunConfigurationExecution>,
+  processCallbackDelegate: ProgramRunner.Callback?,
 ): ProgramRunner.Callback = object : ProgramRunner.Callback {
   override fun processNotStarted(error: Throwable?) {
+    processCallbackDelegate?.processNotStarted(error)
     startedDeferred.completeExceptionally(
       error ?: IllegalStateException("Process not started by some reasons. Probably build process failed."))
   }
@@ -474,6 +509,9 @@ private fun createProcessCallback(
       sessionName = sessionName,
       descriptor = descriptor,
     )
+    // The delegate lets tool-specific code inspect the fresh RunContentDescriptor before processHandler.startNotify().
+    // This keeps debugger-mcp session tweaks out of the generic execution helper and avoids debugger internals here.
+    processCallbackDelegate?.processStarted(descriptor)
     startedDeferred.complete(
       StartedRunConfigurationExecution(
         descriptor = descriptor,

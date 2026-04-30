@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.xdebugger.XExpression;
 import kotlinx.coroutines.flow.MutableStateFlow;
@@ -17,6 +18,13 @@ import static com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt.create
 
 public class XDebugSessionData extends UserDataHolderBase {
   public static final DataKey<XDebugSessionData> DATA_KEY = DataKey.create("XDebugSessionData");
+  /**
+   * Prevents a breakpoint pause in this session from attracting the debugger UI/tool window.
+   * Put this key into the corresponding {@code XDebugSessionImpl.sessionData}.
+   * Used by backend-driven debugger control flows that still need normal pause state updates.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> SUPPRESS_BREAKPOINT_ATTRACTION = Key.create("XDebugSessionData.SuppressBreakpointAttraction");
 
   private final @NotNull String myConfigurationName;
   private final MutableStateFlow<Boolean> myBreakpointsMutedFlow = createMutableStateFlow(false);
