@@ -11,7 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.jackson.writeNumberField
@@ -49,7 +49,7 @@ internal class BuiltInServerDiscoveryService(private val coroutineScope: Corouti
     fun getInstance(): BuiltInServerDiscoveryService = service()
   }
 
-  private val enabled = Registry.`is`("ij.platform.experimental.discoverability", false)
+  private val enabled = RegistryManager.getInstance().`is`("ij.platform.experimental.discoverability")
   private val ready = CompletableDeferred<Unit>()
   private lateinit var jsonFile: Path
   private lateinit var serverAddress: InetAddress
@@ -250,6 +250,8 @@ internal class BuiltInServerDiscoveryService(private val coroutineScope: Corouti
 
 internal class BuiltInServerDiscoveryServiceLauncher : ApplicationActivity {
   override suspend fun execute() {
-    serviceAsync<BuiltInServerDiscoveryService>()
+    if (RegistryManager.getInstanceAsync().`is`("ij.platform.experimental.discoverability")) {
+      serviceAsync<BuiltInServerDiscoveryService>()
+    }
   }
 }
