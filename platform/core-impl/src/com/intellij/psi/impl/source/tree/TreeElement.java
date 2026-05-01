@@ -20,22 +20,47 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.VarHandleWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable, LighterASTNode {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
+
+  /**
+   * The threshold after which we try to clean up stale versions. There is no particular reason behind this number, it was chosen empirically.
+   */
+  private static final int GARBAGE_COLLECTION_LIMIT = 4;
+
   private TreeElement myNextSibling;
   private TreeElement myPrevSibling;
   private CompositeElement myParent;
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
+
+  /**
+   * The version (of versioned PSI feature) when this element is created.
+   * <p>
+   * We use this field to optimize memory usage of versioned graph edges.
+   * In the most frequent scenario, the edge is set once at the creation of the class, and then it does not change.
+   * It would be wasteful to allocate a new object for such cases, and it indeed leads to extremely high memory usage.
+   * So instead we store the version at the level of a graph node, and it is implicitly associated with the values in edges.
+   * If an edge is represented by a {@link VersionedPayloadMap}, then {@link creationVersion} has no effect.
+   * <p>
+   * If {@link creationVersion} is equal to `-1`, then this element is non-versioned.
+   */
+  // not final because of `clone`
+  private volatile long creationVersion = InternalPsiVersioning.getCreationPsiVersionForElement();
 
   public TreeElement(@NotNull IElementType type) {
     myType = type;
@@ -44,6 +69,85 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   private static PsiFileImpl getCachedFile(@NotNull TreeElement each) {
     FileElement node = (FileElement)SharedImplUtil.findFileElement(each);
     return node == null ? null : (PsiFileImpl)node.getCachedPsi();
+  }
+
+  /**
+   * This function performs a lock-free modification of an edge in the graph.
+   */
+  @ApiStatus.Internal
+  protected void setVersionedField(@NotNull VarHandleWrapper wrapper, long version, @Nullable Object payload) {
+    while (true) { // loop because of compareAndSet
+      Object currentlyStoredValue = wrapper.getVolatile(this);
+      boolean isExpanded = currentlyStoredValue instanceof VersionedPayloadMap;
+      if (version == this.creationVersion && !isExpanded) {
+        if (currentlyStoredValue == payload) {
+          return;
+        }
+        if (wrapper.compareAndSet(this, currentlyStoredValue, payload)) {
+          return;
+        }
+      }
+      else if (isExpanded) {
+        VersionedPayloadMap versionedMap = (VersionedPayloadMap)currentlyStoredValue;
+        VersionedPayloadMap newMap = versionedMap.insert(version, payload);
+        if (newMap != null && !wrapper.compareAndSet(this, currentlyStoredValue, newMap)) {
+          continue;
+        }
+        if (newMap != null && versionedMap.size() > GARBAGE_COLLECTION_LIMIT) {
+          // if a map is too big, we make an attempt to compact it.
+          runGarbageCollection(wrapper, newMap);
+        }
+        return;
+      }
+      else {
+        // now we need to perform a transition from direct reference to a map of versions
+        VersionedPayloadMap expanded = VersionedPayloadMap.create(creationVersion, currentlyStoredValue, version, payload);
+        if (wrapper.compareAndSet(this, currentlyStoredValue, expanded)) {
+          return;
+        }
+      }
+    }
+  }
+
+  /**
+   * A procedure to clean up stale versions.
+   * First, cleanup is relevant only for maps -- only then we know that there are multiple versions, of which some can be cleaned up.
+   * Second, since maps are based on atomic references, the cleanup itself is wait-free -- it makes an attempt to remove stale values.
+   * Third, we do not do a traditional compare-and-swap loop here -- if an attempt of garbage collection fails,
+   * then it means that someone else made progress, and they themselves will initiate another round of garbage collection.
+   */
+  private void runGarbageCollection(@NotNull VarHandleWrapper wrapper, @NotNull VersionedPayloadMap versionedMap) {
+    PsiVersionRegistry service = PsiVersionRegistry.getInstance();
+    long minVersion = Long.MAX_VALUE;
+    for (long l : service.getFrozenKeys()) {
+      minVersion = Long.min(minVersion, l);
+    }
+    long finalMinVersion = minVersion;
+    VersionedPayloadMap newMap = versionedMap.cleanupStaleVersions(finalMinVersion);
+    if (newMap != null) {
+      wrapper.compareAndSet(this, versionedMap, newMap);
+    }
+  }
+
+  /**
+   * This function performs wait-free retrieval of an edge in the graph by version.
+   * Technically, we could use `VarHandle` here, but it is more compiler-friendly to read the field directly.
+   */
+  @ApiStatus.Internal
+  protected @Nullable Object getVersionedField(Object currentlyStoredValue, long version) {
+    if (currentlyStoredValue instanceof VersionedPayloadMap) {
+      VersionedPayloadMap map = (VersionedPayloadMap)currentlyStoredValue;
+      return map.lowerBound(version);
+    }
+    else {
+      // this is directly stored field, so we can return it right away.
+      if (version >= creationVersion) {
+        return currentlyStoredValue;
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   @Override
@@ -469,4 +573,3 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return false;
   }
 }
-

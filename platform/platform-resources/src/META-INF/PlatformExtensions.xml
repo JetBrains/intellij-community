@@ -1564,6 +1564,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
 
+    <postStartupActivity implementation="com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning$PsiVersioningWriteActionActivity"/>
+
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
 
