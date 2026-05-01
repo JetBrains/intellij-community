@@ -55,6 +55,8 @@
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
 
+    <registryKey key="ij.platform.experimental.discoverability" defaultValue="false" restartRequired="true"
+                 description="Enables the experimental IDE instances discoverability mechanism via '~/.intellij/*' files"/>
     <applicationActivity implementation="org.jetbrains.ide.BuiltInServerDiscoveryServiceLauncher"/>
 
     <builtInServerInfoContributor implementation="org.jetbrains.ide.OpenedProjectRootsContributor"/>
