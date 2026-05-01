@@ -4,7 +4,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * Docker container with python and ssh. Login with `user:123@127.0.0.1:${sshContainer.sshPort}`
+ * Docker container with python, uv, and ssh. Login with `user:123@127.0.0.1:${sshContainer.sshPort}`
  * ```kotlin
  * @Testcontainers
  * class PySshDockerTest {
