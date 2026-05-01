@@ -12,8 +12,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleJava.run.usesComposeGradlePlugin
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 @Order(ExternalSystemConstants.UNORDERED + 2) // should run after KotlinMppGradleProjectResolver
 internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtension() {
@@ -27,23 +30,28 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
     super.populateModuleExtraModels(gradleModule, ideModule)
     if (!usesComposeGradlePlugin(ideModule)) return
     val mppModel = resolverCtx.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)
+    val kotlinGradleModel = resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)
     val composeResourcesModel = resolverCtx.getExtraProject(gradleModule, ComposeResourcesModel::class.java)
     val customComposeResourcesDirs = composeResourcesModel?.customComposeResourcesDirs.orEmpty()
     log.info("Custom composeResources registered for ${gradleModule.name}: $customComposeResourcesDirs")
-    // If mppModel is null, use the keys we have
     if (mppModel == null) {
-      log.info("ComposeResources: MPP model null for ${gradleModule.name}. Falling back to custom keys: ${customComposeResourcesDirs.keys}")
+      log.info(
+        "ComposeResources: MPP model null for ${gradleModule.name}. " +
+        "Kotlin target: ${kotlinGradleModel?.kotlinTarget}; " +
+        "Kotlin sourceSets: ${kotlinGradleModel?.compilerArgumentsBySourceSet?.keys}; custom keys: ${customComposeResourcesDirs.keys}"
+      )
     }
     else {
       log.info("ComposeResources: Found MPP model for ${gradleModule.name}. Using sourceSets: ${mppModel.sourceSetsByName.keys}")
     }
-    val sourceSetKeys = mppModel?.sourceSetsByName?.keys ?: customComposeResourcesDirs.keys
-    val composeResourcesDirs = gradleModule.commonComposeResourcesDirs() + sourceSetKeys
-      .associateWith { sourceSetName ->
-        val defaultComposeResourcesDir = gradleModule.defaultComposeResourcesDirFor(sourceSetName)
-        customComposeResourcesDirs[sourceSetName]
-          ?.let { /*directoryPath*/ it.first to /*isCustom*/ true } ?: (defaultComposeResourcesDir to /*isCustom*/ false)
-      }
+
+    val composeResourcesDirs = composeResourcesDirsBySourceSetName(
+      projectDirectory = gradleModule.gradleProject.projectDirectory.toPath(),
+      mppSourceSetNames = mppModel?.sourceSetsByName?.keys,
+      compiledKotlinSourceSetNames = kotlinGradleModel?.compiledSourceSetNames(),
+      isAndroidKotlinProject = kotlinGradleModel?.isAndroidKotlinProject() == true,
+      customComposeResourcesDirs = customComposeResourcesDirs,
+    )
 
     val isPublicResClass = composeResourcesModel?.isPublicResClass ?: false
     val nameOfResClass = composeResourcesModel?.nameOfResClass ?: "Res"
@@ -57,23 +65,44 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
     ideModule.createChild(COMPOSE_RESOURCES_KEY, composeResources)
   }
 
-  /**
-   * Provide common composeResources default dirs even for single target Compose projects
-   * for which mppModel doesn't list common source sets
-   */
-  private fun IdeaModule.commonComposeResourcesDirs(): Map<String, Pair<String, Boolean>> =
-    mapOf(
-      "commonMain" to (defaultComposeResourcesDirFor("commonMain") to /*isCustom*/ false),
-      "commonTest" to (defaultComposeResourcesDirFor("commonTest") to /*isCustom*/ false),
-    )
+  private fun KotlinGradleModel.isAndroidKotlinProject(): Boolean = kotlinTarget == KOTLIN_ANDROID
 
-  private fun IdeaModule.defaultComposeResourcesDirFor(sourceSetName: String): String = gradleProject.projectDirectory
-    .resolve("src")
-    .resolve(sourceSetName)
-    .resolve(COMPOSE_RESOURCES_DIR)
-    .absolutePath
+  private fun KotlinGradleModel.compiledSourceSetNames(): Set<String> {
+    // KotlinGradleModelBuilder keeps a key for every source set selected for Kotlin compilation,
+    // respecting Android variant requests. Compiler arguments may be empty, so the keys are the stable signal.
+    // A missing key means the source set is not compiled/imported.
+    return compilerArgumentsBySourceSet.keys
+  }
 
   companion object {
     val log = Logger.getInstance(this::class.java)
+
+    private const val KOTLIN_ANDROID = "kotlin-android"
   }
 }
+
+internal fun composeResourcesDirsBySourceSetName(
+  projectDirectory: Path,
+  mppSourceSetNames: Collection<String>?,
+  compiledKotlinSourceSetNames: Collection<String>?,
+  isAndroidKotlinProject: Boolean,
+  customComposeResourcesDirs: Map<String, Pair<String, Boolean>>,
+): Map<String, Pair<String, Boolean>> {
+  val defaultSourceSetNames = when {
+    mppSourceSetNames != null -> commonComposeResourcesSourceSetNames + mppSourceSetNames
+    isAndroidKotlinProject -> androidComposeResourcesSourceSetNames
+    compiledKotlinSourceSetNames != null -> compiledKotlinSourceSetNames
+    else -> commonComposeResourcesSourceSetNames
+  }
+
+  return buildMap {
+    defaultSourceSetNames.forEach { put(it, projectDirectory.defaultComposeResourcesDirFor(it) to /*isCustom*/ false) }
+    putAll(customComposeResourcesDirs)
+  }
+}
+
+private val commonComposeResourcesSourceSetNames = setOf("commonMain", "commonTest")
+private val androidComposeResourcesSourceSetNames = setOf("main")
+
+private fun Path.defaultComposeResourcesDirFor(sourceSetName: String): String =
+  resolve("src", sourceSetName, COMPOSE_RESOURCES_DIR).absolutePathString()
