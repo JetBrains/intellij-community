@@ -6,6 +6,8 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.ThreadScopeCheckpoint
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 @Internal
 @ApiStatus.ScheduledForRemoval
@@ -135,19 +138,27 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
 private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.launch(indicatorWatcherDispatcher + CoroutineName("indicator watcher")) {
-    while (!indicator.isCanceled) {
-      delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+    while (true) {
+      try {
+        indicator.checkCanceled()
+        if (indicator.isCanceled) {
+          indicator.checkCanceled()
+          logger<ProgressIndicator>().error("A cancelled indicator must throw PCE. Error for $indicator of class ${indicator.javaClass.name}")
+          throw ProcessCanceledException()
+        }
+      }
+      catch (pce: ProcessCanceledException) {
+        job.cancel(IndicatorCancellationException(pce))
+        return@launch
+      }
+      delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS.milliseconds)
     }
-    try {
-      indicator.checkCanceled()
-      error("A cancelled indicator must throw PCE")
-    }
-    catch (pce: ProcessCanceledException) {
-      job.cancel(IndicatorCancellationException(pce))
-    }
+
   }
 }
 
 // use elasticity property of the IO dispatcher
 @OptIn(ExperimentalCoroutinesApi::class)
 private val indicatorWatcherDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(parallelism = 1)
+
+
