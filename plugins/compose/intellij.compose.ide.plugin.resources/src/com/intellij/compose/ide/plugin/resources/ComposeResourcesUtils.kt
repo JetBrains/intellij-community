@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import java.nio.file.Path
 
 internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
@@ -26,14 +27,22 @@ internal fun String.isValidInnerComposeResourcesDirNameFor(dirNames: Set<String>
 
 internal val String.withoutExtension: String get() = substringBeforeLast(".")
 
-/** Returns sourceSet name from a module name
+/**
+ * Returns sourceSet name from a module name as expected by the Compose resources model
  *
  * - `projectName.composeApp.commonMain` -> `commonMain`
  * - `projectName.composeApp.iosMain` -> `iosMain`
- * - except for the main Android module which should be `projectName.composeApp.main` -> `androidMain`
+ *
+ * Notable cases:
+ * - `projectName.composeApp.desktopMain` -> `desktopMain` (old project layout)
+ * - `projectName.desktopApp.main` -> `main` (new project layout)
+ *
+ * - `projectName.composeApp.main` -> `androidMain` (old project layout)
+ * - `projectName.shared.androidMain` -> `androidMain` (new project layout)
+ * - `projectName.app.androidApp.main` -> `main` (new project layout)
  */
 private fun Module.getSourceSetNameFromComposeResourcesDir(): String =
-  name.substringAfterLast('.').takeUnless { it == "main" } ?: "androidMain"
+  name.substringAfterLast('.').takeUnless { isAndroidModule() && it == "main" } ?: "androidMain"
 
 /**
  * Retrieves the module name for the Compose resources task of the given module.
