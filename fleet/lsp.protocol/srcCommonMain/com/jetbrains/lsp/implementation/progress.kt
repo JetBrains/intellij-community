@@ -8,6 +8,7 @@ import com.jetbrains.lsp.protocol.StringOrInt
 import com.jetbrains.lsp.protocol.Window
 import com.jetbrains.lsp.protocol.WorkDoneProgress
 import com.jetbrains.lsp.protocol.WorkDoneProgressCreateParams
+import fleet.util.UID
 import fleet.util.async.catching
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -18,63 +19,68 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 fun interface ProgressReporter {
-  companion object {
-    val NOOP: ProgressReporter = ProgressReporter {}
-  }
+    companion object {
+        val NOOP: ProgressReporter = ProgressReporter {}
+    }
 
-  fun report(progress: WorkDoneProgress)
+    fun report(progress: WorkDoneProgress)
 }
 
-suspend fun LspClient.withServerInitiatedProgress(
+suspend fun<T> LspClient.withServerInitiatedProgress(
     capabilities: ClientCapabilities,
     beginTitle: String,
-    body: suspend CoroutineScope.(ProgressReporter) -> WorkDoneProgress.End,
-) {
+    body: suspend CoroutineScope.(ProgressReporter) -> T,
+): T {
     val token = when {
         capabilities.window?.workDoneProgress == true -> {
-            val token = ProgressToken(StringOrInt.int(42))
+            val token = ProgressToken(StringOrInt.string(UID.random().id))
             catching {
                 request(Window.CreateProgress, WorkDoneProgressCreateParams(token))
             }
             token
         }
+
         else -> null
     }
-    withProgress(token, beginTitle) { progress ->
+    return withProgress(token, beginTitle) { progress ->
         body(progress)
     }
 }
 
-suspend fun LspClient.withProgress(
+suspend fun<T> LspClient.withProgress(
     token: ProgressToken?,
     beginTitle: String,
-    body: suspend CoroutineScope.(ProgressReporter) -> WorkDoneProgress.End,
-) {
-  coroutineScope {
-    when (token) {
-      null -> body(ProgressReporter.NOOP)
-      else -> {
-        val beginProgress = WorkDoneProgress.Begin(title = beginTitle)
-        notify(
-          LSP.ProgressNotificationType,
-          ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), beginProgress)),
-        )
+    body: suspend CoroutineScope.(ProgressReporter) -> T,
+): T =
+    coroutineScope {
+        when (token) {
+            null -> body(ProgressReporter.NOOP)
+            else -> {
+                val beginProgress = WorkDoneProgress.Begin(title = beginTitle)
+                notify(
+                    LSP.ProgressNotificationType,
+                    ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), beginProgress)),
+                )
 
-        val state = MutableStateFlow<WorkDoneProgress?>(null)
-        val endProgress = launch {
-          state.filterNotNull().collect { p ->
-            notify(LSP.ProgressNotificationType, ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), p)))
-            delay(100.milliseconds)
-          }
-        }.use {
-          body(ProgressReporter { p -> state.value = p })
+                val state = MutableStateFlow<WorkDoneProgress?>(null)
+                try {
+                    launch {
+                        state.filterNotNull().collect { p ->
+                            notify(
+                                LSP.ProgressNotificationType,
+                                ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), p))
+                            )
+                            delay(100.milliseconds)
+                        }
+                    }.use {
+                        body(ProgressReporter { p -> state.value = p })
+                    }
+                } finally {
+                    notify(
+                        LSP.ProgressNotificationType,
+                        ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), WorkDoneProgress.End()))
+                    )
+                }
+            }
         }
-
-        notify(
-          LSP.ProgressNotificationType,
-          ProgressParams(token, LSP.json.encodeToJsonElement(WorkDoneProgress.serializer(), endProgress))
-        )
-      }
     }
-  }
-}
