@@ -2,8 +2,12 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +42,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,6 +92,7 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
+import java.awt.Cursor
 import java.awt.datatransfer.DataFlavor
 import javax.swing.JComponent
 
@@ -159,6 +166,21 @@ class WelcomeScreenRightTab(
             Spacer(modifier = Modifier.height(32.dp))
 
             FeatureGrid(modifier = Modifier.wrapContentSize(Alignment.Center))
+
+            val additionalLinks = contentProvider.getAdditionalLinks(project)
+            if (additionalLinks.isNotEmpty()) {
+              Spacer(modifier = Modifier.height(24.dp))
+              Column(
+                modifier = Modifier.wrapContentSize(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                for (link in additionalLinks) {
+                  WelcomeScreenLink(link)
+                }
+              }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             WelcomeScreenRightTabBannerProvider.SingleBanner(project, modifier = Modifier.wrapContentSize(Alignment.Center))
@@ -459,6 +481,43 @@ class WelcomeScreenRightTab(
       metrics = customMetrics,
       focusOutlineAlignment = defaultButtonStyle.focusOutlineAlignment
     )
+  }
+
+  @Composable
+  private fun WelcomeScreenLink(model: WelcomeRightTabContentProvider.LinkModel) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val restingColor = model.tint.takeIf { it != Color.Unspecified } ?: fontColor
+    val textColor = if (isHovered) {
+      model.tintHovered.takeIf { it != Color.Unspecified } ?: restingColor
+    } else {
+      restingColor
+    }
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(4.dp),
+      modifier = Modifier
+        .pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
+        .hoverable(interactionSource)
+        .clickable(
+          interactionSource = interactionSource,
+          indication = null,
+          onClick = { model.onClick(project) },
+        ),
+    ) {
+      Text(
+        text = model.text,
+        color = textColor,
+        fontSize = 13.sp,
+        lineHeight = 16.sp,
+      )
+      Icon(
+        key = AllIconsKeys.Ide.External_link_arrow,
+        contentDescription = null,
+        tint = restingColor,
+        modifier = Modifier.size(14.dp),
+      )
+    }
   }
 
 

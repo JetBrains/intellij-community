@@ -22,6 +22,7 @@ import javax.swing.JComponent
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   fun createButtonsComponent(): JComponent {
     val actionManager = ActionManager.getInstance()
+    // TODO: Do something with the action group. Now it only is present in Rider
     var group = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? ActionGroup)
     if (group == null) {
       group = DefaultActionGroup()

@@ -56,6 +56,20 @@ interface WelcomeRightTabContentProvider {
     val onClick: (Project, CoroutineScope) -> Unit,
   )
 
+  @Composable
+  fun getAdditionalLinks(project: Project): List<LinkModel> = emptyList()
+
+  /**
+   * Optional link rendered below the feature grid (above the banner) on the welcome right tab.
+   * Rendered as an external link with the standard external-arrow icon.
+   */
+  class LinkModel(
+    val text: @Nls String,
+    val onClick: (Project) -> Unit,
+    val tint: Color = Color.Unspecified,
+    val tintHovered: Color = Color.Unspecified,
+  )
+
   /**
    * Base feature button model. Use for frontend-only features.
    * For backend-based features, use [FeatureButtonModelWithBackend] and
