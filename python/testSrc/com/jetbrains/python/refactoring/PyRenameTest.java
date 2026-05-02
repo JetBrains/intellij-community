@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -177,6 +178,11 @@ public class PyRenameTest extends PyTestCase {
   // PY-4200
   public void testRenameUpdatesImportReferences() {
     doMultiFileTest("baz.py");
+  }
+
+  @TestFor(issues="PY-53274")
+  public void testRenameModule() {
+    doMultiFileTest("module.py", "__init__.py");
   }
 
   // PY-3991
