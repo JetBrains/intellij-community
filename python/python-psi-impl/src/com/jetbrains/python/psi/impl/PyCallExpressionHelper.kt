@@ -238,26 +238,20 @@ object PyCallExpressionHelper {
     val result = mutableListOf<PyCallableType>()
 
     for (type in calleeType.toStream()) {
-      // When invoking cls(), turn type[Self] into Self.
-      // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
-      // as a call result, losing Self.
-      // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
-      if (type is PySelfType) {
-        result.add(type)
-      }
-      else if (type is PyClassType) {
-        val implicitlyInvokedMethods =
-          forEveryScopeTakeOverloadsOtherwiseImplementations(resolveImplicitlyInvokedMethods(type, expression, resolveContext), context)
-
-        if (implicitlyInvokedMethods.isEmpty()) {
+      when (type) {
+        // When invoking cls(), turn type[Self] into Self.
+        // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
+        // as a call result, losing Self.
+        // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
+        is PySelfType -> {
           result.add(type)
         }
-        else {
-          result.addAll(changeToImplicitlyInvokedMethods(type, implicitlyInvokedMethods, expression, context))
+        is PyClassType -> {
+          result.addAll(createCallableFromClass(type, expression, resolveContext))
         }
-      }
-      else if (type is PyCallableType) {
-        result.add(type)
+        is PyCallableType -> {
+          result.add(type)
+        }
       }
     }
 
@@ -935,6 +929,33 @@ object PyCallExpressionHelper {
     return map.values.find { it.isKeywordContainer }
   }
 
+  /**
+   * If [type] is a class definition, synthesizes the class constructor.
+   * If [type] is a class instance, resolves its `__call__` method.
+   * Returns a single function or a list of overloads.
+   */
+  private fun createCallableFromClass(
+    type: PyClassType,
+    call: PyCallExpression,
+    resolveContext: PyResolveContext,
+  ): List<PyCallableType> {
+    val context = resolveContext.typeEvalContext
+    val implicitlyInvokedMethods = resolveImplicitlyInvokedMethods(type, call, resolveContext)
+
+    return forEveryScopeTakeOverloadsOtherwiseImplementations(implicitlyInvokedMethods, context)
+      .mapNotNull { method ->
+        if (method !is PyTypedElement) return@mapNotNull null
+        val resolveResult = ClarifiedResolveResult(
+          QualifiedRatedResolveResult(type.pyClass, listOf(), RatedResolveResult.RATE_NORMAL, false),
+          method,
+          null,
+          type.isDefinition
+        )
+        toCallableType(call, resolveResult, context.getType(method), context)
+      }
+      .ifEmpty { listOf(type) }
+  }
+
   @JvmStatic
   fun resolveImplicitlyInvokedMethods(
     type: PyClassType,
@@ -951,27 +972,6 @@ object PyCallExpressionHelper {
   ): List<PyTypeMember> {
     return if (type.isDefinition()) getConstructorTypes(type, resolveContext)
     else type.findMember(PyNames.CALL, resolveContext)
-  }
-
-  private fun changeToImplicitlyInvokedMethods(
-    type: PyClassType,
-    implicitlyInvokedMethods: List<PsiElement>,
-    call: PyCallExpression,
-    context: TypeEvalContext,
-  ): List<PyCallableType> {
-    return implicitlyInvokedMethods
-      .map {
-        ClarifiedResolveResult(
-          QualifiedRatedResolveResult(type.pyClass, listOf(), RatedResolveResult.RATE_NORMAL, false),
-          it,
-          null,
-          type.isDefinition
-        )
-      }
-      .mapNotNull {
-        val clarifiedResolved = it.clarifiedResolved as? PyTypedElement ?: return@mapNotNull null
-        toCallableType(call, it, context.getType(clarifiedResolved), context)
-      }
   }
 
   private fun resolveConstructors(
