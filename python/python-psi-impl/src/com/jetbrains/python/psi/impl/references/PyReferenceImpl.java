@@ -69,7 +69,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -504,13 +503,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode nameElement = myElement.getNameElement();
-    for (PsiElement resolved : PyUtil.multiResolveTopPriority(myElement, myContext)) {
-      if (resolved instanceof PyFile && newElementName.endsWith(PyNames.DOT_PY)) {
-        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
-      }
-      else if (resolved instanceof PyiFile && newElementName.endsWith(PyNames.DOT_PYI)) {
-        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
-      }
+    // there is a case where the file has already been renamed when this function is invoked
+    //  so we can't resolve `myElement` to determine if it's actually a PyFile
+    if (newElementName.endsWith(PyNames.DOT_PY)) {
+      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
+    }
+    else if (newElementName.endsWith(PyNames.DOT_PYI)) {
+      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
     }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
       final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
