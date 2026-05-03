@@ -242,7 +242,8 @@ internal class ProxySettingsUi(
       withContext(Dispatchers.IO) {
         try {
           val client = PlatformHttpClient.client()
-          val request = PlatformHttpClient.requestBuilder(URI(url)).timeout(Duration.ofSeconds(3)).build()
+          val uri = URI(url).takeIf { it.scheme != null } ?: URI("https://$url")
+          val request = PlatformHttpClient.requestBuilder(uri).timeout(Duration.ofSeconds(3)).build()
           JdkProxyProvider.toggleProxyAuthNotification(suppress = true)
           PlatformHttpClient.send(client, request, HttpResponse.BodyHandlers.discarding())
         }

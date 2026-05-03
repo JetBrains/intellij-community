@@ -103,7 +103,7 @@ public final class PlatformHttpClient {
 
   /// Uses the given URI to construct a preconfigured [HttpRequest.Builder].
   public static HttpRequest.@NotNull Builder requestBuilder(@NotNull URI uri) {
-    return (uri.getScheme().equals("file") ? new FileRequestBuilder().uri(uri) : HttpRequest.newBuilder(uri))
+    return ("file".equals(uri.getScheme()) ? new FileRequestBuilder().uri(uri) : HttpRequest.newBuilder(uri))
       .timeout(Duration.ofMillis(HttpRequests.READ_TIMEOUT))
       .header("User-Agent", userAgent());
   }
