@@ -135,6 +135,9 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection$EmptyPackageHighlightingFallback"
+                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection$EmptyPackageHighlightingFallback$WholeFile"/>
   </extensions>
 
   <extensionPoints>
