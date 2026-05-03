@@ -19,8 +19,8 @@ import kotlinx.serialization.Serializable
 data class UndoOperationType(val id: String, val version: Int)
 
 /**
-  * Basic interface to provide custom undo logic for arbitrary state.
-  */
+ * Basic interface to provide custom undo logic for arbitrary state.
+ */
 interface UndoOperation<T> {
   fun undo(data: T)
   fun redo(data: T)
@@ -47,8 +47,8 @@ data class UndoInfo(
 
   val groupKey: UndoGroupKey
     get() =
-    if (isRedo) RedoUndoGroupKey(groupsToUndo, description)
-    else UndoUndoGroupKey(groupsToUndo, description)
+      if (isRedo) RedoUndoGroupKey(groupsToUndo, description)
+      else UndoUndoGroupKey(groupsToUndo, description)
 }
 
 // sorted from oldest to newest
@@ -101,26 +101,39 @@ fun redoInfo(document: Document, undoLog: UndoLog): UndoInfo? {
                       undoLog = undoLog)
 }
 
-fun EditLog.composeSpreadInverted(entryIndexFrom: Long,
-                                  entryIndexTo: Long, entryIndices: List<Long>): Operation {
+/**
+ * It's a "spread invert" — selectively undo only certain edits from a range,
+ * correctly rebasing around the ones being skipped. This is the core of
+ * non-contiguous undo (e.g. undoing edit #3 when edits #4 and #5 happened after it).
+ */
+fun EditLog.composeSpreadInverted(
+  entryIndexFrom: Long,
+  entryIndexTo: Long,
+  entryIndices: List<Long>,
+): Operation {
   val editLog = this
   var undoOperation = Operation.empty()
   val indexedFragment = editLog.slice(entryIndexFrom, entryIndexTo) zip (entryIndexFrom.toInt() until entryIndexTo.toInt())
-  indexedFragment.chunkedBy { it.second.toLong() in entryIndices }.chunked(2).map { pair ->
-    val includePart = pair.first()
-    undoOperation = includePart.map { it.first }.compose().invert().compose(undoOperation)
-    val excludePart = pair.getOrNull(1)
-    if (excludePart != null) {
-      undoOperation = undoOperation.transform(excludePart.map { it.first }.compose(), Sticky.LEFT)
+  indexedFragment
+    .chunkedBy { it.second.toLong() in entryIndices }
+    .chunked(2)
+    .forEach { pair ->
+      val includePart = pair.first()
+      undoOperation = includePart.map { it.first }.compose().invert().compose(undoOperation)
+      val excludePart = pair.getOrNull(1)
+      if (excludePart != null) {
+        undoOperation = undoOperation.transform(excludePart.map { it.first }.compose(), Sticky.LEFT)
+      }
     }
-  }
   return undoOperation
 }
 
-private fun undoRedoInfo(document: Document,
-                         isRedo: Boolean,
-                         groupsToUndoRange: List<CustomIndexedValue<UndoGroupReference, AbstractUndoGroup>>,
-                         undoLog: UndoLog): UndoInfo {
+private fun undoRedoInfo(
+  document: Document,
+  isRedo: Boolean,
+  groupsToUndoRange: List<CustomIndexedValue<UndoGroupReference, AbstractUndoGroup>>,
+  undoLog: UndoLog
+): UndoInfo {
 
   val groupsToUndoReferences = groupsToUndoRange.map { it.index }
   val groupsToUndoAttributes = groupsToUndoRange.map { it.value.attributes }
@@ -173,7 +186,8 @@ private fun List<CaretPosition>.rebase(base: Operation): List<CaretPosition> = m
 
 fun UndoLogData.addGroupChange(newGroup: DocumentUndoGroup, document: Document): UndoLogData.UndoLogChange {
   val editList = newGroup.entryIndices.map { document.edits[it] }
-  val includeIntoLog = newGroup.globalGroups.isNotEmpty() || newGroup.attributes.map[UndoGroupAttributes.includeIntoLog] ?: !editList.all { it.isIdentity() }
+  val includeIntoLog =
+    newGroup.globalGroups.isNotEmpty() || newGroup.attributes.map[UndoGroupAttributes.includeIntoLog] ?: !editList.all { it.isIdentity() }
   if (!includeIntoLog) {
     return if (newGroup.caretStateBefore == newGroup.caretStateAfter)
       UndoLogData.UndoLogChange(null, -1, this.openForMerge)
