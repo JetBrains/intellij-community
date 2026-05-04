@@ -55,6 +55,7 @@ data class BuildGradleModelDebuggerOptions(
 
 fun <T : Any> buildGradleModel(
     projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>,
+    builderClass: Class<*>? = null,
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
@@ -92,7 +93,7 @@ fun <T : Any> buildGradleModel(
         val executionSettings = GradleExecutionSettings()
         val targetPathMapperInitScript = createTargetPathMapperInitScript()
         executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
-        val kotlinToolingExtensionClasses = setOf(
+        val kotlinToolingExtensionClasses = mutableSetOf(
             /* Representative of the `gradle-tooling` module */
             KotlinMPPGradleModelBuilder::class.java,
 
@@ -105,6 +106,9 @@ fun <T : Any> buildGradleModel(
             /* Representative of the `kotlin-gradle-plugin-idea` library */
             IdeaKotlinDependency::class.java,
         )
+        if (builderClass != null) {
+            kotlinToolingExtensionClasses.add(builderClass)
+        }
         val initScript = createMainInitScript(false, kotlinToolingExtensionClasses)
         executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
 

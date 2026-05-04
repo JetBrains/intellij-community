@@ -282,6 +282,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
             GradleVersion.version(gradleVersion),
             requireJdkHome(),
             clazz,
+            null,
             debuggerOptions
         )
 

@@ -14,15 +14,16 @@ import kotlin.reflect.KClass
 
 fun <T : Any> KotlinSyncTestsContext.buildGradleModel(
     clazz: KClass<T>,
+    builderClass: Class<*>? = null,
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
     require(this is KotlinMppTestsContext) { "buildGradleModel works only with KotlinMppTestsContext"}
     return org.jetbrains.kotlin.idea.codeInsight.gradle.buildGradleModel(
-        this.testProjectRoot, testProperties.gradleVersion.version, gradleJdkPath.absolutePath, clazz, debuggerOptions
+        this.testProjectRoot, testProperties.gradleVersion.version, gradleJdkPath.absolutePath, clazz, builderClass, debuggerOptions
     )
 }
 
 fun KotlinSyncTestsContext.buildKotlinMPPGradleModel(
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
-): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(KotlinMPPGradleModelBinary::class, debuggerOptions)
+): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(KotlinMPPGradleModelBinary::class, null, debuggerOptions)
     .map { model -> ObjectInputStream(ByteArrayInputStream(model.data)).readObject() as KotlinMPPGradleModel }
