@@ -29,6 +29,9 @@ common --legacy_external_runfiles
 common --symlink_prefix=/
 common --incompatible_enable_proto_toolchain_resolution
 
+# Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
+
 # Use target platform short name (not CPU) in the output directory
 common --experimental_platform_in_output_dir
 
