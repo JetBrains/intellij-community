@@ -174,6 +174,21 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
     )
   }
 
+  fun `test __new__ attribute assignment`() {
+    doTestByText("""
+      from typing import assert_type
+
+      def func(x: type[Class], y: int) -> str:
+          raise NotImplementedError
+
+      class Class:
+          __new__ = func
+
+      Class(<warning descr="Parameter 'y' unfilled">)</warning>
+      assert_type(Class(1), str)
+    """.trimIndent())
+  }
+
   fun `test __init__ solves type vars left unsolved by __new__`() {
     doTestByText("""
       from typing import assert_type, Self
@@ -230,5 +245,19 @@ internal class PyConstructorTypeTest : PyInspectionTestCase() {
       MyClass[int]()
       <warning descr="Expected type 'MyClass[int]', got 'MyClass[str]' instead">MyClass[str]</warning>()
       """.trimIndent())
+  }
+
+  fun `test __init__ attribute assignment`() {
+    doTestByText("""
+      from typing import assert_type
+
+      class Class[T]:
+          def initialize(self: Class[int], x: str) -> None: ...
+
+          __init__ = initialize
+
+      Class(<warning descr="Parameter 'x' unfilled">)</warning>
+      assert_type(Class("abb"), Class[int])
+    """.trimIndent())
   }
 }
