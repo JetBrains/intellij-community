@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
@@ -70,15 +71,18 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestCompletions(request)
-            .collect {
-              loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(
-                it,
-                it.groupId + ":" + it.artifactId,
-                GradleTomlLibraryCompletionPosition.MODULE,
-                parameters.isAutoPopup,
-                index++,
-              )
+            .collect { event ->
+              loadingAdvertiser.onEvent(event)
+              if (event is DependencyCompletionEvent.Item) {
+                val item = event.result
+                resultSet.addElement(
+                  item,
+                  item.groupId + ":" + item.artifactId,
+                  GradleTomlLibraryCompletionPosition.MODULE,
+                  parameters.isAutoPopup,
+                  index++,
+                )
+              }
             }
         }
       }
@@ -88,9 +92,12 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyGroupCompletionRequest(text, artifact, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestGroupCompletions(request)
-            .collect {
-              loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup, index++)
+            .collect { event ->
+              loadingAdvertiser.onEvent(event)
+              if (event is DependencyCompletionEvent.Item) {
+                val item = event.result
+                resultSet.addElement(item, item.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup, index++)
+              }
             }
         }
       }
@@ -100,9 +107,12 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyArtifactCompletionRequest(group, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestArtifactCompletions(request)
-            .collect {
-              loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup, index++)
+            .collect { event ->
+              loadingAdvertiser.onEvent(event)
+              if (event is DependencyCompletionEvent.Item) {
+                val item = event.result
+                resultSet.addElement(item, item.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup, index++)
+              }
             }
         }
       }
@@ -112,9 +122,12 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyVersionCompletionRequest(group, artifact, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestVersionCompletions(request)
-            .collect {
-              loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup, index++)
+            .collect { event ->
+              loadingAdvertiser.onEvent(event)
+              if (event is DependencyCompletionEvent.Item) {
+                val item = event.result
+                resultSet.addElement(item, item.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup, index++)
+              }
             }
         }
       }
@@ -124,15 +137,18 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestCompletions(request)
-            .collect {
-              loadingAdvertiser.onResultReceived(it)
-              resultSet.addElement(
-                it,
-                it.groupId + ":" + it.artifactId + ":" + it.version,
-                GradleTomlLibraryCompletionPosition.GAV,
-                parameters.isAutoPopup,
-                index++,
-              )
+            .collect { event ->
+              loadingAdvertiser.onEvent(event)
+              if (event is DependencyCompletionEvent.Item) {
+                val item = event.result
+                resultSet.addElement(
+                  item,
+                  item.groupId + ":" + item.artifactId + ":" + item.version,
+                  GradleTomlLibraryCompletionPosition.GAV,
+                  parameters.isAutoPopup,
+                  index++,
+                )
+              }
             }
         }
       }

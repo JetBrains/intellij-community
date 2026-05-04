@@ -7,8 +7,8 @@ import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -20,6 +20,10 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
  * - Phase 2 (local results arrived, server still pending): "Server is still being queried..."
  * - Phase 3 (server responded or timed out): "Press {ACTION_CODE_COMPLETION} to query the server"
  *
+ * If the server request times out or fails, a dedicated message is shown in place of Phase 3:
+ * - "Server query timed out. Press {ACTION_CODE_COMPLETION} to retry"
+ * - "Server unavailable. Press {ACTION_CODE_COMPLETION} to retry"
+ *
  * If the Ultimate plugin is disabled (no server access)
  * - Phase 1 (initial): "Searching for dependency libraries..."
  * - Phase 2 (all local results are shown): advertisement is cleared.
@@ -27,6 +31,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 @ApiStatus.Internal
 class DependencyCompletionLoadingAdvertiser {
   private var serverResultsReceived = isFreeMode()
+  private var terminalServerStatus: TerminalServerStatus? = null
 
   /**
    * Call before starting flow collection to show the initial loading message.
@@ -36,13 +41,29 @@ class DependencyCompletionLoadingAdvertiser {
   }
 
   /**
-   * Call for each item received from the completion flow.
+   * Call for each event received from the completion flow.
    * Automatically updates or clears the loading message based on the result source.
    */
-  fun onResultReceived(result: BaseDependencyCompletionResult) {
+  fun onEvent(event: DependencyCompletionEvent<*>) {
+    when (event) {
+      is DependencyCompletionEvent.Item -> onItem(event)
+      DependencyCompletionEvent.ServerTimedOut -> {
+        serverResultsReceived = true
+        terminalServerStatus = TerminalServerStatus.TIMED_OUT
+        onComplete()
+      }
+      is DependencyCompletionEvent.ServerFailed -> {
+        serverResultsReceived = true
+        terminalServerStatus = TerminalServerStatus.UNAVAILABLE
+        onComplete()
+      }
+    }
+  }
+
+  private fun onItem(event: DependencyCompletionEvent.Item<*>) {
     if (serverResultsReceived) return
 
-    if (result.source == DependencyCompletionContributionSource.SERVER) {
+    if (event.result.source == SERVER) {
       serverResultsReceived = true
       onComplete()
     }
@@ -61,12 +82,17 @@ class DependencyCompletionLoadingAdvertiser {
     }
 
     val shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION)
-    if (shortcut.isNotBlank()) {
-      replaceAdvertisement(GradleBundle.message("gradle.dependency.completion.server.search.tip", shortcut))
-    }
-    else {
+    if (shortcut.isBlank()) {
       clearAdvertisement()
+      return
     }
+
+    val key = when (terminalServerStatus) {
+      TerminalServerStatus.TIMED_OUT -> "gradle.dependency.completion.server.timeout"
+      TerminalServerStatus.UNAVAILABLE -> "gradle.dependency.completion.server.unavailable"
+      null -> "gradle.dependency.completion.server.search.tip"
+    }
+    replaceAdvertisement(GradleBundle.message(key, shortcut))
   }
 
   private fun replaceAdvertisement(@NlsContexts.PopupAdvertisement text: String) {
@@ -81,4 +107,13 @@ class DependencyCompletionLoadingAdvertiser {
   private fun isFreeMode(): Boolean {
     return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
   }
+
+  /**
+   * Enum representing the terminal status of a call to the dependency completion service.
+   *
+   * If the dependency completion service throws an TimeoutCancellationException from any server contributor, TIME_OUT status is set.
+   * If the service throws any other exception (except for cancellation) from any server contributor,
+   * the UNAVAILABLE status is set. This overrides a TIME_OUT status if set.
+   */
+  private enum class TerminalServerStatus { TIMED_OUT, UNAVAILABLE }
 }

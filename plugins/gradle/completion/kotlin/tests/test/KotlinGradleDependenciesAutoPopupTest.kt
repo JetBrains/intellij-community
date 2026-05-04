@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.Disposable
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -33,17 +34,17 @@ import org.junit.jupiter.params.ParameterizedTest
 class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   private val testCompletionService = object : DependencyCompletionService {
-    override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
-      flowOf(DependencyCompletionResult("myGroup", "myArtifact", "1.0", source = LOCAL))
+    override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
+      flowOf(DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup", "myArtifact", "1.0", source = LOCAL)))
 
-    override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
-      flowOf(DependencyPartCompletionResult("myGroup", LOCAL))
+    override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("myGroup", LOCAL)))
 
-    override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
-      flowOf(DependencyPartCompletionResult("myArtifact", LOCAL))
+    override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("myArtifact", LOCAL)))
 
-    override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
-      flowOf(DependencyPartCompletionResult("1.0", LOCAL))
+    override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0", LOCAL)))
   }
 
   @TestDisposable

@@ -13,10 +13,16 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
 interface DependencyCompletionService {
-  fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> = flowOf()
-  fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> = flowOf()
-  fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> = flowOf()
-  fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> = flowOf()
+  fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> = flowOf()
+
+  fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+    flowOf()
+
+  fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+    flowOf()
+
+  fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+    flowOf()
 
   companion object {
     @JvmField
@@ -76,3 +82,17 @@ data class DependencyCompletionResult(
 
 data class DependencyPartCompletionResult(val result: String, override val source: DependencyCompletionContributionSource) :
   BaseDependencyCompletionResult
+
+/**
+ * Stream item produced by [DependencyCompletionService] suggest* methods.
+ *
+ * In addition to actual [Item] results, the stream may emit terminal status events
+ * for the SERVER side: [ServerTimedOut] when the underlying request exceeded its timeout,
+ * and [ServerFailed] when the request failed for any other reason (e.g. server unreachable,
+ * RPC error). LOCAL contributors do not emit status events.
+ */
+sealed interface DependencyCompletionEvent<out T : BaseDependencyCompletionResult> {
+  data class Item<T : BaseDependencyCompletionResult>(val result: T) : DependencyCompletionEvent<T>
+  data object ServerTimedOut : DependencyCompletionEvent<Nothing>
+  data class ServerFailed(val cause: Throwable? = null) : DependencyCompletionEvent<Nothing>
+}

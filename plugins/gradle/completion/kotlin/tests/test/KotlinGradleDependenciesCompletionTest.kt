@@ -7,7 +7,8 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -48,12 +49,12 @@ import kotlin.test.assertTrue
 internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleCompletionTest() {
 
   private val testCompletionService = object : DependencyCompletionService {
-    override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+    override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
       return flowOf(
-        DependencyCompletionResult("myGroup1", "myArtifact1", "myVersion1", null, DependencyCompletionContributionSource.LOCAL),
-        DependencyCompletionResult("myGroup2", "myArtifact2", "myVersion2", null, DependencyCompletionContributionSource.LOCAL),
-        DependencyCompletionResult("myGroup3", "myArtifact3", "myVersion3", null, DependencyCompletionContributionSource.LOCAL),
-        DependencyCompletionResult("fooGroup", "compileArtifact", "barVersion", null, DependencyCompletionContributionSource.LOCAL),
+        DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup1", "myArtifact1", "myVersion1", null, LOCAL)),
+        DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup2", "myArtifact2", "myVersion2", null, LOCAL)),
+        DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup3", "myArtifact3", "myVersion3", null, LOCAL)),
+        DependencyCompletionEvent.Item(DependencyCompletionResult("fooGroup", "compileArtifact", "barVersion", null, LOCAL)),
       )
     }
   }
@@ -448,25 +449,26 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
     val substitutionResult = if (dependencyConfiguration.contains(",")) {
       val items = dependencyConfiguration.split(",")
       "${items[0]}(${items[1]}(\"g:a:v\"))"
-  } else "$dependencyConfiguration(\"g:a:v\")"
+    }
+    else "$dependencyConfiguration(\"g:a:v\")"
 
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
         return flowOf(
-          DependencyCompletionResult(
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "g",
             "a",
             "v",
             dependencyConfiguration,
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
-          DependencyCompletionResult(
+            source = LOCAL
+          )),
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "g",
             "a",
             "v2",
             dependencyConfiguration,
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
+            source = LOCAL
+          )),
         )
       }
     }, testRootDisposable)
@@ -503,20 +505,20 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
   fun `test coordinates completion in dependencies`(gradleVersion: GradleVersion, completionEscaped: String) {
     val completion = completionEscaped.unescape()
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
         return flowOf(
-          DependencyCompletionResult(
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id",
             "2.7.0",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
-          DependencyCompletionResult(
+            source = LOCAL
+          )),
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id",
             "2.7.1",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
+            source = LOCAL
+          )),
         )
       }
     }, testRootDisposable)
@@ -552,10 +554,10 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
     val completion = completionEscaped.unescape()
     val completionResult = completion.replace("<caret>", "g")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> {
+      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
         return flowOf(
-          DependencyPartCompletionResult("g", source = DependencyCompletionContributionSource.LOCAL),
-          DependencyPartCompletionResult("h", source = DependencyCompletionContributionSource.LOCAL)
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("g", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("h", source = LOCAL))
         )
       }
     }, testRootDisposable)
@@ -588,10 +590,10 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
     val completion = completionEscaped.unescape()
     val completionResult = completion.replace("<caret>", "a")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> {
+      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
         return flowOf(
-          DependencyPartCompletionResult("a", source = DependencyCompletionContributionSource.LOCAL),
-          DependencyPartCompletionResult("b", source = DependencyCompletionContributionSource.LOCAL)
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("a", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("b", source = LOCAL))
         )
       }
     }, testRootDisposable)

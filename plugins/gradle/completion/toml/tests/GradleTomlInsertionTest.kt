@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -70,8 +71,8 @@ internal class GradleTomlInsertionTest(
   fun `group completion replaces full string content`() {
     testInsertion(
       service = object : DependencyCompletionService {
-        override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("org.jetbrains.kotlin", SERVER))
+        override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+          flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.jetbrains.kotlin", SERVER)))
       },
       before = """
         [libraries]
@@ -89,8 +90,8 @@ internal class GradleTomlInsertionTest(
   fun `artifact completion replaces full string content`() {
     testInsertion(
       service = object : DependencyCompletionService {
-        override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("kotlin-stdlib", SERVER))
+        override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+          flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("kotlin-stdlib", SERVER)))
       },
       before = """
         [libraries]
@@ -108,8 +109,8 @@ internal class GradleTomlInsertionTest(
   fun `version completion replaces full string content`() {
     testInsertion(
       service = object : DependencyCompletionService {
-        override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
-          flowOf(DependencyPartCompletionResult("2.1.0", SERVER))
+        override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
+          flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("2.1.0", SERVER)))
       },
       before = """
         [libraries]
@@ -127,8 +128,13 @@ internal class GradleTomlInsertionTest(
   fun `module completion replaces full string content`() {
     testInsertion(
       service = object : DependencyCompletionService {
-        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
-          flowOf(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.1.0", source = SERVER))
+        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
+          flowOf(DependencyCompletionEvent.Item(DependencyCompletionResult(
+            "org.jetbrains.kotlin",
+            "kotlin-stdlib",
+            "2.1.0",
+            source = SERVER
+          )))
       },
       before = """
         [libraries]
@@ -146,8 +152,13 @@ internal class GradleTomlInsertionTest(
   fun `GAV completion replaces full string content`() {
     testInsertion(
       service = object : DependencyCompletionService {
-        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
-          flowOf(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.1.0", source = SERVER))
+        override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
+          flowOf(DependencyCompletionEvent.Item(DependencyCompletionResult(
+            "org.jetbrains.kotlin",
+            "kotlin-stdlib",
+            "2.1.0",
+            source = SERVER
+          )))
       },
       before = """
         [libraries]

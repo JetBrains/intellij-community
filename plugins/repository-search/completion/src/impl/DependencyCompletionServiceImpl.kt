@@ -2,9 +2,11 @@ package com.intellij.repository.search.completion.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.repository.search.completion.api.BaseDependencyCompletionRequest
+import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionContributor
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -14,6 +16,7 @@ import com.intellij.repository.search.completion.api.DependencyVersionCompletion
 import com.intellij.repository.search.completion.util.logWarn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
@@ -32,26 +35,26 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
     && it.buildSystemId == request.context.buildSystemId
   }
 
-  override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
+  override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
     parallelStream(contributors(request)) { it.search(request) }
-      .distinctBy { listOf(it.groupId, it.artifactId, it.version, it.scope) }
+      .distinctItemsBy { listOf(it.groupId, it.artifactId, it.version, it.scope) }
 
-  override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
+  override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
     parallelStream(contributors(request)) { it.getGroups(request) }
-      .distinctBy { it.result }
+      .distinctItemsBy { it.result }
 
-  override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
+  override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
     parallelStream(contributors(request)) { it.getArtifacts(request) }
-      .distinctBy { it.result }
+      .distinctItemsBy { it.result }
 
-  override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
+  override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
     parallelStream(contributors(request)) { it.getVersions(request) }
-      .distinctBy { it.result }
+      .distinctItemsBy { it.result }
 
-  private fun <C : DependencyCompletionContributor, R> parallelStream(
+  private fun <C : DependencyCompletionContributor, R : BaseDependencyCompletionResult> parallelStream(
     contributors: List<C>,
     block: suspend (C) -> List<R>,
-  ): Flow<R> {
+  ): Flow<DependencyCompletionEvent<R>> {
     val serverContributors = contributors.filter { it.source == DependencyCompletionContributionSource.SERVER }
     if (serverContributors.isEmpty()) return simpleParallelStream(contributors, block)
 
@@ -65,12 +68,17 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
         val serverJobs = serverContributors.map { contributor ->
           launch(Dispatchers.IO) {
             try {
-              block(contributor).forEach { send(it) }
+              block(contributor).forEach { send(DependencyCompletionEvent.Item(it)) }
+            }
+            catch (e: TimeoutCancellationException) {
+              send(DependencyCompletionEvent.ServerTimedOut)
+              throw e
             }
             catch (e: CancellationException) {
               throw e
             }
             catch (t: Throwable) {
+              send(DependencyCompletionEvent.ServerFailed(t))
               logWarn(t.message ?: "", t)
             }
           }
@@ -86,7 +94,7 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
             try {
               val results = block(contributor)
               withTimeoutOrNull(localDelay) { serverDone.await() }
-              results.forEach { send(it) }
+              results.forEach { send(DependencyCompletionEvent.Item(it)) }
             }
             catch (e: CancellationException) {
               throw e
@@ -100,14 +108,17 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
     }
   }
 
-  private fun <C, R> simpleParallelStream(contributors: List<C>, block: suspend (C) -> List<R>): Flow<R> = channelFlow {
+  private fun <C : DependencyCompletionContributor, R : BaseDependencyCompletionResult> simpleParallelStream(
+    contributors: List<C>,
+    block: suspend (C) -> List<R>,
+  ): Flow<DependencyCompletionEvent<R>> = channelFlow {
     supervisorScope {
       contributors.forEach { contributor ->
         launch(Dispatchers.IO) {
           try {
             val results = block(contributor)
             for (r in results) {
-              send(r)
+              send(DependencyCompletionEvent.Item(r))
             }
           }
           catch (e: CancellationException) {
@@ -122,9 +133,14 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
   }
 }
 
-private fun <T, K> Flow<T>.distinctBy(keySelector: (T) -> K): Flow<T> = flow {
+private fun <R : BaseDependencyCompletionResult, K> Flow<DependencyCompletionEvent<R>>.distinctItemsBy(
+  keySelector: (R) -> K,
+): Flow<DependencyCompletionEvent<R>> = flow {
   val seen = HashSet<K>()
-  collect { value ->
-    if (seen.add(keySelector(value))) emit(value)
+  collect { event ->
+    when (event) {
+      is DependencyCompletionEvent.Item -> if (seen.add(keySelector(event.result))) emit(event)
+      else -> emit(event)
+    }
   }
 }

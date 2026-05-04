@@ -39,6 +39,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.PsiElement
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -184,8 +185,10 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     var index = 0
     runBlockingCancellable {
       completionService.suggestCompletions(request)
-        .collect { item ->
-          loadingAdvertiser.onResultReceived(item)
+        .collect { event ->
+          loadingAdvertiser.onEvent(event)
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
           val lookupString = lookupStringProvider(item)
           val lookupElement = LookupElementBuilder
             .create(item, lookupString)
@@ -260,8 +263,10 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
     var index = 0
     runBlockingCancellable {
-      itemFlow.collect { item ->
-        loadingAdvertiser.onResultReceived(item)
+      itemFlow.collect { event ->
+        loadingAdvertiser.onEvent(event)
+        if (event !is DependencyCompletionEvent.Item) return@collect
+        val item = event.result
         val lookupElement = LookupElementBuilder.create(item, item.result)
           .withPresentableText(item.result)
           .withIcon(item.icon)

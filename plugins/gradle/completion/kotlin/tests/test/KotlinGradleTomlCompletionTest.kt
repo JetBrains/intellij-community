@@ -3,7 +3,8 @@ package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
-import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
+import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
@@ -37,20 +38,20 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p:my-long-artifact-id")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
         return flowOf(
-          DependencyCompletionResult(
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id",
             "2.7.0",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
-          DependencyCompletionResult(
+            source = LOCAL
+          )),
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id-2",
             "2.7.1",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
+            source = LOCAL
+          )),
         )
       }
     }, testRootDisposable)
@@ -80,10 +81,10 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> {
+      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
         return flowOf(
-          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
-          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
     }, testRootDisposable)
@@ -113,10 +114,10 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> {
+      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
         return flowOf(
-          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
-          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
     }, testRootDisposable)
@@ -145,10 +146,10 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> {
+      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
         return flowOf(
-          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
-          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
     }, testRootDisposable)
@@ -178,20 +179,20 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p:my-long-artifact-id:2.7.0")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
         return flowOf(
-          DependencyCompletionResult(
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id",
             "2.7.0",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
-          DependencyCompletionResult(
+            source = LOCAL
+          )),
+          DependencyCompletionEvent.Item(DependencyCompletionResult(
             "org.example.p",
             "my-long-artifact-id-2",
             "2.7.1",
-            source = DependencyCompletionContributionSource.LOCAL
-          ),
+            source = LOCAL
+          )),
         )
       }
     }, testRootDisposable)
