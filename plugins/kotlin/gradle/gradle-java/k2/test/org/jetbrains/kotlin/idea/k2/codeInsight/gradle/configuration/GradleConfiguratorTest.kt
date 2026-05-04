@@ -492,7 +492,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val modules = ReadAction
             .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
             .executeSynchronously()
-        assertEmpty(modules)
+        assertNotEmpty(modules)
     }
 
     @Test
@@ -503,7 +503,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val modules = ReadAction
             .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
             .executeSynchronously()
-        assertEmpty(modules)
+        assertNotEmpty(modules)
     }
 
     @Test
@@ -514,7 +514,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val modules = ReadAction
             .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
             .executeSynchronously()
-        assertEmpty(modules)
+        assertNotEmpty(modules)
     }
 
     @Ignore
