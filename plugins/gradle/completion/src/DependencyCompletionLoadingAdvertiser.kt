@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion
 
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.actionSystem.IdeActions
@@ -106,6 +110,32 @@ class DependencyCompletionLoadingAdvertiser {
 
   private fun isFreeMode(): Boolean {
     return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+  }
+
+  /**
+   * If the server request ended in a terminal error (timeout / unavailable) and no items were
+   * produced, add a placeholder item so the popup stays open with the advertiser
+   * message — instead of being replaced with the "No suggestions" hint.
+   *
+   * No-op for auto-popup completion (where an empty popup would be intrusive),
+   * for free mode (no server expected), and when at least one item was added.
+   */
+  fun addServerErrorPlaceholderIfNeeded(
+    resultSet: CompletionResultSet,
+    parameters: CompletionParameters,
+    hadResults: Boolean,
+  ) {
+    if (hadResults) return
+    if (parameters.isAutoPopup) return
+    if (isFreeMode()) return
+    val status = terminalServerStatus ?: return
+    val key = when (status) {
+      TerminalServerStatus.TIMED_OUT -> "gradle.dependency.completion.server.timeout.short"
+      TerminalServerStatus.UNAVAILABLE -> "gradle.dependency.completion.server.unavailable.short"
+    }
+    val placeholder = LookupElementBuilder.create("")
+      .withPresentableText(GradleBundle.message(key))
+    resultSet.withPrefixMatcher(PlainPrefixMatcher.ALWAYS_TRUE).addElement(placeholder)
   }
 
   /**

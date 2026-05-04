@@ -154,6 +154,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
       }
     }
     loadingAdvertiser.onComplete()
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters, hadResults = index > 0)
   }
 
   private fun CompletionResultSet.addElement(
