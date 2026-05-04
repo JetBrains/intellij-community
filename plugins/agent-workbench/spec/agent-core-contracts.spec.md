@@ -62,7 +62,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - New-thread command mapping is canonical (argument structure after the executable token):
   - Codex default: `<codex-exe> -c check_for_update_on_startup=false`
-  - Codex YOLO: `<codex-exe> -c check_for_update_on_startup=false --full-auto`
+  - Codex YOLO: `<codex-exe> -c check_for_update_on_startup=false --yolo`
   - Claude default: `<claude-exe> --permission-mode default`
   - Claude YOLO: `<claude-exe> --dangerously-skip-permissions`
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt

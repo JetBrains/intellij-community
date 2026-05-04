@@ -53,7 +53,7 @@ class CodexAgentSessionProviderDescriptorTest {
         assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
             .containsExactly("codex", "-c", "check_for_update_on_startup=false")
         assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
-            .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
+            .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo")
     }
 
     @Test
@@ -64,7 +64,7 @@ class CodexAgentSessionProviderDescriptorTest {
                 "-draft plan\nstep 2",
             ).command
         )
-            .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto", "--", "-draft plan\nstep 2")
+            .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo", "--", "-draft plan\nstep 2")
     }
 
     @Test
@@ -140,7 +140,7 @@ class CodexAgentSessionProviderDescriptorTest {
 
             val yolo = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.YOLO)
             assertThat(yolo.sessionId).isNull()
-            assertThat(yolo.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
+            assertThat(yolo.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false", "--yolo")
         }
     }
 

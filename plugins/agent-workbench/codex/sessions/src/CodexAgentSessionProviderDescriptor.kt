@@ -124,7 +124,7 @@ internal class CodexAgentSessionProviderDescriptor(
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
     val command = if (mode == AgentSessionLaunchMode.YOLO) {
-      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--full-auto")
+      listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "--yolo")
     }
     else {
       listOf(executable, "-c", CODEX_AUTO_UPDATE_CONFIG)
@@ -168,7 +168,7 @@ internal class CodexAgentSessionProviderDescriptor(
     }
     return AgentPendingSessionMetadata(
       createdAtMs = System.currentTimeMillis(),
-      launchMode = if ("--full-auto" in launchSpec.command) "yolo" else "standard",
+      launchMode = if ("--yolo" in launchSpec.command) "yolo" else "standard",
     )
   }
 
