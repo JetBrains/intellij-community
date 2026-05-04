@@ -21721,6 +21721,9 @@ function createStreamTransport({
   });
 }
 
+// upstream.ts
+import { AsyncLocalStorage } from "async_hooks";
+
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
 class ExperimentalClientTasks {
   constructor(_client) {
@@ -24848,7 +24851,7 @@ function createProxyTooling({
 }
 
 // upstream.ts
-var RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
+var requestContext = new AsyncLocalStorage, RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
 function getErrorMessage(error48) {
   return error48 instanceof Error ? error48.message : String(error48);
 }
@@ -24991,6 +24994,9 @@ class UpstreamConnection {
   }
   static _LONG_TIMEOUT_TOOLS = /* @__PURE__ */ new Set(["build_project", "lint_files", "open_file_in_editor", "container_exec"]);
   _resolveTimeoutMs(toolName) {
+    let ctx = requestContext.getStore();
+    if (ctx?.clientTimeoutMs !== void 0)
+      return ctx.clientTimeoutMs;
     return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs;
   }
   async forwardRequest(method, params) {
@@ -25462,67 +25468,74 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (detected)
       containerSession = detected, note(`Container session detected on tool call: id=${detected.sessionId}`), updateProxyTooling(), await ensureDiscovered(), await proxyServer.sendToolListChanged();
   }
-  let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {};
+  let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {}, clientTimeoutMs;
+  try {
+    clientTimeoutMs = extractClientTimeoutMs(args);
+  } catch (error48) {
+    return makeToolError(error48 instanceof Error ? error48.message : String(error48));
+  }
   if (containerSession)
     note(`Tool call: ${toolName} [container:${containerSession.sessionId}, proxy:${proxyToolNames.has(toolName)}, hasUpstream:${!!ideaUpstream}]`);
-  if (!toolName)
-    return makeToolError("Tool name is required");
-  if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
-    return makeToolError(blockedToolMessage(toolName));
-  if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
-    if (ideaProxyToolCall && riderProxyToolCall) {
-      if (isMergeTool(toolName))
-        return await callMergedProxyTool(toolName, args);
-      if (toolName === "lint_files")
-        return await callSplitMergedProxyTool(toolName, args);
-      let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
-      try {
-        return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
-      } catch (error48) {
-        let message = error48 instanceof Error ? error48.message : String(error48);
-        return makeToolError(message);
-      }
-    }
-    let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
-    if (proxyCall)
-      try {
+  return await requestContext.run({ clientTimeoutMs }, async () => {
+    if (!toolName)
+      return makeToolError("Tool name is required");
+    if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
+      return makeToolError(blockedToolMessage(toolName));
+    if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
+      if (ideaProxyToolCall && riderProxyToolCall) {
+        if (isMergeTool(toolName))
+          return await callMergedProxyTool(toolName, args);
         if (toolName === "lint_files")
-          return await callSingleLintFilesTool(args);
-        return makeToolOutput(await proxyCall(toolName, args));
-      } catch (error48) {
-        let message = error48 instanceof Error ? error48.message : String(error48);
-        return makeToolError(message);
-      }
-  }
-  if (ideaUpstream && riderUpstream) {
-    let route = resolveRoute(toolName, args, projectPath);
-    switch (route) {
-      case "merge":
-        return await callMergedPassthroughTool(toolName, args);
-      case "split-merge":
-        return await callSplitMergedPassthroughTool(toolName, args);
-      case "target-idea":
-      case "target-rider": {
-        let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+          return await callSplitMergedProxyTool(toolName, args);
+        let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
         try {
-          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+          return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
         } catch (error48) {
           let message = error48 instanceof Error ? error48.message : String(error48);
           return makeToolError(message);
         }
       }
-      case "primary":
-        break;
+      let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
+      if (proxyCall)
+        try {
+          if (toolName === "lint_files")
+            return await callSingleLintFilesTool(args);
+          return makeToolOutput(await proxyCall(toolName, args));
+        } catch (error48) {
+          let message = error48 instanceof Error ? error48.message : String(error48);
+          return makeToolError(message);
+        }
     }
-  }
-  try {
-    if (toolName === "lint_files")
-      return await callSingleLintFilesTool(args);
-    return await primaryUpstream().callToolForClient(toolName, args);
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    return makeToolError(message);
-  }
+    if (ideaUpstream && riderUpstream) {
+      let route = resolveRoute(toolName, args, projectPath);
+      switch (route) {
+        case "merge":
+          return await callMergedPassthroughTool(toolName, args);
+        case "split-merge":
+          return await callSplitMergedPassthroughTool(toolName, args);
+        case "target-idea":
+        case "target-rider": {
+          let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+          try {
+            return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+          } catch (error48) {
+            let message = error48 instanceof Error ? error48.message : String(error48);
+            return makeToolError(message);
+          }
+        }
+        case "primary":
+          break;
+      }
+    }
+    try {
+      if (toolName === "lint_files")
+        return await callSingleLintFilesTool(args);
+      return await primaryUpstream().callToolForClient(toolName, args);
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      return makeToolError(message);
+    }
+  });
 });
 proxyServer.fallbackRequestHandler = async (request) => {
   return await ensureDiscovered(), await primaryUpstream().forwardRequest(request.method, request.params);
@@ -25656,9 +25669,17 @@ function normalizeLintFilePathsArg(value) {
 function normalizeLintTimeoutArg(value) {
   if (value === void 0 || value === null)
     return;
-  if (typeof value !== "number" || !Number.isInteger(value) || !Number.isFinite(value) || value < 0)
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0)
     throw Error("timeout must be a non-negative integer");
   return value;
+}
+function extractClientTimeoutMs(args) {
+  let raw = args.timeout;
+  if (raw === void 0 || raw === null)
+    return;
+  if (typeof raw !== "number" || !Number.isInteger(raw) || raw < 0)
+    throw Error("timeout must be a non-negative integer (milliseconds)");
+  return raw;
 }
 function parseLintFilesToolResult(result) {
   let structured = extractStructuredContent(result);

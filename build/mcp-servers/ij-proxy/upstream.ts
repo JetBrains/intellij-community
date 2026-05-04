@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import {AsyncLocalStorage} from 'node:async_hooks'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
@@ -7,6 +8,16 @@ import {resolveAnalysisCapabilities, resolveReadCapabilities, resolveSearchCapab
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {McpStreamTransport} from './stream-transport'
 import type {AnalysisCapabilities, ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike} from './proxy-tools/types'
+
+export interface RequestContext {
+  /**
+   * Per-call MCP-RPC timeout (ms) supplied by the agent via tools/call
+   * arguments.timeout. 0 disables the deadline. undefined → fall back to env defaults.
+   */
+  clientTimeoutMs?: number
+}
+
+export const requestContext = new AsyncLocalStorage<RequestContext>()
 
 export interface UpstreamConnectionOptions {
   transport: McpStreamTransport
@@ -265,6 +276,10 @@ export class UpstreamConnection {
   private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project', 'lint_files', 'open_file_in_editor', 'container_exec'])
 
   private _resolveTimeoutMs(toolName: string): number {
+    const ctx = requestContext.getStore()
+    if (ctx?.clientTimeoutMs !== undefined) {
+      return ctx.clientTimeoutMs
+    }
     return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs
   }
 

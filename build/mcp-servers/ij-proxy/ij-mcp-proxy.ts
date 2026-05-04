@@ -14,7 +14,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createStreamTransport} from './stream-transport'
-import {UpstreamConnection} from './upstream'
+import {requestContext, UpstreamConnection} from './upstream'
 import {findReachablePorts} from './discovery'
 import type {ItemTransformer} from './routing'
 import {
@@ -598,93 +598,102 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     ? {...(rawArgs as ToolArgs)}
     : {}
 
+  let clientTimeoutMs: number | undefined
+  try {
+    clientTimeoutMs = extractClientTimeoutMs(args)
+  } catch (error) {
+    return makeToolError(error instanceof Error ? error.message : String(error))
+  }
+
   if (containerSession) {
     note(`Tool call: ${toolName} [container:${containerSession.sessionId}, proxy:${proxyToolNames.has(toolName)}, hasUpstream:${!!ideaUpstream}]`)
   }
 
-  if (!toolName) {
-    return makeToolError('Tool name is required')
-  }
-
-  if (BASE_BLOCKED_TOOL_NAMES.has(toolName)) {
-    return makeToolError(blockedToolMessage(toolName))
-  }
-
-  await ensureDiscovered()
-
-  // Proxy-handled tools
-  if (proxyToolNames.has(toolName)) {
-    // Both IDEs available: merge search tools, route file tools by path
-    if (ideaProxyToolCall && riderProxyToolCall) {
-      if (isMergeTool(toolName)) {
-        return await callMergedProxyTool(toolName, args)
-      }
-      if (toolName === 'lint_files') {
-        return await callSplitMergedProxyTool(toolName, args)
-      }
-      const ide = resolveIdeForPath(args, projectPath)
-      const proxyCall = ide === 'rider' ? riderProxyToolCall : ideaProxyToolCall
-      const rewrittenArgs = rewriteArgsForTarget(ide === 'rider' ? 'target-rider' : 'target-idea', args)
-      try {
-        return makeToolOutput(await proxyCall(toolName, rewrittenArgs))
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        return makeToolError(message)
-      }
+  return await requestContext.run({clientTimeoutMs}, async () => {
+    if (!toolName) {
+      return makeToolError('Tool name is required')
     }
 
-    // Single IDE: use whichever is available
-    const proxyCall = ideaProxyToolCall ?? riderProxyToolCall
-    if (proxyCall) {
-      try {
-        if (toolName === 'lint_files') {
-          return await callSingleLintFilesTool(args)
+    if (BASE_BLOCKED_TOOL_NAMES.has(toolName)) {
+      return makeToolError(blockedToolMessage(toolName))
+    }
+
+    await ensureDiscovered()
+
+    // Proxy-handled tools
+    if (proxyToolNames.has(toolName)) {
+      // Both IDEs available: merge search tools, route file tools by path
+      if (ideaProxyToolCall && riderProxyToolCall) {
+        if (isMergeTool(toolName)) {
+          return await callMergedProxyTool(toolName, args)
         }
-        return makeToolOutput(await proxyCall(toolName, args))
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        return makeToolError(message)
-      }
-    }
-  }
-
-  // Passthrough tools with routing
-  if (ideaUpstream && riderUpstream) {
-    const route = resolveRoute(toolName, args, projectPath)
-
-    switch (route) {
-      case 'merge':
-        return await callMergedPassthroughTool(toolName, args)
-
-      case 'split-merge':
-        return await callSplitMergedPassthroughTool(toolName, args)
-
-      case 'target-idea':
-      case 'target-rider': {
-        const target = route === 'target-rider' ? riderUpstream : ideaUpstream
+        if (toolName === 'lint_files') {
+          return await callSplitMergedProxyTool(toolName, args)
+        }
+        const ide = resolveIdeForPath(args, projectPath)
+        const proxyCall = ide === 'rider' ? riderProxyToolCall : ideaProxyToolCall
+        const rewrittenArgs = rewriteArgsForTarget(ide === 'rider' ? 'target-rider' : 'target-idea', args)
         try {
-          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args))
+          return makeToolOutput(await proxyCall(toolName, rewrittenArgs))
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
           return makeToolError(message)
         }
       }
 
-      case 'primary':
-        break // fall through to single-IDE path
+      // Single IDE: use whichever is available
+      const proxyCall = ideaProxyToolCall ?? riderProxyToolCall
+      if (proxyCall) {
+        try {
+          if (toolName === 'lint_files') {
+            return await callSingleLintFilesTool(args)
+          }
+          return makeToolOutput(await proxyCall(toolName, args))
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          return makeToolError(message)
+        }
+      }
     }
-  }
 
-  // Single IDE
-  try {
-    if (toolName === 'lint_files') {
-      return await callSingleLintFilesTool(args)
+    // Passthrough tools with routing
+    if (ideaUpstream && riderUpstream) {
+      const route = resolveRoute(toolName, args, projectPath)
+
+      switch (route) {
+        case 'merge':
+          return await callMergedPassthroughTool(toolName, args)
+
+        case 'split-merge':
+          return await callSplitMergedPassthroughTool(toolName, args)
+
+        case 'target-idea':
+        case 'target-rider': {
+          const target = route === 'target-rider' ? riderUpstream : ideaUpstream
+          try {
+            return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args))
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+            return makeToolError(message)
+          }
+        }
+
+        case 'primary':
+          break // fall through to single-IDE path
+      }
     }
-    return await primaryUpstream().callToolForClient(toolName, args)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return makeToolError(message)
-  }
+
+    // Single IDE
+    try {
+      if (toolName === 'lint_files') {
+        return await callSingleLintFilesTool(args)
+      }
+      return await primaryUpstream().callToolForClient(toolName, args)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return makeToolError(message)
+    }
+  })
 })
 
 proxyServer.fallbackRequestHandler = async (request) => {
@@ -878,10 +887,19 @@ function normalizeLintTimeoutArg(value: unknown): number | undefined {
   if (value === undefined || value === null) {
     return undefined
   }
-  if (typeof value !== 'number' || !Number.isInteger(value) || !Number.isFinite(value) || value < 0) {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
     throw new Error('timeout must be a non-negative integer')
   }
   return value
+}
+
+function extractClientTimeoutMs(args: ToolArgs): number | undefined {
+  const raw = args.timeout
+  if (raw === undefined || raw === null) return undefined
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) {
+    throw new Error('timeout must be a non-negative integer (milliseconds)')
+  }
+  return raw
 }
 
 function parseLintFilesToolResult(result: unknown): LintFilesToolResult {
