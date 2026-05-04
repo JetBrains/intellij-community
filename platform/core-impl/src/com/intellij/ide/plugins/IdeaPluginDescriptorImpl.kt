@@ -50,7 +50,7 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isDeleted: Boolean = false
 
-  var jarFiles: List<Path>? = null
+  var ownClassPath: List<Path>? = null
 
   /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
   var isMarkedForLoading: Boolean = true

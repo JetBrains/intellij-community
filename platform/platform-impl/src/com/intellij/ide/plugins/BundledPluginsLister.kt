@@ -49,7 +49,7 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
         val homeDir = Path.of(PathManager.getHomePath())
 
         for (plugin in plugins) {
-          var jarFiles = plugin.jarFiles
+          var jarFiles = plugin.ownClassPath
           if (jarFiles == null && plugin.pluginId == PluginManagerCore.CORE_ID) {
             jarFiles = (plugin.classLoader as? UrlClassLoader)?.files
           }
@@ -73,7 +73,7 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
               else {
                 ProductInfoLayoutItemKind.moduleV2
               },
-              classPath = module.jarFiles?.map { file ->
+              classPath = module.ownClassPath?.map { file ->
                 file.relativeTo(homeDir).invariantSeparatorsPathString
               } ?: emptyList(),
             ))

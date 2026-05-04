@@ -378,7 +378,7 @@ internal class PluginDependenciesTest {
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin")
     assertThat(result).hasExactlyEnabledModulesWithoutMainDescriptors("dep")
     val depModuleDescriptor = result.getEnabledModule("dep")
-    assertThat(depModuleDescriptor.jarFiles).containsExactly(pluginDir.resolve("lib/modules/dep.jar"))
+    assertThat(depModuleDescriptor.ownClassPath).containsExactly(pluginDir.resolve("lib/modules/dep.jar"))
   }
 
   @Test

@@ -326,7 +326,7 @@ class PluginManagerTest {
           dataLoader = LocalFsDataLoader(pluginPath)
         )
         plugins.add(descriptor)
-        descriptor.jarFiles = emptyList()
+        descriptor.ownClassPath = emptyList()
       }
       loadingContext.close()
       val discoveredPlugins = PluginsDiscoveryResult.build(

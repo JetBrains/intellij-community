@@ -89,7 +89,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureContentModule(module: ContentModuleDescriptor): Boolean {
-    if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
+    if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.ownClassPath == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
       throw PluginException("Package is not specified (module=$module)", module.pluginId)
     }
 
@@ -125,7 +125,7 @@ class ClassLoaderConfigurator(
       return true
     }
 
-    val customJarFiles = module.jarFiles
+    val customJarFiles = module.ownClassPath
     if (customJarFiles == null) {
       module.pluginClassLoader = PluginClassLoader(
         classPath = mainInfo.classPath,
@@ -200,7 +200,7 @@ class ClassLoaderConfigurator(
       return exisingMainInfo
     } 
 
-    var mainModuleFiles = mainDescriptor.jarFiles
+    var mainModuleFiles = mainDescriptor.ownClassPath
     if (mainModuleFiles == null) {
       if (!mainDescriptor.useIdeaClassLoader) {
         LOG.error("jarFiles is not set for $mainDescriptor")
@@ -210,7 +210,7 @@ class ClassLoaderConfigurator(
     var allFiles: MutableSet<Path>? = null
     for (contentModule in mainDescriptor.contentModules) {
       if (contentModule.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
-        val customJarFiles = contentModule.jarFiles
+        val customJarFiles = contentModule.ownClassPath
         if (customJarFiles != null) {
           if (allFiles == null) {
             allFiles = LinkedHashSet(mainModuleFiles)
@@ -256,7 +256,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureCorePluginContentModuleClassLoader(module: ContentModuleDescriptor, deps: Array<PluginModuleDescriptor>) {
-    val jarFiles = module.jarFiles
+    val jarFiles = module.ownClassPath
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
         classPath = ClassPath(jarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
@@ -407,7 +407,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: PluginMai
 
   val result = ArrayList<Pair<String, PluginModuleId?>>(modules.size)
   for (module in modules) {
-    if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+    if (!module.ownClassPath.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       continue
     }
 

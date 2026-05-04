@@ -159,8 +159,8 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
-    assertThat(descriptor.jarFiles).isNotNull()
-    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
+    assertThat(descriptor.ownClassPath).isNotNull()
+    assertThat(descriptor.ownClassPath!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
@@ -182,8 +182,8 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
-    assertThat(descriptor.jarFiles).isNotNull()
-    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
+    assertThat(descriptor.ownClassPath).isNotNull()
+    assertThat(descriptor.ownClassPath!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test

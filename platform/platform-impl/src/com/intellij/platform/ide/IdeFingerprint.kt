@@ -123,7 +123,7 @@ private fun hashByFileContent(descriptor: IdeaPluginDescriptorImpl, hasher: Hash
 
   ProgressManager.checkCanceled()
 
-  val files = descriptor.jarFiles!!
+  val files = descriptor.ownClassPath!!
   hasher.putInt(files.size)
   for (file in files) {
     // if the path is not a directory, only "this" file will be visited
