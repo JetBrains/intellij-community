@@ -50,7 +50,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isDeleted: Boolean = false
 
-  @Transient
   var jarFiles: List<Path>? = null
 
   /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
