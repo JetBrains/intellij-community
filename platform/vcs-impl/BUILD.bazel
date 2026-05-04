@@ -84,6 +84,7 @@ jvm_library(
     "//platform/execution",
     "//platform/eel",
     "//fleet/rhizomedb",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 
@@ -170,6 +171,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/eel:eel_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
