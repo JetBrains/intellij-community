@@ -452,7 +452,7 @@ export async function handleContainerBash(
       command = command.replaceAll(posixProjectPath, session.workspacePath)
     }
   }
-  const timeoutMs = typeof args.timeout === 'number' ? args.timeout * 1000 : 900000
+  const timeoutMs = typeof args.timeout === 'number' ? args.timeout : 900_000
   const result = extractText(await callUpstreamTool('container_exec', {
     sessionId: session.sessionId,
     command: ['bash', '-c', `cd '${session.workspacePath}' && ${command}`],

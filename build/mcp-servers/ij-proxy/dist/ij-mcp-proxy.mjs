@@ -24453,7 +24453,7 @@ async function handleContainerBash(args, projectPath, callUpstreamTool, session)
     if (posixProjectPath !== projectPath)
       command = command.replaceAll(posixProjectPath, session.workspacePath);
   }
-  let timeoutMs = typeof args.timeout === "number" ? args.timeout * 1000 : 900000, result = extractText(await callUpstreamTool("container_exec", {
+  let timeoutMs = typeof args.timeout === "number" ? args.timeout : 900000, result = extractText(await callUpstreamTool("container_exec", {
     sessionId: session.sessionId,
     command: ["bash", "-c", `cd '${session.workspacePath}' && ${command}`],
     timeoutMs
@@ -24737,7 +24737,7 @@ var TOOL_VARIANTS = [
       type: "object",
       properties: {
         command: { type: "string", description: "The bash command to execute" },
-        timeout: { type: "number", description: "Timeout in seconds (default: 900). Use 1200+ for build commands." }
+        timeout: { type: "number", description: "Per-call timeout in milliseconds. Used as the ij-proxy MCP RPC deadline and as the inner container_exec command deadline. 0 disables. Default: 900000 (15 min); use 1200000+ for build commands." }
       },
       required: ["command"]
     }),
