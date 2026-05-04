@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import type {IncomingHttpHeaders, IncomingMessage} from 'node:http'
+import {request as httpRequest} from 'node:http'
+import {request as httpsRequest} from 'node:https'
+import {Readable} from 'node:stream'
 import isPortReachable from 'is-port-reachable'
 import pRetry from 'p-retry'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
 type TransportMessage = unknown
 type TransportSendOptions = Record<string, unknown> | undefined
+type FetchLike = (url: string | URL, init?: RequestInit) => Promise<Response>
 
 const SESSION_NOT_FOUND_RE = /session not found/i
 
@@ -100,6 +105,105 @@ function formatProbedPortList(candidates: PortCandidate[]): string {
 
 function buildEndpointNotFoundMessage(candidates: PortCandidate[]): string {
   return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`
+}
+
+// Convert Fetch API headers into the plain object shape accepted by node:http.
+function headersToObject(headers: HeadersInit | undefined): Record<string, string> {
+  const result: Record<string, string> = {}
+  new Headers(headers).forEach((value, key) => {
+    result[key] = value
+  })
+  return result
+}
+
+// Preserve repeated response headers when adapting node:http responses back to Fetch API Response.
+function headersFromIncoming(headers: IncomingHttpHeaders): Headers {
+  const result = new Headers()
+  for (const [key, value] of Object.entries(headers)) {
+    if (Array.isArray(value)) {
+      for (const item of value) result.append(key, item)
+    } else if (value !== undefined) {
+      result.set(key, String(value))
+    }
+  }
+  return result
+}
+
+// The MCP SDK sends JSON bodies, but support the common Fetch body shapes used by RequestInit.
+function bodyToNodeBody(body: BodyInit | null | undefined): string | Buffer | undefined {
+  if (body == null) return undefined
+  if (typeof body === 'string') return body
+  if (body instanceof URLSearchParams) return body.toString()
+  if (body instanceof ArrayBuffer) return Buffer.from(body)
+  if (ArrayBuffer.isView(body)) return Buffer.from(body.buffer, body.byteOffset, body.byteLength)
+  throw new Error(`Unsupported MCP upstream fetch body type: ${Object.prototype.toString.call(body)}`)
+}
+
+// Fetch rejects with the signal's abort reason; mirror that behavior for the node:http adapter.
+function signalReasonToError(signal: AbortSignal | null | undefined): Error {
+  const reason = signal?.reason
+  if (reason instanceof Error) return reason
+  return new Error(reason === undefined ? 'Request aborted' : String(reason))
+}
+
+// Fetch-compatible adapter over node:http/node:https.
+// Bun's standard fetch path times out long-running silent MCP POST responses after a few minutes,
+// before the SDK/tool-call timeout can fire. Supplying this adapter to StreamableHTTPClientTransport
+// bypasses that runtime limit while still giving the MCP SDK a standard Response object and
+// RequestInit.signal cancellation.
+export function createNodeHttpFetch(): FetchLike {
+  return async (url, init) => {
+    const target = url instanceof URL ? url : new URL(url)
+    const request = target.protocol === 'https:' ? httpsRequest : httpRequest
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+      throw new Error(`Unsupported MCP upstream fetch protocol: ${target.protocol}`)
+    }
+
+    const body = bodyToNodeBody(init?.body)
+    const signal = init?.signal
+
+    return await new Promise<Response>((resolve, reject) => {
+      let response: IncomingMessage | undefined
+      const req = request(target, {
+        method: init?.method ?? 'GET',
+        headers: headersToObject(init?.headers)
+      }, (res) => {
+        response = res
+        res.on('close', cleanup)
+        resolve(new Response(Readable.toWeb(res) as ReadableStream<Uint8Array>, {
+          status: res.statusCode ?? 500,
+          statusText: res.statusMessage,
+          headers: headersFromIncoming(res.headers)
+        }))
+      })
+
+      function cleanup(): void {
+        signal?.removeEventListener('abort', abort)
+      }
+
+      function abort(): void {
+        const error = signalReasonToError(signal)
+        cleanup()
+        req.destroy(error)
+        response?.destroy(error)
+        reject(error)
+      }
+
+      req.on('error', (error) => {
+        cleanup()
+        reject(error)
+      })
+
+      if (signal?.aborted) {
+        abort()
+        return
+      }
+      signal?.addEventListener('abort', abort, {once: true})
+
+      if (body !== undefined) req.write(body)
+      req.end()
+    })
+  }
 }
 
 class StreamTransportImpl implements McpStreamTransport {
@@ -272,7 +376,7 @@ class StreamTransportImpl implements McpStreamTransport {
         }
 
         if (note) note(`Connecting to MCP stream ${targetUrl}`)
-        const transport = new StreamableHTTPClientTransport(targetUrl)
+        const transport = new StreamableHTTPClientTransport(targetUrl, {fetch: createNodeHttpFetch()})
         transport.onmessage = (message, extra) => {
           if (this.onmessage) this.onmessage(message, extra)
         }

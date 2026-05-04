@@ -20186,6 +20186,11 @@ async function clearLogFile() {
   } catch {}
 }
 
+// stream-transport.ts
+import { request as httpRequest } from "http";
+import { request as httpsRequest } from "https";
+import { Readable } from "stream";
+
 // node_modules/is-port-reachable/index.js
 import net from "net";
 async function isPortReachable(port, { host, timeout = 1000 } = {}) {
@@ -21502,6 +21507,77 @@ function formatProbedPortList(candidates) {
 function buildEndpointNotFoundMessage(candidates) {
   return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`;
 }
+function headersToObject(headers) {
+  let result = {};
+  return new Headers(headers).forEach((value, key) => {
+    result[key] = value;
+  }), result;
+}
+function headersFromIncoming(headers) {
+  let result = /* @__PURE__ */ new Headers;
+  for (let [key, value] of Object.entries(headers))
+    if (Array.isArray(value))
+      for (let item of value)
+        result.append(key, item);
+    else if (value !== void 0)
+      result.set(key, String(value));
+  return result;
+}
+function bodyToNodeBody(body) {
+  if (body == null)
+    return;
+  if (typeof body === "string")
+    return body;
+  if (body instanceof URLSearchParams)
+    return body.toString();
+  if (body instanceof ArrayBuffer)
+    return Buffer.from(body);
+  if (ArrayBuffer.isView(body))
+    return Buffer.from(body.buffer, body.byteOffset, body.byteLength);
+  throw Error(`Unsupported MCP upstream fetch body type: ${Object.prototype.toString.call(body)}`);
+}
+function signalReasonToError(signal) {
+  let reason = signal?.reason;
+  if (reason instanceof Error)
+    return reason;
+  return Error(reason === void 0 ? "Request aborted" : String(reason));
+}
+function createNodeHttpFetch() {
+  return async (url2, init) => {
+    let target = url2 instanceof URL ? url2 : new URL(url2), request = target.protocol === "https:" ? httpsRequest : httpRequest;
+    if (target.protocol !== "http:" && target.protocol !== "https:")
+      throw Error(`Unsupported MCP upstream fetch protocol: ${target.protocol}`);
+    let body = bodyToNodeBody(init?.body), signal = init?.signal;
+    return await new Promise((resolve, reject) => {
+      let response, req = request(target, {
+        method: init?.method ?? "GET",
+        headers: headersToObject(init?.headers)
+      }, (res) => {
+        response = res, res.on("close", cleanup), resolve(new Response(Readable.toWeb(res), {
+          status: res.statusCode ?? 500,
+          statusText: res.statusMessage,
+          headers: headersFromIncoming(res.headers)
+        }));
+      });
+      function cleanup() {
+        signal?.removeEventListener("abort", abort);
+      }
+      function abort() {
+        let error48 = signalReasonToError(signal);
+        cleanup(), req.destroy(error48), response?.destroy(error48), reject(error48);
+      }
+      if (req.on("error", (error48) => {
+        cleanup(), reject(error48);
+      }), signal?.aborted) {
+        abort();
+        return;
+      }
+      if (signal?.addEventListener("abort", abort, { once: !0 }), body !== void 0)
+        req.write(body);
+      req.end();
+    });
+  };
+}
 
 class StreamTransportImpl {
   _options;
@@ -21626,7 +21702,7 @@ class StreamTransportImpl {
       }
       if (note)
         note(`Connecting to MCP stream ${targetUrl}`);
-      let transport = new StreamableHTTPClientTransport(targetUrl);
+      let transport = new StreamableHTTPClientTransport(targetUrl, { fetch: createNodeHttpFetch() });
       if (transport.onmessage = (message, extra) => {
         if (this.onmessage)
           this.onmessage(message, extra);

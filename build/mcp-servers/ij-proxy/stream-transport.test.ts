@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {rejects, strictEqual} from 'node:assert/strict'
-import {describe, it} from 'bun:test'
-import {createStreamTransport} from './stream-transport'
+import {ok, rejects, strictEqual} from 'node:assert/strict'
+import {createServer, type IncomingMessage, type Server, type ServerResponse} from 'node:http'
+import type {AddressInfo} from 'node:net'
+import {afterAll, afterEach, beforeAll, describe, it} from 'bun:test'
+import {createNodeHttpFetch, createStreamTransport} from './stream-transport'
 
 function createBaseTransport() {
   return createStreamTransport({
@@ -150,5 +152,121 @@ describe('stream transport endpoint discovery diagnostics', () => {
     })
 
     await rejects(() => transport.start(), /No MCP stream ports configured/)
+  })
+})
+
+describe('createNodeHttpFetch', () => {
+  let server: Server
+  let baseUrl = ''
+  let handler: ((req: IncomingMessage, res: ServerResponse) => void) | null = null
+
+  beforeAll(async () => {
+    server = createServer((req, res) => {
+      if (handler) {
+        handler(req, res)
+      } else {
+        res.statusCode = 500
+        res.end('no handler')
+      }
+    })
+    await new Promise<void>((resolve) => {
+      server.listen(0, '127.0.0.1', () => {
+        const addr = server.address() as AddressInfo
+        baseUrl = `http://127.0.0.1:${addr.port}`
+        resolve()
+      })
+    })
+  })
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  })
+
+  afterEach(() => {
+    handler = null
+  })
+
+  it('round-trips method, headers, status, and body', async () => {
+    let observed: {method?: string; url?: string; headers: Record<string, string | string[] | undefined>; body: string} = {
+      headers: {},
+      body: ''
+    }
+    handler = (req, res) => {
+      const chunks: Buffer[] = []
+      req.on('data', (chunk) => chunks.push(chunk as Buffer))
+      req.on('end', () => {
+        observed = {
+          method: req.method,
+          url: req.url,
+          headers: req.headers,
+          body: Buffer.concat(chunks).toString('utf8')
+        }
+        res.statusCode = 201
+        res.setHeader('content-type', 'text/plain')
+        res.setHeader('x-custom', 'hi')
+        res.end('response body')
+      })
+    }
+
+    const fetchImpl = createNodeHttpFetch()
+    const response = await fetchImpl(`${baseUrl}/route`, {
+      method: 'POST',
+      headers: {'content-type': 'application/json', 'x-trace-id': '42'},
+      body: JSON.stringify({k: 'v'})
+    })
+
+    strictEqual(response.status, 201)
+    strictEqual(response.headers.get('content-type'), 'text/plain')
+    strictEqual(response.headers.get('x-custom'), 'hi')
+    strictEqual(await response.text(), 'response body')
+    strictEqual(observed.method, 'POST')
+    strictEqual(observed.url, '/route')
+    strictEqual(observed.headers['content-type'], 'application/json')
+    strictEqual(observed.headers['x-trace-id'], '42')
+    strictEqual(observed.body, '{"k":"v"}')
+  })
+
+  it('rejects with the signal abort reason when aborted in-flight', async () => {
+    handler = () => {
+      // Hang — never respond, leaving the request to be aborted from the client side.
+    }
+
+    const fetchImpl = createNodeHttpFetch()
+    const controller = new AbortController()
+    const promise = fetchImpl(`${baseUrl}/hang`, {signal: controller.signal})
+    setTimeout(() => controller.abort(new Error('client cancelled')), 10)
+
+    await rejects(
+      () => promise,
+      (error: unknown) => {
+        ok(error instanceof Error)
+        strictEqual(error.message, 'client cancelled')
+        return true
+      }
+    )
+  })
+
+  it('rejects immediately when given a pre-aborted signal', async () => {
+    handler = (_req, res) => {
+      res.statusCode = 200
+      res.end('ok')
+    }
+
+    const fetchImpl = createNodeHttpFetch()
+    const controller = new AbortController()
+    controller.abort(new Error('precancelled'))
+
+    await rejects(
+      () => fetchImpl(`${baseUrl}/pre`, {signal: controller.signal}),
+      /precancelled/
+    )
+  })
+
+  it('throws on unsupported URL protocols', async () => {
+    const fetchImpl = createNodeHttpFetch()
+    await rejects(
+      () => fetchImpl('ftp://example.test/'),
+      /Unsupported MCP upstream fetch protocol/
+    )
   })
 })
