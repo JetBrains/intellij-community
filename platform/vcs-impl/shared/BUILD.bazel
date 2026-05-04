@@ -38,6 +38,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/diff-api:diff",
     "//fleet/rhizomedb",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 
@@ -77,6 +78,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/diff-api:diff_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end

@@ -34,6 +34,10 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/util/concurrency",
     "//fleet/rhizomedb",
+    "//platform/platform-frontend:frontend",
+    "//platform/lang-impl",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/platform-impl/rpc",
   ]
 )
 
@@ -69,6 +73,10 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` end
