@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
@@ -33,8 +32,10 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
  * - Phase 2 (all local results are shown): advertisement is cleared.
  */
 @ApiStatus.Internal
-class DependencyCompletionLoadingAdvertiser {
-  private var serverResultsReceived = isFreeMode()
+class DependencyCompletionLoadingAdvertiser(
+  private val freeMode: Boolean = isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID),
+) {
+  private var serverResultsReceived = freeMode
   private var terminalServerStatus: TerminalServerStatus? = null
 
   /**
@@ -53,7 +54,7 @@ class DependencyCompletionLoadingAdvertiser {
       is DependencyCompletionEvent.Item -> onItem(event)
       DependencyCompletionEvent.ServerTimedOut -> {
         serverResultsReceived = true
-        terminalServerStatus = TerminalServerStatus.TIMED_OUT
+        if (terminalServerStatus == null) terminalServerStatus = TerminalServerStatus.TIMED_OUT
         onComplete()
       }
       is DependencyCompletionEvent.ServerFailed -> {
@@ -80,7 +81,7 @@ class DependencyCompletionLoadingAdvertiser {
    * Call after flow collection completes to ensure the loading message is removed.
    */
   fun onComplete() {
-    if (isFreeMode()) {
+    if (freeMode) {
       clearAdvertisement()
       return
     }
@@ -108,10 +109,6 @@ class DependencyCompletionLoadingAdvertiser {
     CompletionServiceImpl.currentCompletionProgressIndicator?.clearAllAdvertisements()
   }
 
-  private fun isFreeMode(): Boolean {
-    return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
-  }
-
   /**
    * If the server request ended in a terminal error (timeout / unavailable) and no items were
    * produced, add a placeholder item so the popup stays open with the advertiser
@@ -122,12 +119,12 @@ class DependencyCompletionLoadingAdvertiser {
    */
   fun addServerErrorPlaceholderIfNeeded(
     resultSet: CompletionResultSet,
-    parameters: CompletionParameters,
+    isAutoPopup: Boolean,
     hadResults: Boolean,
   ) {
     if (hadResults) return
-    if (parameters.isAutoPopup) return
-    if (isFreeMode()) return
+    if (isAutoPopup) return
+    if (freeMode) return
     val status = terminalServerStatus ?: return
     val key = when (status) {
       TerminalServerStatus.TIMED_OUT -> "gradle.dependency.completion.server.timeout.short"

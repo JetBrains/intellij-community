@@ -212,7 +212,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
     }
     loadingAdvertiser.onComplete()
-    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters, hadResults = index > 0)
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)
   }
 
 
@@ -286,7 +286,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       }
     }
     loadingAdvertiser.onComplete()
-    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters, hadResults = index > 0)
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)
   }
 
   private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
