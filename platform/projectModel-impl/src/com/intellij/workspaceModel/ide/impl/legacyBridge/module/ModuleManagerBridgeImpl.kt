@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ide.plugins.ContentModuleDescriptor
-import com.intellij.ide.plugins.DependsSubDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.getMainDescriptor
+import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -673,15 +670,10 @@ private fun checkModuleLevelServiceAndExtensionRegistration() {
 }
 
 private fun checkModuleLevel(plugin: IdeaPluginDescriptorImpl, child: IdeaPluginDescriptorImpl) {
-  fun IdeaPluginDescriptorImpl.describe(): String = when (this) {
-    is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
-    is ContentModuleDescriptor -> "content module $contentModuleName"
-    is DependsSubDescriptor -> "<depends> sub-descriptor ($dependsTargetId)"
-  }
   fun check(list: List<*>, debugLevel: Boolean = false) {
     if (list.isNotEmpty()) {
       val message = "Module-level elements are deprecated, and support is scheduled to be removed: " +
-                    "${child.describe()} of ${plugin.describe()} registers $list"
+                    "${child.shortLogDescription} of ${plugin.shortLogDescription} registers $list"
       if (!debugLevel) {
         LOG.warn(message)
       }

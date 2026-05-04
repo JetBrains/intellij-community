@@ -54,7 +54,7 @@ object PluginInitializationDiagnosticUtils {
       val (childFreeChainedExclusions, otherChildren) = children.partition { (exclusionChildren[it]?.size ?: 0) == 0 && resolvedPluginSet.getExclusionReason(it) is ChainedExclusion }
       if (childFreeChainedExclusions.isNotEmpty()) {
         appendIndentString(indent + 1)
-        appendLine("dependent ${childFreeChainedExclusions.joinToString(", ") { it.getLogDescription() }} excluded")
+        appendLine("dependent ${childFreeChainedExclusions.joinToString(", ") { it.shortLogDescription }} excluded")
       }
       for (child in otherChildren) {
         writeExclusionTree(child, indent + 1)
@@ -70,7 +70,7 @@ object PluginInitializationDiagnosticUtils {
         .forEach { (ref, roots) ->
           val disabledPlugin = broadResolveContext.resolveReference(ref).firstOrNull { resolvedPluginSet.initContext.isPluginDisabled(it.pluginId) }
           if (disabledPlugin != null) {
-            appendLine("${disabledPlugin.getLogDescription()} is marked disabled")
+            appendLine("${disabledPlugin.shortLogDescription} is marked disabled")
           } else {
             when (ref) {
               is DependencyRef.ContentModule -> append("module ")
@@ -83,7 +83,7 @@ object PluginInitializationDiagnosticUtils {
           val (childFreeExclusions, otherRoots) = roots.partition { (exclusionChildren[it.descriptor]?.size ?: 0) == 0 }
           if (childFreeExclusions.isNotEmpty()) {
             appendIndentString(1)
-            appendLine("dependent ${childFreeExclusions.joinToString(", ") { it.descriptor.getLogDescription() }} excluded")
+            appendLine("dependent ${childFreeExclusions.joinToString(", ") { it.descriptor.shortLogDescription }} excluded")
           }
           for (root in otherRoots) {
             writeExclusionTree(root.descriptor, 1)
@@ -106,7 +106,7 @@ object PluginInitializationDiagnosticUtils {
         appendLine("Resolved descriptors:")
         for ((index, descriptor) in resolvedPluginSet.sortedResolvedDescriptors.withIndex()) {
           if (index > 0) append(", ")
-          append(descriptor.getLogDescription())
+          append(descriptor.shortLogDescription)
         }
       })
     }
@@ -118,7 +118,7 @@ object PluginInitializationDiagnosticUtils {
     ?: error("$this is not a cycle exclusion reason")
 
   private fun DescriptorExclusionReason.logMessage(): String {
-    val logDescr = descriptor.getLogDescription()
+    val logDescr = descriptor.shortLogDescription
     return when (this) {
       // chained:
       is ContentModuleParentIsExcluded -> "dependent $logDescr excluded"
@@ -127,20 +127,20 @@ object PluginInitializationDiagnosticUtils {
       is DependsParentIsExcluded -> "dependent $logDescr excluded"
       // root:
       is DependencyIsNotResolved -> "dependent $logDescr excluded" // special handling in logExclusionTree
-      is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.getLogDescription()} which is not visible"
+      is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
-      is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.getLogDescription()}"
-      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in ${preferredConflictingModule.getLogDescription()}"
+      is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
+      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in ${preferredConflictingModule.shortLogDescription}"
       is PartOfDependencyCycle -> buildString {
         appendLine("The following modules form a dependency cycle:")
-        explainCycle(dependencyCycle, fmtNode = { it.getLogDescription() })
+        explainCycle(dependencyCycle, fmtNode = { it.shortLogDescription })
       }
       is PartOfRuntimeModuleGroupDependencyCycle -> buildString {
         appendLine("Classloaders made from the following groups form a dependency cycle:")
         explainCycle(
           dependencyCycle,
-          fmtNode = { "${it.representativeModule.getLogDescription()} (${it.sortedDescriptors.joinToString { it.getLogDescription() }})" },
-          fmtDeps = { it.joinToString(", ") { it.representativeModule.getLogDescription() } }
+          fmtNode = { "${it.representativeModule.shortLogDescription} (${it.sortedDescriptors.joinToString { it.shortLogDescription }})" },
+          fmtDeps = { it.joinToString(", ") { it.representativeModule.shortLogDescription } }
         )
       }
       is ProductRulesImposedExclusion -> "$logDescr is excluded by product rules: ${this.productReason}"
@@ -153,14 +153,6 @@ object PluginInitializationDiagnosticUtils {
       if (endLine) appendLine()
       else endLine = true
       append("    | ${fmtNode(node)} depends on: ${fmtDeps(dependencies)}")
-    }
-  }
-
-  private fun IdeaPluginDescriptorImpl.getLogDescription(): String {
-    return when (this) {
-      is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
-      is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
-      is ContentModuleDescriptor -> "module ${moduleId.displayName}"
     }
   }
 
