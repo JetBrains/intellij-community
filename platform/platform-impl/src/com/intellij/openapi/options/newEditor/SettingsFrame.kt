@@ -3,20 +3,14 @@ package com.intellij.openapi.options.newEditor
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
-import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.newui.EventHandler
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationActivationListener
@@ -32,38 +26,43 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.project.VetoableProjectManagerListener
+import com.intellij.openapi.ui.ComboBoxWithWidePopup
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.WindowState
 import com.intellij.openapi.wm.IdeFrame
-import org.jetbrains.annotations.ApiStatus
-import com.intellij.openapi.ui.ComboBoxWithWidePopup
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.DeferredIconListener
 import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.mac.touchbar.Touchbar
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.IconUtil
+import com.intellij.ui.mac.touchbar.Touchbar
+import com.intellij.util.system.OS
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
 import java.awt.GridBagLayout
+import java.awt.Window
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
@@ -82,8 +81,8 @@ import javax.swing.UIManager
 import javax.swing.border.CompoundBorder
 
 /**
- * Non-modal settings window using JFrame
- * One instance per application; a project combo lets the user switch between open projects.
+ * Non-modal settings window using JFrame.
+ * One instance per application; opening settings from a different project switches the frame to that project.
  */
 @ApiStatus.Internal
 internal class SettingsFrame private constructor(
@@ -97,8 +96,6 @@ internal class SettingsFrame private constructor(
     /** Single app-wide instance. */
     @Volatile
     private var ourInstance: SettingsFrame? = null
-
-    private const val PINNED_KEY = "ide.settings.window.pinned"
 
     private fun resetInstance() {
       ourInstance = null
@@ -151,28 +148,26 @@ internal class SettingsFrame private constructor(
   /** Panel that holds the editor; its content is swapped on project switch. */
   private val contentArea = JPanel(BorderLayout())
 
-  /** Combo box for switching between open projects. */
-  private lateinit var projectWidget: ComboBoxWithWidePopup<Project>
-
-  /** The project-switcher panel — created once and re-attached to each new editor on switch. */
-  private lateinit var projectWidgetPanel: JPanel
-
-  /** True while programmatically updating the project widget; suppresses re-entrant switches. */
-  private var suppressProjectSwitch = false
-
   /** Kept so we can rewire it to the new editor when switching projects. */
   private var applyButton: JButton? = null
+
+  /** Manages the frame header. Non-null only when [Registry.is("ide.settings.non.modal.custom.header")] is true. */
+  private var headerHelper: SettingsFrameCustomHeaderHelper? = null
+
+  /** Combo box for switching between open projects. Non-null only when the custom header is disabled. */
+  private var projectWidget: ComboBoxWithWidePopup<Project>? = null
+
+  /** The project-switcher panel — created once and re-attached to each new editor on switch. */
+  private var projectWidgetPanel: JPanel? = null
+
+  /** True, while programmatically updating the project widget; suppresses re-entrant switches. */
+  private var suppressProjectSwitch = false
 
   /** The editor for the current project. Replaced when switching projects. */
   private var editor: SettingsEditor
 
   /** Disposable for the current editor. Disposed and recreated on each project switch. */
   private var editorDisposable: Disposable
-
-  /** Whether the settings window floats above the IDE (always on top). Persisted across sessions. */
-  private var isPinned: Boolean
-    get() = PropertiesComponent.getInstance().getBoolean(PINNED_KEY, true)
-    set(value) { PropertiesComponent.getInstance().setValue(PINNED_KEY, value, true) }
 
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -185,13 +180,20 @@ internal class SettingsFrame private constructor(
     editor = makeEditor(editorDisposable, project, groups, configurable, filter)
 
     contentArea.add(editor, BorderLayout.CENTER)
-    editor.setTreeTopComponent(createProjectWidget())
 
     val mainPanel = JPanel(BorderLayout())
     mainPanel.add(contentArea, BorderLayout.CENTER)
     mainPanel.add(createButtonPanel(), BorderLayout.SOUTH)
 
+    if (Registry.`is`("ide.settings.non.modal.custom.header")) {
+      headerHelper = SettingsFrameCustomHeaderHelper(project, mainPanel, frameDisposable)
+    }
+    else {
+      editor.setTreeTopComponent(createProjectWidget())
+    }
+
     component = mainPanel
+    MnemonicHelper.init(mainPanel)
     preferredFocusedComponent = editor.getPreferredFocusedComponent()
 
     val initialSize = editor.getDialogInitialSize()
@@ -207,7 +209,7 @@ internal class SettingsFrame private constructor(
     val window = getFrame()
     if (window is JFrame) {
       val rootPane = window.rootPane
-      window.isAlwaysOnTop = isPinned
+      window.isAlwaysOnTop = Registry.`is`("ide.settings.non.modal.always.on.top")
 
       // Cmd/Ctrl+F: open search
       EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { findShortcut ->
@@ -244,7 +246,11 @@ internal class SettingsFrame private constructor(
             rootPane.defaultButton = null
             window.repaint()
           }
-          editor.recordWindowLeaveState()
+          // Don't snapshot leave state when focus moves to an owned child dialog: any changes
+          // the user makes there are intentional, so the snapshot would be stale on return.
+          if (!e.oppositeWindow.isOwnedBy(window)) {
+            editor.recordWindowLeaveState()
+          }
         }
 
         override fun windowActivated(e: WindowEvent) {
@@ -254,46 +260,44 @@ internal class SettingsFrame private constructor(
             savedDefaultButton = null
             window.repaint()
           }
-          editor.resetUnmodifiedOnWindowFocus()
+          // Skip reset only when returning from an owned child dialog (e.g. a file chooser opened
+          // by a configurable). All other cases — including null (browser, OS app, drag-and-drop)
+          // and unrelated AWT windows — are genuine app-switches where external changes may have
+          // occurred and the configurable should be refreshed.
+          val opposite = e.oppositeWindow
+          if (opposite == null || !opposite.isOwnedBy(window)) {
+            editor.resetUnmodifiedOnWindowFocus()
+          }
         }
       })
     }
 
     val bus = ApplicationManager.getApplication().messageBus
 
-    // Handle current-project closure.
+    // Close the frame when its project closes (no switching to another project).
     bus.connect(frameDisposable)
       .subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(project: Project) {
-          if (project == this@SettingsFrame.project) {
-            val remaining = openProjects()
-            if (remaining.isNotEmpty()) {
-              doSwitchProject(remaining.first(), null, null)
-            }
-            else {
-              close()
-            }
-          }
+          if (project == this@SettingsFrame.project) close()
         }
       })
 
     // Repaint the project combo box when a deferred project icon finishes loading.
-    // The renderer calls retrieveIcon() on the DeferredIconImpl to get the concrete icon, which
-    // is a placeholder until loading completes. This subscription triggers a repaint, so the
-    // resolved icon is shown as soon as it is ready.
-    bus.connect(frameDisposable)
-      .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
-        override fun evaluated(deferred: DeferredIcon, result: Icon) = projectWidget.repaint()
-      })
+    if (!Registry.`is`("ide.settings.non.modal.custom.header")) {
+      bus.connect(frameDisposable)
+        .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
+          override fun evaluated(deferred: DeferredIcon, result: Icon) { projectWidget?.repaint() }
+        })
+    }
 
     // When the IDE application loses OS focus (user switches to browser/terminal), clear
     // isAlwaysOnTop so the settings window drops behind other apps. Restore it when the IDE
-    // regains focus. This makes "pin" mean "float above the IDE only, not every app".
+    // regains focus. This makes always-on-top mean "float above the IDE only, not every app".
     if (window is JFrame) {
       bus.connect(frameDisposable)
         .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
           override fun applicationActivated(ideFrame: IdeFrame) {
-            if (isPinned) getFrame().isAlwaysOnTop = true
+            if (Registry.`is`("ide.settings.non.modal.always.on.top")) getFrame().isAlwaysOnTop = true
           }
           override fun applicationDeactivated(ideFrame: IdeFrame) {
             getFrame().isAlwaysOnTop = false
@@ -326,6 +330,14 @@ internal class SettingsFrame private constructor(
 
   }
 
+  // ── Custom frame header ───────────────────────────────────────────────────────
+
+  override fun createFrameCustomHeader(frame: JFrame): CustomHeader =
+    headerHelper!!.createFrameCustomHeader(frame)
+
+  override fun useCustomWindowDecoration(): Boolean =
+    headerHelper?.usesCustomWindowDecoration ?: false
+
   // ── Editor factory ────────────────────────────────────────────────────────────
 
   private fun makeEditor(
@@ -339,7 +351,6 @@ internal class SettingsFrame private constructor(
     true,  // useLeaveState: auto-reset unmodified configurables when navigating back
     ISettingsTreeViewFactory { f, g -> SettingsTreeView(f, g) },
     spotlightPainterFactory,
-    createPinAction(),
   )
 
   // ── Project widget ────────────────────────────────────────────────────────────
@@ -350,7 +361,7 @@ internal class SettingsFrame private constructor(
     val customizer = ApplicationManager.getApplication().getService(ProjectWindowCustomizerService::class.java)
     val model = MutableCollectionComboBoxModel(openProjects().toMutableList())
     projectWidget = ComboBoxWithWidePopup(model)
-    projectWidget.renderer = listCellRenderer<Project?> {
+    projectWidget!!.renderer = listCellRenderer<Project?> {
       value?.let { proj ->
         val rawIcon = customizer.getProjectIcon(proj)
         // DeferredIcon.deepCopy() resets scaledDelegateIcon to the placeholder even when isDone=true,
@@ -366,7 +377,7 @@ internal class SettingsFrame private constructor(
       }
     }
     model.selectedItem = project
-    projectWidget.addItemListener { e ->
+    projectWidget!!.addItemListener { e ->
       if (!suppressProjectSwitch && e.stateChange == ItemEvent.SELECTED) {
         val selected = e.item as? Project ?: return@addItemListener
         if (selected != project) switchToProject(selected, null, null)
@@ -376,24 +387,10 @@ internal class SettingsFrame private constructor(
     projectWidgetPanel = object : JPanel(BorderLayout()) {
       override fun getMinimumSize(): Dimension = Dimension(0, super.getMinimumSize().height)
     }
-    projectWidgetPanel.background = UIUtil.SIDE_PANEL_BACKGROUND
-    projectWidgetPanel.border = JBUI.Borders.empty(4, 5, 0, 5)
-    projectWidgetPanel.add(projectWidget, BorderLayout.CENTER)
-    return projectWidgetPanel
-  }
-
-  private fun createPinAction(): ToggleAction = object : ToggleAction(
-    IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
-    IdeBundle.messagePointer("action.ToggleAction.description.pin.window"),
-    AllIcons.General.Pin_tab,
-  ) {
-    override fun isSelected(e: AnActionEvent): Boolean = isPinned
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      isPinned = state
-      getFrame().isAlwaysOnTop = state
-    }
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-    override fun isDumbAware(): Boolean = true
+    projectWidgetPanel!!.background = UIUtil.SIDE_PANEL_BACKGROUND
+    projectWidgetPanel!!.border = JBUI.Borders.empty(4, 5, 0, 5)
+    projectWidgetPanel!!.add(projectWidget!!, BorderLayout.CENTER)
+    return projectWidgetPanel!!
   }
 
   /**
@@ -401,11 +398,12 @@ internal class SettingsFrame private constructor(
    * Uses [suppressProjectSwitch] to prevent the [ItemEvent] from triggering a re-entrant switch.
    */
   private fun refreshProjectWidget(newProject: Project) {
+    val widget = projectWidget ?: return
     suppressProjectSwitch = true
     try {
       @Suppress("UNCHECKED_CAST")
-      (projectWidget.model as MutableCollectionComboBoxModel<Project>).update(openProjects())
-      projectWidget.model.selectedItem = newProject
+      (widget.model as MutableCollectionComboBoxModel<Project>).update(openProjects())
+      widget.model.selectedItem = newProject
     }
     finally {
       suppressProjectSwitch = false
@@ -430,12 +428,12 @@ internal class SettingsFrame private constructor(
       )
 
       if (choice == Messages.CANCEL) {
-        refreshProjectWidget(project)
+        projectWidget?.let { refreshProjectWidget(project) }
         return
       }
       if (choice == Messages.YES) {
         if (!editor.apply()) {
-          refreshProjectWidget(project)
+          projectWidget?.let { refreshProjectWidget(project) }
           return // validation failed – stay on current project
         }
       }
@@ -469,6 +467,7 @@ internal class SettingsFrame private constructor(
   /** Unconditionally replaces the editor with one for [newProject]. */
   private fun doSwitchProject(newProject: Project, toSelect: Configurable?, filter: String?) {
     project = newProject
+    headerHelper?.update(newProject) ?: refreshProjectWidget(newProject)
 
     // Capture UI state before disposing the old editor
     val currentConfigurableId = editor.currentConfigurable
@@ -495,9 +494,8 @@ internal class SettingsFrame private constructor(
 
     editor = makeEditor(editorDisposable, newProject, groups, resolvedToSelect, filter)
 
-    refreshProjectWidget(newProject)
     contentArea.add(editor, BorderLayout.CENTER)
-    editor.setTreeTopComponent(projectWidgetPanel)
+    projectWidgetPanel?.let { editor.setTreeTopComponent(it) }
     editor.splitterProportion = splitterProportion
     contentArea.revalidate()
     contentArea.repaint()
@@ -534,10 +532,6 @@ internal class SettingsFrame private constructor(
         window.size = currentSize
       }
     }
-    // Create the native peer (addNotify) for HiDPI-aware rendering, then run a layout
-    // pass (validate) so components like the project icon are sized correctly on first show.
-    window.addNotify()
-    window.validate()
   }
 
   override fun show() {
@@ -551,6 +545,15 @@ internal class SettingsFrame private constructor(
       window.toFront()
       window.requestFocus()
       return
+    }
+    // On macOS without custom decorations, zero the transparent title bar height so that
+    // SettingsInnerHeader fills the title bar area at the traffic-light level (y=0).
+    // setTransparentTitleBar (called from createContents → super.show) reads this property.
+    // Also hide the native macOS title text so it doesn't appear in the center of the header.
+    if (OS.CURRENT == OS.macOS && !IdeFrameDecorator.isCustomDecorationActive() && window is JFrame
+        && Registry.`is`("ide.settings.non.modal.custom.header")) {
+      window.rootPane.putClientProperty("Window.transparentTitleBarHeight", 0)
+      window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
     }
     super.show()
   }
@@ -628,7 +631,7 @@ internal class SettingsFrame private constructor(
     }
 
     val rightButtons = mutableListOf<JButton>()
-    if (SystemInfo.isMac) {
+    if (OS.CURRENT == OS.macOS) {
       // macOS: Cancel | Apply | OK
       rightButtons.add(cancelButton)
       applyButton?.let { rightButtons.add(it) }
@@ -656,5 +659,15 @@ internal class SettingsFrame private constructor(
     }
     return panel
   }
+}
+
+/** Returns true if this window's ownership chain passes through [ancestor]. */
+private fun Window?.isOwnedBy(ancestor: Window): Boolean {
+  var w = this?.owner
+  while (w != null) {
+    if (w === ancestor) return true
+    w = w.owner
+  }
+  return false
 }
 

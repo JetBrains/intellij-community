@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ide.actions.BackAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ide.actions.ForwardAction;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.ui.UISettings;
@@ -11,7 +12,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.UiDataProvider;
@@ -83,6 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
+  private static final Logger LOG = Logger.getInstance(SettingsEditor.class);
   static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
@@ -102,8 +103,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   /** Whether to auto-reset unmodified configurables when navigating back to them (non-modal windows). */
   private final boolean myUseLeaveState;
   private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
-  private final @Nullable AnAction myExtraHeaderAction;
-
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
 
@@ -130,11 +129,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @Nullable String filter,
                  boolean useLeaveState,
                  @NotNull ISettingsTreeViewFactory factory,
-                 @NotNull SpotlightPainterFactory spotlightPainterFactory,
-                 @Nullable AnAction extraHeaderAction) {
+                 @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
     myUseLeaveState = useLeaveState;
-    myExtraHeaderAction = extraHeaderAction;
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -268,6 +265,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
             // values to avoid overwriting external or background changes.
             // Cascade: the user-modified configurable (e.g., Color Scheme Font) handles shared
             // state through its own apply(); its sibling (Console Font) must not clobber it.
+            LOG.warn("apply: skipping '" + configurable.getDisplayName() + "' (leave-state=false)");
             continue;
           }
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
@@ -505,9 +503,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
     group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
-    if (myExtraHeaderAction != null) {
-      group.add(myExtraHeaderAction);
-    }
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -669,13 +664,16 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
    * Resets the current configurable if it had no user edits when the window lost focus
    * (myLeaveState=false) but is now isModified=true (external/background change).
    * Call this when the settings window regains focus so external changes become visible.
+   * The leave-state entry is consumed (removed) regardless, so any subsequent user edits
+   * are not blocked by a stale entry in the apply loop.
    * Non-current configurables are handled lazily: reset on navigation via postUpdateCurrent,
    * and protected at apply time by the myLeaveState skip in the apply loop.
    */
   public void resetUnmodifiedOnWindowFocus() {
     Configurable current = filter.context.getCurrentConfigurable();
     if (current == null) return;
-    if (myLeaveState.get(current) == Boolean.FALSE && current.isModified()) {
+    Boolean leaveState = myLeaveState.remove(current);
+    if (leaveState == Boolean.FALSE && current.isModified()) {
       current.reset();
       filter.context.fireReset(current);
     }
