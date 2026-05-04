@@ -151,7 +151,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       }
       PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
       field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
-        .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
+        .appendField(myExpr, JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
                      anchorMember);
       updateVariable(field);
       return field;
@@ -257,7 +257,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 getOccurrences(),
                                                 isReplaceAllOccurrences(), true,
                                                 true,
-                                                BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
+                                                JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION,
                                                 myVisibility, (PsiLocalVariable)getLocalVariable(),
                                                 getType(),
                                                 true,

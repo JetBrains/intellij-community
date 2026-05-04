@@ -38,4 +38,11 @@ public class FieldPostfixTemplateTest extends PostfixTemplateTestCase {
   protected String getSuffix() {
     return "field";
   }
+
+  public static class ModFieldPostfixTemplateTest extends FieldPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

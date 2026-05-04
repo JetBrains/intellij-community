@@ -125,7 +125,7 @@ public final class PostfixTemplateModCompletionItemProvider implements ModComple
 
     @Override
     public @NotNull ModCompletionItemPresentation presentation() {
-      return new ModCompletionItemPresentation(MarkupText.plainText(myTemplate.getPresentableName()))
+      return new ModCompletionItemPresentation(MarkupText.plainText(myTemplate.getPresentableName() + " (mod)"))
         .withMainIcon(() -> AllIcons.Nodes.Template)
         .withDetailText(MarkupText.plainText(myTemplate.getExample()));
     }

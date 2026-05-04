@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -179,7 +180,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       PsiType defaultType = typeSelectorManager.getDefaultType();
       NameSuggestionsGenerator generator = IntroduceConstantDialog.createNameSuggestionGenerator(null, expr, JavaCodeStyleManager.getInstance(project), enteredName, getParentClass());
       return new Settings(generator.getSuggestedNameInfo(defaultType).names[0], expr, occurrences, replaceAllOccurrences, true, true,
-                          InitializationPlace.IN_FIELD_DECLARATION,
+                          JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION,
                           ObjectUtils.notNull(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY, PsiModifier.PUBLIC),
                           localVariable, defaultType, localVariable != null, getParentClass(), preselectNonNls, false);
     }
@@ -195,7 +196,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       return null;
     }
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
-                        InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                        JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
                         dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
                         dialog.isAnnotateAsNonNls(),
                         dialog.introduceEnumConstant());
@@ -245,8 +246,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
-  protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
-    return true;
+  protected @Nullable String checkClass(@NotNull PsiClass parentClass, @NotNull PsiExpression selectedExpr) {
+    return null;
   }
 
   public static @NlsActions.ActionText String getRefactoringNameText() {

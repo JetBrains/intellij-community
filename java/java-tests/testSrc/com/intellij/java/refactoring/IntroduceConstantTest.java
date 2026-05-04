@@ -14,6 +14,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -225,7 +226,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
         final PsiType psiType = selectorManager.getDefaultType();
         assertEquals(psiType.getCanonicalText(), expectedType);
         return new Settings("xxx", expr, occurrences, true, true, true,
-                            InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
+                            JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
                             parentClass, false, false);
       }
     }.invoke(getProject(), getEditor(), getFile(), null);

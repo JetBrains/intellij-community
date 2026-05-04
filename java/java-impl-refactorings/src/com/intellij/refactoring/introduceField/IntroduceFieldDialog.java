@@ -36,7 +36,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
 class IntroduceFieldDialog extends DialogWrapper {
-  public static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  public static JavaIntroduceFieldHandlerBase.InitializationPlace ourLastInitializerPlace;
 
   private final Project myProject;
   private final PsiClass myParentClass;
@@ -91,7 +91,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myNameField.getEnteredName();
   }
 
-  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+  public JavaIntroduceFieldHandlerBase.InitializationPlace getInitializerPlace() {
     return myCentralPanel.getInitializerPlace();
   }
 

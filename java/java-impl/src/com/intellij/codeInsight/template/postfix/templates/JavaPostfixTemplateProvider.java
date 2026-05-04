@@ -74,7 +74,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new IfStatementPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate("inst"),
-    new IntroduceFieldPostfixTemplate(), //doesn't support mod completion
+    new IntroduceFieldPostfixTemplate(),
     new IntroduceVariablePostfixTemplate(),
     new IsNullCheckPostfixTemplate(),
     new NotExpressionPostfixTemplate(),

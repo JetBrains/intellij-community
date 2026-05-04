@@ -34,9 +34,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase.*;
+
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
-  private @Nullable JComboBox<BaseExpressionToFieldHandler.InitializationPlace> myInitializerCombo;
-  private DefaultComboBoxModel<BaseExpressionToFieldHandler.InitializationPlace> myInitialisersPlaceModel;
+  private @Nullable JComboBox<InitializationPlace> myInitializerCombo;
+  private DefaultComboBoxModel<InitializationPlace> myInitialisersPlaceModel;
 
   public IntroduceFieldPopupPanel(PsiClass parentClass,
                                   PsiExpression initializerExpression,
@@ -54,15 +56,15 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
-                                            BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
+                                            InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
-      setEnabledInitializationPlaces(initializerExpression);
+      setEnabledInitializationPlaces(initializerExpression, hasSetUpChoice());
       if (!myAllowInitInMethod) {
-        myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+        myInitialisersPlaceModel.removeElement(InitializationPlace.IN_CURRENT_METHOD);
       }
       boolean inOnlyConstructor = myIsCurrentMethodConstructor && myParentClass.getConstructors().length == 1;
       if (myWillBeDeclaredStatic || inOnlyConstructor) {
-        myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+        myInitialisersPlaceModel.removeElement(InitializationPlace.IN_CONSTRUCTOR);
       }
     } else {
       myInitialisersPlaceModel.removeAllElements();
@@ -71,11 +73,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   void setupSelection(@NotNull Disposable disposable) {
     boolean canBeInitializedInField =
-      myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) > -1;
+      myInitialisersPlaceModel.getIndexOf(InitializationPlace.IN_FIELD_DECLARATION) > -1;
     boolean canBeInitializedInConstructor =
-      myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) > -1;
+      myInitialisersPlaceModel.getIndexOf(InitializationPlace.IN_CONSTRUCTOR) > -1;
     int canBeInitializedInCurrentMethod =
-      myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+      myInitialisersPlaceModel.getIndexOf(InitializationPlace.IN_CURRENT_METHOD);
 
     ReadAction.nonBlocking(
         () -> getSelection(IntroduceFieldDialog.ourLastInitializerPlace, canBeInitializedInField, canBeInitializedInConstructor, canBeInitializedInCurrentMethod))
@@ -85,35 +87,35 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private BaseExpressionToFieldHandler.InitializationPlace getSelection(BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace,
+  private InitializationPlace getSelection(InitializationPlace ourLastInitializerPlace,
                                                                         boolean canBeInitializedInField,
                                                                         boolean canBeInitializedInConstructor,
                                                                         int canBeInitializedInCurrentMethod) {
     final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(myParentClass);
-    if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD &&
+    if (ourLastInitializerPlace == InitializationPlace.IN_SETUP_METHOD &&
         hasSetUpChoice() && 
         (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) || TestFrameworks.getInstance().isTestClass(myParentClass))) {
-      return BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD;
+      return InitializationPlace.IN_SETUP_METHOD;
     }
     else {
-      if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR &&
+      if (ourLastInitializerPlace == InitializationPlace.IN_CONSTRUCTOR &&
           canBeInitializedInConstructor && myParentClass.getConstructors().length > 0) {
-        return BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
+        return InitializationPlace.IN_CONSTRUCTOR;
       }
       else {
-        if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION &&
+        if (ourLastInitializerPlace == InitializationPlace.IN_FIELD_DECLARATION &&
             canBeInitializedInField) {
-          return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
+          return InitializationPlace.IN_FIELD_DECLARATION;
         }
         else {
           if (canBeInitializedInCurrentMethod > -1) {
-            return BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD;
+            return InitializationPlace.IN_CURRENT_METHOD;
           }
           else if (canBeInitializedInField) {
-            return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
+            return InitializationPlace.IN_FIELD_DECLARATION;
           }
           else {
-            return BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD;
+            return InitializationPlace.IN_CURRENT_METHOD;
           }
         }
       }
@@ -122,7 +124,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   protected void initializeControls(PsiExpression initializerExpression,
-                                    BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
+                                    InitializationPlace ourLastInitializerPlace) {
   }
 
   @Override
@@ -131,9 +133,9 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
+  public InitializationPlace getInitializerPlace() {
     if (myInitializerCombo != null) {
-      return (BaseExpressionToFieldHandler.InitializationPlace)myInitializerCombo.getSelectedItem();
+      return (InitializationPlace)myInitializerCombo.getSelectedItem();
     }
     return myInitialisersPlaceModel.getElementAt(0);
   }
@@ -156,11 +158,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
                              JBInsets.emptyInsets(), 0, 0);
 
     myInitialisersPlaceModel = new DefaultComboBoxModel<>();
-    myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
-    myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
-    myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+    myInitialisersPlaceModel.addElement(InitializationPlace.IN_CURRENT_METHOD);
+    myInitialisersPlaceModel.addElement(InitializationPlace.IN_FIELD_DECLARATION);
+    myInitialisersPlaceModel.addElement(InitializationPlace.IN_CONSTRUCTOR);
     if (!DumbService.isDumb(myParentClass.getProject()) && TestFrameworks.getInstance().isTestClass(myParentClass)) {
-      myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
+      myInitialisersPlaceModel.addElement(InitializationPlace.IN_SETUP_METHOD);
     }
     initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);
     if (myInitialisersPlaceModel.getSize() > 1) {
@@ -168,10 +170,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       gridBagConstraints.insets.left = 5;
       gridBagConstraints.anchor = GridBagConstraints.WEST;
       groupPanel.add(initLabel, gridBagConstraints);
-      ComboBox<BaseExpressionToFieldHandler.InitializationPlace> initializersCombo = new ComboBox<>(myInitialisersPlaceModel);
+      ComboBox<InitializationPlace> initializersCombo = new ComboBox<>(myInitialisersPlaceModel);
       KeyboardComboSwitcher.setupActions(initializersCombo, myParentClass.getProject());
       initLabel.setLabelFor(initializersCombo);
-      initializersCombo.setRenderer(BuilderKt.textListCellRenderer("", IntroduceFieldPopupPanel::getPresentableText));
+      initializersCombo.setRenderer(BuilderKt.textListCellRenderer("", place -> InitializationPlace.getPresentableText(place)));
       initializersCombo.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -188,14 +190,14 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return groupPanel;
   }
 
-  private static @Nullable String getPresentableText(BaseExpressionToFieldHandler.InitializationPlace value) {
-    if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) {
+  public static @Nullable String getPresentableText(@Nullable InitializationPlace value) {
+    if (value == InitializationPlace.IN_CURRENT_METHOD) {
       return "current method";
-    } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
+    } else if (value == InitializationPlace.IN_CONSTRUCTOR) {
       return "constructor";
-    } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
+    } else if (value == InitializationPlace.IN_FIELD_DECLARATION) {
       return "field declaration";
-    } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD){
+    } else if (value == InitializationPlace.IN_SETUP_METHOD){
       return "setUp";
     }
     return null;
@@ -204,13 +206,13 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   @Override
   protected boolean updateInitializationPlaceModel(boolean initializedInSetup, boolean initializedInConstructor, boolean locals) {
     if (locals) {
-      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
+      myInitialisersPlaceModel.removeElement(InitializationPlace.IN_FIELD_DECLARATION);
     }
     if (!initializedInConstructor) {
-      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+      myInitialisersPlaceModel.removeElement(InitializationPlace.IN_CONSTRUCTOR);
     }
     if (!initializedInSetup) {
-      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
+      myInitialisersPlaceModel.removeElement(InitializationPlace.IN_SETUP_METHOD);
     } else {
       return true;
     }
@@ -219,13 +221,13 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   protected boolean hasSetUpChoice() {
-    return myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD) > -1;
+    return myInitialisersPlaceModel.getIndexOf(InitializationPlace.IN_SETUP_METHOD) > -1;
   }
 
   @Override
   public void setInitializeInFieldDeclaration() {
     LOG.assertTrue(myInitializerCombo != null);
-    myInitializerCombo.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
+    myInitializerCombo.setSelectedItem(InitializationPlace.IN_FIELD_DECLARATION);
   }
 
   @Override
@@ -235,9 +237,9 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   @Override
   protected boolean allowFinal() {
     final Object selectedItem = getInitializerPlace();
-    boolean allowFinal = selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION ||
-                         (selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR && !myWillBeDeclaredStatic);
-    if (selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD && myIsCurrentMethodConstructor) {
+    boolean allowFinal = selectedItem == InitializationPlace.IN_FIELD_DECLARATION ||
+                         (selectedItem == InitializationPlace.IN_CONSTRUCTOR && !myWillBeDeclaredStatic);
+    if (selectedItem == InitializationPlace.IN_CURRENT_METHOD && myIsCurrentMethodConstructor) {
       final PsiMethod[] constructors = myParentClass.getConstructors();
       allowFinal = constructors.length <= 1;
     }
@@ -247,11 +249,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   @Override
   protected void updateInitializerSelection() {
     if (myAllowInitInMethodIfAll || !isReplaceAllOccurrences()) {
-      if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) == -1) {
-        myInitialisersPlaceModel.insertElementAt(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, 0);
+      if (myInitialisersPlaceModel.getIndexOf(InitializationPlace.IN_CURRENT_METHOD) == -1) {
+        myInitialisersPlaceModel.insertElementAt(InitializationPlace.IN_CURRENT_METHOD, 0);
       }
     } else {
-      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+      myInitialisersPlaceModel.removeElement(InitializationPlace.IN_CURRENT_METHOD);
     }
   }
 
