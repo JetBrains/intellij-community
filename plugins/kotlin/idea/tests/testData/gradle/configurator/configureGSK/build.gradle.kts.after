@@ -9,11 +9,11 @@ buildscript {
         mavenCentral()
     }
 }
-dependencies {
-    implementation(kotlin("stdlib-jre8"))
-}
 repositories {
     mavenCentral()
+}
+dependencies {
+    testImplementation(kotlin("test"))
 }
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {

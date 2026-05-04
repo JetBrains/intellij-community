@@ -43,6 +43,13 @@
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.migration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

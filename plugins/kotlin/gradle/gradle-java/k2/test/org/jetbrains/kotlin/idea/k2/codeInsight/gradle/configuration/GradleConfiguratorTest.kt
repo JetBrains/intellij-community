@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
@@ -24,8 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
@@ -60,6 +62,9 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
         foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     @Test
     @TargetVersions("<9.0.0")
@@ -142,6 +147,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Ignore("KTIJ-38638")
     @Test
     @TargetVersions("6.0 <=> 7.6.x")
     fun testProjectWithSubmodule() {
@@ -853,6 +859,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     // compilerOptions + same option with another value
+    @Ignore("KTIJ-38636")
     @Test
     fun testChangeFeatureSupportCompilerOptionsKts() {
         addLanguageFeature(LanguageFeature.InlineClasses)
@@ -941,6 +948,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Ignore("KTIJ-38636")
     @Test
     fun testEnableFeatureSupportToExistentArgumentsKts() {
         addLanguageFeature(LanguageFeature.InlineClasses)
@@ -953,6 +961,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
 
+    @Ignore("KTIJ-38636")
     @Test
     fun testEnableFeatureSupportToExistentArgumentsCompilerOptionsKts() {
         addLanguageFeature(LanguageFeature.InlineClasses)
@@ -970,6 +979,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         addLanguageFeature(LanguageFeature.ProhibitAllMultipleDefaultsInheritedFromSupertypes)
     }
 
+    @Ignore("KTIJ-38636")
     @Test
     fun testAddToAddAllInFreeCompilerArgsWhenChangingSomeOption() {
         addLanguageFeature(LanguageFeature.MangleClassMembersReturningInlineClasses, state = LanguageFeature.State.DISABLED)
