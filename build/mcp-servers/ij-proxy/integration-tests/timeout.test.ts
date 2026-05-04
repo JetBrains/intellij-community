@@ -181,6 +181,49 @@ describe('ij MCP proxy tool call timeout', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('bash forwards args.timeout (ms) to container_exec as timeoutMs', async () => {
+    const containerExecTool = buildUpstreamTool('container_exec', {
+      sessionId: {type: 'string'},
+      command: {type: 'array', items: {type: 'string'}},
+      timeoutMs: {type: 'number'}
+    }, ['sessionId', 'command'])
+
+    const calls: Array<{args: Record<string, unknown>}> = []
+    await withProxy({
+      tools: [containerExecTool],
+      proxyEnv: {
+        AGENT_CONTAINER_SESSION_ID: 'test-session',
+        AGENT_CONTAINER_WORKSPACE_PATH: '/workspace'
+      },
+      onToolCall: async ({name, args}) => {
+        if (name === 'container_exec') {
+          calls.push({args: args as Record<string, unknown>})
+        }
+        return {text: 'output'}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+
+      const r1 = await proxyClient.send('tools/call', {
+        name: 'bash',
+        arguments: {command: 'echo hi', timeout: 30000}
+      })
+      ok(!r1.result?.isError, `unexpected error: ${r1.result?.content?.[0]?.text ?? ''}`)
+
+      const r2 = await proxyClient.send('tools/call', {
+        name: 'bash',
+        arguments: {command: 'echo hi'}
+      })
+      ok(!r2.result?.isError, `unexpected error: ${r2.result?.content?.[0]?.text ?? ''}`)
+
+      strictEqual(calls.length, 2)
+      strictEqual(calls[0].args.timeoutMs, 30000,
+        `expected 30000ms forwarded for explicit timeout, got: ${JSON.stringify(calls[0].args)}`)
+      strictEqual(calls[1].args.timeoutMs, 900000,
+        `expected 900000ms default when no timeout given, got: ${JSON.stringify(calls[1].args)}`)
+    })
+  })
+
   it('forwards args.timeout to upstream while applying it as the proxy deadline', async () => {
     const passthroughTool = buildUpstreamTool('custom_passthrough_tool', {
       payload: {type: 'string'},
