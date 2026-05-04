@@ -24612,8 +24612,20 @@ function buildToolSpec(name, description, inputSchema, annotations, context) {
   return {
     name,
     description: resolveToolDescription(description, context),
-    inputSchema,
+    inputSchema: withTimeoutDeclared(inputSchema),
     ...annotations ? { annotations } : {}
+  };
+}
+var TIMEOUT_INPUT_SCHEMA_PROPERTY = {
+  type: "number",
+  description: "Optional. Per-call timeout in milliseconds. Used as the ij-proxy MCP RPC deadline and forwarded to upstream tools that accept it. 0 disables. Defaults to the proxy's configured per-tool timeout (~60 s for most tools, ~1200 s for build/lint/container)."
+};
+function withTimeoutDeclared(inputSchema) {
+  if (Object.prototype.hasOwnProperty.call(inputSchema.properties, "timeout"))
+    return inputSchema;
+  return {
+    ...inputSchema,
+    properties: { ...inputSchema.properties, timeout: TIMEOUT_INPUT_SCHEMA_PROPERTY }
   };
 }
 var TOOL_VARIANTS = [

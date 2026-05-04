@@ -100,8 +100,23 @@ function buildToolSpec(
   return {
     name,
     description: resolveToolDescription(description, context),
-    inputSchema,
+    inputSchema: withTimeoutDeclared(inputSchema),
     ...(annotations ? {annotations} : {})
+  }
+}
+
+const TIMEOUT_INPUT_SCHEMA_PROPERTY = {
+  type: 'number',
+  description: 'Optional. Per-call timeout in milliseconds. Used as the ij-proxy MCP RPC deadline and forwarded to upstream tools that accept it. 0 disables. Defaults to the proxy\'s configured per-tool timeout (~60 s for most tools, ~1200 s for build/lint/container).'
+} as const
+
+function withTimeoutDeclared(inputSchema: ToolInputSchema): ToolInputSchema {
+  if (Object.prototype.hasOwnProperty.call(inputSchema.properties, 'timeout')) {
+    return inputSchema
+  }
+  return {
+    ...inputSchema,
+    properties: {...inputSchema.properties, timeout: TIMEOUT_INPUT_SCHEMA_PROPERTY}
   }
 }
 

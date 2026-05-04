@@ -72,6 +72,22 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('declares timeout on every proxy tool inputSchema', async () => {
+    await withProxy({}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const proxyToolNames = new Set(getProxyToolNames())
+      const advertisedProxyTools = listResponse.result.tools.filter((tool) => proxyToolNames.has(tool.name))
+      ok(advertisedProxyTools.length > 0)
+      for (const tool of advertisedProxyTools) {
+        const properties = tool.inputSchema?.properties ?? {}
+        ok('timeout' in properties, `Expected timeout in inputSchema for ${tool.name}`)
+        const timeoutSchema = properties.timeout
+        ok(timeoutSchema && typeof timeoutSchema === 'object' && timeoutSchema.type === 'number',
+          `Expected timeout to be {type: 'number'} for ${tool.name}, got ${JSON.stringify(timeoutSchema)}`)
+      }
+    })
+  })
+
   it('hides upstream search tool and keeps proxy search tools', async () => {
     await withProxy({tools: upstreamToolsWithLegacySearch}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
