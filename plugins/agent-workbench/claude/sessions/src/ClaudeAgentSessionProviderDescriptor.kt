@@ -108,6 +108,8 @@ internal class ClaudeAgentSessionProviderDescriptor(
 
   override fun isCliAvailable(): Boolean = ClaudeCliSupport.isAvailable()
 
+  override suspend fun ensureCliAvailable(): Boolean = ClaudeCliSupport.findExecutableViaTerminalResolver() != null
+
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return buildClaudeResumeLaunchSpec(sessionId, executableResolver())
   }

@@ -72,7 +72,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 
-- Provider bridge launch-spec construction is suspending: `buildResumeLaunchSpec` and `buildNewSessionLaunchSpec` are `suspend fun` so the executable resolver can run EEL-backed lookups (e.g. fetching environment variables on Windows) without blocking the caller. `isCliAvailable()` remains synchronous and is allowed to use a sync local PATH check for menu enable/disable gating.
+- Provider bridge launch-spec construction is suspending: `buildResumeLaunchSpec` and `buildNewSessionLaunchSpec` are `suspend fun` so the executable resolver can run EEL-backed lookups (e.g. fetching environment variables on Windows) without blocking the caller. The synchronous `isCliAvailable()` is kept for surfaces that paint synchronously (sessions tree popup, editor-tab actions). The descriptor also exposes `suspend fun ensureCliAvailable()` which routes through the same `TerminalAgentResolver` as launches; the agent prompt palette schedules a follow-up resolver-backed refresh so its provider menu enable/disable matches the launch lookup, even when the binary is in a known-location candidate (`$HOME/.local/bin`, `/usr/local/bin`, `$HOME\AppData\Roaming\npm`) but not on the GUI process's `PATH`.
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
 

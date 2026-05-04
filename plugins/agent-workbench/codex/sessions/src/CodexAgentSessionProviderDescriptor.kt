@@ -112,6 +112,8 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
+  override suspend fun ensureCliAvailable(): Boolean = CodexCliUtils.findExecutableViaTerminalResolver() != null
+
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     val executable = executableResolver()
     return AgentSessionTerminalLaunchSpec(

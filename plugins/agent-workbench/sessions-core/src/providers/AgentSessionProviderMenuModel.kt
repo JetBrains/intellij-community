@@ -32,34 +32,66 @@ fun buildAgentSessionProviderMenuModel(bridges: List<AgentSessionProviderDescrip
 
   bridges.forEach { bridge ->
     val cliAvailable = bridge.isCliAvailable()
-    val disabledReasonKey = if (cliAvailable) null else bridge.cliMissingMessageKey
-
-    if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
-      standardItems += AgentSessionProviderMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.STANDARD,
-        labelKey = bridge.newSessionLabelKey,
-        isEnabled = cliAvailable,
-        disabledReasonKey = disabledReasonKey,
-      )
-    }
-
-    val yoloLabelKey = bridge.yoloSessionLabelKey
-    if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
-      yoloItems += AgentSessionProviderMenuItem(
-        bridge = bridge,
-        mode = AgentSessionLaunchMode.YOLO,
-        labelKey = yoloLabelKey,
-        isEnabled = cliAvailable,
-        disabledReasonKey = disabledReasonKey,
-      )
-    }
+    appendMenuItems(bridge, cliAvailable, standardItems, yoloItems)
   }
 
   return AgentSessionProviderMenuModel(
     standardItems = standardItems,
     yoloItems = yoloItems,
   )
+}
+
+/**
+ * Suspending variant of [buildAgentSessionProviderMenuModel] that uses [AgentSessionProviderDescriptor.ensureCliAvailable]
+ * for the enable/disable decision, so menus rendered through it stay aligned with the launch-time CLI lookup
+ * (`TerminalAgentResolver`). Surfaces that can repaint asynchronously (the agent prompt palette) prefer this
+ * over the synchronous [buildAgentSessionProviderMenuModel].
+ */
+suspend fun buildAgentSessionProviderMenuModelAsync(
+  bridges: List<AgentSessionProviderDescriptor>,
+): AgentSessionProviderMenuModel {
+  val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
+  val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
+
+  for (bridge in bridges) {
+    val cliAvailable = bridge.ensureCliAvailable()
+    appendMenuItems(bridge, cliAvailable, standardItems, yoloItems)
+  }
+
+  return AgentSessionProviderMenuModel(
+    standardItems = standardItems,
+    yoloItems = yoloItems,
+  )
+}
+
+private fun appendMenuItems(
+  bridge: AgentSessionProviderDescriptor,
+  cliAvailable: Boolean,
+  standardItems: MutableList<AgentSessionProviderMenuItem>,
+  yoloItems: MutableList<AgentSessionProviderMenuItem>,
+) {
+  val disabledReasonKey = if (cliAvailable) null else bridge.cliMissingMessageKey
+
+  if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
+    standardItems += AgentSessionProviderMenuItem(
+      bridge = bridge,
+      mode = AgentSessionLaunchMode.STANDARD,
+      labelKey = bridge.newSessionLabelKey,
+      isEnabled = cliAvailable,
+      disabledReasonKey = disabledReasonKey,
+    )
+  }
+
+  val yoloLabelKey = bridge.yoloSessionLabelKey
+  if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
+    yoloItems += AgentSessionProviderMenuItem(
+      bridge = bridge,
+      mode = AgentSessionLaunchMode.YOLO,
+      labelKey = yoloLabelKey,
+      isEnabled = cliAvailable,
+      disabledReasonKey = disabledReasonKey,
+    )
+  }
 }
 
 fun buildAgentSessionProviderActionModel(
