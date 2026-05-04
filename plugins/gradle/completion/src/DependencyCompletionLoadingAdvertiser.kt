@@ -40,8 +40,8 @@ class DependencyCompletionLoadingAdvertiser {
   /**
    * Call before starting flow collection to show the initial loading message.
    */
-  fun showSearchingServer() {
-    replaceAdvertisement(GradleBundle.message("gradle.dependency.completion.searching.server"))
+  fun showSearchingStatus() {
+    replaceAdvertisement(GradleBundle.message("gradle.dependency.completion.searching.status"))
   }
 
   /**

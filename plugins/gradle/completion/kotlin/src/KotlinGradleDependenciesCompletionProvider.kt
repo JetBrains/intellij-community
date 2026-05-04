@@ -170,7 +170,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
+    loadingAdvertiser.showSearchingStatus()
 
     val documentText = parameters.editor.document.text
     val offset = parameters.offset
@@ -225,7 +225,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
+    loadingAdvertiser.showSearchingStatus()
 
     val dummyText = parameters.position.parent.text
     val text = removeDummySuffix(dummyText)

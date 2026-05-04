@@ -64,7 +64,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
 
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingServer()
+    loadingAdvertiser.showSearchingStatus()
     var index = 0
     when {
       key == moduleKey -> {
