@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor
 
 import com.intellij.CommonBundle
@@ -119,18 +119,22 @@ internal class SettingsFrame private constructor(
       val existing = ourInstance
       if (existing != null && !existing.isDisposed) {
         if (existing.project == project) {
-          configurable?.let { existing.editor.select(it) }
+          if (configurable != null) {
+            existing.editor.selectWithFilter(configurable, filter)
+          } else {
+            filter?.let { existing.editor.setFilter(it) }
+          }
         }
         else {
-          existing.switchToProject(project, configurable)
+          existing.switchToProject(project, configurable, filter)
         }
         return existing
       }
       return SettingsFrame(project, groups, configurable, filter).also { ourInstance = it }
     }
 
-    private fun openProjects(): Array<Project> =
-      ProjectManager.getInstance().openProjects.filter { !it.isDefault }.toTypedArray()
+    private fun openProjects(): List<Project> =
+      ProjectManager.getInstance().openProjects.filter { !it.isDefault }
 
     private val spotlightPainterFactory = object : SpotlightPainterFactory {
       override fun createSpotlightPainter(
@@ -195,9 +199,9 @@ internal class SettingsFrame private constructor(
       setSize(initialSize)
     }
     else {
-      setSize(Dimension(900, 700))
+      setSize(JBUI.size(900, 700))
     }
-    getFrame().minimumSize = Dimension(900, 700)
+    getFrame().minimumSize = JBUI.size(900, 700)
 
     // Register keyboard shortcuts and window-close behavior.
     val window = getFrame()
@@ -264,7 +268,7 @@ internal class SettingsFrame private constructor(
           if (project == this@SettingsFrame.project) {
             val remaining = openProjects()
             if (remaining.isNotEmpty()) {
-              doSwitchProject(remaining[0], null)
+              doSwitchProject(remaining.first(), null, null)
             }
             else {
               close()
@@ -365,7 +369,7 @@ internal class SettingsFrame private constructor(
     projectWidget.addItemListener { e ->
       if (!suppressProjectSwitch && e.stateChange == ItemEvent.SELECTED) {
         val selected = e.item as? Project ?: return@addItemListener
-        if (selected != project) switchToProject(selected, null)
+        if (selected != project) switchToProject(selected, null, null)
       }
     }
 
@@ -400,7 +404,7 @@ internal class SettingsFrame private constructor(
     suppressProjectSwitch = true
     try {
       @Suppress("UNCHECKED_CAST")
-      (projectWidget.model as MutableCollectionComboBoxModel<Project>).update(openProjects().toList())
+      (projectWidget.model as MutableCollectionComboBoxModel<Project>).update(openProjects())
       projectWidget.model.selectedItem = newProject
     }
     finally {
@@ -413,7 +417,7 @@ internal class SettingsFrame private constructor(
   /**
    * Asks the user what to do with unsaved changes, then switches to [newProject].
    */
-  private fun switchToProject(newProject: Project, toSelect: Configurable?) {
+  private fun switchToProject(newProject: Project, toSelect: Configurable?, filter: String?) {
     if (editor.isModified) {
       val choice = Messages.showYesNoCancelDialog(
         getFrame(),
@@ -437,7 +441,7 @@ internal class SettingsFrame private constructor(
       }
       // Messages.NO → discard, fall through
     }
-    doSwitchProject(newProject, toSelect)
+    doSwitchProject(newProject, toSelect, filter)
   }
 
   /**
@@ -463,7 +467,7 @@ internal class SettingsFrame private constructor(
   }
 
   /** Unconditionally replaces the editor with one for [newProject]. */
-  private fun doSwitchProject(newProject: Project, toSelect: Configurable?) {
+  private fun doSwitchProject(newProject: Project, toSelect: Configurable?, filter: String?) {
     project = newProject
 
     // Capture UI state before disposing the old editor
@@ -489,7 +493,7 @@ internal class SettingsFrame private constructor(
     editorDisposable = Disposer.newDisposable("SettingsFrame.editor")
     Disposer.register(frameDisposable, editorDisposable)
 
-    editor = makeEditor(editorDisposable, newProject, groups, resolvedToSelect, null)
+    editor = makeEditor(editorDisposable, newProject, groups, resolvedToSelect, filter)
 
     refreshProjectWidget(newProject)
     contentArea.add(editor, BorderLayout.CENTER)
@@ -618,8 +622,9 @@ internal class SettingsFrame private constructor(
 
     val applyAction = editor.getApplyAction()
     if (applyAction != null) {
-      applyButton = DialogWrapper.createJButtonForAction(applyAction, null)
-      DialogUtil.registerMnemonic(applyButton!!)
+      applyButton = DialogWrapper.createJButtonForAction(applyAction, null).also {
+        DialogUtil.registerMnemonic(it)
+      }
     }
 
     val rightButtons = mutableListOf<JButton>()

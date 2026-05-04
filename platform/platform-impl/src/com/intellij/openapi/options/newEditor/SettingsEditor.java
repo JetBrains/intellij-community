@@ -439,6 +439,15 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return search;
   }
 
+  void setFilter(@Nullable String text) {
+    filter.update(text);
+  }
+
+  void selectWithFilter(@NotNull Configurable configurable, @Nullable String filterText) {
+    treeView.select(configurable).onProcessed(it -> filter.update(filterText));
+    editor.select(configurable);
+  }
+
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
     return new MutableConfigurableGroup.Listener() {
       @Override
