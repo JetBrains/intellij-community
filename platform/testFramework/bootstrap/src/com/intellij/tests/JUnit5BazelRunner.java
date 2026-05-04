@@ -27,22 +27,31 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -87,11 +96,16 @@ public final class JUnit5BazelRunner {
   // Allow test target to specify test jar explicitly. Android Studio runs tests from a external targets so SELF_LOCATION can't be used
   private static final String jbEnvTestJar = "JB_TEST_JAR";
 
+  private static final String intellijBuildTestGroups = "intellij.build.test.groups";
+  private static final String intellijBuildTestGroupRoots = "test.group.roots";
+  private static final String commonTestGroupsResourceName = "tests/testGroups.properties";
+
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
   private static final Launcher launcher = LauncherFactory.create();
 
   private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
+  private static final PostDiscoveryFilter ignorePostDiscoveryFilter = new JUnit5TeamCityRunner.IgnorePostDiscoveryFilter();
   private static final PostDiscoveryFilter shardFilter = ShardFilter.create();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
@@ -100,13 +114,18 @@ public final class JUnit5BazelRunner {
   }
 
   public static LauncherDiscoveryRequest createDiscoveryRequest(List<? extends DiscoverySelector> bazelTestSelectors, String engineVintage) {
-    return LauncherDiscoveryRequestBuilder.request()
+    LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
       .selectors(bazelTestSelectors)
       .filters(getTestFilters(bazelTestSelectors))
       .filters(generateFiltersFromJbEnv().toArray(new Filter[0]))
-      .filters(getEngineFilters(engineVintage))
-      .build();
+      .filters(getEngineFilters(engineVintage));
+
+    if (!"false".equals(engineVintage)) {
+      builder = builder.filters(ignorePostDiscoveryFilter);
+    }
+
+    return builder.build();
   }
 
   private static List<? extends DiscoverySelector> getTestSelectorsByClassPathRoots(ClassLoader classLoader) throws Throwable {
@@ -364,6 +383,14 @@ public final class JUnit5BazelRunner {
 
   private static Filter<?>[] getTestFilters(List<? extends DiscoverySelector> bazelTestSelectors) {
     List<Filter<?>> filters = new ArrayList<>();
+    if (isTestGroupsFilterRequested()) {
+      try {
+        setTestGroupRootsPropertyIfNeeded();
+      } catch (IOException e) {
+        throw new IllegalStateException("Failed to set test group roots property", e);
+      }
+      filters.add(new JUnit5TeamCityRunner.CommonTestClassesFilter());
+    }
     filters.add(bucketingPostDiscoveryFilter);
     filters.add(performancePostDiscoveryFilter);
     if (shardFilter != null) {
@@ -391,6 +418,77 @@ public final class JUnit5BazelRunner {
 
     filters.add(classNameFilter);
     return filters.toArray(new Filter[0]);
+  }
+
+  private static boolean isTestGroupsFilterRequested() {
+    String testGroups = System.getProperty(intellijBuildTestGroups);
+    return testGroups != null && !testGroups.isBlank();
+  }
+
+  private static void setTestGroupRootsPropertyIfNeeded() throws IOException {
+    String testGroupRoots = System.getProperty(intellijBuildTestGroupRoots);
+    if (testGroupRoots != null && !testGroupRoots.isBlank()) {
+      return;
+    }
+    if (testGroupRoots != null) {
+      System.clearProperty(intellijBuildTestGroupRoots);
+    }
+
+    List<Path> roots = findTestGroupRoots(getContextClassLoader());
+    if (!roots.isEmpty()) {
+      System.setProperty(intellijBuildTestGroupRoots, roots.stream()
+        .map(path -> path.toAbsolutePath().toString())
+        .collect(Collectors.joining(File.pathSeparator)));
+    }
+  }
+
+  private static List<Path> findTestGroupRoots(ClassLoader classLoader) throws IOException {
+    LinkedHashSet<Path> roots = new LinkedHashSet<>();
+    Enumeration<URL> resources = classLoader.getResources(commonTestGroupsResourceName);
+    int extractedResourceIndex = 0;
+    Path testGroupRootsDir = getTestGroupRootsTempDir();
+    while (resources.hasMoreElements()) {
+      URL resource = resources.nextElement();
+      Path resourcePath = getFileResourcePath(resource);
+      if (resourcePath == null) {
+        resourcePath = extractTestGroupsResource(resource, testGroupRootsDir, extractedResourceIndex++);
+      }
+      roots.add(resourcePath);
+    }
+    return new ArrayList<>(roots);
+  }
+
+  private static ClassLoader getContextClassLoader() {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    return classLoader != null ? classLoader : ClassLoader.getSystemClassLoader();
+  }
+
+  private static Path getFileResourcePath(URL resource) throws IOException {
+    if (!"file".equals(resource.getProtocol())) {
+      return null;
+    }
+    try {
+      return Path.of(resource.toURI()).toAbsolutePath();
+    }
+    catch (URISyntaxException e) {
+      throw new IOException("Invalid test group resource URL: " + resource, e);
+    }
+  }
+
+  private static Path extractTestGroupsResource(URL resource, Path testGroupRootsDir, int index) throws IOException {
+    Path testGroupsFile = testGroupRootsDir.resolve("testGroups-" + index + ".properties");
+    try (var stream = resource.openStream()) {
+      Files.copy(stream, testGroupsFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+    return testGroupsFile.toAbsolutePath();
+  }
+
+  private static Path getTestGroupRootsTempDir() throws IOException {
+    String tempDir = System.getenv(bazelEnvTestTmpDir);
+    Path root = tempDir == null || tempDir.isBlank() ? Files.createTempDirectory("junit5-bazel-test-groups") : Path.of(tempDir);
+    Path testGroupRootsDir = root.resolve("test-group-roots");
+    Files.createDirectories(testGroupRootsDir);
+    return testGroupRootsDir;
   }
 
   private static Filter<?>[] getEngineFilters(String engineVintage) {

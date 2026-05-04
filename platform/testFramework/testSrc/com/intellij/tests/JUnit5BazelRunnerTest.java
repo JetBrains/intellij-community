@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import com.intellij.idea.IJIgnore;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
@@ -9,7 +11,13 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +32,27 @@ class JUnit5BazelRunnerTest {
       VintageSampleTest.class.getName(),
       JupiterSampleTest.class.getName()
     );
+  }
+
+  @Test
+  @IJIgnore(issue = "MRI-3013")
+  // failed on teamcity as com.intellij.TestCaseLoader.ourCommonTestClassesFilter evaluated before setting required properties
+  void filtersTestsByConfiguredTestGroups(@TempDir Path tempDir) throws Exception {
+    Path resourceRoot = tempDir.resolve("resources");
+    Path testGroupsFile = resourceRoot.resolve("tests/testGroups.properties");
+    Files.createDirectories(testGroupsFile.getParent());
+    Files.writeString(testGroupsFile, "[JUPITER]\n" + JupiterSampleTest.class.getName() + "\n");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("intellij.build.test.patterns", "");
+    properties.put("intellij.build.test.groups", "JUPITER");
+    properties.put("test.group.roots", null);
+    try (URLClassLoader resourceClassLoader = new URLClassLoader(new URL[]{resourceRoot.toUri().toURL()}, getContextClassLoader())) {
+      withSystemProperties(properties, () -> withContextClassLoader(resourceClassLoader, () -> {
+        assertThat(discoverTestClasses(null)).containsExactly(JupiterSampleTest.class.getName());
+        assertThat(System.getProperty("test.group.roots")).contains(testGroupsFile.toAbsolutePath().toString());
+      }));
+    }
   }
 
   @Test
@@ -74,6 +103,53 @@ class JUnit5BazelRunnerTest {
         throw new AssertionError("Unexpected source: " + source);
       })
       .orElseThrow(() -> new AssertionError("Missing source for " + testIdentifier.getUniqueId()));
+  }
+
+  private static void withSystemProperties(Map<String, String> properties, ThrowingRunnable action) throws Exception {
+    Map<String, String> previousValues = new HashMap<>();
+    properties.keySet().forEach(key -> previousValues.put(key, System.getProperty(key)));
+    try {
+      properties.forEach((key, value) -> {
+        if (value == null) {
+          System.clearProperty(key);
+        }
+        else {
+          System.setProperty(key, value);
+        }
+      });
+      action.run();
+    }
+    finally {
+      previousValues.forEach((key, value) -> {
+        if (value == null) {
+          System.clearProperty(key);
+        }
+        else {
+          System.setProperty(key, value);
+        }
+      });
+    }
+  }
+
+  private static ClassLoader getContextClassLoader() {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    return classLoader != null ? classLoader : ClassLoader.getSystemClassLoader();
+  }
+
+  private static void withContextClassLoader(ClassLoader classLoader, ThrowingRunnable action) throws Exception {
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      action.run();
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingRunnable {
+    void run() throws Exception;
   }
 
   public static class VintageSampleTest {
