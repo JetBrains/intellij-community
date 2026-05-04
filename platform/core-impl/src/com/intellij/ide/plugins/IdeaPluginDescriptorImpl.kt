@@ -50,7 +50,7 @@ sealed class IdeaPluginDescriptorImpl(
 
   var isDeleted: Boolean = false
 
-  var ownClassPath: List<Path>? = null
+  abstract val ownClassPath: List<Path>?
 
   /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
   var isMarkedForLoading: Boolean = true
@@ -159,6 +159,8 @@ class DependsSubDescriptor(
   override val moduleDependencies: ModuleDependencies = ModuleDependencies.EMPTY
 
   private val rawResourceBundleBaseName: String? = raw.resourceBundleBaseName
+
+  override val ownClassPath: List<Path>? = null
 
   override fun getDescriptorPath(): String = descriptorPath
 
@@ -274,6 +276,8 @@ class ContentModuleDescriptor(
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
+
+  override var ownClassPath: List<Path>? = null
 
   /** java helper */
   fun getModuleNameString(): String = moduleId.name

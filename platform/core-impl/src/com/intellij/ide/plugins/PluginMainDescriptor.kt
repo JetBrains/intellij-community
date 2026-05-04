@@ -100,6 +100,8 @@ class PluginMainDescriptor(
 
   override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, this)
 
+  override var ownClassPath: List<Path>? = null
+
   init {
     reportMainDescriptorUnexpectedElements(raw) { logUnexpectedElement(this@PluginMainDescriptor, it) }
   }
