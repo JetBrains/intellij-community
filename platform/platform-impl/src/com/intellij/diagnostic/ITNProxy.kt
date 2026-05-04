@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.platform.util.coroutines.childScope
@@ -59,7 +60,7 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 @ApiStatus.Internal
 object ITNProxy {
   private const val DEFAULT_ENDPOINT = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
-  private const val REPORT_ENDPOINT_PROPERTY = "idea.diagnostic.itn.endpoint"
+  private const val REPORT_ENDPOINT_REGISTRY_KEY = "idea.diagnostic.itn.endpoint"
   private const val JETBRAINS_HOST_SUFFIX = ".jetbrains.com"
   private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
   private val LOG = logger<ITNProxy>()
@@ -203,14 +204,23 @@ object ITNProxy {
   }
 
   private fun getReportEndpoint(): String {
-    val endpoint = System.getProperty(REPORT_ENDPOINT_PROPERTY)?.trim().takeUnless { it.isNullOrEmpty() } ?: return DEFAULT_ENDPOINT
+    val endpoint = getConfiguredReportEndpoint() ?: return DEFAULT_ENDPOINT
 
     if (!isEndpointValid(endpoint)) {
-      LOG.debug("Ignoring -D$REPORT_ENDPOINT_PROPERTY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
+      LOG.debug("Ignoring $REPORT_ENDPOINT_REGISTRY_KEY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
       return DEFAULT_ENDPOINT
     }
 
     return endpoint
+  }
+
+  private fun getConfiguredReportEndpoint(): String? {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      Registry.stringValue(REPORT_ENDPOINT_REGISTRY_KEY, "").trim().takeIf { it.isNotEmpty() }?.let {
+        return it
+      }
+    }
+    return System.getProperty(REPORT_ENDPOINT_REGISTRY_KEY)?.trim()?.takeIf { it.isNotEmpty() }
   }
 
   private fun isEndpointValid(endpoint: String): Boolean {

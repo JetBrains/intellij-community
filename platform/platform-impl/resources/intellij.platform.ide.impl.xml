@@ -76,6 +76,11 @@
       description="Enable Alt key to focus the main menu bar on Windows"
       restartRequired="true"
     />
+    <registryKey
+      key="idea.diagnostic.itn.endpoint"
+      defaultValue=""
+      description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"
+    />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
   </extensions>
