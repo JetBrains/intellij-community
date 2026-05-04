@@ -1303,6 +1303,8 @@ e:com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType
 - s:values():com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType[]
+e:com.intellij.toolWindow.ToolWindowEventSource
+- sf:HideBottomWindowsAction:com.intellij.toolWindow.ToolWindowEventSource
 com.intellij.troubleshooting.GeneralTroubleInfoCollector
 - sf:EP_SETTINGS:com.intellij.openapi.extensions.ExtensionPointName
 - a:collectInfo(com.intellij.openapi.project.Project):java.lang.String

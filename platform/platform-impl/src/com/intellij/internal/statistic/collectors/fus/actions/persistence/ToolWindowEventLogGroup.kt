@@ -16,7 +16,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.toolWindow.ToolWindowEventSource
 
 internal object ToolWindowEventLogGroup : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("toolwindow", 63)
+  private val GROUP = EventLogGroup("toolwindow", 64)
 
   override fun getGroup(): EventLogGroup = GROUP
 
