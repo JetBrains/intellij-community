@@ -193,6 +193,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @ApiStatus.Internal
   public void markDocumentUnsaved(Document document, boolean force) {
     if (!ExternalChangeActionUtil.isExternalDocumentChangeInProgress()) {
+      if (LOG.isTraceEnabled()) LOG.trace("markDocumentUnsaved: marking document " + document + " as unsaved");
       myUnsavedDocuments.add(document);
       if (force) {
         document.putUserData(FORCE_SAVE_DOCUMENT_KEY, Boolean.TRUE);
@@ -416,11 +417,13 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     if (myConflictResolver.hasConflict(file)) {
+      if (LOG.isTraceEnabled()) LOG.trace("maySaveDocument: save for " + file + " is vetoed by conflict resolver");
       return false;
     }
 
     for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       if (!vetoer.maySaveDocument(document, isExplicit)) {
+        if (LOG.isTraceEnabled()) LOG.trace("maySaveDocument: save for " + file + " is vetoed by " + vetoer);
         return false;
       }
     }
@@ -789,7 +792,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       VirtualFile file = getFile(document);
       assert file != null;
-      if (!file.isValid()) return null;
+      if (!file.isValid()) {
+        if (LOG.isTraceEnabled()) LOG.trace("reloadFromDisk: file is not valid " + file);
+        return null;
+      }
 
       if (!fireBeforeFileContentReload(file, document)) {
         return null;
@@ -931,6 +937,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {
+          if (LOG.isTraceEnabled()) LOG.trace("fireBeforeFileContentReload: reload for " + file + " is vetoed by " + vetoer);
           return false;
         }
       }
