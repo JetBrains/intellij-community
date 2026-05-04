@@ -59,7 +59,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public int myDebuggerPort = 29781;
     public @NonNls String myAttachProcessFilter = "python";
     public int myEvaluationResponseTimeout = 60_000;
-    public @NonNls String myDebuggerBackend = PyDebuggerBackend.PYDEVD.name();
+    public @NonNls String myDebuggerBackend = PyDebuggerBackend.DEBUGPY.name();
   }
 
 
