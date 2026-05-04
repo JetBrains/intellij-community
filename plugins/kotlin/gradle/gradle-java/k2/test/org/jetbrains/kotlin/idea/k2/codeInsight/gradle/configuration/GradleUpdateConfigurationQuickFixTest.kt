@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -28,7 +28,7 @@ import kotlin.reflect.KMutableProperty0
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath("/")
 @TestMetadata("../../../idea/tests/testData/gradle/languageFeature/")
 class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
