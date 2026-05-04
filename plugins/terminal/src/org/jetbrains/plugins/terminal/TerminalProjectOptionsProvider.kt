@@ -39,13 +39,14 @@ import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import org.jetbrains.plugins.terminal.settings.impl.TerminalProjectOptionsMigration
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Files
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
 @Service(Service.Level.PROJECT)
-@State(name = "TerminalProjectNonSharedOptionsProvider", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
+@State(name = TerminalProjectOptionsProvider.COMPONENT_NAME, storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
   private val state = State()
@@ -58,6 +59,17 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     state.startingDirectory = newState.startingDirectory
     state.shellPath = newState.shellPath
     state.envDataOptions = newState.envDataOptions
+
+    val backendState = TerminalProjectOptionsMigration.getInstance(project).getBackendStateOnce()
+    if (backendState != null) {
+      state.startingDirectory = backendState.startingDirectory
+      state.shellPath = backendState.shellPath
+      state.envDataOptions = backendState.envDataOptions
+    }
+  }
+
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   fun getEnvData(): EnvironmentVariablesData {
@@ -232,6 +244,8 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
+
+    internal const val COMPONENT_NAME: String = "TerminalProjectNonSharedOptionsProvider"
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {

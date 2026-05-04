@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.settings.RemoteSettingInfo
+import com.intellij.ide.settings.RemoteSettingInfo.Direction.DoNotSynchronize
 import com.intellij.ide.settings.RemoteSettingInfo.Direction.InitialFromFrontend
 import com.intellij.ide.settings.RemoteSettingInfoProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
@@ -11,5 +12,7 @@ internal class TerminalRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
     TerminalOptionsProvider.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
     TerminalFontSettingsService.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
     BlockTerminalOptions.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
+
+    TerminalProjectOptionsProvider.COMPONENT_NAME to RemoteSettingInfo(DoNotSynchronize),
   )
 }
