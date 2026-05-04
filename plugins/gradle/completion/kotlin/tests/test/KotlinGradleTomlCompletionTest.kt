@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 
-private var libraries = "[libraries]" + System.lineSeparator()
+private var libraries = "[libraries]\n"
 private const val tomlPath = "gradle/libs.versions.toml"
 
 @GradleProjectTestApplication
