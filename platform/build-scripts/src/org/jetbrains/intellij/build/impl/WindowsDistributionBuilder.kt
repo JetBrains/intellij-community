@@ -30,6 +30,7 @@ import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateIjLightLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -547,10 +548,12 @@ internal class WindowsDistributionBuilder(
           mainClass = context.ideMainClassName,
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           customCommands = run {
+            val vmOptionsFilePath: (BuildContext) -> String = { clientCtx ->
+              "bin/${clientCtx.add64IfNeeded(clientCtx.productProperties.baseFileName)}.exe.vmoptions"
+            }
             val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) { clientCtx ->
-                "bin/${clientCtx.add64IfNeeded(clientCtx.productProperties.baseFileName)}.exe.vmoptions"
-              },
+              generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
+              generateIjLightLaunchData(arch, OsFamily.WINDOWS, context, vmOptionsFilePath),
               generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
               generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
             )

@@ -135,7 +135,8 @@ private fun PluginInitializationContext.selectFromExplicitSubset(
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<PluginMainDescriptor> {
   val compatiblePlugins = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
-  val pluginIdsSubset = essentialPlugins + explicitPluginSubsetToLoad!!
+  val explicitSubset = explicitPluginSubsetToLoad ?: emptySet()
+  val pluginIdsSubset = essentialPlugins + explicitSubset
   val pluginSubset = compatiblePlugins.filter { it.pluginId in pluginIdsSubset }
   val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
   val requiredModules = PluginDependencyAnalysis.getRequiredTransitiveModules(

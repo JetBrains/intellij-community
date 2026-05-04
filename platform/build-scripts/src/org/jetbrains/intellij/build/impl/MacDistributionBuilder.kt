@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateIjLightLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -421,10 +422,12 @@ class MacDistributionBuilder(
           mainClass = context.ideMainClassName,
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           customCommands = run {
+            val vmOptionsFilePath: (BuildContext) -> String = {
+              "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
+            }
             val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
-                "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
-              },
+              generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
+              generateIjLightLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
               generateQodanaLaunchData(context, arch, OsFamily.MACOS),
               generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
             )

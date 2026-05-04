@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion
 import org.jetbrains.intellij.build.impl.client.getAdditionalEmbeddedClientVmOptions
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateIjLightLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -402,10 +403,12 @@ class LinuxDistributionBuilder(
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           startupWmClass = getLinuxFrameClass(context),
           customCommands = run {
+            val vmOptionsFilePath: (BuildContext) -> String = {
+              "bin/${it.add64IfNeeded(it.productProperties.baseFileName)}.vmoptions"
+            }
             val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context) {
-                "bin/${it.add64IfNeeded(it.productProperties.baseFileName)}.vmoptions"
-              },
+              generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
+              generateIjLightLaunchData(arch, OsFamily.LINUX, context, vmOptionsFilePath),
               generateQodanaLaunchData(context, arch, OsFamily.LINUX),
               generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
             )
