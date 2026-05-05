@@ -51,8 +51,9 @@ object JunieCliSupport {
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
     findExecutableViaTerminalResolver() ?: JUNIE_COMMAND
 
-  fun buildNewSessionCommand(executable: String = JUNIE_COMMAND): List<String> {
-    return listOf(executable, SKIP_UPDATE_CHECK_FLAG)
+  fun buildNewSessionCommand(yolo: Boolean = false, executable: String = JUNIE_COMMAND): List<String> {
+    return if (yolo) listOf(executable, SKIP_UPDATE_CHECK_FLAG, BRAVE_FLAG)
+    else listOf(executable, SKIP_UPDATE_CHECK_FLAG)
   }
 
   fun buildResumeCommand(sessionId: String, executable: String = JUNIE_COMMAND): List<String> {
@@ -87,4 +88,5 @@ private suspend fun createLocalResolutionContext(): TerminalAgentResolutionConte
 }
 
 private const val SKIP_UPDATE_CHECK_FLAG: String = "--skip-update-check"
+internal const val BRAVE_FLAG: String = "--brave"
 private const val SESSION_ID_FLAG: String = "--session-id"
