@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -282,7 +282,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override
     public SourcePosition mapDelegate(final SourcePosition original) {
-      return ReadAction.compute(() -> {
+      return ReadAction.nonBlocking(() -> {
         PsiFile file = original.getFile();
         int line = original.getLine();
 
@@ -319,7 +319,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           }
         }
         return original;
-      });
+      }).executeSynchronously();
     }
   }
 
