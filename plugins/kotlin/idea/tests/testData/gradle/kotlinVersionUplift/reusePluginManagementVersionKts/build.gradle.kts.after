@@ -13,6 +13,7 @@ java {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.runInEdtAndWait
-import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
@@ -23,6 +24,9 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
         val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
         foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     private fun runSimpleTestcase(kotlinVersion: String) {
         val files = importProjectFromTestData()
@@ -620,7 +624,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
-                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+                assertTrue(kotlinVersionsAndModules.isEmpty())
 
                 configurator.configureWithVersion(
                     myProject,
@@ -649,7 +653,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
-                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+                assertTrue(kotlinVersionsAndModules.isEmpty())
 
                 configurator.configureWithVersion(
                     myProject,
@@ -674,14 +678,14 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
             val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
             val configurator = findGradleModuleConfigurator()
             //buildSrc should be ignored
-            TestCase.assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
+            assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
 
             runWriteAction {
                 val collector = NotificationMessageCollector.create(myProject)
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
-                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+                assertTrue(kotlinVersionsAndModules.isEmpty())
 
                 configurator.configureWithVersion(
                     myProject,
@@ -706,7 +710,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
             val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
             val configurator = findGradleModuleConfigurator()
             //buildSrc should be ignored
-            TestCase.assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
+            assertTrue(getCanBeConfiguredModules(myProject, configurator).none { it.name.contains("buildSrc") })
 
             runWriteAction {
 
@@ -714,7 +718,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
-                TestCase.assertTrue(kotlinVersionsAndModules.isEmpty())
+                assertTrue(kotlinVersionsAndModules.isEmpty())
 
                 configurator.configureWithVersion(
                     myProject,

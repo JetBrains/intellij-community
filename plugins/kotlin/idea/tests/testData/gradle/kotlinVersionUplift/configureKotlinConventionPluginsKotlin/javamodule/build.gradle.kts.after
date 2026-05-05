@@ -5,10 +5,11 @@ plugins {
 
 java {
 }
-dependencies {
-}
 repositories {
     mavenCentral()
+}
+dependencies {
+    testImplementation(kotlin("test"))
 }
 kotlin {
     jvmToolchain(11)
