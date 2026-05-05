@@ -41,11 +41,6 @@ dependencies {
     }
     jetbrainsRuntime()
   }
-
-  implementation(project(":junie-common"))
-  implementation(project(":common"))
-  implementation(project(":prompt-core"))
-  implementation(project(":sessions-core"))
 }
 
 kotlin {
