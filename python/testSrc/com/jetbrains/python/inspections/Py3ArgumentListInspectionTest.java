@@ -813,10 +813,25 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testFixedTupleArgsWithVariadicMiddleArgCount() {
     doTestByText("""
                    def foo(*args: *tuple[int, *tuple[str, ...], float]) -> None: ...
-
+                   
+                   foo(<warning descr="Parameter '__p0' unfilled"><warning descr="Parameter '__p2' unfilled">)</warning></warning>
+                   foo(1<warning descr="Parameter '__p2' unfilled">)</warning>
                    foo(1, 3.14)
                    foo(1, "a", 3.14)
                    foo(1, "a", "b", "c", 3.14)
+                   """);
+  }
+
+  // PY-88727
+  public void testFixedTupleArgsWithVariadicAtStart() {
+    doTestByText("""
+                   def foo(*args: *tuple[*tuple[int, ...], str, bool]) -> None: ...
+                   
+                   foo(<warning descr="Parameter '__p1' unfilled"><warning descr="Parameter '__p2' unfilled">)</warning></warning>
+                   foo("a"<warning descr="Parameter '__p2' unfilled">)</warning>
+                   foo("a", True)
+                   foo(1, "a", True)
+                   foo(1, 2, 3, "a", True)
                    """);
   }
 

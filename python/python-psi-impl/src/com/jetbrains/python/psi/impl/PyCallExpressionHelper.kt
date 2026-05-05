@@ -1126,10 +1126,9 @@ object PyCallExpressionHelper {
     val variadicKeywordArguments = filterVariadicKeywordArguments(arguments)
 
     val allPositionalArguments = positionalResults.allPositionalArguments
+    val reservedForPostArgs = mutableListOf<PyExpression?>()
 
-    val reservedForPostArgs = reserveArgsForPostArgsParams(parameters, allPositionalArguments)
-
-    for (parameter in parameters) {
+    for ((index, parameter) in parameters.withIndex()) {
       val psi = parameter.parameter
 
       if (parameter.isPositionOnlySeparator) {
@@ -1144,6 +1143,23 @@ object PyCallExpressionHelper {
           positionalOnlyMode = false
         }
         if (parameter.isPositionalContainer) {
+          // In a normal Python signature `*args` swallows all remaining positional arguments,
+          // since nothing positional can follow it. However, `*tuple[T1, *tuple[U, ...], T2]`
+          // expansion produces synthetic positional-only parameters AFTER `*args`
+          // (e.g. `[__p0: T1, *args: U, __p1: T2]`).
+          // Reserve trailing positional arguments here so they end up bound to
+          // those post-`*args` parameters in subsequent iterations.
+          val postArgsPositionalCount = parameters.subList(index + 1, parameters.size)
+            .count { it.parameter == null && isLegacyPositionalOnly(it) }
+          val toReserve = minOf(postArgsPositionalCount, allPositionalArguments.size)
+          if (toReserve > 0) {
+            val reserveFrom = allPositionalArguments.size - toReserve
+            reservedForPostArgs.addAll(allPositionalArguments.subList(reserveFrom, allPositionalArguments.size))
+            repeat(toReserve) {
+              allPositionalArguments.removeLast()
+            }
+          }
+
           for (argument in allPositionalArguments) {
             if (argument != null) {
               mappedParameters[argument] = parameter
@@ -1170,7 +1186,11 @@ object PyCallExpressionHelper {
           variadicKeywordArguments.clear()
         }
         else if (keywordOnlyMode && psi == null && isLegacyPositionalOnly(parameter) || positionalOnlyMode) {
-          // Positional-only parameter: consume from reserved post-*args arguments or from allPositionalArguments
+          // In a normal Python signature, positional-only parameters cannot follow `*args`
+          // (anything after `*args` is keyword-only), so the `keywordOnlyMode` branch only fires
+          // for synthetic positional-only parameters produced by `*tuple[T1, *tuple[U, ...], T2]`
+          // expansion. For those, consume from arguments reserved at the `*args` branch above;
+          // otherwise (no preceding `*args`) consume from the regular positional pool.
           val source = if (keywordOnlyMode) reservedForPostArgs else allPositionalArguments
           val positionalArgument = source.next()
           if (positionalArgument != null) {
@@ -1468,31 +1488,6 @@ object PyCallExpressionHelper {
       }
     }
     return results
-  }
-
-  /**
-   * Reserves positional arguments from the end of [allPositionalArguments] for synthetic post-`*args`
-   * positional-only parameters (created by tuple expansion, e.g. `*args: *tuple[int, *tuple[str, ...], /post-*args/ -> float]`).
-   */
-  private fun reserveArgsForPostArgsParams(
-    parameters: List<PyCallableParameter>,
-    allPositionalArguments: MutableList<PyExpression?>,
-  ): MutableList<PyExpression?> {
-    val reserved = mutableListOf<PyExpression?>()
-    val argsIdx = parameters.indexOfFirst { it.isPositionalContainer }
-    if (argsIdx >= 0) {
-      val postArgsPositionalCount = parameters.subList(argsIdx + 1, parameters.size)
-        .count { it.parameter == null && isLegacyPositionalOnly(it) }
-
-      if (postArgsPositionalCount > 0 && allPositionalArguments.size > postArgsPositionalCount) {
-        val reserveFrom = allPositionalArguments.size - postArgsPositionalCount
-        reserved.addAll(allPositionalArguments.subList(reserveFrom, allPositionalArguments.size))
-        repeat(postArgsPositionalCount) {
-          allPositionalArguments.removeLast()
-        }
-      }
-    }
-    return reserved
   }
 
   private fun unpackParametersIfNeeded(

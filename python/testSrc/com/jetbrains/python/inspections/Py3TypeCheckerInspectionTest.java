@@ -5311,6 +5311,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-88727
+  public void testFixedTupleArgsWithVariadicAtStart() {
+    doTestByText("""
+                   def foo(*args: *tuple[*tuple[int, ...], str, bool]) -> None: ...
+
+                   foo("a", True)
+                   foo(1, "a", True)
+                   foo(1, 2, 3, "a", True)
+                   foo(<warning descr="Expected type 'int', got 'str' instead">"wrong"</warning>, "a", True)
+                   foo(1, <warning descr="Expected type 'str', got 'int' instead">2</warning>, True)
+                   foo(1, "a", <warning descr="Expected type 'bool', got 'str' instead">"wrong"</warning>)
+                   """);
+  }
+
   // PY-88727, PY-76847
   public void testFixedTupleArgsCombinedWithUnpackedTypedDictKwargs() {
     doTestByText("""
