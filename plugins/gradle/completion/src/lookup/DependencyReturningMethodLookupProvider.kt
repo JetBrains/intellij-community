@@ -37,11 +37,9 @@ object DependencyReturningMethodLookupProvider {
     else
       ParenthesesInsertHandler.getInstance(false)
 
-    val platformIcon = if (hasParameters) PlatformIcons.Function else PlatformIcons.Method
-
-    return LookupElementBuilder.create(name)
+      return LookupElementBuilder.create(name)
       .withInsertHandler(insertHandler)
-      .withIcon(IconManager.getInstance().getPlatformIcon(platformIcon))
+      .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Method))
       .withTypeText("Dependency returning method")
   }
 }
