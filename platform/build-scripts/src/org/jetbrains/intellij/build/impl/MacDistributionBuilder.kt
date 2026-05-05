@@ -618,7 +618,7 @@ class MacDistributionBuilder(
     copyFile(productInfoJson, sitProductInfoFile)
     Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
-    if (context.isMacCodeSignEnabled) {
+    if (context.isMacCodeSignEnabled && !context.isLanguageServer) {
       context.proprietaryBuildTools.signTool.signFiles(listOf(sitFile), context, macSigningOptions("application/x-mac-app-zip", context))
     }
 
