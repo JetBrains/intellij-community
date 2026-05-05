@@ -1099,7 +1099,7 @@ object PyCallExpressionHelper {
     var positionalOnlyMode = hasSlashParameter || oldStylePositionalOnly
     var keywordOnlyMode = false
     var mappedVariadicArgumentsToParameters = false
-    val mappedParameters = LinkedHashMap<PyExpression?, PyCallableParameter?>()
+    val mappedParameters = LinkedHashMap<PyExpression, PyCallableParameter>()
     val unmappedParameters = mutableListOf<PyCallableParameter?>()
     val unmappedContainerParameters = mutableListOf<PyCallableParameter?>()
     val unmappedArguments = mutableListOf<PyExpression?>()
@@ -1186,7 +1186,7 @@ object PyCallExpressionHelper {
         }
         else if (!allPositionalArguments.isEmpty()) {
           val positionalArgument = allPositionalArguments.next()
-          assert(positionalArgument != null)
+          require(positionalArgument != null)
           mappedParameters[positionalArgument] = parameter
           if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
             parametersMappedToVariadicPositionalArguments.add(parameter)
@@ -1342,7 +1342,7 @@ object PyCallExpressionHelper {
     var argument = argument
     val unmappedParameters = mutableListOf<PyCallableParameter?>()
     val unmappedArguments = mutableListOf<PyExpression?>()
-    val mappedParameters = mutableMapOf<PyExpression?, PyCallableParameter?>()
+    val mappedParameters = mutableMapOf<PyExpression, PyCallableParameter>()
     argument = PyPsiUtils.flattenParens(argument)
     if (argument is PySequenceExpression) {
       val argumentComponents = argument.elements
@@ -1404,7 +1404,7 @@ object PyCallExpressionHelper {
   }
 
   private fun filterPositionalAndVariadicArguments(expressions: List<PyExpression>): PositionalArgumentsAnalysisResults {
-    val variadicArguments = ArrayList<PyExpression?>()
+    val variadicArguments = ArrayList<PyExpression>()
     val allPositionalArguments = ArrayList<PyExpression?>()
     val componentsOfVariadicPositionalArguments = ArrayList<PyExpression?>()
     var seenVariadicPositionalArgument = false
@@ -1537,7 +1537,7 @@ object PyCallExpressionHelper {
 }
 
 class ArgumentMappingResults internal constructor(
-  val mappedParameters: Map<PyExpression?, PyCallableParameter?>,
+  val mappedParameters: Map<PyExpression, PyCallableParameter>,
   val unmappedParameters: List<PyCallableParameter?>,
   val unmappedContainerParameters: List<PyCallableParameter?>,
   val unmappedArguments: List<PyExpression?>,
@@ -1547,7 +1547,7 @@ class ArgumentMappingResults internal constructor(
 )
 
 private class TupleMappingResults(
-  val parameters: Map<PyExpression?, PyCallableParameter?>,
+  val parameters: Map<PyExpression, PyCallableParameter>,
   val unmappedParameters: List<PyCallableParameter?>,
   val unmappedArguments: List<PyExpression?>,
 )
@@ -1555,7 +1555,7 @@ private class TupleMappingResults(
 private class PositionalArgumentsAnalysisResults(
   val allPositionalArguments: MutableList<PyExpression?>,
   val componentsOfVariadicPositionalArguments: List<PyExpression?>,
-  val variadicPositionalArguments: MutableList<PyExpression?>,
+  val variadicPositionalArguments: MutableList<PyExpression>,
 )
 
 private class ClarifiedResolveResult(
