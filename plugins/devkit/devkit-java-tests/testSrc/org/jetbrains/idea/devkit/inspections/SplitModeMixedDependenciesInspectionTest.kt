@@ -59,30 +59,6 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
-  fun testMixedPluginDependenciesInPluginXml() {
-    val pluginXml = addModuleWithXmlDescriptor(
-      moduleName = "unique.module.name.18",
-      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
-      pluginXmlContent = """
-        <<error descr="This module effectively depends on frontend-only and backend-only modules simultaneously. It will not get loaded in Split Mode.
-
-Computed module kind reasoning:
-
-Frontend dependency 'com.intellij.jetbrains.client' from descriptor 'plugin.xml' in module 'unique.module.name.18'
-
-Backend dependency 'com.jetbrains.remoteDevelopment' from descriptor 'plugin.xml' in module 'unique.module.name.18'">idea-plugin</error>>
-          <dependencies>
-            <plugin id="com.intellij.jetbrains.client"/>
-            <plugin id="com.jetbrains.remoteDevelopment"/>
-          </dependencies>
-        </idea-plugin>
-      """.trimIndent()
-    )
-    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
-
-    myFixture.checkHighlighting()
-  }
-
   fun testMixedDependsInPluginXml() {
     val pluginXml = addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.28",
@@ -92,11 +68,11 @@ Backend dependency 'com.jetbrains.remoteDevelopment' from descriptor 'plugin.xml
 
 Computed module kind reasoning:
 
-Frontend dependency 'com.intellij.jetbrains.client' from descriptor 'plugin.xml' in module 'unique.module.name.28'
+Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'unique.module.name.28'
 
-Backend dependency 'com.jetbrains.remoteDevelopment' from descriptor 'plugin.xml' in module 'unique.module.name.28'">idea-plugin</error>>
-          <depends>com.intellij.jetbrains.client</depends>
-          <depends>com.jetbrains.remoteDevelopment</depends>
+Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.28'">idea-plugin</error>>
+          <depends>intellij.platform.frontend</depends>
+          <depends>intellij.platform.backend</depends>
         </idea-plugin>
       """.trimIndent()
     )

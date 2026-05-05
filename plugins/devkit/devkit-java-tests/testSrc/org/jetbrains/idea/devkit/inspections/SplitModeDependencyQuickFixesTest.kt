@@ -68,7 +68,6 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
           <dependencies>
             <module name="intellij.platform.core"/>
             <module name="intellij.platform.backend"/>
-            <plugin id="com.jetbrains.remoteDevelopment"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <typedHandler<caret>/>
@@ -77,7 +76,7 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
       """.trimIndent()
     )
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
-    addModuleDependencies(pluginXml, "intellij.platform.backend", "com.jetbrains.remoteDevelopment")
+    addModuleDependencies(pluginXml, "intellij.platform.backend")
 
     val intention = myFixture.findSingleIntention("Make module 'unique.module.name.quick.fix.2' work in 'frontend' only")
     myFixture.launchAction(intention)
@@ -85,11 +84,9 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     val result = myFixture.file.text
     Assert.assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     Assert.assertFalse(result.contains("intellij.platform.backend"))
-    Assert.assertFalse(result.contains("com.jetbrains.remoteDevelopment"))
 
     val moduleDependencies = getModuleDependencyNames(pluginXml)
     Assert.assertFalse(moduleDependencies.contains("intellij.platform.backend"))
-    Assert.assertFalse(moduleDependencies.contains("com.jetbrains.remoteDevelopment"))
   }
 
   fun testMakeModuleFrontendDependenciesFixInMixedInspection() {
@@ -101,20 +98,12 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
             <module name="intellij.platform.core"/>
             <module name="intellij.platform.frontend"/>
             <module name="intellij.platform.backend"/>
-            <plugin id="com.intellij.jetbrains.client"/>
-            <plugin id="com.jetbrains.remoteDevelopment"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
     )
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
-    addModuleDependencies(
-      pluginXml,
-      "intellij.platform.frontend",
-      "intellij.platform.backend",
-      "com.intellij.jetbrains.client",
-      "com.jetbrains.remoteDevelopment",
-    )
+    addModuleDependencies(pluginXml, "intellij.platform.frontend", "intellij.platform.backend")
 
     val intention = myFixture.findSingleIntention("Make module 'unique.module.name.quick.fix.3' work in 'frontend' only")
     myFixture.launchAction(intention)
@@ -122,15 +111,11 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     val result = myFixture.file.text
     Assert.assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     Assert.assertTrue(result.contains("<module name=\"intellij.platform.frontend\"/>"))
-    Assert.assertTrue(result.contains("<plugin id=\"com.intellij.jetbrains.client\"/>"))
     Assert.assertFalse(result.contains("intellij.platform.backend"))
-    Assert.assertFalse(result.contains("com.jetbrains.remoteDevelopment"))
 
     val moduleDependencies = getModuleDependencyNames(pluginXml)
     Assert.assertTrue(moduleDependencies.contains("intellij.platform.frontend"))
-    Assert.assertTrue(moduleDependencies.contains("com.intellij.jetbrains.client"))
     Assert.assertFalse(moduleDependencies.contains("intellij.platform.backend"))
-    Assert.assertFalse(moduleDependencies.contains("com.jetbrains.remoteDevelopment"))
   }
 
   fun testMakeModuleMonolithOnlyFixInXmlInspection() {

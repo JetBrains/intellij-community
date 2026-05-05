@@ -1,8 +1,19 @@
 [
-  {"moduleName": "intellij.platform.frontend", "moduleKind": "frontend"},
-  {"moduleName": "intellij.platform.backend", "moduleKind": "backend"},
   {"moduleName": "intellij.platform.monolith", "moduleKind": "monolith"},
 
+  {"moduleName": "intellij.platform.frontend", "moduleKind": "frontend"},
+  {"moduleName": "intellij.platform.frontend.split", "moduleKind": "frontend"},
+  {"moduleName": "com.intellij.jetbrains.client", "moduleKind": "frontend"},
+  {"moduleName": "com.intellij.jetbrains.client.driver", "moduleKind": "frontend"},
+  {"moduleName": "com.intellij.jetbrains.client.git", "moduleKind": "frontend"},
+  {"moduleName": "com.intellij.jetbrains.client.performanceTesting", "moduleKind": "frontend"},
+  {"moduleName": "intellij.rd.client", "moduleKind": "frontend"},
+  {"moduleName": "intellij.cwm.frontend", "moduleKind": "frontend"},
+  {"moduleName": "intellij.cwm.connection.frontend.split", "moduleKind": "frontend"},
+
+  {"moduleName": "intellij.platform.backend", "moduleKind": "backend"},
+  {"moduleName": "intellij.platform.backend.split", "moduleKind": "backend"},
+  {"moduleName": "com.jetbrains.remoteDevelopment", "moduleKind": "backend"},
   {"moduleName": "intellij.cwm", "moduleKind": "backend"},
   {"moduleName": "intellij.cwm.plugin", "moduleKind": "backend"},
   {"moduleName": "intellij.cwm.plugin.provisioner", "moduleKind": "backend"},
@@ -19,11 +30,8 @@
   {"moduleName": "intellij.codeWithMe.appcode.main", "moduleKind": "backend"},
   {"moduleName": "intellij.cwm.connection", "moduleKind": "shared"},
   {"moduleName": "intellij.cwm.plugin.common", "moduleKind": "shared"},
-  {"moduleName": "intellij.cwm.frontend", "moduleKind": "frontend"},
-  {"moduleName": "intellij.cwm.connection.frontend.split", "moduleKind": "frontend"},
 
   {"pluginId": "com.intellij.modules.lang", "moduleKind": "shared"},
-
   {"moduleName": "intellij.platform.navbar.frontend", "descriptorRelativePath": "resources/intellij.platform.navbar.frontend.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangPlugin.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangComponents.xml", "moduleKind": "shared"},
