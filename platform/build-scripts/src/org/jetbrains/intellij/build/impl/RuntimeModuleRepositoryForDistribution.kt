@@ -251,7 +251,7 @@ private suspend fun generateRepositoryForDistribution(
   addMappingForModulesWithoutResources(moduleProductionPaths)
   addMappingsForDuplicatingLibraries(libraryPaths, moduleProductionPaths)
 
-  val additionalFrontendPlugins = computeDescriptorsForAdditionalFrontendPlugins(context, bundledPlugins, platformLayout)
+  val additionalFrontendPlugins = computeDescriptorsForAdditionalFrontendPlugins(context, platformLayout)
   val corePluginDescriptorModuleName = context.productProperties.applicationInfoModule
   val embeddedFrontendDescriptorModuleName = context.getEmbeddedFrontendProductContext()?.productProperties?.applicationInfoModule
   val contentModuleDetector = ContentModuleDetectorImpl(
@@ -300,7 +300,6 @@ private suspend fun generateRepositoryForDistribution(
  */
 private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
   context: BuildContext,
-  bundledPlugins: List<PluginBuildDescriptor>,
   platformLayout: PlatformLayout,
 ): List<PluginBuildDescriptor> {
   return TraceManager.spanBuilder("compute layout of additional plugins for embedded frontend").use {
@@ -327,8 +326,7 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
       )
     )
 
-    val pluginDescriptorModulesForFrontend = embeddedFrontendContext.getBundledPluginModules()
-    val additionalPluginModules = pluginDescriptorModulesForFrontend - bundledPlugins.mapTo(HashSet()) { it.layout.mainModule }
+    val additionalPluginModules = embeddedFrontendContext.getBundledPluginModules() - context.getBundledPluginModules().toSet()
     if (additionalPluginModules.isNotEmpty()) {
       /* generate descriptors for custom 'Xxx for JetBrains Client' plugins, which are not bundled with the IDE but are used in the frontend process; eventually we'll get rid of
          them (see IJPL-220139) */

@@ -265,7 +265,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     return productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModule ->
       val header = pluginHeaders[pluginDescriptorModule]
                    ?: pluginHeaders[RuntimeModuleId.contentModule(pluginDescriptorModule.name, RuntimeModuleId.DEFAULT_NAMESPACE)]
-      if (header == null) {
+      if (header == null && !isBundledPluginSkipped(pluginDescriptorModule)) {
         softly.collectAssertionErrorIfNotRegisteredYet(AssertionError(
           "Plugin header for module '${pluginDescriptorModule.presentableName}' is not found in the runtime module repository"
         ))
@@ -279,6 +279,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     val productName = context.applicationInfo.productNameWithEdition
     val currentDistributionName = if (isEmbeddedVariant) productName else "'$productName Frontend'"
     for (mainModuleId in rawProductModules.bundledPluginMainModules) {
+      if (isBundledPluginSkipped(mainModuleId)) continue
       val mainModule = repository.resolveModule(mainModuleId)
       if (mainModule.resolvedModule == null) {
         val problematicModule = if (mainModule.failedDependencyPath.size == 1) "it" else "its dependency ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.presentableName }}"
@@ -310,6 +311,12 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         )
       }
     }
+  }
+
+  private fun isBundledPluginSkipped(mainModuleId: RuntimeModuleId): Boolean {
+    //this doesn't support custom plugin directory names, but it's enough for tests
+    val pluginDirectoryName = mainModuleId.name.removePrefix("intellij.").replace('.', '-')
+    return pluginDirectoryName in context.options.bundledPluginDirectoriesToSkip
   }
 
   private fun SoftAssertions.collectAssertionErrorIfNotRegisteredYet(e: AssertionError) {

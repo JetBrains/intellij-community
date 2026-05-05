@@ -448,7 +448,7 @@ data class BuildOptions(
    * Specifies a list of directory names for bundled plugins that should not be included in the product distribution.
    * This option can be used to speed up updating the IDE from sources.
    */
-  val bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
+  var bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
    * Specifies a list of directory names for non-bundled plugins (determined by [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] and
