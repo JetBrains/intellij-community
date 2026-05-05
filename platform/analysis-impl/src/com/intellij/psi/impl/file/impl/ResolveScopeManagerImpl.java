@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.FileResolveScopeProvider;
@@ -52,7 +51,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<Pair<VirtualFile, CodeInsightContext>, GlobalSearchScope> myDefaultResolveScopesCache;
+  private final Map<FileWithContext, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project) {
@@ -61,8 +60,10 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.computeBlocking(() -> createScopeByFile(key)),
-                                                              () -> CollectionFactory.createConcurrentWeakKeySoftValueMap());
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
+      fileWithContext -> ReadAction.computeBlocking(() -> createScopeByFile(fileWithContext)),
+      () -> CollectionFactory.createConcurrentWeakKeySoftValueMap()
+    );
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -77,10 +78,10 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
-  private @NotNull GlobalSearchScope createScopeByFile(@NotNull Pair<VirtualFile, CodeInsightContext> key) {
-    VirtualFile original = VirtualFileUtil.originalFile(key.first);
-    VirtualFile file = ObjectUtils.notNull(original, key.first);
-    CodeInsightContext context = key.second;
+  private @NotNull GlobalSearchScope createScopeByFile(@NotNull FileWithContext fileWithContext) {
+    VirtualFile original = VirtualFileUtil.originalFile(fileWithContext.file);
+    VirtualFile file = ObjectUtils.notNull(original, fileWithContext.file);
+    CodeInsightContext context = fileWithContext.context;
 
     GlobalSearchScope scope = null;
     for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
@@ -94,14 +95,14 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
         scope = scope.union(extra);
       }
     }
-    if (original != null && !scope.contains(key.first)) {
-      scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
+    if (original != null && !scope.contains(fileWithContext.file)) {
+      scope = scope.union(GlobalSearchScope.fileScope(myProject, fileWithContext.file));
     }
     return scope;
   }
 
   private @NotNull GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    return myDefaultResolveScopesCache.get(Pair.create(vFile, context));
+    return myDefaultResolveScopesCache.get(new FileWithContext(vFile, context));
   }
 
   private @NotNull GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
@@ -246,4 +247,6 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   public void dispose() {
 
   }
+
+  private record FileWithContext(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {}
 }
