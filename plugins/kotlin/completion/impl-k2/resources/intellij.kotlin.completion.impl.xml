@@ -18,6 +18,12 @@
     <completion.contributor language="kotlin"
                             order="last, before default"
                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <completion.contributor language="JAVA"
+                            id="KotlinCompanionMemberContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinCompanionMemberContributor"/>
+
     <statistician key="completion" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionStatistician"/>
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
 
