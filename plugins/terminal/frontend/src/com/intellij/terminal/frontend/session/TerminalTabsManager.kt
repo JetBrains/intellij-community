@@ -26,6 +26,8 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
+import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.pathString
 

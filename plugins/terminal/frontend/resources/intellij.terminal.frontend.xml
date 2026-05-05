@@ -55,7 +55,6 @@
       serviceInterface="com.intellij.terminal.frontend.session.TerminalPortForwardingManager"
       serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoPortForwardingManager"
       open="true"/>
-    <projectSettings service="com.intellij.terminal.frontend.session.TerminalTabsStorage"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>

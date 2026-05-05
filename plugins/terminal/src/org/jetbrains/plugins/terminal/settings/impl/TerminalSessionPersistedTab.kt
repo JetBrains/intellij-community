@@ -1,10 +1,12 @@
-package com.intellij.terminal.frontend.session
+package org.jetbrains.plugins.terminal.settings.impl
 
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
-internal data class TerminalSessionPersistedTab(
+@ApiStatus.Internal
+data class TerminalSessionPersistedTab(
   @Attribute
   val name: String?,
   @Attribute

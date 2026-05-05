@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.session
+package org.jetbrains.plugins.terminal.settings.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -8,10 +8,12 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "TerminalTabsStorage", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-internal class TerminalTabsStorage : PersistentStateComponent<TerminalTabsStorage.State> {
+class TerminalTabsStorage : PersistentStateComponent<TerminalTabsStorage.State> {
   class State {
     @XCollection
     var tabs: List<TerminalSessionPersistedTab> = emptyList()

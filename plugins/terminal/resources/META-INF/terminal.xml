@@ -139,6 +139,7 @@
     <applicationSettings service="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
     <projectSettings service="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <projectSettings service="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
+    <projectSettings service="org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage"/>
     <applicationSettings service="org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage"/>
   </extensions>
 
