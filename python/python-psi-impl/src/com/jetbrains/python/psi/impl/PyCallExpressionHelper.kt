@@ -49,7 +49,6 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
@@ -988,6 +987,10 @@ object PyCallExpressionHelper {
       return resolvedMetaClassCall
     }
 
+    if (!type.pyClass.isNewStyleClass(context)) {
+      return type.resolveMember(PyNames.INIT, callSite, AccessDirection.READ, resolveContext) ?: emptyList()
+    }
+
     // https://typing.python.org/en/latest/spec/constructors.html#new-method
     val resolvedNew = resolveNewMethod(type, callSite, resolveContext)
     val skipInitEvaluation = resolvedNew.any { isReturnTypeIncompatibleWithClass(type, it, callSite, context) }
@@ -995,10 +998,18 @@ object PyCallExpressionHelper {
       return resolvedNew
     }
 
-    // The most derived `__init__` or `__new__` is returned.
+    // The most derived `__init__` (preferred) or `__new__` is returned.
     // The signature of the returned method is later used to solve generic parameters to infer constructor call type.
-    val initAndNew = type.pyClass.multiFindInitOrNew(true, context)
-    return preferInitOverNew(initAndNew).map { RatedResolveResult(PyReferenceImpl.getRate(it, context), it) }
+    val mro = sequenceOf(type) + type.getAncestorTypes(context).asSequence().filterNotNull()
+    for (current in mro) {
+      val init = current.resolveMember(PyNames.INIT, callSite, AccessDirection.READ, resolveContext, false)
+      if (!init.isNullOrEmpty()) return init
+
+      val new = current.resolveMember(PyNames.NEW, callSite, AccessDirection.READ, resolveContext, false)
+      if (!new.isNullOrEmpty()) return new
+    }
+
+    return emptyList()
   }
 
   private fun getConstructorTypes(type: PyClassType, resolveContext: PyResolveContext): List<PyTypeMember> {
@@ -1022,11 +1033,6 @@ object PyCallExpressionHelper {
       return returnTypeAnnotation != null
     }
     return false
-  }
-
-  private fun preferInitOverNew(functions: List<PyFunction>): Collection<PyFunction> {
-    val functionGroups = functions.groupBy { it.name }
-    return functionGroups[PyNames.INIT] ?: functionGroups.values.flatten()
   }
 
   private fun resolveMetaClassCallMethod(
