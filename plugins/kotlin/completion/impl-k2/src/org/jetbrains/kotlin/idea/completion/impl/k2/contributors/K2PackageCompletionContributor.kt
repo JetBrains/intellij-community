@@ -64,10 +64,11 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
 
     override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {
         is KotlinTypeNameReferencePositionContext -> {
-            position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
-                parameters = completionContext.parameters,
-                prefixMatcher = completionContext.prefixMatcher,
-            )
+            (shouldCompleteTopLevelPackages() || position.explicitReceiver != null) &&
+                    position.allowsClassifiersAndPackagesForPossibleExtensionCallables(
+                        parameters = completionContext.parameters,
+                        prefixMatcher = completionContext.prefixMatcher,
+                    )
         }
 
         is KotlinPackageDirectivePositionContext,

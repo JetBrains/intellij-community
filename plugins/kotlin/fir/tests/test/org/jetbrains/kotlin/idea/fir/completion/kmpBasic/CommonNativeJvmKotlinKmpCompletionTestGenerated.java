@@ -3614,9 +3614,14 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/AfterIntSeparatedWithComments.kt");
         }
 
-        @TestMetadata("AlwaysCompleteNonSubPackages.kt")
-        public void testAlwaysCompleteNonSubPackages() throws Exception {
-            runTest("../../completion/testData/basic/common/AlwaysCompleteNonSubPackages.kt");
+        @TestMetadata("AlwaysCompleteNonSubPackagesInExpression.kt")
+        public void testAlwaysCompleteNonSubPackagesInExpression() throws Exception {
+            runTest("../../completion/testData/basic/common/AlwaysCompleteNonSubPackagesInExpression.kt");
+        }
+
+        @TestMetadata("AlwaysCompleteNonSubPackagesInType.kt")
+        public void testAlwaysCompleteNonSubPackagesInType() throws Exception {
+            runTest("../../completion/testData/basic/common/AlwaysCompleteNonSubPackagesInType.kt");
         }
 
         @TestMetadata("AlwaysCompleteTopLevelPackagesInImport.kt")
@@ -4359,9 +4364,14 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
         }
 
-        @TestMetadata("NoTopLevelPackagesIfDisabled.kt")
-        public void testNoTopLevelPackagesIfDisabled() throws Exception {
-            runTest("../../completion/testData/basic/common/NoTopLevelPackagesIfDisabled.kt");
+        @TestMetadata("NoTopLevelPackagesInExpressionIfDisabled.kt")
+        public void testNoTopLevelPackagesInExpressionIfDisabled() throws Exception {
+            runTest("../../completion/testData/basic/common/NoTopLevelPackagesInExpressionIfDisabled.kt");
+        }
+
+        @TestMetadata("NoTopLevelPackagesInTypeIfDisabled.kt")
+        public void testNoTopLevelPackagesInTypeIfDisabled() throws Exception {
+            runTest("../../completion/testData/basic/common/NoTopLevelPackagesInTypeIfDisabled.kt");
         }
 
         @TestMetadata("ObjectInTypePosition.kt")
