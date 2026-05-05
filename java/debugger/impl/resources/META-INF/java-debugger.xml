@@ -74,6 +74,8 @@
                     interface="com.intellij.debugger.engine.DebuggerAgentParametersModifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.hotSwapSourceFileFilterProvider"
                     interface="com.intellij.debugger.impl.hotswap.HotSwapSourceFileFilterProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.jvmHotSwapListener"
+                    interface="com.intellij.debugger.impl.hotswap.JvmHotSwapListener" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

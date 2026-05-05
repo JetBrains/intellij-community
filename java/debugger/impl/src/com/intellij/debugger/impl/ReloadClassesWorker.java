@@ -7,6 +7,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.impl.hotswap.JvmHotSwapListener;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -35,8 +36,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
@@ -152,6 +155,9 @@ class ReloadClassesWorker {
         }));
     }
 
+    Set<String> classesToReload = Set.copyOf(modifiedClasses.keySet());
+    notifyBeforeHotSwap(classesToReload);
+    Set<String> reloadedClasses = Collections.emptySet();
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
@@ -200,11 +206,13 @@ class ReloadClassesWorker {
       }
 
       LOG.debug("classes reloaded");
+      reloadedClasses = Set.copyOf(redefineProcessor.myRedefinedClasses);
     }
     catch (Throwable e) {
       processException(e);
     }
 
+    notifyAfterHotSwap(classesToReload, reloadedClasses);
     debugProcess.onHotSwapFinished();
 
     final Semaphore waitSemaphore = new Semaphore();
@@ -246,6 +254,14 @@ class ReloadClassesWorker {
     }
   }
 
+  private void notifyBeforeHotSwap(@NotNull Set<String> classesToReload) {
+    JvmHotSwapListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeHotSwap(myDebuggerSession, classesToReload));
+  }
+
+  private void notifyAfterHotSwap(@NotNull Set<String> classesToReload, @NotNull Set<String> reloadedClasses) {
+    JvmHotSwapListener.EP_NAME.forEachExtensionSafe(listener -> listener.afterHotSwap(myDebuggerSession, classesToReload, reloadedClasses));
+  }
+
   private void reportProblem(String qualifiedName, @Nullable Exception ex) {
     String reason = ex != null ? ex.getLocalizedMessage() : null;
     if (reason == null || reason.isEmpty()) {
@@ -262,6 +278,7 @@ class ReloadClassesWorker {
     private static final int CLASSES_CHUNK_SIZE = 100;
     private final @NotNull VirtualMachineProxyImpl myVirtualMachineProxy;
     private final @NotNull Map<@NotNull ReferenceType, byte @NotNull []> myRedefineMap = new HashMap<>();
+    private final @NotNull Set<@NotNull String> myRedefinedClasses = new HashSet<>();
     private @Range(from = 0, to = Integer.MAX_VALUE) int myProcessedClassesCount;
     private @Range(from = 0, to = Integer.MAX_VALUE) int myPartiallyRedefinedClassesCount;
 
@@ -279,7 +296,8 @@ class ReloadClassesWorker {
 
       final byte[] content = FileUtil.loadFileBytes(file);
       if (vmClasses.size() == 1) {
-        myRedefineMap.put(vmClasses.get(0), content);
+        ReferenceType vmClass = vmClasses.getFirst();
+        myRedefineMap.put(vmClass, content);
         if (myRedefineMap.size() >= CLASSES_CHUNK_SIZE) {
           processChunk();
         }
@@ -310,6 +328,7 @@ class ReloadClassesWorker {
       if (redefinedVersionsCount < vmClasses.size()) {
         myPartiallyRedefinedClassesCount++;
       }
+      myRedefinedClasses.add(qualifiedName);
       myProcessedClassesCount++;
     }
 
@@ -323,6 +342,9 @@ class ReloadClassesWorker {
       // reload this portion of classes and clear the map to free memory
       try {
         myVirtualMachineProxy.redefineClasses(myRedefineMap);
+        for (ReferenceType vmClass : myRedefineMap.keySet()) {
+          myRedefinedClasses.add(vmClass.name());
+        }
         myProcessedClassesCount += myRedefineMap.size();
       }
       finally {
