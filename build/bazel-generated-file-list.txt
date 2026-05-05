@@ -244,7 +244,6 @@ fleet/lsp.protocol/test
 fleet/modules/api
 fleet/modules/jvm
 fleet/multiplatform.shims
-fleet/preferences
 fleet/reporting/api
 fleet/reporting/shared
 fleet/rhizomedb

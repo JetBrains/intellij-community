@@ -75,7 +75,6 @@ kotlin {
     }
     implementation(jps.org.bouncycastle.bcpkix.jdk18on845177467.get())
     api(project(":fleet.util.core"))
-    implementation(project(":fleet.preferences"))
     implementation(project(":fleet.ktor.client.cio"))
     implementation(project(":fleet.ktor.client.core"))
     implementation(project(":fleet.ktor.server.cio"))

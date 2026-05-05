@@ -37,7 +37,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/util/core",
-    "//fleet/preferences",
     "//fleet/ktor/client/cio",
     "//fleet/ktor/client/core",
     "//fleet/ktor/server/cio",
@@ -75,7 +74,6 @@ jvm_library(
   runtime_deps = [
     ":network",
     "//fleet/util/core:core_test_lib",
-    "//fleet/preferences:preferences_test_lib",
     "//fleet/ktor/client/cio:cio_test_lib",
     "//fleet/ktor/client/core:core_test_lib",
     "//fleet/ktor/server/cio:cio_test_lib",
