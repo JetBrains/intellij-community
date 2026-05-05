@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import java.nio.file.Path
 
 internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
@@ -105,6 +105,22 @@ internal fun PsiFile.isComposeResourcesFile(
   if (!parentName.isValidInnerComposeResourcesDirNameFor(validInnerComposeResourcesDirNames)) return false
   val composeResourcesDir = this.parent?.parent?.virtualFile?.toNioPathOrNull() ?: return false
   return this.project.getAllComposeResourcesDirs().any { it.directoryPath == composeResourcesDir }
+}
+
+/**
+ * Returns the [ResourceType] of the given file if it belongs to a Compose resources directory structure or `null` otherwise.
+ *
+ * This function calls [isComposeResourcesFile] and, if the file is a valid Compose resources file,
+ * it resolves its [ResourceType] from the file's path via [ResourceType.fromPath].
+ *
+ * @return the [ResourceType] associated with this file, or `null` if the file is not a Compose resources file
+ */
+internal fun PsiFile.getComposeResourceType(
+  validInnerComposeResourcesDirNames: Set<String> = VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES,
+): ResourceType? {
+  if (!isComposeResourcesFile(validInnerComposeResourcesDirNames)) return null
+  val filePath = this.virtualFile?.toNioPathOrNull() ?: return null
+  return ResourceType.fromPath(filePath)
 }
 
 /**

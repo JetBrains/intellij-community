@@ -57,6 +57,10 @@
     <lang.foldingBuilder language="kotlin"
                          implementationClass="com.intellij.compose.ide.plugin.resources.folding.ComposeResourcesFoldingBuilder"/>
     <fileEditorProvider implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider"/>
+    <xml.xmlExtension implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlExtension"/>
+    <xml.schemaProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlSchemaProvider"/>
+    <xml.elementDescriptorProvider
+      implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlElementDescriptorProvider"/>
   </extensions>
 
   <projectListeners>
