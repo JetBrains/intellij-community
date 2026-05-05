@@ -14,6 +14,7 @@ targets:
   - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../sessions-actions/resources/intellij.agent.workbench.sessions.actions.xml
   - ../../codex/sessions/src/CodexAgentSessionProviderDescriptor.kt
+  - ../../junie/sessions/src/JunieAgentSessionProviderDescriptor.kt
   - ../../codex/sessions/src/backend/CodexSessionBackendSelector.kt
   - ../../codex/sessions/src/backend/rollout/CodexRolloutRefreshHintsProvider.kt
   - ../../sessions/resources/messages/AgentSessionsBundle.properties
@@ -24,6 +25,7 @@ targets:
   - ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   - ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
   - ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  - ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   - ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   - ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   - ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
@@ -118,6 +120,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Command selection for new-thread launches must follow canonical mapping in `spec/agent-core-contracts.spec.md`.
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
+  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
 - Codex new-thread opens normally start in pending identity state (`codex:new-*`); the launch service allocates that pending identity before any concrete provider thread id exists.
 - Codex plan-mode launches with a non-empty stripped `/plan <prompt>` body must use the normal pending-tab PTY path and enqueue post-start dispatch steps `/plan`, then stripped prompt body.

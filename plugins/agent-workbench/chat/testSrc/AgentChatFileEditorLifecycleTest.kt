@@ -549,6 +549,37 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun junieInitialMessageWaitsForPromptInputBeforeSending() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = testFile(
+      threadIdentity = "junie:new-1",
+      shellCommand = listOf("junie", "--skip-update-check"),
+    ).also {
+      it.updateInitialMessageMetadata(
+        initialComposedMessage = "Implement the feature",
+        initialMessageToken = "token-junie",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("Select model Current model")
+    Thread.sleep(350)
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+
+    terminalTabs.tab.emitMeaningfulOutput("Welcome to Junie Type your prompt...")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("Implement the feature", shouldExecute = true))
+  }
+
+  @Test
   fun codexPlanModeTimeoutReadinessWaitsWithoutSending() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT

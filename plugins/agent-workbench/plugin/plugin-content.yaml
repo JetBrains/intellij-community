@@ -50,6 +50,9 @@
 - name: lib/modules/intellij.agent.workbench.json.jar
   contentModules:
   - name: intellij.agent.workbench.json
+- name: lib/modules/intellij.agent.workbench.junie.sessions.jar
+  contentModules:
+  - name: intellij.agent.workbench.junie.sessions
 - name: lib/modules/intellij.agent.workbench.prompt.core.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.core

@@ -15,6 +15,7 @@ internal fun resolveAgentChatProviderBehavior(provider: AgentSessionProvider?): 
   return when (provider) {
     AgentSessionProvider.CLAUDE -> ClaudeAgentChatProviderBehavior
     AgentSessionProvider.CODEX -> CodexAgentChatProviderBehavior
+    AgentSessionProvider.JUNIE -> JunieAgentChatProviderBehavior
     else -> DefaultAgentChatProviderBehavior
   }
 }
@@ -87,6 +88,22 @@ private object DefaultAgentChatProviderBehavior : AgentChatProviderBehavior
 private object ClaudeAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun shouldUseBracketedPasteMode(text: String): Boolean {
     return !text.isClaudeMenuCommandPrompt()
+  }
+}
+
+private object JunieAgentChatProviderBehavior : AgentChatProviderBehavior {
+  override suspend fun beforeInitialMessageSend(
+    file: AgentChatVirtualFile,
+    tab: AgentChatTerminalTab,
+    dispatch: AgentChatInitialMessageDispatch,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    return if (isJuniePromptInputReady(tab.readRecentOutputTail())) {
+      AgentChatInitialMessageRetryDecision.PROCEED
+    }
+    else {
+      AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateJuniePromptReadinessRetryBackoffMs(retryAttempt))
+    }
   }
 }
 
@@ -180,6 +197,30 @@ private fun calculateCodexPlanModeRetryBackoffMs(retryAttempt: Int): Long {
   return (CODEX_PLAN_MODE_RETRY_BACKOFF_MS * (1L shl cappedAttempt)).coerceAtMost(CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS)
 }
 
+private fun calculateJuniePromptReadinessRetryBackoffMs(retryAttempt: Int): Long {
+  val cappedAttempt = retryAttempt.coerceIn(0, 2)
+  return (JUNIE_PROMPT_READINESS_RETRY_BACKOFF_MS * (1L shl cappedAttempt)).coerceAtMost(JUNIE_PROMPT_READINESS_MAX_RETRY_BACKOFF_MS)
+}
+
+private fun isJuniePromptInputReady(text: String): Boolean {
+  val normalized = sanitizeJunieTerminalText(text)
+  return JUNIE_PROMPT_INPUT_MARKERS.any { marker -> normalized.contains(marker, ignoreCase = true) }
+}
+
+private fun sanitizeJunieTerminalText(text: String): String {
+  val sanitized = buildString(text.length) {
+    text.forEach { char ->
+      append(
+        when {
+          char.isWhitespace() || char.isISOControl() -> ' '
+          else -> char
+        }
+      )
+    }
+  }
+  return sanitized.replace(JUNIE_TERMINAL_WHITESPACE_REGEX, " ").trim()
+}
+
 private fun isCodexPlanModeBusyOutput(text: String): Boolean {
   return normalizeCodexTerminalOutput(text).contains(CODEX_PLAN_MODE_BUSY_MESSAGE, ignoreCase = true)
 }
@@ -231,11 +272,17 @@ private fun stripCodexTerminalAnsi(text: String): String = CODEX_TERMINAL_ANSI_E
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val CODEX_TERMINAL_TAIL_LINE_SCAN_LIMIT: Int = 8
+private const val JUNIE_PROMPT_READINESS_RETRY_BACKOFF_MS: Long = 250
+private const val JUNIE_PROMPT_READINESS_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val CODEX_PLAN_MODE_BUSY_MESSAGE: String = "'/plan' is disabled while a task is in progress."
 private const val CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE: String = "Booting MCP server:"
 private const val CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE: String = "Starting MCP servers"
 private const val CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE: String = "tab to queue"
 private const val CODEX_PLAN_MODE_WORKING_STATUS_MARKER: String = "Working ("
+private val JUNIE_PROMPT_INPUT_MARKERS: List<String> = listOf(
+  "Type your prompt",
+)
 
 private val CODEX_TERMINAL_ANSI_ESCAPE_REGEX: Regex = Regex("\\u001B\\[[0-9;?]*[ -/]*[@-~]")
 private val CODEX_TERMINAL_WHITESPACE_REGEX: Regex = Regex(" +")
+private val JUNIE_TERMINAL_WHITESPACE_REGEX: Regex = Regex(" +")

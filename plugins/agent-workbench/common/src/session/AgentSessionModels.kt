@@ -13,6 +13,8 @@ value class AgentSessionProvider private constructor(val value: String) {
 
     val CLAUDE: AgentSessionProvider = from("claude")
 
+    val JUNIE: AgentSessionProvider = from("junie")
+
     fun from(value: String): AgentSessionProvider {
       require(AGENT_SESSION_PROVIDER_ID_REGEX.matches(value)) {
         "Invalid provider id '$value'. Expected: ${AGENT_SESSION_PROVIDER_ID_REGEX.pattern}"

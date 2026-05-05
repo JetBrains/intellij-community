@@ -11,6 +11,7 @@ targets:
   - ../codex/common/src/*.kt
   - ../codex/sessions/src/**/*.kt
   - ../claude/sessions/src/**/*.kt
+  - ../junie/sessions/src/**/*.kt
   - ../filewatch/src/**/*.kt
   - ../sessions/testSrc/*.kt
   - ../chat/src/*.kt
@@ -90,8 +91,11 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Catalog refresh must clear stale standalone-project branch metadata when the latest catalog entry no longer provides a branch.
   [@test] ../sessions/testSrc/AgentSessionRefreshServiceIntegrationTest.kt
 
-- Default session-source registration must include Codex and Claude provider bridges.
+- Default session-source registration must include Codex, Claude, and Junie provider bridges.
   [@test] ../sessions/testSrc/AgentSessionProvidersTest.kt
+
+- Junie provider loading must read indexed CLI sessions for the matching project path.
+  [@test] ../junie/sessions/testSrc/JunieSessionSourceTest.kt
 
 - Provider results for a path load must be merged and sorted by `updatedAt` descending.
   [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt

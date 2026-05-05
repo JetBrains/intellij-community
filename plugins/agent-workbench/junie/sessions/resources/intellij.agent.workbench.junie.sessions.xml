@@ -1,0 +1,21 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.terminal.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionProvider
+      id="agentWorkbenchJunie"
+      order="after agentWorkbenchClaude"
+      implementation="com.intellij.agent.workbench.junie.sessions.JunieAgentSessionProviderDescriptor"/>
+  </extensions>
+</idea-plugin>
