@@ -25,7 +25,7 @@ Define the AI Review feature: an ACP-agent-powered code review system integrated
 The feature is split into three modules:
 - **Core** (`intellij.agent.workbench.ai.review`) — community module owning data models, session management, Problems toolwindow UI. Content module of the Agent Workbench plugin.
 - **Space Bridge** (`intellij.agent.workbench.ai.review.space`) — optional ultimate module contributing Space draft-posting actions to AI Review tabs when the Space plugin is available. Content module of the Agent Workbench plugin.
-- **Agents Executor** (`intellij.agent.workbench.ai.review.agents`) — ultimate module providing `AIReviewAcpAgent` as a project-level `@Service` that executes reviews via ACP agents (Claude Code, Codex). Content module of the Agent Workbench plugin; depends on `intellij.ml.llm.agents.acp`.
+- **Agents Executor** (`intellij.agent.workbench.ai.review.agents`) — ultimate module providing `AIReviewAcpAgent` as a project-level `@Service` that executes reviews via ACP agents (Claude Code, Codex, Junie). Content module of the Agent Workbench plugin; depends on `intellij.ml.llm.agents.acp`.
 
 ## Goals
 - Support multiple concurrent review sessions, each with an independent Problems toolwindow tab.
@@ -90,7 +90,7 @@ The feature is split into three modules:
 
 - ACP session operations must auto-approve tool calls for READ, SEARCH, and EXECUTE categories; EDIT, DELETE, and MOVE must be rejected.
 
-- ACP agent contributors (Claude Code, Codex) are registered via the `com.intellij.agent.workbench.ai.review.acp.acpAgentContributor` extension point defined in the agents module.
+- ACP agent contributors (Claude Code, Codex, Junie) are registered via the `com.intellij.agent.workbench.ai.review.acp.acpAgentContributor` extension point defined in the agents module.
 
 ### Prompt Popup Integration
 
@@ -103,7 +103,7 @@ The feature is split into three modules:
   2. obtain `AIReviewAcpAgent` via `project.service<AIReviewAcpAgent>()`,
   3. call `agent.execute()` and wire the resulting `Job` to the session's `viewModel.setRunningState()`.
 
-- Agent selection must map from Agent Workbench provider ID: `"claude"` -> Claude Code ACP, `"codex"` -> Codex ACP.
+- Agent selection must map from Agent Workbench provider ID: `"claude"` -> Claude Code ACP, `"codex"` -> Codex ACP, `"junie"` -> Junie ACP.
 
 ### State Machine (per session)
 
