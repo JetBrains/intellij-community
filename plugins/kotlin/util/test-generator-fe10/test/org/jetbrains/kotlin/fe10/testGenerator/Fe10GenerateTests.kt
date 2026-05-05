@@ -633,7 +633,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "orInWhenGuard", // K2-only
                     "convertFromMultiDollarToRegularString", // K2-only
                     "javaCollectionsWithNullableTypes", // K2-only
-                    "kdocResolutionResultHasChanged", // K2-only
                     "replaceManualRangeWithIndicesCalls", // K2-only
                     "convertLongToDuration", // K2-only
                     "customComponentDestructuringMigration", // K2-only
