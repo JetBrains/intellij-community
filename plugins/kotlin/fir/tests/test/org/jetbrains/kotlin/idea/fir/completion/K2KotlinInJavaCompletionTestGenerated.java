@@ -149,6 +149,140 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/inJava/extensions")
+    public static class Extensions extends AbstractK2KotlinInJavaCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ExtensionOnArray.java")
+        public void testExtensionOnArray() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnArray.java");
+        }
+
+        @TestMetadata("ExtensionOnInterface.java")
+        public void testExtensionOnInterface() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnInterface.java");
+        }
+
+        @TestMetadata("ExtensionOnJavaClass.java")
+        public void testExtensionOnJavaClass() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnJavaClass.java");
+        }
+
+        @TestMetadata("ExtensionOnList.java")
+        public void testExtensionOnList() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnList.java");
+        }
+
+        @TestMetadata("ExtensionOnMutableList.java")
+        public void testExtensionOnMutableList() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnMutableList.java");
+        }
+
+        @TestMetadata("ExtensionOnNullableReceiver.java")
+        public void testExtensionOnNullableReceiver() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnNullableReceiver.java");
+        }
+
+        @TestMetadata("ExtensionOnString.java")
+        public void testExtensionOnString() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnString.java");
+        }
+
+        @TestMetadata("ExtensionOnSupertype.java")
+        public void testExtensionOnSupertype() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionOnSupertype.java");
+        }
+
+        @TestMetadata("ExtensionProperty.java")
+        public void testExtensionProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ExtensionProperty.java");
+        }
+
+        @TestMetadata("HideSuspendFunction.java")
+        public void testHideSuspendFunction() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/HideSuspendFunction.java");
+        }
+
+        @TestMetadata("JvmName.java")
+        public void testJvmName() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/JvmName.java");
+        }
+
+        @TestMetadata("MemberExtensionHidden.java")
+        public void testMemberExtensionHidden() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/MemberExtensionHidden.java");
+        }
+
+        @TestMetadata("MultipleParams.java")
+        public void testMultipleParams() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/MultipleParams.java");
+        }
+
+        @TestMetadata("MutableExtensionProperty.java")
+        public void testMutableExtensionProperty() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/MutableExtensionProperty.java");
+        }
+
+        @TestMetadata("NoExtensionWrongType.java")
+        public void testNoExtensionWrongType() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/NoExtensionWrongType.java");
+        }
+
+        @TestMetadata("NoInstanceMethodDuplicate.java")
+        public void testNoInstanceMethodDuplicate() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/NoInstanceMethodDuplicate.java");
+        }
+
+        @TestMetadata("OperatorExtension.java")
+        public void testOperatorExtension() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/OperatorExtension.java");
+        }
+
+        @TestMetadata("PrivateExtension.java")
+        public void testPrivateExtension() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/PrivateExtension.java");
+        }
+
+        @TestMetadata("SimpleFunction.java")
+        public void testSimpleFunction() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SimpleFunction.java");
+        }
+
+        @TestMetadata("SimpleFunctionWithPrefix.java")
+        public void testSimpleFunctionWithPrefix() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SimpleFunctionWithPrefix.java");
+        }
+
+        @TestMetadata("SmartCompletionMatchingReturn.java")
+        public void testSmartCompletionMatchingReturn() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SmartCompletionMatchingReturn.java");
+        }
+
+        @TestMetadata("SmartCompletionMethodArgument.java")
+        public void testSmartCompletionMethodArgument() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SmartCompletionMethodArgument.java");
+        }
+
+        @TestMetadata("SmartCompletionPropertyReturn.java")
+        public void testSmartCompletionPropertyReturn() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/SmartCompletionPropertyReturn.java");
+        }
+
+        @TestMetadata("ThisReceiver.java")
+        public void testThisReceiver() throws Exception {
+            runTest("../../completion/testData/inJava/extensions/ThisReceiver.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/inJava/suspend")
     public static class Suspend extends AbstractK2KotlinInJavaCompletionTest {
         @java.lang.Override
