@@ -54,13 +54,9 @@ internal class KotlinDslBaseScriptSyncContributor : GradleSyncContributor {
             )
         }
 
-        return if (models.isEmpty()) {
-            storage
-        } else {
-            val entitySource = GradleKotlinDslBaseScriptEntitySource(context.projectPath, phase)
-            GradleKotlinScriptEntityProvider.getInstance(context.project)
-                .getUpdatedStorage(storage.toBuilder(), entitySource, models, definitions)
-        }
+        val entitySource = GradleKotlinDslBaseScriptEntitySource(context.projectPath, phase)
+        return GradleKotlinScriptEntityProvider.getInstance(context.project)
+            .getUpdatedStorage(storage.toBuilder(), entitySource, models, definitions)
     }
 }
 
