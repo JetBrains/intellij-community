@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
@@ -36,7 +35,7 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
     val chatFile = file as AgentChatVirtualFile
     val validationError = validate(chatFile)
     if (validationError == null) {
-      return withContext(Dispatchers.UI) {
+      return withContext(Dispatchers.EDT) {
         AgentChatFileEditor(project = project, file = chatFile)
       }
     }
