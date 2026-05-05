@@ -72,7 +72,6 @@ build --tool_java_runtime_version=remotejdk_25
 # see https://bazel.build/external/lockfile
 # use `bazel mod deps --lockfile_mode=refresh` to update lock file
 common --lockfile_mode=error
-common:windows --lockfile_mode=off  # todo: https://youtrack.jetbrains.com/issue/DPE-59
 
 # make sure you don't need to open file to read compilation errors
 common --experimental_ui_max_stdouterr_bytes=-1
