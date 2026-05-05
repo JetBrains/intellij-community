@@ -112,6 +112,7 @@ dependencies {
     pluginModule(implementation(project(":claude-sessions")))
     pluginModule(implementation(project(":codex-common")))
     pluginModule(implementation(project(":codex-sessions")))
+    pluginModule(implementation(project(":junie-sessions")))
     pluginModule(implementation(project(":ai-review")))
     pluginModule(implementation(project(":ai-review-agents")))
     pluginModule(implementation(project(":ai-review-space")))
