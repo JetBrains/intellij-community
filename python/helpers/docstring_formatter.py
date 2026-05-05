@@ -312,14 +312,19 @@ def format_rest(docstring):
         """
 
         def apply(self):
-            for node in tuple(self.document.findall(nodes.system_message)):
+            if PY2:
+                findall = self.document.traverse
+            else:
+                findall = self.document.findall
+
+            for node in tuple(findall(nodes.system_message)):
                 if node['level'] < self.document.reporter.report_level:
                     node.parent.remove(node)
                     try:
                         del self.document.ids[node['ids'][0]]
                     except IndexError:
                         pass
-            for node in self.document.findall(nodes.section):
+            for node in findall(nodes.section):
                 if "system-messages" in node['classes'] and len(node) == 1:
                     node.parent.remove(node)
 
