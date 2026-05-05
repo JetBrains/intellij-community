@@ -97,7 +97,6 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             jdk11Home ?: jdk8Home ?: jdk17Home ?: javaHome
         }
 
-    @OptIn(ExperimentalPathApi::class)
     override fun setUp() {
         setUpWithKotlinPlugin {
             super.setUp()

@@ -27,13 +27,11 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
     this += KaStandardTypeClassIds.CHAR_SEQUENCE
 }
 
-@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean =
     type.isInheritorOf(ITERABLE_CLASS_IDS, checkNullability)
 
-@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun canBeIteratedOrIterator(type: KaType, checkNullability: Boolean = true): Boolean =

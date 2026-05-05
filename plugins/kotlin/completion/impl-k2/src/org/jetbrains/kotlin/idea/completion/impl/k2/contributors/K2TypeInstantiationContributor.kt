@@ -141,7 +141,6 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     /**
      * Completes type instantiation items for matching types that are proper subtypes of the expected type.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeSubtypes() {
         val expectedType = context.weighingContext.expectedType?.upperBoundIfFlexible() ?: return

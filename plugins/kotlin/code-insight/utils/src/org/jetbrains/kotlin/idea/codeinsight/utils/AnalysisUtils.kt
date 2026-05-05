@@ -177,7 +177,6 @@ val KtTypeReference.typeIfSafeToResolve: KaType?
         return this.type
     }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun KaNamedFunctionSymbol.isEqualsMethodSymbol(): Boolean {
     if (name != OperatorNameConventions.EQUALS) return false

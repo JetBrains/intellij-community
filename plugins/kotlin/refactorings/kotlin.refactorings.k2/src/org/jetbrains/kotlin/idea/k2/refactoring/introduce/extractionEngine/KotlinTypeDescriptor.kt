@@ -138,7 +138,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  *
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun isResolvableInScope(
     typeToCheck: KaType,

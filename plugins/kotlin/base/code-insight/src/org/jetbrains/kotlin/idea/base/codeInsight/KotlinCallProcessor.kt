@@ -185,7 +185,6 @@ object KotlinCallProcessor {
         return current
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
             fun handleSpecial(element: KtElement): Boolean {

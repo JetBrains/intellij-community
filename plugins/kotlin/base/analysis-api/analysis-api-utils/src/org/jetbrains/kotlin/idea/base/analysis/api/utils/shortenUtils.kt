@@ -38,10 +38,6 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 /**
  * Shorten references in the given [element]. See [shortenReferencesInRange] for more details.
  */
-@OptIn(
-    KaAllowAnalysisFromWriteAction::class,
-    KaAllowAnalysisOnEdt::class,
-)
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptionsForIde = ShortenOptionsForIde.DEFAULT,
@@ -84,10 +80,6 @@ fun deprecatedShortenReferences(
  * Here `pack.A` should be shortened and processed first because it can be shortened without adding imports. It is generally prefered to use
  * this API instead of calling `shortenReferences` multiple times on individual references.
  */
-@OptIn(
-    KaAllowAnalysisFromWriteAction::class,
-    KaAllowAnalysisOnEdt::class,
-)
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptionsForIde = ShortenOptionsForIde.DEFAULT,
@@ -124,10 +116,6 @@ fun shortenReferences(
  * [org.jetbrains.kotlin.analysis.api.components.KtReferenceShortenerMixIn] in a background thread to perform the analysis and then
  * modify PSI on the EDT thread by invoking [invokeShortening] on the resulting [ShortenCommandForIde].
  */
-@OptIn(
-    KaAllowAnalysisFromWriteAction::class,
-    KaAllowAnalysisOnEdt::class,
-)
 fun shortenReferencesInRange(
     file: KtFile,
     selection: TextRange = file.textRange,

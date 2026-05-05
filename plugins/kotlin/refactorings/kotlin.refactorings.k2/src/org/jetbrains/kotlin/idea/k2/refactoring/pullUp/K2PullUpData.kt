@@ -34,7 +34,6 @@ internal class K2PullUpData(
         getSuperTypeEntryBySymbol(sourceClass, getTargetClassSymbol(analysisSession))
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun KaSession.collectVisibleTypeParameters(klass: KtClassOrObject): List<KaTypeParameterSymbol> =
         klass.containingKtFile.scopeContext(klass).scopes
             .filter { it.kind is KaScopeKind.TypeParameterScope }

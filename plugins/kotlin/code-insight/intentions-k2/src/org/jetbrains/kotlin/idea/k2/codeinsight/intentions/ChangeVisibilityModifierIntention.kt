@@ -141,7 +141,6 @@ sealed class ChangeVisibilityModifierIntention(
         }
         val symbol = element.symbol
 
-        @OptIn(KaExperimentalApi::class)
         val targetVisibility = modifier.toVisibility()
         if (symbol.compilerVisibility == targetVisibility) return null
         val modifierList = element.modifierList

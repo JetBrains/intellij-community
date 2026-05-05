@@ -35,7 +35,6 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Uses periodic polling via a coroutine with [delay] to check KCRI artifact timestamps.
  */
-@OptIn(ExperimentalBuildToolsApi::class)
 internal class BtaFileWatcher(private val project: Project) {
     private val lastSeenCriTimestamps = ConcurrentHashMap<Path, FileTime>()
 

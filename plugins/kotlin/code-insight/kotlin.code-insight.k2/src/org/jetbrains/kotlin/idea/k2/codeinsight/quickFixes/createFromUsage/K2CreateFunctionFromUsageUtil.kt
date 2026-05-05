@@ -300,7 +300,6 @@ object K2CreateFunctionFromUsageUtil {
         return guessUnsubstitutedType(expectedArgumentType, substitutions)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun guessUnsubstitutedType(type: KaType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
         val matchedArg = substitutions.find { (receiverTypeArgument, _) ->
@@ -548,7 +547,6 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun computeExpectedParams(call: KtCallElement, isAnnotation:Boolean=false): List<ExpectedParameter> {
         val receiverExpression = (call.parent as? KtDotQualifiedExpression)?.receiverExpression

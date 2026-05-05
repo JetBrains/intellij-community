@@ -109,7 +109,6 @@ object MockLibraryUtil {
         )
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun compileLibraryToJar(
         sourcesPath: String,
         contentDir: File,

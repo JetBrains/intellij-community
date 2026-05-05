@@ -523,7 +523,6 @@ private class ParameterToReceiverVisitor(
     /**
      * Determines the appropriate qualifier for 'this' expressions based on the receiver value.
      */
-    @OptIn(KaExperimentalApi::class)
     private fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String? {
         val symbol = receiverValue.symbol
         return when {

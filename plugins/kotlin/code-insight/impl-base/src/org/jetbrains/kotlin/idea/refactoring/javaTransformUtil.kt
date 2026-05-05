@@ -192,7 +192,6 @@ fun createJavaField(property: KtNamedDeclaration, targetClass: PsiClass): PsiFie
     return field
 }
 
-@OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind): PsiClass {
     val factory = PsiElementFactory.getInstance(klass.project)
     val className = klass.name!!

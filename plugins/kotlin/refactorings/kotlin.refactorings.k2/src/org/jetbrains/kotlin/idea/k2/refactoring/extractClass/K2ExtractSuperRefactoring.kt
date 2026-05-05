@@ -181,7 +181,6 @@ private fun getElementsToMove(
     return elementsToMove
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun createClass(
     extractInfo: ExtractSuperInfo,
     info: CreateClassInfo,

@@ -30,7 +30,7 @@ object RemoveArgumentNamesUtils {
      * Returns arguments that are not named or can be unnamed, placed in their correct positions.
      * No arguments following vararg argument are returned.
      */
-    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectArgumentsContext(callElement: KtCallElement): ArgumentsData? {
         val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return null

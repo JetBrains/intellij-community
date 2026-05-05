@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsLi
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 
-@OptIn(ExperimentalCompilerApi::class)
 @ApiStatus.Internal
 internal class KtCompilerPluginsProviderIdeImpl(
     private val project: Project,
@@ -79,7 +78,6 @@ internal class KtCompilerPluginsProviderIdeImpl(
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun <T : Any> getRegisteredExtensions(module: KaModule, extensionType: ExtensionPointDescriptor<T>): List<T> {
         val pluginsCache = pluginsCacheCachedValue.value ?: return emptyList()
         return pluginsCache.getRegisteredExtensions(

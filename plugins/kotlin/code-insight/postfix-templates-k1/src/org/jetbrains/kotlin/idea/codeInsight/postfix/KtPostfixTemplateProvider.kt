@@ -67,7 +67,6 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
     }
 }
 
-@OptIn(KaContextParameterApi::class)
 private class KtNotPostfixTemplate(provider: PostfixTemplateProvider) : NotPostfixTemplate(
     KtPostfixTemplatePsiInfo,
     createBooleanExpressionSelector(),

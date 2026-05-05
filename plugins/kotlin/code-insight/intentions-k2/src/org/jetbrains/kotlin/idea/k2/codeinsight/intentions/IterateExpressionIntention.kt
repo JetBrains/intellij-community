@@ -86,7 +86,6 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtExpression): Unit? {
         if (element.parent !is KtBlockExpression) return null
 

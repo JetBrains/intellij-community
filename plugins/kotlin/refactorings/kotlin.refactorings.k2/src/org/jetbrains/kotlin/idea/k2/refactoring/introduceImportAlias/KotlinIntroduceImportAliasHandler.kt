@@ -60,7 +60,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
 
-    @OptIn(KaImplementationDetail::class)
     fun doRefactoring(project: Project, editor: Editor, element: KtNameReferenceExpression) {
         val file = element.containingKtFile
         val declaration = element.mainReference.resolve() ?: return

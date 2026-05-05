@@ -44,7 +44,6 @@ internal fun addImportIfRequired(
     context.doPostponedOperationsAndUnblockDocument()
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
     if (file.importDirectives.any { it.importPath?.fqName == nameToImport }) return true
 

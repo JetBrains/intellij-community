@@ -194,7 +194,6 @@ internal fun KtExpression.evaluateRuntimeKaType(): KaType? {
 }
 
 // See KTIJ-35541
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
     abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }

@@ -146,7 +146,6 @@ class KotlinTestGenerator: TestGenerator {
             }
         }
 
-        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         fun addTestMethods(
             editor: Editor,
             targetClass: KtClass,

@@ -61,7 +61,7 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
 
     override fun supportFiltersWithDoublePrefix(): Boolean = false
 
-    @OptIn(KaImplementationDetail::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun createFile(originalFile: PsiFile, text: String): PsiFile {
         val newFile =
             KtPsiFactory(originalFile.project, eventSystemEnabled = true, markGenerated = false).createFile(originalFile.name, text)

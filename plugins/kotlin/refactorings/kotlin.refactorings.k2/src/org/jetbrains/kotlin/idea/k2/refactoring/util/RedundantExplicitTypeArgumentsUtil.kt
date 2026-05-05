@@ -135,7 +135,6 @@ private fun restoreTypes(typePointers: List<KaTypePointer<KaType>>): List<KaType
     typePointers.map { it.restore(session) ?: return null }
 
 // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` to reduce resolve and avoid psi checks
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
     get() = containingKtFile

@@ -30,7 +30,6 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun doTest(directory: File, filesToConvert: List<File>) {
         val psiManager = PsiManager.getInstance(project)
 

@@ -116,7 +116,6 @@ private fun createMethodDescriptor(declaration: KtDeclaration, sourcePosition: S
     return analyze(declaration) { createMethodDescriptor(document, declaration) }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaSession.createMethodDescriptor(document: Document, declaration: KtDeclaration): MethodDescriptor? {
     var symbol = declaration.symbol
     val lineNumber = document.getLineNumber(declaration.textOffset)

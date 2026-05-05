@@ -57,7 +57,6 @@ internal object LetImplementInterfaceFixFactories {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KaSession.createFixIfAvailable(
         expectedType: KaType,
         actualType: KaType,

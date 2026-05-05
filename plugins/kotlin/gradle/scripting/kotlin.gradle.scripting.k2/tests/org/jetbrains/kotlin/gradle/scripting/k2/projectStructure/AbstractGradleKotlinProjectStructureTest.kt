@@ -126,7 +126,6 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
     }
 
 
-    @OptIn(KaPlatformInterface::class)
     private fun collectModules(): List<KaModule> {
         val files = testDataFiles.map { getFile(it.path).getPsiFile(project) }
         val modules = files.map { it.getKaModule(project, useSiteModule = null) }

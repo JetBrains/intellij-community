@@ -88,7 +88,6 @@ fun isLetCallRedundant(
     return singleReferenceNotInsideInnerLambda != null
 }
 
-@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtDotQualifiedExpression.isLetCallRedundant(parameterName: String): Boolean {

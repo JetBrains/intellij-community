@@ -55,7 +55,6 @@ internal class ReplaceWithOperatorAssignmentInspection :
         return right.left != null && right.right != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
         val left = element.left ?: return null
         val right = element.right as? KtBinaryExpression ?: return null

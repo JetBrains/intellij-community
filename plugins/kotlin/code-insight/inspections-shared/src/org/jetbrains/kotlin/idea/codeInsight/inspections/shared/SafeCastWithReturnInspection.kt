@@ -70,7 +70,6 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         return !(leftExpressionReferenceName != "as?" && leftExpressionReferenceName != "as")
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         val withRHS = element.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return null
         if (element.isUsedAsExpression) {

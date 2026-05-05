@@ -164,7 +164,6 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         getSettings(project, SYSTEM_ID).linkProject(settings)
     }
 
-    @OptIn(KaExperimentalApi::class)
     protected fun checkScriptConfigurationsIfAny() {
         val settings = (getSettings(project, SYSTEM_ID) as GradleSettings).linkedProjectsSettings.firstOrNull()
             ?: error("Cannot find linked gradle project: ${project.basePath}")

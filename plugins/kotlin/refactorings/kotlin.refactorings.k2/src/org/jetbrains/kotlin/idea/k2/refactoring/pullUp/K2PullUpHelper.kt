@@ -532,7 +532,7 @@ internal class K2PullUpHelper(
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(movedMember)
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaExperimentalApi::class)
     override fun move(info: MemberInfoBase<PsiMember>, substitutor: PsiSubstitutor) {
         val member = info.member.toKtDeclarationWrapperAware() ?: return
 

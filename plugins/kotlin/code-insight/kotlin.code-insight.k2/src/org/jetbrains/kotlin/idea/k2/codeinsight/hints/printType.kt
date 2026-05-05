@@ -150,7 +150,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
-@OptIn(KaExperimentalApi::class, ClassIdBasedLocality::class)
+@OptIn(ClassIdBasedLocality::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType

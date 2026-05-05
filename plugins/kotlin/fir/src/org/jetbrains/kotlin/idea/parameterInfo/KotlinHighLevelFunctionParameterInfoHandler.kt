@@ -170,7 +170,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun updateParameterInfo(argumentList: TArgumentList, context: UpdateParameterInfoContext) {
         if (context.parameterOwner !== argumentList) {
             context.removeHint()

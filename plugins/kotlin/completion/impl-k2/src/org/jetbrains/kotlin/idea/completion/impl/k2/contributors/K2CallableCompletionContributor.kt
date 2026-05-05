@@ -441,7 +441,6 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             )
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected fun collectDotCompletionForCallableReceiver(
         explicitReceiver: KtExpression,

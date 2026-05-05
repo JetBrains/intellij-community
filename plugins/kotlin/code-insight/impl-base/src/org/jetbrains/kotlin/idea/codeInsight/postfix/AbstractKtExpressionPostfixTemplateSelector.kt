@@ -43,7 +43,6 @@ abstract class AbstractKtExpressionPostfixTemplateSelector<CTX>(
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
 

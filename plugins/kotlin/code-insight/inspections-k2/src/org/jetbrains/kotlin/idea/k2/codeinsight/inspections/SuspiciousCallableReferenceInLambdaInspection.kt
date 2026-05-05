@@ -146,7 +146,6 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun createQuickFix(context: Context) = object : KotlinModCommandQuickFix<KtLambdaExpression>() {
         override fun getFamilyName() = KotlinBundle.message("move.reference.into.parentheses")
 

@@ -248,7 +248,6 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createWrapWithSafeLetCallInputForNullableExpression(
         nullableExpression: KtExpression?,

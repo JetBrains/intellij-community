@@ -84,7 +84,6 @@ internal class ReplaceGuardClauseWithFunctionCallInspection :
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtIfExpression): Context? {
         val call = element.getCallExpression() ?: return null
         val kotlinFunction = element.getKotlinFunction(call) ?: return null

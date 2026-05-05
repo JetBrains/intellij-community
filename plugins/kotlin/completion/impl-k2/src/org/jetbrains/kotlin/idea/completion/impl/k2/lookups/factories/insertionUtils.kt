@@ -151,7 +151,6 @@ private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Bool
     return contextParameterList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
 }
 
-@OptIn(KaImplementationDetail::class)
 private class ShortenCommandForIdeWrapper(
     delegate: ShortenCommandForIde,
     private val copy: KtFile,

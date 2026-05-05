@@ -57,7 +57,6 @@ abstract class KtGenerateMembersHandler(
 
     override fun isClassNode(key: MemberChooserObject): Boolean = key is KaClassOrObjectSymbolChooserObject
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun generateMembers(
         editor: Editor,
         classOrObject: KtClassOrObject,

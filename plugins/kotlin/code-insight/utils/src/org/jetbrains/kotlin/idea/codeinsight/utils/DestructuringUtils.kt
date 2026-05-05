@@ -66,7 +66,6 @@ private val POSITIONAL_DESTRUCTURING_CLASSES: Set<ClassId> = setOf(
  * Checks if the destructured type is intended for positional destructuring (Pair, Triple, IndexedValue).
  * These types should use bracket syntax [x, y] instead of name-based destructuring.
  */
-@OptIn(KaContextParameterApi::class)
 context(session: KaSession)
 fun KtDestructuringDeclaration.isPositionalDestructuringType(): Boolean {
     val classType = session.getClassType(this) ?: return false

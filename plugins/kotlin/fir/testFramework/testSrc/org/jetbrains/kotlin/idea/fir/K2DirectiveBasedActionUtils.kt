@@ -48,7 +48,7 @@ object K2DirectiveBasedActionUtils {
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_AFTER_ERROR_DIRECTIVE, AFTER_ERROR_DIRECTIVE)
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun checkForUnexpected(
         mainFile: File,
         file: KtFile,

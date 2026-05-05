@@ -64,7 +64,6 @@ private const val _NO_NAME_PROVIDED_ = "`<no name provided>`"
  * Kotlin factory for creating [FieldElement] or [ClassElement] objects.
  */
 object KotlinElementFactory {
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun newClassElement(clazz: KtClassOrObject): ClassElement {
         val ce = ClassElement()

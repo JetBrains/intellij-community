@@ -96,7 +96,7 @@ object NamedArgumentUtils {
         return getNameForNameableArgument(argument, callElement, resolvedCall)
     }
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getNameForNameableArgument(
         argument: KtValueArgument,
@@ -141,7 +141,7 @@ object NamedArgumentUtils {
         return realArgumentType?.isSubtypeOf(associatedType) != true
     }
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun hasAmbiguousVararg(argument: KtValueArgument, resolvedCall: KaFunctionCall<*>): Boolean {
         val varargParam = resolvedCall.symbol.valueParameters.find { it.isVararg } ?: return false
@@ -161,7 +161,7 @@ object NamedArgumentUtils {
         return !argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
     }
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun getNameForValueParameter(
         argument: KtValueArgument,

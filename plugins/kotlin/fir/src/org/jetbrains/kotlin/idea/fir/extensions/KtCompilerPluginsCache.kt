@@ -113,7 +113,6 @@ class KtCompilerPluginsCache private constructor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun <T : Any, K : Any> KaModule.getExtensionsForModule(
         classLoader: ClassLoader,
         registrarForModule: ConcurrentMap<K, Optional<CompilerPluginRegistrar.ExtensionStorage>>,
@@ -127,7 +126,7 @@ class KtCompilerPluginsCache private constructor(
         @Suppress("UNCHECKED_CAST") return registrars as List<T>
     }
 
-    @OptIn(KaExperimentalApi::class, LLFirInternals::class)
+    @OptIn(KaExperimentalApi::class)
     private fun computeExtensionStorage(
         classLoader: ClassLoader,
         module: KaModule
@@ -167,7 +166,6 @@ class KtCompilerPluginsCache private constructor(
 
         val compilerConfiguration =
             CompilerConfiguration.create().apply {
-                @OptIn(ExperimentalCompilerApi::class)
                 // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
                 // (or even a platform-agnostic alternative) should be added.
                 if (compilerArguments is K2JVMCompilerArguments && module is KaSourceModule) {

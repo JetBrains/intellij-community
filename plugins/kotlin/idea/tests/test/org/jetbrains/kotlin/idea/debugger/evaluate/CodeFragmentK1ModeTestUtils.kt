@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.io.File
 
-@OptIn(KaExperimentalApi::class)
 internal fun JavaCodeInsightTestFixture.configureByK1ModeCodeFragment(filePath: String) {
     configureByFile(File(filePath).name)
 

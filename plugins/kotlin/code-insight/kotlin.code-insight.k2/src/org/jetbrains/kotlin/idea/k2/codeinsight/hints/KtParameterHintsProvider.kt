@@ -96,7 +96,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,

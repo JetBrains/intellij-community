@@ -276,7 +276,6 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     protected abstract fun moveLambdaOutsideParenthesis(methodCall: KtCallExpression)
 
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {

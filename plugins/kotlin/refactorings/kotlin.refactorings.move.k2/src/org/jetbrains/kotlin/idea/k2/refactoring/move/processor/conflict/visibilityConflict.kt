@@ -212,7 +212,6 @@ private fun KaSymbol.isProtectedVisibleFrom(refererSymbol: KaSymbol): Boolean {
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
-@OptIn(KaAllowAnalysisOnEdt::class)
 fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,

@@ -39,7 +39,6 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
 
     data class Context(val replacementOperator: String, val messageKey: String, val messageParam: String?)
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtElement): Context? {
         if (!isAvailable(element)) return null
         return determineContextFromElement(element as? KtExpression ?: return null)

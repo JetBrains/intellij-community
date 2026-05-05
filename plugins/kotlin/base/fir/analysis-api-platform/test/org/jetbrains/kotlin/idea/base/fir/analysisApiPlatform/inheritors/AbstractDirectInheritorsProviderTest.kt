@@ -15,7 +15,6 @@ abstract class AbstractDirectInheritorsProviderTest : AbstractInheritorsProvider
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("directInheritors")
 
-    @OptIn(KaImplementationDetail::class)
     override fun resolveInheritors(targetClass: KtClass, useSiteModule: KaModule): List<ClassId> =
         KotlinDirectInheritorsProvider.getInstance(project)
             .getDirectKotlinInheritors(targetClass, KaResolutionScopeProvider.getInstance(useSiteModule.project).getResolutionScope(useSiteModule))

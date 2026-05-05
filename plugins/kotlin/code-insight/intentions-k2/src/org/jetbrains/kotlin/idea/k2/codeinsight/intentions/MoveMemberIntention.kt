@@ -27,7 +27,6 @@ internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName 
 
     override fun startInWriteAction(): Boolean = false
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         val target = getTarget(element) ?: return
 

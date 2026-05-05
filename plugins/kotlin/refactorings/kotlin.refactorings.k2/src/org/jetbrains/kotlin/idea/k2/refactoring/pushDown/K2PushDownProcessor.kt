@@ -81,7 +81,6 @@ internal class K2PushDownProcessor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun prepareRefactoring(
         usages: Array<out UsageInfo>,
         actionsContext: PushDownActionsContext,

@@ -134,7 +134,6 @@ class KotlinClassRenderer : ClassRenderer() {
         return gettersToShow
     }
 
-    @OptIn(ExperimentalContextReceivers::class, KaExperimentalApi::class)
     @Suppress("OPT_IN_USAGE_ERROR")
     private fun KmProperty.shouldBeVisibleInVariablesView(): Boolean {
         return getter.isNotDefault && receiverParameterType == null && contextParameters.isEmpty()

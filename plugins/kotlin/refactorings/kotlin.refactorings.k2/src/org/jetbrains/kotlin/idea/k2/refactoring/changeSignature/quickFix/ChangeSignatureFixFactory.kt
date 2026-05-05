@@ -399,7 +399,6 @@ object ChangeSignatureFixFactory {
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
         val ktType = argumentExpression?.expressionType

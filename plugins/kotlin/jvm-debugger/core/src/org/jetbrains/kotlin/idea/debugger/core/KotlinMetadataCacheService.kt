@@ -49,7 +49,6 @@ private class KotlinMetadataCache {
         val packageName: String,
         val extraInt: Int,
     ) {
-        @OptIn(ExperimentalEncodingApi::class)
         fun toMetadata(): Metadata {
             return Metadata(
                 kind = kind,

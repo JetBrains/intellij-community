@@ -25,7 +25,6 @@ interface ShortenCommandForIde : ShortenCommand {
 @ApiStatus.Internal
 data class CompanionReferenceToShorten(val companionReferenceToShorten: SmartPsiElementPointer<KtSimpleNameExpression>)
 
-@OptIn(KaImplementationDetail::class)
 internal class ShortenCommandForIdeImpl(
     override val targetFile: SmartPsiElementPointer<KtFile>,
     override val importsToAdd: Set<FqName>,

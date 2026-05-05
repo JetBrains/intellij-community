@@ -190,7 +190,6 @@ constructor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getTypeParameterList(): PsiTypeParameterList =
         typeParameterListPart.getOrBuild {
             object : LightTypeParameterListBuilder(context.manager, context.language) {

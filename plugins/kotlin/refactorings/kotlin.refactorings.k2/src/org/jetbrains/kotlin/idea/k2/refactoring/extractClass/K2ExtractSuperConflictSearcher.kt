@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class K2ExtractSuperConflictSearcher : KotlinExtractSuperConflictSearcher {
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun collectConflicts(
         originalClass: KtClassOrObject,
         memberInfos: List<KotlinMemberInfo>,

@@ -173,7 +173,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isAppliedOnMapReceiver(firstCall: KaCallInfo): Boolean {
         return firstCall.successfulFunctionCallOrNull()?.isCalledOnMapExtensionReceiver == true

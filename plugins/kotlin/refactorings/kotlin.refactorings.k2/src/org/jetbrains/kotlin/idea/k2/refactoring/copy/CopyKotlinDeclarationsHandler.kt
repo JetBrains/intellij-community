@@ -136,7 +136,6 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun doCopy(elements: Array<out PsiElement>, defaultTargetDirectory: PsiDirectory?) {
 
         if (elements.isEmpty()) return

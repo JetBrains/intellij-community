@@ -117,7 +117,6 @@ class SmartStepTargetVisitor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KaSession.recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         if (expression !is KtNameReferenceExpression && expression !is KtCallableReferenceExpression) return false
         val targetType = expression.computeTargetType()

@@ -98,7 +98,6 @@ internal interface K2CompletionRunner {
         /**
          * Runs chain completion, returning true if any new results were added by chain completion.
          */
-        @OptIn(KaImplementationDetail::class)
         fun runChainCompletion(
             originalPositionContext: KotlinNameReferencePositionContext,
             completionResultSet: CompletionResultSet,
@@ -152,7 +151,6 @@ internal interface K2CompletionRunner {
                     )
 
                     // TODO: Remove once KT-79109 KaBaseIllegalPsiException is thrown incorrectly when using CodeFragments in KtCompletionExtensionCandidateChecker.create
-                    @OptIn(KaImplementationDetail::class)
                     val commonData = createCommonSectionData(newCompletionContext) ?: return@analyze
 
                     val sink = K2DelegatingLookupElementSink(completionResultSet)

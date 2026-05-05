@@ -37,7 +37,6 @@ class RunScratchAction : ScratchAction(
     }
 
     object Handler {
-        @OptIn(UnsafeCastFunction::class)
         fun doAction(scratchFile: K1KotlinScratchFile, isAutoRun: Boolean) {
             val project = scratchFile.project
             val isRepl = scratchFile.options.isRepl

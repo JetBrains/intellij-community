@@ -463,7 +463,7 @@ private fun renderCallableWithPsiFallbackForErrorType(
     return targetSymbol.render(renderer)
 }
 
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaExperimentalApi::class)
 fun KaDeclarationRenderer.Builder.withoutLabel() {
     contextReceiversRenderer = contextReceiversRenderer.with {
         contextReceiverListRenderer = ContextParametersListRenderer

@@ -76,7 +76,6 @@ val KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES: Key<Pair<String, String>> = K
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override val compilerType: CompilerType = CompilerType.K2
 
-    @OptIn(KaExperimentalApi::class)
     override fun compileCodeFragment(
         context: ExecutionContext,
         codeFragment: KtCodeFragment
@@ -174,7 +173,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, ExperimentalCompilerApi::class)
+    @OptIn(KaExperimentalApi::class)
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData {
         val module = codeFragment.module
 

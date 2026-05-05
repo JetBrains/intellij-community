@@ -43,7 +43,6 @@ class KotlinFirChangeSignatureTest :
         return true
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = { emptyList() }
 
     override fun doTestInvokePosition(code: String) {
@@ -161,7 +160,7 @@ class KotlinFirChangeSignatureTest :
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testExpressionFragmentErrors() {
         val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
         val fragment = KtPsiFactory(project).createTypeCodeFragment("CustomList<out String>", psiFile)
@@ -174,7 +173,7 @@ class KotlinFirChangeSignatureTest :
         )
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun testTypeFragmentErrors() {
         val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
         val fragment = KtPsiFactory(project).createTypeCodeFragment("", psiFile)

@@ -35,7 +35,6 @@ internal class UnfoldPropertyToIfIntention :
         return listOf(TextRange(0, endOffset))
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
         prepareUnfoldPropertyContext(element)
 

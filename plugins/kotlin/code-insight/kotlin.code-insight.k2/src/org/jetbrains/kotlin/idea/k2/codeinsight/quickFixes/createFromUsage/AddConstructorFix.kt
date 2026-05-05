@@ -70,7 +70,6 @@ internal class AddConstructorFix(
     }
 }
 
-@OptIn(KaAllowAnalysisFromWriteAction::class)
 private fun buildConstructorAsString(
     element: KtClass,
     request: CreateConstructorRequest,

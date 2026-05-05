@@ -59,7 +59,6 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtProperty): Unit? {
         if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
@@ -69,7 +68,6 @@ internal abstract class AbstractAddAccessorIntention(
         return isApplicable.asUnit
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
         // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead

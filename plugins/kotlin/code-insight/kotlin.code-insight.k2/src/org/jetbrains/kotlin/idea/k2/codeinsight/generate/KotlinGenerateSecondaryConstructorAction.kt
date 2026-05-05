@@ -90,7 +90,6 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any && superClassSymbol.classId != StandardClassIds.Enum
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
         // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead

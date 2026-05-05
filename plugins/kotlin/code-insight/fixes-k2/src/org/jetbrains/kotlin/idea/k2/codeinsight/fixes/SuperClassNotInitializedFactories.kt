@@ -146,7 +146,6 @@ internal object SuperClassNotInitializedFactories {
         NotVararg, VarargNoSpread, VarargWithSpread;
     }
 
-    @OptIn(KaExperimentalApi::class)
     private class AddParametersFix(
         element: KtSuperTypeEntry,
         context: AddParametersContext,
@@ -210,7 +209,6 @@ internal object SuperClassNotInitializedFactories {
         }.toList()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createSingleConstructorFix(
         superClassSymbol: KaNamedClassSymbol,

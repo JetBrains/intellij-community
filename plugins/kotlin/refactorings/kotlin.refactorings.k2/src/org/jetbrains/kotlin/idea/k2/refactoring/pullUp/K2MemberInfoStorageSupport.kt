@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 internal class K2MemberInfoStorageSupport : KotlinMemberInfoStorageSupport {
-    @OptIn(KaAllowAnalysisOnEdt::class, KaPlatformInterface::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun memberConflict(
         member1: KtNamedDeclaration,
         member2: KtNamedDeclaration,

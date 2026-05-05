@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun createConstructorCallLookupElement(
         containingSymbol: KaClassLikeSymbol,

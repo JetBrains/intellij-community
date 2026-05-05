@@ -27,7 +27,6 @@ private val KOTLIN_PROJECT_SCRIPT_TEMPLATE = FqName("KotlinProjectScriptTemplate
 private val PLUGINS: Name = Name.identifier("plugins")
 
 class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvider() {
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getImplicitReference(
         element: PsiElement,
         offsetInElement: Int
@@ -37,7 +36,6 @@ class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvide
         else -> null
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun createFromCall(element: KtCallExpression): GradlePluginReference? {
         val maybePluginId = getSingleFunctionCallableId(element)
         if (maybePluginId == null || !maybePluginId.isPluginId()) return null
@@ -48,7 +46,6 @@ class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvide
         return GradlePluginReference(literal, range, literal.text)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun createFromNameReference(element: KtNameReferenceExpression): GradlePluginReference? {
         val parentCallExpression = findParentOfType(element, KtCallExpression::class.java) ?: return null
         val maybePluginsSection = getSingleFunctionCallableId(parentCallExpression)

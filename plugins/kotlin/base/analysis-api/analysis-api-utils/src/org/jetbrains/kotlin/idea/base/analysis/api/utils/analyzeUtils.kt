@@ -37,7 +37,6 @@ inline fun <R> analyzeInModalWindow(
 }
 
 @OptIn(
-    KaImplementationDetail::class,
     KaAllowAnalysisFromWriteAction::class,
     KaAllowAnalysisOnEdt::class,
 )

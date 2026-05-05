@@ -72,7 +72,6 @@ val KaValueParameterSymbol.hasSynthesizedName: Boolean
  * @see KaVariableSignature.realName
  * @see KaValueParameterSymbol.hasSynthesizedName
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 val KaValueParameterSymbol.realName: Name?
     get() {
@@ -128,7 +127,6 @@ fun createRealNameRenderer(renderer: KaDeclarationNameRenderer): KaDeclarationNa
  *
  * @see KaValueParameterSymbol.realName
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 val KaVariableSignature<KaValueParameterSymbol>.realName: Name?
     get() = when {

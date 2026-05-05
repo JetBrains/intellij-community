@@ -287,7 +287,6 @@ sealed class K2MoveRenameUsageInfo(
             }
         }
 
-        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         private fun KtReferenceExpression.markInternalUsageInfo(topLevelMoved: KtElement) {
             val expr = this
             val mainReference = expr.mainReference

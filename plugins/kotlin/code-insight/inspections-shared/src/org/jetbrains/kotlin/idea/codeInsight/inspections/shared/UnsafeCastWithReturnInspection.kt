@@ -59,7 +59,6 @@ class UnsafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtB
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtBinaryExpression): Unit = Unit
 
     override fun buildVisitor(

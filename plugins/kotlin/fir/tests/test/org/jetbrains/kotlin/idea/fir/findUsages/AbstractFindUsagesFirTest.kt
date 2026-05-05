@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest(), KMPTest {
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> {
         return k2DiagnosticProviderForFindUsages()
     }

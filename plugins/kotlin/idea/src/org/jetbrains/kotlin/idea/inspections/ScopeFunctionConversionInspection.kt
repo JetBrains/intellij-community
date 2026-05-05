@@ -372,7 +372,6 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         })
     }
 
-    @OptIn(KaIdeApi::class)
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         val filter = { element: PsiElement ->
             if (element is KtThisExpression && element.getLabelName() != null)

@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+@OptIn(KaExperimentalApi::class)
 abstract class KotlinK2RuntimeTypeEvaluator(
     editor: Editor?,
     private val expression: KtExpression,

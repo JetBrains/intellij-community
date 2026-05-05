@@ -96,7 +96,6 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun analyzeFile(file: KtFile): Map<PsiElement, List<HighlightInfo.Builder>> = analyze(file) {
         // Trigger additional resolution under `analyze` block to have the session on the stack
         // to avoid stop-the-world and GC optimizations

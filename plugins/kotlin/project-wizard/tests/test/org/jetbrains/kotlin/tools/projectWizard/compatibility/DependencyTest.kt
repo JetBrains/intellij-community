@@ -48,7 +48,6 @@ class DependencyTest : BasePlatformTestCase() {
         nestedClasses.forEach { it.initializeNestedObjects() }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun testMavenDependenciesExist() {
         // Cause all inner objects to be instantiated
         Dependencies::class.initializeNestedObjects()

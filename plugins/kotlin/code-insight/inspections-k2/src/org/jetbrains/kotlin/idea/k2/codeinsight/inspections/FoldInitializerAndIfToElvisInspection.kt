@@ -46,7 +46,6 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         return prepareData(element, enforceNonNullableTypeIfPossible = true)
     }

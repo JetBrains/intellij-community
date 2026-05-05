@@ -47,7 +47,6 @@ inline fun <T> getAllKeysAndMeasure(index: StubIndexKey<*, *>, log: Logger, cros
     measureIndexCall(index, "getAllKeys", processElementsMaxDuration(), log, block)
 
 @ApiStatus.Internal
-@OptIn(ExperimentalTime::class)
 inline fun <T> measureIndexCall(index: StubIndexKey<*, *>, prefix: String, threshold: Duration, log: Logger, crossinline block: () -> T): T {
     val mark = TimeSource.Monotonic.markNow()
     val t = block()
@@ -62,7 +61,6 @@ inline fun <T> measureIndexCall(index: StubIndexKey<*, *>, prefix: String, thres
 }
 
 @ApiStatus.Internal
-@OptIn(ExperimentalTime::class)
 inline fun <T> checkCollectionSize(index: StubIndexKey<*, *>, prefix: String, log: Logger, collection: Collection<T>): Collection<T> {
     val thresholdSize = collectionThresholdSize()
     val size = collection.size

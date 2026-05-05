@@ -55,7 +55,6 @@ internal class ConvertNaNEqualityInspection :
                 (element.left?.text?.endsWith(NAN_NAME) == true || element.right?.text?.endsWith(NAN_NAME) == true)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
         val left = element.left ?: return null
         val right = element.right ?: return null

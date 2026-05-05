@@ -37,7 +37,6 @@ infix fun KaType.isPossiblySubTypeOf(superType: KaType): Boolean {
     return superTypeWithReplacedTypeArguments != null && isSubtypeOf(superTypeWithReplacedTypeArguments)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: Boolean): KaType =
     buildClassTypeWithStarProjections(symbol).withNullability(nullability)

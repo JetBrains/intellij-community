@@ -167,7 +167,6 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol

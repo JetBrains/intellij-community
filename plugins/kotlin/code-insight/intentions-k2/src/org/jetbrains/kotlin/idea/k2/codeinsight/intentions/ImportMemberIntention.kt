@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
-@OptIn(KaIdeApi::class)
 internal class ImportMemberIntention :
     KotlinApplicableModCommandAction<KtElement, ImportMemberIntention.Context>(KtElement::class) {
 

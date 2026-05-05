@@ -98,7 +98,6 @@ internal fun KaSession.getClashingMemberInTargetClass(
     return targetClassSymbol.findCallableMemberBySignature(callableSymbol.substitute(substitutor))
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaSession.checkClashWithSuperDeclaration(
     data: K2PullUpData,
     member: KtNamedDeclaration,
@@ -121,7 +120,6 @@ private fun KaSession.checkClashWithSuperDeclaration(
     conflicts.putValue(member, conflictMessage.capitalize())
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaSession.handleParameterClash(
     parameter: KtParameter,
     parameterSymbol: KaDeclarationSymbol,

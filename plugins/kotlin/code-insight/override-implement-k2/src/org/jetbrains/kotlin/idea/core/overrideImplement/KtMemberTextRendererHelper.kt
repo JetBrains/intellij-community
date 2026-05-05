@@ -25,7 +25,7 @@ internal fun renderMemberText(symbol: KaCallableSymbol, renderer: KaDeclarationR
     return symbol.render(renderer)
 }
 
-@OptIn(KaExperimentalApi::class, KaNonPublicApi::class)
+@OptIn(KaExperimentalApi::class)
 private fun KaDeclarationRenderer.withTypeFilter(targetSymbol: KaCallableSymbol) = this.with {
     returnTypeFilter = object : KaCallableReturnTypeFilter {
         override fun shouldRenderReturnType(analysisSession: KaSession, type: KaType, symbol: KaCallableSymbol): Boolean =
