@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.project.MavenParentProjectFileProcessor;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenSettingsCache;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -513,28 +512,10 @@ public final class MavenDomProjectProcessorUtils {
                                             Function<? super MavenDomProfile, ? extends T> domProfileFunction,
                                             Function<? super MavenDomProjectModel, ? extends T> projectDomFunction) {
 
-    if (processProfilesXml(MavenDomUtil.getVirtualFile(projectDom), mavenProjectOrNull, processor, project, domProfileFunction)) {
-      return true;
-    }
-
     if (processProfiles(projectDom.getProfiles(), mavenProjectOrNull, processor, domProfileFunction)) return true;
 
     T t = projectDomFunction.fun(projectDom);
     return t != null && processor.process(t);
-  }
-
-  private static <T> boolean processProfilesXml(VirtualFile projectFile,
-                                                MavenProject mavenProjectOrNull,
-                                                Processor<? super T> processor,
-                                                Project project,
-                                                Function<? super MavenDomProfile, ? extends T> f) {
-    VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
-    if (profilesFile == null) return false;
-
-    MavenDomProfiles profiles = MavenDomUtil.getMavenDomProfilesModel(project, profilesFile);
-    if (profiles == null) return false;
-
-    return processProfiles(profiles, mavenProjectOrNull, processor, f);
   }
 
   private static <T> boolean processProfiles(MavenDomProfiles profilesDom,

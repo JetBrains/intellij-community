@@ -1034,15 +1034,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    createProfilesXml("""
-                        <profile>
-                          <id>one</id>
-                          <properties>
-                            <profilesXmlProp>value</profilesXmlProp>
-                          </properties>
-                        </profile>
-                        """.trimIndent())
-
     createModulePom("parent",
                     """
                       <groupId>test</groupId>
@@ -1115,11 +1106,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     val variants = getCompletionVariants(projectPom)
-    assertContain(variants, "pomProp", "pomProfilesProp", "profilesXmlProp")
-    assertContain(variants,
-                  "parentPomProp",
-                  "parentPomProfilesProp",
-                  "parentProfilesXmlProp")
+    assertContain(variants, "pomProp", "pomProfilesProp")
+    assertContain(variants, "parentPomProp", "parentPomProfilesProp")
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId")
     assertContain(variants, "basedir", "project.basedir", "pom.basedir", "project.baseUri", "pom.basedir")
     assertDoNotContain(variants, "baseUri")
@@ -1132,7 +1120,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     assertDoNotContain(variants, "project.maven.build.timestamp")
     assertContain(variants, "settingsXmlProp")
     assertContain(variants, "settings.localRepository")
-    assertContain(variants, "user.home", "env." + envVar)
+    assertContain(variants, "user.home", "env.$envVar")
   }
 
   @Test

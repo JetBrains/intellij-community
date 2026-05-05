@@ -15,13 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenSettingsCache;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
@@ -84,16 +82,7 @@ final class ProfileNode extends MavenSimpleNode {
     }
 
     for (MavenProject mavenProject : myMavenProjectsStructure.getProjectsManager().getProjects()) {
-      // search in "Profile descriptors" - located in project basedir (profiles.xml)
       final VirtualFile mavenProjectFile = mavenProject.getFile();
-      final VirtualFile profilesXmlFile = MavenUtil.findProfilesXmlFile(mavenProjectFile);
-      if (profilesXmlFile != null) {
-        final MavenDomProfiles profilesModel = MavenDomUtil.getMavenDomProfilesModel(myProject, profilesXmlFile);
-        if (profilesModel != null) {
-          addProfiles(profiles, profilesModel.getProfiles());
-        }
-      }
-
       // search in "Per Project" - Defined in the POM itself (pom.xml)
       final MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProjectFile);
       if (projectModel != null) {

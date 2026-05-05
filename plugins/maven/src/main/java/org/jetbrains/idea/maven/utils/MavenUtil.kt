@@ -379,14 +379,6 @@ object MavenUtil {
     return baseDir
   }
 
-  @JvmStatic
-  fun findProfilesXmlFile(pomFile: VirtualFile?): VirtualFile? {
-    if (pomFile == null) return null
-    val parent = pomFile.getParent()
-    if (parent == null || !parent.isValid()) return null
-    return parent.findChild(MavenConstants.PROFILES_XML)
-  }
-
   fun getProfilesXmlNioFile(pomFile: VirtualFile?): Path? {
     if (pomFile == null) return null
     val parent = pomFile.getParent()

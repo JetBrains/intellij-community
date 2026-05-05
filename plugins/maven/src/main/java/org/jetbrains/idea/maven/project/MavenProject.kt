@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -217,8 +216,8 @@ class MavenProject(val file: VirtualFile) {
   val directoryPath: Path
     get() = file.parent.toNioPath()
 
-  val profilesXmlFile: VirtualFile?
-    get() = MavenUtil.findProfilesXmlFile(file)
+  internal val profilesXmlFile: VirtualFile?
+    get() = null
 
   val profilesXmlNioFile: Path?
     get() = MavenUtil.getProfilesXmlNioFile(file)
