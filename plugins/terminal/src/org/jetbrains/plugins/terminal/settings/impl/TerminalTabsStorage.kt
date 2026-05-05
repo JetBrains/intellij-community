@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.settings.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -12,8 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-@State(name = "TerminalTabsStorage", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class TerminalTabsStorage : PersistentStateComponent<TerminalTabsStorage.State> {
+@State(name = TerminalTabsStorage.COMPONENT_NAME, storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+class TerminalTabsStorage(private val project: Project) : PersistentStateComponent<TerminalTabsStorage.State> {
   class State {
     @XCollection
     var tabs: List<TerminalSessionPersistedTab> = emptyList()
@@ -35,9 +36,20 @@ class TerminalTabsStorage : PersistentStateComponent<TerminalTabsStorage.State> 
 
   override fun loadState(state: State) {
     this.state = state
+
+    val backendTabs = TerminalTabsStorageMigration.getInstance(project).getBackendTabsOnce()
+    if (backendTabs != null) {
+      this.state.tabs = backendTabs
+    }
+  }
+
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   companion object {
+    internal const val COMPONENT_NAME: String = "TerminalTabsStorage"
+
     @JvmStatic
     fun getInstance(project: Project): TerminalTabsStorage {
       return project.service()

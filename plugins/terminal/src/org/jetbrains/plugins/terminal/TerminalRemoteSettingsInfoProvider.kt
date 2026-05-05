@@ -6,6 +6,7 @@ import com.intellij.ide.settings.RemoteSettingInfo.Direction.DoNotSynchronize
 import com.intellij.ide.settings.RemoteSettingInfo.Direction.InitialFromFrontend
 import com.intellij.ide.settings.RemoteSettingInfoProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 
 internal class TerminalRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> = mapOf(
@@ -14,5 +15,6 @@ internal class TerminalRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
     BlockTerminalOptions.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
 
     TerminalProjectOptionsProvider.COMPONENT_NAME to RemoteSettingInfo(DoNotSynchronize),
+    TerminalTabsStorage.COMPONENT_NAME to RemoteSettingInfo(DoNotSynchronize),
   )
 }
