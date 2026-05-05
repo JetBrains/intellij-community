@@ -17,6 +17,7 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.awaitExit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -225,6 +226,7 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
     ): ScratchCompilerResolution = try {
         block()
     } catch (e: Exception) {
+        if (e is CancellationException) throw e
         log.warn("$errorMessage Falling back to bundled JPS compiler at ${KotlinPluginLayout.kotlincPath}.", e)
         ScratchCompilerResolution(compilerHome = KotlinPluginLayout.kotlincPath, distJar = null)
     }

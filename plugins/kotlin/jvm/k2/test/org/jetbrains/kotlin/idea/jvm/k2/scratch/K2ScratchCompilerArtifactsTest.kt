@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import java.nio.file.Files
 import java.nio.file.Path
@@ -13,6 +14,23 @@ import kotlin.io.path.outputStream
 import kotlin.io.path.readText
 
 class K2ScratchCompilerArtifactsTest : UsefulTestCase() {
+    private val tempDir = TempDirectory()
+
+    override fun setUp() {
+        super.setUp()
+        tempDir.before(name)
+    }
+
+    override fun tearDown() {
+        try {
+            tempDir.after()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
+
     fun testExtractScratchCompilerHomeKeepsOnlyScratchArtifacts() {
         val distJar = createDistJar(
             kotlincIdeScratchHomeRelativePaths +
@@ -25,7 +43,7 @@ class K2ScratchCompilerArtifactsTest : UsefulTestCase() {
 
         val extractedHome = extractKotlincIdeScratchHomeForTests(
             distJar = distJar,
-            targetDir = Files.createTempDirectory("kotlincIdeScratchHome"),
+            targetDir = tempDir.newDirectoryPath("scratch-home"),
         )
 
         assertTrue(Files.exists(extractedHome.resolve(kotlincIdeScratchBuildTxtFileName)))
@@ -44,8 +62,8 @@ class K2ScratchCompilerArtifactsTest : UsefulTestCase() {
     }
 
     fun testExtractScratchCompilerHomeRefreshesWhenDistJarChanges() {
-        val targetDir = Files.createTempDirectory("kotlincIdeScratchHome")
-        val distJar = Files.createTempFile("k2ScratchCompilerArtifacts", ".jar")
+        val targetDir = tempDir.newDirectoryPath("scratch-home")
+        val distJar = tempDir.newFileNio("dist.jar")
 
         writeDistJar(distJar, kotlincIdeScratchHomeRelativePaths.associateWith { "old:$it" })
         extractKotlincIdeScratchHomeForTests(distJar = distJar, targetDir = targetDir)
@@ -63,7 +81,7 @@ class K2ScratchCompilerArtifactsTest : UsefulTestCase() {
     }
 
     private fun createDistJar(entries: List<String>): Path {
-        val distJar = Files.createTempFile("k2ScratchCompilerArtifacts", ".jar")
+        val distJar = tempDir.newFileNio("dist.jar")
         writeDistJar(distJar, entries.distinct().associateWith { it })
         return distJar
     }
