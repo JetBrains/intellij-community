@@ -33,13 +33,16 @@ class AIReviewViewModel(
   private val latestRequest = MutableStateFlow(initialRequest)
   private val runningReviewActivity = MutableStateFlow<StructuredIdeActivity?>(null)
 
-  val state: MutableStateFlow<State> = MutableStateFlow<State>(State.NotStarted)
+  val state: MutableStateFlow<State> = MutableStateFlow(State.NotStarted)
 
   val problems: StateFlow<List<AIReviewResult.Problem>> = state
     .mapState { state ->
-      (state as? State.FullReviewReceived)?.fullReview?.problems
-      ?: (state as? State.PartialReviewReceived)?.partialReview?.problems
-      ?: emptyList()
+      val problems = when (state) {
+        is State.WithFullReview -> state.fullReview.problems
+        is State.WithPartialReview -> state.partialReview?.problems.orEmpty()
+        else -> emptyList()
+      }
+      problems.deduplicatedByProblemIdentity()
     }
 
   val changes: StateFlow<List<Change>> = latestRequest
@@ -139,7 +142,7 @@ class AIReviewViewModel(
 }
 
 /**
- * Simple [StateFlow] mapping without requiring a [CoroutineScope].
+ * Simple [StateFlow] mapping without requiring a coroutine scope.
  * Uses a lazy derivation approach compatible with the community module dependencies.
  */
 private fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> =
