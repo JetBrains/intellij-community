@@ -29,6 +29,11 @@ internal object NoneTailType : ModNavigatorTailType(), FrontendFriendlyTailType 
 
 @Serializable
 internal object HumbleSpaceBeforeWordTailType : ModNavigatorTailType(), FrontendFriendlyTailType {
+  @Deprecated("Deprecated in Java")
+  override fun isApplicable(context: InsertionContext): Boolean {
+    return !context.shouldAddCompletionChar() || context.completionChar != ' '
+  }
+
   override fun processTail(navigator: ModNavigator, tailOffset: Int): Int {
     val text = navigator.document.charsSequence
     if (text.length > tailOffset + 1 && text[tailOffset] == ' ') {

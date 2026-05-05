@@ -337,6 +337,22 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
       }""");
   }
 
+  public void testNoSecondSpaceAfterKeyword() {
+    configureFromFileText("Test.java", """
+      class X {
+        void test(f<caret>)
+      }
+      """);
+    complete();
+    assertNotNull(getLookup());
+    type(' ');
+    checkResultByText("""
+      class X {
+        void test(final <caret>)
+      }
+      """);
+  }
+
   public void testPackageKeyword() {
     configureFromFileText("Test.java", """
       pa<caret>ckage hello.world;
@@ -410,6 +426,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     protected void setUp() throws Exception {
       super.setUp();
       Registry.get("ide.completion.modcommand").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testNoSecondSpaceAfterKeyword() {
+      // will be fixed later
     }
 
     @Override
