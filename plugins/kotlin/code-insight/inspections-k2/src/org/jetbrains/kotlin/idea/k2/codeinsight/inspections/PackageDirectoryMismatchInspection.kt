@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.ui.Messages
@@ -75,7 +75,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             val element = if (directive.textLength != 0) {
                 directive
             } else {
-                EmptyPackageHighlightingFallback.getInstance().getElementToHighlight(directive)
+                EmptyPackageHighlightingFallback.getOrCreateInstance().getElementToHighlight(directive)
             }
 
             holder.registerProblem(
@@ -150,13 +150,18 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
     /**
      * Picks the PSI element to anchor the "package directive doesn't match directory" problem on
      * when the package directive itself is empty (missing or commented out).
+     *
+     * Note: We cannot reliably register this service in the main part of Kotlin IntelliJ Plugin for now,
+     * because it might conflict with other places of registration.
+     * Instead, we expect that this service might not be registered, and the default implementation will be created
+     * by [getOrCreateInstance].
      */
     internal interface EmptyPackageHighlightingFallback {
         fun getElementToHighlight(directive: KtPackageDirective): PsiElement
 
         companion object {
             @JvmStatic
-            fun getInstance(): EmptyPackageHighlightingFallback = service()
+            fun getOrCreateInstance(): EmptyPackageHighlightingFallback = serviceOrNull() ?: WholeFile()
         }
 
         class WholeFile : EmptyPackageHighlightingFallback {

@@ -45,7 +45,9 @@ inline fun <reified T : Any> service(): T {
 }
 
 /**
- * Contrary to [serviceIfCreated], tries to initialize the service if not yet initialized
+ * Contrary to [serviceIfCreated], tries to initialize the service if not yet initialized.
+ *
+ * Returns: service instance, or `null` if no service found
  */
 inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication()?.getService(T::class.java)
 
