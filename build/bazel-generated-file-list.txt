@@ -242,7 +242,6 @@ fleet/ktor/server/cio
 fleet/lsp.protocol
 fleet/lsp.protocol/test
 fleet/modules/api
-fleet/modules/jvm
 fleet/multiplatform.shims
 fleet/reporting/api
 fleet/reporting/shared
@@ -257,7 +256,6 @@ fleet/util/codepoints/test
 fleet/util/core
 fleet/util/logging/api
 fleet/util/logging/slf4j
-fleet/util/modules
 fleet/util/multiplatform
 fleet/util/network
 fleet/util/serialization
