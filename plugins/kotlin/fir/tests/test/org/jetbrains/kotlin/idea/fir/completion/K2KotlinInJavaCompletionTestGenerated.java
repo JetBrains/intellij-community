@@ -19,19 +19,102 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../completion/testData/inJava")
-public class K2KotlinInJavaCompletionTestGenerated extends AbstractK2KotlinInJavaCompletionTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2KotlinInJavaCompletionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/inJava/companionObject")
+    public static class CompanionObject extends AbstractK2KotlinInJavaCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("CompanionOfInterface.java")
+        public void testCompanionOfInterface() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/CompanionOfInterface.java");
+        }
+
+        @TestMetadata("ConstVal.java")
+        public void testConstVal() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/ConstVal.java");
+        }
+
+        @TestMetadata("ContainingClassMember.java")
+        public void testContainingClassMember() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/ContainingClassMember.java");
+        }
+
+        @TestMetadata("JvmField.java")
+        public void testJvmField() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/JvmField.java");
+        }
+
+        @TestMetadata("JvmStatic.java")
+        public void testJvmStatic() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/JvmStatic.java");
+        }
+
+        @TestMetadata("NamedCompanion.java")
+        public void testNamedCompanion() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/NamedCompanion.java");
+        }
+
+        @TestMetadata("NoCompanion.java")
+        public void testNoCompanion() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/NoCompanion.java");
+        }
+
+        @TestMetadata("PrivateMembers.java")
+        public void testPrivateMembers() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/PrivateMembers.java");
+        }
+
+        @TestMetadata("PropertyAccessors.java")
+        public void testPropertyAccessors() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/PropertyAccessors.java");
+        }
+
+        @TestMetadata("ProtectedMember.java")
+        public void testProtectedMember() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/ProtectedMember.java");
+        }
+
+        @TestMetadata("SimpleMethod.java")
+        public void testSimpleMethod() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/SimpleMethod.java");
+        }
+
+        @TestMetadata("SimpleValue.java")
+        public void testSimpleValue() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/SimpleValue.java");
+        }
+
+        @TestMetadata("SmartCompletion.java")
+        public void testSmartCompletion() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/SmartCompletion.java");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/inJava")
+    public static class Uncategorized extends AbstractK2KotlinInJavaCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("List.java")
-    public void testList() throws Exception {
-        runTest("../../completion/testData/inJava/List.java");
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("List.java")
+        public void testList() throws Exception {
+            runTest("../../completion/testData/inJava/List.java");
+        }
     }
 }
