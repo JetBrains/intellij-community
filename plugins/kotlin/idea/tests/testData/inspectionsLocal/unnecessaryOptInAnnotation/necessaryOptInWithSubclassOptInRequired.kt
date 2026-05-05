@@ -6,6 +6,12 @@
 // ERROR: This annotation is not repeatable
 // ERROR: This annotation is not repeatable
 // ERROR: This annotation is not repeatable
+// K2_ERROR: This annotation is not repeatable.
+// K2_ERROR: This annotation is not repeatable.
+// K2_ERROR: This annotation is not repeatable.
+// K2_ERROR: This annotation is not repeatable.
+// K2_ERROR: This annotation is not repeatable.
+// K2_ERROR: This annotation is not repeatable.
 
 @file:OptIn(ExperimentalSubclassOptIn::class)
 

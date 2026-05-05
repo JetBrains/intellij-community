@@ -16926,6 +16926,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/derivedClassUsage.kt");
         }
 
+        @TestMetadata("derivedClassUsageNoProblem.kt")
+        public void testDerivedClassUsageNoProblem() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/derivedClassUsageNoProblem.kt");
+        }
+
         @TestMetadata("necessaryAnnotation.kt")
         public void testNecessaryAnnotation() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryAnnotation.kt");

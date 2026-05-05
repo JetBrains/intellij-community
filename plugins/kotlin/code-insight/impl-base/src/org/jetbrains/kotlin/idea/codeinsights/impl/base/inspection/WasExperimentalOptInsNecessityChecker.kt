@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 
-internal object WasExperimentalOptInsNecessityChecker {
+object WasExperimentalOptInsNecessityChecker {
     private val VERSION_ARGUMENT = Name.identifier("version")
 
     fun getNecessaryOptInsFromWasExperimental(

@@ -22026,6 +22026,365 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation")
+    public static class UnnecessaryOptInAnnotation extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("derivedClassUsage.kt")
+        public void testDerivedClassUsage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/derivedClassUsage.kt");
+        }
+
+        @TestMetadata("derivedClassUsageNoProblem.kt")
+        public void testDerivedClassUsageNoProblem() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/derivedClassUsageNoProblem.kt");
+        }
+
+        @TestMetadata("necessaryAnnotation.kt")
+        public void testNecessaryAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryAnnotation.kt");
+        }
+
+        @TestMetadata("necessaryArraySet.kt")
+        public void testNecessaryArraySet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryArraySet.kt");
+        }
+
+        @TestMetadata("necessaryClassInstanceDeclaration.kt")
+        public void testNecessaryClassInstanceDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryClassInstanceDeclaration.kt");
+        }
+
+        @TestMetadata("necessaryClassTwoMarkers.kt")
+        public void testNecessaryClassTwoMarkers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryClassTwoMarkers.kt");
+        }
+
+        @TestMetadata("necessaryCompanion.kt")
+        public void testNecessaryCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryCompanion.kt");
+        }
+
+        @TestMetadata("necessaryDerivedClass.kt")
+        public void testNecessaryDerivedClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClass.kt");
+        }
+
+        @TestMetadata("necessaryDerivedClassParentMethod.kt")
+        public void testNecessaryDerivedClassParentMethod() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryDerivedClassParentMethod.kt");
+        }
+
+        @TestMetadata("necessaryFileOptInWithSubclassOptInRequired.kt")
+        public void testNecessaryFileOptInWithSubclassOptInRequired() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFileOptInWithSubclassOptInRequired.kt");
+        }
+
+        @TestMetadata("necessaryFqAnnotation.kt")
+        public void testNecessaryFqAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFqAnnotation.kt");
+        }
+
+        @TestMetadata("necessaryFunctionLambdaArgument.kt")
+        public void testNecessaryFunctionLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionLambdaArgument.kt");
+        }
+
+        @TestMetadata("necessaryFunctionLambdaArgument2.kt")
+        public void testNecessaryFunctionLambdaArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionLambdaArgument2.kt");
+        }
+
+        @TestMetadata("necessaryFunctionOptionalArgument.kt")
+        public void testNecessaryFunctionOptionalArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionOptionalArgument.kt");
+        }
+
+        @TestMetadata("necessaryFunctionReturnValue.kt")
+        public void testNecessaryFunctionReturnValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionReturnValue.kt");
+        }
+
+        @TestMetadata("necessaryFunctionReturnValue2.kt")
+        public void testNecessaryFunctionReturnValue2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryFunctionReturnValue2.kt");
+        }
+
+        @TestMetadata("necessaryImportAlias.kt")
+        public void testNecessaryImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryImportAlias.kt");
+        }
+
+        @TestMetadata("necessaryInlineFunction.kt")
+        public void testNecessaryInlineFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryInlineFunction.kt");
+        }
+
+        @TestMetadata("necessaryInlineReifiedFunction.kt")
+        public void testNecessaryInlineReifiedFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryInlineReifiedFunction.kt");
+        }
+
+        @TestMetadata("necessaryOptInWithSubclassOptInRequired.kt")
+        public void testNecessaryOptInWithSubclassOptInRequired() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOptInWithSubclassOptInRequired.kt");
+        }
+
+        @TestMetadata("necessaryOverride.kt")
+        public void testNecessaryOverride() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverride.kt");
+        }
+
+        @TestMetadata("necessaryOverrideInterface.kt")
+        public void testNecessaryOverrideInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideInterface.kt");
+        }
+
+        @TestMetadata("necessaryOverrideProperty1.kt")
+        public void testNecessaryOverrideProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideProperty1.kt");
+        }
+
+        @TestMetadata("necessaryOverrideProperty2.kt")
+        public void testNecessaryOverrideProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideProperty2.kt");
+        }
+
+        @TestMetadata("necessaryOverrideWithSuper.kt")
+        public void testNecessaryOverrideWithSuper() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryOverrideWithSuper.kt");
+        }
+
+        @TestMetadata("necessaryProperty1.kt")
+        public void testNecessaryProperty1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProperty1.kt");
+        }
+
+        @TestMetadata("necessaryProperty2.kt")
+        public void testNecessaryProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProperty2.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter1.kt")
+        public void testNecessaryPropertySetter1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter1.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter2.kt")
+        public void testNecessaryPropertySetter2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter2.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter3.kt")
+        public void testNecessaryPropertySetter3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter3.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter4.kt")
+        public void testNecessaryPropertySetter4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter4.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter5.kt")
+        public void testNecessaryPropertySetter5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter5.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter6.kt")
+        public void testNecessaryPropertySetter6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter6.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter7.kt")
+        public void testNecessaryPropertySetter7() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter7.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter8.kt")
+        public void testNecessaryPropertySetter8() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter8.kt");
+        }
+
+        @TestMetadata("necessaryPropertySetter9.kt")
+        public void testNecessaryPropertySetter9() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryPropertySetter9.kt");
+        }
+
+        @TestMetadata("necessaryProvideDelegate.kt")
+        public void testNecessaryProvideDelegate() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryProvideDelegate.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias1.kt")
+        public void testNecessaryTypeAlias1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias1.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias2.kt")
+        public void testNecessaryTypeAlias2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias2.kt");
+        }
+
+        @TestMetadata("necessaryTypeAlias3.kt")
+        public void testNecessaryTypeAlias3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryTypeAlias3.kt");
+        }
+
+        @TestMetadata("necessaryValueParameter.kt")
+        public void testNecessaryValueParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueParameter.kt");
+        }
+
+        @TestMetadata("necessaryValueUsage1.kt")
+        public void testNecessaryValueUsage1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage1.kt");
+        }
+
+        @TestMetadata("necessaryValueUsage2.kt")
+        public void testNecessaryValueUsage2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage2.kt");
+        }
+
+        @TestMetadata("necessaryValueUsage3.kt")
+        public void testNecessaryValueUsage3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryValueUsage3.kt");
+        }
+
+        @TestMetadata("necessaryWasExperimental.kt")
+        public void testNecessaryWasExperimental() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/necessaryWasExperimental.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionArgument1.kt")
+        public void testNesessaryFunctionArgument1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionArgument1.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionArgument2.kt")
+        public void testNesessaryFunctionArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionArgument2.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionBlockBody.kt")
+        public void testNesessaryFunctionBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionBlockBody.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionExpressionBody.kt")
+        public void testNesessaryFunctionExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionExpressionBody.kt");
+        }
+
+        @TestMetadata("nesessaryFunctionResult.kt")
+        public void testNesessaryFunctionResult() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionResult.kt");
+        }
+
+        @TestMetadata("nesessaryTemplateParameter1.kt")
+        public void testNesessaryTemplateParameter1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryTemplateParameter1.kt");
+        }
+
+        @TestMetadata("noArguments.kt")
+        public void testNoArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/noArguments.kt");
+        }
+
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/recursive.kt");
+        }
+
+        @TestMetadata("redundantClassTwoMarkers.kt")
+        public void testRedundantClassTwoMarkers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkers.kt");
+        }
+
+        @TestMetadata("redundantClassTwoMarkersBothUseless.kt")
+        public void testRedundantClassTwoMarkersBothUseless() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantClassTwoMarkersBothUseless.kt");
+        }
+
+        @TestMetadata("redundantFunctionBody.kt")
+        public void testRedundantFunctionBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantFunctionBody.kt");
+        }
+
+        @TestMetadata("redundantImportAlias.kt")
+        public void testRedundantImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantImportAlias.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired1.kt")
+        public void testRedundantOptInWithSubclassOptInRequired1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired1.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired2.kt")
+        public void testRedundantOptInWithSubclassOptInRequired2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired2.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired3.kt")
+        public void testRedundantOptInWithSubclassOptInRequired3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired3.kt");
+        }
+
+        @TestMetadata("redundantOptInWithSubclassOptInRequired4.kt")
+        public void testRedundantOptInWithSubclassOptInRequired4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOptInWithSubclassOptInRequired4.kt");
+        }
+
+        @TestMetadata("redundantProperty.kt")
+        public void testRedundantProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantProperty.kt");
+        }
+
+        @TestMetadata("redundantPropertyGetter.kt")
+        public void testRedundantPropertyGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantPropertyGetter.kt");
+        }
+
+        @TestMetadata("redundantValueParameter.kt")
+        public void testRedundantValueParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantValueParameter.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental1.kt")
+        public void testRedundantWasExperimental1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental1.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental2.kt")
+        public void testRedundantWasExperimental2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental2.kt");
+        }
+
+        @TestMetadata("redundantWasExperimental3.kt")
+        public void testRedundantWasExperimental3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantWasExperimental3.kt");
+        }
+
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/typeAlias.kt");
+        }
+
+        @TestMetadata("unmarkedClass.kt")
+        public void testUnmarkedClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/unmarkedClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

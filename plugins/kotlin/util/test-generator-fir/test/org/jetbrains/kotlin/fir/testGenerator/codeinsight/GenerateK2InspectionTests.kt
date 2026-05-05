@@ -184,6 +184,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceUntilWithRangeUntil")
             model("${idea}/inspectionsLocal/scriptExecutable", pattern = Patterns.KTS)
             model("${idea}/inspectionsLocal/replaceAddAllWithMapTo")
+            model("${idea}/inspectionsLocal/unnecessaryOptInAnnotation")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
