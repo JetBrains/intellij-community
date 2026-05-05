@@ -34,6 +34,7 @@
     <module name="intellij.devkit.intelliLang"/>
     <module name="intellij.devkit.themes"/>
     <module name="intellij.devkit.uiDesigner"/>
+    <module name="intellij.devkit.uiDsl"/>
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.devkit.workspaceModel.k1"/>
     <module name="intellij.devkit.workspaceModel.k2"/>

@@ -44,6 +44,7 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit/k2",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
     "//plugins/devkit/intellij.devkit.compose:compose",
+    "//plugins/devkit/intellij.devkit.uiDsl:uiDsl",
   ]
 )
 
@@ -65,6 +66,7 @@ jvm_library(
     "//plugins/devkit/intellij.devkit.workspaceModel/tests",
     "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
     "//plugins/devkit/intellij.devkit.compose:compose_test_lib",
+    "//plugins/devkit/intellij.devkit.uiDsl:uiDsl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.plugin.main` end

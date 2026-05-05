@@ -993,6 +993,7 @@ plugins/devkit/intellij.devkit.stacktrace
 plugins/devkit/intellij.devkit.themes
 plugins/devkit/intellij.devkit.threading
 plugins/devkit/intellij.devkit.uiDesigner
+plugins/devkit/intellij.devkit.uiDsl
 plugins/devkit/intellij.devkit.workspaceModel
 plugins/devkit/intellij.devkit.workspaceModel/k1
 plugins/devkit/intellij.devkit.workspaceModel/k2
