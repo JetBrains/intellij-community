@@ -65,7 +65,7 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate) {
       LOG.trace { "Perform update" }
-      val rootsChangeInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceChangedEventInfo((event as VersionedStorageChangeInternal).getAllChanges().toList())
+      val rootsChangeInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceChangedEventInfo()
       projectRootManager.rootsChanged.rootsChanged(rootsChangeInfo)
     }
   }

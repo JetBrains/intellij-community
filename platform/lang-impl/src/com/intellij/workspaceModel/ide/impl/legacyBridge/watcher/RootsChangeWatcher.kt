@@ -35,13 +35,7 @@ internal object RootsChangeWatcher {
         applier.afterVfsChange()
         val projectRootManager = getProjectRootManagerToFireEvent(project)
         if (projectRootManager != null) {
-          val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-          //todo indexing should automatically schedule indexing for newly registered WorkspaceFileSet instead of determining entities manually 
-          val entitiesToReindex = applier.entitiesToReindex.filter { 
-            val entity = it.resolve(snapshot)
-            entity != null && ProjectEntityIndexingService.getInstance(project).shouldCauseRescan(null, entity)
-          }
-          val indexingInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceEntitiesRootsChangedInfo(entitiesToReindex)
+          val indexingInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceEntitiesRootsChangedInfo()
           projectRootManager.rootsChanged.rootsChanged(indexingInfo)
         }
       }

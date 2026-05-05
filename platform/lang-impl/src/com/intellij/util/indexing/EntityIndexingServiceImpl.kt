@@ -2,18 +2,15 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityPointer
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 internal class EntityIndexingServiceImpl : EntityIndexingServiceEx {
 
-  override fun createWorkspaceChangedEventInfo(changes: List<EntityChange<*>>): RootsChangeRescanningInfo {
-    return WorkspaceEventRescanningInfo(changes)
+  override fun createWorkspaceChangedEventInfo(): RootsChangeRescanningInfo {
+    return WorkspaceEventRescanningInfo
   }
 
-  override fun createWorkspaceEntitiesRootsChangedInfo(pointers: List<EntityPointer<WorkspaceEntity>>): RootsChangeRescanningInfo {
-    return WorkspaceEntitiesRootsChangedRescanningInfo(pointers)
+  override fun createWorkspaceEntitiesRootsChangedInfo(): RootsChangeRescanningInfo {
+    return WorkspaceEntitiesRootsChangedRescanningInfo
   }
 
   override fun isFromWorkspaceOnly(indexingInfos: List<RootsChangeRescanningInfo>): Boolean {
@@ -26,8 +23,8 @@ internal class EntityIndexingServiceImpl : EntityIndexingServiceEx {
     return true
   }
 
-  internal class WorkspaceEventRescanningInfo(val events: List<EntityChange<*>>) : RootsChangeRescanningInfo
+  internal object WorkspaceEventRescanningInfo : RootsChangeRescanningInfo
 
-  internal class WorkspaceEntitiesRootsChangedRescanningInfo(val pointers: List<EntityPointer<WorkspaceEntity>>) : RootsChangeRescanningInfo
+  internal object WorkspaceEntitiesRootsChangedRescanningInfo : RootsChangeRescanningInfo
 
 }
