@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers;
 
@@ -19,19 +19,52 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../completion/testData/handlers/injava")
-public class HighLevelJavaCompletionHandlerTestGenerated extends AbstractHighLevelJavaCompletionHandlerTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class HighLevelJavaCompletionHandlerTestGenerated extends AbstractHighLevelJavaCompletionHandlerTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/handlers/injava/companionObject")
+    public static class CompanionObject extends AbstractHighLevelJavaCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("SimpleFun.java")
+        public void testSimpleFun() throws Exception {
+            runTest("../../completion/testData/handlers/injava/companionObject/SimpleFun.java");
+        }
+
+        @TestMetadata("SimpleFunWithParameter.java")
+        public void testSimpleFunWithParameter() throws Exception {
+            runTest("../../completion/testData/handlers/injava/companionObject/SimpleFunWithParameter.java");
+        }
+
+        @TestMetadata("SimpleValue.java")
+        public void testSimpleValue() throws Exception {
+            runTest("../../completion/testData/handlers/injava/companionObject/SimpleValue.java");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/handlers/injava")
+    public static class Uncategorized extends AbstractHighLevelJavaCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("ClassAutoImport.java")
-    public void testClassAutoImport() throws Exception {
-        runTest("../../completion/testData/handlers/injava/ClassAutoImport.java");
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ClassAutoImport.java")
+        public void testClassAutoImport() throws Exception {
+            runTest("../../completion/testData/handlers/injava/ClassAutoImport.java");
+        }
     }
 }
