@@ -118,7 +118,7 @@ class UrlPathContext private constructor(
       val pathsBlocks = sequenceOf(paths) + generateSequence(parent) { it.parent }.map { it.paths }
       "UrlPathContext(${
         pathsBlocks.joinToString(" <- ") { block ->
-          block.map { it.toStringWithStars() }.distinct().joinToString(", ", "[", "]")
+          block.map { it.toStringWithStars() }.distinct().sorted().joinToString(", ", "[", "]")
         }
       }, $info)"
     }
