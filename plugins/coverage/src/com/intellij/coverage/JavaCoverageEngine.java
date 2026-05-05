@@ -7,6 +7,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.coverage.analysis.JavaCoverageAnnotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
@@ -21,7 +22,6 @@ import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.notification.Notification;
@@ -61,9 +61,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.BranchData;
+import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
+import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
@@ -88,7 +90,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * @author Roman.Chernyatchik
@@ -408,20 +409,20 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull Path classFile, final @NotNull CoverageSuitesBundle suite) {
-    final byte[] content;
-    try {
-      content = Files.readAllBytes(classFile);
-    }
-    catch (IOException e) {
-      return null;
-    }
+    final ProjectData projectData = new ProjectData();
+    final PackageAnnotator annotator = new PackageAnnotator(suite, suite.getProject(), projectData);
 
     try {
-      return SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(content, suite.getProject());
+      ClassData classData = annotator.collectNonCoveredClassInfo(classFile, projectData);
+      if (classData == null) return null;
+      return SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(classData, suite.getProject());
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.error("Fail to process class from: " + classFile, e);
+    }
+    finally {
+      annotator.close();
     }
     return null;
   }
@@ -446,19 +447,29 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   public @NotNull Set<String> getQualifiedNames(final @NotNull PsiFile sourceFile) {
-    final PsiClass[] classes = ReadAction.computeBlocking(() -> ((PsiClassOwner)sourceFile).getClasses());
-    final Set<String> qNames = new HashSet<>();
-    for (final JavaCoverageEngineExtension nameExtension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
-      if (ReadAction.computeBlocking(() -> nameExtension.suggestQualifiedName(sourceFile, classes, qNames))) {
-        return qNames;
+    return ReadAction.nonBlocking(() -> {
+      final PsiClass[] classes = ((PsiClassOwner)sourceFile).getClasses();
+      final Set<String> qNames = new HashSet<>();
+      for (final JavaCoverageEngineExtension nameExtension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
+        if (nameExtension.suggestQualifiedName(sourceFile, classes, qNames)) {
+          return qNames;
+        }
       }
-    }
-    for (final PsiClass aClass : classes) {
-      final String qName = ReadAction.computeBlocking(() -> aClass.getQualifiedName());
-      if (qName == null) continue;
+      for (final PsiClass aClass : classes) {
+        collectClassQualifiedNames(aClass, qNames);
+      }
+      return qNames;
+    }).executeSynchronously();
+  }
+
+  private static void collectClassQualifiedNames(final @NotNull PsiClass psiClass, final @NotNull Set<? super String> qNames) {
+    final String qName = ClassUtil.getJVMClassName(psiClass);
+    if (qName != null) {
       qNames.add(qName);
     }
-    return qNames;
+    for (PsiClass innerClass : psiClass.getInnerClasses()) {
+      collectClassQualifiedNames(innerClass, qNames);
+    }
   }
 
   @Override
@@ -488,35 +499,18 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     String packageVmName = AnalysisUtils.fqnToInternalName(getPackageName(srcFile));
 
-    final List<Path> children = new ArrayList<>();
-    for (VirtualFile root : roots) {
-      if (root == null) continue;
-      final VirtualFile packageDir = root.findFileByRelativePath(packageVmName);
-      if (packageDir == null) continue;
-      final Path dir = packageDir.toNioPath();
-      if (!Files.exists(dir)) continue;
-      try (Stream<Path> files = Files.list(dir)) {
-        files.forEach(children::add);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
-    }
-
+    final Set<String> classNames = new HashSet<>();
     final PsiClass[] classes = ReadAction.computeBlocking(() -> ((PsiClassOwner)srcFile).getClasses());
     for (final PsiClass psiClass : classes) {
       final String className = ReadAction.computeBlocking(() -> psiClass.getName());
-      if (className == null) continue;
-      for (Path child : children) {
-        String fileName = child.getFileName().toString();
-        if (FileUtilRt.extensionEquals(fileName, JavaClassFileType.INSTANCE.getDefaultExtension())) {
-          final String childName = FileUtilRt.getNameWithoutExtension(fileName);
-          if (childName.equals(className) ||  //class or inner
-              childName.startsWith(className) && childName.charAt(className.length()) == '$') {
-            classFiles.add(child);
-          }
-        }
+      if (className != null) {
+        classNames.add(className);
       }
+    }
+
+    for (VirtualFile root : roots) {
+      if (root == null) continue;
+      classFiles.addAll(JavaCoverageClassesEnumerator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
     }
     return classFiles;
   }

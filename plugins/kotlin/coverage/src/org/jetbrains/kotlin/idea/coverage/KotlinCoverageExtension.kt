@@ -6,19 +6,19 @@ import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageEngine
 import com.intellij.coverage.JavaCoverageEngineExtension
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
@@ -42,9 +42,11 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
 
     override fun suggestQualifiedName(sourceFile: PsiFile, classes: Array<out PsiClass>, names: MutableSet<String>): Boolean {
         if (sourceFile is KtFile) {
-            val qNames = collectGeneratedClassQualifiedNames(sourceFile)
-            if (!qNames.isNullOrEmpty()) {
-                names.addAll(qNames)
+            val packageName = runReadActionBlocking { sourceFile.packageFqName.asString() }
+
+            val topLevelClassNames = runReadActionBlocking { collectClassFilePrefixes(sourceFile) }
+            if (topLevelClassNames.isNotEmpty()) {
+                names.addAll(topLevelClassNames.map { "$packageName.$it" })
                 return true
             }
         }
@@ -91,7 +93,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
                 return false
             }
             val existingClassFiles = getClassesGeneratedFromFile(srcFile)
-            existingClassFiles.mapTo(classFiles) { it.toNioPath() }
+            classFiles.addAll(existingClassFiles)
             return existingClassFiles.isNotEmpty()
         }
         return false
@@ -118,17 +120,15 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         private val LOG = Logger.getInstance(KotlinCoverageExtension::class.java)
 
         private fun collectGeneratedClassQualifiedNames(file: KtFile): List<String>? =
-            findOutputRoots(file)?.flatMap { collectGeneratedClassQualifiedNames(it, file) ?: emptyList() }
+            findOutputRoots(file)?.flatMap { collectGeneratedClassQualifiedNames(it, file) }
 
-        fun collectGeneratedClassQualifiedNames(outputRoot: VirtualFile?, file: KtFile): List<String>? {
+        fun collectGeneratedClassQualifiedNames(outputRoot: VirtualFile, file: KtFile): List<String> {
+            val outputRootPath = outputRoot.toNioPath()
             val existingClassFiles = getClassesGeneratedFromFile(outputRoot, file)
-            if (existingClassFiles.isEmpty()) {
-                return null
-            }
-            LOG.debug("ClassFiles: [${existingClassFiles.joinToString { it.name }}]")
-            return existingClassFiles.map {
-                val relativePath = VfsUtilCore.getRelativePath(it, outputRoot!!)!!
-                relativePath.removeSuffix(".class").replace("/", ".")
+            return existingClassFiles.mapNotNull {
+                val classPath = getRelativeClassPath(outputRootPath, it) ?: return@mapNotNull null
+                val classInternalName = classPath.removeSuffix(".class")
+                AnalysisUtils.internalNameToFqn(classInternalName)
             }
         }
 
@@ -156,21 +156,26 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         }
 
 
-        private fun getClassesGeneratedFromFile(file: KtFile): List<VirtualFile> =
-            findOutputRoots(file)?.flatMap { runReadAction { getClassesGeneratedFromFile(it, file) } } ?: emptyList()
+        private fun getClassesGeneratedFromFile(file: KtFile): List<Path> =
+            findOutputRoots(file)?.flatMap { getClassesGeneratedFromFile(it, file) } ?: emptyList()
 
-        private fun getClassesGeneratedFromFile(outputRoot: VirtualFile?, file: KtFile): List<VirtualFile> {
-            val relativePath = file.packageFqName.asString().replace('.', '/')
-            val packageOutputDir = outputRoot?.findFileByRelativePath(relativePath) ?: return listOf()
+        private fun getClassesGeneratedFromFile(outputRoot: VirtualFile, file: KtFile): List<Path> {
+            val outputRootPath = outputRoot.toNioPath()
+            val packageName = runReadActionBlocking { file.packageFqName.asString() }
+            val packageVMName = AnalysisUtils.fqnToInternalName(packageName)
 
-            val prefixes = collectClassFilePrefixes(file)
-            LOG.debug("ClassFile prefixes: [${prefixes.joinToString(", ")}]")
-            return packageOutputDir.children.filter { packageFile ->
-                prefixes.any {
-                    (packageFile.name.startsWith("$it$") && FileUtilRt.getExtension(packageFile.name) == "class") ||
-                            packageFile.name == "$it.class"
-                }
+            val topLevelClassNames = runReadActionBlocking { collectClassFilePrefixes(file) }
+            return JavaCoverageClassesEnumerator.collectClassFiles(outputRootPath, packageVMName, topLevelClassNames.toSet())
+        }
+
+        private fun getRelativeClassPath(outputRoot: Path, classFile: Path): String? {
+            val archivePrefix = "$outputRoot!/"
+            val classFilePath = classFile.toString()
+            if (classFilePath.startsWith(archivePrefix)) {
+                return classFilePath.substring(archivePrefix.length)
             }
+            if (!classFile.startsWith(outputRoot)) return null
+            return outputRoot.relativize(classFile).joinToString("/")
         }
 
         private fun findOutputRoots(file: KtFile): Array<VirtualFile>? {
@@ -193,8 +198,8 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
 
         private fun collectClassFilePrefixes(file: KtFile): Collection<String> {
             val result = file.children.filterIsInstance<KtClassOrObject>().mapNotNull { it.name }
-            val packagePartFqName = JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName
-            return result.union(arrayListOf(packagePartFqName.shortName().asString()))
+            val fileClassName = JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.shortName().asString()
+            return result + listOf(fileClassName)
         }
     }
 }

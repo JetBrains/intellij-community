@@ -108,7 +108,7 @@ public abstract class JavaCoverageClassesEnumerator {
     if (processor == null) return;
     Set<String> requestedTopLevelNames = toRequestedTopLevelNames(rootPackageVMName, requestData.getRequestedSimpleNames());
     Map<TopLevelClassKey, List<Path>> topLevelClasses = new HashMap<>();
-    OutputRootContext context = new OutputRootContext(packageOutputRoot, rootPackageVMName, packagePathInRoot, requestedTopLevelNames);
+    OutputRootContext context = new OutputRootContext(packageOutputRoot, rootPackageVMName, packagePathInRoot, requestedTopLevelNames == null);
     processor.collectClasses(context, (packageVMName, simpleName, classFile) ->
       collectTopLevelClass(topLevelClasses, packageVMName, simpleName, classFile, requestedTopLevelNames));
     visitCollectedClasses(topLevelClasses);
@@ -128,6 +128,43 @@ public abstract class JavaCoverageClassesEnumerator {
     if (Files.isDirectory(outputRoot)) return DIRECTORY_OUTPUT_ROOT_PROCESSOR;
     if (Files.isRegularFile(outputRoot)) return ARCHIVE_OUTPUT_ROOT_PROCESSOR;
     return null;
+  }
+
+  /**
+   * Collects class files generated from the requested top-level classes in the given package.
+   * Supports both directory output roots and archive output roots, such as jars. Returned paths for archive entries use
+   * the {@code /path/to/archive.jar!/entry/name.class} form.
+   * <p>
+   * The {@code topLevelClassNames} set contains simple source-level class names. A class file is included when its simple
+   * name is equal to one of these names or starts with {@code <top-level-name>$}, which covers nested, inner, local, and
+   * anonymous classes generated for that top-level class.
+   */
+  public static @NotNull List<Path> collectClassFiles(@NotNull Path outputRoot,
+                                                      @NotNull String packageVMName,
+                                                      @NotNull Set<String> topLevelClassNames) {
+    if (topLevelClassNames.isEmpty()) return List.of();
+    OutputRootProcessor processor = getProcessor(outputRoot);
+    if (processor == null) return List.of();
+
+    List<Path> classFiles = new ArrayList<>();
+    OutputRootContext context = new OutputRootContext(outputRoot, packageVMName, packageVMName, false);
+    processor.collectClasses(context, (classPackageVMName, simpleName, classFile) -> {
+      if (!classPackageVMName.equals(packageVMName)) return;
+      if (isGeneratedFromTopLevelClass(simpleName, topLevelClassNames)) {
+        classFiles.add(classFile);
+      }
+    });
+    return classFiles;
+  }
+
+  private static boolean isGeneratedFromTopLevelClass(@NotNull String simpleName, @NotNull Set<String> topLevelClassNames) {
+    for (String topLevelClassName : topLevelClassNames) {
+      if (simpleName.equals(topLevelClassName) ||
+          simpleName.startsWith(topLevelClassName) && simpleName.charAt(topLevelClassName.length()) == '$') {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void visitCollectedClasses(Map<TopLevelClassKey, List<Path>> topLevelClasses) {
@@ -169,10 +206,7 @@ public abstract class JavaCoverageClassesEnumerator {
   private record OutputRootContext(Path outputRoot,
                                    String rootPackageVMName,
                                    @NotNull String packagePathInRoot,
-                                   @Nullable Set<String> requestedTopLevelNames) {
-    private boolean includeSubpackages() {
-      return requestedTopLevelNames == null;
-    }
+                                   boolean includeSubpackages) {
   }
 
   private interface OutputRootProcessor {

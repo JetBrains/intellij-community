@@ -23,6 +23,7 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
+import com.intellij.rt.coverage.util.ClassNameUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -223,9 +224,22 @@ public final class PackageAnnotator {
     });
   }
 
+  public @Nullable ClassData collectNonCoveredClassInfo(final @NotNull Path classFile, @NotNull ProjectData projectData) {
+    ClassReader classReader = loadClassReader(classFile);
+    if (classReader == null) return null;
+    String className = ClassNameUtil.convertToFQName(classReader.getClassName());
+    return collectNonCoveredClassInfo(className, classReader, projectData);
+  }
+
   private @Nullable ClassData collectNonCoveredClassInfo(final Path classFile, String className, ProjectData projectData) {
     ClassReader classReader = loadClassReader(classFile);
     if (classReader == null) return null;
+    return collectNonCoveredClassInfo(className, classReader, projectData);
+  }
+
+  private @Nullable ClassData collectNonCoveredClassInfo(@NotNull String className,
+                                                        @NotNull ClassReader classReader,
+                                                        @NotNull ProjectData projectData) {
     UnloadedUtil.appendUnloadedClass(projectData, className, classReader, mySuite.isBranchCoverage());
     return projectData.getClassData(className);
   }
