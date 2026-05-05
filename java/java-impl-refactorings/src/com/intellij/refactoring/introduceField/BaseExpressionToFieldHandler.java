@@ -117,8 +117,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiFile file = successContext.psiFile();
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return true;
     PsiType tempType = successContext.tempType();
-    myParentClass = successContext.parentClass();
     final List<PsiClass> classes = successContext.proposedClasses();
+    myParentClass = classes.getFirst();
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
                                         activeIntroducer.startsOnTheSameElement(selectedExpr, null);
@@ -206,7 +206,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
       else {
         LOG.error("Unexpected file: " + file);
-        return "";
+        return null;
       }
     }
     return null;
@@ -676,7 +676,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myElement = getPhysicalElement(selectedExpr);
       if (myElement.getParent() instanceof PsiExpressionStatement statement &&
           getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) &&
-          selectedExpr.isPhysical() &&
+          (selectedExpr.isPhysical() || selectedExpr.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null) &&
           statement.getParent() instanceof PsiCodeBlock) {
         myDeleteSelf = true;
       }

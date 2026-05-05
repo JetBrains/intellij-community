@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -27,7 +28,7 @@ public interface JavaIntroduceFieldHandlerBase extends RefactoringActionHandler,
 
   @NotNull AvailableSettings getAvailableSettings(@NotNull JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success element);
 
-  void run(@NotNull PsiElement expression, @NotNull JavaIntroduceFieldHandlerBase.InitializationPlace place);
+  @Nullable PsiField run(@NotNull PsiElement expression, @NotNull JavaIntroduceFieldHandlerBase.InitializationPlace place);
 
   sealed interface ExpressionToFieldContext {
     record Error(@NlsContexts.DialogMessage @NotNull String message) implements ExpressionToFieldContext {

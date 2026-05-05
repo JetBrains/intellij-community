@@ -15,7 +15,11 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author ignatov
@@ -43,6 +47,18 @@ public class FieldPostfixTemplateTest extends PostfixTemplateTestCase {
     @Override
     protected boolean useModCommandTemplates() {
       return true;
+    }
+
+    //mod command has different an end position for caret after renaming, because it can only rename PsiNamedElement
+    @Override
+    protected void checkAfterFile() {
+      try {
+        String expected = FileUtil.loadFile(new File(getTestDataPath(), getTestName(true) + "_after.java"))
+          .replace("<caret>", "");
+        myFixture.checkResult(expected, true);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }

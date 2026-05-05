@@ -4,7 +4,9 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
@@ -14,9 +16,12 @@ import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpressionType;
 import com.intellij.psi.PsiLambdaParameterType;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodReferenceType;
@@ -37,6 +42,7 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
@@ -252,58 +258,91 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   @Override
-  public void run(@NotNull PsiElement element, @NotNull JavaIntroduceFieldHandlerBase.InitializationPlace place) {
+  public PsiField run(@NotNull PsiElement element, @NotNull JavaIntroduceFieldHandlerBase.InitializationPlace place) {
     if (!(element instanceof PsiExpression expression)) {
-      return;
+      return null;
     }
     ExpressionToFieldContext context = getContext(expression);
-    if (!(context instanceof ExpressionToFieldContext.Success succesSetting)) {
-      return;
+    if (!(context instanceof ExpressionToFieldContext.Success successContext)) {
+      return null;
     }
-    final OccurrenceManager occurrenceManager = createOccurrenceManager(succesSetting.selectedExpr(), succesSetting.parentClass());
+    final OccurrenceManager occurrenceManager = createOccurrenceManager(successContext.selectedExpr(), successContext.parentClass());
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
-    PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(succesSetting.selectedExpr());
+    PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(successContext.selectedExpr());
     if (tempAnchorElement == null) {
-      tempAnchorElement = succesSetting.selectedExpr();
+      tempAnchorElement = successContext.selectedExpr();
     }
-    SettingParameters parameters = getParameters(succesSetting.parentClass(), succesSetting.selectedExpr(),
+    SettingParameters parameters = getParameters(successContext.parentClass(), successContext.selectedExpr(),
                                                  occurrences, tempAnchorElement, anchorStatementIfAll);
 
     String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
     if (visibility == null) {
       visibility = PsiModifier.PRIVATE;
     }
-    SuggestedNameInfo suggestedName = CommonJavaRefactoringUtil.getSuggestedName(succesSetting.tempType(), succesSetting.selectedExpr(),
-                                                                                 tempAnchorElement);
-    String name = suggestedName.names.length > 0 ? suggestedName.names[0] : "v";
+    SuggestedNameInfo suggestedName = JavaNameSuggestionUtil.suggestFieldName(
+        successContext.tempType(), null, successContext.selectedExpr(),
+        parameters.declareStatic(), successContext.parentClass());
+    String name = suggestedName.names.length > 0 ? suggestedName.names[0] : "myField";
 
+    boolean declareFinal = place == InitializationPlace.IN_FIELD_DECLARATION ||
+                           (place == InitializationPlace.IN_CONSTRUCTOR && !parameters.declareStatic()) ||
+                           (place == InitializationPlace.IN_CURRENT_METHOD &&
+                            parameters.currentMethodConstructor() &&
+                           successContext.parentClass().getConstructors().length <= 1);
     Settings settings = new Settings(name,
-                                     succesSetting.selectedExpr(),
+                                     successContext.selectedExpr(),
                                      occurrences,
-                                     true,
+                                     false,
                                      parameters.declareStatic,
-                                     place == InitializationPlace.IN_FIELD_DECLARATION || place == InitializationPlace.IN_CONSTRUCTOR,
+                                     declareFinal,
                                      place,
                                      visibility,
                                      null,
-                                     succesSetting.tempType(),
+                                     successContext.tempType(),
                                      false,
-                                     succesSetting.parentClass(), false, false);
+                                     successContext.parentClass(), false, false);
 
     if (expression.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) == Boolean.TRUE) {
       ElementToWorkOn.REPLACE_NON_PHYSICAL.set(tempAnchorElement, true);
       ElementToWorkOn.REPLACE_NON_PHYSICAL.set(anchorStatementIfAll, true);
-      ElementToWorkOn.REPLACE_NON_PHYSICAL.set(succesSetting.selectedExpr(), true);
-      ElementToWorkOn.REPLACE_NON_PHYSICAL.set(succesSetting.parentClass(), true);
+      ElementToWorkOn.REPLACE_NON_PHYSICAL.set(successContext.selectedExpr(), true);
+      ElementToWorkOn.REPLACE_NON_PHYSICAL.set(successContext.parentClass(), true);
       Arrays.stream(occurrences).forEach(e -> ElementToWorkOn.REPLACE_NON_PHYSICAL.set(e, true));
     }
 
-    final Runnable runnable =
-      new ConvertToFieldRunnable(succesSetting.selectedExpr(), settings, succesSetting.tempType(), occurrences,
-                                 anchorStatementIfAll, tempAnchorElement, null, succesSetting.parentClass());
+    final ConvertToFieldRunnable runnable =
+      new ConvertToFieldRunnable(successContext.selectedExpr(), settings, successContext.tempType(), occurrences,
+                                 anchorStatementIfAll, tempAnchorElement, null, successContext.parentClass());
     runnable.run();
+    PsiField result = runnable.getField();
+    addExtraNewLine(result);
+    return result;
+  }
+
+  private static void addExtraNewLine(@Nullable PsiField result) {
+    if (result == null) {
+      return;
+    }
+    PsiClass containingClass = result.getContainingClass();
+    Document document = result.getContainingFile().getViewProvider().getDocument();
+    if (document != null) {
+      PsiDocumentManager.getInstance(result.getProject()).doPostponedOperationsAndUnblockDocument(document);
+    }
+    if (containingClass != null && containingClass.isValid()) {
+      PsiElement lBrace = containingClass.getLBrace();
+      if (lBrace == null) {
+        return;
+      }
+      PsiElement ws = lBrace.getNextSibling();
+      if (ws instanceof PsiWhiteSpace && ws.getNextSibling() == result) {
+        String wsText = ws.getText();
+        if (wsText.startsWith("\n") && !wsText.startsWith("\n\n")) {
+          ws.replace(PsiParserFacade.getInstance(result.getProject()).createWhiteSpaceFromText("\n" + wsText));
+        }
+      }
+    }
   }
 
   @Override
@@ -313,11 +352,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
     PsiElement tempAnchorElement = CommonJavaRefactoringUtil.getParentExpressionAnchorElement(context.selectedExpr());
-    SettingParameters parameters = getParameters(context.parentClass(), (PsiExpression)context.element(), occurrences,
+    SettingParameters parameters = getParameters(context.parentClass(), context.selectedExpr(), occurrences,
                                                  tempAnchorElement == null ? context.selectedExpr() : tempAnchorElement,
                                                  anchorStatementIfAll);
 
-    boolean isTestClass = TestFrameworks.getInstance().isTestClass(context.parentClass());
+    Project project = context.parentClass().getProject();
+    boolean isTestClass = !DumbService.isDumb(project) && TestFrameworks.getInstance().isTestClass(context.parentClass());
     IntroduceFieldCentralPanel.InitializationParameters initializationPlaceParameters =
       getInitializationPlaceParameters(context.selectedExpr(), isTestClass);
 

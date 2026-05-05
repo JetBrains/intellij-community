@@ -81,7 +81,7 @@ abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtur
       }
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(getTestName(true) + "_after.java", true);
+    checkAfterFile();
   }
 
   protected void doTestCompletion(@Nullable String text) {
@@ -127,11 +127,15 @@ abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtur
       WriteCommandAction.runWriteCommandAction(getProject(), () -> state2.gotoEnd(false));
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(getTestName(true) + "_after.java", true);
+    checkAfterFile();
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+  }
+
+  protected void checkAfterFile() {
+    myFixture.checkResultByFile(getTestName(true) + "_after.java", true);
   }
 }
