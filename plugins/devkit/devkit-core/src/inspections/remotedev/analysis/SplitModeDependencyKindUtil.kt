@@ -33,7 +33,7 @@ internal fun resolveDependencyKind(dependencyName: String): SplitModeApiRestrict
     return SplitModeApiRestrictionsService.ModuleKind.MONOLITH
   }
 
-  return SplitModeApiRestrictionsService.getInstance().getDependencyKind(dependencyName) ?: guessDependencyKindByName(dependencyName)
+  return guessDependencyKindByName(dependencyName)
 }
 
 internal fun isExplicitFrontendDependency(dependencyName: String): Boolean {

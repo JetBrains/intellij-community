@@ -25,6 +25,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.toUElementOfType
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
@@ -34,7 +36,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
   companion object {
     private val LOG: Logger = logger<SplitModeApiRestrictionsService>()
     private const val API_RESTRICTIONS_FILE_PATH = "/remotedevInspectionData/ApiRestrictions.json"
-    private const val DEPENDENCY_RESTRICTIONS_FILE_PATH = "/remotedevInspectionData/DependencyRestrictions.json"
     private const val PREDEFINED_MODULE_KINDS_FILE_PATH = "/remotedevInspectionData/PredefinedModuleKinds.json"
     private const val BACKEND_API_ANNOTATION = "com.intellij.util.remdev.BackendApi"
     private const val FRONTEND_API_ANNOTATION = "com.intellij.util.remdev.FrontendApi"
@@ -122,10 +123,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     return restrictions.apiHints[apiName]
   }
 
-  fun getDependencyKind(dependencyName: String): ModuleKind? {
-    return getRestrictionsSnapshot().dependencyRestrictions[dependencyName]
-  }
-
   internal fun getPredefinedModuleKind(
     module: Module,
     descriptorFile: XmlFile? = null,
@@ -199,20 +196,14 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     try {
       LOG.info(
         "Loading API restrictions from $API_RESTRICTIONS_FILE_PATH, " +
-        "dependency restrictions from $DEPENDENCY_RESTRICTIONS_FILE_PATH, " +
         "and predefined module kinds from $PREDEFINED_MODULE_KINDS_FILE_PATH"
       )
 
-      val (apiRestrictions, dependencyRestrictions, predefinedModuleKinds) = withContext(Dispatchers.IO) {
+      val (apiRestrictions, predefinedModuleKinds) = withContext(Dispatchers.IO) {
         val apiRestrictionsData = loadApiRestrictionsData()
-        val dependencyRestrictionsData = loadRestrictionsData<DependencyRestriction>(DEPENDENCY_RESTRICTIONS_FILE_PATH)
         val predefinedModuleKindsData = loadPredefinedModuleKindsData()
 
-        Triple(
-          buildApiRestrictionsLookup(apiRestrictionsData),
-          buildDependencyRestrictionsLookup(dependencyRestrictionsData),
-          buildPredefinedModuleKindsLookup(predefinedModuleKindsData),
-        )
+        buildApiRestrictionsLookup(apiRestrictionsData) to buildPredefinedModuleKindsLookup(predefinedModuleKindsData)
       }
 
       restrictionsState = RestrictionsState(
@@ -221,7 +212,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
           codeRestrictions = apiRestrictions.codeRestrictions,
           extensionPointToApiName = apiRestrictions.extensionPointToApiName,
           apiHints = apiRestrictions.apiHints,
-          dependencyRestrictions = dependencyRestrictions,
           predefinedModuleKinds = predefinedModuleKinds,
         )
       )
@@ -229,7 +219,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
       LOG.info(
         "Loaded ${apiRestrictions.codeRestrictions.size} API restrictions, " +
         "${apiRestrictions.extensionPointToApiName.size} extension point restrictions, " +
-        "${dependencyRestrictions.size} dependency restrictions, " +
         "and ${predefinedModuleKinds.size()} predefined module kinds"
       )
     }
@@ -245,19 +234,19 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     return state.get().restrictionsSnapshot
   }
 
-  private inline fun <reified T> loadRestrictionsData(filePath: String): RestrictionsData<T> {
-    val jsonText = readRestrictionsJson(filePath) ?: return RestrictionsData()
-    return json.decodeFromString(jsonText)
-  }
-
   private fun loadApiRestrictionsData(): List<ApiRestriction> {
     val jsonText = readRestrictionsJson(API_RESTRICTIONS_FILE_PATH) ?: return emptyList()
     return json.decodeFromString(jsonText)
   }
 
   private fun loadPredefinedModuleKindsData(): List<PredefinedModuleKind> {
-    val jsonText = readRestrictionsJson(PREDEFINED_MODULE_KINDS_FILE_PATH) ?: return emptyList()
-    return json.decodeFromString(jsonText)
+    val bundledJsonText = readRestrictionsJson(PREDEFINED_MODULE_KINDS_FILE_PATH) ?: return emptyList()
+    val predefinedModuleKinds = json.decodeFromString<List<PredefinedModuleKind>>(bundledJsonText).toMutableList()
+    val additionalJsonText = readAdditionalPredefinedModuleKindsJson()
+    if (additionalJsonText != null) {
+      predefinedModuleKinds.addAll(json.decodeFromString<List<PredefinedModuleKind>>(additionalJsonText))
+    }
+    return predefinedModuleKinds
   }
 
   private fun readRestrictionsJson(filePath: String): String? {
@@ -268,6 +257,18 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     }
 
     return inputStream.bufferedReader().use { it.readText() }
+  }
+
+  private fun readAdditionalPredefinedModuleKindsJson(): String? {
+    val filePath = SplitModeAnalysisFlags.getAdditionalPredefinedModuleKindsFilePath() ?: return null
+    val path = Path.of(filePath)
+    if (!Files.isRegularFile(path)) {
+      LOG.info("Additional predefined split-mode module kinds file does not exist: $filePath")
+      return null
+    }
+
+    LOG.info("Loading additional predefined split-mode module kinds from $filePath")
+    return Files.newBufferedReader(path).use { it.readText() }
   }
 
   private fun buildApiRestrictionsLookup(data: List<ApiRestriction>): RestrictionsLookup {
@@ -354,12 +355,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
       pluginIds = pluginIds,
       descriptorPaths = descriptorPaths,
     )
-  }
-
-  private fun buildDependencyRestrictionsLookup(data: RestrictionsData<DependencyRestriction>): Map<String, ModuleKind> {
-    return data.withModuleKinds().associate { (moduleKind, restriction) ->
-      restriction.dependencyName to moduleKind
-    }
   }
 
   private fun getAnnotatedApiKind(apiOwner: PsiModifierListOwner?): ModuleKind? {
@@ -449,7 +444,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     val codeRestrictions: Map<String, ModuleKind> = emptyMap(),
     val extensionPointToApiName: Map<String, String> = emptyMap(),
     val apiHints: Map<String, String> = emptyMap(),
-    val dependencyRestrictions: Map<String, ModuleKind> = emptyMap(),
     val predefinedModuleKinds: PredefinedModuleKindsLookup = PredefinedModuleKindsLookup(),
   )
 
@@ -517,11 +511,5 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
 
     @SerialName("moduleKind")
     val moduleKind: String,
-  )
-
-  @Serializable
-  private data class DependencyRestriction(
-    @SerialName("dependencyName")
-    val dependencyName: String,
   )
 }
