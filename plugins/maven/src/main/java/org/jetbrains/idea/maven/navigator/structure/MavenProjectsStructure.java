@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -30,8 +29,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +54,7 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   private final SimpleTree myTree;
   private volatile boolean isUnloading = false;
 
-  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new HashMap<>();
+  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new ConcurrentHashMap<>();
 
   public MavenProjectsStructure(Project project,
                                 MavenStructureDisplayMode displayMode,
@@ -148,10 +146,13 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void update() {
-    List<MavenProject> projects = getProjectsManager().getProjects();
-    Set<MavenProject> deleted = new HashSet<>(myProjectToNodeMapping.keySet());
-    deleted.removeAll(projects);
-    updateProjects(projects, deleted);
+    boundedUpdateService.execute(() -> {
+      List<MavenProject> projects = getProjectsManager().getProjects();
+      Set<MavenProject> deleted = ConcurrentHashMap.newKeySet();
+      deleted.addAll(myProjectToNodeMapping.keySet());
+      projects.forEach(deleted::remove);
+      doUpdateProjects(projects, deleted);
+    });
   }
 
   void updateFrom(SimpleNode node) {
@@ -169,6 +170,10 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void updateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
+    boundedUpdateService.execute(() -> doUpdateProjects(updated, deleted));
+  }
+
+  private void doUpdateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
     for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
@@ -230,15 +235,17 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void updateProfiles() {
-    myRoot.updateProfiles();
+    boundedUpdateService.execute(() -> myRoot.updateProfiles());
   }
 
   public void updateIgnored(List<MavenProject> projects) {
-    for (MavenProject each : projects) {
-      ProjectNode node = findNodeFor(each);
-      if (node == null) continue;
-      node.updateIgnored();
-    }
+    boundedUpdateService.execute(() -> {
+      for (MavenProject each : projects) {
+        ProjectNode node = findNodeFor(each);
+        if (node == null) continue;
+        node.updateIgnored();
+      }
+    });
   }
 
   public void accept(@NotNull TreeVisitor visitor) {
@@ -246,15 +253,19 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void updateGoals() {
-    for (ProjectNode each : myProjectToNodeMapping.values()) {
-      each.updateGoals();
-    }
+    boundedUpdateService.execute(() -> {
+      for (ProjectNode each : myProjectToNodeMapping.values()) {
+        each.updateGoals();
+      }
+    });
   }
 
   public void updateRunConfigurations() {
-    for (ProjectNode each : myProjectToNodeMapping.values()) {
-      each.updateRunConfigurations();
-    }
+    boundedUpdateService.execute(() -> {
+      for (ProjectNode each : myProjectToNodeMapping.values()) {
+        each.updateRunConfigurations();
+      }
+    });
   }
 
   public void select(MavenProject project) {
@@ -263,7 +274,7 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void select(SimpleNode node) {
-    myModel.select(node, myTree, treePath -> {
+    myModel.select(node, myTree, _ -> {
     });
   }
 
@@ -327,31 +338,26 @@ public final class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void run() {
-      List<PluginNode> pluginInfos = new ArrayList<>();
+      List<PluginNode> pluginNodes = new ArrayList<>();
       var iterator = myPluginInfos.iterator();
       while (!isUnloading && iterator.hasNext()) {
         var next = iterator.next();
         var pluginInfo = MavenArtifactUtil.readPluginInfo(next.getArtifact());
-        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo);
-        pluginInfos.add(pluginNode);
+        pluginNodes.add(new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo));
       }
-      updateNodesInEDT(pluginInfos);
-    }
-
-    private void updateNodesInEDT(List<PluginNode> pluginNodes) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myParentNode.getPluginNodes().clear();
-        if (isUnloading) return;
-        myParentNode.getPluginNodes().addAll(pluginNodes);
-        myParentNode.sort(myParentNode.getPluginNodes());
-        myParentNode.childrenChanged();
-      });
+      myParentNode.getPluginNodes().clear();
+      if (isUnloading) return;
+      myParentNode.getPluginNodes().addAll(pluginNodes);
+      myParentNode.sort(myParentNode.getPluginNodes());
+      myParentNode.childrenChanged();
     }
   }
 
   public void updateRepositoryStatus(@NotNull MavenIndexUpdateState state) {
-    myProjectToNodeMapping.values().forEach(pn -> {
-      pn.getRepositoriesNode().updateStatus(state);
+    boundedUpdateService.execute(() -> {
+      myProjectToNodeMapping.values().forEach(pn -> {
+        pn.getRepositoriesNode().updateStatus(state);
+      });
     });
   }
 }
