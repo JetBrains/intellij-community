@@ -59,7 +59,6 @@ kotlin {
     implementation(project(":fleet.test.runtime"))
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.bundles"))
-    implementation(project(":fleet.util.network"))
     implementation(project(":fleet.ktor.client.core"))
   }
   // KOTLIN__MARKER_END

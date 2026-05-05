@@ -14,11 +14,8 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
-            <arrayArg name="pluginOptions" />
           </arrayArguments>
         </compilerArguments>
       </configuration>
@@ -37,7 +34,6 @@
     <orderEntry type="module" module-name="fleet.codecache" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="fleet.bundles" scope="TEST" />
-    <orderEntry type="module" module-name="fleet.util.network" scope="TEST" />
     <orderEntry type="module" module-name="fleet.ktor.client.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
   </component>

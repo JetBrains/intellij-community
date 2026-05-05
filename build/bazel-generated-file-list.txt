@@ -257,7 +257,6 @@ fleet/util/core
 fleet/util/logging/api
 fleet/util/logging/slf4j
 fleet/util/multiplatform
-fleet/util/network
 fleet/util/serialization
 grid/api
 grid/core-impl

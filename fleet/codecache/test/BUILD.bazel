@@ -38,8 +38,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//fleet/bundles",
     "//fleet/bundles:bundles_test_lib",
-    "//fleet/util/network",
-    "//fleet/util/network:network_test_lib",
     "//fleet/ktor/client/core",
     "//fleet/ktor/client/core:core_test_lib",
     "@lib//:kotlinx-serialization-core",
