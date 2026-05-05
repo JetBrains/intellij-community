@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -21,13 +21,17 @@ public enum HighlightingLevel {
   INSPECTIONS("option.highlighting.level.inspections", AllIcons.Ide.HectorOn, Predicates.alwaysTrue()),
 
   ADVANCED("option.highlighting.level.syntax", AllIcons.Ide.HectorSyntax, rangeHighlighter -> {
-    if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
-    return info == null || info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) < 0 && info.type != HighlightInfoType.TODO;
+    if (info == null) return true; // not a code analysis result, always show
+    if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
+    return info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) < 0 && info.type != HighlightInfoType.TODO;
   }),
 
-  SIMPLE("option.highlighting.level.none", AllIcons.Ide.HectorOff, rangeHighlighter ->
-    rangeHighlighter.getLayer() <= HighlighterLayer.SYNTAX);
+  SIMPLE("option.highlighting.level.none", AllIcons.Ide.HectorOff, rangeHighlighter -> {
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
+    if (info == null) return true; // not a code analysis result, always show
+    return rangeHighlighter.getLayer() <= HighlighterLayer.SYNTAX;
+  });
 
   private final @NotNull String myTextKey;
   private final @Nullable Icon myIcon;
