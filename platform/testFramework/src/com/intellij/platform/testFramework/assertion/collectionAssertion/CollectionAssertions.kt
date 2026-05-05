@@ -107,6 +107,15 @@ object CollectionAssertions {
   }
 
   @JvmStatic
+  fun <T> assertSingle(
+    expected: T,
+    actual: Collection<T>,
+    messageSupplier: (() -> String)? = null,
+  ) {
+    assertEqualsOrdered(listOf(expected), actual, messageSupplier)
+  }
+
+  @JvmStatic
   fun <T> assertEmpty(
     actual: Collection<T>,
     messageSupplier: (() -> String)? = null,
@@ -119,16 +128,28 @@ object CollectionAssertions {
     }
   }
 
-  private fun <T> throwAssertionFailedError(
-    expected: T,
-    actual: T,
-    messageSupplier: (() -> String)?,
-    description: String,
-  ): Nothing {
-    val message = when (val message = messageSupplier?.invoke()) {
+  @JvmStatic
+  fun <T> assertNotEmpty(
+    actual: Collection<T>,
+    messageSupplier: (() -> String)? = null,
+  ) {
+    if (actual.isEmpty()) {
+      throwAssertionFailedError(messageSupplier, """
+        |Expecting actual not to be empty
+      """.trimMargin())
+    }
+  }
+
+  private fun throwAssertionFailedError(messageSupplier: (() -> String)?, description: String): Nothing =
+    throw AssertionFailedError(formatFailureMessage(messageSupplier, description))
+
+  private fun <T> throwAssertionFailedError(expected: T, actual: T, messageSupplier: (() -> String)?, description: String): Nothing =
+    throw AssertionFailedError(formatFailureMessage(messageSupplier, description), expected, actual)
+
+  private fun formatFailureMessage(messageSupplier: (() -> String)?, description: String): String {
+    return when (val message = messageSupplier?.invoke()) {
       null -> description
       else -> "$message\n$description"
     }
-    throw AssertionFailedError(message, expected, actual)
   }
 }

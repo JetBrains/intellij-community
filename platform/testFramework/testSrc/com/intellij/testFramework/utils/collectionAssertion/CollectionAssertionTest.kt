@@ -5,6 +5,8 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsOrdered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertNotEmpty
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertSingle
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -98,6 +100,37 @@ class CollectionAssertionTest {
     }
     Assertions.assertThrows(AssertionError::class.java) {
       assertEmpty(setOf(1, 2, 3))
+    }
+  }
+
+  @Test
+  fun `test CollectionAssertions#assertNotEmpty`() {
+    assertNotEmpty(listOf(1))
+    assertNotEmpty(listOf(1, 2, 3))
+    assertNotEmpty(setOf(1, 2, 3))
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertNotEmpty(emptyList<Int>())
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertNotEmpty(emptySet<Int>())
+    }
+  }
+
+  @Test
+  fun `test CollectionAssertions#assertSingle`() {
+    assertSingle(1, listOf(1))
+    assertSingle("a", setOf("a"))
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertSingle(1, emptyList())
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertSingle(1, listOf(2))
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertSingle(1, listOf(1, 2))
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertSingle(1, listOf(1, 1))
     }
   }
 }
