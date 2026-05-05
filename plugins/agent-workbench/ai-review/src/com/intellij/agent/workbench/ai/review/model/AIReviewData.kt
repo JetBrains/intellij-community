@@ -84,6 +84,31 @@ data class AIReviewResult(
   }
 }
 
+@ApiStatus.Internal
+data class AIReviewProblemIdentity(
+  val path: String,
+  val lineStart: Int,
+  val lineEnd: Int,
+  val message: String,
+  val severity: Severity,
+)
+
+@ApiStatus.Internal
+fun AIReviewResult.Problem.problemIdentity(): AIReviewProblemIdentity {
+  return AIReviewProblemIdentity(
+    path = path,
+    lineStart = lineStart,
+    lineEnd = lineEnd,
+    message = message,
+    severity = severity,
+  )
+}
+
+@ApiStatus.Internal
+fun Iterable<AIReviewResult.Problem>.deduplicatedByProblemIdentity(): List<AIReviewResult.Problem> {
+  return distinctBy { it.problemIdentity() }
+}
+
 internal val Severity.displayName
   get(): @Nls String =
     when (this) {

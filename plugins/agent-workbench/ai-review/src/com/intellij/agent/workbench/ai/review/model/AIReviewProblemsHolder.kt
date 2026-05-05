@@ -17,13 +17,16 @@ class AIReviewProblemsHolder : Disposable {
 
   private val lock = ReentrantReadWriteLock()
   private val problemsByPath = HashMap<String, MutableList<AIReviewResult.Problem>>()
+  private val problemIdentities = HashSet<AIReviewProblemIdentity>()
 
   fun addProblems(newProblems: Collection<AIReviewResult.Problem>) {
     if (newProblems.isEmpty()) return
 
     lock.write {
       for (problem in newProblems) {
-        problemsByPath.getOrPut(problem.path) { mutableListOf() }.add(problem)
+        if (problemIdentities.add(problem.problemIdentity())) {
+          problemsByPath.getOrPut(problem.path) { mutableListOf() }.add(problem)
+        }
       }
     }
   }
@@ -31,6 +34,7 @@ class AIReviewProblemsHolder : Disposable {
   fun clear() {
     lock.write {
       problemsByPath.clear()
+      problemIdentities.clear()
     }
   }
 

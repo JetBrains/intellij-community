@@ -2,10 +2,12 @@
 package com.intellij.agent.workbench.ai.review.ui
 
 import com.intellij.agent.workbench.ai.review.AIReviewBundle
+import com.intellij.agent.workbench.ai.review.model.AIReviewProblemIdentity
 import com.intellij.agent.workbench.ai.review.model.AIReviewRequest
 import com.intellij.agent.workbench.ai.review.model.AIReviewSession
 import com.intellij.agent.workbench.ai.review.model.AIReviewViewModel
 import com.intellij.agent.workbench.ai.review.model.AIReviewViewModel.State
+import com.intellij.agent.workbench.ai.review.model.problemIdentity
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.toolWindow.CollectorBasedRoot
@@ -64,7 +66,7 @@ class AIReviewDynamicPanelProvider(
     session.cs.launch {
       session.viewModel.state.collectLatest { viewState ->
         val review = session.viewModel
-        if (viewState is State.Running) {
+        if (viewState.needClearProblemStorage()) {
           storage.clear()
           session.problemsHolder.clear()
         }
@@ -72,7 +74,7 @@ class AIReviewDynamicPanelProvider(
         session.problemsHolder.addProblems(newProblems)
         val newProblemsNodes = createProblemsNodes(project, review)
         storage.addProblems(newProblemsNodes)
-        applyStateToUi(project, panel, viewState, storage)
+        applyStateToUi(panel, viewState, storage)
       }
     }
 
@@ -80,8 +82,11 @@ class AIReviewDynamicPanelProvider(
   }
 }
 
+private fun State.needClearProblemStorage(): Boolean {
+  return this is State.Running || this is State.WithPartialReview || this is State.WithFullReview
+}
+
 private suspend fun applyStateToUi(
-  project: Project,
   panel: AIReviewProblemsViewPanel,
   state: State,
   storage: AIReviewProblemsStorage,
@@ -110,10 +115,6 @@ private suspend fun applyStateToUi(
           updateEmptyText(getNoProblemsFoundEmptyText(storage), panel, request)
         }
         is State.FilterApplied -> {
-          updateEmptyText(getNoProblemsFoundEmptyText(storage), panel, request)
-        }
-        else -> {
-          tree.isRootVisible = false
           updateEmptyText(getNoProblemsFoundEmptyText(storage), panel, request)
         }
       }
@@ -163,13 +164,23 @@ internal class AIReviewProblemsStorage(state: ProblemsViewState) : ProblemsColle
   private val filter = AIReviewProblemFilter(state)
 
   private val problems = Collections.synchronizedList(mutableListOf<AIReviewFileProblem>())
+  private val problemIdentities = HashSet<AIReviewProblemIdentity>()
 
   fun addProblems(newProblems: Collection<AIReviewFileProblem>) {
-    problems.addAll(newProblems)
+    synchronized(problems) {
+      for (problem in newProblems) {
+        if (problemIdentities.add(problem.problemIdentity())) {
+          problems.add(problem)
+        }
+      }
+    }
   }
 
   fun clear() {
-    problems.clear()
+    synchronized(problems) {
+      problems.clear()
+      problemIdentities.clear()
+    }
   }
 
   override fun getProblemCount(): Int = synchronized(problems) { problems.count { filter(it) } }
@@ -194,25 +205,39 @@ internal class AIReviewProblemsStorage(state: ProblemsViewState) : ProblemsColle
 
   override fun problemAppeared(problem: Problem) {
     if (problem is AIReviewFileProblem) {
-      problems.add(problem)
+      synchronized(problems) {
+        if (problemIdentities.add(problem.problemIdentity())) {
+          problems.add(problem)
+        }
+      }
     }
   }
 
   override fun problemDisappeared(problem: Problem) {
     if (problem is AIReviewFileProblem) {
-      problems.remove(problem)
+      synchronized(problems) {
+        val identity = problem.problemIdentity()
+        val removed = problems.removeIf { it.problemIdentity() == identity }
+        if (removed) {
+          problemIdentities.remove(identity)
+        }
+      }
     }
   }
 
   override fun problemUpdated(problem: Problem) {
     if (problem is AIReviewFileProblem) {
-      val index = problems.indexOf(problem)
-      if (index != -1) {
-        problems[index] = problem
+      synchronized(problems) {
+        val index = problems.indexOfFirst { it.problemIdentity() == problem.problemIdentity() }
+        if (index != -1) {
+          problems[index] = problem
+        }
       }
     }
   }
 }
+
+private fun AIReviewFileProblem.problemIdentity(): AIReviewProblemIdentity = reviewProblem.problemIdentity()
 
 private class AIReviewProblemRootNode(panel: ProblemsViewPanel, storage: AIReviewProblemsStorage)
   : CollectorBasedRoot(panel, storage) {
