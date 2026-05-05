@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONT
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass as kotlinContributorClass
@@ -26,6 +27,9 @@ class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
 private class RemainingCompletionContributorsFilterer : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         if (!isGradleDependenciesCompletionEnabled(parameters)) return
+        // don't ignore other contributors in cases when Gradle completion doesn't suggest anything
+        if (!isCaseCoveredByGradleCompletion(parameters.position)) return
+
         if (parameters.invocationCount >= 2) return
         // Hide ignored contributors for autocompletion (0 invocations) and first-time invoked completion
 
@@ -39,6 +43,13 @@ private class RemainingCompletionContributorsFilterer : CompletionProvider<Compl
                 sortedResult.passResult(otherResult)
             }
         }
+    }
+
+    private fun isCaseCoveredByGradleCompletion(element: PsiElement): Boolean {
+        return element.isOnTheTopLevelOfScriptBlock(DEPENDENCIES)
+                || element.isDependencyArgumentInsideQuotes()
+                || element.isDependencyArgumentWithoutQuotes()
+                || element.isExcludeArgument()
     }
 }
 

@@ -17,6 +17,7 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradlePro
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
@@ -334,8 +336,10 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(buildScript)
                 codeInsightFixture.completeBasic()
-                assertTrue("No completion suggestions expected") {
-                    codeInsightFixture.lookupElements.isNullOrEmpty()
+                val unexpectedLookup = codeInsightFixture.lookupElementStrings
+                    ?.filter { it in listOf("libs", "libs.bundles.my.bundle.aaa", "libs.my.library.aaa") }
+                assertTrue("Version catalog names and aliases shouldn't be suggested in `$expression`, but were: $unexpectedLookup") {
+                    unexpectedLookup.isNullOrEmpty()
                 }
                 codeInsightFixture.checkResult("dependencies { $expression }")
             }
@@ -585,6 +589,33 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("artifactCompletionOnTopLevel.test")
     fun testArtifactCompletionOnTopLevel(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun `test K2 Contributor is not ignored in unsupported cases`(gradleVersion: GradleVersion) {
+        test(gradleVersion, KOTLIN_JVM_PROJECT) {
+            val file = writeTextAndCommit(
+                "build.gradle.kts",
+                """
+                dependencies { 
+                    implementation("org.junit.jupiter:junit-jupiter:6.0.0") {
+                        ex<caret>
+                    }
+                }
+                """.trimIndent()
+            )
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                codeInsightFixture.completeBasic()
+                val expectedElement = codeInsightFixture.lookupElements?.find {
+                    it.contributorClass?.name == "org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2CallableCompletionContributor"
+                            && it.lookupString == "exclude"
+                }
+                assertNotNull(expectedElement, "Expected to find an element produced by K2 Completion Contributor, but it wasn't found")
+            }
+        }
+    }
 
     private fun verifyVersionCatalogCompletion(gradleVersion: GradleVersion) {
         verifyCompletion(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
