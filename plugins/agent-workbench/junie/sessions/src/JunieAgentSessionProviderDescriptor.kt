@@ -28,8 +28,14 @@ internal class JunieAgentSessionProviderDescriptor(
   override val newSessionLabelKey: String
     get() = "toolwindow.action.new.session.junie"
 
+  override val yoloSessionLabelKey: String
+    get() = "toolwindow.action.new.session.junie.yolo"
+
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Junie_14x14
+
+  override val supportedLaunchModes: Set<AgentSessionLaunchMode>
+    get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
@@ -45,9 +51,8 @@ internal class JunieAgentSessionProviderDescriptor(
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
-    require(mode == AgentSessionLaunchMode.STANDARD) { "Unsupported Junie launch mode: $mode" }
     return AgentSessionTerminalLaunchSpec(
-      command = JunieCliSupport.buildNewSessionCommand(executable = executableResolver()),
+      command = JunieCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO, executable = executableResolver()),
     )
   }
 
@@ -69,6 +74,11 @@ internal class JunieAgentSessionProviderDescriptor(
     if (AgentSessionProvider.fromOrNull(identity.substring(0, separator)) != AgentSessionProvider.JUNIE) {
       return null
     }
-    return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = AgentSessionLaunchMode.STANDARD.name.lowercase())
+    return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = resolveLaunchMode(launchSpec))
   }
+}
+
+private fun resolveLaunchMode(launchSpec: AgentSessionTerminalLaunchSpec): String {
+  return if (BRAVE_FLAG in launchSpec.command) AgentSessionLaunchMode.YOLO.name.lowercase()
+  else AgentSessionLaunchMode.STANDARD.name.lowercase()
 }

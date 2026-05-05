@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 @TestApplication
 class JunieAgentSessionProviderDescriptorTest {
@@ -25,7 +24,8 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.sessionSource.provider).isEqualTo(AgentSessionProvider.JUNIE)
     assertThat(descriptor.displayNameKey).isEqualTo("toolwindow.provider.junie")
     assertThat(descriptor.newSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie")
-    assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD)
+    assertThat(descriptor.yoloSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie.yolo")
+    assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
     assertThat(descriptor.icon).isNotNull()
   }
 
@@ -39,12 +39,12 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun `new session launch rejects unsupported mode`() {
+  fun `yolo session launch enables Junie brave mode`(): Unit = runBlocking(Dispatchers.Default) {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "/bin/junie" })
 
-    assertThrows<IllegalArgumentException> {
-      runBlocking(Dispatchers.Default) { descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO) }
-    }
+    val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO)
+
+    assertThat(launchSpec.command).containsExactly("/bin/junie", "--skip-update-check", "--brave")
   }
 
   @Test
@@ -105,6 +105,12 @@ class JunieAgentSessionProviderDescriptorTest {
     )
 
     assertThat(descriptor.resolvePendingSessionMetadata("junie:new-123", launchSpec)?.launchMode).isEqualTo("standard")
+    assertThat(
+      descriptor.resolvePendingSessionMetadata(
+        "junie:new-456",
+        AgentSessionTerminalLaunchSpec(command = listOf("junie-test", "--skip-update-check", "--brave")),
+      )?.launchMode
+    ).isEqualTo("yolo")
     assertThat(descriptor.resolvePendingSessionMetadata("junie:session-123", launchSpec)).isNull()
     assertThat(descriptor.resolvePendingSessionMetadata("codex:new-123", launchSpec)).isNull()
     assertThat(descriptor.resolvePendingSessionMetadata("Junie:new-123", launchSpec)).isNull()

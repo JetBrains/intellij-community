@@ -71,6 +71,7 @@ Define the single source of truth for cross-feature behavior that must stay cons
   - Claude default: `<claude-exe> --permission-mode default`
   - Claude YOLO: `<claude-exe> --dangerously-skip-permissions`
   - Junie default: `<junie-exe> --skip-update-check`
+  - Junie YOLO: `<junie-exe> --skip-update-check --brave`
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
