@@ -91,19 +91,21 @@ internal class GitInMemoryInteractiveRebaseProcess(
     val SUPPORTED_ACTIONS = actionProcessors.keys
 
     private object PickActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit {
+      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit? {
         if (commitToRebase.parentsOids.singleOrNull() == baseCommit?.oid) {
           return commitToRebase
         }
-        return objectRepo.findCommit(objectRepo.rebaseCommit(commitToRebase, baseCommit))
+        val newOid = objectRepo.rebaseCommit(commitToRebase, baseCommit) ?: return baseCommit
+        return objectRepo.findCommit(newOid)
       }
     }
 
     private object RewordActionProcessor : RebaseActionProcessor {
-      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit {
+      override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntry): GitObject.Commit? {
         val newMessage = (entry as GitRebaseRewordEntryWithMessage).newMessage
         val rewordedCommit = objectRepo.commitTreeWithOverrides(commitToRebase, message = newMessage.toByteArray())
-        return objectRepo.findCommit(objectRepo.rebaseCommit(objectRepo.findCommit(rewordedCommit), baseCommit))
+        val newOid = objectRepo.rebaseCommit(objectRepo.findCommit(rewordedCommit), baseCommit) ?: return baseCommit
+        return objectRepo.findCommit(newOid)
       }
     }
 

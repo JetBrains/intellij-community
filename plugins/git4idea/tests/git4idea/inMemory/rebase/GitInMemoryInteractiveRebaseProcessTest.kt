@@ -553,6 +553,41 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
+  fun `test rebase skips empty commit when changes already applied`() {
+    file("a").create("X").add()
+    val firstCommit = commitDetails(commit("Add a X"))
+    file("a").write("Y").addCommit("Modify a Y")
+    file("a").write("X").addCommit("Modify a X")
+
+    logData.refreshAndWait(repo, true)
+    refresh()
+    updateChangeListManager()
+
+    val entries = getRebaseEntries(firstCommit)
+    val model = convertToModel(entries)
+
+    // Original: Add a X -> Modify a Y -> Modify a X
+    // After exchange(1, 2): Add a X -> Modify a X (becomes empty) -> Modify a Y
+    model.exchangeIndices(1, 2)
+
+    val validationResult = GitInMemoryRebaseData.createValidatedRebaseData(
+      model, firstCommit.id, entries.last().commitDetails.id
+    ) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
+
+    GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
+
+    // The empty "Modify a X" commit is skipped — only two commits remain on top of "initial"
+    repo.assertLatestHistory(
+      "Modify a Y",
+      "Add a X"
+    )
+
+    with(repo) {
+      assertCommitted(1) { modified("a", "X", "Y") }
+      assertCommitted(2) { added("a", "X") }
+    }
+  }
+
   private fun getRebaseEntries(firstCommit: VcsFullCommitDetails): List<GitRebaseEntryGeneratedUsingLog> = runBlocking {
     val entries = project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesForDialog(repo, firstCommit, logData)
     checkNotNull(entries)

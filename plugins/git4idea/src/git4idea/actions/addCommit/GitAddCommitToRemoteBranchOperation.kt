@@ -20,8 +20,8 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.MergeConflictException
-import git4idea.inMemory.mergeTrees
 import git4idea.inMemory.objects.Oid
+import git4idea.inMemory.rebaseCommit
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
 import git4idea.push.GitPushTargetType
@@ -111,8 +111,7 @@ internal class GitAddCommitToRemoteBranchOperation(
 
     LOG.info("Remote branch tip: $remoteTipHash")
 
-    val originalTipOid = Oid.fromHash(remoteTipHash)
-    var currentBase = objectRepo.findCommit(originalTipOid)
+    var currentBase = objectRepo.findCommit(Oid.fromHash(remoteTipHash))
 
     // Cherry-pick each commit sequentially
     for (commitDetails in commits) {
@@ -121,24 +120,18 @@ internal class GitAddCommitToRemoteBranchOperation(
 
       LOG.info("Cherry-picking commit ${commit.oid} onto ${currentBase.oid}")
 
-      val mergedTree = objectRepo.mergeTrees(commit, currentBase)
-      if (mergedTree.oid == currentBase.treeOid) {
+      val newCommitOid = objectRepo.rebaseCommit(commit, currentBase)
+      if (newCommitOid == null) {
         LOG.info("Skipping commit ${commit.oid}: changes already present on ${currentBase.oid}")
         continue
       }
 
-      objectRepo.persistObject(mergedTree)
-      val newCommitOid = objectRepo.commitTreeWithOverrides(
-        commit,
-        treeOid = mergedTree.oid,
-        parentsOids = listOf(currentBase.oid),
-      )
       currentBase = objectRepo.findCommit(newCommitOid)
 
       LOG.info("Created new commit: ${currentBase.oid}")
     }
 
-    if (currentBase.oid == originalTipOid) {
+    if (currentBase.oid == Oid.fromHash(remoteTipHash)) {
       LOG.info("All commits already present on ${remoteBranch.nameForLocalOperations}; nothing to push")
       return null
     }
