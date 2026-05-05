@@ -1093,6 +1093,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
+        myHeader.getSelectedTab().closeFilterPopup();
         String newSearchString = getSearchPattern();
         if (myNotFoundString != null) {
           boolean newPatternContainsPrevious = myNotFoundString.length() > 1 && newSearchString.contains(myNotFoundString);

@@ -150,6 +150,7 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
   private RunAnythingContext mySelectedExecutingContext;
   private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
   private RunAnythingChooseContextAction myChooseContextAction;
+  private ShowFilterAction myFilterAction;
   private final Alarm myListRenderingAlarm = new Alarm();
   private final ExecutorService myExecutorService =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Run Anything list building");
@@ -178,6 +179,7 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
+        if (myFilterAction != null) myFilterAction.closeFilterPopup();
         myIsUsedTrigger = true;
 
         final String pattern = mySearchField.getText();
@@ -820,7 +822,8 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
       }
     };
     actionGroup.addAction(myChooseContextAction);
-    actionGroup.addAction(new RunAnythingShowFilterAction());
+    myFilterAction = new RunAnythingShowFilterAction();
+    actionGroup.addAction(myFilterAction);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
     toolbar.setTargetComponent(mySearchField);

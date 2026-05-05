@@ -81,7 +81,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
       .setModalContext(false)
       .setFocusable(false)
       .setResizable(true)
-      .setCancelOnClickOutside(false)
+      .setCancelOnClickOutside(true)
       .setMinSize(new Dimension(200, 200))
       .setDimensionServiceKey(project, getDimensionServiceKey(), false)
       .addListener(popupCloseListener)
@@ -140,4 +140,10 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
   }
 
   protected abstract ElementsChooser<?> createChooser();
+
+  public void closeFilterPopup() {
+    if (myFilterPopup != null && !myFilterPopup.isDisposed()) {
+      myFilterPopup.cancel();
+    }
+  }
 }
