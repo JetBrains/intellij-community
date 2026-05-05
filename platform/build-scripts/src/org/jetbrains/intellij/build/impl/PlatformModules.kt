@@ -197,10 +197,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     }
 
     explicit.add(ModuleItem(moduleName = moduleName, relativeOutputFile = "$moduleName.jar", reason = "productImplementationModules"))
-    if (!context.productProperties.contentModulesToScramble.contains(moduleName) && isModuleCloseSource(moduleName, context)) {
-      Span.current().addEvent("implicit content module to scramble: $moduleName")
-      context.productProperties.contentModulesToScramble += moduleName
-    }
+    markContentModuleToScrambleIfNeeded(moduleName = moduleName, context = context, isEmbedded = true)
   }
   explicit.addAll(toModuleItemSequence(list = PLATFORM_CORE_MODULES, productLayout = productLayout))
 

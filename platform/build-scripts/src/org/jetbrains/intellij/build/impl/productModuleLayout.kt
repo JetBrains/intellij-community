@@ -11,14 +11,11 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.ContentModuleFilter
-import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
 import org.jetbrains.intellij.build.classPath.resolveIncludes
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.isOptionalLoadingRule
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
@@ -74,12 +71,11 @@ internal suspend fun processAndGetProductPluginContentModules(
   )
   resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
-  val frontendModuleFilter = context.getFrontendModuleFilter()
   val moduleItems = LinkedHashSet<ModuleItem>()
   filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
     processProductModule(
       moduleElement = moduleElement,
-      frontendModuleFilter = frontendModuleFilter,
+      layout = layout,
       result = moduleItems,
       moduleToSetChainOverride = moduleToSetChainMapping,
       moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
@@ -153,7 +149,7 @@ internal suspend fun filterAndProcessContentModules(
 
 private suspend fun processProductModule(
   moduleElement: Element,
-  frontendModuleFilter: FrontendModuleFilter,
+  layout: PlatformLayout,
   result: LinkedHashSet<ModuleItem>,
   moduleToSetChainOverride: Map<String, List<String>>? = null,
   moduleToIncludeDependenciesOverride: Map<String, Boolean>? = null,
@@ -163,21 +159,8 @@ private suspend fun processProductModule(
   isEmbedded: Boolean,
   context: BuildContext,
 ) {
-  // - Embedded modules: scrambled if close-source (isModuleCloseSource check)
-  // - Non-embedded modules: scrambled if in contentModulesToScramble list
-  val willBeScrambled = isModuleCloseSource(moduleName = moduleName, context = context) || context.productProperties.contentModulesToScramble.contains(moduleName)
-
-  // Step 2: Determine jar location based on embedded status
-  val relativeOutFile = if (isEmbedded && willBeScrambled) {
-    // Embedded modules use `getProductModuleJarName`, which handles product vs. app jar selection
-    // based on close-source check (product.jar/product-backend.jar for close-source,
-    // app.jar/app-backend.jar for open-source)
-    if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
-  }
-  else {
-    // non-embedded modules always get per-module jars
-    "$moduleName.jar"
-  }
+  val willBeScrambled = markContentModuleToScrambleIfNeeded(moduleName = moduleName, context = context, isEmbedded = isEmbedded)
+  val relativeOutputFile = layout.getProductModuleOutputFile(moduleName) ?: "$moduleName.jar"
 
   // extract module set from override mapping (for programmatic spec)
   val moduleSet = moduleToSetChainOverride?.get(moduleName)
@@ -185,19 +168,19 @@ private suspend fun processProductModule(
   result.add(
     ModuleItem(
       moduleName = moduleName,
-      relativeOutputFile = relativeOutFile,
+      relativeOutputFile = relativeOutputFile,
       reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
       moduleSet = moduleSet,
       includeDependencies = includeDependencies,
     )
   )
 
-  // We do not embed the module descriptor because scrambling can rename classes.
+  // We do not embed the module descriptor into scrambled modules because scrambling can rename classes.
   //
   // However, we cannot rely solely on the `PLUGIN_CLASSPATH` descriptor: for non-embedded modules,
   // xi:included files (e.g., META-INF/VcsExtensionPoints.xml) are not resolvable from the core classpath, since a non-embedded module uses a separate classloader.
   //
-  // Because scrambling applies only (by policy) to embedded modules, we embed the module descriptor for non-embedded modules to address this.
+  // For non-scrambled modules, we embed the module descriptor to address this.
   //
   // Note: We could implement runtime loading via the module's classloader, but that would significantly complicate the runtime code.
   if (!willBeScrambled) {
@@ -225,6 +208,20 @@ private val excludedFromScrambling = hashSetOf(
   "intellij.platform.commercial.dependencies",
   "intellij.rd.platform",
 )
+
+internal fun markContentModuleToScrambleIfNeeded(moduleName: String, context: BuildContext, isEmbedded: Boolean): Boolean {
+  if (context.productProperties.contentModulesToScramble.contains(moduleName)) {
+    return true
+  }
+
+  if (!isEmbedded || !isModuleCloseSource(moduleName = moduleName, context = context)) {
+    return false
+  }
+
+  Span.current().addEvent("implicit content module to scramble: $moduleName")
+  context.productProperties.contentModulesToScramble += moduleName
+  return true
+}
 
 internal fun isModuleCloseSource(moduleName: String, context: CompilationContext): Boolean {
   if (moduleName.endsWith(".resources") || moduleName.endsWith(".icons") || moduleName.startsWith(LIB_MODULE_PREFIX)) {

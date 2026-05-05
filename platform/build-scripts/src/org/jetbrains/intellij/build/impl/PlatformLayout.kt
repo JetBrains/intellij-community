@@ -25,6 +25,7 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   internal var libAsProductModule: Set<String> = emptySet()
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
+  private val productModuleOutputFileOverrides: MutableMap<String, String> = HashMap()
 
   @get:TestOnly
   val excludedProjectLibraries: Sequence<String>
@@ -50,6 +51,26 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
 
   override fun getRelativeJarPath(moduleName: String): String = APP_BACKEND_JAR
+
+  fun withProductModuleOutputFile(moduleName: String, relativeOutputFile: String) {
+    require(!moduleName.isEmpty()) {
+      "Module name must be not empty"
+    }
+    require(!relativeOutputFile.isEmpty()) {
+      "Relative output file must be not empty"
+    }
+    require(!relativeOutputFile.startsWith("/") && relativeOutputFile.endsWith(".jar")) {
+      "Relative output file for $moduleName must be a relative JAR path: $relativeOutputFile"
+    }
+
+    val previous = productModuleOutputFileOverrides.get(moduleName)
+    check(previous == null || previous == relativeOutputFile) {
+      "Product module output file for $moduleName is already set to $previous, cannot set to $relativeOutputFile"
+    }
+    productModuleOutputFileOverrides.put(moduleName, relativeOutputFile)
+  }
+
+  internal fun getProductModuleOutputFile(moduleName: String): String? = productModuleOutputFileOverrides.get(moduleName)
 
   fun withoutProjectLibrary(libraryName: String) {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
