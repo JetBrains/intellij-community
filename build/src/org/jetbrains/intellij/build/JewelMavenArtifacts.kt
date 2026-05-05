@@ -201,7 +201,7 @@ internal object JewelMavenArtifacts {
           }
           check(artifact.coordinates.groupId == GROUP_ID) {
             "The module ${module.name} has groupId=${artifact.coordinates.groupId} " +
-            "but it's expected to have groupId=$GROUP_ID because Maven Central publication credentials are issues per namespace/groupId"
+            "but it's expected to have groupId=$GROUP_ID because Maven Central publication credentials are issued per namespace/groupId"
           }
         }
       }
