@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitWorkingTree
@@ -14,28 +13,42 @@ import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.workingTrees.GitListWorktreeLineListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) : GitWorkingTreeHolder {
   private val cs = repository.coroutineScope.childScope("GitWorkingTreeHolderImpl")
 
-  private val updateSemaphore = OverflowSemaphore(1, BufferOverflow.DROP_OLDEST)
+  private val updateRequests = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  private val updateLock = Mutex()
+
   private val _state = MutableStateFlow<Collection<GitWorkingTree>>(emptyList())
+
+  init {
+    cs.launch(Dispatchers.IO) {
+      updateRequests.consumeAsFlow().collectLatest {
+        updateState()
+      }
+    }
+  }
 
   override fun getWorkingTrees(): Collection<GitWorkingTree> = _state.value
 
   override fun scheduleReload() {
-    cs.launch(Dispatchers.IO) {
-      updateState()
-    }
+    updateRequests.trySend(Unit)
   }
 
   //NB: it's the caller's responsibility to ensure a correct BGT dispatcher
   @RequiresBackgroundThread
   suspend fun updateState() {
     ThreadingAssertions.assertBackgroundThread()
-    updateSemaphore.withPermit {
+    // TODO: cancel the scheduled update to reduce wait times
+    updateLock.withLock {
       _state.value = readWorkingTreesFromGit()
       repository.project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).workingTreesLoaded(repository)
     }
