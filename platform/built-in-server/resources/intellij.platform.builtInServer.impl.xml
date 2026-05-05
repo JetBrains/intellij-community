@@ -71,6 +71,7 @@
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
 
     <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
+    <jbProtocolCommand implementation="org.jetbrains.ide.InstallPluginJbProtocolCommand"/>
 
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer" order="last"/>
     <applicationSettings service="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
