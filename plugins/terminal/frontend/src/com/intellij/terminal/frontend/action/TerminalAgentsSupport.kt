@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolver
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.ContentManager
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.agent.TERMINAL_AI_AGENTS_REGISTRY_KEY
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector

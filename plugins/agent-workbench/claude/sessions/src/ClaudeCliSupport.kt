@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.CLAUDE_COMMAND
+import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.findExecutable
+import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.findExecutableViaTerminalResolver
+import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.resolveExecutableOrDefault
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.environmentVariables
-import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.terminal.backend.rpc.TerminalAgentResolutionContext
-import com.intellij.terminal.backend.rpc.findTerminalAgentBinaryPath
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -60,8 +60,8 @@ object ClaudeCliSupport {
       LOG.warn("Claude terminal agent extension is not registered; falling back to local PATH lookup")
       return findExecutable()
     }
-    val context = createLocalResolutionContext()
-    return findTerminalAgentBinaryPath(claudeAgent, context)
+    val eelApi = LocalEelDescriptor.toEelApi()
+    return TerminalAgentResolver.findBinaryPath(claudeAgent, eelApi)
   }
 
   /**
@@ -78,33 +78,6 @@ object ClaudeCliSupport {
 
   fun buildResumeCommand(sessionId: String, executable: String = CLAUDE_COMMAND): List<String> =
     listOf(executable, "--resume", sessionId)
-}
-
-/**
- * Builds a [TerminalAgentResolutionContext] for the local execution environment without requiring a
- * [com.intellij.openapi.project.Project]. The descriptor that powers Claude session launches is registered
- * as an application-level extension and does not own a project, so we need this project-less form to
- * reach the same resolver pipeline as the project-aware overload.
- */
-private suspend fun createLocalResolutionContext(): TerminalAgentResolutionContext {
-  val eelApi = LocalEelDescriptor.toEelApi()
-  val environment = if (eelApi.platform.isWindows) {
-    try {
-      eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
-    }
-    catch (ex: EelExecApi.EnvironmentVariablesException) {
-      LOG.warn("Failed to fetch environment variables for Claude CLI resolution", ex)
-      emptyMap()
-    }
-  }
-  else {
-    emptyMap()
-  }
-  return TerminalAgentResolutionContext(
-    eelApi = eelApi,
-    osFamily = LocalEelDescriptor.osFamily,
-    environment = environment,
-  )
 }
 
 internal const val PERMISSION_MODE_FLAG: String = "--permission-mode"

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend.session.rpc
+package org.jetbrains.plugins.terminal.agent
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -16,13 +16,12 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentLaunchSpecDto
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 
-internal object TerminalAgentResolver {
+@ApiStatus.Internal
+object TerminalAgentResolver {
   suspend fun listAvailableAgents(project: Project): List<TerminalAvailableAgentDto> {
     val eelDescriptor = project.getEelDescriptor()
     if (!isAgentsResolutionAvailable(eelDescriptor)) return emptyList()
@@ -57,7 +56,6 @@ internal object TerminalAgentResolver {
     return eelDescriptor is LocalEelDescriptor || IdeProductMode.isFrontend
   }
 
-  @VisibleForTesting
   suspend fun findBinaryPath(
     terminalAgent: TerminalAgent,
     eelApi: EelApi,

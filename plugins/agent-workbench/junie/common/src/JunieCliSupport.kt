@@ -6,14 +6,10 @@ package com.intellij.agent.workbench.junie.common
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.environmentVariables
-import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.terminal.backend.rpc.TerminalAgentResolutionContext
-import com.intellij.terminal.backend.rpc.findTerminalAgentBinaryPath
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -44,8 +40,8 @@ object JunieCliSupport {
       LOG.warn("Junie terminal agent extension is not registered; falling back to local PATH lookup")
       return findExecutable()
     }
-    val context = createLocalResolutionContext()
-    return findTerminalAgentBinaryPath(junieAgent, context)
+    val eelApi = LocalEelDescriptor.toEelApi()
+    return TerminalAgentResolver.findBinaryPath(junieAgent, eelApi)
   }
 
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
@@ -64,27 +60,6 @@ object JunieCliSupport {
 
 private fun localExecutableNames(): List<String> {
   return if (SystemInfoRt.isWindows) listOf("junie.bat") else listOf(JunieCliSupport.JUNIE_COMMAND)
-}
-
-private suspend fun createLocalResolutionContext(): TerminalAgentResolutionContext {
-  val eelApi = LocalEelDescriptor.toEelApi()
-  val environment = if (eelApi.platform.isWindows) {
-    try {
-      eelApi.exec.environmentVariables().onlyActual(true).eelIt().await()
-    }
-    catch (ex: EelExecApi.EnvironmentVariablesException) {
-      LOG.warn("Failed to fetch environment variables for Junie CLI resolution", ex)
-      emptyMap()
-    }
-  }
-  else {
-    emptyMap()
-  }
-  return TerminalAgentResolutionContext(
-    eelApi = eelApi,
-    osFamily = LocalEelDescriptor.osFamily,
-    environment = environment,
-  )
 }
 
 private const val SKIP_UPDATE_CHECK_FLAG: String = "--skip-update-check"

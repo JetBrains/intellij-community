@@ -7,11 +7,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.session.rpc.TerminalAgentResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 
 @ApiStatus.Internal

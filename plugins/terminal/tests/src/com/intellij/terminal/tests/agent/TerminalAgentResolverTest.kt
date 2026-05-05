@@ -10,12 +10,12 @@ import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.terminal.frontend.session.rpc.findTerminalAgentBinaryPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.agent.DefaultTerminalAgentProvider
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.findTerminalAgentBinaryPath
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
