@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,13 +48,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     final @Nullable CoverageSuite coverageSuite,
     final @NotNull CoverageLoadErrorReporter reporter
   ) {
-    File sessionFile = sessionDataFile.toFile();
-    ProjectData projectData = ProjectDataLoader.load(sessionFile);
+    ProjectData projectData;
+    try (var input = new BufferedInputStream(Files.newInputStream(sessionDataFile))) {
+      projectData = ProjectDataLoader.load(input);
+    }
+    catch (IOException e) {
+      return new FailedCoverageLoadingResult("Failed to load the report from " + sessionDataFile, e, null);
+    }
     Path sourceMapFilePath = Path.of(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.toString()));
     if (Files.exists(sourceMapFilePath)) {
-      try {
-        File sourceMapFile = sourceMapFilePath.toFile();
-        CoverageReport.loadAndApplySourceMap(projectData, sourceMapFile);
+      try (var input = new BufferedInputStream(Files.newInputStream(sessionDataFile))) {
+        CoverageReport.loadAndApplySourceMap(projectData, input);
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
