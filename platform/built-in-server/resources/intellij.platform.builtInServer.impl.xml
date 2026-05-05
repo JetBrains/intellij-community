@@ -86,4 +86,13 @@
 
     <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
   </extensions>
+  <actions>
+    <action id="TestJbProtocolCommand"
+            internal="true"
+            class="org.jetbrains.ide.TestJbProtocolCommandAction"
+            text="Test JB Protocol Command…"
+            description="Invoke a jetbrains:// URL in the current IDE process (bypasses OS Launch Services).">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
