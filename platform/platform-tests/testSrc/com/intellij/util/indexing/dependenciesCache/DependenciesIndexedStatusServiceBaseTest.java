@@ -20,8 +20,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.DisposableRule;
 import com.intellij.testFramework.EdtRule;
@@ -35,10 +33,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
-import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
-import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
-import com.intellij.util.indexing.roots.builders.ModuleRootsFileBasedIteratorBuilder;
-import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.IndexableSetContributorOrigin;
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
+import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin;
 import kotlin.Pair;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -279,13 +277,13 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     private void assertRescanningLibraries(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
       DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
+      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
       statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
+      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
       List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, SyntheticLibraryIteratorBuilder.class);
-        actualRoots.addAll(((SyntheticLibraryIteratorBuilder)builder).getRoots());
+      for (IndexableFilesIterator iterator : iterators) {
+        SyntheticLibraryOrigin origin = assertInstanceOf(iterator.getOrigin(), SyntheticLibraryOrigin.class);
+        actualRoots.addAll(origin.getRootsToIndex());
       }
       assertContainsElements(actualRoots, roots);
 
@@ -438,13 +436,13 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     private void assertRescanningIndexableSets(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
       DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
+      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
       statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
+      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
       List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, IndexableSetContributorFilesIteratorBuilder.class);
-        actualRoots.addAll(((IndexableSetContributorFilesIteratorBuilder)builder).getProvidedRootsToIndex());
+      for (IndexableFilesIterator iterator : iterators) {
+        IndexableSetContributorOrigin origin = assertInstanceOf(iterator.getOrigin(), IndexableSetContributorOrigin.class);
+        actualRoots.addAll(origin.getRootsToIndex());
       }
       assertContainsElements(actualRoots, roots);
 
@@ -458,6 +456,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Before
     public void setUp() {
+      Registry.get("use.workspace.file.index.for.partial.scanning").setValue(false, disposableRule.getDisposable());
       DirectoryIndexExcludePolicy policy = new DirectoryIndexExcludePolicy() {
         @Override
         public String @NotNull [] getExcludeUrlsForProject() {
@@ -715,16 +714,19 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     private void assertRescanningProjectContent(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
       DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
+      @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> statusPair;
       statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
+      Collection<? extends IndexableFilesIterator> iterators = statusPair.getFirst();
       List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, ModuleRootsFileBasedIteratorBuilder.class);
-        List<VirtualFileUrl> urls = ((ModuleRootsFileBasedIteratorBuilder)builder).getFiles().getRoots();
-        for (VirtualFileUrl url : urls) {
-          VirtualFile file = VirtualFileUrls.getVirtualFile(url);
-          actualRoots.add(file);
+      for (IndexableFilesIterator iterator : iterators) {
+        ModuleRootOrigin origin = assertInstanceOf(iterator.getOrigin(), ModuleRootOrigin.class);
+        List<VirtualFile> originRoots = origin.getRoots();
+        if (originRoots != null) {
+          actualRoots.addAll(originRoots);
+        }
+        List<VirtualFile> nonRecursiveRoots = origin.getNonRecursiveRoots();
+        if (nonRecursiveRoots != null) {
+          actualRoots.addAll(nonRecursiveRoots);
         }
       }
       assertContainsElements(actualRoots, roots);
@@ -740,7 +742,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
   protected StatusMark assertNothingToRescan() {
     DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-    Pair<Collection<? extends IndexableIteratorBuilder>, StatusMark> statusPair =
+    Pair<Collection<? extends IndexableFilesIterator>, StatusMark> statusPair =
       statusService.getDeltaWithLastIndexedStatus();
     assertEmpty(statusPair.getFirst());
     return statusPair.getSecond();

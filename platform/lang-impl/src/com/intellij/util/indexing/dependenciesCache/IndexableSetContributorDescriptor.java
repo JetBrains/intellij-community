@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.IndexableSetContributorFilesIterator;
-import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -61,13 +60,8 @@ final class IndexableSetContributorDescriptor {
     return Objects.hash(presentableText, debugName, projectRoots, applicationRoots);
   }
 
-  public @NotNull List<IndexableSetContributorFilesIteratorBuilder> toIteratorBuilders() {
-    return Arrays.asList(new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, projectRoots, true, contributor),
-                         new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, applicationRoots, false, contributor));
-  }
-
-  public @NotNull IndexableSetContributorFilesIteratorBuilder toIteratorBuilderWithRoots(@NotNull Set<? extends VirtualFile> roots, boolean projectAware) {
-    return new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, roots, projectAware, contributor);
+  public @NotNull IndexableFilesIterator toIndexableIteratorWithRoots(@NotNull Set<? extends VirtualFile> roots, boolean projectAware) {
+    return new IndexableSetContributorFilesIterator(presentableText, debugName, projectAware, Set.copyOf(roots), contributor);
   }
 
   public static @Unmodifiable @NotNull List<IndexableSetContributorDescriptor> collectDescriptors(@NotNull Project project) {

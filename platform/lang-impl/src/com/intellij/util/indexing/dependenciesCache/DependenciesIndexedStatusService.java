@@ -25,11 +25,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isIndexingActivitiesSuppressedSync;
-import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
-
 /**
  * Service is used by platform to calculate which values provided by any of {@link AdditionalLibraryRootsProvider},
  * {@link IndexableSetContributor} or {@link com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy} were changed
@@ -165,7 +164,7 @@ public final class DependenciesIndexedStatusService {
     return ContainerUtil.flatMap(descriptors, descriptor -> descriptor.toIndexableIterators());
   }
 
-  public @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> getDeltaWithLastIndexedStatus() {
+  public @Nullable Pair<@NotNull Collection<? extends IndexableFilesIterator>, @NotNull StatusMark> getDeltaWithLastIndexedStatus() {
     if (!shouldBeUsed()) return null;
     MyStatus statusBefore;
     synchronized (LOCK) {
@@ -176,7 +175,7 @@ public final class DependenciesIndexedStatusService {
       return null;
     }
     MyStatus statusAfter = getCurrentStatus();
-    Collection<? extends IndexableIteratorBuilder> iterators = getDependenciesIterators(project, statusBefore, statusAfter);
+    Collection<? extends IndexableFilesIterator> iterators = getDependenciesIterators(project, statusBefore, statusAfter);
     return new Pair<>(iterators, statusAfter);
   }
 
@@ -188,23 +187,27 @@ public final class DependenciesIndexedStatusService {
   }
 
 
-  private static @NotNull Collection<? extends IndexableIteratorBuilder> getDependenciesIterators(@NotNull Project project,
-                                                                                                  @NotNull MyStatus before,
-                                                                                                  @NotNull MyStatus after) {
+  private static @NotNull Collection<? extends IndexableFilesIterator> getDependenciesIterators(@NotNull Project project,
+                                                                                                @NotNull MyStatus before,
+                                                                                                @NotNull MyStatus after) {
+    List<? extends SyntheticLibraryDescriptor> beforeLibraries = Objects.requireNonNull(before.libraries);
+    List<? extends ExcludePolicyDescriptor> beforeExcludePolicyDescriptors = Objects.requireNonNull(before.excludePolicyDescriptors);
+    List<? extends SyntheticLibraryDescriptor> afterLibraries = Objects.requireNonNull(after.libraries);
+    List<? extends IndexableSetContributorDescriptor> afterContributors = Objects.requireNonNull(after.contributors);
 
-    List<IndexableIteratorBuilder> result = new ArrayList<>(
-      RescannedRootsUtil.getUnexcludedRootsIteratorBuilders(project, before.libraries, before.excludePolicyDescriptors, after.libraries));
+    List<IndexableFilesIterator> result = new ArrayList<>(
+      RescannedRootsUtil.getUnexcludedRootsIterators(project, beforeLibraries, beforeExcludePolicyDescriptors, afterLibraries));
 
     MultiMap<AdditionalLibraryRootsProvider, SyntheticLibraryDescriptor> afterLibs = after.librariesToMap();
     MultiMap<AdditionalLibraryRootsProvider, SyntheticLibraryDescriptor> beforeLibs = before.librariesToMap();
     for (Map.Entry<AdditionalLibraryRootsProvider, Collection<SyntheticLibraryDescriptor>> entry : afterLibs.entrySet()) {
-      result.addAll(RescannedRootsUtil.getLibraryIteratorBuilders(beforeLibs.get(entry.getKey()), entry.getValue()));
+      result.addAll(RescannedRootsUtil.getLibraryIterators(beforeLibs.get(entry.getKey()), entry.getValue()));
     }
 
     Map<IndexableSetContributor, IndexableSetContributorDescriptor> beforeContributors = before.contributorsToMap();
-    for (IndexableSetContributorDescriptor contributorDescriptor : after.contributors) {
-      result.addAll(RescannedRootsUtil.getIndexableSetIteratorBuilders(beforeContributors.get(contributorDescriptor.contributor),
-                                                                       contributorDescriptor));
+    for (IndexableSetContributorDescriptor contributorDescriptor : afterContributors) {
+      result.addAll(RescannedRootsUtil.getIndexableSetIterators(beforeContributors.get(contributorDescriptor.contributor),
+                                                                contributorDescriptor));
     }
 
     return result;

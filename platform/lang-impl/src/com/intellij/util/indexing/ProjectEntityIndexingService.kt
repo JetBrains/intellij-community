@@ -6,14 +6,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -22,10 +20,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.roots.GenericDependencyIterator
-import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.util.indexing.roots.processLibraryEntity
@@ -194,43 +190,37 @@ class ProjectEntityIndexingService(
           }
         }
       }
-      val builders = SmartList<IndexableIteratorBuilder>()
+      val iterators = SmartList<IndexableFilesIterator>()
 
       var dependenciesStatusMark: StatusMark? = null
       if (indexDependencies) {
-        val dependencyBuildersPair = DependenciesIndexedStatusService.getInstance(project).getDeltaWithLastIndexedStatus()
-        if (dependencyBuildersPair == null) {
+        val dependencyIteratorsPair = DependenciesIndexedStatusService.getInstance(project).getDeltaWithLastIndexedStatus()
+        if (dependencyIteratorsPair == null) {
           return@async ScanningIterators(
             "Reindex of changed dependencies requested, but status is not initialized",
           )
         }
-        builders.addAll(dependencyBuildersPair.first)
-        dependenciesStatusMark = dependencyBuildersPair.second
+        iterators.addAll(dependencyIteratorsPair.first)
+        dependenciesStatusMark = dependencyIteratorsPair.second
       }
 
-      val entityStorage = project.serviceAsync<WorkspaceModel>().currentSnapshot
-      if (!builders.isEmpty()) {
-        val mergedIterators = IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
-
-        if (!mergedIterators.isEmpty()) {
-          val debugNames = mergedIterators.map { obj -> obj.getDebugName() }
-          LOG.debug("Accumulated iterators: $debugNames")
-          val maxNamesToLog = 10
-          var reasonMessage = "changes in: " + debugNames
-            .asSequence()
-            .take(maxNamesToLog)
-            .map { str -> StringUtil.wrapWithDoubleQuote(str) }
-            .joinToString(", ")
-          if (debugNames.size > maxNamesToLog) {
-            reasonMessage += " and " + (debugNames.size - maxNamesToLog) + " iterators more"
-          }
-          logRootChanges(project, false)
-          return@async ScanningIterators(
-            reasonMessage,
-            mergedIterators,
-            dependenciesStatusMark
-          )
+      if (iterators.isNotEmpty()) {
+        val debugNames = iterators.map { obj -> obj.getDebugName() }
+        LOG.debug("Accumulated iterators: $debugNames")
+        val maxNamesToLog = 10
+        var reasonMessage = "changes in: " + debugNames
+          .asSequence()
+          .take(maxNamesToLog)
+          .joinToString(", ") { StringUtil.wrapWithDoubleQuote(it) }
+        if (debugNames.size > maxNamesToLog) {
+          reasonMessage += " and " + (debugNames.size - maxNamesToLog) + " iterators more"
         }
+        logRootChanges(project, false)
+        return@async ScanningIterators(
+          reasonMessage,
+          iterators,
+          dependenciesStatusMark
+        )
       }
       return@async CancelledScanning
     }

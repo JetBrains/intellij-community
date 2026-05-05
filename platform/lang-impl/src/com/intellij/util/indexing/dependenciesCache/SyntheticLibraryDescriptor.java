@@ -65,6 +65,10 @@ final class SyntheticLibraryDescriptor {
     return new SyntheticLibraryIndexableFilesIteratorImpl(presentableLibraryName, library, getAllRoots());
   }
 
+  public @NotNull SyntheticLibraryIndexableFilesIteratorImpl toIndexableIterator(@NotNull Collection<? extends VirtualFile> roots) {
+    return new SyntheticLibraryIndexableFilesIteratorImpl(presentableLibraryName, library, roots);
+  }
+
   public @Nullable SyntheticLibraryDescriptor getLibForIncrementalRescanning(@Nullable Collection<? extends SyntheticLibraryDescriptor> before) {
     if (before == null || comparisonId == null || hasExcludeFileCondition) return null;
     return ContainerUtil.find(before, lib -> comparisonId.equals(lib.comparisonId));
