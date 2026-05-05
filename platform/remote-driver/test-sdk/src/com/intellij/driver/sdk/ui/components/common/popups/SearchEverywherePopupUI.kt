@@ -29,10 +29,11 @@ import org.intellij.lang.annotations.Language
 import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
+private const val SEARCH_EVERYWHERE_UI_CLASS = "com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI"
 
 fun Finder.searchEverywherePopup(isSplit: Boolean = false, @Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
   if (isSplit) x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SePopupContentPane")) }, SearchEverywhereSplitPopupUI::class.java).apply(block)
-  else x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
+  else x(xpath ?: xQuery { componentWithChild(byHeavyWeightWindow(), byType(SEARCH_EVERYWHERE_UI_CLASS)) }, SearchEverywherePopupUI::class.java).apply(block)
 
 private fun Finder.seList(locator: QueryBuilder.() -> String = { byType(JList::class.java) }) =
   x(SEJListUiComponent::class.java) { locator() }.apply {
@@ -47,7 +48,7 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
   val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
   val typeFilterButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Filter") })
   val searchEverywhereUi: SearchEveryWhereUi =
-    x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+    x(SearchEveryWhereUi::class.java) { byType(SEARCH_EVERYWHERE_UI_CLASS) }
   val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
 
   fun invokeSelectAction() {
@@ -156,4 +157,13 @@ private class SEJListUiComponent(data: ComponentData) : JListUiComponent(data) {
 
   override val selectedItems: List<String>
     get() = super.selectedItems.map { it.substringBeforeLast(",") }
+}
+
+private fun QueryBuilder.byHeavyWeightWindow(): String {
+  val heavyWeightWindowClass = "javax.swing.Popup" + '$' + "HeavyWeightWindow"
+  return or(
+    byJavaClass(heavyWeightWindowClass),
+    contains(byAttribute("classhierarchy", "$heavyWeightWindowClass ")),
+    contains(byAttribute("classhierarchy", " $heavyWeightWindowClass ")),
+  )
 }
