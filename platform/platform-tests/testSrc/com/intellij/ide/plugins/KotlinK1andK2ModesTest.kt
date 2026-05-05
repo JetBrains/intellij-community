@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.depends
-import com.intellij.platform.testFramework.plugins.extensions
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -32,23 +31,11 @@ class KotlinK1andK2ModesTest {
     assertThat(reason).isNull()
   }
 
-  @Test
-  fun `explicitly incompatible plugin depending on kotlin disabled in K2 Mode`() {
-    plugin("foo") {
-      depends("org.jetbrains.kotlin")
-      extensions("""<supportsKotlinPluginMode supportsK2="false"/>""", ns = "org.jetbrains.kotlin")
-    }.buildDir(rootDir.resolve("foo"))
-    val (_, reason) = getSinglePlugin(rootDir)
-    assertThat(reason).isNotNull()
-    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
-  }
-
 
   @Test
   fun `plugin depending on kotlin is enabled when with supportsK2`() {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
-      extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
     val (_, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
@@ -64,18 +51,6 @@ class KotlinK1andK2ModesTest {
     assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNotNull
-  }
-
-  @Test
-  fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is not disabled`() {
-    plugin("foo") {
-      depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
-      extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
-    }.buildDir(rootDir.resolve("foo"))
-    val (plugin, reason) = getSinglePlugin(rootDir)
-    assertThat(reason).isNull()
-    val dependency = plugin.dependencies.single()
-    assertThat(dependency.subDescriptor).isNotNull()
   }
 }
 

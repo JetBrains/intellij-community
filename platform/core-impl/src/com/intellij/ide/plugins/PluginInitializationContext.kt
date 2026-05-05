@@ -85,9 +85,6 @@ interface PluginInitializationContext {
 
 @ApiStatus.Internal
 fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDescriptor): PluginNonLoadReason? {
-  if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(plugin)) {
-    return PluginIsIncompatibleWithKotlinMode(plugin)
-  }
   if (plugin.isBundled) {
     return null
   }

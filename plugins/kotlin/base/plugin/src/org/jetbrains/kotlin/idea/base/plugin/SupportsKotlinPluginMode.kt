@@ -23,6 +23,7 @@ import com.intellij.util.xmlb.annotations.Attribute
  * </extensions>
  * ```
  */
+@Deprecated("K1 plugin doesn't exist anymore, K2 mode is used by default")
 class SupportsKotlinPluginMode {
   @Attribute("supportsK1")
   var supportsK1: Boolean = true

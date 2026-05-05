@@ -325,10 +325,4 @@
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
   </extensions>
-
-  <!-- notification about unsupported K2 features in K1 mode -->
-  <extensions defaultExtensionNs="com.intellij">
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinK2FeaturesInK1ModeNotifier"/>
-  </extensions>
-
 </idea-plugin>

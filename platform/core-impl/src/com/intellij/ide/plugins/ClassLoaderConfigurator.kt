@@ -251,14 +251,6 @@ class ClassLoaderConfigurator(
       if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
         continue
       }
-      if (!isKotlinPlugin(module.pluginId) &&
-          isKotlinPlugin(dependency.pluginId) &&
-          isIncompatibleWithKotlinPlugin(module)
-      ) {
-        LOG.error("unexpected condition $module") // TODO drop this branch, probably dead code, should be handled by plugin init
-        // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
-        continue
-      }
       setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainClassLoader)
     }
   }

@@ -385,11 +385,6 @@ object DynamicPlugins {
       return null
     }
 
-    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(module)) {
-      // force restarting the IDE in the case the dynamic plugin is incompatible with Kotlin Plugin K1/K2 modes KTIJ-24797
-      return "Plugin ${module.pluginId} depends on the Kotlin plugin in K2 Mode, but the plugin does not support K2 Mode"
-    }
-
     var dependencyMessage: String? = null
     processOptionalDependenciesOnPlugin(module, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
       if ((subDescriptor.pluginClassLoader === module.pluginClassLoader)

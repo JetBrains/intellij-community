@@ -19,8 +19,6 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
          * Kotlin search configurable ID.
          *
          * Has a few hardcoded usages because of circular dependencies.
-         * @see [org.jetbrains.kotlin.idea.configuration.KotlinK2FeaturesInK1ModeNotifier]
-         * @see [org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspendNotificationProvider]
          */
         const val ID = "preferences.language.Kotlin"
     }

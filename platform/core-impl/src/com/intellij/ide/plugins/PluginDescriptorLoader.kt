@@ -1362,15 +1362,6 @@ private fun loadPluginDependencyDescriptors(
   visitedFiles: MutableList<String>,
 ) {
   for (dependency in descriptor.pluginDependencies) {
-    if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(descriptor)) {
-      LOG.warn("Plugin ${descriptor} depends on Kotlin plugin via `${dependency.configFile}` " +
-               "but the plugin is not compatible with the Kotlin plugin in the  K2 mode. " +
-               "So, the `${dependency.configFile}` was not loaded")
-      continue
-    }
-
-
-
     // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
 
     if (dependency.isOptional && dependency.configFile == null && context.createEmptyDependsDescriptorForOptionalDependsWithoutConfigFile) {

@@ -170,9 +170,6 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
               <toolWindow id="MyToolWindow" factoryClass="com.example.demo.MyToolWindowFactory"
                           icon="AllIcons.Toolwindows.ToolWindowPalette"/>
           </extensions>
-          <extensions defaultExtensionNs="org.jetbrains.kotlin">
-              <supportsKotlinPluginMode supportsK2="true"/>
-          </extensions>
       </idea-plugin>
     """.trimIndent())
   }
