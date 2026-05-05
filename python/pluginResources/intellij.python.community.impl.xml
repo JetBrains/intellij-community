@@ -358,6 +358,7 @@
                      key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <editorNotificationProvider implementation="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.packaging.management.PyPackageManagerEditorBanner"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
                      bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
@@ -1234,7 +1235,6 @@
               icon="com.intellij.icons.AllIcons.Actions.Install"/>
       <separator/>
 
-      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
       <add-to-group group-id="RunContextGroup"/>
     </group>
