@@ -24,6 +24,12 @@
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinCompanionMemberContributor"/>
 
+
+    <completion.contributor language="JAVA"
+                            id="KotlinExtensionContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinExtensionContributor"/>
+
     <weigher key="completion"
              implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.DeprioritizeSuspendWeigher"
              id="deprioritizeSuspend"
@@ -70,6 +76,11 @@
 
     <registryKey key="kotlin.java.completion.companion.members"
                  description="Shows Kotlin companion members in Java files during completion"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.java.completion.extensions"
+                 description="Shows Kotlin extension members in Java files during completion"
                  defaultValue="true"
                  restartRequired="false"/>
   </extensions>

@@ -71,6 +71,8 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/project-configuration",
   ]
 )
 
@@ -124,6 +126,8 @@ jvm_library(
     "//platform/code-style-api:codeStyle_test_lib",
     "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/project-configuration:project-configuration_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end

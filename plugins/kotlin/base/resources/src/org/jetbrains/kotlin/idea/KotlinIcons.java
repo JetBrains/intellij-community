@@ -20,6 +20,7 @@ public interface KotlinIcons {
     /** 12x12 */ @NotNull Icon DSL_MARKER_ANNOTATION = KotlinBaseResourcesIcons.DslMarkerAnnotation;
     /** 16x16 */ @NotNull Icon ENUM = KotlinBaseResourcesIcons.EnumKotlin;
     /** 16x16 */ @NotNull Icon EXPECT = KotlinBaseResourcesIcons.Expect;
+    /** 16x16 */ @NotNull Icon EXTENSION_FUNCTION_KOTLIN = KotlinBaseResourcesIcons.ExtensionKotlin;
     Icon EXTENSION_FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinBaseResourcesIcons.Field_value;
     /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinBaseResourcesIcons.Field_variable;
