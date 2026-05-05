@@ -859,21 +859,6 @@ object PyCallExpressionHelper {
     }
   }
 
-  @JvmStatic
-  fun mapArguments(
-    receiver: PyExpression?,
-    callSite: PyCallSiteExpression,
-    callable: PyCallable,
-    context: TypeEvalContext,
-  ): Map<PyExpression, PyCallableParameter> {
-    val mapping = mapArguments(callSite, callable, context)
-    val firstImplicit = mapping.implicitParameters.firstOrNull()
-    return if (receiver != null && firstImplicit != null)
-      mapOf(receiver to firstImplicit) + mapping.mappedParameters
-    else
-      mapping.mappedParameters
-  }
-
   /**
    * Tries to infer implicit offset from the `callSite` and `callable`.
    *
