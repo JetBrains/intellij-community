@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems")
 
-package com.intellij.agent.workbench.junie.sessions
+package com.intellij.agent.workbench.junie.common
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.logger
@@ -88,5 +88,5 @@ private suspend fun createLocalResolutionContext(): TerminalAgentResolutionConte
 }
 
 private const val SKIP_UPDATE_CHECK_FLAG: String = "--skip-update-check"
-internal const val BRAVE_FLAG: String = "--brave"
+const val BRAVE_FLAG: String = "--brave"
 private const val SESSION_ID_FLAG: String = "--session-id"

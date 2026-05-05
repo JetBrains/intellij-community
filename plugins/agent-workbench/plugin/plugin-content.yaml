@@ -53,6 +53,9 @@
 - name: lib/modules/intellij.agent.workbench.json.jar
   contentModules:
   - name: intellij.agent.workbench.json
+- name: lib/modules/intellij.agent.workbench.junie.common.jar
+  contentModules:
+  - name: intellij.agent.workbench.junie.common
 - name: lib/modules/intellij.agent.workbench.junie.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.junie.sessions
