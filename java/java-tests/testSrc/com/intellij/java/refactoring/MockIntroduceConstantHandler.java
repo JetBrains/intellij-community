@@ -23,7 +23,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 
 public class MockIntroduceConstantHandler extends IntroduceConstantHandler{
   private final PsiClass myTargetClass;
@@ -36,7 +36,7 @@ public class MockIntroduceConstantHandler extends IntroduceConstantHandler{
   protected Settings showRefactoringDialog(final Project project, final Editor editor, final PsiClass parentClass, final PsiExpression expr,
                                            final PsiType type, final PsiExpression[] occurrences, final PsiElement anchorElement,
                                            final PsiElement anchorElementIfAll) {
-    return new Settings("xxx", expr, occurrences, true, true, true, JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, type, false,
+    return new Settings("xxx", expr, occurrences, true, true, true, JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, type, false,
                         myTargetClass != null ? myTargetClass : parentClass, false, false);
   }
 

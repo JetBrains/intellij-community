@@ -122,7 +122,7 @@ public abstract class IntroduceFieldCentralPanel {
     });
 
     final boolean hasLocalFromVisitor = refsLocal.get();
-    boolean superOrThis = IntroduceFieldHandler.isInSuperOrThis(initializer);
+    boolean superOrThis = FieldExtractor.isInSuperOrThis(initializer);
     if (!hasLocalFromVisitor && fields.isEmpty() && !superOrThis) {
       return null;
     }
@@ -163,16 +163,16 @@ public abstract class IntroduceFieldCentralPanel {
     return true;
   }
 
-  public abstract JavaIntroduceFieldHandlerBase.InitializationPlace getInitializerPlace();
+  public abstract JavaIntroduceFieldService.InitializationPlace getInitializerPlace();
   protected abstract void initializeInitializerPlace(PsiExpression initializerExpression,
-                                                     JavaIntroduceFieldHandlerBase.InitializationPlace ourLastInitializerPlace);
+                                                     JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace);
   protected abstract JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater);
   public abstract void setInitializeInFieldDeclaration();
 
   public abstract String getFieldVisibility();
 
   protected void initializeControls(PsiExpression initializerExpression,
-                                    JavaIntroduceFieldHandlerBase.InitializationPlace ourLastInitializerPlace) {
+                                    JavaIntroduceFieldService.InitializationPlace ourLastInitializerPlace) {
     myCbFinal.setSelected(myCbFinal.isEnabled() && ourLastCbFinalState);
   }
 

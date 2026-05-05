@@ -26,12 +26,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 
 public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
-  private final InitializationPlace myInitializationPlace;
+  private final JavaIntroduceFieldService.InitializationPlace myInitializationPlace;
   private final boolean myDeclareStatic;
 
-  public MockIntroduceFieldHandler(final InitializationPlace initializationPlace, final boolean declareStatic) {
+  public MockIntroduceFieldHandler(final JavaIntroduceFieldService.InitializationPlace initializationPlace, final boolean declareStatic) {
     myInitializationPlace = initializationPlace;
     myDeclareStatic = declareStatic;
   }

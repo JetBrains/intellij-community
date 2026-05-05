@@ -638,7 +638,8 @@ public final class CommonJavaRefactoringUtil {
     return codeStyleManager.suggestUniqueVariableName(delegate, anchor, true);
   }
 
-  public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
+  @Nullable
+  public static PsiType getTypeByExpressionWithExpectedType(@NotNull PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     PsiType typeByExpression = getTypeByExpression(expr, factory);
     PsiType type = typeByExpression;

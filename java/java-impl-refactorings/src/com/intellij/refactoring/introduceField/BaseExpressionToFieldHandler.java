@@ -28,7 +28,6 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiCallExpression;
@@ -59,13 +58,11 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -91,8 +88,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase.ExpressionToFieldContext;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase.InitializationPlace;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ExpressionToFieldContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance(BaseExpressionToFieldHandler.class);
@@ -106,7 +103,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   @Override
   protected boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
-    ExpressionToFieldContext context = getContext(selectedExpr);
+    ExpressionToFieldContext context = FieldExtractor.getContext(this, selectedExpr);
     if (context instanceof ExpressionToFieldContext.Error(@NlsContexts.DialogMessage String message)) {
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
@@ -196,22 +193,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return false;
   }
 
-  private @Nullable @NlsContexts.DialogMessage String checkParentClass(@Nullable PsiClass parentClass, @NotNull PsiFile file) {
-    if (parentClass == null) {
-      if (FileTypeUtils.isInServerPageFile(file)) {
-        return JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
-      }
-      else if ("package-info.java".equals(file.getName())) {
-        return JavaRefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName());
-      }
-      else {
-        LOG.error("Unexpected file: " + file);
-        return null;
-      }
-    }
-    return null;
-  }
-
   public static void setModifiers(PsiField field, Settings settings) {
     if (!settings.isIntroduceEnumConstant()) {
       if (settings.isDeclareStatic()) {
@@ -279,10 +260,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                                     PsiType type, PsiExpression[] occurrences, PsiElement anchorElement,
                                                     PsiElement anchorElementIfAll);
 
-
-  private static PsiType getTypeByExpression(PsiExpression expr) {
-    return CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr);
-  }
 
   public @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     boolean compileTimeConstant = LocalToFieldHandler.isCompileTimeConstant(initializerExpression, initializerExpression.getType());
@@ -566,7 +543,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                     PsiExpression[] occurrences,
                     boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace,
+                    @PsiModifier.ModifierConstant  String visibility,
+                    PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
                     PsiClass targetClass,
                     boolean annotateAsNonNls,
@@ -874,7 +853,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return CommonJavaRefactoringUtil.appendField(destClass, psiField, anchorMember, reference);
     }
 
-    private static @Nullable PsiField checkForwardRefs(@Nullable PsiExpression initializer, PsiClass parentClass) {
+    static @Nullable PsiField checkForwardRefs(@Nullable PsiExpression initializer, PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -971,71 +950,5 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     public @Nullable PsiElement getElementReference() {
       return myElementReference;
     }
-  }
-
-  public @NotNull JavaIntroduceFieldHandlerBase.AvailableSettings getAvailableSettings(@NotNull PsiExpression element) {
-    return new JavaIntroduceFieldHandlerBase.AvailableSettings(List.of());
-  }
-
-  public @NotNull ExpressionToFieldContext getContext(@NotNull PsiExpression selectedExpr) {
-
-    if (!Comparing.strEqual(IntroduceConstantHandler.getRefactoringNameText(), getRefactoringName()) &&
-        IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
-        isStaticFinalInitializer(selectedExpr) != null) {
-      return new ExpressionToFieldContext.Error(
-        RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context")));
-    }
-
-    final PsiElement element = getPhysicalElement(selectedExpr);
-
-    final PsiFile file = element.getContainingFile();
-    LOG.assertTrue(file != null, "expr.getContainingFile() == null");
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("expression:" + selectedExpr);
-    }
-
-    final PsiType tempType = getTypeByExpression(selectedExpr);
-    if (tempType == null || LambdaUtil.notInferredType(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
-      return new ExpressionToFieldContext.Error(message);
-    }
-
-    if (PsiTypes.voidType().equals(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
-      return new ExpressionToFieldContext.Error(message);
-    }
-
-    String switchLabelError = RefactoringUtil.checkEnumConstantInSwitchLabel(selectedExpr);
-    if (switchLabelError != null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(switchLabelError);
-      return new ExpressionToFieldContext.Error(message);
-    }
-    PsiClass parentClass = getParentClass(selectedExpr);
-    String message = checkParentClass(parentClass, file);
-    if (message != null) {
-      return new ExpressionToFieldContext.Error(message);
-    }
-    if (parentClass == null) {
-      return new ExpressionToFieldContext.Error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
-    }
-    final List<PsiClass> proposedClasses = new ArrayList<>();
-    PsiClass aClass = parentClass;
-    while (aClass != null) {
-      proposedClasses.add(aClass);
-      final PsiField psiField = ConvertToFieldRunnable.checkForwardRefs(selectedExpr, aClass);
-      if (psiField != null && psiField.getParent() == aClass) break;
-      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    }
-    proposedClasses.removeIf(proposedClass -> proposedClass == null ||
-                                              checkClass(proposedClass, selectedExpr) != null);
-    if (proposedClasses.isEmpty()) {
-      message = checkClass(parentClass, selectedExpr);
-      if (message != null) {
-        return new ExpressionToFieldContext.Error(message);
-      }
-      return new ExpressionToFieldContext.Error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
-    }
-    return new ExpressionToFieldContext.Success(selectedExpr, element, file, tempType, parentClass, proposedClasses);
   }
 }

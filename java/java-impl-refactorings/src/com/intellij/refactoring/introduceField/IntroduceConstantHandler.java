@@ -180,7 +180,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       PsiType defaultType = typeSelectorManager.getDefaultType();
       NameSuggestionsGenerator generator = IntroduceConstantDialog.createNameSuggestionGenerator(null, expr, JavaCodeStyleManager.getInstance(project), enteredName, getParentClass());
       return new Settings(generator.getSuggestedNameInfo(defaultType).names[0], expr, occurrences, replaceAllOccurrences, true, true,
-                          JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION,
+                          JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION,
                           ObjectUtils.notNull(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY, PsiModifier.PUBLIC),
                           localVariable, defaultType, localVariable != null, getParentClass(), preselectNonNls, false);
     }
@@ -196,7 +196,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       return null;
     }
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
-                        JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                        JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
                         dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
                         dialog.isAnnotateAsNonNls(),
                         dialog.introduceEnumConstant());

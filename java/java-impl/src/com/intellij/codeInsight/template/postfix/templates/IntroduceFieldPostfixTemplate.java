@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
@@ -28,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldService;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -66,99 +68,95 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
 
   @Override
   public @NotNull PostfixModExpander createModExpander() {
-    return new PostfixModExpander() {
-      @Override
-      public @NotNull ModCommand expand(@NotNull ActionContext actionContext,
-                                        @NotNull PostfixTemplateProvider provider,
-                                        @NotNull TextRange keyRange) {
-        Project project = actionContext.project();
-        var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
-        JavaIntroduceFieldHandlerBase handler = (JavaIntroduceFieldHandlerBase)supportProvider.getIntroduceFieldHandler();
-        if (handler == null) {
-          return ModCommand.nop();
-        }
-        List<JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success> contexts =
-          PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
-            PsiFile copyFile = (PsiFile)actionContext.file().copy();
-            Document copyDocument = copyFile.getFileDocument();
-            int startOffset = keyRange.getStartOffset();
-            startOffset = PostfixLiveTemplate.positiveOffset(startOffset);
-            copyDocument.deleteString(startOffset, keyRange.getEndOffset());
-            PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
-            provider.prepareCopyForModCommand(copyFile, startOffset);
-            PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
-            PsiElement context = CustomTemplateCallback.getContext(copyFile, PostfixLiveTemplate.positiveOffset(startOffset));
-            PostfixTemplateExpressionSelector selector = selectorAllExpressionsWithCurrentOffset(IS_NON_VOID);
-            List<PsiElement> selectedExpressions = selector.getExpressions(context, copyFile.getFileDocument(), startOffset);
-            List<JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success> list =
-              selectedExpressions.stream().filter(element -> element instanceof PsiExpression)
-                .map(expression -> handler.getContext((PsiExpression)expression))
-                .filter(c -> c instanceof JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success)
-                .map(c -> (JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success)c).toList();
-            return list;
-          });
-        if (contexts.isEmpty()) {
-          return ModCommand.nop();
-        }
-        JavaIntroduceFieldHandlerBase.ExpressionToFieldContext.Success context = contexts.getFirst();
-        JavaIntroduceFieldHandlerBase.AvailableSettings settings = handler.getAvailableSettings(context);
-
-        if (settings.places().size() == 1) {
-          return buildCommandWithPlaceChoice(actionContext, keyRange, settings.places().getFirst(), provider, context.selectedExpr(),
-                                             handler);
-        }
-
-        List<ModCommandAction> actions = ContainerUtil.mapNotNull(settings.places(), place -> {
-          String presentableText = JavaIntroduceFieldHandlerBase.InitializationPlace.getPresentableText(place);
-          if (presentableText == null) return null;
-          return new ModCommandAction() {
-            @Override
-            public @NotNull Presentation getPresentation(@NotNull ActionContext ctx) {
-              return Presentation.of(presentableText).withHighlighting(context.selectedExpr().getTextRange());
-            }
-
-            @Override
-            public @NotNull ModCommand perform(@NotNull ActionContext ctx) {
-              return buildCommandWithPlaceChoice(ctx, new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()), place,
-                                                 provider, context.selectedExpr(), handler);
-            }
-
-            @Override
-            public @NotNull String getFamilyName() {
-              return RefactoringBundle.message("introduce.field.title");
-            }
-          };
-        });
-        if (actions.isEmpty()) return ModCommand.nop();
-        return ModCommand.chooseAction(JavaBundle.message("introduce.field.initialize.in.scope"), actions);
+    return (actionContext, provider, keyRange) -> {
+      JavaIntroduceFieldService introduceFieldService = JavaIntroduceFieldService.getInstance();
+      if (introduceFieldService == null) {
+        return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
       }
+      Project project = actionContext.project();
+      List<JavaIntroduceFieldService.ExpressionToFieldContext.Success> contexts =
+        PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
+          PsiFile copyFile = (PsiFile)actionContext.file().copy();
+          Document copyDocument = copyFile.getFileDocument();
+          int startOffset = keyRange.getStartOffset();
+          startOffset = PostfixLiveTemplate.positiveOffset(startOffset);
+          copyDocument.deleteString(startOffset, keyRange.getEndOffset());
+          PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+          provider.prepareCopyForModCommand(copyFile, startOffset);
+          PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+          PsiElement context = CustomTemplateCallback.getContext(copyFile, PostfixLiveTemplate.positiveOffset(startOffset));
+          PostfixTemplateExpressionSelector selector = selectorAllExpressionsWithCurrentOffset(IS_NON_VOID);
+          List<PsiElement> selectedExpressions = selector.getExpressions(context, copyFile.getFileDocument(), startOffset);
+          List<JavaIntroduceFieldService.ExpressionToFieldContext.Success> list =
+            selectedExpressions.stream().filter(element -> element instanceof PsiExpression)
+              .map(expression -> introduceFieldService.getContext((PsiExpression)expression))
+              .filter(c -> c instanceof JavaIntroduceFieldService.ExpressionToFieldContext.Success)
+              .map(c -> (JavaIntroduceFieldService.ExpressionToFieldContext.Success)c).toList();
+          return list;
+        });
+      if (contexts.isEmpty()) {
+        return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
+      }
+
+      PsiExpression virtualExpr = contexts.getFirst().selectedExpr();
+
+      List<JavaIntroduceFieldService.InitializationPlace> places =
+        JavaIntroduceFieldService.getInstance().getAvailableSettings(virtualExpr).places();
+
+      if (places.isEmpty()) return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
+
+      if (places.size() == 1) {
+        return buildIntroduceCommand(actionContext, keyRange, virtualExpr, places.getFirst(), provider);
+      }
+
+      List<ModCommandAction> actions = ContainerUtil.mapNotNull(places, place -> {
+        String presentableText = JavaIntroduceFieldService.InitializationPlace.getPresentableText(place);
+        if (presentableText == null) return null;
+        return new ModCommandAction() {
+          @Override
+          public @NotNull Presentation getPresentation(@NotNull ActionContext ctx) {
+            return Presentation.of(presentableText).withHighlighting(virtualExpr.getTextRange());
+          }
+
+          @Override
+          public @NotNull ModCommand perform(@NotNull ActionContext ctx) {
+            return buildIntroduceCommand(ctx, new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()),
+                                         virtualExpr, place, provider);
+          }
+
+          @Override
+          public @NotNull String getFamilyName() {
+            return RefactoringBundle.message("introduce.field.title");
+          }
+        };
+      });
+      if (actions.isEmpty()) return ModCommand.nop();
+      return ModCommand.chooseAction(JavaBundle.message("introduce.field.initialize.in.scope"), actions);
     };
   }
 
-  private static @NotNull ModCommand buildCommandWithPlaceChoice(@NotNull ActionContext ctx,
-                                                                 @NotNull TextRange keyRange,
-                                                                 JavaIntroduceFieldHandlerBase.InitializationPlace place,
-                                                                 @NotNull PostfixTemplateProvider provider,
-                                                                 @NotNull PsiExpression selectedExpression,
-                                                                 @NotNull JavaIntroduceFieldHandlerBase handler) {
-
+  private static @NotNull ModCommand buildIntroduceCommand(@NotNull ActionContext ctx,
+                                                           @NotNull TextRange keyRange,
+                                                           @NotNull PsiExpression virtualExpr,
+                                                           @NotNull JavaIntroduceFieldService.InitializationPlace place,
+                                                           @NotNull PostfixTemplateProvider provider) {
     TextRange newSelection = new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset());
     ActionContext updatedContext = ctx.withSelection(newSelection).withOffset(keyRange.getStartOffset());
+    JavaIntroduceFieldService introduceFieldService = JavaIntroduceFieldService.getInstance();
+    if (introduceFieldService == null) return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
     return ModCommand.psiUpdate(updatedContext,
-                                document -> {
-                                  document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset());
-                                },
+                                document -> document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset()),
                                 updater -> {
                                   updater.getDocument()
                                     .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
                                                   ctx.selection().getStartOffset());
                                   PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
-                                  provider.prepareCopyForModCommand(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(
-                                    keyRange.getStartOffset()));
-                                  PsiElement expression =
-                                    PsiTreeUtil.findSameElementInCopy(selectedExpression, updater.getPsiFile());
+                                  provider.prepareCopyForModCommand(updater.getPsiFile(),
+                                                                    PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()));
+                                  PsiElement expression = PsiTreeUtil.findSameElementInCopy(virtualExpr, updater.getPsiFile());
                                   expression = ElementToWorkOn.getWritable(expression, updater);
-                                  PsiField field = handler.run(expression, place);
+                                  PsiField field = introduceFieldService
+                                    .introduceField((PsiExpression)expression, place);
                                   if (field != null) {
                                     List<String> names = new VariableNameGenerator(field, VariableKind.FIELD)
                                       .byExpression(field.getInitializer())

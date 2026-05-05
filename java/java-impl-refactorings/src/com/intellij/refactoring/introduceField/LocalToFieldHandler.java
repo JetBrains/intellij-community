@@ -67,8 +67,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase.InitializationPlace.IN_CONSTRUCTOR;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase.InitializationPlace.IN_FIELD_DECLARATION;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace.IN_CONSTRUCTOR;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION;
 
 public abstract class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance(LocalToFieldHandler.class);
@@ -325,7 +325,7 @@ public abstract class LocalToFieldHandler {
     private final Project myProject;
     private final PsiClass myDestinationClass;
     private final BaseExpressionToFieldHandler.Settings mySettings;
-    private final JavaIntroduceFieldHandlerBase.InitializationPlace myInitializerPlace;
+    private final JavaIntroduceFieldService.InitializationPlace myInitializerPlace;
     private final PsiExpression[] myOccurences;
     private PsiField myField;
 
@@ -376,7 +376,7 @@ public abstract class LocalToFieldHandler {
         myField = (PsiField)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(myField);
         myLocal.normalizeDeclaration();
         PsiElement declarationStatement = myLocal.getParent();
-        final JavaIntroduceFieldHandlerBase.InitializationPlace finalInitializerPlace;
+        final JavaIntroduceFieldService.InitializationPlace finalInitializerPlace;
         if (myLocal.getInitializer() == null) {
           finalInitializerPlace = IN_FIELD_DECLARATION;
         }
