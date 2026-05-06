@@ -44,7 +44,6 @@ import java.util.zip.ZipFile;
 @ApiStatus.Internal
 public final class PackageAnnotator {
   private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
-  private static final @NonNls String JAR_ENTRY_SEPARATOR = "!/";
 
   private final CoverageSuitesBundle mySuite;
   private final Project myProject;
@@ -245,9 +244,9 @@ public final class PackageAnnotator {
   }
 
   private @Nullable ClassReader loadClassReader(@NotNull Path classFile) {
-    String path = classFile.toString();
-    if (isArchiveEntryPath(path)) {
-      byte[] content = loadClassBytesFromArchivePath(path);
+    AnalysisUtils.ArchiveEntryPath archiveEntryPath = AnalysisUtils.splitArchiveEntryPath(classFile);
+    if (archiveEntryPath != null) {
+      byte[] content = loadClassBytesFromArchivePath(archiveEntryPath);
       return content != null ? new ClassReader(content) : null;
     }
     try (InputStream stream = Files.newInputStream(classFile)) {
@@ -258,17 +257,11 @@ public final class PackageAnnotator {
     }
   }
 
-  private byte @Nullable [] loadClassBytesFromArchivePath(@NotNull String path) {
-    int separator = path.indexOf(JAR_ENTRY_SEPARATOR);
-    if (separator <= 0) return null;
-    String archivePath = path.substring(0, separator);
-    String entryPath = path.substring(separator + JAR_ENTRY_SEPARATOR.length());
-    if (entryPath.isEmpty()) return null;
-
-    ZipFile zip = getOrCreateArchive(archivePath);
+  private byte @Nullable [] loadClassBytesFromArchivePath(@NotNull AnalysisUtils.ArchiveEntryPath archiveEntryPath) {
+    ZipFile zip = getOrCreateArchive(archiveEntryPath.archivePath());
     if (zip == null) return null;
     try {
-      var entry = zip.getEntry(entryPath);
+      var entry = zip.getEntry(archiveEntryPath.entryPath());
       if (entry == null || entry.isDirectory()) return null;
       try (var stream = zip.getInputStream(entry)) {
         return FileUtil.loadBytes(stream);
@@ -277,10 +270,6 @@ public final class PackageAnnotator {
     catch (IOException ignored) {
       return null;
     }
-  }
-
-  private static boolean isArchiveEntryPath(@NotNull String path) {
-    return path.indexOf(JAR_ENTRY_SEPARATOR) > 0;
   }
 
   private @Nullable ZipFile getOrCreateArchive(@NotNull String archivePath) {

@@ -38,10 +38,22 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Test
   public void collectSrcLinesForUntouchedFileReadsClassFromArchiveEntry() throws IOException {
+    assertArchiveEntryReadsClass("!/com/intellij/coverage/JavaCoverageEngineTest.class");
+  }
+
+  @Test
+  public void collectSrcLinesForUntouchedFileReadsClassFromWindowsArchiveEntry() throws IOException {
+    assertArchiveEntryReadsClass("!\\com\\intellij\\coverage\\JavaCoverageEngineTest.class");
+  }
+
+  private void assertArchiveEntryReadsClass(String archiveEntrySuffix) throws IOException {
     byte[] content = loadTestClassContent();
     Path classFile = Files.createTempFile("coverage-output", ".class");
-    Path archiveRoot = Files.createTempFile("coverage-output", ".jar");
+    Path tempDir = Files.createTempDirectory("coverage-output");
+    Path archiveDir = tempDir.resolve("coverage-output!");
+    Path archiveRoot = archiveDir.resolve("coverage-output.jar");
     try {
+      Files.createDirectory(archiveDir);
       Files.write(classFile, content);
       try (ZipOutputStream outputStream = new ZipOutputStream(Files.newOutputStream(archiveRoot))) {
         outputStream.putNextEntry(new ZipEntry("com/intellij/coverage/JavaCoverageEngineTest.class"));
@@ -54,13 +66,17 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
       javaSuite.setProject(getProject());
       CoverageSuitesBundle suite = new CoverageSuitesBundle(javaSuite);
       List<Integer> expectedLines = engine.collectSrcLinesForUntouchedFile(classFile, suite);
-      Path archiveEntry = Path.of(archiveRoot + "!/com/intellij/coverage/JavaCoverageEngineTest.class");
+      Assert.assertNotNull(expectedLines);
+      Assert.assertFalse(expectedLines.isEmpty());
+      Path archiveEntry = Path.of(archiveRoot + archiveEntrySuffix);
 
       Assert.assertEquals(expectedLines, engine.collectSrcLinesForUntouchedFile(archiveEntry, suite));
     }
     finally {
       Files.deleteIfExists(classFile);
       Files.deleteIfExists(archiveRoot);
+      Files.deleteIfExists(archiveDir);
+      Files.deleteIfExists(tempDir);
     }
   }
 

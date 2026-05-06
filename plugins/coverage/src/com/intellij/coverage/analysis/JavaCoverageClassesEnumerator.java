@@ -271,7 +271,7 @@ public abstract class JavaCoverageClassesEnumerator {
                                  AnalysisUtils.buildVMName(context.rootPackageVMName(), relativePath.substring(0, slashIndex));
           int simpleNameStart = slashIndex + 1;
           String simpleName = relativePath.substring(simpleNameStart, relativePath.length() - ".class".length());
-          Path classFile = Path.of(context.outputRoot() + "!/" + entryName);
+          Path classFile = AnalysisUtils.toArchiveEntryPath(context.outputRoot(), entryName);
           collector.accept(packageVMName, simpleName, classFile);
         }
       }

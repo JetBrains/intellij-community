@@ -169,10 +169,10 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         }
 
         private fun getRelativeClassPath(outputRoot: Path, classFile: Path): String? {
-            val archivePrefix = "$outputRoot!/"
-            val classFilePath = classFile.toString()
-            if (classFilePath.startsWith(archivePrefix)) {
-                return classFilePath.substring(archivePrefix.length)
+            val archiveEntryPath = AnalysisUtils.splitArchiveEntryPath(classFile)
+            if (archiveEntryPath != null) {
+                if (Path.of(archiveEntryPath.archivePath()) != outputRoot) return null
+                return archiveEntryPath.entryPath()
             }
             if (!classFile.startsWith(outputRoot)) return null
             return outputRoot.relativize(classFile).joinToString("/")
