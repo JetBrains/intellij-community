@@ -48,6 +48,7 @@ import git4idea.statistics.GitAvailabilityChecker
 import git4idea.statistics.GitCommitterCounter
 import git4idea.statistics.RepositoryAvailability
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
+import git4idea.ui.branch.dashboard.NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import java.nio.file.Files
 import java.nio.file.Path
@@ -57,7 +58,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 24)
+  private val GROUP = EventLogGroup("git.configuration", 25)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -76,7 +77,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addIfDiffers(set, settings, defaultSettings, { it.syncSetting }, REPO_SYNC, REPO_SYNC_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.updateMethod }, UPDATE_TYPE, UPDATE_TYPE_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, SAVE_POLICY, SAVE_POLICY_VALUE)
-    addIfDiffers(set, settings, defaultSettings, { it.incomingCommitsCheckStrategy }, INCOMING_COMMITS_CHECK_STRATEGY, GitOperationsCollector.REMOTE_CHECK_STRATEGY)
+    addIfDiffers(set, settings, defaultSettings, { it.incomingCommitsCheckStrategy }, INCOMING_COMMITS_CHECK_STRATEGY,
+                 REMOTE_CHECK_STRATEGY)
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, PUSH_AUTO_UPDATE)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
@@ -202,6 +204,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
     addMainTabPropertyMetricIfDiffers(metrics, project, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
     addAppPropertyMetricIfDiffers(metrics, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
+    addAppPropertyMetricIfDiffers(metrics, NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY, NAVIGATE_LOG_TO_BRANCH_ON_SELECTION)
   }
 
   private fun addMainTabPropertyMetricIfDiffers(
@@ -313,6 +316,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private val SHOW_GIT_BRANCHES_IN_LOG = GROUP.registerVarargEvent("showGitBranchesInLog", EventFields.Enabled)
   private val UPDATE_BRANCH_FILTERS_ON_SELECTION = GROUP.registerVarargEvent("updateBranchesFilterInLogOnSelection", EventFields.Enabled)
+  private val NAVIGATE_LOG_TO_BRANCH_ON_SELECTION = GROUP.registerVarargEvent("navigateLogToBranchOnSelection", EventFields.Enabled)
 
   private val MAX_LOCAL_BRANCHES = EventFields.RoundedInt("max_local_branches")
   private val SHOW_RECENT_BRANCHES = GROUP.registerVarargEvent("showRecentBranches", EventFields.Enabled, MAX_LOCAL_BRANCHES)
