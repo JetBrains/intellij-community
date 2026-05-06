@@ -11,10 +11,13 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
@@ -35,6 +38,10 @@ import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import icons.MavenIcons
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -53,8 +60,8 @@ import org.jetbrains.idea.maven.utils.MavenEelUtil.checkJdkAndShowNotification
 import org.jetbrains.idea.maven.utils.MavenEelUtil.restartMavenConnectorsIfJdkIncorrect
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent
-import org.jetbrains.idea.maven.utils.MavenUtil.invokeLater
 import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JPanel
 import javax.swing.JTextPane
 import javax.swing.text.SimpleAttributeSet
@@ -67,9 +74,14 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
   private var myState = MavenProjectsNavigatorState()
 
   private var myTree: SimpleTree? = null
-  @TestOnly fun structureForTests(): MavenProjectsStructure? = myStructure
 
-  private var myStructure: MavenProjectsStructure? = null
+  @TestOnly
+  fun structureForTests(): MavenProjectsStructure? = myStructure.get()
+
+  private val myStructure: AtomicReference<MavenProjectsStructure> = AtomicReference(null)
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(val cs: CoroutineScope)
 
   init {
     project.getMessageBus()
@@ -83,7 +95,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
 
   override fun getState(): MavenProjectsNavigatorState {
     ThreadingAssertions.assertEventDispatchThread()
-    if (this.myStructure != null) {
+    if (this.myStructure.get() != null) {
       try {
         myState.treeState = Element("root")
         TreeState.createOn(myTree!!).writeExternal(myState.treeState)
@@ -176,24 +188,24 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
 
     MavenShortcutsManager.getInstance(myProject).addListener(MavenShortcutsManager.Listener {
       scheduleStructureRequest(
-        Runnable { myStructure!!.updateGoals() })
+        Runnable { myStructure.get()!!.updateGoals() })
     }, this)
 
     MavenTasksManager.getInstance(myProject).addListener(object : MavenTasksManager.Listener {
       override fun compileTasksChanged() {
-        scheduleStructureRequest(Runnable { myStructure!!.updateGoals() })
+        scheduleStructureRequest(Runnable { myStructure.get()!!.updateGoals() })
       }
     }, this)
 
     MavenRunner.getInstance(myProject).getSettings().addListener(object : MavenRunnerSettings.Listener {
       override fun skipTestsChanged() {
-        scheduleStructureRequest(Runnable { myStructure!!.updateGoals() })
+        scheduleStructureRequest(Runnable { myStructure.get()!!.updateGoals() })
       }
     }, this)
 
     myProject.getMessageBus().connect().subscribe<RunManagerListener>(RunManagerListener.TOPIC, object : RunManagerListener {
       fun changed() {
-        scheduleStructureRequest(Runnable { myStructure!!.updateRunConfigurations() })
+        scheduleStructureRequest(Runnable { myStructure.get()!!.updateRunConfigurations() })
       }
 
       override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
@@ -209,7 +221,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
       }
 
       override fun beforeRunTasksChanged() {
-        scheduleStructureRequest(Runnable { myStructure!!.updateGoals() })
+        scheduleStructureRequest(Runnable { myStructure.get()!!.updateGoals() })
       }
     })
 
@@ -217,7 +229,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
       MavenSystemIndicesManager.TOPIC, object : IndexChangeProgressListener {
         override fun indexStatusChanged(state: MavenIndexUpdateState) {
           doScheduleStructureRequest(Runnable {
-            myStructure!!.updateRepositoryStatus(state)
+            myStructure.get()!!.updateRepositoryStatus(state)
           })
         }
       })
@@ -364,12 +376,12 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
   }
 
   fun selectInTree(project: MavenProject?) {
-    scheduleStructureRequest(Runnable { myStructure!!.select(project) })
+    scheduleStructureRequest(Runnable { myStructure.get()!!.select(project) })
   }
 
   private fun scheduleStructureRequest(r: Runnable) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (null != this.myStructure) {
+      if (null != this.myStructure.get()) {
         r.run()
       }
     }
@@ -379,47 +391,48 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
   }
 
   private fun doScheduleStructureRequest(r: Runnable) {
-    val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID)
-    if (toolWindow == null) return
+    val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID) ?: return
+    val navigator = this
 
-    invokeLater(myProject, Runnable {
+    project.service<CoroutineScopeService>().cs.launch {
       val files = MavenProjectsManager.getInstance(myProject).getState().originalFiles
       val hasMavenProjects = files != null && !files.isEmpty()
+
       if (toolWindow.isAvailable() != hasMavenProjects) {
-        MavenLog.LOG.info("Set MavenToolWindow availability: $hasMavenProjects")
-        toolWindow.setAvailable(hasMavenProjects)
-        if (hasMavenProjects
-            && myProject.getUserData<Boolean?>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null
-        ) {
-          toolWindow.activate(null)
+        withContext(Dispatchers.EDT) {
+          MavenLog.LOG.info("Set MavenToolWindow availability: $hasMavenProjects")
+          toolWindow.setAvailable(hasMavenProjects)
+          if (hasMavenProjects
+              && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null
+          ) {
+            toolWindow.activate(null)
+          }
         }
       }
 
-      val shouldCreate = this.myStructure == null
-      if (shouldCreate) {
-        initStructure()
-      }
+      if (navigator.myStructure.get() == null)
+        withContext(Dispatchers.EDT) {
+          initStructure()
+          TreeState.createFrom(myState.treeState).applyTo(myTree!!)
+        }
 
       r.run()
-      if (shouldCreate) {
-        TreeState.createFrom(myState.treeState).applyTo(myTree!!)
-      }
-    })
+    }
   }
 
   private fun initStructure() {
-    this.myStructure = MavenProjectsStructure(myProject,
-                                                    MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL,
-                                                    MavenProjectsManager.getInstance(myProject),
-                                                    MavenTasksManager.getInstance(myProject),
-                                                    MavenShortcutsManager.getInstance(myProject),
-                                                    this,
-                                                    myTree)
+    this.myStructure.compareAndSet(null, MavenProjectsStructure(myProject,
+                                                                MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL,
+                                                                MavenProjectsManager.getInstance(myProject),
+                                                                MavenTasksManager.getInstance(myProject),
+                                                                MavenShortcutsManager.getInstance(myProject),
+                                                                this,
+                                                                myTree))
   }
 
   @ApiStatus.Internal
   fun scheduleStructureUpdate() {
-    scheduleStructureRequest(Runnable { myStructure!!.update() })
+    scheduleStructureRequest(Runnable { myStructure.get()!!.update() })
   }
 
   private inner class MyProjectsListener : MavenProjectsTree.Listener {
@@ -428,11 +441,11 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
       unignored: List<MavenProject>,
       fromImport: Boolean
     ) {
-      scheduleStructureRequest(Runnable { myStructure!!.updateIgnored(ContainerUtil.concat<MavenProject?>(ignored, unignored)) })
+      scheduleStructureRequest(Runnable { myStructure.get()!!.updateIgnored(ContainerUtil.concat<MavenProject?>(ignored, unignored)) })
     }
 
     override fun profilesChanged() {
-      scheduleStructureRequest(Runnable { myStructure!!.updateProfiles() })
+      scheduleStructureRequest(Runnable { myStructure.get()!!.updateProfiles() })
     }
 
     override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>)  {
@@ -448,7 +461,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
     }
 
     fun scheduleUpdateProjects(projects: List<MavenProject>, deleted: List<MavenProject>) {
-      scheduleStructureRequest(Runnable { myStructure!!.updateProjects(projects, deleted) })
+      scheduleStructureRequest(Runnable { myStructure.get()!!.updateProjects(projects, deleted) })
     }
   }
 
