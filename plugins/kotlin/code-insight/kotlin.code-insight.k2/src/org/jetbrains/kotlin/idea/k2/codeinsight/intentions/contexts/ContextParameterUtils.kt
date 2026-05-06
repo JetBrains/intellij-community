@@ -35,12 +35,15 @@ object ContextParameterUtils {
 
     /**
      * Checks if the given [KtParameter] is a value parameter that can be converted into a context parameter.
+     * The owner function must be a named function with a name identifier.
+     * Parameters of lambdas and anonymous functions are not allowed.
      */
     fun isValueParameterConvertibleToContext(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val valueParameterList = ktParameter.parent as? KtParameterList ?: return false
-        val ownerFunction = valueParameterList.ownerFunction
-        return ownerFunction != null && ownerFunction !is KtConstructor<*>
+        val ownerFunction = valueParameterList.ownerFunction ?: return false
+        val namedFunction = ownerFunction as? KtNamedFunction ?: return false
+        return namedFunction.nameIdentifier != null
     }
 
     /**

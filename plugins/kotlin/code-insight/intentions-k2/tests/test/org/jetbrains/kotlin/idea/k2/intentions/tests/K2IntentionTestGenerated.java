@@ -16233,9 +16233,24 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableAlreadyContext.kt");
             }
 
+            @TestMetadata("inapplicableAnonymousFunctionParameter.kt")
+            public void testInapplicableAnonymousFunctionParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableAnonymousFunctionParameter.kt");
+            }
+
+            @TestMetadata("inapplicableAnonymousFunctionParameterAsArgument.kt")
+            public void testInapplicableAnonymousFunctionParameterAsArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableAnonymousFunctionParameterAsArgument.kt");
+            }
+
             @TestMetadata("inapplicableFeatureDisabled.kt")
             public void testInapplicableFeatureDisabled() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableFeatureDisabled.kt");
+            }
+
+            @TestMetadata("inapplicableLambdaParameter.kt")
+            public void testInapplicableLambdaParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableLambdaParameter.kt");
             }
 
             @TestMetadata("inapplicablePrimaryConstructorParameter.kt")
