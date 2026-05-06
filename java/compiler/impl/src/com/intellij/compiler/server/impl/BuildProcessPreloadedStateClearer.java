@@ -138,12 +138,11 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
 
   @Override
   public void rootsChanged(@NotNull ModuleRootEvent event) {
-    if (!event.isCausedByWorkspaceModelChangesOnly()) {
-      // only process events that are not covered by events from the workspace model
-      final Object source = event.getSource();
-      if (source instanceof Project) {
-        BuildManager.getInstance().clearState((Project)source);
-      }
+    if (event.isCausedByWorkspaceModelChangesOnly()) return;
+    // only process events that are not covered by events from the workspace model
+    final Object source = event.getSource();
+    if (source instanceof Project) {
+      BuildManager.getInstance().clearState((Project)source);
     }
   }
 }

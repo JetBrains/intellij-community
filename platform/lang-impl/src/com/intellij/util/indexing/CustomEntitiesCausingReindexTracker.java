@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.jps.entities.RootsKt;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
@@ -46,9 +45,7 @@ final class CustomEntitiesCausingReindexTracker {
           reinit();
         }
       };
-    //noinspection unchecked
-    IndexableEntityProvider.EP_NAME.addExtensionPointListener(
-      (ExtensionPointListener<IndexableEntityProvider<? extends WorkspaceEntity>>)listener);
+
     //noinspection unchecked
     WorkspaceFileIndexImpl.Companion.getEP_NAME().addExtensionPointListener(
       (ExtensionPointListener<WorkspaceFileIndexContributor<?>>)listener);
@@ -64,10 +61,6 @@ final class CustomEntitiesCausingReindexTracker {
   private static Set<Class<? extends WorkspaceEntity>> listCustomEntitiesCausingRescan() {
     Stream<Class<? extends WorkspaceEntity>> allClasses = WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList().stream()
       .flatMap(contributor -> getEntityClassesToCauseReindexing(contributor));
-    allClasses = Stream.concat(allClasses,
-                               IndexableEntityProvider.EP_NAME.getExtensionList().stream()
-                                 .filter(provider -> provider instanceof IndexableEntityProvider.Enforced<? extends WorkspaceEntity>)
-                                 .map(provider -> provider.getEntityClass()));
     return Set.copyOf(allClasses.filter(aClass -> !isEntityReindexingCustomised(aClass)).collect(Collectors.toSet()));
   }
 
