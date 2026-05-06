@@ -80,6 +80,8 @@ Bazel strict-deps requires every class to be in a direct IML dependency. The fol
 | `ExecutionException`, `GeneralCommandLine`, `KillableColoredProcessHandler`, `OSProcessHandler`, `ScriptRunnerUtil`, `Url`, `NetUtils` | `com.intellij.execution.*`, `com.intellij.util.*` | `intellij.platform.ide.util.io` | `@community//platform/platform-util-io:ide-util-io` |
 | `AsyncPromise`, `Promise` | `org.jetbrains.concurrency` | `intellij.platform.concurrency` | `@community//platform/util/concurrency` |
 | `AppExecutorUtil`, `ProcessAdapter`, `ProcessEvent`, `ProcessOutputTypes`, `ParametersListUtil`, `FileUtil`, `StringUtil` | `com.intellij.util.*`, `com.intellij.openapi.util.*` | `intellij.platform.util` | `@community//platform/util` |
+| `Editor` | `com.intellij.openapi.editor` | `intellij.platform.editor.ui` | `@community//platform/editor-ui-api` |
+| `MultipleLangCommentProvider` | `com.intellij.psi.templateLanguages` | `intellij.platform.lang.impl` | `@community//platform/lang-impl` |
 
 Note: the IML module name for `AsyncPromise`/`Promise` is `intellij.platform.concurrency` (not `intellij.platform.util.concurrency`), even though the source lives under `platform/util/concurrency/`.
 
@@ -163,6 +165,37 @@ Register the implementation in the new module's XML:
 <extensions defaultExtensionNs="com.intellij">
   <<language>.<epName> implementation="com.intellij.<language>.<feature>.MyFeatureHelperImpl"/>
 </extensions>
+```
+
+#### Multi-method EP bundling and opaque state pattern
+
+When separating a library whose operations form a **lifecycle** (capture some state, then use it later), bundle all related operations into one EP rather than creating one EP per method. This avoids proliferating EP registrations and keeps the implementation cohesive.
+
+When lifecycle EP methods need to **pass typed state** between calls (e.g., capture a `List<CssSelectorSuffix>` in step 1, consume it in step 2), but the host module cannot import that type, use `Any?` as the state type. The EP interface uses `Any?`; the implementation casts internally with `@Suppress("UNCHECKED_CAST")`:
+
+```kotlin
+// In host module (no X imports)
+interface MyLifecycleHelper {
+  fun captureState(file: PsiFile): Any?       // returns X-typed data, opaque to host
+  fun applyState(file: PsiFile, state: Any?)  // receives it back; casts inside impl
+
+  companion object {
+    val EP = ExtensionPointName.create<MyLifecycleHelper>("com.intellij.<language>.myLifecycleHelper")
+    fun captureState(file: PsiFile): Any? = EP.extensionList.firstOrNull()?.captureState(file)
+    fun applyState(file: PsiFile, state: Any?) = EP.extensionList.firstOrNull()?.applyState(file, state)
+  }
+}
+
+// In new CSS/X module
+internal class MyLifecycleHelperImpl : MyLifecycleHelper {
+  override fun captureState(file: PsiFile): Any? = getThings(file)  // returns List<XThing>
+
+  override fun applyState(file: PsiFile, state: Any?) {
+    @Suppress("UNCHECKED_CAST")
+    val things = state as? List<XThing> ?: emptyList()
+    // use things...
+  }
+}
 ```
 
 ### 6. Register the new module in the plugin
@@ -249,7 +282,7 @@ Expected: `✓ All files unchanged`. If files change, inspect them — the gener
   --test "com.intellij.ideaProjectStructure.fast.IntelliJProjectPackageNamesTest"
 
 # Validates plugin availability in IDEA Free mode
-./tests.cmd --module intellij.idea.ultimate.build.tests \
+./tests.cmd --module intellij.projectStructureTests \
   --test "com.intellij.idea.ultimate.build.smokeTests.PluginsAvailableInIdeaFreeModeTest"
 ```
 
@@ -278,6 +311,7 @@ All three must pass before the work is done.
 | Kotlin-defined `fun getXxx()` not auto-exposed as property | `Unresolved reference 'xxx'` | Call with explicit `()`: `element.getXxx()` |
 | `object : JavaInterface()` with parentheses | `This type does not have a constructor` | Interfaces have no constructor; use `object : JavaInterface` without `()` |
 | Top-level Kotlin function imported from Java | `cannot find symbol myFunction` | From Java the class is `MyFileKt`; use `import static com.pkg.MyFileKt.myFunction` |
+| Supertype cascade after removing a dep | `Cannot access 'com.X.BaseClass' which is a supertype of 'SubClass'` — even though `BaseClass` is never directly imported | Kotlin needs the full supertype chain of every used type. If you use `SubClass` (from dep Y) whose supertype `BaseClass` lives in dep X, removing X breaks compilation even without direct X imports. Fix: move the `SubClass` usage entirely into the EP implementation in the new module, and expose only a non-X return type (e.g. `Language` instead of `PostCssLanguage`) through the EP interface |
 | Class hierarchy access fails after removing a dep | `cannot access BaseClass: class file not found` | Subclasses of platform types may transitively require the platform dep; keep it even without direct imports |
 | Broad downstream breakage after large file move | Many unrelated modules fail to compile | After moving 10+ files, build `//plugins/... //contrib/...` immediately to find all broken consumers |
 
@@ -292,3 +326,10 @@ All three must pass before the work is done.
 - **`intellij.javascript.backend.spellchecker`** (Pattern A) — moved all spellchecker-related files out of `javascript-backend`. Required `visibility="public"` because CoffeeScript plugin (a separate plugin) subclasses `JSSpellcheckingStrategy` — both the class and its inner tokenizer had to be marked `open` after Java→Kotlin conversion. `javascript-grazie` required a manual dep added outside the generated region.
 
 - **`intellij.javascript.backend.xml`** (Pattern A + B) — largest extraction to date (~40 files). Pattern A: moved all JSX/HTML/injection files wholesale. Pattern B: introduced `JsXmlContextHelper` EP (interface + static dispatch companion) for scattered `instanceof XmlTag/XmlElement` checks across ~60 core files. Required `visibility="public"`. Downstream fixes required in `javascript-ultimate`, `jsf-core`, `webpack`, `flex`, `vuejs`, `svelte`, `react` and others. Note: not all XML IML deps could be removed from `javascript-backend` — some remained due to indirect class hierarchy usage.
+
+## Examples in the Vue Plugin
+
+- **`intellij.vuejs.backend.css`** (Pattern B, 3 EPs) — removed all CSS plugin dependencies from `intellij.vuejs.backend`. Three EPs introduced:
+  1. `VueCssLanguageProvider` — exposes `getCssLanguage()`, `getDefaultStyleLanguage()`, `getStyleCommenter()`. Implemented by `VueCssLanguageProviderImpl` using `CSSLanguage.INSTANCE`, `PostCssLanguage.INSTANCE`, and `PostCssCommentProvider`. The `getDefaultStyleLanguage()`/`getStyleCommenter()` methods were needed because `PostCssLanguage` extends `CssLanguageProperties` (supertype cascade): even removing a direct `PostCssLanguage` reference left the compiler needing `intellij.css.common`. The fix was to move all `PostCssLanguage` usage into the EP implementation and return `Language` (not `PostCssLanguage`) across the boundary.
+  2. `VueCssExtractHelper` — multi-method lifecycle EP using opaque `Any?` state. `captureUnusedStyles(file): Any?` returns a `List<CssSelectorSuffix>` opaquely; `optimizeStyles(file, state: Any?)` casts it back with `@Suppress("UNCHECKED_CAST")` inside the impl. This kept `CssSelectorSuffix` (from `intellij.css.analysis`) entirely within the CSS module.
+  3. `VueCssBindingHelper` — single-method EP wrapping `CssClassInJSLiteralOrIdentifierReferenceProvider.getClassesFromEmbeddedContent()` to remove the `intellij.javascript.web.css` dep from the host.
