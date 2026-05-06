@@ -10,8 +10,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -381,7 +383,11 @@ class SeTabDelegate(
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
       val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
 
-      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else null
+      val availableRemoteProviders = when {
+        projectId == null -> null
+        !service<RemoteApiProviderService>().isServiceOperational() -> null
+        else -> SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId)
+      }
 
       val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {
         !frontendOnlyIds.contains(it)
@@ -419,7 +425,7 @@ class SeTabDelegate(
         }
       }.toMap()
 
-      val frontendProvidersFacade = if (project != null) {
+      val frontendProvidersFacade = if (project != null && remoteProviderIds.isNotEmpty()) {
         val remoteProviderIdToName =
           SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), session, dataContextId, remoteProviderIds.toList())
 

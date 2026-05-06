@@ -17,6 +17,14 @@ interface RemoteApiProviderService {
   @VisibleForTesting
   fun listRegisteredApis(): List<String>
 
+  /**
+   * Some API users that have mixed frontend and backend implementations might want to avoid performing the blocking calls
+   * if the backend API is currently unavailable.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun isServiceOperational(): Boolean
+
   companion object {
     suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {
       return withContext(Dispatchers.IO) {

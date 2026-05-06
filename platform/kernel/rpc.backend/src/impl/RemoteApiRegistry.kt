@@ -86,6 +86,10 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     return remoteApis.keys.toList()
   }
 
+  override fun isServiceOperational(): Boolean {
+    return true
+  }
+
   companion object {
     private val LOG = logger<RemoteApiRegistry>()
   }
