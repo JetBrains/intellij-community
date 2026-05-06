@@ -35,6 +35,6 @@ fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
 @get:ApiStatus.Internal
 val BaseDependencyCompletionResult.icon: Icon
   get() = when(source) {
-    LOCAL -> AllIcons.Actions.OfflineMode
-    SERVER -> AllIcons.Webreferences.Server
+    LOCAL -> AllIcons.Build.CompletionLocalCache
+    SERVER -> AllIcons.Build.CompletionCloud
   }
