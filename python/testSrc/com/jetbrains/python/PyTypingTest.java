@@ -3707,7 +3707,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDefaultDictFromDict() {
-    doTest("defaultdict[Any, dict[_KT, Any]]",
+    doTest("defaultdict[Any, dict[Any, Any]]",
            "from collections import defaultdict\n" +
            "expr = defaultdict(dict)");
   }
@@ -6956,7 +6956,8 @@ public class PyTypingTest extends PyTestCase {
     });
   }
 
-  public void testTypeVarDefaultAny() {
+  // TODO: move to PyTypeInferenceCspTest
+  public void testUnconstrainedTypeVarDefaultAny() {
     withNewAnyTypeEnabled(() -> {
       doTest("Any", """
         from typing import Any
@@ -6968,7 +6969,8 @@ public class PyTypingTest extends PyTestCase {
     });
   }
 
-  public void testUnsolvedTypeVar() {
+  // TODO: move to PyTypeInferenceCspTest
+  public void testUnconstrainedTypeVar() {
     withNewAnyTypeEnabled(() -> {
       doTest("Unknown", """
         def f[T]() -> T: ...

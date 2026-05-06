@@ -74,7 +74,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       """)
   }
 
-  fun `test Unbound TV with default 1`() {
+  fun `test Unconstrained TV with default 1`() {
     doTestByText("""
       from typing import assert_type
   
@@ -84,7 +84,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       """)
   }
 
-  fun `test Unbound TV with default 2`() {
+  fun `test Unconstrained TV with default 2`() {
     doTestByText("""
       from typing import assert_type
   
@@ -579,6 +579,19 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       def f[T](t: T) -> T: ...
       
       a: str = <warning descr="Expected type 'str', got 'int' instead">f(1)</warning>
+      """)
+  }
+
+  @TestFor(issues = ["PY-89047"])
+  fun `test Empty list literal does not collapse generic unification to Any`() {
+    doTestByText("""
+      from typing import assert_type
+
+      def foo[T](_0: list[T], _1: list[T]) -> T:
+          raise NotImplementedError
+      
+      assert_type(foo([1], []), int)
+      assert_type(foo([], [1]), int)
       """)
   }
 }
