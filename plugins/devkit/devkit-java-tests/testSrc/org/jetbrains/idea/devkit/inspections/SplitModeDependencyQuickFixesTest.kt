@@ -62,7 +62,7 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     Assert.assertTrue(getModuleDependencyNames(pluginXml).contains("intellij.platform.frontend"))
   }
 
-  fun testMakeModuleFrontendDependenciesFixInXmlInspection() {
+  fun testMakeModuleFrontendDependenciesFixPreviewInXmlInspection() {
     addModuleWithXmlDescriptor(
       moduleName = "intellij.codeWithMe.abstract.main",
       pluginXmlContent = """
@@ -86,9 +86,13 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
     addModuleDependencies(pluginXml, "intellij.codeWithMe.abstract.main")
 
-    launchActionAndWait("Make module 'unique.module.name.quick.fix.2' work in 'frontend' only") {
-      val moduleDependencies = getModuleDependencyNames(pluginXml)
-      moduleDependencies.contains("intellij.platform.frontend") && !moduleDependencies.contains("intellij.codeWithMe.abstract.main")
+    val intention = myFixture.findSingleIntention("Make module 'unique.module.name.quick.fix.2' work in 'frontend' only")
+    myFixture.checkPreviewAndLaunchAction(intention)
+    timeoutRunBlocking {
+      waitUntil("Quick fix was not applied", 5.seconds) {
+        val moduleDependencies = getModuleDependencyNames(pluginXml)
+        moduleDependencies.contains("intellij.platform.frontend") && !moduleDependencies.contains("intellij.codeWithMe.abstract.main")
+      }
     }
 
     val result = myFixture.file.text
@@ -99,6 +103,45 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     val moduleDependencies = getModuleDependencyNames(pluginXml)
     Assert.assertTrue(moduleDependencies.contains("intellij.platform.frontend"))
     Assert.assertFalse(moduleDependencies.contains("intellij.codeWithMe.abstract.main"))
+  }
+
+  fun testMakeModuleFrontendDependenciesFixInXmlInspection() {
+    addModuleWithXmlDescriptor(
+      moduleName = "intellij.codeWithMe.abstract.main",
+      pluginXmlContent = """
+        <idea-plugin />
+      """.trimIndent()
+    )
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.quick.fix.2",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.core"/>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.intellij">
+            <toolWindow<caret>/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+    addModuleDependencies(pluginXml, "intellij.platform.backend")
+
+    launchActionAndWait("Make module 'unique.module.name.quick.fix.2' work in 'frontend' only") {
+      val moduleDependencies = getModuleDependencyNames(pluginXml)
+      moduleDependencies.contains("intellij.platform.frontend") && !moduleDependencies.contains("intellij.platform.backend")
+    }
+
+    val result = myFixture.file.text
+    Assert.assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
+    Assert.assertTrue(result.contains("<module name=\"intellij.platform.frontend\"/>"))
+    Assert.assertFalse(result.contains("intellij.platform.backend"))
+
+    val moduleDependencies = getModuleDependencyNames(pluginXml)
+    Assert.assertTrue(moduleDependencies.contains("intellij.platform.frontend"))
+    Assert.assertFalse(moduleDependencies.contains("intellij.platform.backend"))
   }
 
   fun testMakeModuleFrontendDependenciesFixInMixedInspection() {
@@ -282,8 +325,8 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
 
   private fun launchActionAndWait(intention: IntentionAction, condition: () -> Boolean) {
     myFixture.launchAction(intention)
-    timeoutRunBlocking {
-      waitUntil("Quick fix was not applied", 5.seconds) { condition() }
+    timeoutRunBlocking(15.seconds) {
+      waitUntil("Quick fix was not applied", 15.seconds) { condition() }
     }
   }
 

@@ -35,7 +35,6 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependenc
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
 internal object SplitModeDependencyQuickFixes {
@@ -310,12 +309,8 @@ private fun applyResolvedDependenciesFix(
   val commandName = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
   if (IntentionPreviewUtils.isIntentionPreviewActive()) {
     val removalPlan = buildDependenciesRemovalPlan(ideaPlugin, module, desiredModuleKind)
-    WriteCommandAction.writeCommandAction(project)
-      .withName(commandName)
-      .compute<Unit, Throwable> {
-        applyDependenciesRemovalPlan(ideaPlugin, module, removalPlan)
-        ensureExplicitDependency(ideaPlugin, module, desiredModuleKind)
-      }
+    applyDependenciesRemovalPlan(ideaPlugin, module, removalPlan)
+    ensureExplicitDependency(ideaPlugin, module, desiredModuleKind)
     return
   }
 
