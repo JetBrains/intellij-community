@@ -105,7 +105,7 @@ interface LcrRow<T> {
    */
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
-  var font: Font?
+  var font: Font
 
   /**
    * When set, the copy action copies the entire text from the row instead of just the first non-empty cell.

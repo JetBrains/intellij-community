@@ -9,7 +9,7 @@ import java.awt.Color
 import java.awt.Font
 
 @ApiStatus.Internal
-class LcrTextInitParamsImpl(foreground: Color, font: Font?) : LcrTextInitParams(foreground, font) {
+class LcrTextInitParamsImpl(foreground: Color, font: Font) : LcrTextInitParams(foreground, font) {
 
   var speedSearchField: LcrTextSpeedSearchParams? = null
 

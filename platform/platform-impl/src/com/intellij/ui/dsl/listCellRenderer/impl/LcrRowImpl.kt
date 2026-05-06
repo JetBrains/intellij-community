@@ -35,6 +35,7 @@ import com.intellij.ui.util.minimumHeight
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -52,7 +53,6 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
-import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
@@ -90,7 +90,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
   override var selectable: Boolean = true
-  override var font: Font? = null
+  override var font: Font = StartupUiUtil.labelFont
   override var copyWholeRow: Boolean = false
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
@@ -199,10 +199,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       if (rowHeight == null) {
         val cellMinHeight = when (cell) {
           is LcrIconImpl -> cell.icon.iconHeight
-          is LcrSimpleColoredTextImpl -> {
-            val font = cell.initParams.font
-            if (font == null) 0 else component.getFontMetrics(font).height
-          }
+          is LcrSimpleColoredTextImpl -> component.getFontMetrics(cell.initParams.font).height
           is LcrSwitchImpl -> component.minimumHeight
         }
         minHeight = max(minHeight, cellMinHeight)
@@ -242,7 +239,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     rowWidth = null
     uiInspectorContext = null
     selectable = true
-    font = UIManager.getFont("Label.font")
+    font = StartupUiUtil.labelFont
     copyWholeRow = false
     foreground = if (selected) JBUI.CurrentTheme.List.Selection.foreground(isListFocused) else RenderingUtil.getForeground(list)
   }

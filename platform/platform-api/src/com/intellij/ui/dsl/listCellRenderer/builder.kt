@@ -88,7 +88,9 @@ fun <T> groupedTextListCellRenderer(textExtractor: (T) -> @Nls String?, separato
 @ApiStatus.Internal
 fun <T> comboBoxEditorRenderer(comboBoxEditor: ComboBoxEditor): ListCellRenderer<T> {
   return listCellRenderer {
-    font = comboBoxEditor.editorComponent.font
+    comboBoxEditor.editorComponent.font?.let {
+      font = it
+    }
 
     @Suppress("HardCodedStringLiteral")
     text(UIUtil.htmlInjectionGuard(value)?.toString() ?: "")

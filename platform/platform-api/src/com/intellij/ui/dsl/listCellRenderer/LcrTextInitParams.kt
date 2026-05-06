@@ -10,7 +10,7 @@ import java.awt.RenderingHints
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-abstract class LcrTextInitParams @ApiStatus.Internal constructor(foreground: Color, font: Font?) : LcrInitParams() {
+abstract class LcrTextInitParams @ApiStatus.Internal constructor(foreground: Color, font: Font) : LcrInitParams() {
 
   /**
    * A gray text that is usually used for non-primary information in renderers
@@ -32,7 +32,7 @@ abstract class LcrTextInitParams @ApiStatus.Internal constructor(foreground: Col
   var attributes: SimpleTextAttributes? = null
 
   @Suppress("CanBePrimaryConstructorProperty")
-  var font: Font? = font
+  var font: Font = font
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
