@@ -34,12 +34,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.JavaCoroutines;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,6 +213,18 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
         finally {
           externalUpdateTaskCompleted = true;
         }
+      }
+
+      @Override
+      public Object execute(@NotNull Continuation<? super Unit> continuation) {
+        // we override `execute` to avoid non-cancellable section coming from `MergingUpdateQueue`
+        return JavaCoroutines.suspendJava((cont -> {
+          try {
+            run();
+          } finally {
+            cont.resume(Unit.INSTANCE);
+          }
+        }), continuation);
       }
     });
   }
