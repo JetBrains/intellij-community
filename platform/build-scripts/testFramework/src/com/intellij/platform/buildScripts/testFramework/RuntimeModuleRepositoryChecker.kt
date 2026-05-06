@@ -91,7 +91,8 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
       createCheckers(context).forEach {
         it().use { checker ->
-          checker.checkIntegrityOfEmbeddedFrontend(productModulesModule, softly)
+          checker.checkIntegrityOfEmbeddedFrontend(productModulesModule, useMainGroup = true, softly)
+          checker.checkIntegrityOfEmbeddedFrontend(productModulesModule, useMainGroup = false, softly)
         }
       }
     }
@@ -127,12 +128,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
             .groupBy({ it.first }, { it.second })
         }
         else {
-          val corePluginModuleName = "intellij.frontend.split.customization"
-          val corePluginForFrontendHeader = repository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginModuleName }
-          if (corePluginForFrontendHeader == null) {
-            softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("The header for the core plugin is not found by its module name '$corePluginModuleName'"))
-            return
-          }
+          val corePluginForFrontendHeader = findCorePluginHeaderForFrontend(softly) ?: return
           corePluginForFrontendHeader.includedModules
             .asSequence()
             .filter { it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
@@ -180,14 +176,32 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, softly: SoftAssertions) {
+  private fun findCorePluginHeaderForFrontend(softly: SoftAssertions): RawRuntimePluginHeader? {
+    val corePluginModuleName = "intellij.frontend.split.customization"
+    val corePluginForFrontendHeader = repository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginModuleName }
+    if (corePluginForFrontendHeader == null) {
+      softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("The header for the core plugin is not found by its module name '$corePluginModuleName'"))
+    }
+    return corePluginForFrontendHeader
+  }
+
+  private fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, useMainGroup: Boolean, softly: SoftAssertions) {
     val productModules = loadProductModules(productModulesModule, context.outputProvider, repository)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
     allProductModules[RuntimeModuleId.legacyJpsModule("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
-    val mainModuleGroupPath = FList.singleton("main module group")
-    productModules.mainModuleGroup.includedModules.forEach { mainModule ->
-      collectDependencies(repository, mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
+    if (useMainGroup) {
+      val mainModuleGroupPath = FList.singleton("main module group")
+      productModules.mainModuleGroup.includedModules.forEach { mainModule ->
+        collectDependencies(repository, mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
+      }
+    }
+    else {
+      val corePluginHeader = findCorePluginHeaderForFrontend(softly) ?: return
+      val corePluginHeaderPath = FList.singleton("core plugin header ${corePluginHeader.pluginDescriptorModuleId.presentableName}")
+      corePluginHeader.includedModules.forEach {
+        allProductModules[it.moduleId] = corePluginHeaderPath
+      }
     }
     val pluginHeaders = loadBundledPluginHeaders(productModules, softly)
     pluginHeaders.forEach { header ->
