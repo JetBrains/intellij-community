@@ -96,7 +96,7 @@ class GradleScriptModel(
     val classpathModel: GradleBuildScriptClasspathModel? = null,
 )
 
-private data class GradleKotlinDslScriptEntitySource(
+internal data class GradleKotlinDslScriptEntitySource(
     override val projectPath: String,
     override val phase: GradleSyncPhase,
 ) : GradleKotlinScriptEntitySource

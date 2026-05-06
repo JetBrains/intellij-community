@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
@@ -20,11 +22,13 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
@@ -110,6 +114,19 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         invalidate(virtualFile)
         ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
         load(virtualFile)
+    }
+
+    /**
+     * Drops all entities contributed under [KotlinScriptEntitySource], then rebuilds only the currently open `.kts` files.
+     * Precise owner-specific entities survive because they use a different entity source.
+     * Closed generic scripts are restored lazily on the next editor-driven load.
+     */
+    fun scheduleReloadOpenScripts(): Job = coroutineScope.launchTracked {
+        invalidateAll()
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        for (openFile in collectOpenScriptFiles(project)) {
+            load(openFile)
+        }
     }
 
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
@@ -240,6 +257,12 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         project.workspaceModel.update("removing .kts modules") { it.removeEntity(entity) }
     }
 
+    private suspend fun invalidateAll() {
+        project.workspaceModel.update("removing all .kts entities") { storage ->
+            storage.replaceBySource({ it == KotlinScriptEntitySource }, ImmutableEntityStorage.empty())
+        }
+    }
+
     private fun VirtualFile.findScriptDefinition(): ScriptDefinition {
         val definition = findScriptDefinition(project, VirtualFileScriptSource(this))
         scriptingDebugLog {
@@ -271,6 +294,13 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             HighlightingSettingsPerFile.getInstance(project).incModificationCount()
             project.publishGlobalModuleStateModificationEvent()
             project.publishGlobalScriptModuleStateModificationEvent()
+        }
+
+        private suspend fun collectOpenScriptFiles(project: Project): List<VirtualFile> {
+            return readAction {
+                FileEditorManager.getInstance(project).openFiles
+                    .filter { it.name.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION) }
+            }
         }
     }
 }

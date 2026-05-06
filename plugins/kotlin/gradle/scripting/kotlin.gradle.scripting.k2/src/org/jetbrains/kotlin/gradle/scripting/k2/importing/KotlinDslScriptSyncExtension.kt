@@ -25,19 +25,19 @@ internal class KotlinDslScriptSyncExtension : GradleSyncExtension {
      * [GradleSyncPhase.BaseScript] phase – existing script entities from a previous sync carry
      * `phase = SCRIPT_MODEL_PHASE`, which is later than any [GradleSyncPhase.BaseScript] phase,
      * so the base extension skips them. To ensure a clean slate, this extension explicitly
-     * removes all script entities from [projectStorage] before the base extension runs.
-     * The base extension then writes the fresh base-phase entities from [syncStorage].
+     * removes all Gradle Kotlin DSL entities from [projectStorage] before the base extension runs.
+     * The base extension then writes the fresh base-phase definition entities from [syncStorage].
      *
      * [GradleSyncPhase.Dynamic] phases before [GradleSyncPhase.SCRIPT_MODEL_PHASE] –
      * [syncStorage] accumulates entities within a phase class and is reset between classes.
-     * Script entities were written during the [GradleSyncPhase.BaseScript] class, so [syncStorage] for [GradleSyncPhase.Dynamic]
+     * Base-phase definition entities were written during the [GradleSyncPhase.BaseScript] class, so [syncStorage] for [GradleSyncPhase.Dynamic]
      * phases carries none of them. Without intervention, `replaceBySource` in [GradleBaseSyncExtension]
-     * would delete the base-phase script entities already present in [projectStorage]. To prevent
+     * would delete the base-phase definition entities already present in [projectStorage]. To prevent
      * this, this extension first copies them from [projectStorage] into [syncStorage], so the
      * base extension sees and preserves them.
      *
      * [GradleSyncPhase.Dynamic] phases after [GradleSyncPhase.SCRIPT_MODEL_PHASE] (included) – no action needed.
-     * The [syncStorage] already contains the final script entities. The base extension replaces the base script entities with them.
+     * The [syncStorage] already contains the final script-phase entities. The base extension replaces the base-phase entities with them.
      */
     override fun updateProjectModel(
         context: ProjectResolverContext,
