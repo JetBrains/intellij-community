@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
+import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
+import com.intellij.agent.workbench.sessions.toolwindow.ui.SessionTreeStrictSubstringComparator
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -110,5 +112,44 @@ class AgentSessionsTreeSnapshotTest {
     assertThat(target.path).isEqualTo("/work/project-a-feature")
     assertThat(target.provider).isEqualTo(AgentSessionProvider.CLAUDE)
     assertThat(target.threadId).isEqualTo("thread-1")
+  }
+
+  @Test
+  fun searchTextUsesRenderedThreadTitle() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      id = "codex-1",
+      title = "Recheck and fix BazelTargetsOnly.kt",
+      updatedAt = 100,
+      archived = false,
+      provider = AgentSessionProvider.CODEX,
+    )
+
+    val searchText = sessionTreeNodeSearchText(SessionTreeNode.Thread(project, thread))
+
+    assertThat(searchText).contains("Recheck and fix BazelTargetsOnly.kt")
+    assertThat(searchText).doesNotContain("codex")
+  }
+
+  @Test
+  fun renderedSearchTextDoesNotCreateProviderLetterMatches() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      id = "thread-1",
+      title = "developers",
+      updatedAt = 100,
+      archived = false,
+      provider = AgentSessionProvider.CODEX,
+    )
+
+    val searchText = sessionTreeNodeSearchText(SessionTreeNode.Thread(project, thread))
+
+    assertThat(searchText).isEqualTo("developers")
+    val comparator = SessionTreeStrictSubstringComparator()
+    assertThat(comparator.matchingFragments("desc", searchText)).isNull()
+    assertThat(comparator.matchingFragments("dev", searchText)).isNotNull()
+    assertThat(comparator.matchingFragments("eve", "developers")).isNull()
+    assertThat(comparator.matchingFragments("Desc", "Image Content Description Task")).isNotNull()
+    assertThat(comparator.matchingFragments("desc", "encoded scheme")).isNull()
   }
 }

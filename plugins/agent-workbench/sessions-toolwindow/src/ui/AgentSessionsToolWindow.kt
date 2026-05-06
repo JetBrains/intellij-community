@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
@@ -241,6 +242,12 @@ internal class AgentSessionsToolWindowPanel(
       duplicateProjectNamesProvider = { sessionTreeModel.duplicateProjectNames },
     )
     configureSessionTreeRenderingProperties(tree)
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
+    installSessionTreeSpeedSearchReveal(
+      tree = tree,
+      modelProvider = { sessionTreeModel },
+      stateProvider = { service<AgentSessionReadService>().stateFlow().value },
+    )
     ToolTipManager.sharedInstance().registerComponent(tree)
     com.intellij.util.ui.tree.ExpandOnDoubleClick.DEFAULT.installOn(tree)
   }

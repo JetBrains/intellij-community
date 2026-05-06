@@ -140,6 +140,38 @@ class AgentSessionRefreshOnDemandIntegrationTest {
   }
 
   @Test
+  fun ensureProjectVisibleExpandsClosedProjectVisibleCount() = runBlocking(Dispatchers.Default) {
+    val hiddenProjectPath = "/work/project-hidden"
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            canReportExactThreadCount = true,
+          ),
+        )
+      },
+      projectEntriesProvider = {
+        listOf(
+          closedProjectEntry("/work/project-a", "Project A"),
+          closedProjectEntry("/work/project-b", "Project B"),
+          closedProjectEntry("/work/project-c", "Project C"),
+          closedProjectEntry(hiddenProjectPath, "Project Hidden"),
+        )
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.size == 4
+      }
+
+      service.ensureProjectVisible(hiddenProjectPath)
+
+      assertThat(service.state.value.visibleClosedProjectCount).isEqualTo(4)
+    }
+  }
+
+  @Test
   fun ensureThreadVisibleDoesNotChangeVisibleCountForAlreadyVisibleThread() = runBlocking(Dispatchers.Default) {
     withService(
       sessionSourcesProvider = {

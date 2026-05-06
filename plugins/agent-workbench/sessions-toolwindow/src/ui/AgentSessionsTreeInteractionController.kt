@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -49,9 +48,8 @@ internal class AgentSessionsTreeInteractionController(
 
   fun install() {
     TreeUtil.installActions(tree)
-    TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
     TreeHoverListener.DEFAULT.addTo(tree)
-    EditSourceOnDoubleClickHandler.install(tree, Runnable { activateSelectedNode() })
+    EditSourceOnDoubleClickHandler.install(tree) { activateSelectedNode() }
     installEnterKeyActivation()
     installMouseListeners()
     installTreeExpansionListener()
