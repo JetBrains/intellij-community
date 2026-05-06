@@ -412,6 +412,47 @@ Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.mo
     Assert.assertEquals("backend", recognizedKind.kindId)
   }
 
+  fun testTransitivelyPredefinedSharedDependencyOverridesFrontendSuffix() {
+    addModuleWithXmlDescriptor(
+      moduleName = "intellij.platform.navbar.frontend",
+      descriptorRelativePathToResourcesDirectory = "intellij.platform.navbar.frontend.xml",
+      pluginXmlContent = """
+        <idea-plugin/>
+      """.trimIndent()
+    )
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.40",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.40.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+            <module name="intellij.platform.navbar.frontend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModuleDescriptor = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.41",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.41.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="unique.module.name.40"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(contentModuleDescriptor.virtualFile)
+
+    myFixture.checkHighlighting()
+
+    val recognizedKind = recognizeSplitModeModuleKind(contentModuleDescriptor as com.intellij.psi.xml.XmlFile)
+    Assert.assertNotNull("Module kind should be recognized", recognizedKind)
+    Assert.assertEquals("unique.module.name.41", recognizedKind!!.moduleName)
+    Assert.assertEquals("backend", recognizedKind.kindId)
+  }
+
   private fun assertSharedModuleKindWithContainingPluginsOfDifferentKinds(moduleName: String) {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
     Assert.assertNotNull("Module $moduleName was not created", module)
