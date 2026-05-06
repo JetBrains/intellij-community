@@ -26,7 +26,7 @@ import kotlin.io.path.pathString
 internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
     override val name: String = "Kotlin DSL Script"
 
-    override val phase: GradleSyncPhase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
+    override val phase: GradleSyncPhase = GradleSyncPhase.SCRIPT_MODEL_PHASE
 
     override suspend fun createProjectModel(
         context: ProjectResolverContext, storage: ImmutableEntityStorage
