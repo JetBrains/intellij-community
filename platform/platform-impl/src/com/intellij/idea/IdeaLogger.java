@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -10,7 +10,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Component;
 import java.awt.Graphics;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -40,15 +38,13 @@ public final class IdeaLogger extends JulLogger {
   // when not null, holds the first of errors that occurred
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
 
-  /**
-   * We try to report exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}) judiciously,
-   * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
-   * we print the error message and the stacktrace once in a while.
-   * <p>
-   * {@code -Didea.logger.exception.expiration.minutes=5} means to forget about this particular exception if it didn't occur for five minutes.
-   * <p>
-   * To disable the "mute frequent exceptions" feature completely, specify {@code -Didea.logger.exception.expiration.minutes=0}
-   */
+  /// We try to report exceptions thrown from frequently called methods (e.g. [Component#paint(Graphics)]) judiciously,
+  /// so that instead of polluting the log with hundreds of identical [`LOG.errors`][com.intellij.openapi.diagnostic.Logger#error(Throwable)]
+  /// we print the error message and the stacktrace once in a while.
+  ///
+  /// `-Didea.logger.exception.expiration.minutes=5` means to forget about this particular exception if it didn't occur for five minutes.
+  ///
+  /// To disable the "mute frequent exceptions" feature completely, specify `-Didea.logger.exception.expiration.minutes=0`
   private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
 
   // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
@@ -62,6 +58,8 @@ public final class IdeaLogger extends JulLogger {
       return cache.get(hash + ":" + t, _ -> new AtomicInteger());
     }
   }
+
+  private static final ThreadLocal<Boolean> FUS_RECURSION_GUARD = new ThreadLocal<>();
 
   public static void dropFrequentExceptionsCaches() {
     MyCache.cache.invalidateAll();
@@ -77,50 +75,46 @@ public final class IdeaLogger extends JulLogger {
     var counter = MyCache.getOrCreate(hash, t);
     var occurrences = counter.incrementAndGet();
     if (isFascinatingNumber(occurrences)) {
-      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " +
-           shortenErrorMessage(t.getMessage()));
+      var msg = shortenErrorMessage(t.getMessage());
+      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " + msg);
     }
     return occurrences != 1;
   }
 
-  /**
-   * 2, 5, 10, 20, 50, 100, ...
-   */
+  /// 2, 5, 10, 20, 50, 100, ...
   private static boolean isFascinatingNumber(int number) {
     if (number <= 1) return false;
     while (number % 10 == 0) number /= 10;
     return number == 1 || number == 2 || number == 5;
   }
 
-  private static @NotNull String shortenErrorMessage(@Nullable String message) {
+  private static String shortenErrorMessage(@Nullable String message) {
     if (message == null) return "null";
     int newLine = message.indexOf('\n');
     message = message.substring(0, newLine != -1 ? newLine : message.length());
     return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
-  private static void reportToFus(@NotNull Throwable t) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+  private static void reportToFus(Throwable t) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred() || FUS_RECURSION_GUARD.get() != null) {
       return;
     }
 
-    Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode() || app.isDisposed()) {
-      return;
-    }
-
-    PluginUtil pluginUtil;
+    FUS_RECURSION_GUARD.set(true);
     try {
-      pluginUtil = PluginUtil.getInstance();
+      var app = ApplicationManager.getApplication();
+      if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
+        var pluginUtil = PluginUtil.getInstance();
+        if (pluginUtil != null) {
+          var pluginId = pluginUtil.findPluginId(t);
+          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+          LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+        }
+      }
     }
-    catch (CancellationException e) {
-      return;
-    }
-
-    if (pluginUtil != null) {
-      var pluginId = pluginUtil.findPluginId(t);
-      var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+    catch (Exception _) { }
+    finally {
+      FUS_RECURSION_GUARD.remove();
     }
   }
 
