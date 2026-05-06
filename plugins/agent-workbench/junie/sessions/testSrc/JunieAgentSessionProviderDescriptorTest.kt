@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -27,7 +29,35 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.newSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie")
     assertThat(descriptor.yoloSessionLabelKey).isEqualTo("toolwindow.action.new.session.junie.yolo")
     assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
+    assertThat(descriptor.supportsArchiveThread).isTrue()
+    assertThat(descriptor.supportsUnarchiveThread).isTrue()
+    assertThat(descriptor.archiveRefreshDelayMs).isEqualTo(1_000L)
+    assertThat(descriptor.suppressArchivedThreadsDuringRefresh).isTrue()
     assertThat(descriptor.icon).isNotNull()
+  }
+
+  @Test
+  fun `descriptor delegates archive unarchive and backend rename to Junie index backend`(): Unit = runBlocking(Dispatchers.Default) {
+    val backend = RecordingJunieThreadMutationBackend()
+    val descriptor = JunieAgentSessionProviderDescriptor(
+      threadMutationBackend = backend,
+      executableResolver = { "junie-test" },
+    )
+
+    assertThat(descriptor.archiveThread("/project", "thread-1")).isTrue()
+    assertThat(descriptor.unarchiveThread("/project", "thread-1")).isTrue()
+    val renameHandler = descriptor.threadRenameHandler as AgentThreadRenameHandler.Backend
+    assertThat(renameHandler.supportedContexts).containsExactlyInAnyOrder(
+      AgentThreadRenameContext.TREE_POPUP,
+      AgentThreadRenameContext.EDITOR_TAB,
+    )
+    assertThat(renameHandler.execute("/project", "thread-1", "Renamed thread")).isTrue()
+
+    assertThat(backend.calls).containsExactly(
+      "archive:/project:thread-1",
+      "unarchive:/project:thread-1",
+      "rename:/project:thread-1:Renamed thread",
+    )
   }
 
   @Test
@@ -115,5 +145,24 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.resolvePendingSessionMetadata("junie:session-123", launchSpec)).isNull()
     assertThat(descriptor.resolvePendingSessionMetadata("codex:new-123", launchSpec)).isNull()
     assertThat(descriptor.resolvePendingSessionMetadata("Junie:new-123", launchSpec)).isNull()
+  }
+}
+
+private class RecordingJunieThreadMutationBackend : JunieSessionThreadMutationBackend {
+  val calls = mutableListOf<String>()
+
+  override fun renameThread(path: String, threadId: String, normalizedName: String): Boolean {
+    calls += "rename:$path:$threadId:$normalizedName"
+    return true
+  }
+
+  override fun archiveThread(path: String, threadId: String): Boolean {
+    calls += "archive:$path:$threadId"
+    return true
+  }
+
+  override fun unarchiveThread(path: String, threadId: String): Boolean {
+    calls += "unarchive:$path:$threadId"
+    return true
   }
 }
