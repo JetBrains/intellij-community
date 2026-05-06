@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.plugins.DynamicPlugins
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -33,7 +33,6 @@ import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
-import java.io.File
 import java.io.IOException
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
@@ -47,9 +46,7 @@ private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 
 private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
 
-private val logger = Logger.getInstance(IdeaDecompiler::class.java)
-private const val DECOMPILER_MUST_NOT_BE_CALLED_WITH_WRITE_ACCESS = "Decompiler must not be called with write access"
-
+@Suppress("IO_FILE_USAGE", "SplitModeApiUsage")
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   internal class LegalBurden : FileEditorManagerListener.Before {
     private var showNotice: Boolean = true
@@ -92,7 +89,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           PluginManagerCore.disablePlugin(id)
 
           val plugin = PluginManagerCore.getPlugin(id)
-          if (plugin is IdeaPluginDescriptorImpl && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
+          if (plugin is PluginMainDescriptor && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
             ApplicationManager.getApplication().invokeLater {
               DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
             }
@@ -119,12 +116,10 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
 
   private fun decompile(file: VirtualFile): CharSequence {
-
-    val application = ApplicationManager.getApplication()
-
-    if (application.isEAP && application.isInternal && Registry.`is`("decompiler.assert.thread")) {
-      if ((application.isDispatchThread || application.isWriteAccessAllowed) && !BinaryFileTypeDecompilers.getInstance().isAllowedDecompilerSlowOperation) {
-        logger.error(DECOMPILER_MUST_NOT_BE_CALLED_WITH_WRITE_ACCESS)
+    val app = ApplicationManager.getApplication()
+    if (app.isEAP && app.isInternal && Registry.`is`("decompiler.assert.thread")) {
+      if ((app.isDispatchThread || app.isWriteAccessAllowed) && !BinaryFileTypeDecompilers.getInstance().isAllowedDecompilerSlowOperation) {
+        thisLogger().error("Decompiler must not be called with write access (file=${file.path})")
       }
     }
 
@@ -152,7 +147,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
       val decompiler = BaseDecompiler(provider, saver, options, myLogger.value, IdeaCancellationManager(maxSecProcessingMethod))
-      files.forEach { decompiler.addSource(File(it.path)) }
+      files.forEach { decompiler.addSource(java.io.File(it.path)) }
       try {
         decompiler.decompileContext()
       }
@@ -177,7 +172,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     catch (e: Exception) {
       when {
         e is IdeaLogger.InternalException && e.cause is IOException -> {
-          logger.warn(file.url, e)
+          thisLogger().warn(file.url, e)
           return Strings.EMPTY_CHAR_SEQUENCE
         }
         ApplicationManager.getApplication().isUnitTestMode && e !is ClassFormatException -> throw AssertionError(file.url, e)
@@ -187,7 +182,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   }
 
   private class MyBytecodeProvider(files: List<VirtualFile>) : IBytecodeProvider {
-    private val pathMap = files.associateBy { File(it.path).absolutePath }
+    private val pathMap = files.associateBy { java.io.File(it.path).absolutePath }
 
     override fun getBytecode(externalPath: String, internalPath: String?): ByteArray =
       pathMap[externalPath]?.contentsToByteArray(false) ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
