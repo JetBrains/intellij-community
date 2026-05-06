@@ -169,15 +169,7 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
     Shortcut mouseShortcut = ContainerUtil.find(shortcuts, shortcut -> !shortcut.isKeyboard());
     if (mouseShortcut != null) {
       shortcutText += KeymapUtil.getShortcutText(mouseShortcut);
-      shortcutText = shortcutText.replace("Button1 ", "");
-    }
-    Shortcut keyboardShortcut = ContainerUtil.find(shortcuts, shortcut -> shortcut.isKeyboard());
-    if (keyboardShortcut != null) {
-      if (!shortcutText.isEmpty()) shortcutText += ", ";
-      shortcutText += KeymapUtil.getShortcutText(keyboardShortcut);
-    }
-    if (!shortcutText.isEmpty()) {
-      return shortcutText;
+      return shortcutText.replace("Button1 ", "");
     }
     return "";
   }
