@@ -58,6 +58,7 @@ public interface PyCallableType extends PyType {
    *
    * @see PyCallableParameterListType#getUnpackedParameters
    */
+  @ApiStatus.Experimental
   default @Nullable List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
     return getParameters(context);
   }
