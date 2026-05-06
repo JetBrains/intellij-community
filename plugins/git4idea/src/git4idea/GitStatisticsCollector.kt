@@ -15,19 +15,18 @@ import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitOperationsCollector.REMOTE_CHECK_STRATEGY
 import git4idea.branch.GitBranchUtil
@@ -201,25 +200,38 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
-    val projectLog = project.serviceIfCreated<VcsProjectLog>() ?: return
-    val ui = projectLog.mainUi ?: return
-
-    addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
-    addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
+    addMainTabPropertyMetricIfDiffers(metrics, project, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
+    addAppPropertyMetricIfDiffers(metrics, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
   }
 
-  private fun addPropertyMetricIfDiffers(
+  private fun addMainTabPropertyMetricIfDiffers(
     metrics: MutableSet<MetricEvent>,
-    ui: MainVcsLogUi,
+    project: Project,
     property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
     eventId: VarargEventId,
   ) {
-    val defaultValue = (property as? VcsLogProjectTabsProperties.CustomBooleanTabProperty)?.defaultValue(ui.id)
-                       ?: (property as? VcsLogApplicationSettings.CustomBooleanProperty)?.defaultValue() ?: return
-    val properties = ui.properties
-    val value = if (properties.exists(property)) properties[property] else defaultValue
+    if (property !is VcsLogProjectTabsProperties.CustomBooleanTabProperty) return
+    val tabsProperties = project.serviceIfCreated<VcsLogProjectTabsProperties>() ?: return
+    val tabStates = tabsProperties.state.tabStates[VcsLogManager.MAIN_LOG_ID] ?: return
+    val defaultValue = property.defaultValue(VcsLogManager.MAIN_LOG_ID)
+    val value = tabStates.customBooleanProperties[property.name] ?: return
 
-    if (!Comparing.equal(value, defaultValue)) {
+    if (value != defaultValue) {
+      metrics.add(eventId.metric(EventFields.Enabled with value))
+    }
+  }
+
+  private fun addAppPropertyMetricIfDiffers(
+    metrics: MutableSet<MetricEvent>,
+    property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
+    eventId: VarargEventId,
+  ) {
+    val defaultValue = if (property is VcsLogApplicationSettings.CustomBooleanProperty) property.defaultValue() else return
+    val properties = ApplicationManager.getApplication().serviceIfCreated<VcsLogApplicationSettings>() ?: return
+    if (!properties.exists(property)) return
+    val value = properties[property]
+
+    if (value != defaultValue) {
       metrics.add(eventId.metric(EventFields.Enabled with value))
     }
   }
