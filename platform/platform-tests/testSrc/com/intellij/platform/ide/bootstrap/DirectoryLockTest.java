@@ -243,4 +243,45 @@ public abstract sealed class DirectoryLockTest {
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
   }
+
+  @Test
+  public void activatingWithDelayedExitingProcess() throws Exception {
+    var javaExe = System.getProperty("java.home") + "/bin/java" + (SystemInfo.isWindows ? ".exe" : "");
+    var classpath = System.getProperty("java.class.path");
+    var process = new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), "500").start();
+    try {
+      var configDir = Files.createDirectories(testDir.resolve("c"));
+      var systemDir = Files.createDirectories(testDir.resolve("s"));
+      Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(process.pid()));
+      var lock = createLock(configDir, systemDir);
+      assertNull(lock.lockOrActivate(currentDir, List.of()));
+    }
+    finally {
+      process.destroyForcibly();
+    }
+  }
+
+  @Test
+  public void activatingWithHungProcessTimesOut() throws Exception {
+    var javaExe = System.getProperty("java.home") + "/bin/java" + (SystemInfo.isWindows ? ".exe" : "");
+    var classpath = System.getProperty("java.class.path");
+    var process = new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), "3000").start();
+    try {
+      var configDir = Files.createDirectories(testDir.resolve("c"));
+      var systemDir = Files.createDirectories(testDir.resolve("s"));
+      Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(process.pid()));
+      var lock = createLock(configDir, systemDir);
+      assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of()))
+        .isInstanceOf(CannotActivateException.class);
+    }
+    finally {
+      process.destroyForcibly();
+    }
+  }
+
+  public static final class DummyProcess {
+    public static void main(String[] args) throws InterruptedException {
+      Thread.sleep(Long.parseLong(args[0]));
+    }
+  }
 }

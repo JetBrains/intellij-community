@@ -175,7 +175,7 @@ public final class DirectoryLock {
       var command = ProcessHandle.current().info().command().orElse("???");
       LOG.debug("current command: " + command);
 
-      for (int attempt = 0; attempt < 1; attempt++) {
+      for (int attempt = 0; attempt < 3; attempt++) {
         try {
           return tryListen();
         }
@@ -197,6 +197,26 @@ public final class DirectoryLock {
           var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
           LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
           if (command.equals(otherCommand)) {
+            var competitor = ProcessHandle.of(otherPid).orElse(null);
+            if (competitor != null) {
+              try {
+                LOG.info("Old process detected (PID " + otherPid + "). Waiting up to 1s for it to exit...");
+                competitor.onExit().get(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+                LOG.info("Old process (PID " + otherPid + ") has exited.");
+                continue; // Process exited! Loop again to grab the lock
+              }
+              catch (java.util.concurrent.TimeoutException e) {
+                LOG.warn("Timeout waiting for old process (PID " + otherPid + ") to exit.");
+              }
+              catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // Restore the interrupted status
+                LOG.warn("Interrupted while waiting for old process (PID " + otherPid + ") to exit.");
+              }
+              catch (Exception e) {
+                // Catch other potential runtime exceptions
+                LOG.warn("Error while waiting for old process (PID " + otherPid + ") to exit: " + e.getMessage(), e);
+              }
+            }
             cannotActivate(command, otherPid, suppressed);
           }
         }
