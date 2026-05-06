@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm'
@@ -12,7 +10,6 @@ repositories {
     mavenCentral()
 }
 java {
-    setTargetCompatibility(JavaVersion.VERSION_1_8)
 }
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
@@ -23,13 +20,6 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-compileKotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
-    }
-}
-compileTestKotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
-    }
+kotlin {
+    jvmToolchain(8)
 }

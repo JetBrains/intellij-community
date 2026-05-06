@@ -18,7 +18,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
@@ -55,7 +54,7 @@ import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 
-open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
+class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     private lateinit var foojayPropertyMap: Map<String, String>
     override fun setUp() {
         super.setUp()
@@ -79,9 +78,8 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         )
 
         val counter = AtomicInteger(0)
-        val myDisposable = Disposer.newDisposable()
         try {
-            val connection = myProject.messageBus.connect(myDisposable)
+            val connection = myProject.messageBus.connect(testRootDisposable)
             connection.subscribe(Notifications.TOPIC, object : Notifications {
                 override fun notify(notification: Notification) {
                     if (notificationText == notification.content) {
@@ -118,7 +116,8 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             )
 
             // Should show notification if the bundled version > external compiler version
-            val shouldShowNotification = kotlinVersion.isRelease && kotlinVersion.kotlinVersion.dropHotfixPart > externalCompilerVersion!!.kotlinVersion
+            val shouldShowNotification =
+                kotlinVersion.isRelease && kotlinVersion.kotlinVersion.dropHotfixPart > externalCompilerVersion!!.kotlinVersion
             val expectedCountAfter = if (shouldShowNotification) 1 else 0
             runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
             connection.deliverImmediately() // the first notification from import action
@@ -143,7 +142,6 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             }
         } finally {
             propertiesComponent.unsetValue(propertyKey)
-            Disposer.dispose(myDisposable)
         }
     }
 
@@ -253,54 +251,54 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureAllModulesInJvmProjectGroovy() {
-        doTest("1.8.0", listOf("project", "project.app")) { files ->
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureAllModulesInJvmProjectKts() {
-        doTest("1.8.0", listOf("project", "project.app")) { files ->
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureRootModuleInJvmProjectGroovy() {
-        doTest("1.8.0", listOf("project")) { files ->
+        doTest("2.3.0", listOf("project")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureRootModuleInJvmProjectKts() {
-        doTest("1.8.0", listOf("project")) { files ->
+        doTest("2.3.0", listOf("project")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureSubModuleInJvmProjectGroovy() {
-        doTest("1.8.0", listOf("project.app")) { files ->
+        doTest("2.2.0", listOf("project.app")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
     }
 
     @Test
-    @TargetVersions("<=6.8.3")
+    @TargetVersions("7.6+")
     fun testConfigureSubModuleInJvmProjectKts() {
-        doTest("1.8.0", listOf("project.app")) { files ->
+        doTest("2.2.0", listOf("project.app")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
         }
@@ -343,7 +341,7 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     private fun runJvmToolchainTest() {
-        doTest("1.8.0", listOf("project")) { files ->
+        doTest("2.3.20", listOf("project")) { files ->
             checkFiles(files, foojayPropertyMap)
         }
     }
@@ -399,11 +397,11 @@ open class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     /* This test doesn't work because configureEach is lazy and target compatibility is calculated on the base of installed on a machine JDK
     or using Gradle JDK. May be fixed in KTIJ-25827
      */
-/*    @Test
-    @TargetVersions("5.6.4")
-    fun testTakeTargetCompatibilityFromConfigureEachKts() {
-        runJvmToolchainTest()
-    }*/
+    /*    @Test
+        @TargetVersions("5.6.4")
+        fun testTakeTargetCompatibilityFromConfigureEachKts() {
+            runJvmToolchainTest()
+        }*/
 
     @Test
     @TargetVersions("7.6+")
