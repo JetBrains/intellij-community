@@ -50,6 +50,11 @@
 c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.execution.wsl.AbstractWslDistribution
 - *:getUNCRootPath():java.nio.file.Path
+*f:com.intellij.formatting.LineWrappingUtil
+- sf:WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY:com.intellij.openapi.util.Key
+- <init>():V
+- s:doWrapLongLinesIfNecessary(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I,I,java.util.List,I):V
+- s:wrapLongLinesIfNecessary(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.List,I):V
 *:com.intellij.frontend.HostIdeInfoService
 - a:getHostInfo():com.intellij.frontend.HostInfo
 *f:com.intellij.frontend.HostInfo
