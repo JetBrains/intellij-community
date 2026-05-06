@@ -17,19 +17,18 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 import org.jetbrains.kotlin.psi.buildExpression
-import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 
 private val HASH_CODE_CALLABLE_ID = CallableId(StandardClassIds.Any, StandardNames.HASHCODE_NAME)
 
@@ -68,7 +67,7 @@ internal class NullableHashCodeInspection : KotlinApplicableInspectionBase.Simpl
 
             override fun applyFix(project: Project, element: KtBinaryExpression, updater: ModPsiUpdater) {
                 val receiver = element.getHashCodeSafeQualifiedExpression()?.receiverExpression ?: return
-                val targetExpression = element.getTopmostParentOfType<KtParenthesizedExpression>() ?: element
+                val targetExpression = element.getTopmostParenthesizedExpressionOrSelf()
                 val commentSaver = CommentSaver(targetExpression)
                 val newElement = KtPsiFactory(project).buildExpression {
                     appendExpression(receiver)

@@ -2872,6 +2872,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/nullableHashCode/parenthesizedCall.kt");
         }
 
+        @TestMetadata("parenthesizedInsideBinaryExpression.kt")
+        public void testParenthesizedInsideBinaryExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableHashCode/parenthesizedInsideBinaryExpression.kt");
+        }
+
         @TestMetadata("parenthesizedReceiver.kt")
         public void testParenthesizedReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/nullableHashCode/parenthesizedReceiver.kt");

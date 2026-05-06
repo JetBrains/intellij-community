@@ -9306,6 +9306,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/nullableHashCode/parenthesizedCall.kt");
         }
 
+        @TestMetadata("parenthesizedInsideBinaryExpression.kt")
+        public void testParenthesizedInsideBinaryExpression() throws Exception {
+            runTest("testData/inspectionsLocal/nullableHashCode/parenthesizedInsideBinaryExpression.kt");
+        }
+
         @TestMetadata("parenthesizedReceiver.kt")
         public void testParenthesizedReceiver() throws Exception {
             runTest("testData/inspectionsLocal/nullableHashCode/parenthesizedReceiver.kt");
