@@ -148,6 +148,19 @@ class NioFileSystemTree(
     fileTreeModel.invalidate()
   }
 
+  fun setRoots(roots: List<UniversalFileChooserContributor.Root>) {
+    fileTreeModel.setContributorRoots(roots)
+  }
+
+  fun matchRoot(path: Path): Path? {
+    return fileTreeModel.matchRoot(path)
+  }
+
+  fun getSelectedVirtualRoot(): UniversalFileChooserContributor.Root? {
+    val component = myTree.selectionPath?.lastPathComponent as? NioFileNode ?: return null
+    return fileTreeModel.getVirtualRoot(component)
+  }
+
   private fun subscribeToChanges(path: Path) {
     if (fileWatcherAdapter == null) return
     if (subscriptionJobs.containsKey(path)) return
@@ -318,7 +331,7 @@ class NioFileSystemTree(
     @JvmStatic
     fun getVirtualFile(path: TreePath): VirtualFile? {
       val component = path.lastPathComponent
-      if (component is NioFileNode) {
+      if (component is NioFileNode && component.path != null) {
         return LocalFileSystem.getInstance().findFileByNioFile(component.path)
       }
       return null

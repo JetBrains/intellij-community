@@ -14,7 +14,7 @@ import javax.swing.Icon
  * A tree node backed by a [Path].
  */
 @ApiStatus.Internal
-open class NioFileNode internal constructor(val path: Path) {
+open class NioFileNode internal constructor(val path: Path?) {
   private val iconRef = AtomicReference<Icon?>()
   private val nameRef = AtomicReference<@NlsSafe String?>()
   private val commentRef = AtomicReference<@NlsSafe String?>()

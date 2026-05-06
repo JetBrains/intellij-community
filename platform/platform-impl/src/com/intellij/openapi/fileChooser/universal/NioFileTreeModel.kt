@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.icons.PredefinedIconOverlayService
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.ui.tree.MapBasedTree
 import com.intellij.ui.tree.MapBasedTree.Entry
 import com.intellij.util.PlatformIcons
@@ -17,11 +17,9 @@ import com.intellij.util.io.PlatformNioHelper
 import com.intellij.util.ui.tree.AbstractTreeModel
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 import kotlin.io.path.invariantSeparatorsPathString
@@ -32,31 +30,41 @@ import kotlin.io.path.invariantSeparatorsPathString
  * but does not use the Virtual File System (VFS) internally.
  */
 @ApiStatus.Internal
-class NioFileTreeModel @JvmOverloads constructor(
+class NioFileTreeModel(
   descriptor: FileChooserDescriptor,
   sortDirectories: Boolean = true,
 ) : AbstractTreeModel(), InvokerSupplier {
 
   companion object {
-    @JvmField
-    val SYSTEM_ROOTS_FILTER: DataKey<Predicate<Path>> = DataKey.create("nio.file.tree.model.system.roots.filter")
 
     private val LOG = Logger.getInstance(NioFileTreeModel::class.java)
 
     private fun fileName(path: Path): String {
-      val name = path.getFileName()
-      return name?.toString() ?: path.toString()
+      val contributor = UniversalFileChooserContributor.findOwner(path)
+      return contributor?.getFileName(path) ?: path.toString()
     }
   }
 
   private val invoker: Invoker = Invoker.forBackgroundThreadWithoutReadAction(this)
   private val state: State = State(descriptor, sortDirectories, this)
+
+  @Volatile
+  private var contributorRoots: List<UniversalFileChooserContributor.Root> = emptyList()
+
   @Volatile
   private var roots: List<Root>? = null
 
   fun invalidate() {
     invoker.invoke {
       roots?.forEach { it.tree.invalidate() }
+      treeStructureChanged(state.path, null, null)
+    }
+  }
+
+  fun setContributorRoots(newRoots: List<UniversalFileChooserContributor.Root>) {
+    invoker.invoke {
+      contributorRoots = newRoots
+      roots = null
       treeStructureChanged(state.path, null, null)
     }
   }
@@ -132,16 +140,11 @@ class NioFileTreeModel @JvmOverloads constructor(
     return null
   }
 
-  fun resetRoots() {
-    invoker.invoke {
-      roots = null
-      treeStructureChanged(state.path, null, null)
-    }
-  }
-
-
   fun matchRoot(path: Path): Path? =
-    state.getRoots().firstOrNull { root -> root.path.invariantSeparatorsPathString == path.invariantSeparatorsPathString }?.path
+    state.getRoots().firstOrNull { root -> root.path?.invariantSeparatorsPathString == path.invariantSeparatorsPathString }?.path
+
+  fun getVirtualRoot(node: NioFileNode): UniversalFileChooserContributor.Root? =
+    (node as? VirtualRoot)?.contributorRoot
 
 
   private data class ChildEntry(
@@ -208,16 +211,19 @@ class NioFileTreeModel @JvmOverloads constructor(
       if (!model.invoker.isValidThread) {
         LOG.error(IllegalStateException(Thread.currentThread().name))
       }
-      val files = descriptorRoots ?: getSystemRoots()
-      if (files.isEmpty()) return emptyList()
-      return files.map { file -> Root(this, file) }
+      if (descriptorRoots != null) {
+        val files = descriptorRoots
+        if (files.isEmpty()) return emptyList()
+        return files.map { file -> Root(this, file) }
+      }
+      val files = model.contributorRoots.mapNotNull { it.path }
+      val virtualRoots = model.contributorRoots.filter { it.path == null }
+      if (files.isEmpty() && virtualRoots.isEmpty()) return emptyList()
+      val realRootNodes = files.map { file -> Root(this, file) }
+      val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, root) }
+      return realRootNodes + virtualRootNodes
     }
 
-    private fun getSystemRoots(): List<Path> {
-      val rootsFilter = descriptor.getUserData(SYSTEM_ROOTS_FILTER)
-      val systemRoots = FileSystems.getDefault().rootDirectories.toList()
-      return if (rootsFilter != null) systemRoots.filter { rootsFilter.test(it) } else systemRoots
-    }
 
     override fun toString(): String = descriptor.title
 
@@ -242,13 +248,14 @@ class NioFileTreeModel @JvmOverloads constructor(
     }
   }
 
-  private open class Node(path: Path, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) : NioFileNode(path) {
+  private open class Node(path: Path?, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) : NioFileNode(path) {
     init {
       updateContent(attrs, isDirectory)
     }
 
-    private fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
+    protected open fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
       val p = path
+      check(p != null)
       updateName(fileName(p))
       if (attrs != null) {
         val directory = isDirectory ?: attrs.isDirectory
@@ -282,15 +289,16 @@ class NioFileTreeModel @JvmOverloads constructor(
     override fun toString(): String = name ?: ""
   }
 
-  private class Root(state: State, path: Path, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) : Node(path, attrs, isDirectory) {
+  private open class Root(state: State, path: Path?, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) :
+    Node(path, attrs, isDirectory) {
     val tree: MapBasedTree<Path, Node> = MapBasedTree(false, { it.path }, state.path)
 
     init {
       tree.updateRoot(Pair.create(this, attrs?.let { !(isDirectory ?: it.isDirectory) } ?: State.isLeaf(path)))
     }
 
-    fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
-      val children = state.getChildrenWithAttributes(parent.node.path)
+    open fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
+      val children = parent.node.path?.let{ state.getChildrenWithAttributes(it) }
         ?: return tree.update(parent, null)
       if (children.isEmpty()) return tree.update(parent, emptyList())
       return tree.update(parent, children
@@ -304,5 +312,25 @@ class NioFileTreeModel @JvmOverloads constructor(
             Pair.create(Node(entry.path, entry.attrs, entry.isDirectory), !entry.isDirectory)
         })
     }
+  }
+
+  private class VirtualRoot(
+    state: State,
+    val contributorRoot: UniversalFileChooserContributor.Root,
+  ) : Root(state, null) {
+    init {
+      updateName(contributorRoot.presentation.presentableName)
+      updateIcon(contributorRoot.presentation.icon ?: EmptyIcon.ICON_16)
+      updateValid(true)
+    }
+
+    override fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
+    }
+
+    override fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
+      return tree.update(parent, emptyList())
+    }
+
+    override fun toString(): String = name ?: ""
   }
 }

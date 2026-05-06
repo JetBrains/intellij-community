@@ -8,7 +8,7 @@ import java.nio.file.Path
 internal class LocalFileChooserContributor : UniversalFileChooserContributor {
   override val tabTitle: String = "Local"
 
-  override fun getRoots(): List<Path> = getFilteredSystemRoots { path -> ownsPath(path) }
+  override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = getFilteredSystemRoots { path -> ownsPath(path) }
 
   override fun ownsPath(path: Path): Boolean = path.asEelPath().descriptor is LocalEelDescriptor
 

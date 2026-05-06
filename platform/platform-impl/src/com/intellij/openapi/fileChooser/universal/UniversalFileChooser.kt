@@ -17,7 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
-import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.VirtualRoot
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Root
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -49,7 +49,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
@@ -78,8 +77,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BooleanSupplier
-import java.util.function.Predicate
-import javax.swing.DefaultListModel
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
@@ -358,9 +355,9 @@ object UniversalFileChooser {
         override fun update(e: AnActionEvent) {
           val fileView = getActiveFileView()
           if (fileView == null) { e.presentation.isVisible = false; return }
-          val selectedVirtualRoot = fileView.virtualRootList.selectedValue
           e.presentation.icon = AllIcons.Actions.Execute
           e.presentation.text = IdeBundle.message("universal.file.chooser.action.mount.status.unmounted")
+          val selectedVirtualRoot = fileView.fileTree.getSelectedVirtualRoot()
           if (selectedVirtualRoot != null) {
             e.presentation.isVisible = true
             e.presentation.isEnabled = !fileView.isMountActionInProgress
@@ -383,7 +380,7 @@ object UniversalFileChooser {
 
         override fun actionPerformed(e: AnActionEvent) {
           val fileView = getActiveFileView() ?: return
-          val selectedVirtualRoot = fileView.virtualRootList.selectedValue
+          val selectedVirtualRoot = fileView.fileTree.getSelectedVirtualRoot()
           if (selectedVirtualRoot != null) {
             fileView.isMountActionInProgress = true
             fileView.cacheUpdateJob?.cancel()
@@ -402,29 +399,28 @@ object UniversalFileChooser {
             }
             return
           }
-          fileView.fileTree.getSelectedFile()?.let { selected ->
-            val root = selected.root
-            fileView.isMountActionInProgress = true
-            fileView.cacheUpdateJob?.cancel()
-            fileView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
-            scope.launch {
-              try {
-                withContext(Dispatchers.IO) {
-                  val status = fileView.contributor.getMountStatus(root)
-                  if (status == MountStatus.Unmounted) {
-                    fileView.contributor.mount(root)
-                  }
+          val selected = fileView.fileTree.getSelectedFile() ?: return
+          val root = selected.root
+          fileView.isMountActionInProgress = true
+          fileView.cacheUpdateJob?.cancel()
+          fileView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+          scope.launch {
+            try {
+              withContext(Dispatchers.IO) {
+                val status = fileView.contributor.getMountStatus(root)
+                if (status == MountStatus.Unmounted) {
+                  fileView.contributor.mount(root)
                 }
-                fileView.fileToSelect = root
               }
-              finally {
-                fileView.topComponent.cursor = Cursor.getDefaultCursor()
-                fileView.isMountActionInProgress = false
-                fileView.startCacheUpdates()
-                fileView.loadRoots()
-                runOnEdt {
-                  fileView.fileTree.updateTree()
-                }
+              fileView.fileToSelect = root
+            }
+            finally {
+              fileView.topComponent.cursor = Cursor.getDefaultCursor()
+              fileView.isMountActionInProgress = false
+              fileView.startCacheUpdates()
+              fileView.loadRoots()
+              runOnEdt {
+                fileView.fileTree.updateTree()
               }
             }
           }
@@ -576,7 +572,7 @@ object UniversalFileChooser {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
       val roots: MutableList<String> = mutableListOf()
-      private val virtualRootMap: MutableMap<Path, VirtualRoot> = ConcurrentHashMap()
+
       var fileToSelect: Path? = null
       private val breadcrumbs = Breadcrumbs()
       private var currentCrumbs: List<FileCrumb> = emptyList()
@@ -596,9 +592,6 @@ object UniversalFileChooser {
       private val tree = Tree()
       val mountStatusCache: MutableMap<String, MountStatus> = ConcurrentHashMap()
       private val presentationCache: MutableMap<String, UniversalFileChooserContributor.Presentation> = ConcurrentHashMap()
-      private val virtualRootListModel = DefaultListModel<VirtualRoot>()
-      val virtualRootList: JBList<VirtualRoot> = JBList(virtualRootListModel)
-      private val virtualRootScrollPane: JComponent
 
       @Volatile
       var cacheUpdateJob: Job? = null
@@ -608,8 +601,6 @@ object UniversalFileChooser {
 
       init {
         val descriptorCopy = FileChooserDescriptor(descriptor)
-        descriptorCopy.putUserData(NioFileTreeModel.SYSTEM_ROOTS_FILTER,
-                                   Predicate { path: Path? -> path != null && roots.contains(path.invariantSeparatorsPathString) })
 
         tree.isRootVisible = false
         tree.showsRootHandles = true
@@ -665,31 +656,13 @@ object UniversalFileChooser {
           }
         })
 
-        virtualRootList.selectionMode = ListSelectionModel.SINGLE_SELECTION
-        virtualRootList.cellRenderer = listCellRenderer("") {
-          text(" ")
-          icon(value.presentation.icon ?: AllIcons.Nodes.Folder)
-          text(value.presentation.presentableName)
-        }
-        virtualRootList.addListSelectionListener {
-          tree.clearSelection()
-          topToolbar.updateActionsAsync()
-        }
         tree.addTreeSelectionListener {
-          if (tree.selectionCount > 0 && !virtualRootList.isSelectionEmpty) {
-            virtualRootList.clearSelection()
-          }
           topToolbar.updateActionsAsync()
         }
-
-        virtualRootScrollPane = ScrollPaneFactory.createScrollPane(virtualRootList).apply { isVisible = false }
-        val treeContentPanel = JPanel(BorderLayout())
-        treeContentPanel.add(virtualRootScrollPane, BorderLayout.NORTH)
-        treeContentPanel.add(scrollPane, BorderLayout.CENTER)
 
         val loadingLabel = JBLabel(IdeBundle.message("universal.file.chooser.label.loading"), SwingConstants.CENTER)
         contentPanel.add(loadingLabel, LOADING_CARD)
-        contentPanel.add(treeContentPanel, TREE_CARD)
+        contentPanel.add(scrollPane, TREE_CARD)
 
         val mainPanel = panel {
           row {
@@ -716,36 +689,27 @@ object UniversalFileChooser {
         cardLayout.show(contentPanel, LOADING_CARD)
         scope.launch {
           withContext(Dispatchers.IO) {
-            val elements = contributor.getRoots()
-            val fetchedVirtualRoots = contributor.getVirtualRoots()
+            val allRoots = contributor.getRoots()
+            val realRoots = allRoots.filter { it.path != null }
             val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
-            for (element in elements) {
-              val presentation = contributor.getPresentation(element)
+            for (root in realRoots) {
+              val presentation = contributor.getPresentation(root.path!!)
               if (presentation != null) {
-                presentations[element.invariantSeparatorsPathString] = presentation
+                presentations[root.path!!.invariantSeparatorsPathString] = presentation
               }
             }
             runOnEdt {
               roots.clear()
-              roots.addAll(elements.map { it.invariantSeparatorsPathString })
+              roots.addAll(realRoots.map { it.path!!.invariantSeparatorsPathString })
               presentationCache.clear()
               presentationCache.putAll(presentations)
-              virtualRootMap.clear()
-              virtualRootListModel.clear()
-              for (vr in fetchedVirtualRoots) {
-                val path = runCatching { Path.of(vr.id) }.getOrNull() ?: continue
-                if (path.invariantSeparatorsPathString !in roots) {
-                  virtualRootMap[path] = vr
-                  virtualRootListModel.addElement(vr)
-                }
-              }
-              virtualRootScrollPane.isVisible = virtualRootListModel.size() > 0
               mountStatusCache.clear()
-              ((tree.model as AsyncTreeModel).model as NioFileTreeModel).resetRoots()
+              fileTree.setRoots(allRoots)
+              fileTree.updateTree()
               cardLayout.show(contentPanel, TREE_CARD)
               fileToSelect?.let {
-                val selection = if ( it.root == it ) {
-                  ((tree.model as AsyncTreeModel).model as NioFileTreeModel).matchRoot(it)
+                val selection = if (it.root == it) {
+                  fileTree.matchRoot(it)
                 } else it
                 fileTree.select(selection, null)
               }
@@ -900,7 +864,10 @@ object UniversalFileChooser {
 
       private class FileCrumb(val file: Path) : Crumb {
         @NlsSafe
-        override fun getText(): String = file.name.ifEmpty { file.pathString }
+        override fun getText(): String {
+          val contributor = UniversalFileChooserContributor.findOwner(file)
+          return contributor?.getFileName(file) ?: file.name.ifEmpty { file.pathString }
+        }
 
         @NlsSafe
         override fun getTooltip(): String = file.pathString

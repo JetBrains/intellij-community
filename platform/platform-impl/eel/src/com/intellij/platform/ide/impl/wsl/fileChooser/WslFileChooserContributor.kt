@@ -13,7 +13,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
 
   override val tabTitle: String = "WSL"
 
-  override fun getRoots(): List<Path> = getFilteredSystemRoots { path -> ownsPath(path) }
+  override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = getFilteredSystemRoots { path -> ownsPath(path) }
 
   override fun ownsPath(path: Path): Boolean = path.asEelPath().descriptor is WslEelDescriptor
 

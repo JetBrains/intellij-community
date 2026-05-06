@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -24,7 +25,7 @@ interface UniversalFileChooserContributor {
   @get:Nls(capitalization = Nls.Capitalization.Title)
   val tabTitle: String
 
-  fun getRoots(): List<Path>
+  suspend fun getRoots(): List<Root>
 
   fun ownsPath(path: Path): Boolean
 
@@ -32,15 +33,14 @@ interface UniversalFileChooserContributor {
 
   suspend fun mount(path: Path) {}
 
-  fun getVirtualRoots(): List<VirtualRoot> = emptyList()
-
-  suspend fun mountVirtualRoot(virtualRoot: VirtualRoot): Path? = null
+  suspend fun mountVirtualRoot(virtualRoot: Root): Path? = null
 
   fun getFileWatcherAdapter(): FileWatcherAdapter? = null
 
-  data class VirtualRoot(
+  data class Root(
     val id: String,
-    val presentation: Presentation
+    val presentation: Presentation,
+    val path : Path? = null
   )
 
   data class Presentation(
@@ -49,8 +49,18 @@ interface UniversalFileChooserContributor {
   )
 
   suspend fun getPresentation(path: Path): Presentation? = null
+
+  fun getFileName(path: Path): String? = path.fileName?.toString()
 }
 
-fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<Path> {
-  return FileSystems.getDefault().getRootDirectories().filter(predicate)
+fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<UniversalFileChooserContributor.Root> {
+  return FileSystems.getDefault().getRootDirectories().filter(predicate).map { asDefaultRoot(it) }
+}
+
+fun asDefaultRoot(path: Path): UniversalFileChooserContributor.Root {
+  val name = path.fileName?.toString() ?: path.toString()
+  return UniversalFileChooserContributor.Root(
+    name,
+    UniversalFileChooserContributor.Presentation(name, AllIcons.Empty),
+    path)
 }
