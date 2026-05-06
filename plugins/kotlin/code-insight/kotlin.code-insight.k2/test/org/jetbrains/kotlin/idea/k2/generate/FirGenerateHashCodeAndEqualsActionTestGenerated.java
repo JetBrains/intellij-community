@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.generate;
 
@@ -63,6 +63,11 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
     @TestMetadata("enum.kt")
     public void testEnum() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/enum.kt");
+    }
+
+    @TestMetadata("existingHashCode.kt")
+    public void testExistingHashCode() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/existingHashCode.kt");
     }
 
     @TestMetadata("explicitDefaultAccessors.kt")

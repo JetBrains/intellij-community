@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Icon;
@@ -32,8 +33,11 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   protected final C myClass;
 
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myEqualsPanel;
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myHashCodePanel;
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myNonNullPanel;
   protected final Map<M, I> myFieldsToHashCode;
   protected final Map<M, I> myFieldsToNonNull;

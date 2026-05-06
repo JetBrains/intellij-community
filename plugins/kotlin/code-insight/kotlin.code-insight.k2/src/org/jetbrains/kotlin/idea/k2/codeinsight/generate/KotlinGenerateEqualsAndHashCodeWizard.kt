@@ -58,7 +58,7 @@ class KotlinGenerateEqualsAndHashCodeWizard(
             }
 
             private fun updateMemberInfos(ktClass: KtClass, memberFilters: MemberFilters) {
-                myEqualsPanel.table.setMemberInfos(
+                myEqualsPanel?.table?.setMemberInfos(
                     memberInfos.filter { memberFilters.isApplicableForEqualsInClass(it.member, ktClass) }
                 )
                 membersToHashCode.values.forEach { memberInfo ->
@@ -81,7 +81,7 @@ class KotlinGenerateEqualsAndHashCodeWizard(
     }
 
     private fun setTableState(isEnabled: Boolean) {
-        myEqualsPanel.table.isEnabled = isEnabled
-        myHashCodePanel.table.isEnabled = isEnabled
+        myEqualsPanel?.table?.isEnabled = isEnabled
+        myHashCodePanel?.table?.isEnabled = isEnabled
     }
 }
