@@ -13,10 +13,14 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import javax.swing.Icon
 
 internal class JunieAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = JunieSessionSource(),
+  private val threadMutationBackend: JunieSessionThreadMutationBackend =
+    (sessionSource as? JunieSessionSource)?.sessionIndexStore ?: JunieSessionIndexStore(),
   private val executableResolver: suspend () -> String = JunieCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
@@ -42,6 +46,27 @@ internal class JunieAgentSessionProviderDescriptor(
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
+
+  override val archiveRefreshDelayMs: Long
+    get() = 1_000L
+
+  override val suppressArchivedThreadsDuringRefresh: Boolean
+    get() = true
+
+  override val supportsArchiveThread: Boolean
+    get() = true
+
+  override val supportsUnarchiveThread: Boolean
+    get() = true
+
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
+    override val supportedContexts: Set<AgentThreadRenameContext>
+      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+
+    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
+      return threadMutationBackend.renameThread(path, threadId, normalizedName)
+    }
+  }
 
   override fun isCliAvailable(): Boolean = JunieCliSupport.isAvailable()
 
@@ -92,6 +117,14 @@ internal class JunieAgentSessionProviderDescriptor(
       return null
     }
     return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = resolveLaunchMode(launchSpec))
+  }
+
+  override suspend fun archiveThread(path: String, threadId: String): Boolean {
+    return threadMutationBackend.archiveThread(path, threadId)
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    return threadMutationBackend.unarchiveThread(path, threadId)
   }
 }
 
