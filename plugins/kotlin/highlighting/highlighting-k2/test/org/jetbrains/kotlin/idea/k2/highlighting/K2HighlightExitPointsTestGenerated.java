@@ -340,6 +340,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../../idea/tests/testData/exitPoints/loopWithContinueWithNonLocalBreak.kt");
     }
 
+    @TestMetadata("minusEqBuildSet.kt")
+    public void testMinusEqBuildSet() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/minusEqBuildSet.kt");
+    }
+
     @TestMetadata("notInline1.kt")
     public void testNotInline1() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/notInline1.kt");
@@ -358,6 +363,21 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
     @TestMetadata("notReturnedLabeledExpression.kt")
     public void testNotReturnedLabeledExpression() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/notReturnedLabeledExpression.kt");
+    }
+
+    @TestMetadata("plusEqBuildList.kt")
+    public void testPlusEqBuildList() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/plusEqBuildList.kt");
+    }
+
+    @TestMetadata("plusEqBuildListNested.kt")
+    public void testPlusEqBuildListNested() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/plusEqBuildListNested.kt");
+    }
+
+    @TestMetadata("plusEqBuildMap.kt")
+    public void testPlusEqBuildMap() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/plusEqBuildMap.kt");
     }
 
     @TestMetadata("receiverResolution.kt")

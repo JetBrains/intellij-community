@@ -340,6 +340,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/loopWithContinueWithNonLocalBreak.kt");
     }
 
+    @TestMetadata("minusEqBuildSet.kt")
+    public void testMinusEqBuildSet() throws Exception {
+        runTest("testData/exitPoints/minusEqBuildSet.kt");
+    }
+
     @TestMetadata("notInline1.kt")
     public void testNotInline1() throws Exception {
         runTest("testData/exitPoints/notInline1.kt");
@@ -358,6 +363,21 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("notReturnedLabeledExpression.kt")
     public void testNotReturnedLabeledExpression() throws Exception {
         runTest("testData/exitPoints/notReturnedLabeledExpression.kt");
+    }
+
+    @TestMetadata("plusEqBuildList.kt")
+    public void testPlusEqBuildList() throws Exception {
+        runTest("testData/exitPoints/plusEqBuildList.kt");
+    }
+
+    @TestMetadata("plusEqBuildListNested.kt")
+    public void testPlusEqBuildListNested() throws Exception {
+        runTest("testData/exitPoints/plusEqBuildListNested.kt");
+    }
+
+    @TestMetadata("plusEqBuildMap.kt")
+    public void testPlusEqBuildMap() throws Exception {
+        runTest("testData/exitPoints/plusEqBuildMap.kt");
     }
 
     @TestMetadata("receiverResolution.kt")

@@ -21,6 +21,7 @@ import com.intellij.util.Consumer
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -95,13 +96,17 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
     }
 
     private fun getOnGeneratorUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        val expression = when (val parent = target.parent) {
-            is KtNameReferenceExpression -> parent.takeIf {
-                target.elementType == KtTokens.IDENTIFIER && parent.text in BUILDER_KEYWORDS
-            }?.let { it.parent as? KtCallExpression }
+        val expression = when (target.elementType) {
+            in BUILDER_OPERATOR_TOKENS ->
+                target.parent?.parent as? KtBinaryExpression
+
+            KtTokens.IDENTIFIER -> {
+                val parent = target.parent as? KtNameReferenceExpression
+                parent?.takeIf { it.text in BUILDER_KEYWORDS }?.parent as? KtCallExpression
+            }
 
             else -> null
-        } as? KtExpression ?: return null
+        } ?: return null
 
         return OnGeneratorUsagesHandler(editor, file, expression)
     }
@@ -113,7 +118,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
         return if (Registry.`is`("kotlin.highlight.stdlib.dsl.exit.points")) {
             getOnGeneratorUsageHandler(editor, file, target)
-        } else{
+        } else {
             null
         }
     }
@@ -445,7 +450,6 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         }
 
         override fun computeUsages(targets: List<PsiElement>) {
-            if (target is KtCallExpression && !target.hasNoExplicitReceiver()) return
 
             val (generatorCall, builderPoints) = findGeneratorCall(target) ?: return
             // Handles both trailing lambda syntax: sequence { } and parenthesized: sequence({ })
@@ -464,11 +468,17 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                 override fun visitCallExpression(expression: KtCallExpression) {
                     super.visitCallExpression(expression)
-                    // Check if this call belongs to our sequence (not nested)
-                    if (belongsToBuilder(expression, generatorLambda, builderPoints)
-                        && isBuilderPointCall(expression, builderPoints)
-                        && expression.isCalledOnReceiverOf(generatorLambda)) {
+                    if (isExitPointOnLambdaReceiver(expression, builderPoints.single + builderPoints.multiple, generatorLambda)
+                    ) {
                         expression.calleeExpression?.let { addOccurrence(it) }
+                    }
+                }
+
+                override fun visitBinaryExpression(expression: KtBinaryExpression) {
+                    super.visitBinaryExpression(expression)
+                    if (isExitPointOnLambdaReceiver(expression, BUILDER_OPERATOR_CALLABLE_IDS, generatorLambda)
+                    ) {
+                        addOccurrence(expression.operationReference)
                     }
                 }
             })
@@ -492,50 +502,48 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
             val builderPoints = findMatchingBuilderPoints(call) ?: return@firstNotNullOfOrNull null
 
-            // Only attach to this enclosing builder if the clicked call actually resolves
-            // to one of *its* exit points. Otherwise keep walking outward.
-            if (expression is KtCallExpression && isBuilderPointCall(expression, builderPoints)) {
-                call to builderPoints
-            } else {
-                null
+            val expectedCallables = when (expression) {
+                is KtBinaryExpression -> BUILDER_OPERATOR_CALLABLE_IDS
+                is KtCallExpression -> builderPoints.single + builderPoints.multiple
+                else -> return@firstNotNullOfOrNull null
             }
-        }
-    }
-
-    private fun belongsToBuilder(
-        builderPointCall: KtCallExpression,
-        targetSequenceLambda: KtLambdaExpression,
-        targetBuilderPoint: BuilderPoint
-    ): Boolean {
-        // Check if exit point doesn't belong to a nested sequence
-        for (parent in builderPointCall.parents) {
-            if (parent == targetSequenceLambda) return true
-
-            if (parent is KtLambdaExpression && parent != targetSequenceLambda) {
-                val call = when (val lambdaParent = parent.parent) {
-                    is KtLambdaArgument -> lambdaParent.parent as? KtCallExpression  // sequence { }
-                    is KtValueArgument -> (lambdaParent.parent as? KtValueArgumentList)?.parent as? KtCallExpression  // sequence({ })
-                    else -> null
-                }
-                val nestedBuilderPoints = call?.let { findMatchingBuilderPoints(it) }
-                if (nestedBuilderPoints == targetBuilderPoint) {
-                    return false
-                }
+            if (!isExitPointOnLambdaReceiver(expression, expectedCallables, lambdaExpr)) {
+                return@firstNotNullOfOrNull null
             }
 
+            call to builderPoints
         }
-        return false
     }
 
     private fun findMatchingBuilderPoints(call: KtCallExpression): BuilderPoint? {
-        return generatorPairs.entries.firstNotNullOfOrNull { (generatorCallableId, builderPoints) ->
-            builderPoints.takeIf { call.resolvesToCallableId(generatorCallableId) }
-        }
+        val callableId = analyze(call) {
+            call.resolveToCall()?.successfulFunctionCallOrNull()
+                ?.signature?.symbol?.callableId
+        } ?: return null
+        return generatorPairs[callableId]
     }
 
-    private fun isBuilderPointCall(call: KtCallExpression, builderPoint: BuilderPoint): Boolean {
-        val allBuilderPoints = builderPoint.single + builderPoint.multiple
-        return call.resolvesToCallableId(*allBuilderPoints.toTypedArray())
+    private fun isExitPointOnLambdaReceiver(
+        expression: KtExpression,
+        expectedCallables: Collection<CallableId>,
+        generatorLambda: KtLambdaExpression
+    ): Boolean = analyze(expression) {
+        val call = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return@analyze false
+        if (call.signature.symbol.callableId !in expectedCallables) return@analyze false
+
+        val receiver = call.extensionReceiver ?: call.dispatchReceiver ?: return@analyze false
+
+        val ownerPsi: PsiElement? = when (receiver) {
+            is KaImplicitReceiverValue ->
+                (receiver.symbol as? KaReceiverParameterSymbol)?.containingSymbol?.psi
+
+            is KaExplicitReceiverValue ->
+                (receiver.expression as? KtThisExpression)
+                    ?.instanceReference?.mainReference?.resolve()
+
+            else -> null
+        }
+        ownerPsi === generatorLambda.functionLiteral
     }
 
     private fun MutableSet<PsiElement>.addIfNotNullAndNotBlock(element: PsiElement?) {
@@ -552,45 +560,6 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         return expression
     }
 
-    private fun KtCallExpression.resolvesToCallableId(vararg expectedCallableIds: CallableId): Boolean {
-        analyze(this) {
-            val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-            val symbol = resolvedCall.signature.symbol
-            val callableId = symbol.callableId ?: return false
-            return callableId in expectedCallableIds
-        }
-    }
-
-    private fun KtCallExpression.hasNoExplicitReceiver(): Boolean = analyze(this) {
-        val call = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val receiver = call.extensionReceiver ?: call.dispatchReceiver
-        when (receiver) {
-            null -> true                          // top-level call, no receiver
-            is KaImplicitReceiverValue -> true    // `add(...)`
-            is KaExplicitReceiverValue ->         // `this.add(...)` / `this@label.add(...)`
-                receiver.expression is KtThisExpression
-            else -> false
-        }
-    }
-
-    private fun KtCallExpression.isCalledOnReceiverOf(builderLambda: KtLambdaExpression): Boolean = analyze(this) {
-        val call = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val receiver = call.extensionReceiver ?: call.dispatchReceiver
-        val builderLiteral = builderLambda.functionLiteral
-
-        val ownerPsi: PsiElement? = when (receiver) {
-            is KaImplicitReceiverValue -> {
-                (receiver.symbol as? KaReceiverParameterSymbol)?.containingSymbol?.psi
-            }
-            is KaExplicitReceiverValue -> {
-                val thisExpr = receiver.expression as? KtThisExpression ?: return false
-                thisExpr.instanceReference.mainReference.resolve()
-            }
-            else -> null
-        }
-        ownerPsi === builderLiteral
-    }
-
     companion object {
         private val BUILDER_KEYWORDS = setOf(
             "yield", "yieldAll", "sequence",
@@ -598,6 +567,14 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             "add", "addAll", "buildList", "buildSet",
             "put", "putAll", "buildMap",
             "append", "appendAll", "buildString"
+        )
+        private val BUILDER_OPERATOR_CALLABLE_IDS = setOf(
+            StandardKotlinNames.Collections.plusAssign,
+            StandardKotlinNames.Collections.minusAssign,
+        )
+        private val BUILDER_OPERATOR_TOKENS = setOf(
+            KtTokens.PLUSEQ,
+            KtTokens.MINUSEQ,
         )
     }
 

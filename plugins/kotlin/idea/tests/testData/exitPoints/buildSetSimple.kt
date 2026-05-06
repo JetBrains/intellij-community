@@ -4,5 +4,6 @@ fun f() {
         <info descr="null">add</info>(1)
         <info descr="null">add</info>(2)
         <info descr="null">addAll</info>(listOf(3, 4))
+        this <info descr="null">-=</info> 1
     }
 }
