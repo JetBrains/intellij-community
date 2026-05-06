@@ -40,12 +40,14 @@ class KmpSyntaxNode internal constructor(
   internal val startLexemeIndex: Int,
   internal val nextMarkerStartLexemeIndex: Int,
   internal val markerIndex: Int,
+  private val documentLanguage: SyntaxLanguage,
   val languageProvider: SyntaxElementLanguageProvider,
 ) : SyntaxNode {
   companion object {
     private fun rootWithContext(
       context: WalkerContext,
       tokens: TokenList,
+      documentLanguage: SyntaxLanguage,
       languageProvider: SyntaxElementLanguageProvider,
     ): KmpSyntaxNode = KmpSyntaxNode(
       parent = null,
@@ -55,6 +57,7 @@ class KmpSyntaxNode internal constructor(
       startLexemeIndex = context.startLexemeIndex,
       nextMarkerStartLexemeIndex = context.startLexemeIndex,
       markerIndex = 0,
+      documentLanguage,
       languageProvider,
     )
 
@@ -65,6 +68,7 @@ class KmpSyntaxNode internal constructor(
       tokenizationPolicy: TokenizationPolicy,
       builderFactory: SyntaxBuilderFactory,
       tokens: TokenList,
+      documentLanguage: SyntaxLanguage,
       languageProvider: SyntaxElementLanguageProvider,
       extensions: () -> ExtensionSupport,
     ): KmpSyntaxNode = rootWithContext(
@@ -77,6 +81,7 @@ class KmpSyntaxNode internal constructor(
         extensions = extensions,
       ),
       tokens,
+      documentLanguage,
       languageProvider,
     )
   }
@@ -97,6 +102,7 @@ class KmpSyntaxNode internal constructor(
     tokens = tokens,
     markerIndex = markerIndex,
     languageProvider = languageProvider,
+    documentLanguage = documentLanguage,
   )
 
   internal val isMarker = markerIndex != -1 && startLexemeIndex == nextMarkerStartLexemeIndex
@@ -109,9 +115,10 @@ class KmpSyntaxNode internal constructor(
     else -> tokens.getTokenType(startLexemeIndex)!!
   }
 
-  override val language: SyntaxLanguage? by lazy {
-    (languageProvider.getLanguage(elementType) ?: parent?.language)!!
-  }
+  override val language: SyntaxLanguage =
+    languageProvider.getLanguage(elementType)
+    ?: parent?.language
+    ?: documentLanguage
 
   override fun equals(other: Any?): Boolean =
     (other === this) || (other is KmpSyntaxNode &&
@@ -281,6 +288,7 @@ class KmpSyntaxNode internal constructor(
             startLexemeIndex = startLexemeIndex
           ),
           tokens,
+          documentLanguage,
           languageProvider,
         )
 
@@ -302,6 +310,7 @@ class KmpSyntaxNode internal constructor(
               ast = tree,
             ),
             chameleonTokens,
+            documentLanguage,
             languageProvider,
           )
         }
