@@ -1,6 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.test;
+package org.jetbrains.kotlin.idea.fir.completion;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,15 +15,15 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("completion/tests-k1")
+@TestRoot("fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/injava/stdlib")
-public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinInJavaCompletionTest {
+@TestMetadata("../../completion/testData/inJava")
+public class K2KotlinInJavaCompletionTestGenerated extends AbstractK2KotlinInJavaCompletionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
+        return KotlinPluginMode.K2;
     }
 
     private void runTest(String testDataFilePath) throws Exception {
@@ -32,6 +32,6 @@ public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinI
 
     @TestMetadata("List.java")
     public void testList() throws Exception {
-        runTest("../testData/injava/stdlib/List.java");
+        runTest("../../completion/testData/inJava/List.java");
     }
 }

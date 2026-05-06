@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 @TestRoot("completion/tests-k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/inJavaWithMockLib")
-public class CompiledKotlinInJavaCompletionTestGenerated extends AbstractK1CompiledKotlinInJavaCompletionTest {
+@TestMetadata("../testData/injava")
+public class K1KotlinSourceInJavaCompletionTestGenerated extends AbstractK1KotlinSourceInJavaWithMockLibCompletionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,146 +32,146 @@ public class CompiledKotlinInJavaCompletionTestGenerated extends AbstractK1Compi
 
     @TestMetadata("AnnotationParameter.java")
     public void testAnnotationParameter() throws Exception {
-        runTest("../testData/inJavaWithMockLib/AnnotationParameter.java");
+        runTest("../testData/injava/AnnotationParameter.java");
     }
 
     @TestMetadata("Class.java")
     public void testClass() throws Exception {
-        runTest("../testData/inJavaWithMockLib/Class.java");
+        runTest("../testData/injava/Class.java");
     }
 
     @TestMetadata("ClassMembers.java")
     public void testClassMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ClassMembers.java");
+        runTest("../testData/injava/ClassMembers.java");
     }
 
     @TestMetadata("ClassObject.java")
     public void testClassObject() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ClassObject.java");
+        runTest("../testData/injava/ClassObject.java");
     }
 
     @TestMetadata("ClassObjectField.java")
     public void testClassObjectField() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ClassObjectField.java");
+        runTest("../testData/injava/ClassObjectField.java");
     }
 
     @TestMetadata("ClassesFromNamespace.java")
     public void testClassesFromNamespace() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ClassesFromNamespace.java");
+        runTest("../testData/injava/ClassesFromNamespace.java");
     }
 
     @TestMetadata("EnumConstants.java")
     public void testEnumConstants() throws Exception {
-        runTest("../testData/inJavaWithMockLib/EnumConstants.java");
+        runTest("../testData/injava/EnumConstants.java");
     }
 
     @TestMetadata("InterfaceDefaultImpl.java")
     public void testInterfaceDefaultImpl() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceDefaultImpl.java");
+        runTest("../testData/injava/InterfaceDefaultImpl.java");
     }
 
     @TestMetadata("InterfaceDefaultImplImportedMembers.java")
     public void testInterfaceDefaultImplImportedMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceDefaultImplImportedMembers.java");
+        runTest("../testData/injava/InterfaceDefaultImplImportedMembers.java");
     }
 
     @TestMetadata("InterfaceDefaultImplMembers.java")
     public void testInterfaceDefaultImplMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceDefaultImplMembers.java");
+        runTest("../testData/injava/InterfaceDefaultImplMembers.java");
     }
 
     @TestMetadata("InterfaceDefaultImplStaticImportedMembers.java")
     public void testInterfaceDefaultImplStaticImportedMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceDefaultImplStaticImportedMembers.java");
+        runTest("../testData/injava/InterfaceDefaultImplStaticImportedMembers.java");
     }
 
     @TestMetadata("InterfaceDefaultImplsNonImported.java")
     public void testInterfaceDefaultImplsNonImported() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceDefaultImplsNonImported.java");
+        runTest("../testData/injava/InterfaceDefaultImplsNonImported.java");
     }
 
     @TestMetadata("InterfaceMember.java")
     public void testInterfaceMember() throws Exception {
-        runTest("../testData/inJavaWithMockLib/InterfaceMember.java");
+        runTest("../testData/injava/InterfaceMember.java");
     }
 
     @TestMetadata("MultiFileFacade.java")
     public void testMultiFileFacade() throws Exception {
-        runTest("../testData/inJavaWithMockLib/MultiFileFacade.java");
+        runTest("../testData/injava/MultiFileFacade.java");
     }
 
     @TestMetadata("MultiFileFacadeMembers.java")
     public void testMultiFileFacadeMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/MultiFileFacadeMembers.java");
+        runTest("../testData/injava/MultiFileFacadeMembers.java");
     }
 
     @TestMetadata("MultiFileFacadeNoImport.java")
     public void testMultiFileFacadeNoImport() throws Exception {
-        runTest("../testData/inJavaWithMockLib/MultiFileFacadeNoImport.java");
+        runTest("../testData/injava/MultiFileFacadeNoImport.java");
     }
 
     @TestMetadata("Nested.java")
     public void testNested() throws Exception {
-        runTest("../testData/inJavaWithMockLib/Nested.java");
+        runTest("../testData/injava/Nested.java");
     }
 
     @TestMetadata("NestedClassMembers.java")
     public void testNestedClassMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/NestedClassMembers.java");
+        runTest("../testData/injava/NestedClassMembers.java");
     }
 
     @TestMetadata("NestedClassMembers2.java")
     public void testNestedClassMembers2() throws Exception {
-        runTest("../testData/inJavaWithMockLib/NestedClassMembers2.java");
+        runTest("../testData/injava/NestedClassMembers2.java");
     }
 
     @TestMetadata("NestedNoImport.java")
     public void testNestedNoImport() throws Exception {
-        runTest("../testData/inJavaWithMockLib/NestedNoImport.java");
+        runTest("../testData/injava/NestedNoImport.java");
     }
 
     @TestMetadata("NestedObjectInstance.java")
     public void testNestedObjectInstance() throws Exception {
-        runTest("../testData/inJavaWithMockLib/NestedObjectInstance.java");
+        runTest("../testData/injava/NestedObjectInstance.java");
     }
 
     @TestMetadata("ObjectInClassObjects.java")
     public void testObjectInClassObjects() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ObjectInClassObjects.java");
+        runTest("../testData/injava/ObjectInClassObjects.java");
     }
 
     @TestMetadata("ObjectInstance.java")
     public void testObjectInstance() throws Exception {
-        runTest("../testData/inJavaWithMockLib/ObjectInstance.java");
+        runTest("../testData/injava/ObjectInstance.java");
     }
 
     @TestMetadata("RenamedFacade.java")
     public void testRenamedFacade() throws Exception {
-        runTest("../testData/inJavaWithMockLib/RenamedFacade.java");
+        runTest("../testData/injava/RenamedFacade.java");
     }
 
     @TestMetadata("SingleFileFacade.java")
     public void testSingleFileFacade() throws Exception {
-        runTest("../testData/inJavaWithMockLib/SingleFileFacade.java");
+        runTest("../testData/injava/SingleFileFacade.java");
     }
 
     @TestMetadata("SingleFileFacadeMembers.java")
     public void testSingleFileFacadeMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/SingleFileFacadeMembers.java");
+        runTest("../testData/injava/SingleFileFacadeMembers.java");
     }
 
     @TestMetadata("SingleFileFacadeNoImport.java")
     public void testSingleFileFacadeNoImport() throws Exception {
-        runTest("../testData/inJavaWithMockLib/SingleFileFacadeNoImport.java");
+        runTest("../testData/injava/SingleFileFacadeNoImport.java");
     }
 
     @TestMetadata("Subpackage.java")
     public void testSubpackage() throws Exception {
-        runTest("../testData/inJavaWithMockLib/Subpackage.java");
+        runTest("../testData/injava/Subpackage.java");
     }
 
     @TestMetadata("TopLevelMembers.java")
     public void testTopLevelMembers() throws Exception {
-        runTest("../testData/inJavaWithMockLib/TopLevelMembers.java");
+        runTest("../testData/injava/TopLevelMembers.java");
     }
 }

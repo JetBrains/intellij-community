@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 @TestRoot("completion/tests-k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/injava/stdlib")
-public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinInJavaCompletionTest {
+@TestMetadata("../testData/inJava")
+public class K1KotlinInJavaCompletionTestGenerated extends AbstractK1KotlinInJavaCompletionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,6 +32,6 @@ public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinI
 
     @TestMetadata("List.java")
     public void testList() throws Exception {
-        runTest("../testData/injava/stdlib/List.java");
+        runTest("../testData/inJava/List.java");
     }
 }

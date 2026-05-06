@@ -65,7 +65,7 @@ import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractMultiModuleLineMarkerCodeMetaInfoTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
-import org.jetbrains.kotlin.idea.completion.test.AbstractCompiledKotlinInJavaCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractK1CompiledKotlinInJavaCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractDumbCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractJava8BasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmWithLibBasicCompletionTest
@@ -75,8 +75,8 @@ import org.jetbrains.kotlin.idea.completion.test.AbstractK1JvmBasicCompletionTes
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1JvmSmartCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractK1MLPerformanceCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractKeywordCompletionTest
-import org.jetbrains.kotlin.idea.completion.test.AbstractKotlinSourceInJavaCompletionTest
-import org.jetbrains.kotlin.idea.completion.test.AbstractKotlinStdLibInJavaCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractK1KotlinSourceInJavaWithMockLibCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractK1KotlinInJavaCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractMultiFileJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractMultiFileSmartCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.AbstractMultiPlatformCompletionTest
@@ -1264,16 +1264,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     //}
 
     testGroup("completion/tests-k1", testDataPath = "../testData", category = COMPLETION) {
-        testClass<AbstractCompiledKotlinInJavaCompletionTest> {
-            model("injava", pattern = JAVA, isRecursive = false)
+        testClass<AbstractK1CompiledKotlinInJavaCompletionTest> {
+            model("inJavaWithMockLib", pattern = JAVA, isRecursive = false)
         }
 
-        testClass<AbstractKotlinSourceInJavaCompletionTest> {
-            model("injava", pattern = JAVA, isRecursive = false)
+        testClass<AbstractK1KotlinSourceInJavaWithMockLibCompletionTest> {
+            model("inJavaWithMockLib", pattern = JAVA, isRecursive = false)
         }
 
-        testClass<AbstractKotlinStdLibInJavaCompletionTest> {
-            model("injava/stdlib", pattern = JAVA, isRecursive = false)
+        testClass<AbstractK1KotlinInJavaCompletionTest> {
+            model("inJava", pattern = JAVA, isRecursive = false)
         }
 
         testClass<AbstractBasicCompletionWeigherTest> {

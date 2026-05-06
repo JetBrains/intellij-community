@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/inJavaWithMockLib")
-public class CompiledKotlinInJavaCompletionTestGenerated extends AbstractK1CompiledKotlinInJavaCompletionTest {
+public class K1CompiledKotlinInJavaCompletionTestGenerated extends AbstractK1CompiledKotlinInJavaCompletionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
