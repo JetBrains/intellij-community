@@ -178,7 +178,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
 
   private fun findCorePluginHeaderForFrontend(softly: SoftAssertions): RawRuntimePluginHeader? {
     val corePluginModuleName = "intellij.frontend.split.customization"
-    val corePluginForFrontendHeader = repository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginModuleName }
+    val corePluginForFrontendHeader = repository.findBundledPluginHeader(RuntimeModuleId.legacyJpsModule(corePluginModuleName))
     if (corePluginForFrontendHeader == null) {
       softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("The header for the core plugin is not found by its module name '$corePluginModuleName'"))
     }
@@ -275,10 +275,8 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
 
   private fun loadBundledPluginHeaders(productModules: ProductModules, softly: SoftAssertions): List<RawRuntimePluginHeader> {
-    val pluginHeaders = repository.bundledPluginHeaders.associateBy { it.pluginDescriptorModuleId }
     return productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModule ->
-      val header = pluginHeaders[pluginDescriptorModule]
-                   ?: pluginHeaders[RuntimeModuleId.contentModule(pluginDescriptorModule.name, RuntimeModuleId.DEFAULT_NAMESPACE)]
+      val header = repository.findBundledPluginHeader(pluginDescriptorModule)
       if (header == null && !isBundledPluginSkipped(pluginDescriptorModule)) {
         softly.collectAssertionErrorIfNotRegisteredYet(AssertionError(
           "Plugin header for module '${pluginDescriptorModule.presentableName}' is not found in the runtime module repository"

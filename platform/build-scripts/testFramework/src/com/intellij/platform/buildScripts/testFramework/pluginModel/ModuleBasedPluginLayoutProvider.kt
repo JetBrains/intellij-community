@@ -47,11 +47,10 @@ class ModuleBasedPluginLayoutProvider(
       resourceFileResolver,
     )
     mainModulesOfBundledPlugins = productModules.bundledPluginDescriptorModules.mapTo(HashSet()) { it.name }
-    val pluginHeaders = runtimeModuleRepository.bundledPluginHeaders.associateBy { it.pluginDescriptorModuleId.name }
     embeddedModulesInBundledPlugins = productModules.bundledPluginDescriptorModules.associateBy(
       { it.name },
       { pluginDescriptorModule ->
-        val header = pluginHeaders[pluginDescriptorModule.name] ?: return@associateBy emptyList()
+        val header = runtimeModuleRepository.findBundledPluginHeader(pluginDescriptorModule) ?: return@associateBy emptyList()
         header.includedModules
           .filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED && it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE
                     && it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_MODULE_TESTS_NAMESPACE }
@@ -62,7 +61,7 @@ class ModuleBasedPluginLayoutProvider(
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
 
   override fun loadCorePluginLayout(): PluginLayoutDescription {
-    val corePluginHeader = runtimeModuleRepository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginConfigurationModuleName }
+    val corePluginHeader = runtimeModuleRepository.findBundledPluginHeader(RuntimeModuleId.legacyJpsModule(corePluginConfigurationModuleName))
                            ?: error("Cannot find core plugin header for module '$corePluginConfigurationModuleName'")
     val embeddedModules = corePluginHeader.includedModules
       .asSequence()

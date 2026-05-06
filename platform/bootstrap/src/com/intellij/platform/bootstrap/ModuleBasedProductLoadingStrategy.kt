@@ -90,7 +90,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
       else {
         val corePluginDescriptorModule = System.getProperty(PLATFORM_CORE_PLUGIN_DESCRIPTOR_MODULE_PROPERTY, "intellij.frontend.split.customization")
-        val corePluginHeader = moduleRepository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginDescriptorModule }
+        val corePluginHeader = moduleRepository.findBundledPluginHeader(RuntimeModuleId.legacyJpsModule(corePluginDescriptorModule))
         if (corePluginHeader == null) {
           error("The core plugin header is not found in $moduleRepository by module $corePluginDescriptorModule")
         }
@@ -159,10 +159,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     loadingContext: PluginDescriptorLoadingContext,
     zipPool: ZipEntryResolverPool,
   ): Deferred<DiscoveredPluginsList> {
-    val pluginHeaders = moduleRepository.bundledPluginHeaders.associateBy { it.pluginDescriptorModuleId }
     val bundled = productModules.bundledPluginDescriptorModules.mapNotNull { pluginDescriptorModuleId ->
-      val pluginHeader = pluginHeaders[pluginDescriptorModuleId]
-                         ?: pluginHeaders[RuntimeModuleId.contentModule(pluginDescriptorModuleId.name, RuntimeModuleId.DEFAULT_NAMESPACE)]
+      val pluginHeader = moduleRepository.findBundledPluginHeader(pluginDescriptorModuleId)
       if (pluginHeader == null) {
         logger<ModuleBasedProductLoadingStrategy>().error("Plugin header for module '${pluginDescriptorModuleId.presentableName}' is not found in the runtime module repository")
         return@mapNotNull null

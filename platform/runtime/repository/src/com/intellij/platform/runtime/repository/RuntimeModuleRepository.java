@@ -71,4 +71,10 @@ public interface RuntimeModuleRepository {
    * For a monolithic IDE, it also includes plugins bundled with its embedded frontend.
    */
   @NotNull List<@NotNull RawRuntimePluginHeader> getBundledPluginHeaders();
+
+  /**
+   * Returns the header of a plugin bundled with the current distribution which {@code plugin.xml} is located in
+   * {@code pluginDescriptorModuleId} or {@code null} if no such plugin is found.
+   */
+  @Nullable RawRuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId);
 }

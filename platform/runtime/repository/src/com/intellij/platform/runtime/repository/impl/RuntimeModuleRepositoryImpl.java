@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   );
   private final Map<RuntimeModuleId, ResolveResult> myResolveResults;
   private final Map<RuntimeModuleId, RuntimeModuleHeaderImpl> myHeadersCache;
+  private volatile Map<RuntimeModuleId, RawRuntimePluginHeader> myBundledPluginHeadersByDescriptorModule;
   private volatile RawRuntimeModuleRepositoryData myRawData;
   private final Path myDescriptorsFilePath;
 
@@ -170,6 +172,23 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   @Override
   public @NotNull List<@NotNull RawRuntimePluginHeader> getBundledPluginHeaders() {
     return getRawData().getPluginHeaders();
+  }
+
+  @Override
+  public @Nullable RawRuntimePluginHeader findBundledPluginHeader(@NotNull RuntimeModuleId pluginDescriptorModuleId) {
+    if (myBundledPluginHeadersByDescriptorModule == null) {
+      HashMap<RuntimeModuleId, RawRuntimePluginHeader> map = new HashMap<>();
+      for (RawRuntimePluginHeader header : getRawData().getPluginHeaders()) {
+        map.put(header.getPluginDescriptorModuleId(), header);
+      }
+      myBundledPluginHeadersByDescriptorModule = map;
+    }
+    RawRuntimePluginHeader header = myBundledPluginHeadersByDescriptorModule.get(pluginDescriptorModuleId);
+    if (header == null && !pluginDescriptorModuleId.getNamespace().equals(RuntimeModuleId.DEFAULT_NAMESPACE)) {
+      //some plugin descriptor modules are also registered as content modules with default namespace
+      header = myBundledPluginHeadersByDescriptorModule.get(RuntimeModuleId.contentModule(pluginDescriptorModuleId.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));
+    }
+    return header;
   }
 
   @Override

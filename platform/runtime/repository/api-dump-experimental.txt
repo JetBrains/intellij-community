@@ -31,6 +31,7 @@
 - s:values():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule[]
 *:com.intellij.platform.runtime.repository.RuntimeModuleRepository
 - s:create(java.nio.file.Path):com.intellij.platform.runtime.repository.RuntimeModuleRepository
+- a:findBundledPluginHeader(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 - a:getBootstrapClasspath(java.lang.String):java.util.List
 - a:getBundledPluginHeaders():java.util.List
 - a:getModule(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
