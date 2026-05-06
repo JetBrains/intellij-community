@@ -3315,6 +3315,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Locked:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LogFolder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:McpServer:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:McpServerWidget:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Method:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MethodReference:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Mnemonic:org.jetbrains.jewel.ui.icon.IntelliJIconKey

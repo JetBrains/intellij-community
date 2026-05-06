@@ -2746,6 +2746,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey McpServer = new IntelliJIconKey("expui/nodes/mcpServer.svg", "expui/nodes/mcpServer.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey McpServerWidget = new IntelliJIconKey("expui/nodes/mcpServerWidget.svg", "expui/nodes/mcpServerWidget.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Method = new IntelliJIconKey("nodes/method.svg", "expui/nodes/method.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

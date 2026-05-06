@@ -32,7 +32,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
   private val popupState = PopupState.forPopup()
 
   companion object {
-    private val MCP_LOGO: Icon = AllIcons.Nodes.McpServer
+    private val MCP_LOGO: Icon = AllIcons.Nodes.McpServerWidget
     private val BADGE_ICON_SUPPLIER = BadgeIconSupplier(MCP_LOGO)
     const val POPUP_WIDTH: Int = 450
     private const val POPUP_HEIGHT = 180 //approx size of the content
