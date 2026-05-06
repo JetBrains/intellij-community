@@ -1,15 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.execution.target.BrowsableTargetEnvironmentType
-import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.util.addMouseHoverListener
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -24,13 +18,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.util.preferredHeight
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.Component
 import java.awt.Cursor
@@ -112,43 +104,7 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
             addMouseListener(object : MouseAdapter() {
               override fun mouseClicked(e: MouseEvent?) {
                 if (isBusy) return
-
-                when (fileSystem) {
-                  is FileSystem.Eel -> {
-                    SlowOperations.knownIssue("PY-666").use { // TODO FIX ME PLEASE if you know how
-                      val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle)
-                      FileChooser.chooseFile(descriptor, null, parent, null) { file ->
-                        val path = file?.toNioPath()
-                        path?.toString()?.let {
-                          fieldAccessor.setText(comboBox, it)
-                        }
-                      }
-                    }
-                  }
-                  is FileSystem.Target -> {
-                    val targetType = fileSystem.targetEnvironmentConfiguration.getTargetType()
-                    if (targetType is BrowsableTargetEnvironmentType) {
-                      val descriptor = FileChooserDescriptorFactory.singleFile().withTitle(browseTitle)
-                      val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
-
-                      val actionListener = targetType.createBrowser(
-                        ProjectManager.getInstance().defaultProject,
-                        hints.customFileChooserDescriptor!!.title,
-                        fieldAccessor,
-                        comboBox,
-                        { fileSystem.targetEnvironmentConfiguration },
-                        hints
-                      )
-                      actionListener.actionPerformed(null)
-                    }
-                    else {
-                      val dialog = ManualPathEntryDialog(browseTitle, panel.width, fileSystem.targetEnvironmentConfiguration)
-                      if (dialog.showAndGet()) {
-                        fieldAccessor.setText(comboBox, dialog.path)
-                      }
-                    }
-                  }
-                }
+                fileSystem.configureFileBrowseEditor(fieldAccessor, comboBox, browseTitle, panel)
               }
             })
           }

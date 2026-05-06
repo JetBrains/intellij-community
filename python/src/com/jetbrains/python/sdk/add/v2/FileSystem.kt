@@ -2,13 +2,19 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -28,6 +34,8 @@ import com.intellij.python.community.services.systemPython.SysPythonRegisterErro
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
@@ -64,8 +72,10 @@ import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import javax.swing.JComponent
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -88,6 +98,14 @@ sealed interface FileSystem<P : PathHolder> {
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
+
+  @RequiresEdt
+  fun <T> configureFileBrowseEditor(
+    fieldAccessor: TextComponentAccessor<ComboBox<T>>,
+    comboBox: ComboBox<T>,
+    browseTitle: @Nls String,
+    parentComponent: JComponent,
+  )
 
   /**
    * [pathToPython] has to be system (not venv) if set [requireSystemPython]
@@ -121,6 +139,24 @@ sealed interface FileSystem<P : PathHolder> {
     override val isLocal: Boolean = eelApi == localEel
     override fun getBinaryToExec(path: PathHolder.Eel): BinaryToExec {
       return BinOnEel(path.path)
+    }
+
+    @RequiresEdt
+    override fun <T> configureFileBrowseEditor(
+      fieldAccessor: TextComponentAccessor<ComboBox<T>>,
+      comboBox: ComboBox<T>,
+      browseTitle: @Nls String,
+      parentComponent: JComponent,
+    ) {
+      SlowOperations.knownIssue("PY-666").use { // TODO FIX ME PLEASE if you know how
+        val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle)
+        FileChooser.chooseFile(descriptor, null, parentComponent, null) { file ->
+          val path = file?.toNioPath()
+          path?.toString()?.let {
+            fieldAccessor.setText(comboBox, it)
+          }
+        }
+      }
     }
 
     override suspend fun setupSdk(
@@ -293,6 +329,37 @@ sealed interface FileSystem<P : PathHolder> {
 
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
+    }
+
+
+    @RequiresEdt
+    override fun <T> configureFileBrowseEditor(
+      fieldAccessor: TextComponentAccessor<ComboBox<T>>,
+      comboBox: ComboBox<T>,
+      browseTitle: @Nls String,
+      parentComponent: JComponent,
+    ) {
+      val targetType = targetEnvironmentConfiguration.getTargetType()
+      if (targetType is BrowsableTargetEnvironmentType) {
+        val descriptor = FileChooserDescriptorFactory.singleFile().withTitle(browseTitle)
+        val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
+
+        val actionListener = targetType.createBrowser(
+          ProjectManager.getInstance().defaultProject,
+          hints.customFileChooserDescriptor!!.title,
+          fieldAccessor,
+          comboBox,
+          { targetEnvironmentConfiguration },
+          hints
+        )
+        actionListener.actionPerformed(null)
+      }
+      else {
+        val dialog = ManualPathEntryDialog(browseTitle, parentComponent.width, targetEnvironmentConfiguration)
+        if (dialog.showAndGet()) {
+          fieldAccessor.setText(comboBox, dialog.path)
+        }
+      }
     }
 
     override suspend fun setupSdk(
