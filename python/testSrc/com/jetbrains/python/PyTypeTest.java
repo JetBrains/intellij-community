@@ -3824,7 +3824,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-30861
   public void testDontReplaceSpecifiedReturnTypeWithSelf() {
-    doTest("Dict[_KT, Any]",
+    doTest("Dict[Any, Any]",
            """
              from collections import defaultdict
              data = defaultdict(dict)

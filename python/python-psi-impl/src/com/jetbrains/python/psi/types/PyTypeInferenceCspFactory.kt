@@ -185,8 +185,8 @@ object PyTypeInferenceCspFactory {
       builder.addInferenceVariable(typeParam)
 
       // bounds
-      if (typeParam.getBound() != null) {
-        val typeVarBound_selfBounded = substituteSelfTypes(typeParam.getBound(), receiverType, context)
+      if (typeParam.bound != null) {
+        val typeVarBound_selfBounded = substituteSelfTypes(typeParam.bound, receiverType, context)
         // semantics: TV <: Bound
         builder.addConstraint(typeParam, typeVarBound_selfBounded, Variance.COVARIANT, ConstraintPriority.HIGH)
       }
