@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.trace
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.json.JsonMapper
 import com.intellij.internal.statistic.eventLog.EventLogFile
 import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -12,8 +14,6 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.openapi.diagnostic.logger
-import tools.jackson.core.type.TypeReference
-import tools.jackson.databind.json.JsonMapper
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
