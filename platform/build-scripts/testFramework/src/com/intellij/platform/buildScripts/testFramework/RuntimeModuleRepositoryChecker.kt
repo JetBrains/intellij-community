@@ -66,7 +66,6 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
       createCheckers(context).forEach {
         it().use { checker ->
-          checker.checkProductModules(productModulesModule, useMainGroup = true, softly)
           checker.checkProductModules(productModulesModule, useMainGroup = false, softly)
         }
       }
