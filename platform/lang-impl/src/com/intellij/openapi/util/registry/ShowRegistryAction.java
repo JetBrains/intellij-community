@@ -11,14 +11,6 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 final class ShowRegistryAction extends AnAction implements DumbAware, LightEditCompatible {
-
-  private RegistryUi myUi;
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(myUi == null);
-  }
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -26,13 +18,7 @@ final class ShowRegistryAction extends AnAction implements DumbAware, LightEditC
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myUi = new RegistryUi() {
-      @Override
-      public void dispose() {
-        myUi = null;
-      }
-    };
-    if (myUi.show()) {
+    if (new RegistryUi().show()) {
       EditorFactory.getInstance().refreshAllEditors();
     }
   }

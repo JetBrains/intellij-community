@@ -49,6 +49,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,10 +97,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Kirill Kalishev
- * @author Konstantin Bulenkov
+ * Internal. Plugins are not allowed to show Registry programmatically.
  */
-public class RegistryUi implements Disposable {
+@ApiStatus.Internal
+public final class RegistryUi implements Disposable {
   private static final String RECENT_PROPERTIES_KEY = "RegistryRecentKeys";
 
   private final JBTable myTable;

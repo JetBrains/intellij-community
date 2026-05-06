@@ -12437,11 +12437,6 @@ f:com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 - f:getUiPath():java.lang.String
 - f:setPath(java.lang.String):V
 - f:setUiPath(java.lang.String):V
-c:com.intellij.openapi.util.registry.RegistryUi
-- com.intellij.openapi.Disposable
-- <init>():V
-- dispose():V
-- show():Z
 f:com.intellij.openapi.vcs.changes.PsiChangeTracker
 - s:getElementsChanged(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.psi.util.PsiFilter):java.util.Map
 com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
