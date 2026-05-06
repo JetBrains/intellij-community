@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 class JUnit5BazelRunnerTest {
@@ -32,7 +31,7 @@ class JUnit5BazelRunnerTest {
 
   @Test
   void discoversJupiterAndVintageTestsByDefault() {
-    assertThat(discoverTestClassesWithoutInheritedRunnerFilters(null)).containsExactlyInAnyOrder(
+    assertThat(discoverTestClassesWithoutInheritedRunnerFilters()).containsExactlyInAnyOrder(
       VintageSampleTest.class.getName(),
       JupiterSampleTest.class.getName()
     );
@@ -59,38 +58,13 @@ class JUnit5BazelRunnerTest {
     }
   }
 
-  @Test
-  void excludesVintageTestsWhenVintageEngineIsDisabled() {
-    assertThat(discoverTestClassesWithoutInheritedRunnerFilters("false")).containsExactly(JupiterSampleTest.class.getName());
-  }
-
-  @Test
-  void discoversOnlyVintageTestsWhenRequested() {
-    assertThat(discoverTestClassesWithoutInheritedRunnerFilters("only")).containsExactly(VintageSampleTest.class.getName());
-  }
-
-  @Test
-  void rejectsUnsupportedVintageMode() {
-    assertThatThrownBy(() -> runWithInheritedRunnerFiltersDisabled(
-      () -> JUnit5BazelRunner.createDiscoveryRequest(selectors(), "unsupportedEngine")))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining("unsupportedEngine");
-  }
-
   private static Set<String> discoverTestClassesWithRunnerRequest() {
-    return discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors(), null));
+    return discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors()));
   }
 
-  private static Set<String> discoverTestClassesWithoutInheritedRunnerFilters(String engineVintage) {
+  private static Set<String> discoverTestClassesWithoutInheritedRunnerFilters() {
     return computeWithInheritedRunnerFiltersDisabled(
-      () -> discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors(), engineVintage)));
-  }
-
-  private static void runWithInheritedRunnerFiltersDisabled(Runnable action) {
-    computeWithInheritedRunnerFiltersDisabled(() -> {
-      action.run();
-      return null;
-    });
+      () -> discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors())));
   }
 
   private static <T> T computeWithInheritedRunnerFiltersDisabled(Supplier<T> action) {

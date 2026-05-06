@@ -16,7 +16,6 @@ import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.discovery.MethodSelector;
 import org.junit.platform.engine.discovery.UniqueIdSelector;
-import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
@@ -25,7 +24,6 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,10 +112,10 @@ public final class JUnit5BazelRunner {
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
-    return createDiscoveryRequest(bazelTestSelectors, System.getProperty("intellij.build.test.engine.vintage"));
+    return createDiscoveryRequest(bazelTestSelectors);
   }
 
-  public static LauncherDiscoveryRequest createDiscoveryRequest(List<? extends DiscoverySelector> bazelTestSelectors, String engineVintage) {
+  public static LauncherDiscoveryRequest createDiscoveryRequest(List<? extends DiscoverySelector> bazelTestSelectors) {
     boolean ignoreInheritedFilters = Boolean.getBoolean(intellijBuildTestRunnerIgnoreInheritedFilters);
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
@@ -127,7 +125,6 @@ public final class JUnit5BazelRunner {
         .filters(getTestFilters(bazelTestSelectors))
         .filters(generateFiltersFromJbEnv().toArray(new Filter[0]));
     }
-    builder.filters(getEngineFilters(engineVintage));
 
     if (!"true".equals(System.getenv(jbEnvIdeSmRun))) {
       builder
@@ -135,9 +132,7 @@ public final class JUnit5BazelRunner {
         .configurationParameter(CAPTURE_STDERR_PROPERTY_NAME, "true");
     }
 
-    if (!"false".equals(engineVintage)) {
-      builder = builder.filters(ignorePostDiscoveryFilter);
-    }
+    builder = builder.filters(ignorePostDiscoveryFilter);
 
     return builder.build();
   }
@@ -520,17 +515,6 @@ public final class JUnit5BazelRunner {
     Path testGroupRootsDir = root.resolve("test-group-roots");
     Files.createDirectories(testGroupRootsDir);
     return testGroupRootsDir;
-  }
-
-  private static Filter<?>[] getEngineFilters(String engineVintage) {
-    if (engineVintage == null) {
-      return new Filter[0];
-    }
-    return switch (engineVintage) {
-      case "false" -> new Filter[]{EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)};
-      case "only" -> new Filter[]{EngineFilter.includeEngines(VintageTestDescriptor.ENGINE_ID)};
-      default -> throw new RuntimeException("Unsupported engine value: " + engineVintage);
-    };
   }
 
   private static List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
