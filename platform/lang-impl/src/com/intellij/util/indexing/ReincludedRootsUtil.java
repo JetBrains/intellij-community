@@ -168,9 +168,6 @@ public final class ReincludedRootsUtil {
 
     @Override
     public @NotNull Collection<IndexableFilesIterator> createIteratorsFromWorkspaceFiles(@NotNull Project project) {
-      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
-        return Collections.emptyList();
-      }
 
       List<IndexableFilesIterator> result = new ArrayList<>();
 

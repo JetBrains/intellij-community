@@ -18,12 +18,6 @@ import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createCustomKindEntityIterators
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forCustomKindEntity
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
@@ -46,43 +40,16 @@ import java.util.TreeMap
 import java.util.function.Consumer
 import java.util.function.Function
 
-internal sealed interface IndexingRootsDescription {
-  fun createBuilders(): Collection<IndexableIteratorBuilder>
-  fun createIterator(storage: EntityStorage): IndexableFilesIterator?
-}
+internal sealed interface IndexingRootsDescription
 
 internal data class EntityGenericContentRootsDescription<E : WorkspaceEntity>(val entityPointer: EntityPointer<E>,
-                                                                              val roots: IndexingUrlRootHolder) : IndexingRootsDescription {
-  override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forGenericContentEntity(entityPointer, roots)
-  }
-
-  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
-    return createGenericContentEntityIterators(entityPointer, roots).firstOrNull()
-  }
-}
+                                                                              val roots: IndexingUrlRootHolder) : IndexingRootsDescription
 
 internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val entityPointer: EntityPointer<E>,
-                                                                        val urlRoots: IndexingUrlSourceRootHolder) : IndexingRootsDescription {
-  override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forExternalEntity(entityPointer, urlRoots)
-  }
-
-  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
-    return IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, urlRoots).firstOrNull()
-  }
-}
+                                                                        val urlRoots: IndexingUrlSourceRootHolder) : IndexingRootsDescription
 
 internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val entityPointer: EntityPointer<E>,
-                                                                          val roots: IndexingUrlRootHolder) : IndexingRootsDescription {
-  override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forCustomKindEntity(entityPointer, roots)
-  }
-
-  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
-    return createCustomKindEntityIterators(entityPointer, roots).firstOrNull()
-  }
-}
+                                                                          val roots: IndexingUrlRootHolder) : IndexingRootsDescription
 
 internal fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
