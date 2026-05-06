@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.session
 
-import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.trace
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -9,7 +8,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
@@ -70,12 +68,6 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
       }
       else {
         terminalStarter.sendBytes(event.bytes, false)
-      }
-
-      // We count enter key presses on the backend separately, because it's used in the settings
-      // to show the feedback notification, and the settings are currently shown on the backend through Lux.
-      if (event.bytes.firstOrNull()?.toInt() == '\r'.code && AppMode.isRemoteDevHost()) {
-        TerminalUsageLocalStorage.getInstance().recordEnterKeyPressed()
       }
     }
     is TerminalResizeEvent -> {
