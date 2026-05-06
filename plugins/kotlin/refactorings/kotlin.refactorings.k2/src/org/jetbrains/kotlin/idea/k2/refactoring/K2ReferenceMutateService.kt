@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.name.tail
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -185,6 +187,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 // Here we assume that the passed fqName uniquely identifies the new target element
                 val oldTarget = simpleNameReference.resolve()
                 if (oldTarget?.kotlinFqName == fqName) return expression
+                if (oldTarget is KtConstructor<*> && oldTarget.containingClass()?.fqName == fqName) return expression
             }
             if (fqName.isRoot) return expression
             val elementToReplace = expression.getQualifiedElementOrCallableRef()
