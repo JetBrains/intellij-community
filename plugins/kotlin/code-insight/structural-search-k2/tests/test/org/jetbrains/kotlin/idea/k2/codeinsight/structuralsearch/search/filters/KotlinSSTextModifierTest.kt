@@ -81,4 +81,19 @@ class KotlinSSTextModifierTest : KotlinStructuralSearchTest() {
         
         class B { class A {} }
     """.trimIndent()) }
+
+    fun testWhenReturnConditionTextMismatch() { doTest("""
+        when {
+            '_x:[regex( foo )] -> Unit
+        }
+    """.trimIndent(), """
+        fun a() {
+            val bar = 1
+            val x = 0
+            return when {
+                bar == x -> Unit
+                else -> Unit
+            }
+        }
+    """.trimIndent()) }
 }

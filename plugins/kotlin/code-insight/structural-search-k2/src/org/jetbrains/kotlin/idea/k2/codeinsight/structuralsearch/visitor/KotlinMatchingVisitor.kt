@@ -913,10 +913,13 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitWhenEntry(ktWhenEntry: KtWhenEntry) {
         val other = getTreeElementDepar<KtWhenEntry>() ?: return
 
-        // $x$ -> $y$ should match else branches
-        val bypassElseTest = ktWhenEntry.firstChild is KtWhenConditionWithExpression
-                && ktWhenEntry.firstChild.children.size == 1
-                && ktWhenEntry.firstChild.firstChild is KtNameReferenceExpression
+        // $x$ -> $y$ should match else branches, but only when $x$ is an unconstrained
+        // template variable — otherwise predicates like regex would be silently bypassed.
+        val patternRef = (ktWhenEntry.firstChild as? KtWhenConditionWithExpression)
+            ?.takeIf { it.children.size == 1 }
+            ?.firstChild as? KtNameReferenceExpression
+        val refHandler = patternRef?.let(::getHandler) as? SubstitutionHandler
+        val bypassElseTest = refHandler != null && refHandler.predicate == null
 
         myMatchingVisitor.result =
             (bypassElseTest && other.isElse || myMatchingVisitor.matchInAnyOrder(ktWhenEntry.conditions, other.conditions))
