@@ -15,11 +15,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.util.coroutines.filterConcurrent
 import com.intellij.testFramework.SkipInHeadlessEnvironment
-import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -71,7 +71,6 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.outputStream
-import kotlin.io.path.pathString
 import kotlin.io.path.readLines
 import kotlin.random.Random
 
@@ -302,10 +301,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     if (options.repeatCount > 1 && options.attemptCount > 1) {
       context.messages.logErrorAndThrow("'intellij.build.test.repeat.count' and 'intellij.build.test.attempt.count' options cannot be used together")
-    }
-
-    if (options.shouldSkipJUnit34Tests && options.shouldSkipJUnit5Tests) {
-      context.messages.logErrorAndThrow("'intellij.build.test.skip.tests.junit34' and 'intellij.build.test.skip.tests.junit5' options cannot be used together")
     }
   }
 
@@ -917,13 +912,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           mainModule = mainModule,
-          systemProperties = systemProperties + listOfNotNull(
+          systemProperties = systemProperties + listOf(
             "intellij.build.test.list.classes" to testClassesListFile.absolutePathString(),
-            when {
-              options.shouldSkipJUnit5Tests -> "intellij.build.test.engine.vintage" to "only"
-              options.shouldSkipJUnit34Tests -> "intellij.build.test.engine.vintage" to "false"
-              else -> null
-            },
             "intellij.build.test.ignoreFirstAndLastTests" to "true",
           ),
           jvmArgs = jvmArgs,
@@ -1082,13 +1072,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           blockWithDefaultFlowId("run tests${spanNameSuffix}") {
             exitCode = runJUnit5Engine(
               mainModule = mainModule,
-              systemProperties = systemProperties + additionalProperties + listOfNotNull(
-                when {
-                  options.shouldSkipJUnit5Tests -> "intellij.build.test.engine.vintage" to "only"
-                  options.shouldSkipJUnit34Tests -> "intellij.build.test.engine.vintage" to "false"
-                  else -> null
-                },
-              ),
+              systemProperties = systemProperties + additionalProperties,
               jvmArgs = jvmArgs,
               envVariables = envVariables,
               bootstrapClasspath = bootstrapClasspath,

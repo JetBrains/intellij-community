@@ -28,7 +28,6 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
@@ -77,7 +76,6 @@ import java.util.logging.LogRecord;
  * - __class__ className[;...]
  * - __package__ packageName
  * - __classpathroot__
- *   if {@systemProperty intellij.build.test.engine.vintage} is set, {@code only} runs only JUnit 3/4 tests using {@linkplain VintageTestEngine}, {@code false} runs only JUnit 5 tests; otherwise, both are run
  *   if {@systemProperty intellij.build.test.reverse.order} is set, tests are run in reverse order
  * - className
  * - className methodName
@@ -85,7 +83,6 @@ import java.util.logging.LogRecord;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunner {
-  private static final String ENGINE_VINTAGE = System.getProperty("intellij.build.test.engine.vintage");
   private static final String IGNORE_FIRST_AND_LAST_TESTS = System.getProperty("intellij.build.test.ignoreFirstAndLastTests");
   private static final String LIST_CLASSES = System.getProperty("intellij.build.test.list.classes");
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
@@ -129,19 +126,13 @@ public final class JUnit5TeamCityRunner {
         Set<Path> classpathRoots = getClassRoots(classLoader);
         if (classpathRoots == null) throw new RuntimeException("Failed to get classpath roots");
         selectors = DiscoverySelectors.selectClasspathRoots(classpathRoots);
-        filters.add(new CommonTestClassesFilter());                                           // name check
-        filters.add(new BucketingClassNameFilter());                                          // bucketing
-        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());    // IJIgnore and Ignore support in JUnit 3/4
-        filters.add(new PerformancePostDiscoveryFilter());                                    // PerformanceUnitTest support
-        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());  // SkipInHeadlessEnvironment support in JUnit 3/4
+        filters.add(new CommonTestClassesFilter());         // name check
+        filters.add(new BucketingClassNameFilter());        // bucketing
+        filters.add(new IgnorePostDiscoveryFilter());       // IJIgnore and Ignore support in JUnit 3/4
+        filters.add(new PerformancePostDiscoveryFilter());  // PerformanceUnitTest support
+        filters.add(new HeadlessPostDiscoveryFilter());     // SkipInHeadlessEnvironment support in JUnit 3/4
         if (INCLUDE_TAGS != null) filters.add(TagFilter.includeTags(INCLUDE_TAGS.split(";")));        // JUnit 5 tag filter
         if (EXCLUDE_TAGS != null) filters.add(TagFilter.excludeTags(EXCLUDE_TAGS.split(";")));        // JUnit 5 tag exclusion filter
-
-        // filter engines
-        if ("false".equals(ENGINE_VINTAGE)) filters.add(EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID));      // JUnit 5 tests only
-        else if ("only".equals(ENGINE_VINTAGE)) filters.add(EngineFilter.includeEngines(VintageTestDescriptor.ENGINE_ID));  // JUnit 3/4 tests only
-        else if (ENGINE_VINTAGE != null) throw new RuntimeException("Unsupported 'intellij.build.test.engine.vintage' value: " + ENGINE_VINTAGE);
-        // else all tests
       }
       else if (args.length == 1) {
         String className = args[0];
@@ -164,7 +155,7 @@ public final class JUnit5TeamCityRunner {
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      boolean reportAsBootstrapTestsSuite = !"false".equals(ENGINE_VINTAGE) && args[0].equals("__classpathroot__");  // mask JUnit 3/4 suite names to preserve test identity on TeamCity
+      boolean reportAsBootstrapTestsSuite = args[0].equals("__classpathroot__");  // mask JUnit 3/4 suite names to preserve test identity on TeamCity
       listener = isUnderTeamCity() ? new TCExecutionListener(reportAsBootstrapTestsSuite) : new ConsoleTestExecutionListener();
 
       if (LIST_CLASSES != null) {
