@@ -585,6 +585,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/htmltools/intellij.html.tools.iml" filepath="$PROJECT_DIR$/plugins/htmltools/intellij.html.tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/htmltools/intellij.html.tools.tests.iml" filepath="$PROJECT_DIR$/plugins/htmltools/intellij.html.tools.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.ide.starter.allure.annotations.scanner/intellij.ide.starter.allure.annotations.scanner.iml" filepath="$PROJECT_DIR$/tools/intellij.ide.starter.allure.annotations.scanner/intellij.ide.starter.allure.annotations.scanner.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-startup/importSettings/intellij.ide.startup.importSettings.iml" filepath="$PROJECT_DIR$/plugins/ide-startup/importSettings/intellij.ide.startup.importSettings.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-startup/importSettings/intellij.ide.startup.importSettings.tests.iml" filepath="$PROJECT_DIR$/plugins/ide-startup/importSettings/intellij.ide.startup.importSettings.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android-customization/intellij.idea.android.customization.iml" filepath="$PROJECT_DIR$/android-customization/intellij.idea.android.customization.iml" />

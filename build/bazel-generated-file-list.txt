@@ -1639,6 +1639,7 @@ spellchecker
 spellchecker/xml
 tools/apiDump
 tools/apiDump/testData
+tools/intellij.ide.starter.allure.annotations.scanner
 tools/intellij.lambda.sampleTests
 tools/intellij.lambda.sampleTestsWithFixtures
 tools/intellij.lambda.sampleTestsWithFixtures/plugin
