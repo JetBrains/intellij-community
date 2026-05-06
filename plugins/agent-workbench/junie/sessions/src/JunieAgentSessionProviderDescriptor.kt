@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -55,6 +56,20 @@ internal class JunieAgentSessionProviderDescriptor(
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(
       command = JunieCliSupport.buildNewSessionCommand(yolo = mode == AgentSessionLaunchMode.YOLO, executable = executableResolver()),
+    )
+  }
+
+  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(
+      command = JunieCliSupport.buildNewSessionCommand(),
+    )
+  }
+
+  @Suppress("UNUSED_PARAMETER")
+  override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
+    return AgentSessionLaunchSpec(
+      sessionId = null,
+      launchSpec = buildNewSessionLaunchSpec(mode),
     )
   }
 

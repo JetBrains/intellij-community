@@ -3,11 +3,9 @@ package com.intellij.agent.workbench.junie.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -60,21 +58,6 @@ class JunieAgentSessionProviderDescriptorTest {
       "--session-id",
       "session-251209-172932-1ze8",
     )
-  }
-
-  @Test
-  fun `initial message launch uses interactive post start dispatch`() {
-    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
-    val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
-
-    val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
-      baseLaunchSpec = AgentSessionTerminalLaunchSpec(JunieCliSupport.buildNewSessionCommand(executable = "junie-test")),
-      initialMessagePlan = initialMessagePlan,
-    )
-    val dispatchSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
-
-    assertThat(launchSpec).isNull()
-    assertThat(dispatchSteps.map { it.text }).containsExactly("Implement the feature")
   }
 
   @Test

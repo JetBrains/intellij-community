@@ -28,8 +28,7 @@ internal class JunieSessionSource(
     val matchingEntries = loadIndexEntries(sessionIndexPathProvider())
       .filter { it.normalizedProjectDir == normalizedProjectPath }
       .sortedByDescending(JunieSessionIndexEntry::updatedAt)
-    rememberActiveThreadRead(matchingEntries, JunieSessionIndexEntry::sessionId, JunieSessionIndexEntry::updatedAt)
-    return matchingEntries.map { it.toAgentSessionThread(readTracker) }
+    return matchingEntries.map { it.toAgentSessionThread() }
   }
 
   private fun loadIndexEntries(indexPath: Path): List<JunieSessionIndexEntry> {
@@ -108,21 +107,15 @@ private fun List<JunieSessionIndexEntry>.latestBySessionId(): List<JunieSessionI
   return latestBySessionId.values.toList()
 }
 
-private fun JunieSessionIndexEntry.toAgentSessionThread(readTracker: Map<String, Long>): AgentSessionThread {
+private fun JunieSessionIndexEntry.toAgentSessionThread(): AgentSessionThread {
   return AgentSessionThread(
     id = sessionId,
     title = title,
     updatedAt = updatedAt,
     archived = false,
-    activity = effectiveActivity(readTracker),
+    activity = AgentThreadActivity.READY,
     provider = AgentSessionProvider.JUNIE,
   )
-}
-
-private fun JunieSessionIndexEntry.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
-  val lastSeenAt = readTracker[sessionId] ?: return AgentThreadActivity.READY
-  if (updatedAt > lastSeenAt) return AgentThreadActivity.UNREAD
-  return AgentThreadActivity.READY
 }
 
 private fun normalizeJunieProjectPath(path: String): String? {
