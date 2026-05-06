@@ -3144,6 +3144,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsConstructor.kt");
             }
 
+            @TestMetadata("mixedNamedAndPositionalArgumentsContextParameter.kt")
+            public void testMixedNamedAndPositionalArgumentsContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsContextParameter.kt");
+            }
+
+            @TestMetadata("mixedNamedAndPositionalArgumentsContextParameterTypeCheck.kt")
+            public void testMixedNamedAndPositionalArgumentsContextParameterTypeCheck() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsContextParameterTypeCheck.kt");
+            }
+
             @TestMetadata("mixedNamedAndPositionalArgumentsMultiple.kt")
             public void testMixedNamedAndPositionalArgumentsMultiple() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsMultiple.kt");
@@ -3152,6 +3162,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("mixedNamedAndPositionalArgumentsSubtype.kt")
             public void testMixedNamedAndPositionalArgumentsSubtype() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSubtype.kt");
+            }
+
+            @TestMetadata("mixedNamedAndPositionalArgumentsSwappedOrder.kt")
+            public void testMixedNamedAndPositionalArgumentsSwappedOrder() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSwappedOrder.kt");
             }
         }
 

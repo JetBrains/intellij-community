@@ -4005,6 +4005,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsConstructor.kt");
             }
 
+            @TestMetadata("mixedNamedAndPositionalArgumentsContextParameter.kt")
+            public void testMixedNamedAndPositionalArgumentsContextParameter() throws Exception {
+                runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsContextParameter.kt");
+            }
+
+            @TestMetadata("mixedNamedAndPositionalArgumentsContextParameterTypeCheck.kt")
+            public void testMixedNamedAndPositionalArgumentsContextParameterTypeCheck() throws Exception {
+                runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsContextParameterTypeCheck.kt");
+            }
+
             @TestMetadata("mixedNamedAndPositionalArgumentsMultiple.kt")
             public void testMixedNamedAndPositionalArgumentsMultiple() throws Exception {
                 runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsMultiple.kt");
@@ -4013,6 +4023,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("mixedNamedAndPositionalArgumentsSubtype.kt")
             public void testMixedNamedAndPositionalArgumentsSubtype() throws Exception {
                 runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSubtype.kt");
+            }
+
+            @TestMetadata("mixedNamedAndPositionalArgumentsSwappedOrder.kt")
+            public void testMixedNamedAndPositionalArgumentsSwappedOrder() throws Exception {
+                runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSwappedOrder.kt");
             }
         }
 

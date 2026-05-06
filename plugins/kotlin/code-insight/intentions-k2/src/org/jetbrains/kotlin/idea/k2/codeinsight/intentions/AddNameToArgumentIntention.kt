@@ -8,7 +8,11 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.MixingNamedAndPositionalArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableN
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -60,7 +65,15 @@ class AddNameToArgumentIntention :
     }
 
     override fun KaSession.prepareContext(element: KtValueArgument): Context? {
+        if (element.getArgumentExpression()?.hasMixingDiagnosticsPresent() == true) return null
         return getStableNameFor(element)?.let { Context(it) }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KtExpression.hasMixingDiagnosticsPresent(): Boolean {
+        val diagnostics = directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        return diagnostics.any { it is MixingNamedAndPositionalArguments }
     }
 
     override fun invoke(
