@@ -56,6 +56,20 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
     doTest(expected)
   }
 
+  @Test
+  fun `no warnings on table with spaces in separator cells`() {
+    // language=Markdown
+    val expected = """
+    | Active  | Suggested | Audit? |
+    | ------- | --------- | ------ |
+    | `true`  | `true`    | No     |
+    | `true`  | `false`   | Yes    |
+    | `false` | `true`    | No     |
+    | `false` | `false`   | No     |
+    """.trimIndent()
+    doTest(expected)
+  }
+
   private fun doTest(expected: String) {
     myFixture.configureByText("some.md", expected)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())

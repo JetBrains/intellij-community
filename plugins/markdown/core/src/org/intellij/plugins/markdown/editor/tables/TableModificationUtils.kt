@@ -58,9 +58,10 @@ object TableModificationUtils {
     return width
   }
 
+  private val separatorCellPattern = Regex(":?-+:?")
+
   private fun isSeparatorCellCorrectlyFormatted(cellText: String): Boolean {
-    // Don't have to validate ':' count and positions, since it won't be a separator at all
-    return cellText.all { it =='-' || it == ':' }
+    return separatorCellPattern.matches(cellText.trim())
   }
 
   fun MarkdownTableCell.hasCorrectPadding(): Boolean {
