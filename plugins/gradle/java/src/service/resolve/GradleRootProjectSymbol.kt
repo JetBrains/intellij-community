@@ -14,17 +14,15 @@ class GradleRootProjectSymbol(rootProjectPath: String) : GradleProjectSymbol(roo
 
   override val qualifiedName: String get() = rootProjectName
 
-  override fun presentation(): TargetPresentation = rootProjectPresentation
+  override fun presentation(): TargetPresentation = TargetPresentation
+    .builder(GradleBundle.message("gradle.root.project"))
+    .icon(GradleIcons.Gradle)
+    .presentation()
 
   override fun externalProject(rootProject: ExternalProject): ExternalProject = rootProject
 
   companion object {
 
     const val rootProjectName = ":"
-
-    private val rootProjectPresentation: TargetPresentation = TargetPresentation
-      .builder(GradleBundle.message("gradle.root.project"))
-      .icon(GradleIcons.Gradle)
-      .presentation()
   }
 }
