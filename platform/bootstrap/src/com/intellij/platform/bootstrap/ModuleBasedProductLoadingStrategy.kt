@@ -64,7 +64,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private val useMainModuleGroup
-    get() = SystemProperties.getBooleanProperty("intellij.platform.module.based.loader.use.main.module.group", true)
+    get() = SystemProperties.getBooleanProperty("intellij.platform.module.based.loader.use.main.module.group", false)
 
   override val currentModeId: String
     get() = currentMode.id
@@ -92,7 +92,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         val corePluginDescriptorModule = System.getProperty(PLATFORM_CORE_PLUGIN_DESCRIPTOR_MODULE_PROPERTY, "intellij.frontend.split.customization")
         val corePluginHeader = moduleRepository.bundledPluginHeaders.find { it.pluginDescriptorModuleId.name == corePluginDescriptorModule }
         if (corePluginHeader == null) {
-          error("The core plugin header is not found in the runtime module repository by module $corePluginDescriptorModule")
+          error("The core plugin header is not found in $moduleRepository by module $corePluginDescriptorModule")
         }
         corePluginHeader.includedModules.filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED }.flatMapTo(LinkedHashSet()) { module ->
           val classpath = moduleRepository.findHeader(module.moduleId)?.ownClasspath ?: emptyList()
