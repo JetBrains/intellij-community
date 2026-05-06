@@ -172,6 +172,10 @@ class AgentSessionStateSyncTestFacade(
     stateStore.showMoreThreads(path)
   }
 
+  fun ensureProjectVisible(path: String) {
+    stateStore.ensureProjectVisible(path)
+  }
+
   fun ensureThreadVisible(path: String, provider: AgentSessionProvider, threadId: String) {
     stateStore.ensureThreadVisible(path = path, provider = provider, threadId = threadId)
   }

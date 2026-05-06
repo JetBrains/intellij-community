@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodePresentation
+import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.tree.shouldExpandOnDoubleClick
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
@@ -66,12 +67,17 @@ private class AgentSessionsTreeNodeDescriptor(
 ) : NodeDescriptor<Any?>(null, parentDescriptor) {
   private var presentationHash: Int = computePresentationHash()
 
+  init {
+    myName = computeName()
+  }
+
   override fun update(): Boolean {
     val nextHash = computePresentationHash()
     if (presentationHash == nextHash) {
       return false
     }
     presentationHash = nextHash
+    myName = computeName()
     return true
   }
 
@@ -92,5 +98,12 @@ private class AgentSessionsTreeNodeDescriptor(
       }
       else -> 0
     }
+  }
+
+  private fun computeName(): String {
+    if (element !is SessionTreeId) return ""
+    val model = modelProvider()
+    val node = model.entriesById[element]?.node ?: return ""
+    return sessionTreeNodeSearchText(node, model.duplicateProjectNames)
   }
 }

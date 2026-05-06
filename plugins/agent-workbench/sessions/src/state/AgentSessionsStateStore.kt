@@ -62,6 +62,19 @@ class AgentSessionsStateStore {
     }
   }
 
+  fun ensureProjectVisible(path: String) {
+    val normalizedPath = normalizeAgentWorkbenchPath(path)
+    update { state ->
+      val requiredClosedProjectCount = requiredVisibleClosedProjectCount(state.projects, normalizedPath) ?: return@update state
+      if (requiredClosedProjectCount <= state.visibleClosedProjectCount) {
+        state
+      }
+      else {
+        state.copy(visibleClosedProjectCount = requiredClosedProjectCount)
+      }
+    }
+  }
+
   fun showMoreThreads(path: String) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     update { state ->
@@ -178,4 +191,18 @@ private fun findThreadIndex(
 
 private fun AgentSessionThread.matchesProviderAndThreadOrSubAgent(provider: AgentSessionProvider, threadId: String): Boolean {
   return this.provider == provider && (id == threadId || subAgents.any { subAgent -> subAgent.id == threadId })
+}
+
+private fun requiredVisibleClosedProjectCount(projects: List<AgentProjectSessions>, normalizedPath: String): Int? {
+  var closedProjectCount = 0
+  for (project in projects) {
+    val isAlwaysVisible = project.isOpen || project.worktrees.any { it.isOpen }
+    if (!isAlwaysVisible) {
+      closedProjectCount++
+    }
+    if (normalizeAgentWorkbenchPath(project.path) == normalizedPath) {
+      return if (isAlwaysVisible) 0 else closedProjectCount
+    }
+  }
+  return null
 }
