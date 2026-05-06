@@ -135,12 +135,20 @@ internal object SplitModeModuleKindResolver {
         val containingModule = ModuleUtilCore.findModuleForPsiElement(pluginXml) ?: continue
         val ownDependencyFacts =
           SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(ideaPlugin, descriptorAnalysisStates)
+        val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
+        val resolvedModuleKind =
+          if (predefinedModuleKind != null) {
+            ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning)
+          }
+          else {
+            computeResolvedModuleKind(containingModule.name, ownDependencyFacts, emptyList())
+          }
 
         yield(
           ContainingPlugin(
             descriptorPath = pluginXml.virtualFile.path,
             moduleName = containingModule.name,
-            moduleKind = computeResolvedModuleKind(containingModule.name, ownDependencyFacts, emptyList()),
+            moduleKind = resolvedModuleKind,
             dependencyFacts = asContainingPluginFacts(ownDependencyFacts),
           )
         )

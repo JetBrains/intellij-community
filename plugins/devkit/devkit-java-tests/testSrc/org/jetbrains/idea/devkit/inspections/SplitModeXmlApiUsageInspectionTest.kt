@@ -814,6 +814,40 @@ Module 'unique.module.name.37'  -> backend">typedHandler</warning>/>
     myFixture.checkHighlighting()
   }
 
+  fun testPredefinedSharedContainingPluginOverridesFrontendNamingConvention() {
+    addModuleWithXmlDescriptor(
+      moduleName = "intellij.platform.navbar.frontend",
+      descriptorRelativePathToResourcesDirectory = "intellij.platform.navbar.frontend.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <content>
+            <module name="unique.module.name.39" loading="embedded"/>
+          </content>
+        </idea-plugin>
+      """.trimIndent(),
+    )
+    val contentModuleDescriptor = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.39",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.39.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <typedHandler/>
+            <<warning descr="'com.intellij.localInspection' can only be used in 'backend' module type. Actual module type is 'shared'.
+
+Computed module kind reasoning:
+
+Module declares no own FE/BE dependencies, but the containing plugin.xml files do:
+Module 'intellij.platform.navbar.frontend'  -> shared">localInspection</warning>/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent(),
+    )
+    myFixture.configureFromExistingVirtualFile(contentModuleDescriptor.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testFrontendExtensionInPluginXmlWithRequiredBackendContentModule() {
     addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.28",
