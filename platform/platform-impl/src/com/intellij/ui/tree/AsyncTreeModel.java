@@ -1248,10 +1248,23 @@ public final class AsyncTreeModel extends AbstractTreeModel
   @Override
   public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
     tree.cachedPresentation = presentation;
-    if (tree.root == null && presentation != null) {
+    if (presentation == null) {
+      return;
+    }
+    if (tree.root == null) {
       var rootPath = new CachingTreePath(presentation.getRoot());
       tree.root = toNode(null, presentation, rootPath);
       treeStructureChanged(new CachingTreePath(tree.root.object), null, null);
+    }
+    else {
+      presentation.rootLoaded(tree.root.object);
+      if (tree.root.isLoadingRequired() || tree.root.loading != null) {
+        var cachedNodes = getChildrenFromCachedPresentation(tree.root);
+        if (cachedNodes != null) {
+          tree.root.setChildren(cachedNodes);
+          treeStructureChanged(new CachingTreePath(tree.root.object), null, null);
+        }
+      }
     }
   }
 

@@ -79,6 +79,28 @@ internal class TreeStateTest : BasePlatformTestCase() {
     )
   }
 
+  fun `test restore cached presentation when root is already loaded`() {
+    cachedPresentationTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        -a2
+         *a2.1
+         *a2.2
+        *a3
+      """.trimIndent(),
+      expectedLoadedNodes = listOf(
+        "/root",
+        "/root/a1",
+        "/root/a1/a1.1",
+        "/root/a2",
+        "/root/a3",
+      ),
+      loadRootBeforeRestore = true,
+    )
+  }
+
   fun `test restore cached presentation - no children to restore`() {
     cachedPresentationTest(
       inputToSave = """
@@ -226,12 +248,16 @@ internal class TreeStateTest : BasePlatformTestCase() {
     inputToSave: String,
     inputToRestore: String = inputToSave,
     expectedLoadedNodes: List<String>,
+    loadRootBeforeRestore: Boolean = false,
   ) = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val coroutineScope = this
     val tree = createTree(inputToSave, coroutineScope, async = true)
     expandInitiallyExpanded(tree)
     val state = TreeState.createOn(tree, true, false, true)
     val newTree = createTree(inputToRestore, coroutineScope, async = true)
+    if (loadRootBeforeRestore) {
+      loadRoot(newTree)
+    }
     state.applyTo(newTree)
     val actualLoadedNodes = suspendCancellableCoroutine { continuation -> 
       newTree.addPropertyChangeListener(CACHED_TREE_PRESENTATION_PROPERTY, PropertyChangeListener {
@@ -241,6 +267,12 @@ internal class TreeStateTest : BasePlatformTestCase() {
       })
     }
     assertThat(actualLoadedNodes).isEqualTo(expectedLoadedNodes)
+  }
+
+  private suspend fun loadRoot(tree: Tree) {
+    TreeUtil.promiseVisit(tree, object : TreeVisitor {
+      override fun visit(path: TreePath): TreeVisitor.Action = TreeVisitor.Action.INTERRUPT
+    }).await()
   }
 
   private fun syncSelectionTest(inputToSave: String, inputToRestore: String) = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
