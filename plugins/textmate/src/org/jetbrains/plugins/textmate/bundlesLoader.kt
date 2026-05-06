@@ -47,7 +47,9 @@ internal fun registerBundlesInParallel(scope: CoroutineScope,
       }
     }
   }
+  TextMateService.LOG.debug("Starting textmate bundle initialization with ${bundlesToLoad.size} bundles")
   ProgressIndicatorUtils.awaitWithCheckCanceled(initializationJob.asCompletableFuture())
+  TextMateService.LOG.debug("Starting textmate bundle initialization completed")
 }
 
 data class TextMateBundleToLoad(val name: String, val path: String)
