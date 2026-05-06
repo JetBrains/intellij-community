@@ -78,6 +78,23 @@ class DevKitMcpToolset : McpToolset {
   }
 
   @McpTool
+  @McpDescription(
+    """
+      |Recognizes the effective Split Mode module kind for a plugin.xml or content-module descriptor
+      |using the same DevKit analysis as the remdev inspections.
+      |Returns the effective kind and the reasoning used to compute it.
+      |Possible kinds include `shared`, `frontend`, `backend`, `monolith`, and `mixed`.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun recognize_ij_module_kind(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    descriptorPath: String,
+  ): RecognizeIjModuleKindResult {
+    return recognizeSplitModeModuleKindForPath(descriptorPath)
+  }
+
+  @McpTool
   @McpDescription("""
         |Analyzes the usage of the Read/Write lock for the method under the caret.
         |Also analyzes call paths to some depth.
@@ -220,5 +237,17 @@ class DevKitMcpToolset : McpToolset {
     val kindTemplateName: String,
     @property:McpDescription("Path to the plugin.xml selected for content-module registration, relative to the project root when available.")
     val targetPluginXmlPath: String?,
+  )
+
+  @Serializable
+  data class RecognizeIjModuleKindResult(
+    @property:McpDescription("Resolved IntelliJ module name that owns the descriptor.")
+    val moduleName: String,
+    @property:McpDescription("Descriptor path that was analyzed, relative to the project root when provided that way.")
+    val descriptorPath: String,
+    @property:McpDescription("Effective Split Mode module kind. One of: `shared`, `frontend`, `backend`, `monolith`, `mixed`.")
+    val kindId: String,
+    @property:McpDescription("Reasoning produced by the same DevKit module-kind analysis used by the remdev inspections.")
+    val reasoning: String,
   )
 }

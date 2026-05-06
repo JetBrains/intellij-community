@@ -13,6 +13,7 @@ import org.jetbrains.idea.devkit.build.PluginBuildConfiguration
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeSplitModeModuleKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.Assert
@@ -356,6 +357,29 @@ Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.mo
     )
 
     assertSharedModuleKindWithContainingPluginsOfDifferentKinds("unique.module.name.37")
+  }
+
+  fun testRecognizeModuleKindApiReturnsKindAndReasoning() {
+    val contentModuleDescriptor = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.38",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.38.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+
+    val recognizedKind = recognizeSplitModeModuleKind(contentModuleDescriptor as com.intellij.psi.xml.XmlFile)
+    Assert.assertNotNull("Module kind should be recognized", recognizedKind)
+    Assert.assertEquals("unique.module.name.38", recognizedKind!!.moduleName)
+    Assert.assertEquals("backend", recognizedKind.kindId)
+    Assert.assertTrue(
+      "Reasoning should mention the backend dependency.\nReasoning: ${recognizedKind.reasoning}",
+      recognizedKind.reasoning.contains("intellij.platform.backend"),
+    )
   }
 
   private fun assertSharedModuleKindWithContainingPluginsOfDifferentKinds(moduleName: String) {
