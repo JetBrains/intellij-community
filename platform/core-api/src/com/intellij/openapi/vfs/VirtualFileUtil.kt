@@ -33,7 +33,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.pathString
 
-fun VirtualFile.validOrNull() = if (isValid) this else null
+fun VirtualFile.validOrNull(): VirtualFile? = if (isValid) this else null
 
 val VirtualFile.isFile: Boolean
   get() = isValid && !isDirectory
