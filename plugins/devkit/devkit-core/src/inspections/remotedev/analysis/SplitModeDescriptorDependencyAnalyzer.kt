@@ -86,7 +86,14 @@ internal object SplitModeDescriptorDependencyAnalyzer {
     val accumulator = DependencyFactsAccumulator(descriptorLocation)
     val directDependencies = collectDirectDependencies(ideaPlugin)
     for (dependency in directDependencies) {
-      accumulator.record(DependencyInfo(dependency.name, directDependencyTrace(descriptorLocation)))
+      val dependencyDescriptor = dependency.resolveDescriptor()
+      val predefinedDependencyFacts = if (dependencyDescriptor == null) null else getPredefinedDependencyFacts(dependencyDescriptor)
+      if (predefinedDependencyFacts != null) {
+        accumulator.recordTransitiveDependencies(dependency.name, predefinedDependencyFacts)
+      }
+      else {
+        accumulator.record(DependencyInfo(dependency.name, directDependencyTrace(descriptorLocation)))
+      }
       if (accumulator.hasMonolithEvidence()) {
         return accumulator.toDependencyFacts()
       }

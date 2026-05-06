@@ -128,6 +128,28 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  fun testPredefinedModuleSkipsAllSplitModeInspections() {
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "intellij.platform.navbar.frontend",
+      descriptorRelativePathToResourcesDirectory = "intellij.platform.navbar.frontend.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.intellij">
+            <typedHandler/>
+            <localInspection/>
+          </extensions>
+        </idea-plugin>
+      """.trimIndent(),
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testSkippingPredefinedModuleInspectionsCanBeDisabled() {
     RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.skip.predefined")
       .setValue(false, testRootDisposable)
