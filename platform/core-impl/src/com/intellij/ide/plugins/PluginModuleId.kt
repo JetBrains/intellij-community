@@ -38,7 +38,7 @@ class PluginModuleId private constructor(val name: String, val namespace: String
   companion object {
     private val interner = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, PluginModuleId>()
     /** this property is temporarily added to allow using modules without specifying namespace */
-    private val useNamespaceInId = SystemProperties.getBooleanProperty("intellij.platform.plugin.modules.use.namespace.in.id", false)
+    private val useNamespaceInId = SystemProperties.getBooleanProperty("intellij.platform.plugin.modules.use.namespace.in.id", true)
 
     @JvmStatic
     fun getId(name: String, namespace: String): PluginModuleId {
