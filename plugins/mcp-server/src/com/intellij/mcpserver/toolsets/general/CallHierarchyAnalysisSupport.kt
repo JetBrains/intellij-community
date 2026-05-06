@@ -1,5 +1,7 @@
 package com.intellij.mcpserver.toolsets.general
 
+import com.intellij.ide.actions.FqnUtil
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
@@ -136,39 +138,62 @@ private class CallHierarchyAnalyzer(
 
   private suspend fun resolveTargetSymbol(symbolFqn: String): CallSymbol {
     val candidates = ArrayList<CallSymbol>()
-    for (element in resolveTargetPsiElements(symbolFqn)) {
+    val exactSearchCandidates = ArrayList<CallSymbol>()
+    for (targetElement in resolveTargetPsiElements(symbolFqn)) {
       checkCancelled()
       val candidate = readAction {
-        resolveCallHierarchyTarget(element)?.let(::createCallSymbol)
+        resolveCallHierarchyTarget(targetElement.element)?.let(::createCallSymbol)
       } ?: continue
-      if (candidate.matchesPlainFqn(symbolFqn) && candidates.none { it.signature == candidate.signature }) {
+      if (candidate.matchesPlainFqn(symbolFqn)) {
         candidates.add(candidate)
+      }
+      else if (targetElement.matchedInputPattern) {
+        exactSearchCandidates.add(candidate)
       }
     }
 
-    if (candidates.isEmpty()) {
+    val matchingCandidates = candidates.distinctBy { it.identityKey }
+    val exactCandidates = exactSearchCandidates.distinctBy { it.identityKey }
+    val resolvedCandidates = matchingCandidates.ifEmpty { exactCandidates }
+
+    if (resolvedCandidates.isEmpty()) {
       mcpFail("No callable symbol found for ${CallHierarchyRequest::symbolFqn.name} `$symbolFqn`.\n" +
               "Pass a callable FQN such as `com.example.Service.run` or `com.example.Service.run(String)`.\n" +
               "Type roots are supported only when the language call hierarchy provider maps them to a callable target; " +
               "use `search_symbol` to find callable symbols when needed.")
     }
-    if (candidates.size > 1) {
-      failAmbiguousSymbol(symbolFqn, candidates)
+    if (resolvedCandidates.size > 1) {
+      failAmbiguousSymbol(symbolFqn, resolvedCandidates)
     }
-    return candidates.single()
+    return resolvedCandidates.single()
   }
 
-  private suspend fun resolveTargetPsiElements(symbolFqn: String): List<PsiElement> {
-    val candidates = LinkedHashSet<PsiElement>()
-    candidates.addAll(findSymbolCandidates(symbolFqn.removeValueParameters()))
+  private suspend fun resolveTargetPsiElements(symbolFqn: String): List<TargetPsiElement> {
+    val candidates = LinkedHashMap<PsiElement, TargetPsiElement>()
+    fun addCandidates(elements: Iterable<PsiElement>, matchedInputPattern: Boolean) {
+      for (element in elements) {
+        candidates.compute(element) { _, existing ->
+          existing?.copy(matchedInputPattern = existing.matchedInputPattern || matchedInputPattern)
+          ?: TargetPsiElement(element, matchedInputPattern)
+        }
+      }
+    }
+
+    val nameWithoutParameters = symbolFqn.removeValueParameters()
+    addCandidates(findQualifiedNameProviderCandidates(symbolFqn), matchedInputPattern = true)
+    addCandidates(findSymbolCandidates(listOf(nameWithoutParameters)), matchedInputPattern = true)
+    val shortPattern = nameWithoutParameters.substringAfterLast('.')
+    if (shortPattern != nameWithoutParameters) {
+      addCandidates(findSymbolCandidates(listOf(shortPattern)), matchedInputPattern = false)
+    }
     val signature = parseCallableSignature(symbolFqn)
     if (signature != null) {
-      candidates.addAll(findCallableCandidatesByOwner(signature))
+      addCandidates(findCallableCandidatesByOwner(signature), matchedInputPattern = true)
     }
     else {
-      candidates.addAll(findTypeCandidates(symbolFqn))
+      addCandidates(findTypeCandidates(symbolFqn), matchedInputPattern = true)
     }
-    return candidates.toList()
+    return candidates.values.toList()
   }
 
   private fun resolveCallHierarchyTarget(element: PsiElement): PsiElement? {
@@ -419,14 +444,14 @@ private class CallHierarchyAnalyzer(
     )
   }
 
-  private suspend fun findSymbolCandidates(symbolFqn: String): List<PsiElement> {
-    return findChooseByNameCandidates(symbolFqn) { parentDisposable ->
+  private suspend fun findSymbolCandidates(patterns: List<String>): List<PsiElement> {
+    return findChooseByNameCandidates(patterns) { parentDisposable ->
       listOf(GotoClassModel2(project), GotoSymbolModel2(project, parentDisposable))
     }
   }
 
   private suspend fun findTypeCandidates(typeFqn: String): List<PsiElement> {
-    val candidates = findChooseByNameCandidates(typeFqn) { listOf(GotoClassModel2(project)) }
+    val candidates = findChooseByNameCandidates(listOf(typeFqn)) { listOf(GotoClassModel2(project)) }
     return readAction {
       candidates.filter { candidate ->
         val namedElement = canonicalNamedElement(candidate) ?: return@filter false
@@ -436,17 +461,17 @@ private class CallHierarchyAnalyzer(
   }
 
   private suspend fun findChooseByNameCandidates(
-    symbolFqn: String,
+    patterns: List<String>,
     createModels: (Disposable) -> List<ChooseByNameModel>,
   ): List<PsiElement> = coroutineScope {
     val parentDisposable = asDisposable()
     val provider = DefaultChooseByNameItemProvider(null)
     val result = LinkedHashSet<PsiElement>()
-    val patterns = listOf(symbolFqn, symbolFqn.substringAfterLast('.')).distinct().filter { it.isNotBlank() }
+    val uniquePatterns = patterns.distinct().filter { it.isNotBlank() }
 
     for (model in createModels(parentDisposable)) {
       val viewModel = McpChooseByNameViewModel(project, model, SYMBOL_SEARCH_LIMIT)
-      for (pattern in patterns) {
+      for (pattern in uniquePatterns) {
         checkCancelled()
         val transformedPattern = viewModel.transformPattern(pattern)
         if (transformedPattern.isBlank()) continue
@@ -472,6 +497,14 @@ private class CallHierarchyAnalyzer(
       }
     }
     result.toList()
+  }
+
+  private suspend fun findQualifiedNameProviderCandidates(symbolFqn: String): List<PsiElement> {
+    return readAction {
+      qualifiedNameLookupVariants(symbolFqn).mapNotNull { qualifiedName ->
+        runCatching { QualifiedNameProviderUtil.qualifiedNameToElement(qualifiedName, project) }.getOrNull()
+      }
+    }
   }
 
   private suspend fun findCallableCandidatesByOwner(signature: CallableSignatureParts): List<PsiElement> {
@@ -508,6 +541,7 @@ private class CallHierarchyAnalyzer(
 
   private fun searchableNames(element: PsiNamedElement, displayName: String, longName: String): Set<String> {
     return buildSet {
+      stableQualifiedNames(element).forEach(::add)
       element.name?.takeIf { it.isNotBlank() }?.let(::add)
       qualifiedName(element)?.takeIf { it.isNotBlank() }?.let(::add)
       parentQualifiedName(element)?.takeIf { it.isNotBlank() }?.let { parentName ->
@@ -520,6 +554,25 @@ private class CallHierarchyAnalyzer(
       val parentName = parentQualifiedName(element)
       if (!name.isNullOrBlank() && !parentName.isNullOrBlank()) {
         add("$parentName.$name")
+      }
+    }
+  }
+
+  private fun stableQualifiedNames(element: PsiNamedElement): Set<String> {
+    return buildSet {
+      fun addQualifiedName(candidate: PsiElement?) {
+        if (candidate == null || !candidate.isValid) return
+        (candidate as? PsiQualifiedNamedElement)?.qualifiedName?.takeIf { it.isNotBlank() }?.let(::add)
+        runCatching { FqnUtil.getQualifiedNameFromProviders(candidate) }.getOrNull()?.takeIf { it.isNotBlank() }?.let(::add)
+        runCatching { QualifiedNameProviderUtil.getQualifiedName(candidate) }.getOrNull()?.takeIf { it.isNotBlank() }?.let(::add)
+      }
+
+      addQualifiedName(element)
+      addQualifiedName(runCatching { QualifiedNameProviderUtil.adjustElementToCopy(element) }.getOrNull())
+      val navigationElement = runCatching { element.navigationElement }.getOrNull()
+      if (navigationElement !== element) {
+        addQualifiedName(navigationElement)
+        navigationElement?.let { addQualifiedName(runCatching { QualifiedNameProviderUtil.adjustElementToCopy(it) }.getOrNull()) }
       }
     }
   }
@@ -581,16 +634,24 @@ private data class CallSymbol(
   val fqnCandidates: Set<String>,
   val filePath: String?,
 ) {
+  val identityKey: String = fqnCandidates
+    .asSequence()
+    .flatMap { comparableNameVariants(it).asSequence() }
+    .firstOrNull()
+                           ?: listOfNotNull(filePath, signature).joinToString(":")
+
   fun matchesPlainFqn(symbolFqn: String): Boolean {
-    return signature == symbolFqn ||
-           signature.removeValueParameters() == symbolFqn ||
-           shortQualifiedSignature(signature) == symbolFqn ||
-           shortQualifiedSignature(signature)?.removeValueParameters() == symbolFqn ||
-           fqnCandidates.any { candidate ->
-      candidate == symbolFqn || candidate.removeValueParameters() == symbolFqn
-    }
+    val includeParameterlessNames = !symbolFqn.contains('(')
+    val requestedNames = comparableNameVariants(symbolFqn, includeParameterlessNames)
+    return comparableNameVariants(signature, includeParameterlessNames).any { it in requestedNames } ||
+           fqnCandidates.any { candidate -> comparableNameVariants(candidate, includeParameterlessNames).any { it in requestedNames } }
   }
 }
+
+private data class TargetPsiElement(
+  val element: PsiElement,
+  val matchedInputPattern: Boolean,
+)
 
 private data class CallNode(
   val symbol: CallSymbol,
@@ -712,6 +773,59 @@ private fun valueParameters(text: String, name: String): String? {
 private fun String.removeValueParameters(): String {
   val parameterStart = indexOf('(')
   return if (parameterStart == -1) this else substring(0, parameterStart)
+}
+
+private fun qualifiedNameLookupVariants(symbolFqn: String): Set<String> {
+  val name = symbolFqn.singleLine()
+  if (name.isBlank()) return emptySet()
+  return buildSet {
+    add(name)
+    add(name.removeValueParameters())
+    memberSeparatorVariants(name).forEach { variant ->
+      add(variant)
+      add(variant.removeValueParameters())
+    }
+  }
+}
+
+private fun comparableNameVariants(name: String): Set<String> {
+  return comparableNameVariants(name, includeParameterlessName = true)
+}
+
+private fun comparableNameVariants(name: String, includeParameterlessName: Boolean): Set<String> {
+  val singleLineName = name.singleLine()
+  if (singleLineName.isBlank()) return emptySet()
+  return buildSet {
+    add(singleLineName)
+    if (includeParameterlessName) {
+      add(singleLineName.removeValueParameters())
+    }
+    val dotSeparatedName = singleLineName.replace('#', '.')
+    add(dotSeparatedName)
+    if (includeParameterlessName) {
+      add(dotSeparatedName.removeValueParameters())
+    }
+    shortQualifiedSignature(dotSeparatedName)?.let { shortName ->
+      add(shortName)
+      if (includeParameterlessName) {
+        add(shortName.removeValueParameters())
+      }
+    }
+  }
+}
+
+private fun memberSeparatorVariants(name: String): Set<String> {
+  return buildSet {
+    add(name)
+    if ('#' in name) {
+      add(name.replace('#', '.'))
+    }
+    val withoutParameters = name.removeValueParameters()
+    val lastDot = withoutParameters.lastIndexOf('.')
+    if (lastDot > 0 && lastDot < withoutParameters.lastIndex) {
+      add(withoutParameters.substring(0, lastDot) + '#' + name.substring(lastDot + 1))
+    }
+  }
 }
 
 private fun parseCallableSignature(signature: String): CallableSignatureParts? {

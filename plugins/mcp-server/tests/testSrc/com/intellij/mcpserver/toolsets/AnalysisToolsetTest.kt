@@ -310,6 +310,80 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun analyze_calls_resolves_kotlin_member_by_full_fqn() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isKotlinPluginInstalled(), "Kotlin plugin is required for this test")
+
+    testMcpTool(
+      AnalysisToolset::analyze_calls.name,
+      buildJsonObject {
+        put("symbolFqn", JsonPrimitive("kotlinCalls.KotlinCallGraph.memberEntry"))
+        put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+        put("depth", JsonPrimitive(1))
+      },
+    ) { result ->
+      val text = result.textContent.text
+      assertThat(result.isError).isFalse()
+      assertThat(text).contains("memberEntry")
+      assertThat(text).contains("topLeaf")
+    }
+  }
+
+  @Test
+  fun analyze_calls_resolves_kotlin_top_level_function_by_source_fqn() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isKotlinPluginInstalled(), "Kotlin plugin is required for this test")
+
+    testMcpTool(
+      AnalysisToolset::analyze_calls.name,
+      buildJsonObject {
+        put("symbolFqn", JsonPrimitive("kotlinCalls.topEntry"))
+        put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+        put("depth", JsonPrimitive(1))
+      },
+    ) { result ->
+      val text = result.textContent.text
+      assertThat(result.isError).isFalse()
+      assertThat(text).contains("topEntry")
+      assertThat(text).contains("topLeaf")
+    }
+  }
+
+  @Test
+  fun analyze_calls_resolves_kotlin_top_level_function_by_jvm_facade_fqn() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isKotlinPluginInstalled(), "Kotlin plugin is required for this test")
+
+    testMcpTool(
+      AnalysisToolset::analyze_calls.name,
+      buildJsonObject {
+        put("symbolFqn", JsonPrimitive("kotlinCalls.KotlinCallGraphKt.fileFacadeEntry"))
+        put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+        put("depth", JsonPrimitive(1))
+      },
+    ) { result ->
+      val text = result.textContent.text
+      assertThat(result.isError).isFalse()
+      assertThat(text).contains("fileFacadeEntry")
+      assertThat(text).contains("topLeaf")
+    }
+  }
+
+  @Test
+  fun analyze_calls_keeps_short_kotlin_name_ambiguous() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isKotlinPluginInstalled(), "Kotlin plugin is required for this test")
+
+    testMcpTool(
+      AnalysisToolset::analyze_calls.name,
+      buildJsonObject {
+        put("symbolFqn", JsonPrimitive("ambiguousKotlinEntry"))
+        put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+      },
+    ) { result ->
+      val text = result.textContent.text
+      assertThat(result.isError).isTrue()
+      assertThat(text).contains("Ambiguous symbolFqn")
+    }
+  }
+
+  @Test
   fun analyze_calls_treats_legacy_persisted_signature_as_plain_symbol_input() = runBlocking(Dispatchers.Default) {
     assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
 
@@ -642,6 +716,10 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
    */
   private fun isJavaPluginInstalled(): Boolean {
     return PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.java"))
+  }
+
+  private fun isKotlinPluginInstalled(): Boolean {
+    return PluginManagerCore.isPluginInstalled(PluginId.getId("org.jetbrains.kotlin"))
   }
 
   private suspend fun withLintFilesCollector(
