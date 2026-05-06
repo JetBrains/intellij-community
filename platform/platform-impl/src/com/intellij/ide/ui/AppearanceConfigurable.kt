@@ -56,6 +56,7 @@ import com.intellij.ui.MacCustomAppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
@@ -550,58 +551,66 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
-          { checkBox(cdShowToolWindowBars).apply {
-            enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
-            if(NotRoamableUiSettings.getInstance().xNextStripe) {
-              comment(message("xnext.comment.unavailable"))
-            }
-          } },
-          { checkBox(cdLeftToolWindowLayout) },
-        )
-        if (ExperimentalUI.isNewUI()) {
-          if (ResizeStripeManager.enabled()) {
-            twoColumnsRow(
-              {
-                checkBox(cdShowToolWindowNames).gap(RightGap.SMALL).onApply {
-                  ResizeStripeManager.applyShowNames()
+          {
+            panel {
+              row {
+                checkBox(cdShowToolWindowBars).apply {
+                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+                  if (NotRoamableUiSettings.getInstance().xNextStripe) {
+                    comment(message("xnext.comment.unavailable"))
+                  }
+                }.onChanged { cb ->
+                  findDiagramPanel(cb)?.showToolWindowBars = cb.isSelected
                 }
-              },
-              { checkBox(cdRightToolWindowLayout) },
-            )
-            twoColumnsRow(
-              {
+              }
+              if (ExperimentalUI.isNewUI() && ResizeStripeManager.enabled()) {
+                row {
+                  checkBox(cdShowToolWindowNames).onApply {
+                    ResizeStripeManager.applyShowNames()
+                  }.onChanged { cb ->
+                    findDiagramPanel(cb)?.showToolWindowNames = cb.isSelected
+                  }
+                }
+              }
+              row {
+                checkBox(cdLeftToolWindowLayout).onChanged { cb ->
+                  findDiagramPanel(cb)?.leftHorizontalSplit = cb.isSelected
+                }
+              }
+              row {
+                checkBox(cdRightToolWindowLayout).onChanged { cb ->
+                  findDiagramPanel(cb)?.rightHorizontalSplit = cb.isSelected
+                }
+              }
+              row {
                 checkBox(cdWidescreenToolWindowLayout)
                   .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
-              },
-              { checkBox(cdRememberSizeForEachToolWindowNewUI) },
-            )
-          }
-          else {
-            twoColumnsRow(
-              {
-                checkBox(cdWidescreenToolWindowLayout)
-                  .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
-              },
-              { checkBox(cdRightToolWindowLayout) },
-            )
-            twoColumnsRow(
-              { checkBox(cdRememberSizeForEachToolWindowNewUI) },
-            )
-          }
-        }
-        else {
-          twoColumnsRow(
-            {
-              checkBox(cdWidescreenToolWindowLayout)
-                .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
-            },
-            { checkBox(cdRightToolWindowLayout) },
-          )
-          twoColumnsRow(
-            { checkBox(cdShowToolWindowNumbers) },
-            { checkBox(cdRememberSizeForEachToolWindowOldUI) },
-          )
-        }
+                  .onChanged { cb ->
+                    findDiagramPanel(cb)?.wideScreenSupport = cb.isSelected
+                  }
+              }
+              if (ExperimentalUI.isNewUI()) {
+                row { checkBox(cdRememberSizeForEachToolWindowNewUI) }
+              }
+              else {
+                row { checkBox(cdShowToolWindowNumbers) }
+                row { checkBox(cdRememberSizeForEachToolWindowOldUI) }
+              }
+            }
+          },
+          {
+            val diagram = ToolWindowLayoutDiagramPanel()
+            cell(diagram)
+              .align(Align.FILL)
+              .onApply {
+                diagram.wideScreenSupport = settings.wideScreenSupport
+                diagram.leftHorizontalSplit = settings.leftHorizontalSplit
+                diagram.rightHorizontalSplit = settings.rightHorizontalSplit
+                diagram.showToolWindowBars = !settings.hideToolStripes
+                diagram.showToolWindowNames = settings.showToolWindowsNames
+              }
+          },
+        )
       }
 
       group(message("group.presentation.mode")) {
@@ -797,6 +806,30 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
     IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
     IdeZoomEventFields.presentationMode.with(isPresentation)
   )
+}
+
+private fun findDiagramPanel(component: java.awt.Component): ToolWindowLayoutDiagramPanel? {
+  var parent = component.parent
+  while (parent != null) {
+    if (parent is ToolWindowLayoutDiagramPanel) return parent
+    for (child in parent.components) {
+      val found = findDiagramInTree(child)
+      if (found != null) return found
+    }
+    parent = parent.parent
+  }
+  return null
+}
+
+private fun findDiagramInTree(component: java.awt.Component): ToolWindowLayoutDiagramPanel? {
+  if (component is ToolWindowLayoutDiagramPanel) return component
+  if (component is java.awt.Container) {
+    for (child in component.components) {
+      val found = findDiagramInTree(child)
+      if (found != null) return found
+    }
+  }
+  return null
 }
 
 @Internal
