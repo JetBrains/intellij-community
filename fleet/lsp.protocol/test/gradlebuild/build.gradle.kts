@@ -72,9 +72,7 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.test.jvm1610416103.get().let { "${it.group}:kotlinx-coroutines-test:${it.version}" }) {
       isTransitive = false
     }
-    implementation(project(":fleet.ktor.client.cio"))
     implementation(project(":fleet.ktor.client.core"))
-    implementation(project(":fleet.ktor.network.tls"))
     implementation(project(":fleet.lsp.protocol"))
     implementation(project(":fleet.test.runtime"))
   }

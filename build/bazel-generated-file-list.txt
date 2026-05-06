@@ -235,10 +235,7 @@ fleet/codecache/test
 fleet/compiler-plugins
 fleet/fastutil
 fleet/kernel
-fleet/ktor/client/cio
 fleet/ktor/client/core
-fleet/ktor/network/tls
-fleet/ktor/server/cio
 fleet/lsp.protocol
 fleet/lsp.protocol/test
 fleet/modules/api

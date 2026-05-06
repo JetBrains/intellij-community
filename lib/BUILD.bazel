@@ -753,21 +753,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.typesafe/config-1.4.4.jar_copy",
-  src = "@com_typesafe-config-1_4_4_http//file",
-  out = "com.typesafe/config-1.4.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com-typesafe-config",
-  jar = "@com_typesafe-config-1_4_4_http//file",
-  source_jar = "@com_typesafe-config-1_4_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.jetbrains.intellij.deps.completion/completion-ranking-cpp-0.1.5.jar_copy",
   src = "@org_jetbrains_intellij_deps_completion-completion-ranking-cpp-0_1_5_http//file",
   out = "org.jetbrains.intellij.deps.completion/completion-ranking-cpp-0.1.5.jar",
@@ -2439,21 +2424,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.ktor/ktor-client-cio-jvm-3.4.1.jar_copy",
-  src = "@io_ktor-ktor-client-cio-jvm-3_4_1_http//file",
-  out = "io.ktor/ktor-client-cio-jvm-3.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-io-ktor-client-cio",
-  jar = "@io_ktor-ktor-client-cio-jvm-3_4_1_http//file",
-  source_jar = "@io_ktor-ktor-client-cio-jvm-3_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "io.ktor/ktor-client-core-jvm-3.4.1.jar_copy",
   src = "@io_ktor-ktor-client-core-jvm-3_4_1_http//file",
   out = "io.ktor/ktor-client-core-jvm-3.4.1.jar",
@@ -2574,21 +2544,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.ktor/ktor-network-tls-jvm-3.4.1.jar_copy",
-  src = "@io_ktor-ktor-network-tls-jvm-3_4_1_http//file",
-  out = "io.ktor/ktor-network-tls-jvm-3.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-io-ktor-network-tls",
-  jar = "@io_ktor-ktor-network-tls-jvm-3_4_1_http//file",
-  source_jar = "@io_ktor-ktor-network-tls-jvm-3_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "io.ktor/ktor-serialization-jvm-3.4.1.jar_copy",
   src = "@io_ktor-ktor-serialization-jvm-3_4_1_http//file",
   out = "io.ktor/ktor-serialization-jvm-3.4.1.jar",
@@ -2600,51 +2555,6 @@ jvm_import(
   name = "fleet-io-ktor-serialization",
   jar = "@io_ktor-ktor-serialization-jvm-3_4_1_http//file",
   source_jar = "@io_ktor-ktor-serialization-jvm-3_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.ktor/ktor-server-cio-jvm-3.4.1.jar_copy",
-  src = "@io_ktor-ktor-server-cio-jvm-3_4_1_http//file",
-  out = "io.ktor/ktor-server-cio-jvm-3.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-io-ktor-server-cio",
-  jar = "@io_ktor-ktor-server-cio-jvm-3_4_1_http//file",
-  source_jar = "@io_ktor-ktor-server-cio-jvm-3_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.ktor/ktor-server-core-jvm-3.4.1.jar_copy",
-  src = "@io_ktor-ktor-server-core-jvm-3_4_1_http//file",
-  out = "io.ktor/ktor-server-core-jvm-3.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-io-ktor-server-core",
-  jar = "@io_ktor-ktor-server-core-jvm-3_4_1_http//file",
-  source_jar = "@io_ktor-ktor-server-core-jvm-3_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.ktor/ktor-server-host-common-jvm-3.4.1.jar_copy",
-  src = "@io_ktor-ktor-server-host-common-jvm-3_4_1_http//file",
-  out = "io.ktor/ktor-server-host-common-jvm-3.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-io-ktor-server-host-common",
-  jar = "@io_ktor-ktor-server-host-common-jvm-3_4_1_http//file",
-  source_jar = "@io_ktor-ktor-server-host-common-jvm-3_4_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2855,21 +2765,6 @@ jvm_import(
   name = "ch_qos_logback-logback-core-1_3_14_http_import",
   jar = "@ch_qos_logback-logback-core-1_3_14_http//file",
   source_jar = "@ch_qos_logback-logback-core-1_3_14-sources_http//file"
-)
-
-copy_file(
-  name = "org.fusesource.jansi/jansi-2.4.1.jar_copy",
-  src = "@org_fusesource_jansi-jansi-2_4_1_http//file",
-  out = "org.fusesource.jansi/jansi-2.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "fleet-org-fusesource-jansi",
-  jar = "@org_fusesource_jansi-jansi-2_4_1_http//file",
-  source_jar = "@org_fusesource_jansi-jansi-2_4_1-sources_http//file",
-  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -7508,6 +7403,14 @@ copy_file(
 )
 
 copy_file(
+  name = "org.fusesource.jansi/jansi-2.4.1.jar_copy",
+  src = "@org_fusesource_jansi-jansi-2_4_1_http//file",
+  out = "org.fusesource.jansi/jansi-2.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jline/jline-terminal-3.27.0.jar_copy",
   src = "@org_jline-jline-terminal-3_27_0_http//file",
   out = "org.jline/jline-terminal-3.27.0.jar",
@@ -9739,6 +9642,22 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+copy_file(
+  name = "io.ktor/ktor-client-cio-jvm-3.4.1.jar_copy",
+  src = "@io_ktor-ktor-client-cio-jvm-3_4_1_http//file",
+  out = "io.ktor/ktor-client-cio-jvm-3.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.ktor/ktor-network-tls-jvm-3.4.1.jar_copy",
+  src = "@io_ktor-ktor-network-tls-jvm-3_4_1_http//file",
+  out = "io.ktor/ktor-network-tls-jvm-3.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "ktor-client-cio",
   exports = [
@@ -9936,6 +9855,22 @@ jvm_import(
   name = "io_ktor-ktor-serialization-kotlinx-jvm-3_4_1_http_import",
   jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_4_1_http//file",
   source_jar = "@io_ktor-ktor-serialization-kotlinx-jvm-3_4_1-sources_http//file"
+)
+
+copy_file(
+  name = "io.ktor/ktor-server-cio-jvm-3.4.1.jar_copy",
+  src = "@io_ktor-ktor-server-cio-jvm-3_4_1_http//file",
+  out = "io.ktor/ktor-server-cio-jvm-3.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.ktor/ktor-server-core-jvm-3.4.1.jar_copy",
+  src = "@io_ktor-ktor-server-core-jvm-3_4_1_http//file",
+  out = "io.ktor/ktor-server-core-jvm-3.4.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
