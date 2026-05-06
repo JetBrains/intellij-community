@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
@@ -129,17 +131,12 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             connection.deliverImmediately()
 
             showNewKotlinCompilerAvailableNotificationIfNeeded(myProject)
-            showNewKotlinCompilerAvailableNotificationIfNeeded(myProject)
 
             runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
             connection.deliverImmediately()
             assertEquals(expectedCountAfter, counter.get())
 
-            if (shouldShowNotification) {
-                assertTrue(propertiesComponent.isValueSet(propertyKey))
-            } else {
-                assertFalse(propertiesComponent.isValueSet(propertyKey))
-            }
+            assertEquals(shouldShowNotification, propertiesComponent.isValueSet(propertyKey))
         } finally {
             propertiesComponent.unsetValue(propertyKey)
         }
@@ -482,37 +479,45 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         assertSameElements(moduleNamesWithKotlinFiles, "project.app")
     }
 
+    private fun testProjectWithOneModule() {
+        importProjectFromTestData()
+
+        myProject.modules.forEach {
+            val configurators = ReadAction
+                .nonBlocking(Callable { getAbleToRunConfigurators(it) })
+                .executeSynchronously()
+            when (it.name) {
+                "project" -> {
+                    assert(configurators.isEmpty())
+                }
+
+                "project.app", "project.app.main", "project.app.test" -> {
+                    assert(configurators.singleOrNull() is KotlinGradleModuleConfigurator)
+                }
+
+                else -> {
+                    fail("Unexpected module name: ${it.name}")
+                }
+            }
+        }
+    }
+
     @Test
     @TargetVersions("<7.6")
     fun testListNonConfiguredModulesConfigured() {
-        importProjectFromTestData()
-
-        val modules = ReadAction
-            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
-            .executeSynchronously()
-        assertNotEmpty(modules)
+        testProjectWithOneModule()
     }
 
     @Test
     @TargetVersions("<9.0.0")
     fun testListNonConfiguredModulesConfiguredWithImplementation() {
-        importProjectFromTestData()
-
-        val modules = ReadAction
-            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
-            .executeSynchronously()
-        assertNotEmpty(modules)
+        testProjectWithOneModule()
     }
 
     @Test
     @TargetVersions("<7.6")
     fun testListNonConfiguredModulesConfiguredOnlyTest() {
-        importProjectFromTestData()
-
-        val modules = ReadAction
-            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
-            .executeSynchronously()
-        assertNotEmpty(modules)
+        testProjectWithOneModule()
     }
 
     @Ignore
