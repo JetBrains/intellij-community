@@ -329,6 +329,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerInvocationUtil.invokeLater(myProject, runnable);
       }
+
+      @Override
+      protected void commandCancelled() {
+        LOG.error("invokeRatherLater was silently cancelled " + runnable.getClass());
+      }
     });
   }
 
