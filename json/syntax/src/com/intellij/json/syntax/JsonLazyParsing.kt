@@ -5,5 +5,9 @@ import fleet.util.multiplatform.linkToActual
 
 internal fun jsonLazyParsing(): Boolean = linkToActual()
 
-/** @see jsonLazyParsingJvm, jsonLazyParsingWasmJs*/
+/**
+ * Handles lazy parsing switch of JSON files in syntax lib which has no dependency on IntelliJ platform.
+ *
+ * @see jsonLazyParsingJvm, jsonLazyParsingWasmJs
+ */
 val JsonLazyParsing: Boolean = jsonLazyParsing()

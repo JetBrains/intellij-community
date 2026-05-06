@@ -3,7 +3,6 @@ package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementTypeConverterFactory;
 import com.intellij.json.syntax.JsonLanguageDefinition;
-import com.intellij.json.syntax.JsonLazyParsingKt;
 import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
@@ -44,7 +43,7 @@ public class JsonParsingTest extends ParsingTestCase {
   }
 
   protected boolean isIgnore() {
-    return !JsonLazyParsingKt.getJsonLazyParsing();
+    return !JsonElementFactory.getJsonLazyParsingIJ();
   }
 
   public void testKeywords() {

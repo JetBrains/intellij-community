@@ -24,6 +24,8 @@
               implementationClass="com.intellij.json.jsonLines.JsonLinesFileType" fieldName="INSTANCE"
               language="JSON Lines"/>
 
+    <registryKey defaultValue="true" description="Enable lazy parsing of JSON" key="json.lazy.parsing" restartRequired="true"/>
+
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.parserDefinition language="JSON Lines" implementationClass="com.intellij.json.jsonLines.JsonLinesParserDefinition"/>
