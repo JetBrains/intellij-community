@@ -2,6 +2,7 @@
 package com.intellij.tests.bazel;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,11 @@ class BazelJUnitOutputListenerTest {
 
     Element suite = getOnlyElement(xml, "testsuite");
     assertThat(suite.getAttribute("tests")).isEqualTo("3");
-    assertThat(suite.getAttribute("failures")).isEqualTo("1");
+    assertThat(suite.getAttribute("failures")).isEqualTo("0");
+    assertThat(suite.getAttribute("errors")).isEqualTo("1");
     assertThat(suite.getAttribute("skipped")).isEqualTo("2");
     assertThat(getTestCaseNames(xml)).contains("firstTest", "secondTest");
-    assertThat(countTestCasesWithTag(xml, "failure")).isEqualTo(1);
+    assertThat(countTestCasesWithTag(xml, "error")).isEqualTo(1);
     assertThat(getOnlyTestCase(xml, "firstTest").getElementsByTagName("skipped").getLength()).isEqualTo(1);
     assertThat(getOnlyTestCase(xml, "secondTest").getElementsByTagName("skipped").getLength()).isEqualTo(1);
   }
@@ -45,11 +47,12 @@ class BazelJUnitOutputListenerTest {
 
     Element suite = getOnlyElement(xml, "testsuite");
     assertThat(suite.getAttribute("tests")).isEqualTo("2");
-    assertThat(suite.getAttribute("failures")).isEqualTo("1");
+    assertThat(suite.getAttribute("failures")).isEqualTo("0");
+    assertThat(suite.getAttribute("errors")).isEqualTo("1");
     assertThat(suite.getAttribute("skipped")).isEqualTo("0");
     assertThat(getTestCaseNames(xml)).contains("successfulTest");
-    assertThat(countTestCasesWithTag(xml, "failure")).isEqualTo(1);
-    assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("failure").getLength()).isEqualTo(0);
+    assertThat(countTestCasesWithTag(xml, "error")).isEqualTo(1);
+    assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("error").getLength()).isEqualTo(0);
     assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("skipped").getLength()).isEqualTo(0);
   }
 
@@ -63,6 +66,19 @@ class BazelJUnitOutputListenerTest {
       "secondParameterizedTest.FIRST",
       "secondParameterizedTest.SECOND"
     );
+  }
+
+  @Test
+  void treatsAbortedTestsAsSkipped(@TempDir Path tempDir) throws Exception {
+    Document xml = executeAndReadXml(AbortedScenario.class, tempDir.resolve("aborted.xml"));
+
+    Element suite = getOnlyElement(xml, "testsuite");
+    assertThat(suite.getAttribute("tests")).isEqualTo("2");
+    assertThat(suite.getAttribute("failures")).isEqualTo("0");
+    assertThat(suite.getAttribute("errors")).isEqualTo("0");
+    assertThat(suite.getAttribute("skipped")).isEqualTo("1");
+    assertThat(getOnlyTestCase(xml, "abortedTest").getElementsByTagName("skipped").getLength()).isEqualTo(1);
+    assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("skipped").getLength()).isEqualTo(0);
   }
 
   private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile) throws Exception {
@@ -168,6 +184,17 @@ class BazelJUnitOutputListenerTest {
     @ParameterizedTest(name = "{0}")
     @EnumSource(ParameterizedValue.class)
     void secondParameterizedTest(ParameterizedValue value) {
+    }
+  }
+
+  static class AbortedScenario {
+    @Test
+    void abortedTest() {
+      Assumptions.assumeTrue(false, "skipping due to failed assumption");
+    }
+
+    @Test
+    void successfulTest() {
     }
   }
 

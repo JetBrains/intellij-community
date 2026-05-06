@@ -98,9 +98,6 @@ class TestData {
         || isSkipped()) {
       return false;
     }
-    if (result.getStatus() == TestExecutionResult.Status.ABORTED) {
-      return true;
-    }
 
     return result.getThrowable().map(thr -> thr instanceof AssertionError).orElse(false);
   }
@@ -115,6 +112,10 @@ class TestData {
     }
 
     if (getSkipReason() != null) {
+      return true;
+    }
+
+    if (getResult().getStatus() == TestExecutionResult.Status.ABORTED) {
       return true;
     }
 
