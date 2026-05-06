@@ -36,12 +36,14 @@ import org.jetbrains.kotlin.lexer.KtTokens.FUN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.INLINE_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.IN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OUT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantOpenInInterface::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPEN_KEYWORD, true))
         registerPsiQuickFixes(KaFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
         registerPsiQuickFixes(KaFirDiagnostic.RepeatedModifier::class, RemoveModifierFixBase.removeNonRedundantModifier)
         registerPsiQuickFixes(KaFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
