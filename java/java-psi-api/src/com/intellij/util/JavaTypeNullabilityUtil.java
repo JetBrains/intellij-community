@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public final class JavaTypeNullabilityUtil {
    * @return type nullability
    */
   public static @NotNull TypeNullability getTypeNullability(@NotNull PsiClassType type) {
-    return getTypeNullability(type, null, !isLocal(type));
+    return getTypeNullability(type, null, !shouldIgnoreContainer(type));
   }
 
   private static @NotNull TypeNullability getTypeNullability(@NotNull PsiClassType type,
@@ -98,14 +99,20 @@ public final class JavaTypeNullabilityUtil {
     return TypeNullability.UNKNOWN;
   }
 
-  private static boolean isLocal(PsiClassType classType) {
+  private static boolean shouldIgnoreContainer(PsiClassType classType) {
     PsiElement context = classType.getPsiContext();
     return context instanceof PsiJavaCodeReferenceElement &&
            context.getParent() instanceof PsiTypeElement &&
-           isLocalVariable(context.getParent().getParent());
+           shouldIgnoreContainer(context.getParent().getParent());
   }
 
-  private static boolean isLocalVariable(PsiElement element) {
+  /**
+   * @param element type element owner to check
+   * @return true if for this type owner, the container annotation like {@code @NullMarked} should be ignored
+   * (for example, if the element is a local variable)
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean shouldIgnoreContainer(@Nullable PsiElement element) {
     return element instanceof PsiLocalVariable || 
            element instanceof PsiParameter && !(element.getParent() instanceof PsiParameterList);
   }

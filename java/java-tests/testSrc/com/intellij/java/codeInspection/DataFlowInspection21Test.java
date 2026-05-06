@@ -278,4 +278,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testOptionalInference() {
     doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
+
+  public void testNullableArrayLocalVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }
