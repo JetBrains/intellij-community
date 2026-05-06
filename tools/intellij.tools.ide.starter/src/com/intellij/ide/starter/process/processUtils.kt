@@ -66,7 +66,7 @@ private suspend fun getFilteredProcessList(filter: Predicate<OSProcess>? = null)
  * IDEA-256265: shared-indexes tests on Linux suspiciously fail with 137 (killed by OOM)
  */
 suspend fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false, testClassWithLeftoverProcesses: String? = null) {
-  findAndKillProcessesBySubstring(IDE_TESTS_SUBSTRING) { processes ->
+  findAndKillProcessesBySubPathInArguments(IDE_TESTS_SUBSTRING) { processes ->
     if (reportErrors) {
       processes.reportEachOutdatedProcessSeparately(testClassWithLeftoverProcesses)
     }
@@ -107,6 +107,14 @@ suspend fun findAndKillProcessesBySubstring(vararg substringToSearch: String, on
                               onFoundProcesses = onFoundProcesses)
 }
 
+
+suspend fun findAndKillProcessesBySubPathInArguments(pathToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+  val regex = Regex("""(^|[\\/])${Regex.escape(pathToSearch)}([\\/]|$)""")
+  return findAndKillProcesses(message = "Killing process containing subpath '${pathToSearch}' in arguments",
+                              filter = { p -> p.arguments.any { regex.containsMatchIn(it) } },
+                              onFoundProcesses = onFoundProcesses)
+}
+
 suspend fun findAndKillProcesses(
   message: String? = null,
   filter: Predicate<ProcessInfo>,
@@ -115,6 +123,11 @@ suspend fun findAndKillProcesses(
   val prefix = message ?: "Killing process matching '$filter' in command line"
   logOutput("$prefix ...")
   val processInfosToKill = getProcessList(filter)
+
+  if (processInfosToKill.any { it.pid == ProcessHandle.current().pid() }) {
+    error("The filter has resolved the current process")
+  }
+
   if (processInfosToKill.isNotEmpty()) {
     onFoundProcesses.invoke(processInfosToKill)
     logOutput("$prefix: [${processInfosToKill.joinToString(", ")}] will be killed")
