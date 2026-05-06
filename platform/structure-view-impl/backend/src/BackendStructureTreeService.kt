@@ -29,9 +29,11 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntRef
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.structureView.impl.DelegatingNodeProvider
 import com.intellij.platform.structureView.impl.ShowStructurePopupRequest
 import com.intellij.platform.structureView.impl.StructureViewScopeHolder
@@ -46,6 +48,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PlaceHolder
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineName
@@ -190,7 +193,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
                 is StructureViewEvent.ComputeNodes -> {
                   val computeStartTime = System.currentTimeMillis()
                   val nodes = entry.structureTreeModel.invoker.compute {
-                    computeNodes(id.id)
+                    ProgressManager.getInstance().computePrioritized(ThrowableComputable<ComputeNodesResult?, Throwable?> { return@ThrowableComputable computeNodes(id.id) })
                   }.asDeferred().await()
 
                   logger.debug {
@@ -211,8 +214,6 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
         val (root, actions) = try {
           myStructureTreeModel.invoker.compute {
-            entry.wrapper.rebuildTree()
-
             val rootModel = createRootModel(wrapper.rootElement as TreeElementWrapper,
                                             treeModel as? ExpandInfoProvider,
                                             getElementInfoProvider(treeModel))
