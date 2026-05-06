@@ -24,24 +24,16 @@ import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.util.concurrent.Callable
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
@@ -159,27 +151,23 @@ class NullableAnnotationsPanel(
     myTable.setRowSelectionAllowed(true)
     myTable.setShowGrid(false)
 
-    val tablePanel = UI.PanelFactory
-      .panel(toolbarDecorator.createPanel())
-      .withLabel(JavaBundle.message("nullable.notnull.annotations.panel.title", model.getName()))
-      .withComment(JavaBundle.message("nullable.notnull.annotations.panel.description"))
-      .moveLabelOnTop()
-      .resizeY(true)
-      .createPanel()
-    tablePanel.preferredSize = JBDimension(tablePanel.preferredSize.width, 200)
-
-    myComponent = JPanel(GridBagLayout())
-    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
-    val constraints = GridBag().setDefaultAnchor(GridBagConstraints.WEST)
-    myComponent.add(tablePanel, constraints.nextLine().coverLine().fillCell().weighty(1.0))
-    myComponent.add(JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints.nextLine().next())
-    myComponent.add(myCombo, constraints.next().fillCellHorizontally().weightx(1.0).insetBottom(UIUtil.DEFAULT_VGAP))
-    val label = JBLabel(JavaBundle.message("nullable.notnull.annotation.used.label.description"))
-      .withFont(JBFont.medium())
-      .setAllowAutoWrapping(true)
-      .setCopyable(true)
-    label.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND)
-    myComponent.add(label, constraints.nextLine().coverLine().fillCell())
+    myComponent = panel {
+      row {
+        cell(toolbarDecorator.createPanel())
+          .align(Align.FILL)
+          .label(JavaBundle.message("nullable.notnull.annotations.panel.title", model.getName()), LabelPosition.TOP)
+          .comment(JavaBundle.message("nullable.notnull.annotations.panel.description"))
+          .resizableColumn()
+          .applyToComponent {
+            preferredSize = JBDimension(preferredSize.width, 200)
+          }
+      }
+        .resizableRow()
+      row(JavaBundle.message("nullable.notnull.annotation.used.label")) {
+        cell(myCombo)
+        contextHelp(JavaBundle.message("nullable.notnull.annotation.used.label.description"))
+      }
+    }
   }
 
   private fun createHeaderRenderer(): TableCellRenderer {
