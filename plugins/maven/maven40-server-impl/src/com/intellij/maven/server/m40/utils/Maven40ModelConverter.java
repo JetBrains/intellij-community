@@ -334,7 +334,17 @@ public class Maven40ModelConverter {
       List<String> modules = each.getModules();
       profile.setModules(modules == null ? Collections.emptyList() : modules);
       profile.setActivation(convertActivation(each.getActivation()));
-      if (each.getBuild() != null) convertBuildBase(profile.getBuild(), each.getBuild());
+      if (each.getBuild() != null) {
+        convertBuildBase(profile.getBuild(), each.getBuild());
+        List<Plugin> profilePlugins = each.getBuild().getPlugins();
+        if (profilePlugins != null && !profilePlugins.isEmpty()) {
+          List<MavenPlugin> convertedPlugins = new ArrayList<>();
+          for (Plugin plugin : profilePlugins) {
+            convertedPlugins.add(convertPlugin(plugin, Collections.emptyList()));
+          }
+          profile.setPlugins(convertedPlugins);
+        }
+      }
       result.add(profile);
     }
     return result;
@@ -606,4 +616,3 @@ public class Maven40ModelConverter {
                              false /*artifact instanceof CustomMaven3Artifact && ((CustomMaven3Artifact)artifact).isStub()*/);
   }
 }
-
