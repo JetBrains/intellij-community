@@ -385,7 +385,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
   // Both these methods are abstraction leakage and should be rewritten
 
   fun setBusy(busy: Boolean) {
-    (editor as ComboBoxWithBrowseButtonEditor<*, P>).setBusy(busy)
+    (editor as ComboBoxWithBrowseButtonEditor<*>).setBusy(busy)
   }
 
 }

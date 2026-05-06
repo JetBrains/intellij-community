@@ -24,6 +24,7 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatform
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.ui.pyModalBlocking
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
@@ -34,9 +35,11 @@ import javax.swing.BorderFactory
 import javax.swing.ComboBoxEditor
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.io.path.pathString
 
-internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
-  val comboBox: ComboBox<T?>,
+@VisibleForTesting
+class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
+  val comboBox: ComboBox<PythonSelectableInterpreter<P>?>,
   val fileSystem: FileSystem<P>,
   val browseTitle: @NlsContexts.DialogTitle String,
   onPathSelected: (String) -> Unit,
@@ -45,15 +48,18 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
   private val panel: JComponent
   private lateinit var iconLabel: JLabel
   private var _item: Any? = null
-  var isBusy = false
+  var isBusy: Boolean = false
     private set
 
-  private val fieldAccessor = object : TextComponentAccessor<ComboBox<T?>> {
-    override fun getText(component: ComboBox<T?>): @NlsSafe String? {
-      return component.selectedItem?.toString()
-    }
+  @VisibleForTesting
+  val fieldAccessor: TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> = object : TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> {
+    override fun getText(component: ComboBox<PythonSelectableInterpreter<P>?>): @NlsSafe String? =
+      when (val p = component.getItemAt(component.selectedIndex)?.homePath ?: return null) {
+        is PathHolder.Eel -> p.path.pathString
+        is PathHolder.Target -> p.pathString
+      }
 
-    override fun setText(component: ComboBox<T?>?, text: @NlsSafe String) {
+    override fun setText(component: ComboBox<PythonSelectableInterpreter<P>?>, text: @NlsSafe String) {
       onPathSelected(text)
     }
   }
@@ -121,7 +127,7 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
     if (_item == anObject) return
     _item = anObject
     component.clear()
-    component.customizeForPythonInterpreter(isBusy, anObject as? PythonSelectableInterpreter<P>)
+    component.customizeForPythonInterpreter(isBusy, anObject as? PythonSelectableInterpreter<*>)
   }
 
   fun setBusy(busy: Boolean) {
@@ -130,7 +136,7 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
     component.isEnabled = !isBusy
     comboBox.isEnabled = !isBusy
     component.clear()
-    (item as? PythonSelectableInterpreter<P>).takeIf { !busy }.let {
+    (item as? PythonSelectableInterpreter<*>).takeIf { !busy }.let {
       component.customizeForPythonInterpreter(busy, it)
     }
   }
