@@ -17,7 +17,7 @@ internal class TestJbProtocolCommandAction : DumbAwareAction() {
       "jetbrains:// URL (or query starting with command name):",
       "Test JB Protocol Command",
       null,
-      "jetbrains://idea/installPlugin?id=IdeaVIM",
+      "jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo",
       null,
     ) ?: return
 
