@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.hint.EditorHintListener
@@ -67,10 +67,6 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
     connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun enteredDumbMode() {
-        hideActiveLookup()
-      }
-
-      override fun exitDumbMode() {
         hideActiveLookup()
       }
     })
