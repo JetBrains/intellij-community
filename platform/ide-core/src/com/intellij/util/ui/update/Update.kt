@@ -57,7 +57,7 @@ abstract class Update : ComparableObject.Impl, Runnable {
     }
     else {
       // todo fix clients
-      Cancellation.withNonCancelableSection().use {
+      Cancellation.executeInNonCancelableSection {
         run()
       }
     }
