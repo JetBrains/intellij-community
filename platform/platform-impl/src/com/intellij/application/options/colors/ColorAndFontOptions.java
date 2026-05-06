@@ -140,6 +140,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private MessageBusConnection myEditorColorSchemeConnection;
   private boolean myShouldChangeLafIfNecessary = true;
+  private @Nullable String myPreselectedSchemeName;
 
   public ColorAndFontOptions() {
     myModel.addListener(modelListener);
@@ -460,7 +461,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
 
       if (!myInitResetCompleted) {
-        myModel.setPreselectedSchemeName(schemeName, this);
+        myPreselectedSchemeName = schemeName;
       }
     });
   }
@@ -679,10 +680,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
 
       EditorColorsScheme schemeToSelect = null;
-      String preselectedSchemeName = myModel.getPreselectedSchemeName();
+      String preselectedSchemeName = myPreselectedSchemeName;
       if (preselectedSchemeName != null) {
         schemeToSelect = myModel.getScheme(preselectedSchemeName);
-        myModel.setPreselectedSchemeName(null, this);
+        myPreselectedSchemeName = null;
       }
 
       if (schemeToSelect == null) {

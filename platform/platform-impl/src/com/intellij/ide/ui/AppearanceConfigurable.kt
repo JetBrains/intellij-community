@@ -251,6 +251,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           })
         }
         val editorSchemeCombo = colorAndFontsOptions.createComponent(true)
+        var shouldPreselectCurrentSchemeOnReset = true
 
         row {
           cell(editorSchemeCombo).onIsModified {
@@ -258,12 +259,20 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }.onApply {
             colorAndFontsOptions.apply()
           }.onReset {
+            if (shouldPreselectCurrentSchemeOnReset) {
+              colorAndFontsOptions.selectedScheme?.name?.let { colorAndFontsOptions.preselectScheme(it) }
+              shouldPreselectCurrentSchemeOnReset = false
+            }
             colorAndFontsOptions.reset()
+            preselectEditorSchemeInColorSchemeConfigurable(
+              editorSchemeCombo, colorAndFontsOptions, colorAndFontsOptions.selectedScheme?.name)
           }.enabledIf(syncThemeAndEditorSchemePredicate.not())
 
           syncThemeAndEditorSchemePredicate.addListener { isSyncOn ->
             if (isSyncOn) {
               colorAndFontsOptions.reset()
+              preselectEditorSchemeInColorSchemeConfigurable(
+                editorSchemeCombo, colorAndFontsOptions, colorAndFontsOptions.selectedScheme?.name)
             }
           }
         }

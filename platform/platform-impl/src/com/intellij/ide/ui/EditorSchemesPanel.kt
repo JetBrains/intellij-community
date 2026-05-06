@@ -16,6 +16,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.ActionLink
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -46,6 +47,9 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
 
       override fun onSchemeChanged(scheme: EditorColorsScheme?) {
         onSchemeChangedFromAction(scheme)
+        if (scheme != null && areSchemesLoaded()) {
+          preselectEditorSchemeInColorSchemeConfigurable(component, colorAndFontsOptions, scheme.name)
+        }
       }
 
       override fun renameScheme(scheme: EditorColorsScheme, newName: String) {
@@ -63,6 +67,16 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
   override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
+@ApiStatus.Internal
+internal fun preselectEditorSchemeInColorSchemeConfigurable(component: JComponent,
+                                                           currentOptions: ColorAndFontOptions,
+                                                           schemeName: String?) {
+  val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(component)) ?: return
+  val configurable = settings.find(ColorAndFontOptions.ID) as? ColorAndFontOptions ?: return
+  if (configurable === currentOptions) return
+  schemeName?.let { configurable.preselectScheme(it) }
+}
+
 internal class OpenEditorSchemeConfigurableAction(val component: JComponent, val selectedSchemeProvider: () -> String?) :
   DumbAwareAction(IdeBundle.message("combobox.editor.color.scheme.edit")) {
 
@@ -73,7 +87,7 @@ internal class OpenEditorSchemeConfigurableAction(val component: JComponent, val
       ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, ColorAndFontOptions::class.java)
     }
     else {
-      val configurable = settings.find("reference.settingsdialog.IDE.editor.colors") as? ColorAndFontOptions ?: return
+      val configurable = settings.find(ColorAndFontOptions.ID) as? ColorAndFontOptions ?: return
       selectedSchemeProvider()?.let {
         configurable.preselectScheme(it)
       }
