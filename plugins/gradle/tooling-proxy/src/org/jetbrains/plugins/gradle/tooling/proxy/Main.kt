@@ -17,7 +17,9 @@ import org.gradle.tooling.TestLauncher
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
+import org.gradle.tooling.model.dsl.GradleDslBaseScriptModel
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.dsl.InternalGradleDslBaseScriptModel
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -190,10 +192,11 @@ object Main {
   }
 
   private fun convertData(data: Any?): Any? {
-    if (data is BuildEnvironment) {
-      return InternalBuildEnvironment.convertBuildEnvironment(data)
+    return when (data) {
+      is BuildEnvironment -> InternalBuildEnvironment.convertBuildEnvironment(data)
+      is GradleDslBaseScriptModel -> InternalGradleDslBaseScriptModel.convertDslBaseScriptModel(data)
+      else -> data
     }
-    return data
   }
 
   private fun serializeData(data: Any?): ByteArray {
