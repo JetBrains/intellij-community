@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -105,12 +106,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
+  @Override
   public HighlightSeverity getMinimumSeverity() {
     return myMinimumSeverity;
   }
 
   @ApiStatus.Internal
-  public static @NotNull HighlightingSession getFromCurrentIndicator(@NotNull PsiFile psiFile) {
+  static @NotNull HighlightingSession getFromCurrentIndicator(@NotNull PsiFile psiFile) {
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     Map<PsiFile, List<HighlightingSession>> map = indicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
@@ -127,41 +129,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return ContainerUtil.getLastItem(sessions);
   }
 
-  @ApiStatus.Internal
-  public static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
-                                                                   @NotNull DaemonProgressIndicator progressIndicator,
-                                                                   @NotNull ProperTextRange visibleRange) {
-    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
-    List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
-    if (sessions == null) {
-      return createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0);
-    }
-    else {
-      return sessions.get(0);
-    }
-  }
-
-  /**
-   * @deprecated use {@link #createHighlightingSession(PsiFile, Editor, EditorColorsScheme, DaemonProgressIndicator, Number)}
-   */
   @RequiresEdt
   @ApiStatus.Internal
-  @Deprecated
-  public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
-                                                                           CodeInsightContext context,
-                                                                           @Nullable Editor editor,
-                                                                           @Nullable EditorColorsScheme editorColorsScheme,
-                                                                           @NotNull DaemonProgressIndicator progressIndicator,
-                                                                           @NotNull Number daemonCancelEventCount) {
-    return createHighlightingSession(psiFile, editor, editorColorsScheme, progressIndicator, daemonCancelEventCount);
-  }
-  @RequiresEdt
-  @ApiStatus.Internal
-  public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
-                                                                           @Nullable Editor editor,
-                                                                           @Nullable EditorColorsScheme editorColorsScheme,
-                                                                           @NotNull DaemonProgressIndicator progressIndicator,
-                                                                           @NotNull Number daemonCancelEventCount) {
+  static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
+                                                                    @Nullable Editor editor,
+                                                                    @Nullable EditorColorsScheme editorColorsScheme,
+                                                                    @NotNull DaemonProgressIndicator progressIndicator,
+                                                                    @NotNull Number daemonCancelEventCount) {
     ThreadingAssertions.assertEventDispatchThread();
     ProperTextRange visibleRange = editor == null ? ProperTextRange.create(0, psiFile.getViewProvider().getDocument().getTextLength())
                                   : editor.calculateVisibleRange();
@@ -219,14 +193,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
-  static void runInsideHighlightingSessionInEDT(@NotNull PsiFile psiFile,
-                                                @Nullable EditorColorsScheme editorColorsScheme,
-                                                @NotNull ProperTextRange visibleRange,
-                                                boolean canChangeFileSilently,
-                                                @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (!(ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof DaemonProgressIndicator)) {
-      ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(psiFile, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
+  static void runInsideAdditionalHighlightingSession(@NotNull PsiFile psiFile,
+                                                     @Nullable EditorColorsScheme editorColorsScheme,
+                                                     @NotNull ProperTextRange visibleRange,
+                                                     boolean canChangeFileSilently,
+                                                     @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
+    if (!isUnderDaemonProgress()) {
+      ProgressManager.getInstance().executeProcessUnderProgress(()-> runInsideAdditionalHighlightingSession(psiFile, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
       return;
     }
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
@@ -241,13 +214,19 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
   }
 
+  private static boolean isUnderDaemonProgress() {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    return indicator != null && ProgressWrapper.unwrapAll(indicator) instanceof DaemonProgressIndicator;
+  }
+
   @ApiStatus.Internal
-  public static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
+  @RequiresEdt
+  static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
       for (List<HighlightingSession> sessions : map.values()) {
         for (HighlightingSession session : sessions) {
-          ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
+          session.applyFileLevelHighlightsRequests();
         }
       }
     }
@@ -280,6 +259,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
+  @Override
   public void applyFileLevelHighlightsRequests() {
     ThreadingAssertions.assertEventDispatchThread();
     List<RunnableFuture<?>> requests = new ArrayList<>(pendingFileLevelHighlightRequests);
@@ -290,7 +270,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
-  public static void clearAllHighlightingSessions(@NotNull DaemonProgressIndicator indicator) {
+  static void clearAllHighlightingSessions(@NotNull DaemonProgressIndicator indicator) {
     indicator.putUserData(HIGHLIGHTING_SESSION, null);
     if (LOG.isTraceEnabled()) {
       LOG.trace("HighlightingSessionImpl.clearAllHighlightingSessions");
@@ -342,7 +322,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   // compute additional stuff in background thread
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  public void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
+  void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ThreadingAssertions.assertBackgroundThread();
 
     ReadAction.runBlocking(() -> {
@@ -362,36 +342,32 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Deprecated
-  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights,
-                                 int group,
-                                 boolean cleanOldHighlights,
-                                 @NotNull HighlighterRecycler recycler) {
-    Project project = getProject();
+  @Override
+  public void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights,
+                                         @NotNull List<? extends RangeHighlighter> reusedHighlighters, int group,
+                                         boolean cleanOldHighlights,
+                                         @NotNull PsiFile psiFile) {
+    Project project = psiFile.getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-    PsiFile psiFile = getPsiFile();
-    boolean shouldUpdate = !fileLevelHighlights.isEmpty() || codeAnalyzer.hasFileLevelHighlights(group, psiFile);
-    if (shouldUpdate) {
-      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, info->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength(), info.getDescription()));
-
-      Future<?> future = EdtExecutorService.getInstance().submit(() -> {
-        if (project.isDisposed() || isCanceled()) return;
-        if (cleanOldHighlights) {
-          codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
-        }
-        for (int i = 0; i < fileLevelHighlights.size(); i++) {
-          HighlightInfo fileLevelInfo = fileLevelHighlights.get(i);
-          RangeHighlighter reused = reusedHighlighters.get(i);
-          codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused, getCodeInsightContext());
-        }
-      });
-      pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
-    }
+    Future<?> future = EdtExecutorService.getInstance().submit(() -> {
+      if (project.isDisposed() || isCanceled()) return;
+      if (cleanOldHighlights) {
+        codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
+      }
+      for (int i = 0; i < fileLevelHighlights.size(); i++) {
+        HighlightInfo fileLevelInfo = fileLevelHighlights.get(i);
+        RangeHighlighter reused = reusedHighlighters.get(i);
+        codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused, getCodeInsightContext());
+      }
+    });
+    pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
 
   // removes the old HighlightInfo and adds the new one atomically, to avoid flicker
-  void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo,
-                                 @NotNull HighlightInfo newFileLevelInfo,
-                                 @Nullable RangeHighlighterEx toReuse) {
+  @Override
+  public void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo,
+                                        @NotNull HighlightInfo newFileLevelInfo,
+                                        @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
@@ -402,7 +378,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
 
-  void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
+  @Override
+  public void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
     assert fileLevelHighlightInfo.isFileLevelAnnotation();
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -413,7 +390,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
-  void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
+  @ApiStatus.Internal
+  @Override
+  public void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {

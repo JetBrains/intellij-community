@@ -244,7 +244,7 @@ public final class TestDaemonCodeAnalyzerImpl {
                                      ThreadDumper.dumpThreadsToString());
         }
 
-        ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
+        session.applyFileLevelHighlightsRequests();
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
@@ -566,6 +566,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     return DaemonCodeAnalyzerImpl.getHighlights(document, minSeverity, myProject);
   }
 
+  @RequiresEdt
   private static void dispatchAllInvocationEventsInIdeEventQueueReleasingWIL() {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();

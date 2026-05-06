@@ -302,7 +302,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       return Collections.emptyList();
     }
     LineMarkersPass pass = new LineMarkersPass(psiFile.getProject(), psiFile, document, psiFile.getTextRange(), psiFile.getTextRange(), Mode.ALL,
-                                               HighlightingSessionImpl.getFromCurrentIndicator(psiFile));
+                                               DaemonCodeAnalyzerEx.getInstanceEx(psiFile.getProject()).getHighlightSessionFromCurrentIndicator(psiFile));
     return pass.doCollectMarkers();
   }
 

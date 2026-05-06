@@ -126,6 +126,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doAddFileLevelInfoComponent;
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doRemoveFileLevelInfoComponent;
@@ -1703,5 +1704,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), sessionIndicator);
       }, _ -> editor.isDisposed() || psiFile.getProject().isDisposed());
     }
+  }
+
+  @Override
+  public HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile) {
+    return HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+  }
+
+  @Override
+  public void runInsideAdditionalHighlightingSession(@NotNull PsiFile psiFile,
+                                                     @Nullable EditorColorsScheme editorColorsScheme,
+                                                     @NotNull ProperTextRange visibleRange,
+                                                     boolean canChangeFileSilently,
+                                                     @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
+    HighlightingSessionImpl.runInsideAdditionalHighlightingSession(psiFile, editorColorsScheme, visibleRange, canChangeFileSilently, runnable);
   }
 }

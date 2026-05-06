@@ -50,7 +50,7 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
     val language = psiFile.language
     val hintSink = InlayHintsSinkImpl(editor)
     val collectors = getProviders(psiFile, editor).mapNotNull { it.getCollectorWrapperFor(psiFile, editor, language, hintSink) }
-    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).visibleRange
+    val priorityRange = DaemonCodeAnalyzerEx.getInstanceEx(psiFile.project).getHighlightSessionFromCurrentIndicator(psiFile).visibleRange
 
     return InlayHintsPass(psiFile, collectors, editor, priorityRange, hintSink)
   }

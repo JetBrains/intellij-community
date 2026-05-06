@@ -8,6 +8,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -16,17 +17,20 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
@@ -122,9 +126,11 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
   @ApiStatus.Internal
+  @RequiresReadLock
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
   /**
@@ -134,6 +140,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    * @param context pass the corresponding context or null if file level highlight is not context-dependent
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public abstract void addFileLevelHighlight(int group,
                                              @NotNull HighlightInfo info,
                                              @NotNull PsiFile psiFile,
@@ -147,6 +154,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    * @param context pass the corresponding context or null if file level highlight is not context-dependent
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public abstract void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo,
                                                  @NotNull HighlightInfo newInfo,
                                                  @NotNull PsiFile psiFile,
@@ -158,11 +166,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
-
-  public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
-    getFileStatusMap().markWholeFileScopeDirty(document, reason);
-  }
 
   public static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
     if (!(fileEditor instanceof TextEditor textEditor)) {
@@ -191,4 +196,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   @RequiresBackgroundThread
   protected abstract void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull TextRange visibleRange);
+
+  @ApiStatus.Internal
+  public abstract HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile);
+  @ApiStatus.Internal
+  public abstract void runInsideAdditionalHighlightingSession(@NotNull PsiFile psiFile,
+                                                              @Nullable EditorColorsScheme editorColorsScheme,
+                                                              @NotNull ProperTextRange visibleRange,
+                                                              boolean canChangeFileSilently,
+                                                              @NotNull Consumer<? super @NotNull HighlightingSession> runnable);
 }

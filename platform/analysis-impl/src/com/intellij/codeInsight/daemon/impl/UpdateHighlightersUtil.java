@@ -190,9 +190,9 @@ public final class UpdateHighlightersUtil {
     }
     if (psiFile != null) {
       DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
-      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
-        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session)
-      );
+      DaemonCodeAnalyzerEx.getInstanceEx(project).runInsideAdditionalHighlightingSession(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
+        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
+      });
     }
   }
 
@@ -408,6 +408,7 @@ public final class UpdateHighlightersUtil {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, null);
   }
 
+  @RequiresEdt
   @ApiStatus.Internal
   public static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
     ThreadingAssertions.assertEventDispatchThread();
@@ -463,7 +464,7 @@ public final class UpdateHighlightersUtil {
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
   static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession session) {
     if (info.isFileLevelAnnotation()) {
-      ((HighlightingSessionImpl)session).removeFileLevelHighlight(info);
+      session.removeFileLevelHighlight(info);
     }
     RangeHighlighter highlighter = info.getHighlighter();
     try {

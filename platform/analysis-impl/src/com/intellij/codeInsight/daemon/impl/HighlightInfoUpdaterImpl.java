@@ -1566,7 +1566,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // create new
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup, session.getProject(), context);
-        ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
+        session.addFileLevelHighlight(newInfo, highlighter);
       }
       else {
         //assertNoInfoInMarkup(newInfo, markup, recycler, invalidElementRecycler);
@@ -1584,7 +1584,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       highlighter = oldInfo.getHighlighter();
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup, session.getProject(), context);
-        ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
+        session.replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -163,19 +164,18 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
 
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
-    boolean hasErrorElement = false;
     //noinspection IncorrectCancellationExceptionHandling
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
-      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
-      GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
-      pass.setContext(context);
-      pass.collectInformation(progressIndicator);
-      hasErrorElement = pass.hasErrorElement();
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).runInsideAdditionalHighlightingSession(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), visibleRange, false, _-> {
+        GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
+        pass.setContext(context);
+        pass.collectInformation(progressIndicator);
+      });
     }
     catch (ProcessCanceledException e) {
       if (error.get() != null) {
-        ProblemImpl problem = new ProblemImpl(virtualFile, error.get(), hasErrorElement);
+        ProblemImpl problem = new ProblemImpl(virtualFile, error.get(), false);
         reportProblems(virtualFile, Collections.singleton(problem));
       }
       return false;

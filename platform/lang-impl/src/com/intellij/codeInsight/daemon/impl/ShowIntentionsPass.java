@@ -78,7 +78,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     myQueryIntentionActions = queryIntentionActions;
     myEditor = editor;
     myPsiFile = psiFile;
-    myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
+    myVisibleRange = DaemonCodeAnalyzerEx.getInstanceEx(psiFile.getProject()).getHighlightSessionFromCurrentIndicator(psiFile).getVisibleRange();
   }
 
   public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,

@@ -363,7 +363,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
           collected.add(DumbFac.this);
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0, 1).registerFix(new MyDumbFix(), null, null, null, null).create();
           MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
-          BackgroundUpdateHighlightersUtil.setHighlightersInRange(myFile.getTextRange(), List.of(info), markup, getId(), HighlightingSessionImpl.getFromCurrentIndicator(myFile));
+          BackgroundUpdateHighlightersUtil.setHighlightersInRange(myFile.getTextRange(), List.of(info), markup, getId(), DaemonCodeAnalyzerEx.getInstanceEx(myProject).getHighlightSessionFromCurrentIndicator(myFile));
         }
 
         @Override

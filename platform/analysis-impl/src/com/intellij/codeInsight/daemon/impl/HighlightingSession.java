@@ -6,15 +6,22 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * This instance is created at the highlighting start and discarded when the highlighting is finished.
@@ -25,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 public interface HighlightingSession {
   @NotNull
   Project getProject();
+
+  @ApiStatus.Internal
+  HighlightSeverity getMinimumSeverity();
 
   @NotNull
   PsiFile getPsiFile();
@@ -50,4 +60,27 @@ public interface HighlightingSession {
 
   @ApiStatus.Experimental
   @NotNull CodeInsightContext getCodeInsightContext();
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  void applyFileLevelHighlightsRequests();
+
+  @ApiStatus.Internal
+  @Deprecated
+  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights,
+                                        @NotNull List<? extends RangeHighlighter> reusedHighlighters, int group,
+                                        boolean cleanOldHighlights,
+                                        @NotNull PsiFile psiFile);
+
+  // removes the old HighlightInfo and adds the new one atomically, to avoid flicker
+  @ApiStatus.Internal
+  void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo,
+                                 @NotNull HighlightInfo newFileLevelInfo,
+                                 @Nullable RangeHighlighterEx toReuse);
+
+  @ApiStatus.Internal
+  void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo);
+
+  @ApiStatus.Internal
+  void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse);
 }

@@ -48,6 +48,9 @@ internal class EditorContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   private fun getCurrentContextStateWithPreferredDefault(editor: Editor): EditorSelectedContexts {
+    assert(editor.project?.equals(project)?:true) {
+      "called with wrong project: $project. editor project: ${editor.project}"
+    }
     if (!isSharedSourceSupportEnabled(project)) {
       return SingleEditorContext(defaultContext())
     }

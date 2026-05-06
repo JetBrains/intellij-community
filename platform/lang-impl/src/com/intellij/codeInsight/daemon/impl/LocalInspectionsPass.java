@@ -180,7 +180,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
 
 
         result.resultContexts = runner.inspect(toolWrappers,
-                                               ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity(),
+                                               getHighlightingSession().getMinimumSeverity(),
                                                true,
                                                applyIncrementallyCallback,
                                                contextFinishedCallback,
@@ -311,7 +311,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
 
   @Override
   protected void applyInformationWithProgress() {
-    ((HighlightingSessionImpl)getHighlightingSession()).applyFileLevelHighlightsRequests();
+    getHighlightingSession().applyFileLevelHighlightsRequests();
   }
 
   private void createHighlightsForDescriptor(@NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered,

@@ -59,7 +59,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(psiFile)) {
         throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is an injected fragment but expected top-level");
       }
-      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+      myHighlightingSession = DaemonCodeAnalyzerEx.getInstanceEx(project).getHighlightSessionFromCurrentIndicator(psiFile);
     }
     if (document instanceof DocumentWindow) {
       throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");

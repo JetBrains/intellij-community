@@ -116,6 +116,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -932,10 +933,13 @@ public final class DaemonListeners implements Disposable {
     myPsiChangeHandler.flushUpdateFileStatusQueue();
   }
   @TestOnly
+  @RequiresEdt
   void waitUpdateExpensiveFlags(@NotNull Document document, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     assert ApplicationManager.getApplication().isUnitTestMode();
+    ThreadingAssertions.assertEventDispatchThread();
     while (getExpensiveFlags(document) == null) {
       myRecomputeFlagsInBGT.waitForAllExecuted(timeout, unit);
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 }

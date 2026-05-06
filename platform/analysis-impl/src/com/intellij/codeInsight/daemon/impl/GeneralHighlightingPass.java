@@ -224,7 +224,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   @Override
   protected void applyInformationWithProgress() {
-    ((HighlightingSessionImpl)getHighlightingSession()).applyFileLevelHighlightsRequests();
+    getHighlightingSession().applyFileLevelHighlightsRequests();
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
   }
 
@@ -244,8 +244,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), elements1, elements2, visitors, forceHighlightParents, chunkSize,
                                                                    myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, myPriorityRange, restrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    setupAnnotationSession(session, myPriorityRange, restrictRange, getHighlightingSession().getMinimumSeverity());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     if (annotatorRunner == null) {
       runnable.run();
@@ -309,8 +308,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         return added;
       }
     };
-    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, myRestrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, myRestrictRange, getHighlightingSession().getMinimumSeverity());
     return holder;
   }
 

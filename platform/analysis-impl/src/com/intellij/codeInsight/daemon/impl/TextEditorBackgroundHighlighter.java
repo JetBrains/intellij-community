@@ -75,14 +75,14 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     }
 
     int[] effectivePassesToIgnore = psiFile.getOriginalFile() instanceof PsiCompiledFile ? IGNORE_FOR_COMPILED:
-    DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile) ?
-    ArrayUtil.EMPTY_INT_ARRAY : null;
+                                    DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile) ?
+                                    ArrayUtil.EMPTY_INT_ARRAY : null;
     if (effectivePassesToIgnore == null) {
       return List.of();
     }
 
     try {
-      HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+      DaemonCodeAnalyzerEx.getInstanceEx(project).getHighlightSessionFromCurrentIndicator(psiFile);
     }
     catch (IllegalStateException e) {
       // could not find the session for this psi file;

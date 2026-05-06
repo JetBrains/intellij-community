@@ -39,7 +39,7 @@ final class LocalInspectionsPassFactory implements MainHighlightingPassFactory,
     if (textRange == null){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(psiFile.getProject(), editor.getDocument());
     }
-    TextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
+    TextRange visibleRange = DaemonCodeAnalyzerEx.getInstanceEx(psiFile.getProject()).getHighlightSessionFromCurrentIndicator(psiFile).getVisibleRange();
     return new LocalInspectionsPass(psiFile, editor.getDocument(), textRange, visibleRange, true, HighlightInfoUpdater.getInstance(psiFile.getProject()), true);
   }
 

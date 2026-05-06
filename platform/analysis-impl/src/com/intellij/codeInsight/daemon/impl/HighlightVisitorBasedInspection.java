@@ -17,6 +17,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -45,7 +46,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
   @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean runAnnotators = true;
   @SuppressWarnings("WeakerAccess") // made public for serialization
-  public boolean runVisitors = false;
+  public boolean runVisitors;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -136,39 +137,38 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
 
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    // in case the inspection is running in batch mode
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, daemonProgressIndicator, visibleRange);
-
-    GeneralHighlightingPass ghp = new GeneralHighlightingPass(
-      psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
-      HighlightInfoUpdater.EMPTY
-    );
-    ghp.setContext(context);
-
-    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
-      psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
-      highlightErrorElements, HighlightInfoUpdater.EMPTY
-    );
-    ighp.setContext(context);
-
-    String fileName = psiFile.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
+    // in case the inspection is running in batch mode
+    DaemonCodeAnalyzerEx.getInstanceEx(project).runInsideAdditionalHighlightingSession(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), visibleRange, false, _-> {
+      GeneralHighlightingPass ghp = new GeneralHighlightingPass(
+        psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
+        HighlightInfoUpdater.EMPTY
+      );
+      ghp.setContext(context);
 
-    for (TextEditorHighlightingPass pass : List.of(ghp, ighp)) {
-      TraceKt.use(tracer.spanBuilder(pass.getClass().getSimpleName()).setAttribute("file", fileName), _ -> {
-        pass.doCollectInformation(daemonProgressIndicator);
-        List<HighlightInfo> infos = pass.getInfos();
-        for (HighlightInfo info : infos) {
-          if (info == null) continue;
-          if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
-            result.add(info);
+      InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
+        psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
+        highlightErrorElements, HighlightInfoUpdater.EMPTY
+      );
+      ighp.setContext(context);
+
+      String fileName = psiFile.getName();
+      IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
+
+      for (TextEditorHighlightingPass pass : List.of(ghp, ighp)) {
+        TraceKt.use(tracer.spanBuilder(pass.getClass().getSimpleName()).setAttribute("file", fileName), _ -> {
+          pass.doCollectInformation(daemonProgressIndicator);
+          List<HighlightInfo> infos = pass.getInfos();
+          for (HighlightInfo info : infos) {
+            if (info == null) continue;
+            if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
+              result.add(info);
+            }
           }
-        }
-        return null;
-      });
-    }
-
+          return null;
+        });
+      }
+    });
     return result;
   }
 }
