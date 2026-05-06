@@ -86,14 +86,12 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import java.awt.Component
 import java.io.IOException
@@ -244,13 +242,10 @@ class ProjectWizardJdkComboBox(
     get() = model.items.filterIsInstance<DetectedJdk>()
   var isLoadingDownloadItem: Boolean = false
   var isLoadingDetectedJdks: Boolean = false
-  var isLoadingWorkspaceModel: Boolean = false
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
   val coroutineScope: CoroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
   private var downloadOpenJdkJob: Job? = null
   private var addDetectedJdkJob: Job? = null
-  @VisibleForTesting
-  var loadWorkspaceModelJob: Job? = null
 
   var currentEelDescriptor: EelDescriptor = LocalEelDescriptor
 
@@ -258,7 +253,6 @@ class ProjectWizardJdkComboBox(
     disposable.whenDisposed { coroutineScope.cancel() }
 
     reloadJdks(currentEelDescriptor)
-    ensureWorkspaceModelLoaded(currentEelDescriptor)
 
     isSwingPopup = false
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -330,7 +324,7 @@ class ProjectWizardJdkComboBox(
         cellHasFocus: Boolean,
       ): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        if (index == -1 && (isLoadingDetectedJdks || isLoadingDownloadItem || isLoadingWorkspaceModel) && selectedItem !is DownloadJdk) {
+        if (index == -1 && (isLoadingDetectedJdks || isLoadingDownloadItem) && selectedItem !is DownloadJdk) {
           val panel = object : CellRendererPanel(BorderLayout()) {
             override fun getAccessibleContext(): AccessibleContext = component.accessibleContext
           }
@@ -348,21 +342,9 @@ class ProjectWizardJdkComboBox(
 
   fun refreshJdks(descriptor: EelDescriptor) {
     ThreadingAssertions.assertEventDispatchThread()
-    currentEelDescriptor = descriptor
-    ensureWorkspaceModelLoaded(descriptor)
-  }
-
-  private fun ensureWorkspaceModelLoaded(descriptor: EelDescriptor) {
-    ThreadingAssertions.assertEventDispatchThread()
-    val eelMachine = descriptor.getResolvedEelMachine() ?: LocalEelMachine
-    loadWorkspaceModelJob?.cancel()
-    isLoadingWorkspaceModel = true
-    loadWorkspaceModelJob = coroutineScope.launch {
-      GlobalWorkspaceModel.getInstanceAsync(eelMachine)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        isLoadingWorkspaceModel = false
-        reloadJdks(currentEelDescriptor)
-      }
+    if (currentEelDescriptor != descriptor) {
+      currentEelDescriptor = descriptor
+      reloadJdks(descriptor)
     }
   }
 

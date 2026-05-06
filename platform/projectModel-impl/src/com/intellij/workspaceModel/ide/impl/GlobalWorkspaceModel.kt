@@ -509,7 +509,12 @@ class GlobalWorkspaceModelRegistry {
 
   fun getGlobalModels(): List<GlobalWorkspaceModel> {
     return if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
-      environmentToModel.values.toList()
+      if (environmentToModel.containsKey(LocalEelMachine)) {
+        environmentToModel.values.toList()
+      }
+      else {
+        environmentToModel.values.toList() + getGlobalModel(LocalEelMachine)
+      }
     }
     else {
       listOf(getGlobalModel(LocalEelMachine))
