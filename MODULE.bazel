@@ -76,7 +76,6 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/llvm_msvc.patch",  # TODO: remove that once merged to upstream
-        "//:build/llvm_libunwind.patch",  # TODO: remove that once https://github.com/hermeticbuild/hermetic-llvm/issues/513 is fixed
     ],
 )
 
