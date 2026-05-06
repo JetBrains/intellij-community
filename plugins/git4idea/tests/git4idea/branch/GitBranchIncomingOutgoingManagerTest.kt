@@ -2,7 +2,9 @@
 package git4idea.branch
 
 import com.intellij.openapi.vcs.Executor.cd
+import git4idea.commands.GitLineHandler
 import git4idea.config.GitIncomingRemoteCheckStrategy
+import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
@@ -28,6 +30,8 @@ internal class GitBranchIncomingOutgoingManagerTest : GitPlatformTest() {
     repo.update()
 
     manager = GitBranchIncomingOutgoingManager.getInstance(project)
+
+    GitVcsApplicationSettings.getInstance().isUseCredentialHelper = false
   }
 
   override fun hasRemoteGitOperation() = true
@@ -107,6 +111,37 @@ internal class GitBranchIncomingOutgoingManagerTest : GitPlatformTest() {
 
     val state = manager.getIncomingOutgoingState(repo, repo.currentBranch!!)
     assertEquals(2, state.totalIncoming())
+  }
+
+
+  fun `test ls-remote command disables native credential helper when not previously authenticated`() {
+    GitVcsSettings.getInstance(myProject).setIncomingCommitsCheckStrategy(GitIncomingRemoteCheckStrategy.LS_REMOTE)
+    GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
+
+    val capturedHandlers = mutableListOf<GitLineHandler>()
+    git.runCommandListener = { capturedHandlers.add(it) }
+
+    updateIncomingOutgoing()
+
+    var lsRemoteHandlers = capturedHandlers.filter { "ls-remote" in it.printableCommandLine() }
+    assertNotEmpty(lsRemoteHandlers)
+    assertTrue(
+      "credential.helper= must appear in the ls-remote command line when the remote has not been authenticated yet",
+      lsRemoteHandlers.all { "credential.helper=" in it.printableCommandLine() }
+    )
+
+    capturedHandlers.clear()
+    updateIncomingOutgoing()
+
+    // repo doesn't require authentication, so after first successful ls-remote
+    // we will stop resetting the credential helper
+
+    lsRemoteHandlers = capturedHandlers.filter { "ls-remote" in it.printableCommandLine() }
+    assertNotEmpty(lsRemoteHandlers)
+    assertTrue(
+      "credential.helper= must not appear in the ls-remote command line when the remote has been authenticated",
+      lsRemoteHandlers.none { "credential.helper=" in it.printableCommandLine() }
+    )
   }
 
   private fun updateIncomingOutgoing() {

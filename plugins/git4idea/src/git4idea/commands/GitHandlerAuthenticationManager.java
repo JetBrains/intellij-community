@@ -2,6 +2,7 @@
 package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService;
 import com.intellij.externalProcessAuthHelper.NativeSshAuthService;
 import com.intellij.externalProcessAuthHelper.NativeSshGuiAuthenticator;
@@ -83,7 +84,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
       boolean isConfigCommand = handler.getCommand() == GitCommand.CONFIG;
       if (isConfigCommand) return;
 
-      boolean shouldResetCredentialHelper = !useCredentialHelper &&
+      boolean shouldResetCredentialHelper = (!useCredentialHelper || handler.getIgnoreAuthenticationMode() == AuthenticationMode.NONE) &&
                                             GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(version);
       if (shouldResetCredentialHelper) {
         handler.addConfigParameters("credential.helper=");
