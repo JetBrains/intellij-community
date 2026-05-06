@@ -260,6 +260,7 @@ object PyExpectedTypeJudgement {
         return kwargsContainerType
       }
 
+      // TODO For non-variadic types of **kwargs requires supporting extra_items in PyTypedDictType PY-85421
       val baseFields = (kwargsContainerType as? PyUnpackedTypedDictType)?.typedDictType?.fields.orEmpty()
       val fields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
       fields.putAll(baseFields)
