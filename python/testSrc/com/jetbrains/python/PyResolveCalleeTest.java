@@ -51,7 +51,6 @@ public class PyResolveCalleeTest extends PyTestCase {
   public void testDecoCall() {
     final PyCallableType resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
-    assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() {

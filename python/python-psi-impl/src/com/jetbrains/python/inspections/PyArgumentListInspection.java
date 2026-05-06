@@ -94,14 +94,14 @@ public final class PyArgumentListInspection extends PyInspection {
         final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
         if (params == null) return;
 
-        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
           registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
                                                     callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
-          for (int i = firstParamOffset; i < params.size(); i++) {
+          for (int i = firstParamOffset + 1; i < params.size(); i++) {
             final PyCallableParameter parameter = params.get(i);
             if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
               continue;

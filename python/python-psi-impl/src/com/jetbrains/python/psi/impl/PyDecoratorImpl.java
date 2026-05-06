@@ -87,21 +87,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
 
   @Override
   public @NotNull List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
-    final Function<PyCallableType, PyCallableType> mapping = callableType -> {
-      if (!hasArgumentList()) {
-        // NOTE: that +1 thing looks fishy
-        final TypeEvalContext context = resolveContext.getTypeEvalContext();
-        return new PyCallableTypeImpl(callableType.getParameters(context),
-                                      callableType.getReturnType(context),
-                                      callableType.getCallable(),
-                                      callableType.getModifier(),
-                                      callableType.getImplicitOffset() + 1);
-      }
-
-      return callableType;
-    };
-
-    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext), mapping);
+    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
   @Override
