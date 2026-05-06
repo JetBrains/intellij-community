@@ -62,6 +62,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -641,8 +642,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public static PsiModifierListOwner findContainerNullabilityContext(@NotNull PsiTypeElement typeElement) {
     PsiElement parent = typeElement.getContext();
     while (parent != null) {
-      if(parent instanceof PsiModifierListOwner) {
-        return (PsiModifierListOwner)parent;
+      if (parent instanceof PsiModifierListOwner) {
+        return JavaTypeNullabilityUtil.shouldIgnoreContainer(parent) ? null : (PsiModifierListOwner)parent;
       }
       parent = parent.getContext();
     }
