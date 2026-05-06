@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>

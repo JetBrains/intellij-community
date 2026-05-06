@@ -18,6 +18,7 @@ jvm_library(
     "//libraries/hash4j",
     "//platform/core-nio-fs",
     "//platform/external-process-auth-helper/rt",
+    "//platform/ide-core",
   ],
   exports = [
     "//platform/eel",
@@ -49,6 +50,7 @@ jvm_library(
     "//libraries/hash4j:hash4j_test_lib",
     "//platform/core-nio-fs:core-nio-fs_test_lib",
     "//platform/external-process-auth-helper/rt:rt_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.eel.provider` end

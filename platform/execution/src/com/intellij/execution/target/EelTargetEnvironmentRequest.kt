@@ -34,7 +34,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApiBlocking
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
@@ -189,7 +189,9 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = ConcurrentHashMap()
   private val acceptors = ConcurrentLinkedQueue<EelTunnelsApi.ConnectionAcceptor>()
 
-  private val eel = request.configuration.descriptor.toEelApiBlocking()
+  private val eel = runBlockingMaybeCancellable {
+    request.configuration.descriptor.toEelApi()
+  }
 
   private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.descriptor}") }
 

@@ -22,6 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
   </component>
 </module>

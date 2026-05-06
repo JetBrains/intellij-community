@@ -16,12 +16,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -208,14 +210,10 @@ object ExecUtil {
   @ThrowsChecked(EelExecApi.EnvironmentVariablesException::class)
   @ApiStatus.Internal
   @JvmStatic
-  fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?, isPassParentEnvironment: Boolean): Process {
+  fun startProcessBlockingUsingEel(descriptor: EelDescriptor, builder: ProcessBuilder, pty: LocalPtyOptions?, isPassParentEnvironment: Boolean): Process {
     val args = builder.command()
     val exe = args.first().let { exe -> runCatching { Path.of(exe).asEelPath().toString() }.getOrNull() ?: exe }
     val rest = args.subList(1, args.size)
-    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable {
-      environmentVariables().eelIt().await()
-    }
-    else emptyMap()) + builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
 
     // Warn about paths not normalized to remote representation (see IJPL-232192)
@@ -229,14 +227,17 @@ object ExecUtil {
       }
     }
 
-    val options = spawnProcess(exe)
-      .args(rest)
-      .workingDirectory(workingDir)
-      .env(env)
-      .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
-
     return runBlockingMaybeCancellable {
-      options.eelIt().convertToJavaProcess()
+      val exec = descriptor.toEelApi().exec
+      val env = (if (isPassParentEnvironment) exec.environmentVariables().eelIt().await() else emptyMap()) +
+                builder.environment()
+      exec.spawnProcess(exe)
+        .args(rest)
+        .workingDirectory(workingDir)
+        .env(env)
+        .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
+        .eelIt()
+        .convertToJavaProcess()
     }
   }
 }

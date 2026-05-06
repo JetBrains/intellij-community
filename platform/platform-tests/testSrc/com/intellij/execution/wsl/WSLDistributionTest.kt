@@ -520,7 +520,7 @@ class WSLDistributionTest {
         .withFailMessage("WslIjentManager substitutes setProcessCreator")
         .isEqualTo(true)
 
-      assertThat(sourceCommandLine.tryGetEel())
+      assertThat(sourceCommandLine.getNonLocalEelDescriptor())
         .withFailMessage("Eel should not be set for a patched command line")
         .isNull()
 

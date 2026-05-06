@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":execution_resources"],
   deps = [
+    "//platform/eel-nioFs",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/ide-core",
@@ -35,7 +36,6 @@ jvm_library(
     "//platform/util/base",
     "//platform/kernel/shared:kernel",
     "//platform/eel",
-    "//platform/eel-provider",
     "//fleet/rhizomedb",
   ]
 )
@@ -48,6 +48,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":execution",
+    "//platform/eel-nioFs:eel-nioFs_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
@@ -69,7 +70,6 @@ jvm_library(
     "//platform/util/base:base_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/eel:eel_test_lib",
-    "//platform/eel-provider:eel-provider_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )

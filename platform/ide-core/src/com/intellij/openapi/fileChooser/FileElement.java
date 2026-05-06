@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.path.EelPath;
-import com.intellij.platform.eel.provider.utils.JEelUtils;
+import com.intellij.platform.eel.provider.EelPathConversionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,8 +94,13 @@ public class FileElement {
   }
 
   private static boolean isOnUnix(@NotNull VirtualFile file) {
-    EelPath eelPath = JEelUtils.toEelPath(file.toNioPath());
-    return eelPath != null && eelPath.getDescriptor().getOsFamily().equals(EelOsFamily.Posix);
+    try {
+      EelPath eelPath = EelPathConversionsKt.asEelPath(file.toNioPath());
+      return eelPath.getDescriptor().getOsFamily().equals(EelOsFamily.Posix);
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   public static boolean isArchive(@Nullable VirtualFile file) {

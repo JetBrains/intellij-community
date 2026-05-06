@@ -100,7 +100,7 @@ public class PtyCommandLine extends GeneralCommandLine implements CommandLineWit
 
   @Override
   protected @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws IOException {
-    if (getInputFile() == null && !isProcessCreatorSet() && tryGetEel() == null) {
+    if (getInputFile() == null && !isProcessCreatorSet() && getNonLocalEelDescriptor() == null) {
       try {
         return startProcessWithPty(processBuilder.command());
       }
