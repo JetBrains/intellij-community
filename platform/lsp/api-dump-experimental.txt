@@ -1,0 +1,6 @@
+c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
+- com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+- *:getCompletionPrefix(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String):java.lang.String
+c:com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
+- com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
+- *:getEnforcedTextAttributes(org.eclipse.lsp4j.Diagnostic):com.intellij.openapi.editor.markup.TextAttributes

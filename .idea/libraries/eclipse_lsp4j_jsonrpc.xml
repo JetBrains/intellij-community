@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="eclipse.lsp4j.jsonrpc" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.24.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0.jar">
+          <sha256sum>7721572e849d4f359b46ede55d5604b982ff498d0d92ebc70e18029f59823c08</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/eclipse_lsp4j_jsonrpc" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

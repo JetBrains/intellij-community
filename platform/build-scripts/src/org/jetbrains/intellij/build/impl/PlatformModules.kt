@@ -172,9 +172,10 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       sequenceOf(
         "eclipse.lsp4j",
         "eclipse.lsp4j.jsonrpc",
+      ) + sequenceOf(
         "eclipse.lsp4j.debug",
         "eclipse.lsp4j.jsonrpc.debug",
-      )
+      ).filter { context.project.libraryCollection.findLibrary(it) != null }
     )
   }
 

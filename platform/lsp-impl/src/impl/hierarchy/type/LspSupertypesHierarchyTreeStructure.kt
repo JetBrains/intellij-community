@@ -1,0 +1,21 @@
+package com.intellij.platform.lsp.impl.hierarchy.type
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.lsp.impl.hierarchy.Lsp4jHierarchyItem
+import com.intellij.platform.lsp.impl.hierarchy.LspHierarchyNodeDescriptor
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams
+
+internal class LspSupertypesHierarchyTreeStructure(
+  project: Project,
+  baseDescriptor: LspHierarchyNodeDescriptor,
+) : LspTypeHierarchyTreeStructure(project, baseDescriptor) {
+
+  override fun fetchItems(nodeDescriptor: LspHierarchyNodeDescriptor): List<Lsp4jHierarchyItem> {
+    val typeHierarchyItem = nodeDescriptor.item?.toTypeHierarchyItem()
+    if (typeHierarchyItem == null) return emptyList()
+    val params = TypeHierarchySupertypesParams(typeHierarchyItem)
+    return nodeDescriptor.server.sendRequestSync {
+      it.textDocumentService.typeHierarchySupertypes(params)
+    }?.map { Lsp4jHierarchyItem.from(it) } ?: emptyList()
+  }
+}

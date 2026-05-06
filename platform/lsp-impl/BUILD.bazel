@@ -1,0 +1,106 @@
+### auto-generated section `build intellij.platform.lsp.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "lsp-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lsp-impl",
+  module_name = "intellij.platform.lsp.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lsp-impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:eclipse-lsp4j",
+    "@lib//:eclipse-lsp4j-jsonrpc",
+    "//platform/core-impl",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/xtext-xbase",
+    "//platform/indexing-api:indexing",
+    "//platform/lsp",
+    "//platform/ide-core-impl",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/backend/workspace",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/core-ui",
+    "//platform/markdown-utils",
+    "//platform/statistics",
+    "//platform/workspace/storage",
+    "//platform/foldings",
+    "//platform/util/progress",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/refactoring",
+  ],
+  exports = ["//platform/lsp"]
+)
+
+jvm_library(
+  name = "lsp-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":lsp-impl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:eclipse-lsp4j",
+    "@lib//:eclipse-lsp4j-jsonrpc",
+    "//platform/core-impl",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/xtext-xbase",
+    "//platform/indexing-api:indexing",
+    "//platform/lsp",
+    "//platform/ide-core-impl",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/backend/workspace",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/core-ui",
+    "//platform/markdown-utils",
+    "//platform/markdown-utils:markdown-utils_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/storage",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/foldings",
+    "//platform/util/progress",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/refactoring",
+  ],
+  exports = ["//platform/lsp"]
+)
+### auto-generated section `build intellij.platform.lsp.impl` end
+
+### auto-generated section `test intellij.platform.lsp.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "lsp-impl_test",
+  runtime_deps = [":lsp-impl_test_lib"]
+)
+### auto-generated section `test intellij.platform.lsp.impl` end

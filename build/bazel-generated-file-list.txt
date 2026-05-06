@@ -663,6 +663,10 @@ platform/lang-impl/backend
 platform/lang-impl/testEntities
 platform/libraries/cglib
 platform/locking-impl
+platform/lsp
+platform/lsp-impl
+platform/lsp-impl/tests
+platform/lsp/testFramework
 platform/lvcs-api
 platform/lvcs-impl
 platform/macro

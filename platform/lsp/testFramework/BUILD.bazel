@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.platform.lsp.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.lsp.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lsp",
+    "//platform/testFramework",
+  ]
+)
+### auto-generated section `build intellij.platform.lsp.testFramework` end

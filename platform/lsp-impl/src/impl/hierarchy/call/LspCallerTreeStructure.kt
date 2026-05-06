@@ -1,0 +1,21 @@
+package com.intellij.platform.lsp.impl.hierarchy.call
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.lsp.impl.hierarchy.Lsp4jHierarchyItem
+import com.intellij.platform.lsp.impl.hierarchy.LspHierarchyNodeDescriptor
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams
+
+internal class LspCallerTreeStructure(
+  project: Project,
+  baseDescriptor: LspHierarchyNodeDescriptor,
+) : LspCallHierarchyTreeStructure(project, baseDescriptor) {
+
+  override fun fetchItems(nodeDescriptor: LspHierarchyNodeDescriptor): List<Lsp4jHierarchyItem> {
+    val callHierarchyItem = nodeDescriptor.item?.toCallHierarchyItem()
+    if (callHierarchyItem == null) return emptyList()
+    val params = CallHierarchyIncomingCallsParams(callHierarchyItem)
+    return nodeDescriptor.server.sendRequestSync {
+      it.textDocumentService.callHierarchyIncomingCalls(params)
+    }?.map { Lsp4jHierarchyItem.from(it.from) } ?: emptyList()
+  }
+}

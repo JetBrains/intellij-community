@@ -1,0 +1,135 @@
+<idea-plugin visibility="public">
+  <module value="com.intellij.modules.lsp"/>
+
+  <dependencies>
+    <module name="intellij.platform.lsp"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="100" description="LSP server connect timeout" key="lsp.server.connect.timeout"/>
+    <notificationGroup id="LSP window/showMessage"
+                       displayType="BALLOON"
+                       bundle="messages.LspBundle"
+                       key="notification.group.lsp.message"/>
+    <notificationGroup id="LSP window/logMessage: errors, warnings"
+                       displayType="NONE"
+                       bundle="messages.LspBundle"
+                       key="notification.group.lsp.log.errors.warnings"/>
+    <notificationGroup id="LSP window/logMessage: info, log; $/logTrace"
+                       displayType="NONE" isLogByDefault="false"
+                       bundle="messages.LspBundle"
+                       key="notification.group.lsp.log.info.trace"/>
+
+    <projectService serviceInterface="com.intellij.platform.lsp.api.LspServerManager"
+                    serviceImplementation="com.intellij.platform.lsp.impl.LspServerManagerImpl"/>
+
+    <editorFactoryDocumentListener id="LspDocumentListener"
+                                   implementation="com.intellij.platform.lsp.impl.LspDocumentListener"/>
+    <vfs.asyncListener id="LspFileListener"
+                       implementation="com.intellij.platform.lsp.impl.LspFileListener"/>
+
+    <highlightingPassFactory implementation="com.intellij.platform.lsp.impl.highlighting.LspHighlightingPassFactory"/>
+    <problemFileHighlightFilter implementation="com.intellij.platform.lsp.impl.highlighting.LspProblemFileHighlightFilter"/>
+    <enterHandlerDelegate id="LspOnTypeFormattingEnterHandler" order="last"
+                          implementation="com.intellij.platform.lsp.impl.formatter.LspOnTypeFormattingEnterHandler"/>
+    <editorTypedHandler id="LspTypedActionHandler" order="last"
+                        implementationClass="com.intellij.platform.lsp.impl.formatter.LspTypedActionHandler"/>
+    <typedHandler id="LspAutoPopupTypedHandler" order="last"
+                  implementation="com.intellij.platform.lsp.impl.completion.LspAutoPopupTypedHandler"/>
+    <typedHandler id="LspParameterInfoTypedHandler" order="last, before LspAutoPopupTypedHandler"
+                  implementation="com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoTypedHandler"/>
+    <completion.contributor id="LspCompletionContributor"
+                            language="any"
+                            order="last, before wordCompletion, before TextMateCompletionContributor"
+                            implementationClass="com.intellij.platform.lsp.impl.completion.LspCompletionContributor"/>
+    <weigher id="LspCompletionWeigher"
+             key="completion"
+             order="after priority, before prefix"
+             implementationClass="com.intellij.platform.lsp.impl.completion.LspCompletionWeigher"/>
+    <codeInsight.codeVisionProvider implementation="com.intellij.platform.lsp.impl.codeLens.LspCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.platform.lsp.impl.codeLens.LspCodeVisionGroupSettingProvider"/>
+    <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.inlayHint.LspInlayHintsProviderFactory"/>
+    <codeInsight.parameterInfo id="LspParameterInfoHandler" language=""
+                               implementationClass="com.intellij.platform.lsp.impl.parameterInfo.LspParameterInfoHandler"/>
+    <psi.implicitReferenceProvider id="LspImplicitReferenceProvider"
+                                   implementation="com.intellij.platform.lsp.impl.navigation.LspImplicitReferenceProvider"/>
+    <psi.implicitReferenceProvider id="LspDocumentLinkReferenceProvider"
+                                   implementation="com.intellij.platform.lsp.impl.navigation.LspDocumentLinkReferenceProvider"/>
+    <lang.symbolTypeProvider id="LspSymbolTypeProvider" implementation="com.intellij.platform.lsp.impl.navigation.LspSymbolTypeProvider"/>
+    <uiDataRule implementation="com.intellij.platform.lsp.impl.usages.LspSearchTargetsRule"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.platform.lsp.impl.usages.LspUsageSearcher"/>
+    <platform.backend.documentation.targetProvider id="LspDocumentationTargetProvider"
+                                                   implementation="com.intellij.platform.lsp.impl.documentation.LspDocumentationTargetProvider"/>
+    <formattingService id="LspFormattingService" implementation="com.intellij.platform.lsp.impl.formatter.LspFormattingService"/>
+    <lang.importOptimizer language="" implementationClass="com.intellij.platform.lsp.impl.formatter.LspImportOptimizer" order="last"/>
+    <lang.foldingBuilder language="" implementationClass="com.intellij.platform.lsp.impl.folding.LspFoldingBuilder"/>
+    <gotoSymbolContributor implementation="com.intellij.platform.lsp.impl.workspaceSymbol.LspGoToSymbolContributor"/>
+    <gotoClassContributor implementation="com.intellij.platform.lsp.impl.workspaceSymbol.LspGoToClassContributor"/>
+    <searchEverywhereResultsEqualityProvider
+      implementation="com.intellij.platform.lsp.impl.workspaceSymbol.LspWorkspaceSymbolEqualityProvider"/>
+    <lang.psiStructureViewFactory language="" implementationClass="com.intellij.platform.lsp.impl.documentSymbol.LspStructureViewFactory"/>
+    <fileBreadcrumbsCollector implementation="com.intellij.platform.lsp.impl.documentSymbol.LspFileBreadcrumbsCollector"
+                              order="last, after PsiFileBreadcrumbsCollector"/>
+    <platform.lang.lsWidget.itemsProvider id="LspWidgetItemsProvider"
+                                          implementation="com.intellij.platform.lsp.impl.lsWidget.LspWidgetItemsProvider"/>
+    <applicationService serviceInterface="com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService"
+                        serviceImplementation="com.intellij.platform.lsp.impl.lsWidget.LspWidgetInternalServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.lsp.util.Lsp4jService"
+                        serviceImplementation="com.intellij.platform.lsp.impl.util.Lsp4jServiceImpl"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.platform.lsp.impl.highlighting.LspHighlightUsagesHandlerFactory"
+                                   order="last"/>
+    <registryKey key="lsp.communication.standard.log.file" defaultValue="false"
+                 description="Write communication logs between the IDE and external language services to idea.log file (effective only if DEBUG-level logging is enabled for the 'com.intellij.platform.lsp' category)."/>
+
+    <callHierarchyProvider language=""
+                           implementationClass="com.intellij.platform.lsp.impl.hierarchy.call.LspCallHierarchyProvider"
+                           order="last"/>
+    <typeHierarchyProvider language=""
+                           implementationClass="com.intellij.platform.lsp.impl.hierarchy.type.LspTypeHierarchyProvider"
+                           order="last"/>
+    <extendWordSelectionHandler id="LspWordSelectionHandler"
+                                implementation="com.intellij.platform.lsp.impl.selectWord.LspWordSelectionHandler"
+                                order="last"/>
+
+    <renameHandler implementation="com.intellij.platform.lsp.impl.rename.LspRenameHandler" order="last"/>
+
+    <!--@formatter:off-->
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention0</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention1</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention2</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention3</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention4</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention5</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention6</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention7</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention8</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention9</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention10</className> <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention11</className> <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention12</className> <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention13</className> <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <intentionAction> <className>com.intellij.platform.lsp.impl.intention.LspIntention14</className> <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
+    <!--@formatter:on-->
+  </extensions>
+
+  <projectListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
+              class="com.intellij.platform.lsp.impl.LspFileEditorManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
+              class="com.intellij.platform.lsp.impl.LspFileDocumentManagerListener"/>
+    <listener topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
+              class="com.intellij.platform.lsp.impl.navigation.CurrentActionListener"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSupportProvider"
+                    interface="com.intellij.platform.lsp.api.LspServerSupportProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.lsp.documentAdapter"
+                    interface="com.intellij.platform.lsp.impl.LspDocumentAdapter"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>
