@@ -121,6 +121,11 @@ open class WhatsNewInVisionContentProvider {
     } ?: error("Vision page not found")
 
     val allowedIds = getAllowedMultipageIds()
+
+    // Don't check ids if only default multipage ID is allowed
+    if (allowedIds == setOf(DEFAULT_MULTIPAGE_ID)) {
+      return container
+    }
     for (page in container.entities) {
       for (multipageId in page.multipageIds) {
         if (multipageId !in allowedIds) {
