@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("SSBasedInspection")
+
 package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.Ref
@@ -149,6 +151,42 @@ class PyLiteralType private constructor(
     fun stringLiteral(anchor: PsiElement, value: String): PyLiteralType? {
       val strClass = PyBuiltinCache.getInstance(anchor).strType?.pyClass
       return strClass?.let { PyLiteralType(it, PyLiteralValue.StringValue(value, "\"${value}\"")) }
+    }
+
+    /**
+     * Build a `Literal[<integer>]` type from a raw [BigInteger] value, anchored at [anchor]
+     * so the `int` class is resolved through that element's builtin cache. Returns `null`
+     * when `int` cannot be resolved (e.g. broken interpreter).
+     */
+    @JvmStatic
+    fun intLiteral(anchor: PsiElement, value: BigInteger): PyLiteralType? {
+      val intClass = PyBuiltinCache.getInstance(anchor).intType?.pyClass
+      return intClass?.let { PyLiteralType(it, PyLiteralValue.IntValue(value)) }
+    }
+
+    /**
+     * Build a `Literal[True]` or `Literal[False]` type from a raw [Boolean] value, anchored
+     * at [anchor] so the `bool` class is resolved through that element's builtin cache.
+     * Returns `null` when `bool` cannot be resolved.
+     */
+    @JvmStatic
+    fun boolLiteral(anchor: PsiElement, value: Boolean): PyLiteralType? {
+      val boolClass = PyBuiltinCache.getInstance(anchor).boolType?.pyClass
+      return boolClass?.let { PyLiteralType(it, PyLiteralValue.BoolValue(value)) }
+    }
+
+    /**
+     * Build a [PyLiteralType] from a raw deserialized value whose runtime type
+     * determines the literal kind (`Boolean` → bool, `Number` → int, `String` → str).
+     * Returns `null` when the value type is unsupported or the backing class cannot
+     * be resolved.
+     */
+    @JvmStatic
+    fun fromLiteralValue(anchor: PsiElement, value: Any): PyLiteralType? = when (value) {
+      is Boolean -> boolLiteral(anchor, value)
+      is Number -> intLiteral(anchor, BigInteger.valueOf(value.toLong()))
+      is String -> stringLiteral(anchor, value)
+      else -> null
     }
 
     @ApiStatus.Internal
