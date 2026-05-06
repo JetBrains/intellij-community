@@ -67,6 +67,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
+    "//platform/vcs-api:vcs",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/agent-workbench/prompt/core",
