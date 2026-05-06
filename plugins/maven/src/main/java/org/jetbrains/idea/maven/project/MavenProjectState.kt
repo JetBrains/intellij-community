@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.model.MavenProfile
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.jetbrains.idea.maven.model.MavenSource
@@ -43,7 +44,7 @@ data class MavenProjectState(
   val managedDependencies: Map<String, MavenArtifactInfo> = emptyMap(),
   val modulesPathsAndNames: Map<String, String> = emptyMap(),
   val modelMap: Map<String, String> = emptyMap(),
-  val profilesIds: Collection<String> = emptySet(),
+  val profiles: List<MavenProfile> = emptyList(),
   val activatedProfilesIds: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
   val dependencyHash: String? = null,
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
