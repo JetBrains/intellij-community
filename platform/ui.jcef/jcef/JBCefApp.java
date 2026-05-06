@@ -79,6 +79,14 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
   private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
   private static final String REGISTRY_REMOTE_KEY = "ide.browser.jcef.out-of-process.enabled";
+  private static final String FRAMEWORK_DIR_PATH_ARG = "--framework-dir-path=";
+  private static final String BROWSER_SUBPROCESS_PATH_ARG = "--browser-subprocess-path=";
+  private static final String MAIN_BUNDLE_PATH_ARG = "--main-bundle-path=";
+  private static final String MAC_APP_BUNDLE_SUFFIX = ".app";
+  private static final String MAC_APP_CONTENTS_DIR = "Contents";
+  private static final String MAC_APP_EXECUTABLES_DIR = "MacOS";
+  private static final String JCEF_HELPER_NAME = "jcef Helper";
+  private static final String JCEF_HELPER_APP_NAME = JCEF_HELPER_NAME + MAC_APP_BUNDLE_SUFFIX;
 
   private static JCefVersionDetails VERSION_DETAILS = null;
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
@@ -158,6 +166,26 @@ public final class JBCefApp {
     }
     else {
       CefApp.setIsRemoteEnabled(myIsRemoteEnabled);
+      String cefFrameworkPathOSX = config.getCefFrameworkPathOSX();
+      if (cefFrameworkPathOSX == null && OS.isMacintosh() && !myIsRemoteEnabled) {
+        List<String> appArgs = config.getAppArgsAsList();
+        for (String appArg : config.getAppArgsAsList()) {
+          if (appArg.startsWith(FRAMEWORK_DIR_PATH_ARG)) {
+            cefFrameworkPathOSX = appArg.substring(FRAMEWORK_DIR_PATH_ARG.length());
+            break;
+          }
+        }
+        if (cefFrameworkPathOSX != null) {
+          Path helperPath = Path.of(cefFrameworkPathOSX).getParent().resolve(JCEF_HELPER_APP_NAME);
+          Path browserSubprocessPath = helperPath.resolve(MAC_APP_CONTENTS_DIR).resolve(MAC_APP_EXECUTABLES_DIR).resolve(JCEF_HELPER_NAME);
+          if (Files.isRegularFile(browserSubprocessPath)) {
+            appArgs.removeIf(arg -> arg.startsWith(BROWSER_SUBPROCESS_PATH_ARG) || arg.startsWith(MAIN_BUNDLE_PATH_ARG));
+            appArgs.add(BROWSER_SUBPROCESS_PATH_ARG + browserSubprocessPath);
+            appArgs.add(MAIN_BUNDLE_PATH_ARG + helperPath);
+          }
+        }
+      }
+      final String macCefFrameworkPathOSX = cefFrameworkPathOSX;
       if (myIsRemoteEnabled) {
         final Supplier<CefRendering> defaultRenderingFactory = () -> {
           JBCefOSRHandlerFactory osrHandlerFactory = JBCefOSRHandlerFactory.getInstance();
@@ -173,9 +201,10 @@ public final class JBCefApp {
       CefLog.init(logPath, settings.log_severity);
 
       JBCefHealthMonitor.getInstance().performHealthCheckAsync(settings, () -> {
-        if (OS.isMacintosh() && config.getCefFrameworkPathOSX() != null) {
-          CefApp.startupAsync(config.getCefFrameworkPathOSX());
-        } else {
+        if (OS.isMacintosh() && macCefFrameworkPathOSX != null) {
+          CefApp.startupAsync(macCefFrameworkPathOSX);
+        }
+        else {
           CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
         }
       });
