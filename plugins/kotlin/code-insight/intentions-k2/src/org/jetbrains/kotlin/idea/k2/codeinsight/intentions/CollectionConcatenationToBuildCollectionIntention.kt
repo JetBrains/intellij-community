@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ThisRebinderForAddingNewReceiver
+import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -213,7 +214,7 @@ class CollectionConcatenationToBuildCollectionIntention :
     ) {
         val expression = element.safeDeparenthesize()
         val expressionToConvert = expression.expressionToConvert()
-        val replacementTarget = expressionToConvert.topmostParenthesizedExpression()
+        val replacementTarget = expressionToConvert.getTopmostParenthesizedExpressionOrSelf()
         if (!elementContext.isValid()) return
         val replacements = ThisRebinderForAddingNewReceiver.apply(elementContext.rebinderContext)
 
@@ -334,10 +335,6 @@ class CollectionConcatenationToBuildCollectionIntention :
             }
         }
         return topmostBinaryExpression ?: currentExpression
-    }
-
-    private fun KtExpression.topmostParenthesizedExpression(): KtExpression {
-        return generateSequence(this) { it.parent as? KtParenthesizedExpression }.last()
     }
 
     private fun KtExpression.transformingCallExpression(): KtCallExpression? {

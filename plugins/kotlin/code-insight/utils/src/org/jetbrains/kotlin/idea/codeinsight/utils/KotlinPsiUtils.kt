@@ -98,6 +98,21 @@ fun KtContainerNode.getControlFlowElementDescription(): String? {
 }
 
 /**
+ * Returns this expression or the topmost directly enclosing parenthesized expression.
+ *
+ * For `foo()` as the receiver expression:
+ * ```
+ * foo() + bar      -> foo()
+ * (foo()) + bar    -> (foo())
+ * ((foo())) + bar  -> ((foo()))
+ * (1 + foo())      -> foo()
+ * (1 + (foo()))    -> (foo())
+ * ```
+ */
+fun KtExpression.getTopmostParenthesizedExpressionOrSelf(): KtExpression =
+    generateSequence(this) { it.parent as? KtParenthesizedExpression }.last()
+
+/**
  * Returns whether the property accessor is a redundant getter or not.
  * TODO: We place this function in kotlin.code-insight.utils because it looks specific for redundant-getter-inspection.
  *       However, if we find some cases later that need this function for a general-purpose, we should move it to kotlin.base.psi.
