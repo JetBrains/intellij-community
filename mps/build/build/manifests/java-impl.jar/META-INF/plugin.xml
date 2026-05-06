@@ -1,6 +1,6 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="false">
   <id>com.intellij.java</id>
-  <version>261.22158.999-mps</version>
+  <version>261.23567.999-mps</version>
   <idea-version since-build="261.22158" until-build="263.*" />
   <name>Java</name>
   <description><![CDATA[
