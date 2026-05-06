@@ -2,11 +2,18 @@ package com.intellij.driver.sdk.ui.components.clion
 
 import com.intellij.util.system.OS
 
+
+data class Toolset(
+  val kind: String,
+  val path: String? = null
+)
+
 sealed class Toolchain(
   val name: ToolchainNames,
   val compiler: Compiler,
   val debugger: Debugger,
   val buildTool: BuildTool,
+  val toolset: Toolset = Toolset(kind = "SYSTEM_UNIX_TOOLSET", path = null),
 ) {
   override fun toString(): String {
     return if (compiler == Compiler.DEFAULT) "${name}_$debugger"
@@ -53,7 +60,8 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-  ) : Toolchain(name, compiler, debugger, buildTool)
+    toolset: Toolset = Toolset(kind = "MINGW", path = "BUNDLED_MINGW")
+  ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class CustomMingw(
     compiler: Compiler = Compiler.DEFAULT,
@@ -74,7 +82,8 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MSVC,
-  ) : Toolchain(name, compiler, debugger, buildTool)
+    toolset: Toolset = Toolset(kind = "MSVC", path = "\"Program Files (x86)\\Microsoft Visual Studio\\2026\\BuildTools\"")
+  ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Cygwin(
     compiler: Compiler = Compiler.DEFAULT,
