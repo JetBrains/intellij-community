@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.path.EelPath
@@ -50,6 +51,12 @@ internal class TerminalProjectOptionsMigration(
     if (!IdeProductMode.isFrontend) return null // Migration is needed only for Split-Mode frontend
     val props = PropertiesComponent.getInstance(project)
     if (props.getBoolean(MIGRATION_ATTEMPTED_KEY, false)) return null
+
+    if (PlatformProjectOpenProcessor.isNewProject(project)) {
+      props.setValue(MIGRATION_ATTEMPTED_KEY, true)
+      LOG.info("Terminal project options migration skipped for project $project: it's a new project")
+      return null
+    }
 
     val job = migrationJob ?: synchronized(this) {
       migrationJob ?: coroutineScope.async {
