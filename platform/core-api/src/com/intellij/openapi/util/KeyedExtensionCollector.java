@@ -47,7 +47,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private Map<String, PersistentList<T>> explicitExtensions = Java11Shim.INSTANCE.mapOf();
 
   private volatile @UnmodifiableView Map<String, List<T>> cache = Java11Shim.INSTANCE.mapOf();
-  private final String epName;
+  private final @NotNull String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();

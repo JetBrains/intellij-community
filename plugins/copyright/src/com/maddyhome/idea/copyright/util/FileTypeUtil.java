@@ -202,7 +202,7 @@ public class FileTypeUtil implements Disposable {
   }
 
   public static Set<FileType> getSupportedTypes() {
-    return CopyrightUpdaters.INSTANCE.getAllRegisteredExtensions().keySet();
+    return CopyrightUpdaters.INSTANCE.getAllRegisteredFileTypes();
   }
 
   public static boolean hasBlockComment(FileType fileType) {
