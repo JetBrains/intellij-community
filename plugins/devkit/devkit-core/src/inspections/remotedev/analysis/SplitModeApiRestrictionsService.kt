@@ -123,6 +123,15 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     return restrictions.apiHints[apiName]
   }
 
+  fun getPredefinedDependencyKind(dependencyId: String): ModuleKind? {
+    val predefinedModuleKinds = getRestrictionsSnapshot().predefinedModuleKinds
+    val moduleKind = predefinedModuleKinds.moduleNames[dependencyId]
+    if (moduleKind != null) {
+      return moduleKind
+    }
+    return predefinedModuleKinds.pluginIds[dependencyId]
+  }
+
   internal fun getPredefinedModuleKind(
     module: Module,
     descriptorFile: XmlFile? = null,
@@ -420,15 +429,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     return VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/')
   }
 
-  private fun <T> RestrictionsData<T>.withModuleKinds(): Sequence<Pair<ModuleKind, T>> {
-    return sequenceOf(
-      frontend.asSequence().map { ModuleKind.FRONTEND to it },
-      backend.asSequence().map { ModuleKind.BACKEND to it },
-      monolith.asSequence().map { ModuleKind.MONOLITH to it },
-      shared.asSequence().map { ModuleKind.SHARED to it },
-    ).flatten()
-  }
-
   private data class RestrictionsLookup(
     val codeRestrictions: Map<String, ModuleKind>,
     val extensionPointToApiName: Map<String, String>,
@@ -467,21 +467,6 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
       return moduleNames.size + pluginIds.size + descriptorPaths.size
     }
   }
-
-  @Serializable
-  private data class RestrictionsData<T>(
-    @SerialName("frontend")
-    val frontend: List<T> = emptyList(),
-
-    @SerialName("backend")
-    val backend: List<T> = emptyList(),
-
-    @SerialName("monolith")
-    val monolith: List<T> = emptyList(),
-
-    @SerialName("shared")
-    val shared: List<T> = emptyList(),
-  )
 
   @Serializable
   private data class ApiRestriction(

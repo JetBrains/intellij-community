@@ -945,9 +945,7 @@ Backend dependency 'intellij.platform.backend' from containing plugin required c
     myFixture.configureFromExistingVirtualFile(frontendContentModuleDescriptor.virtualFile)
 
     myFixture.checkHighlighting()
-    Assert.assertTrue(
-      myFixture.filterAvailableIntentions("Make module 'unique.module.name.35' work in 'frontend' only").isEmpty()
-    )
+    myFixture.findSingleIntention("Make module 'unique.module.name.35' work in 'frontend' only")
     myFixture.findSingleIntention("Make module 'unique.module.name.35' work in 'backend' only")
   }
 

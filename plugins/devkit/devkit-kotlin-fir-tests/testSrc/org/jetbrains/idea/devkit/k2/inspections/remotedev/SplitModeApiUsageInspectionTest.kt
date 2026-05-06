@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.remotedev
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ModuleOrderEntry
@@ -734,8 +735,9 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     """.trimIndent()
     )
 
-    val intention = myFixture.findSingleIntention("Make module 'light_idea_test_case' work in 'frontend' only")
-    myFixture.launchAction(intention)
+    launchActionAndWait("Make module 'light_idea_test_case' work in 'frontend' only") {
+      getModuleDependencyNames().contains("intellij.platform.frontend")
+    }
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
     val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
@@ -855,8 +857,9 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     )
     addCurrentModuleDependencies("intellij.platform.frontend")
 
-    val intention = myFixture.findSingleIntention("Make module 'light_idea_test_case' work in 'backend' only")
-    myFixture.launchAction(intention)
+    launchActionAndWait("Make module 'light_idea_test_case' work in 'backend' only") {
+      !getModuleDependencyNames().contains("intellij.platform.frontend")
+    }
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
     val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
@@ -876,6 +879,18 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
           model.addInvalidModuleEntry(dependencyName)
         }
       }
+    }
+  }
+
+  private fun launchActionAndWait(intentionText: String, condition: () -> Boolean) {
+    val intention = myFixture.findSingleIntention(intentionText)
+    launchActionAndWait(intention, condition)
+  }
+
+  private fun launchActionAndWait(intention: IntentionAction, condition: () -> Boolean) {
+    myFixture.launchAction(intention)
+    timeoutRunBlocking {
+      waitUntil("Quick fix was not applied", 5.seconds) { condition() }
     }
   }
 }
