@@ -4,22 +4,24 @@ package org.jetbrains.ide
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import javax.swing.JComponent
 
 internal class TestJbProtocolCommandAction : DumbAwareAction() {
   @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
   override fun actionPerformed(e: AnActionEvent) {
-    val input = Messages.showInputDialog(
-      e.project,
-      "jetbrains:// URL (or query starting with command name):",
-      "Test JB Protocol Command",
-      null,
-      "jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo",
-      null,
-    ) ?: return
+    val dialog = TestJbProtocolCommandDialog(e.project)
+    if (!dialog.showAndGet()) return
+    val input = dialog.url.takeIf { it.isNotBlank() } ?: return
 
     val query = input.trim()
       .removePrefix("jetbrains://")
@@ -31,6 +33,40 @@ internal class TestJbProtocolCommandAction : DumbAwareAction() {
     }
     result.message?.let {
       Messages.showInfoMessage(e.project, it, "JB Protocol Result")
+    }
+  }
+}
+
+@Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+private class TestJbProtocolCommandDialog(project: Project?) : DialogWrapper(project) {
+  private val urlField = JBTextField(
+    "jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo",
+    60,
+  )
+
+  val url: String get() = urlField.text
+
+  init {
+    title = "Test JB Protocol Command"
+    init()
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent = urlField
+
+  override fun createCenterPanel(): JComponent = panel {
+    row("URL:") {
+      cell(urlField).align(AlignX.FILL).resizableColumn()
+    }
+    row("Examples:") {
+      val examples = """
+        jetbrains://idea/installPlugin?id=IdeaVIM
+        jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo
+      """.trimIndent()
+      val area = JBTextArea(examples, 2, 60).apply {
+        isEditable = false
+        lineWrap = false
+      }
+      cell(area).align(AlignX.FILL)
     }
   }
 }
