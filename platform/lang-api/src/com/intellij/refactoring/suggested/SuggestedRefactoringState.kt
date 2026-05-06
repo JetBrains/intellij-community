@@ -133,7 +133,10 @@ class SuggestedRefactoringState(
       throw ProcessCanceledException()
     }
     val psiFile = anchor.containingFile
-    val signatureRange = refactoringSupport.signatureRange(anchor)!!
+    val signatureRange = refactoringSupport.signatureRange(anchor)
+    if (signatureRange == null) {
+      throw ProcessCanceledException()
+    }
     val importsRange = refactoringSupport.importsRange(psiFile)
     if (importsRange != null && importsRange.length != 0) {
       require(importsRange.endOffset < signatureRange.startOffset)
