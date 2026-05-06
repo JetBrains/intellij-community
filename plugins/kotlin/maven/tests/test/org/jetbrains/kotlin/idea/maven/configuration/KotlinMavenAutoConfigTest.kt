@@ -1,31 +1,32 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.configuration
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.runInEdtAndGet
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
 import org.junit.Test
 
-class KotlinMavenAutoConfigTest() : AbstractKotlinMavenImporterTest() {
+class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
 
     override fun shouldRunTest(): Boolean {
         return super.shouldRunTest() && !AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio()
     }
 
     private fun testConfigure(moduleName: String, expectedSuccess: Boolean) {
-        return runInEdtAndGet {
+        return runBlocking(Dispatchers.EDT) {
             val registryValue = Registry.get("kotlin.configuration.maven.autoConfig.enabled")
             val oldValue = registryValue.asBoolean()
             registryValue.setValue(true, testRootDisposable)
             try {
-                val module = runReadAction {
+                val module = readAction {
                     ModuleManager.getInstance(project).findModuleByName(moduleName)!!
                 }
-                val settings = runBlocking { KotlinJavaMavenConfigurator().calculateAutoConfigSettings(module) }
+                val settings = KotlinJavaMavenConfigurator().calculateAutoConfigSettings(module)
                 if (expectedSuccess) {
                     assertEquals(module, settings?.module)
                 } else {
