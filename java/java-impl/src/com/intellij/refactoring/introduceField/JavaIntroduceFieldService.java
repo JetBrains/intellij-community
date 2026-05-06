@@ -78,6 +78,6 @@ public abstract class JavaIntroduceFieldService {
     }
   }
 
-  public static final record AvailableSettings(@NotNull List<@NotNull InitializationPlace> places) {
+  public record AvailableSettings(@NotNull List<@NotNull InitializationPlace> places) {
   }
 }

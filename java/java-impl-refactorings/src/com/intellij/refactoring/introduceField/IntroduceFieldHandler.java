@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
@@ -83,9 +84,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     }
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
-      return JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
-                                           RefactoringUIUtil.getDescription(aClass, false),
-                                           RefactoringUIUtil.getDescription(parentClass, false));
+      String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
+                                                     RefactoringUIUtil.getDescription(aClass, false),
+                                                     RefactoringUIUtil.getDescription(parentClass, false));
+      return StringUtil.capitalize(message);
     }
     return null;
   }

@@ -112,7 +112,7 @@ final class FieldExtractor {
     if (proposedClasses.isEmpty()) {
       message = handler.checkClass(parentClass, selectedExpr);
       if (message != null) {
-        return new JavaIntroduceFieldService.ExpressionToFieldContext.Error(message);
+        return new JavaIntroduceFieldService.ExpressionToFieldContext.Error(RefactoringBundle.getCannotRefactorMessage(message));
       }
       return new JavaIntroduceFieldService.ExpressionToFieldContext.Error(
         JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
