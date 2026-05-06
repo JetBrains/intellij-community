@@ -23,6 +23,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.main.kts" exported="" />
+    <orderEntry type="module" module-name="intellij.repository.search.completion" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch.definition" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" exported="" />

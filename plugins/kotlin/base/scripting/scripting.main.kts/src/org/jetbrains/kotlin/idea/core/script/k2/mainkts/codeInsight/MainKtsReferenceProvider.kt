@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.core.script.k2.codeInsight
+package org.jetbrains.kotlin.idea.core.script.k2.mainkts.codeInsight
 
 import com.intellij.model.Pointer
 import com.intellij.model.SingleTargetReference
@@ -20,28 +20,13 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 
-private val IMPORT_FQN: FqName = FqName("org.jetbrains.kotlin.mainKts.Import")
-
 class MainKtsReferenceProvider : ImplicitReferenceProvider {
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun isImportAnnotation(element: KtAnnotationEntry): Boolean {
-        return allowAnalysisOnEdt {
-            analyze(element) {
-                val symbol = element.calleeExpression?.resolveToCall()?.singleFunctionCallOrNull()?.symbol as? KaConstructorSymbol
-                symbol?.containingClassId?.asSingleFqName()
-            }
-        } == IMPORT_FQN
-    }
+    fun isImportAnnotation(element: KtAnnotationEntry): Boolean = element.matchesAnnotationFqn(IMPORT_FQN)
 
     override fun getImplicitReference(
         element: PsiElement,

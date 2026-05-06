@@ -1224,6 +1224,7 @@ plugins/kotlin/base/psi
 plugins/kotlin/base/resources
 plugins/kotlin/base/scripting/scripting.k1
 plugins/kotlin/base/scripting/scripting.k2
+plugins/kotlin/base/scripting/scripting.main.kts
 plugins/kotlin/base/scripting/scripting.scratch.definition
 plugins/kotlin/base/scripting/scripting.shared
 plugins/kotlin/base/statistics

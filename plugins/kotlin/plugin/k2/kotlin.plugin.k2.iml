@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.main.kts" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch.definition" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="RUNTIME" />
