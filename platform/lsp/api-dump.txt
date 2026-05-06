@@ -1,0 +1,463 @@
+c:com.intellij.platform.lsp.api.Lsp4jClient
+- org.eclipse.lsp4j.services.LanguageClient
+- <init>(com.intellij.platform.lsp.api.LspServerNotificationsHandler):V
+- f:applyEdit(org.eclipse.lsp4j.ApplyWorkspaceEditParams):java.util.concurrent.CompletableFuture
+- f:configuration(org.eclipse.lsp4j.ConfigurationParams):java.util.concurrent.CompletableFuture
+- f:createProgress(org.eclipse.lsp4j.WorkDoneProgressCreateParams):java.util.concurrent.CompletableFuture
+- f:logMessage(org.eclipse.lsp4j.MessageParams):V
+- f:logTrace(org.eclipse.lsp4j.LogTraceParams):V
+- f:notifyProgress(org.eclipse.lsp4j.ProgressParams):V
+- f:publishDiagnostics(org.eclipse.lsp4j.PublishDiagnosticsParams):V
+- f:refreshCodeLenses():java.util.concurrent.CompletableFuture
+- f:refreshDiagnostics():java.util.concurrent.CompletableFuture
+- f:refreshInlayHints():java.util.concurrent.CompletableFuture
+- f:refreshInlineValues():java.util.concurrent.CompletableFuture
+- f:refreshSemanticTokens():java.util.concurrent.CompletableFuture
+- f:registerCapability(org.eclipse.lsp4j.RegistrationParams):java.util.concurrent.CompletableFuture
+- f:showDocument(org.eclipse.lsp4j.ShowDocumentParams):java.util.concurrent.CompletableFuture
+- f:showMessage(org.eclipse.lsp4j.MessageParams):V
+- f:showMessageRequest(org.eclipse.lsp4j.ShowMessageRequestParams):java.util.concurrent.CompletableFuture
+- telemetryEvent(java.lang.Object):V
+- f:unregisterCapability(org.eclipse.lsp4j.UnregistrationParams):java.util.concurrent.CompletableFuture
+- f:workspaceFolders():java.util.concurrent.CompletableFuture
+a:com.intellij.platform.lsp.api.LspCommunicationChannel
+f:com.intellij.platform.lsp.api.LspCommunicationChannel$Socket
+- com.intellij.platform.lsp.api.LspCommunicationChannel
+- <init>(I,Z):V
+- b:<init>(I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():Z
+- f:copy(I,Z):com.intellij.platform.lsp.api.LspCommunicationChannel$Socket
+- bs:copy$default(com.intellij.platform.lsp.api.LspCommunicationChannel$Socket,I,Z,I,java.lang.Object):com.intellij.platform.lsp.api.LspCommunicationChannel$Socket
+- equals(java.lang.Object):Z
+- f:getPort():I
+- f:getStartProcess():Z
+- hashCode():I
+f:com.intellij.platform.lsp.api.LspCommunicationChannel$StdIO
+- com.intellij.platform.lsp.api.LspCommunicationChannel
+- sf:INSTANCE:com.intellij.platform.lsp.api.LspCommunicationChannel$StdIO
+- equals(java.lang.Object):Z
+- hashCode():I
+com.intellij.platform.lsp.api.LspServer
+- sf:Companion:com.intellij.platform.lsp.api.LspServer$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
+- a:getDescriptor():com.intellij.platform.lsp.api.LspServerDescriptor
+- a:getDocumentIdentifier(com.intellij.openapi.vfs.VirtualFile):org.eclipse.lsp4j.TextDocumentIdentifier
+- a:getDocumentVersion(com.intellij.openapi.editor.Document):I
+- a:getInitializeResult():org.eclipse.lsp4j.InitializeResult
+- a:getProject():com.intellij.openapi.project.Project
+- a:getProviderClass():java.lang.Class
+- a:getState():com.intellij.platform.lsp.api.LspServerState
+- a:sendNotification(kotlin.jvm.functions.Function1):V
+- a:sendRequest(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- a:sendRequestSync(I,kotlin.jvm.functions.Function1):java.lang.Object
+- bs:sendRequestSync$default(com.intellij.platform.lsp.api.LspServer,I,kotlin.jvm.functions.Function1,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.lsp.api.LspServer$Companion
+- sf:DEFAULT_REQUEST_TIMEOUT_MS:I
+a:com.intellij.platform.lsp.api.LspServerDescriptor
+- sf:Companion:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile[]):V
+- createCommandLine():com.intellij.execution.configurations.GeneralCommandLine
+- createInitializationOptions():java.lang.Object
+- createInitializeParams():org.eclipse.lsp4j.InitializeParams
+- createLsp4jClient(com.intellij.platform.lsp.api.LspServerNotificationsHandler):com.intellij.platform.lsp.api.Lsp4jClient
+- findFileByUri(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- p:findLocalFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- getClientCapabilities():org.eclipse.lsp4j.ClientCapabilities
+- p:getFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getFileUri(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getLsp4jServerClass():java.lang.Class
+- getLspCodeActionsSupport():com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
+- getLspCommandsSupport():com.intellij.platform.lsp.api.customization.LspCommandsSupport
+- getLspCommunicationChannel():com.intellij.platform.lsp.api.LspCommunicationChannel
+- getLspCompletionSupport():com.intellij.platform.lsp.api.customization.LspCompletionSupport
+- getLspCustomization():com.intellij.platform.lsp.api.customization.LspCustomization
+- getLspDiagnosticsSupport():com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
+- getLspDocumentColorSupport():com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
+- getLspDocumentLinkSupport():com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
+- getLspFindReferencesSupport():com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
+- getLspFormattingSupport():com.intellij.platform.lsp.api.customization.LspFormattingSupport
+- getLspGoToDefinitionSupport():Z
+- getLspGoToTypeDefinitionSupport():Z
+- getLspHoverSupport():Z
+- getLspSemanticTokensSupport():com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
+- getLspServerListener():com.intellij.platform.lsp.api.LspServerListener
+- f:getPresentableName():java.lang.String
+- f:getProject():com.intellij.openapi.project.Project
+- f:getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getWorkspaceConfiguration(org.eclipse.lsp4j.ConfigurationItem):java.lang.Object
+- a:isSupportedFile(com.intellij.openapi.vfs.VirtualFile):Z
+- startServerProcess():com.intellij.execution.process.OSProcessHandler
+f:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
+- f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.platform.lsp.api.LspServerListener
+- serverInitialized(org.eclipse.lsp4j.InitializeResult):V
+- serverStopped(Z):V
+com.intellij.platform.lsp.api.LspServerManager
+- sf:Companion:com.intellij.platform.lsp.api.LspServerManager$Companion
+- a:ensureServerStarted(java.lang.Class,com.intellij.platform.lsp.api.LspServerDescriptor):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspServerManager
+- a:getServersForProvider(java.lang.Class):java.util.Collection
+- a:startServersIfNeeded(java.lang.Class):V
+- a:stopAndRestartIfNeeded(java.lang.Class):V
+- a:stopServers(java.lang.Class):V
+f:com.intellij.platform.lsp.api.LspServerManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspServerManager
+com.intellij.platform.lsp.api.LspServerNotificationsHandler
+- a:applyEdit(org.eclipse.lsp4j.ApplyWorkspaceEditParams):java.util.concurrent.CompletableFuture
+- a:configuration(org.eclipse.lsp4j.ConfigurationParams):java.util.concurrent.CompletableFuture
+- a:createProgress(org.eclipse.lsp4j.WorkDoneProgressCreateParams):java.util.concurrent.CompletableFuture
+- a:logMessage(org.eclipse.lsp4j.MessageParams):V
+- a:logTrace(org.eclipse.lsp4j.LogTraceParams):V
+- a:notifyProgress(org.eclipse.lsp4j.ProgressParams):V
+- a:publishDiagnostics(org.eclipse.lsp4j.PublishDiagnosticsParams):V
+- a:refreshCodeLenses():java.util.concurrent.CompletableFuture
+- a:refreshDiagnostics():java.util.concurrent.CompletableFuture
+- a:refreshInlayHints():java.util.concurrent.CompletableFuture
+- a:refreshInlineValues():java.util.concurrent.CompletableFuture
+- a:refreshSemanticTokens():java.util.concurrent.CompletableFuture
+- a:registerCapability(org.eclipse.lsp4j.RegistrationParams):java.util.concurrent.CompletableFuture
+- a:showDocument(org.eclipse.lsp4j.ShowDocumentParams):java.util.concurrent.CompletableFuture
+- a:showMessage(org.eclipse.lsp4j.MessageParams):V
+- a:showMessageRequest(org.eclipse.lsp4j.ShowMessageRequestParams):java.util.concurrent.CompletableFuture
+- a:telemetryEvent(java.lang.Object):V
+- a:unregisterCapability(org.eclipse.lsp4j.UnregistrationParams):java.util.concurrent.CompletableFuture
+- a:workspaceFolders():java.util.concurrent.CompletableFuture
+e:com.intellij.platform.lsp.api.LspServerState
+- java.lang.Enum
+- sf:Initializing:com.intellij.platform.lsp.api.LspServerState
+- sf:Running:com.intellij.platform.lsp.api.LspServerState
+- sf:ShutdownNormally:com.intellij.platform.lsp.api.LspServerState
+- sf:ShutdownUnexpectedly:com.intellij.platform.lsp.api.LspServerState
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.lsp.api.LspServerState
+- s:values():com.intellij.platform.lsp.api.LspServerState[]
+com.intellij.platform.lsp.api.LspServerSupportProvider
+- sf:Companion:com.intellij.platform.lsp.api.LspServerSupportProvider$Companion
+- createLspServerWidgetItem(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
+- createLspWidgetItems(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
+- a:fileOpened(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.lsp.api.LspServerSupportProvider$LspServerStarter):V
+f:com.intellij.platform.lsp.api.LspServerSupportProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+com.intellij.platform.lsp.api.LspServerSupportProvider$LspServerStarter
+- a:ensureServerStarted(com.intellij.platform.lsp.api.LspServerDescriptor):V
+a:com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+- com.intellij.platform.lsp.api.LspServerDescriptor
+- <init>(com.intellij.openapi.project.Project,java.lang.String):V
+a:com.intellij.platform.lsp.api.customization.LspCallHierarchyCustomizer
+f:com.intellij.platform.lsp.api.customization.LspCallHierarchyDisabled
+- com.intellij.platform.lsp.api.customization.LspCallHierarchyCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspCallHierarchyDisabled
+c:com.intellij.platform.lsp.api.customization.LspCallHierarchySupport
+- com.intellij.platform.lsp.api.customization.LspCallHierarchyCustomizer
+- <init>():V
+- shouldAskServerForCallHierarchy(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.platform.lsp.api.customization.LspCodeActionsCustomizer
+f:com.intellij.platform.lsp.api.customization.LspCodeActionsDisabled
+- com.intellij.platform.lsp.api.customization.LspCodeActionsCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspCodeActionsDisabled
+c:com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
+- com.intellij.platform.lsp.api.customization.LspCodeActionsCustomizer
+- <init>():V
+- createIntentionAction(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
+- createQuickFix(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
+- getIntentionActionsSupport():Z
+- getQuickFixesSupport():Z
+a:com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
+f:com.intellij.platform.lsp.api.customization.LspCodeLensDisabled
+- com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspCodeLensDisabled
+c:com.intellij.platform.lsp.api.customization.LspCodeLensSupport
+- com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
+- <init>():V
+- codeLensClicked(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command,java.awt.event.MouseEvent):V
+- shouldAskServerForCodeLenses(com.intellij.openapi.vfs.VirtualFile):Z
+- shouldDisplayCodeLens(com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.CodeLens):Z
+a:com.intellij.platform.lsp.api.customization.LspCommandsCustomizer
+f:com.intellij.platform.lsp.api.customization.LspCommandsDisabled
+- com.intellij.platform.lsp.api.customization.LspCommandsCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspCommandsDisabled
+c:com.intellij.platform.lsp.api.customization.LspCommandsSupport
+- com.intellij.platform.lsp.api.customization.LspCommandsCustomizer
+- <init>():V
+- executeCommand(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.Command):V
+a:com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+f:com.intellij.platform.lsp.api.customization.LspCompletionDisabled
+- com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspCompletionDisabled
+c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
+- com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+- <init>():V
+- createLookupElement(com.intellij.codeInsight.completion.CompletionParameters,org.eclipse.lsp4j.CompletionItem):com.intellij.codeInsight.lookup.LookupElement
+- p:getIcon(org.eclipse.lsp4j.CompletionItem):javax.swing.Icon
+- p:getTailText(org.eclipse.lsp4j.CompletionItem):java.lang.String
+- p:getTypeText(org.eclipse.lsp4j.CompletionItem):java.lang.String
+- p:isBold(org.eclipse.lsp4j.CompletionItem):Z
+- p:isStrikeout(org.eclipse.lsp4j.CompletionItem):Z
+- isTriggerCharacterRespected(C):Z
+- renderLookupElement(org.eclipse.lsp4j.CompletionItem,com.intellij.codeInsight.lookup.LookupElementPresentation):V
+- shouldRunCodeCompletion(com.intellij.codeInsight.completion.CompletionParameters):Z
+c:com.intellij.platform.lsp.api.customization.LspCustomization
+- <init>():V
+- getCallHierarchyCustomizer():com.intellij.platform.lsp.api.customization.LspCallHierarchyCustomizer
+- getCodeActionsCustomizer():com.intellij.platform.lsp.api.customization.LspCodeActionsCustomizer
+- getCodeLensCustomizer():com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
+- getCommandsCustomizer():com.intellij.platform.lsp.api.customization.LspCommandsCustomizer
+- getCompletionCustomizer():com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
+- getDiagnosticsCustomizer():com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
+- getDocumentColorCustomizer():com.intellij.platform.lsp.api.customization.LspDocumentColorCustomizer
+- getDocumentHighlightsCustomizer():com.intellij.platform.lsp.api.customization.LspDocumentHighlightsCustomizer
+- getDocumentLinkCustomizer():com.intellij.platform.lsp.api.customization.LspDocumentLinkCustomizer
+- getDocumentSymbolCustomizer():com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
+- getFindReferencesCustomizer():com.intellij.platform.lsp.api.customization.LspFindReferencesCustomizer
+- getFoldingRangeCustomizer():com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
+- getFormattingCustomizer():com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
+- getGoToDefinitionCustomizer():com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+- getGoToTypeDefinitionCustomizer():com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
+- getHoverCustomizer():com.intellij.platform.lsp.api.customization.LspHoverCustomizer
+- getInlayHintCustomizer():com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
+- getOnTypeFormattingCustomizer():com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
+- getOptimizeImportsCustomizer():com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
+- getRenameCustomizer():com.intellij.platform.lsp.api.customization.LspRenameCustomizer
+- getSelectionRangeCustomizer():com.intellij.platform.lsp.api.customization.LspSelectionRangeCustomizer
+- getSemanticTokensCustomizer():com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
+- getSignatureHelpCustomizer():com.intellij.platform.lsp.api.customization.LspSignatureHelpCustomizer
+- getSymbolKindCustomizer():com.intellij.platform.lsp.api.customization.LspSymbolKindCustomizer
+- getTypeHierarchyCustomizer():com.intellij.platform.lsp.api.customization.LspTypeHierarchyCustomizer
+- getWorkspaceSymbolCustomizer():com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolCustomizer
+a:com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
+f:com.intellij.platform.lsp.api.customization.LspDiagnosticsDisabled
+- com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspDiagnosticsDisabled
+c:com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
+- com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
+- <init>():V
+- createAnnotation(com.intellij.lang.annotation.AnnotationHolder,org.eclipse.lsp4j.Diagnostic,com.intellij.openapi.util.TextRange,java.util.List):V
+- getHighlightSeverity(org.eclipse.lsp4j.Diagnostic):com.intellij.lang.annotation.HighlightSeverity
+- getMessage(org.eclipse.lsp4j.Diagnostic):java.lang.String
+- getSpecialHighlightType(org.eclipse.lsp4j.Diagnostic):com.intellij.codeInspection.ProblemHighlightType
+- getTooltip(org.eclipse.lsp4j.Diagnostic):java.lang.String
+- shouldAskServerForDiagnostics(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.platform.lsp.api.customization.LspDocumentColorCustomizer
+f:com.intellij.platform.lsp.api.customization.LspDocumentColorDisabled
+- com.intellij.platform.lsp.api.customization.LspDocumentColorCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspDocumentColorDisabled
+c:com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
+- com.intellij.platform.lsp.api.customization.LspDocumentColorCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspDocumentHighlightsCustomizer
+f:com.intellij.platform.lsp.api.customization.LspDocumentHighlightsDisabled
+- com.intellij.platform.lsp.api.customization.LspDocumentHighlightsCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspDocumentHighlightsDisabled
+c:com.intellij.platform.lsp.api.customization.LspDocumentHighlightsSupport
+- com.intellij.platform.lsp.api.customization.LspDocumentHighlightsCustomizer
+- <init>():V
+- shouldAskServerForDocumentHighlights(com.intellij.psi.PsiFile):Z
+a:com.intellij.platform.lsp.api.customization.LspDocumentLinkCustomizer
+f:com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
+- com.intellij.platform.lsp.api.customization.LspDocumentLinkCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
+c:com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
+- com.intellij.platform.lsp.api.customization.LspDocumentLinkCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
+- a:getBreadcrumbsSupport():Z
+- a:getStructureViewSupport():Z
+f:com.intellij.platform.lsp.api.customization.LspDocumentSymbolDisabled
+- com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspDocumentSymbolDisabled
+- getBreadcrumbsSupport():Z
+- getStructureViewSupport():Z
+c:com.intellij.platform.lsp.api.customization.LspDocumentSymbolSupport
+- com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
+- <init>():V
+- getBreadcrumbsSupport():Z
+- getStructureViewSupport():Z
+a:com.intellij.platform.lsp.api.customization.LspFindReferencesCustomizer
+f:com.intellij.platform.lsp.api.customization.LspFindReferencesDisabled
+- com.intellij.platform.lsp.api.customization.LspFindReferencesCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspFindReferencesDisabled
+c:com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
+- com.intellij.platform.lsp.api.customization.LspFindReferencesCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
+f:com.intellij.platform.lsp.api.customization.LspFoldingRangeDisabled
+- com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspFoldingRangeDisabled
+c:com.intellij.platform.lsp.api.customization.LspFoldingRangeSupport
+- com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
+f:com.intellij.platform.lsp.api.customization.LspFormattingDisabled
+- com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspFormattingDisabled
+c:com.intellij.platform.lsp.api.customization.LspFormattingSupport
+- com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
+- <init>():V
+- shouldFormatThisFileExclusivelyByServer(com.intellij.openapi.vfs.VirtualFile,Z,Z):Z
+a:com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+f:com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
+- com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
+c:com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
+- com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
+f:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
+- com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
+c:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionSupport
+- com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspHoverCustomizer
+f:com.intellij.platform.lsp.api.customization.LspHoverDisabled
+- com.intellij.platform.lsp.api.customization.LspHoverCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspHoverDisabled
+c:com.intellij.platform.lsp.api.customization.LspHoverSupport
+- com.intellij.platform.lsp.api.customization.LspHoverCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
+f:com.intellij.platform.lsp.api.customization.LspInlayHintDisabled
+- com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspInlayHintDisabled
+c:com.intellij.platform.lsp.api.customization.LspInlayHintSupport
+- com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
+- <init>():V
+- getMaxInlayHintChars():I
+- shouldApplyInlayHint(org.eclipse.lsp4j.InlayHint):Z
+- shouldAskServerForInlayHints(com.intellij.openapi.vfs.VirtualFile):Z
+- shouldDisplayInlayHint(com.intellij.openapi.vfs.VirtualFile,org.eclipse.lsp4j.InlayHint):Z
+c:com.intellij.platform.lsp.api.customization.LspIntentionAction
+- com.intellij.codeInsight.intention.IntentionAction
+- <init>(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):V
+- p:applyWorkspaceEdit(org.eclipse.lsp4j.WorkspaceEdit,java.util.Map):V
+- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- f:getFamilyName():java.lang.String
+- pf:getLspServer():com.intellij.platform.lsp.api.LspServer
+- getText():java.lang.String
+- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- f:invoke(com.intellij.openapi.vfs.VirtualFile):V
+- f:isAvailable():Z
+- isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
+- f:isAvailable(kotlin.jvm.functions.Function1):Z
+- f:startInWriteAction():Z
+a:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
+f:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingDisabled
+- com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingDisabled
+c:com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
+- com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
+f:com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
+- com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
+c:com.intellij.platform.lsp.api.customization.LspOptimizeImportsSupport
+- com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
+- <init>():V
+- shouldOptimizeImportsInThisFileExclusivelyByServer(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,Z):Z
+a:com.intellij.platform.lsp.api.customization.LspRenameCustomizer
+f:com.intellij.platform.lsp.api.customization.LspRenameDisabled
+- com.intellij.platform.lsp.api.customization.LspRenameCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspRenameDisabled
+c:com.intellij.platform.lsp.api.customization.LspRenameSupport
+- com.intellij.platform.lsp.api.customization.LspRenameCustomizer
+- <init>():V
+- getRenameableRangeAtOffset(com.intellij.openapi.editor.Document,I):com.intellij.openapi.util.TextRange
+- shouldRunRename(com.intellij.psi.PsiFile):Z
+a:com.intellij.platform.lsp.api.customization.LspSelectionRangeCustomizer
+f:com.intellij.platform.lsp.api.customization.LspSelectionRangeDisabled
+- com.intellij.platform.lsp.api.customization.LspSelectionRangeCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspSelectionRangeDisabled
+c:com.intellij.platform.lsp.api.customization.LspSelectionRangeSupport
+- com.intellij.platform.lsp.api.customization.LspSelectionRangeCustomizer
+- <init>():V
+- shouldAskServerForSelectionRange(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
+f:com.intellij.platform.lsp.api.customization.LspSemanticTokensDisabled
+- com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspSemanticTokensDisabled
+c:com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
+- com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
+- <init>():V
+- getTextAttributesKey(java.lang.String,java.util.List):com.intellij.openapi.editor.colors.TextAttributesKey
+- getTokenModifiers():java.util.List
+- getTokenTypes():java.util.List
+- shouldAskServerForSemanticTokens(com.intellij.psi.PsiFile):Z
+a:com.intellij.platform.lsp.api.customization.LspSignatureHelpCustomizer
+f:com.intellij.platform.lsp.api.customization.LspSignatureHelpDisabled
+- com.intellij.platform.lsp.api.customization.LspSignatureHelpCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspSignatureHelpDisabled
+c:com.intellij.platform.lsp.api.customization.LspSignatureHelpSupport
+- com.intellij.platform.lsp.api.customization.LspSignatureHelpCustomizer
+- <init>():V
+- isTriggerCharacterRespected(C):Z
+c:com.intellij.platform.lsp.api.customization.LspSymbolKindCustomizer
+- <init>():V
+- getIcon(org.eclipse.lsp4j.SymbolKind):javax.swing.Icon
+- getSupportedKinds():java.util.List
+a:com.intellij.platform.lsp.api.customization.LspTypeHierarchyCustomizer
+f:com.intellij.platform.lsp.api.customization.LspTypeHierarchyDisabled
+- com.intellij.platform.lsp.api.customization.LspTypeHierarchyCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspTypeHierarchyDisabled
+c:com.intellij.platform.lsp.api.customization.LspTypeHierarchySupport
+- com.intellij.platform.lsp.api.customization.LspTypeHierarchyCustomizer
+- <init>():V
+- shouldAskServerForTypeHierarchy(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolCustomizer
+f:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolDisabled
+- com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolDisabled
+f:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
+- com.intellij.navigation.NavigationItem
+- <init>(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- f:copy(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
+- bs:copy$default(com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem,com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol,I,java.lang.Object):com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolNavigationItem
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- getPresentation():com.intellij.navigation.ItemPresentation
+- hashCode():I
+- navigate(Z):V
+c:com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolSupport
+- com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolCustomizer
+- <init>():V
+- createNavigationItem(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.WorkspaceSymbol):com.intellij.navigation.NavigationItem
+c:com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
+- com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
+- <init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class):V
+- b:<init>(com.intellij.platform.lsp.api.LspServer,com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:createAdditionalInlineActions():java.util.List
+- p:createStopOrRestartAction():com.intellij.openapi.actionSystem.AnAction
+- p:createWidgetInlineActions():java.util.List
+- p:createWidgetMainAction():com.intellij.openapi.actionSystem.AnAction
+- pf:getLspServer():com.intellij.platform.lsp.api.LspServer
+- p:getRootPostfix():java.lang.String
+- p:getServerLabel():java.lang.String
+- getStatusBarIcon():javax.swing.Icon
+- getStatusBarTooltip():java.lang.String
+- p:getVersionPostfix():java.lang.String
+- getWidgetActionLocation():com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
+- p:getWidgetActionText():java.lang.String
+- isError():Z
+a:com.intellij.platform.lsp.util.Lsp4jService
+- sf:Companion:com.intellij.platform.lsp.util.Lsp4jService$Companion
+- <init>():V
+- a:extractLocationsFromJson(java.util.List):java.util.List
+- sf:getInstance():com.intellij.platform.lsp.util.Lsp4jService
+f:com.intellij.platform.lsp.util.Lsp4jService$Companion
+- f:getInstance():com.intellij.platform.lsp.util.Lsp4jService
+f:com.intellij.platform.lsp.util.Lsp4jUtilKt
+- sf:applyTextEdit(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.TextEdit):Z
+- sf:applyTextEdits(com.intellij.openapi.editor.Document,java.util.List):Z
+- sf:getLsp4jPosition(com.intellij.openapi.editor.Document,I):org.eclipse.lsp4j.Position
+- sf:getLsp4jRange(com.intellij.openapi.editor.Document,I,I):org.eclipse.lsp4j.Range
+- sf:getOffsetInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Position):java.lang.Integer
+- sf:getRangeInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Range):com.intellij.openapi.util.TextRange
+f:com.intellij.platform.lsp.util.LspNavigationUtilsKt
+- sf:navigateOrShowPopup(com.intellij.platform.lsp.api.LspServer,java.util.List,java.lang.String,java.awt.event.MouseEvent):V
+- sf:navigateToLocation(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.Location):V
+- sf:showLspNavigationPopup(com.intellij.platform.lsp.api.LspServer,java.util.List,java.lang.String,java.awt.event.MouseEvent):V

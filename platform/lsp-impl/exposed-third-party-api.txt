@@ -1,0 +1,6 @@
+kotlin/jvm/internal/DefaultConstructorMarker
+org/eclipse/lsp4j/Diagnostic
+org/eclipse/lsp4j/MarkupContent
+org/eclipse/lsp4j/Position
+org/eclipse/lsp4j/Range
+org/eclipse/lsp4j/TextDocumentIdentifier

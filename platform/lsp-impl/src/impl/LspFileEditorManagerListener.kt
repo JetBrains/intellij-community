@@ -1,0 +1,34 @@
+package com.intellij.platform.lsp.impl
+
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.vfs.VirtualFile
+
+internal class LspFileEditorManagerListener : FileEditorManagerListener {
+  override fun fileOpened(fileEditorManager: FileEditorManager, file: VirtualFile) {
+    val project = fileEditorManager.project.takeIf { !it.isDefault } ?: return
+    if (!file.isInLocalFileSystem) return
+    LspOpenedFilesService.getInstance(project).processOpenedFiles(listOf(file))
+  }
+
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    val project = event.manager.project.takeIf { !it.isDefault } ?: return
+    val file = event.newFile?.takeIf { it.isInLocalFileSystem } ?: return
+    LspOpenedFilesService.getInstance(project).processOpenedFiles(listOf(file))
+  }
+
+  override fun fileClosed(fileEditorManager: FileEditorManager, file: VirtualFile) {
+    val project = fileEditorManager.project.takeIf { !it.isDefault } ?: return
+    if (!file.isInLocalFileSystem) return
+    if (fileEditorManager.isFileOpen(file)) return // the file might be still open in some other editor
+    val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
+    if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) return
+    val serversToSendDidClose = LspServerManagerImpl.getInstanceImpl(project).getServersWithThisFileOpen(file)
+    if (serversToSendDidClose.isNotEmpty()) {
+      WriteAction.run<RuntimeException> { serversToSendDidClose.forEach { it.documentSyncManager.close(file) } }
+    }
+  }
+}

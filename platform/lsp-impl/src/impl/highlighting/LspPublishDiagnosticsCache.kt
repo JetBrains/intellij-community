@@ -1,0 +1,104 @@
+package com.intellij.platform.lsp.impl.highlighting
+
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.impl.LspCoroutineScopeService
+import com.intellij.platform.lsp.impl.LspServerImpl
+import com.intellij.platform.lsp.impl.highlightingCommon.LspHighlightingCache
+import com.intellij.psi.util.PsiModificationTracker
+import kotlinx.coroutines.launch
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.Range
+
+/**
+ * [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specification/#textDocument_publishDiagnostics)
+ *
+ * Odd one out: this cache is populated by unsolicited server notifications, not by pull requests.
+ * The pull hooks are overridden to no-ops, and data arrives via [diagnosticsReceived] → [applyServerHighlightings].
+ */
+internal class LspPublishDiagnosticsCache(
+  private val lspServer: LspServerImpl,
+) : LspHighlightingCache<LspDiagnosticAndLazyQuickFixes>(lspServer.project) {
+
+  override fun isSupportedForFile(file: VirtualFile): Boolean = true
+
+  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspDiagnosticAndLazyQuickFixes>>? = null
+
+  internal fun diagnosticsReceived(params: PublishDiagnosticsParams) {
+    // the file is expected to be null if the server is dropping diagnostics for a deleted/renamed/moved file
+    val file: VirtualFile? = lspServer.descriptor.findFileByUri(params.uri)
+
+    if (file == null) {
+      if (params.diagnostics.isNotEmpty()) {
+        // If a file has been deleted / moved / renamed, then the server sends an empty list for an unexistent file -
+        // just to drop the client's cache.
+        // Not empty diagnostics list for a file that doesn't exist is not expected.
+        thisLogger().warn("Could not find a file with published diagnostics: ${params.uri}")
+      }
+      return
+    }
+
+    handleDiagnosticsNotification(params, file)
+  }
+
+  private fun handleDiagnosticsNotification(params: PublishDiagnosticsParams, file: VirtualFile) {
+    val document = FileDocumentManager.getInstance().getCachedDocument(file)
+
+    val declaredVersion = params.version
+    if (declaredVersion != null && lspServer.isFileOpened(file)) {
+      // We compare versions only for opened files.
+      // Assuming that some server even publishes diagnostics for unopened files,
+      // those files don't have edits, so mismatched diagnostics won't be perceived as a visual mess.
+      if (document != null && lspServer.getDocumentVersion(document) != declaredVersion) {
+        // These diagnostics are for some previous document version. Ignore. The server will send up-to-date diagnostics later.
+        lspServer.logDebug("Ignoring diagnostics (version $declaredVersion) for ${file.name}; " +
+                           "current document version: ${lspServer.getDocumentVersion(document)}")
+        return
+      }
+    }
+
+    val psiModCount = PsiModificationTracker.getInstance(lspServer.project).modificationCount
+    val cachedHighlightings = if (document != null) {
+      val lspDocument = lspServer.documentMapping.findDocumentByUrl(params.uri)
+      val infosFromServer = params.diagnostics.map { diagnostic ->
+        val hostRange = lspDocument?.toHostRange(diagnostic.range) ?: diagnostic.range
+        hostRange to LspDiagnosticAndLazyQuickFixes(diagnostic, lspDocument?.id)
+      }
+      buildHighlightings(document, infosFromServer)
+    }
+    else {
+      // file isn't open => no editor to display diagnostics
+      emptyList()
+    }
+
+    // todo diagnosticsReceived arrives per-cell and replaces previous diagnostics from that cells only
+    //  and cachedHighlightings must contain diagnostics from all cells at once,
+    //  so for now we can either explicitly disable PublishDiagnostics for Notebook,
+    //  or alternatively figure out smart merging
+    //val diagnosticDocumentId = TextDocumentIdentifier(params.uri)
+    //val lspDocument = lspServer.documentMapping.findDocumentByUrl(params.uri)
+    //
+    //val cachedHighlightings = if (document != null) {
+    //  params.diagnostics.mapNotNull { diagnostic ->
+    //    val hostRange = lspDocument?.toHostRange(diagnostic.range) ?: diagnostic.range
+    //    val textRange = getRangeInDocument(document, hostRange) ?: return@mapNotNull null
+    //    LspCachedHighlighting(textRange, LspDiagnosticAndLazyQuickFixes(diagnostic, diagnosticDocumentId))
+    //  }
+    //}
+    //else {
+    //  // file isn't open => no editor to display diagnostics
+    //  emptyList()
+    //}
+
+    applyServerHighlightings(file, psiModCount, cachedHighlightings)
+    LspCoroutineScopeService.getInstance(project).cs.launch {
+      onResponseReceived(file)
+    }
+  }
+
+  override suspend fun onResponseReceived(file: VirtualFile) {
+    LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+    lspServer.notifyDiagnosticsReceived(file)
+  }
+}

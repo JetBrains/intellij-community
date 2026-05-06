@@ -1,0 +1,11 @@
+<idea-plugin>
+  <id>com.intellij.platform.lsp.impl.tests</id>
+  <name>LSP Impl Tests</name>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.lsp" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl" loading="embedded"/>
+  </content>
+</idea-plugin>
