@@ -4,8 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.options.JavaInspectionButtons;
-import com.intellij.codeInsight.options.JavaInspectionControls;
+import com.intellij.codeInsight.options.JavaControlButtonKind;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.IncorrectLazyConstantUsageInspection;
 import com.intellij.codeInspection.InspectionProfile;
@@ -49,7 +48,7 @@ public final class FieldMayBeFinalInspection extends BaseInspection implements C
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
+    return pane(JavaControlButtonKind.IMPLICIT_WRITE_ANNOTATIONS.button());
   }
 
   @Override

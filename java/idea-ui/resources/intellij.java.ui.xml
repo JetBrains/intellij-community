@@ -61,4 +61,10 @@
     <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
                     interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.codeInsight.options.JavaInspectionButtonProvider"
+      serviceImplementation="com.intellij.java.ui.inspections.JavaInspectionDialogButtonProvider"/>
+    <inspectionCustomComponent implementation="com.intellij.java.ui.inspections.JavaInspectionButtons"/>
+  </extensions>
 </idea-plugin>

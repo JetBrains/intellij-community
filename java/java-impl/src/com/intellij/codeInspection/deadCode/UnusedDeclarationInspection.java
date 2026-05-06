@@ -4,6 +4,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInsight.options.JavaControlButtonKind;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
@@ -62,8 +63,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInsight.options.JavaInspectionButtons.ButtonKind;
-import static com.intellij.codeInsight.options.JavaInspectionControls.button;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.dropdown;
 import static com.intellij.codeInspection.options.OptPane.group;
@@ -174,8 +173,8 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                          option("false", JavaBundle.message("radio.button.unused.declaration.unused.option"))));
     content.add(group(
       JavaBundle.message("label.entry.points"),
-      horizontalStack(button(ButtonKind.ENTRY_POINT_CODE_PATTERNS),
-                      button(ButtonKind.ENTRY_POINT_ANNOTATIONS))));
+      horizontalStack(JavaControlButtonKind.ENTRY_POINT_CODE_PATTERNS.button(),
+                      JavaControlButtonKind.ENTRY_POINT_ANNOTATIONS.button())));
     content.add(checkbox("ADD_MAINS_TO_ENTRIES", JavaBundle.message("inspection.dead.code.option.main")));
     content.add(checkbox("ADD_APPLET_TO_ENTRIES", JavaBundle.message("inspection.dead.code.option.applet")));
     content.add(checkbox("ADD_SERVLET_TO_ENTRIES", JavaBundle.message("inspection.dead.code.option.servlet")));

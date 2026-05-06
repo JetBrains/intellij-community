@@ -16,8 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.options.JavaInspectionButtons;
-import com.intellij.codeInsight.options.JavaInspectionControls;
+import com.intellij.codeInsight.options.JavaControlButtonKind;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
@@ -65,7 +64,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
+    return pane(JavaControlButtonKind.IMPLICIT_WRITE_ANNOTATIONS.button());
   }
 
   @Override

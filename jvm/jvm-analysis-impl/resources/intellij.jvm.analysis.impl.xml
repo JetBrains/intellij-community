@@ -194,8 +194,6 @@
                       key="inspection.empty.method.display.name" bundle="messages.JvmAnalysisBundle"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
 
-    <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
-
     <annotator language="UAST" implementationClass="com.intellij.analysis.logging.highlighting.LoggingPlaceholderAnnotator"/>
 
     <psi.symbolReferenceProvider

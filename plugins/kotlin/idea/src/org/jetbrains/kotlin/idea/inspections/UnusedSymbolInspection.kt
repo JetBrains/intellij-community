@@ -6,8 +6,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.intention.QuickFixFactory
-import com.intellij.codeInsight.options.JavaInspectionButtons
-import com.intellij.codeInsight.options.JavaInspectionControls
+import com.intellij.codeInsight.options.JavaControlButtonKind
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
@@ -772,7 +771,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
     }
 
     override fun getOptionsPane(): OptPane {
-        return OptPane.pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.ENTRY_POINT_ANNOTATIONS))
+        return OptPane.pane(JavaControlButtonKind.ENTRY_POINT_ANNOTATIONS.button())
     }
 
     private fun createQuickFixes(declaration: KtNamedDeclaration): List<LocalQuickFix> {
