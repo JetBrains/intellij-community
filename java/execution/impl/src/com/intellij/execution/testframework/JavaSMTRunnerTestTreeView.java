@@ -79,9 +79,6 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
           durationMillis = TimeUnit.SECONDS.toMillis(durationSeconds);
           return NlsMessages.formatDurationApproximateNarrow(durationMillis);
         }
-        if (testProxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC) {
-          return testProxy.getDurationString(consoleProperties);
-        }
         if (testProxy.isSuite() &&
             testProxy.isFinal() &&
             !testProxy.isSubjectToHide(consoleProperties) &&
@@ -162,8 +159,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
 
   @Override
   public Long getCustomizedDuration(@NotNull SMTestProxy proxy) {
-    if (!proxy.isSuite() || proxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
-        !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
+    if (!proxy.isSuite() || !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
       return proxy.getDuration();
     }
     Long startTime = proxy.getStartTimeMillis();

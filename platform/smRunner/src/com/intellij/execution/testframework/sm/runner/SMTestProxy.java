@@ -68,6 +68,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -595,14 +596,10 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myDuration = (duration >= 0) ? duration : null;
       return;
     }
-    else {
-      invalidateCachedDurationForContainerSuites(-1);
+    invalidateCachedDurationForContainerSuites(-1);
+    if (duration >= 0) {
+      myStartTime = Optional.ofNullable(myEndTime).orElseGet(() -> System.currentTimeMillis()) - duration;
     }
-
-    // Not allow to directly set duration for suites.
-    // It should be the sum of children. This requirement is only
-    // for safety of current model and may be changed
-    LOG.warn("Unsupported operation");
   }
 
   void resetDuration() {

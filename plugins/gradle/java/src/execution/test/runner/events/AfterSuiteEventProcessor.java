@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
@@ -51,9 +49,7 @@ public class AfterSuiteEventProcessor extends AbstractTestEventProcessor {
     if (testProxy == null) return;
 
     if (testProxy != getResultsViewer().getTestsRootNode()) {
-      if (Registry.is("test.use.suite.duration") && duration > 0) {
-        SMTestProxy.SMRootTestProxy root = getResultsViewer().getTestsRootNode();
-        root.setDurationStrategy(TestDurationStrategy.MANUAL);
+      if (duration > 0) {
         testProxy.setDuration(duration);
       }
       if (testProxy instanceof GradleSMTestProxy) {

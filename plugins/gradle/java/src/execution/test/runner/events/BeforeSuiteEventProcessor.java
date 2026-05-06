@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,10 +44,6 @@ public class BeforeSuiteEventProcessor extends AbstractBeforeTestEventProcessor 
     @Nullable String methodName,
     @NotNull String displayName
   ) {
-    if (Registry.is("test.use.suite.duration")) {
-      getResultsViewer().getTestsRootNode().setDurationStrategy(TestDurationStrategy.MANUAL);
-    }
-
     var isCombineSameTests = !showInternalTestNodes();
 
     if (isCombineSameTests && isHiddenTestNode(suiteName)) {

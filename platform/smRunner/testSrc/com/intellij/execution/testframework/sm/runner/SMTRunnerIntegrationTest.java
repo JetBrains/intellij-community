@@ -162,48 +162,6 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
   }
 
-  public void testSuiteFinishedWithWallTimeDuration() {
-    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite']");
-
-    notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='test']");
-    notifyStdoutLineAvailable("##teamcity[testFinished nodeId='2' duration='100']");
-
-    notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='1' duration='500']");
-    notifyStdoutLineAvailable("##teamcity[testingFinished]");
-    assertState(1, 0, 1, "passed");
-    SMTestProxy suite = myRootNode.getChildren().getFirst();
-    assertNotNull(suite);
-    Long suiteDuration = suite.getDuration();
-    assertNotNull(suiteDuration);
-    assertEquals(500L, suiteDuration.longValue());
-  }
-
-  public void testNameBasedSuiteFinishedWithWallTimeDuration() {
-    // use name-based test tree
-    myProcessHandler.destroyProcess();
-    Disposer.dispose(myConsole);
-    createConsole(false);
-
-
-    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    notifyStdoutLineAvailable("##teamcity[testSuiteStarted name='suite']");
-
-    notifyStdoutLineAvailable("##teamcity[testStarted name='test']");
-    notifyStdoutLineAvailable("##teamcity[testFinished name='test' duration='100']");
-
-    notifyStdoutLineAvailable("##teamcity[testSuiteFinished name='suite' duration='501']");
-    notifyStdoutLineAvailable("##teamcity[testingFinished]");
-    assertState(1, 0, 1, "passed");
-    SMTestProxy suite = myRootNode.getChildren().getFirst();
-    assertNotNull(suite);
-    Long suiteDuration = suite.getDuration();
-    assertNotNull(suiteDuration);
-    assertEquals(501L, suiteDuration.longValue());
-  }
-
   public void testSuiteFinishedWithWallTimeDurationWithoutDurationStrategy() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
@@ -226,7 +184,7 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testManualSuiteWithoutExplicitDuration_computesFromChildren() {
-    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
+    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite']");
     notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='test1']");
@@ -241,7 +199,7 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testManualSuite_cacheInvalidatedAfterChildrenFinish() {
-    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
+    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
     notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite']");
     notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='test1']");
@@ -259,21 +217,6 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     notifyStdoutLineAvailable("##teamcity[testingFinished]");
 
     assertEquals(300L, suite.getDuration().longValue()); // cache invalidated, now correct
-  }
-
-  public void testManualRootWithoutExplicitDuration_computesFromChildren() {
-    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    notifyStdoutLineAvailable("##teamcity[testingStarted]");
-    notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite']");
-    notifyStdoutLineAvailable("##teamcity[testStarted nodeId='2' parentNodeId='1' name='test']");
-
-    assertNull(myRootNode.getDuration()); // called before children finish
-
-    notifyStdoutLineAvailable("##teamcity[testFinished nodeId='2' duration='100']");
-    notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='1' duration='200']");
-    notifyStdoutLineAvailable("##teamcity[testingFinished]");
-
-    assertEquals(200L, myRootNode.getDuration().longValue()); // root sums children = 200
   }
 
   private void assertState(int finishedTests, int failedTests, int topLevelChildrenCount, String status) {

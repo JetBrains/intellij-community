@@ -51,7 +51,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
    * <p>
    * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
    */
-  public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", false);
+  public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", true);
 
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor);

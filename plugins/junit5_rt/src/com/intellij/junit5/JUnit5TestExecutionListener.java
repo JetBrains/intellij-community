@@ -28,12 +28,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public JUnit5TestExecutionListener(PrintStream printStream) {
     boolean useSuiteDuration = Boolean.parseBoolean(System.getProperty(SUITE_DURATION, "true"));
     myState = new ExecutionState(printStream, useSuiteDuration);
-    if (useSuiteDuration) {
-      myState.print("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    }
-    else {
-      myState.print("##teamcity[enteredTheMatrix]");
-    }
+    myState.print("##teamcity[enteredTheMatrix]");
   }
 
   public boolean wasSuccessful() {

@@ -49,12 +49,7 @@ public class IDEATestNGRemoteListener {
   public IDEATestNGRemoteListener(PrintStream printStream) {
     myPrintStream = printStream;
     myUseSuiteDuration = Boolean.parseBoolean(System.getProperty(SUITE_DURATION, "true"));
-    if (myUseSuiteDuration) {
-      myPrintStream.println("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    }
-    else {
-      myPrintStream.println("##teamcity[enteredTheMatrix]");
-    }
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
   }
 
   public synchronized void onStart(final ISuite suite) {

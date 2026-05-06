@@ -48,12 +48,7 @@ public class JUnit4TestListener extends RunListener {
   public JUnit4TestListener(PrintStream printStream) {
     myPrintStream = printStream;
     myUseSuiteDuration = Boolean.parseBoolean(System.getProperty(SUITE_DURATION, "true"));
-    if (myUseSuiteDuration) {
-      myPrintStream.println("##teamcity[enteredTheMatrix durationStrategy='MANUAL']");
-    }
-    else {
-      myPrintStream.println("##teamcity[enteredTheMatrix]");
-    }
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
   }
 
   private static String escapeName(String str) {

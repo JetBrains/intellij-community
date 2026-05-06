@@ -45,9 +45,6 @@ public class JUnit4WallTimeIntegrationTest extends AbstractTestFrameworkCompilin
     assertNotNull(psiClass);
     ProcessOutput processOutput = doStartTestsProcess(createConfiguration(psiClass));
 
-    ServiceMessage enteredMatrix = ContainerUtil.find(processOutput.messages, m -> "enteredTheMatrix".equals(m.getMessageName()));
-    assertEquals("MANUAL", enteredMatrix.getAttributes().get("durationStrategy"));
-
     ServiceMessage suite = ContainerUtil.find(processOutput.messages, TestSuiteFinished.class::isInstance);
     long duration = Long.parseLong(suite.getAttributes().get("duration"));
     // @AfterClass (200ms) + @Test (100ms) = >= 300ms
