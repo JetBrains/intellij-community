@@ -4,8 +4,10 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
@@ -118,6 +120,8 @@ sealed interface FileSystem<P : PathHolder> {
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk>
 
+  fun createTargetRequest(): TargetEnvironmentRequest
+
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
   suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
@@ -140,6 +144,8 @@ sealed interface FileSystem<P : PathHolder> {
     override fun getBinaryToExec(path: PathHolder.Eel): BinaryToExec {
       return BinOnEel(path.path)
     }
+
+    override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
     @RequiresEdt
     override fun <T> configureFileBrowseEditor(
@@ -331,6 +337,8 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(PathHolder.Target(raw))
     }
 
+    override fun createTargetRequest(): TargetEnvironmentRequest =
+      targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
 
     @RequiresEdt
     override fun <T> configureFileBrowseEditor(

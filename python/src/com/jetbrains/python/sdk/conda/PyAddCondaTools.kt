@@ -165,10 +165,7 @@ internal suspend fun findConda(fileSystem: FileSystem<*>, filter: (FullPathOnTar
 
   // legacy slow fallback detection via the defined list of paths in case of there is no conda on the PATH (PY-85060),
   // not sure if it is worth it to keep it, because if there is no conda on the PATH the installation might be broken
-  val request = when (fileSystem) {
-    is FileSystem.Eel -> LocalTargetEnvironmentRequest()
-    is FileSystem.Target -> fileSystem.targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
-  }
+  val request = fileSystem.createTargetRequest()
 
   return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(request), filter)
 }
