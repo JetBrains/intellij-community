@@ -80,6 +80,13 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 }
 
 /**
+ * @return [LightVirtualFileBase.originalFile] recursively unwrapped
+ */
+fun VirtualFile.rootOriginalFile(): VirtualFile? {
+  return generateSequence(this) { f -> f.originalFile() }.lastOrNull()
+}
+
+/**
  * @return [LightVirtualFileBase.originalFile]
  */
 fun VirtualFile.originalFile(): VirtualFile? {

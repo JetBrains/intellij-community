@@ -966,6 +966,8 @@ com.intellij.openapi.vfs.VirtualFileSet
 - a:freeze():V
 - a:freezed():java.util.Set
 - a:process(com.intellij.util.Processor):Z
+f:com.intellij.openapi.vfs.VirtualFileUtil
+- sf:rootOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 com.intellij.openapi.vfs.VirtualFileWithId
 - a:getId():I
 com.intellij.openapi.vfs.VirtualFileWithoutContent
