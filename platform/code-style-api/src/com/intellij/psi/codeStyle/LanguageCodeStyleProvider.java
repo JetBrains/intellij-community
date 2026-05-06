@@ -2,7 +2,6 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +9,6 @@ import java.util.Set;
 
 import static java.lang.Character.isLetterOrDigit;
 
-@ApiStatus.Internal
 public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactory {
   static @Nullable LanguageCodeStyleProvider forLanguage(Language language) {
     for (LanguageCodeStyleProvider provider : CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders()) {
@@ -22,21 +20,18 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
   }
 
   static @Nullable LanguageCodeStyleProvider findUsingBaseLanguage(@NotNull Language language) {
-    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+    for (Language currLang = language; currLang != null; currLang = currLang.getBaseLanguage()) {
       LanguageCodeStyleProvider curr = forLanguage(currLang);
       if (curr != null) return curr;
     }
     return null;
   }
 
-  @NotNull
-  Language getLanguage();
+  @NotNull Language getLanguage();
 
-  @NotNull
-  CommonCodeStyleSettings getDefaultCommonSettings();
+  @NotNull CommonCodeStyleSettings getDefaultCommonSettings();
 
-  @NotNull
-  DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings);
+  @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings);
 
   Set<String> getSupportedFields();
 
@@ -44,18 +39,16 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
    * Return true if formatter for this language uses {@link CommonCodeStyleSettings#KEEP_LINE_BREAKS} flag
    * for custom line breaks processing
    */
-  @ApiStatus.Experimental
   default boolean usesCommonKeepLineBreaks() {
     return false;
   }
 
   /**
-   * Allows to delegate common settings, including indentation,
-   * to base language common settings. Useful, when extended language
+   * Allows delegating common settings, including indentation,
+   * to base language common settings. Useful when the extended language
    * requires some own, additional custom settings, but everything else is taken
    * from the base language.
    */
-  @ApiStatus.Experimental
   default boolean useBaseLanguageCommonSettings() {
     return false;
   }
@@ -64,7 +57,7 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
    * Checks if formatter is allowed to enforce a leading space in the
    * line comment. Formatter will make a transformation like:
    * <pre>//comment</pre>  =>  <pre>// comment</pre>
-   * in case of {@link CommenterOption#LINE_COMMENT_ADD_SPACE_ON_REFORMAT}
+   * in case of {@link CodeStyleSettingsCustomizable.CommenterOption#LINE_COMMENT_ADD_SPACE_ON_REFORMAT}
    * is enabled.
    * <br/>
    * <br/>
@@ -74,8 +67,8 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
    * keyword is not allowed.
    * <br/>
    * <br/>
-   * The default implementation checks whether comment is not empty and starts from
-   * alphanumeric character. The typical implementation should add its own guard conditions
+   * The default implementation checks whether a comment is not empty and starts from
+   * an alphanumeric character. The typical implementation should add its own guard conditions
    * first and then return the super-call.
    *
    * @param commentContents Text of the comment <b>without</b> a comment prefix

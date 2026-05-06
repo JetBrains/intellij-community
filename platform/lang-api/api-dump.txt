@@ -948,6 +948,8 @@ com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider
 - a:getFileType():com.intellij.openapi.fileTypes.FileType
 - a:getPreviewText():java.lang.String
 - a:prepareForReformat(com.intellij.psi.PsiFile):V
+a:com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
+- com.intellij.psi.codeStyle.LanguageCodeStyleProvider
 com.intellij.psi.codeStyle.extractor.differ.Differ
 - sf:UGLY_FORMATTING:I
 - a:getDifference(com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult):I

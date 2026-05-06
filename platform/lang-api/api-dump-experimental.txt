@@ -607,6 +607,7 @@ c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 - com.intellij.psi.codeStyle.CodeStyleSettingsProvider
+- com.intellij.psi.codeStyle.LanguageCodeStyleProvider
 - *:getAccessor(java.lang.Object,java.lang.reflect.Field):com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor
 - *f:getPropertyMapper(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
 a:com.intellij.psi.stubs.NamedStubBase

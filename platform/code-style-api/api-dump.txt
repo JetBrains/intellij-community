@@ -965,6 +965,16 @@ com.intellij.psi.codeStyle.ImportsLayoutSettings
 - a:setNamesCountToUseImportOnDemand(I):V
 - a:setUseFqClassNames(Z):V
 - a:setUseSingleClassImports(Z):V
+com.intellij.psi.codeStyle.LanguageCodeStyleProvider
+- canInsertSpaceInLineComment(java.lang.String):Z
+- s:findUsingBaseLanguage(com.intellij.lang.Language):com.intellij.psi.codeStyle.LanguageCodeStyleProvider
+- s:forLanguage(com.intellij.lang.Language):com.intellij.psi.codeStyle.LanguageCodeStyleProvider
+- a:getDefaultCommonSettings():com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- a:getDocCommentSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.DocCommentSettings
+- a:getLanguage():com.intellij.lang.Language
+- a:getSupportedFields():java.util.Set
+- useBaseLanguageCommonSettings():Z
+- usesCommonKeepLineBreaks():Z
 c:com.intellij.psi.codeStyle.LegacyCodeStyleSettings
 - com.intellij.psi.codeStyle.CommonCodeStyleSettings
 - BLANK_LINES_AROUND_CLASS:I
