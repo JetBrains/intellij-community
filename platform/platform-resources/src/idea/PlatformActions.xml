@@ -1400,6 +1400,7 @@
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
+      <action id="ShortDumbMode" internal="true" class="com.intellij.internal.RunShortDumbModeAction" text="Run Short Dumb Action"/>
       <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
         <synonym text="Exit Incomplete Dependencies Mode"/>
       </action>
