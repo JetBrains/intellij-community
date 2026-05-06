@@ -211,7 +211,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                 } else {
                     null
                 }
-                (if (annotations.isNullOrEmpty()) "" else "$annotations ") + name + ": " + type.render(
+                (if (annotations.isNullOrEmpty()) "" else "$annotations ") + (if (superParameters[index].isVararg) "${KtTokens.VARARG_KEYWORD} " else "") + name + ": " + type.render(
                     declarationRenderer.typeRenderer,
                     Variance.INVARIANT
                 )

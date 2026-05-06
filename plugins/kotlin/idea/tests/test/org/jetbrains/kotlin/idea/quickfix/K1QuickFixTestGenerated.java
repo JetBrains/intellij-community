@@ -13953,6 +13953,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeSuperInterface.kt");
             }
 
+            @TestMetadata("changeParameterTypeVarargsParam.kt")
+            public void testChangeParameterTypeVarargsParam() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeVarargsParam.kt");
+            }
+
             @TestMetadata("changeReturnType.kt")
             public void testChangeReturnType() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/changeReturnType.kt");

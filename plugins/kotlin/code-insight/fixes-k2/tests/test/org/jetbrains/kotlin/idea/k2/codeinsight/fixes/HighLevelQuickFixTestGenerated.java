@@ -11463,6 +11463,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeSuperInterface.kt");
             }
 
+            @TestMetadata("changeParameterTypeVarargsParam.kt")
+            public void testChangeParameterTypeVarargsParam() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeVarargsParam.kt");
+            }
+
             @TestMetadata("changeReturnType.kt")
             public void testChangeReturnType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeReturnType.kt");

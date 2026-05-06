@@ -1,0 +1,12 @@
+// "Change function signature to 'fun f(vararg a: String)'" "true"
+// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun f(vararg a: String): Unit
+open class A {
+    open fun f(vararg a: String) {}
+}
+
+class B: A() {
+    <caret>override fun f(vararg a: String) {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix
