@@ -13,7 +13,6 @@ import com.intellij.diff.statistics.MergeResultSource;
 import com.intellij.diff.statistics.MergeStatisticsCollector;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
-import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
@@ -599,7 +598,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     model.getAllChanges().forEach(change -> {
       ThreesideMergeHighlighters highlighters = new ThreesideMergeHighlighters(change, null, this);
       myHighlighters.put(change, highlighters);
-      onChangeAdded(change);
+      if (!change.isResolved()) {
+        onChangeAdded(change);
+      }
     });
 
     myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
