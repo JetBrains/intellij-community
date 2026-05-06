@@ -38,6 +38,8 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JEditorPane
@@ -217,6 +219,11 @@ internal class UpdateInfoPanel(
     if (bgImage != null) {
       DialogBackgroundImageProvider.getInstance().setBackgroundImageToDialog(dialog, bgImage)
       mainPanel.putClientProperty(DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
+      dialog.rootPane?.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+          dialog.rootPane?.repaint()
+        }
+      })
     }
     return mainPanel
   }
