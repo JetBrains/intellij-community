@@ -176,6 +176,7 @@ object PluginManagerCore {
    *
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
+  @get:ApiStatus.Internal
   @JvmStatic
   val plugins: Array<IdeaPluginDescriptor>
     get() = getPluginSet().allPlugins.toTypedArray<IdeaPluginDescriptor>()
@@ -192,9 +193,15 @@ object PluginManagerCore {
    * Returns descriptors of plugins which are successfully loaded into the IDE.
    * The result is sorted in a way that if each plugin comes after the plugins it depends on.
    */
+  @get:ApiStatus.Internal
   @JvmStatic
   val loadedPlugins: List<IdeaPluginDescriptor>
     get() = getPluginSet().enabledPlugins
+
+  @JvmStatic
+  fun getLoadedPluginIds(): Collection<PluginId> {
+    return getPluginSet().enabledPlugins.map { it.pluginId }
+  }
 
   @JvmStatic
   fun isLoaded(id: PluginId): Boolean {
@@ -202,7 +209,7 @@ object PluginManagerCore {
     return plugin != null && isLoaded(plugin)
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @JvmStatic
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.isLoaded ?: false
 
@@ -227,14 +234,20 @@ object PluginManagerCore {
 
   /**
    * Marks the plugin with a given id as disabled (a persistent setting). Note that this method does not unload the plugin.
+   *
+   * Internal. Plugins may not disable plugins this way.
    */
   @JvmStatic
+  @ApiStatus.Internal
   fun disablePlugin(id: PluginId): Boolean = PluginEnabler.HEADLESS.disableById(setOf(id))
 
   /**
    * Marks the plugin with a given id as enabled (a persistent setting). Note that this method does not load the plugin.
+   *
+   * Internal. Plugins may not enable plugins this way.
    */
   @JvmStatic
+  @ApiStatus.Internal
   fun enablePlugin(id: PluginId): Boolean = PluginEnabler.HEADLESS.enableById(setOf(id))
 
   @ApiStatus.Internal
@@ -924,6 +937,7 @@ object PluginManagerCore {
   val logger: Logger
     get() = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
+  @ApiStatus.Internal
   @Contract("null -> null")
   @JvmStatic
   fun getPlugin(id: PluginId?): IdeaPluginDescriptor? = if (id == null) null else findPlugin(id)
@@ -1154,7 +1168,6 @@ object PluginManagerCore {
     }
     return true
   }
-
 }
 
 @ApiStatus.Internal

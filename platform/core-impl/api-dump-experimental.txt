@@ -20,8 +20,6 @@
 - com.intellij.ide.plugins.PluginEnabler
 - a:isIgnoredDisabledPlugins():Z
 - a:setIgnoredDisabledPlugins(Z):V
-f:com.intellij.ide.plugins.PluginManagerCore
-- *sf:isLoaded(com.intellij.openapi.extensions.PluginDescriptor):Z
 *:com.intellij.ide.plugins.PluginNonLoadReason
 - a:getDetailedMessage():java.lang.String
 - a:getLogMessage():java.lang.String
