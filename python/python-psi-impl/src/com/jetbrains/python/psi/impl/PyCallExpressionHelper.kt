@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
@@ -31,7 +30,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
-import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
@@ -48,7 +46,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult
-import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
@@ -142,45 +139,30 @@ object PyCallExpressionHelper {
   }
 
   private fun getCalleeType(expression: PyCallExpression, resolveContext: PyResolveContext): PyType? {
+    val context = resolveContext.typeEvalContext
+    val callee = expression.callee ?: return PyAnyType.unknown
+    if (callee !is PyReferenceExpression) return context.getType(callee)
+
+    val resolvedCallee = callee.multiFollowAssignmentsChain(resolveContext)
     val results = PyUtil.filterTopPriorityResults(
-      forEveryScopeTakeOverloadsOtherwiseImplementations(multipleResolveCallee(expression.callee, resolveContext),
-                                                         resolveContext.typeEvalContext) { it.element }
+      forEveryScopeTakeOverloadsOtherwiseImplementations(resolvedCallee, context) { it.element }
     )
 
     val callableTypes = mutableListOf<PyType?>()
-    for (resolveResult in results) {
-      val element = resolveResult.element
-      val clarified = clarifyResolveResult(resolveResult, resolveContext)
+    for (result in results) {
+      val clarified = clarifyResolveResult(result, context) ?: continue
+      val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
 
-      val typeFromProviders = if (element != null) {
-        val typeFromProviders =
-          PyReferenceExpressionImpl.getReferenceTypeFromProviders(element, resolveContext.typeEvalContext, expression)
-
-        typeFromProviders?.get()
-      }
-      else {
-        null
-      }
-
-      val result = mutableListOf<PyType?>()
-      if (clarified != null) {
-        typeFromProviders.toStream().forEach {
-          ContainerUtil.addIfNotNull(result, toCallableType(expression, clarified, it, resolveContext.typeEvalContext))
+      result.element
+        ?.let { PyReferenceExpressionImpl.getReferenceTypeFromProviders(it, context, expression) }
+        ?.get()
+        .toStream().filterIsInstance<PyCallableType>()
+        .ifEmpty {
+          context.getType(clarifiedResolved).toStream().filterIsInstance<PyCallableType>()
         }
-
-        if (result.isEmpty()) {
-          val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
-          val resolvedType = resolveContext.typeEvalContext.getType(clarifiedResolved)
-          resolvedType.toStream().forEach { itemType ->
-            ContainerUtil.addIfNotNull(
-              result,
-              toCallableType(expression, clarified, itemType, resolveContext.typeEvalContext)
-            )
-          }
+        .forEach {
+          callableTypes.add(adjustCallableType(it, expression, clarified, context))
         }
-      }
-
-      callableTypes.addAll(result)
     }
 
     return PyUnionType.union(callableTypes)
@@ -306,18 +288,7 @@ object PyCallExpressionHelper {
     return calleeType.components.filterIsInstance<PyCallableType>()
   }
 
-  private fun multipleResolveCallee(expression: PyExpression?, resolveContext: PyResolveContext): List<QualifiedRatedResolveResult> {
-    return when (expression) {
-      is PyReferenceExpression -> expression.multiFollowAssignmentsChain(resolveContext)
-      is PyLambdaExpression -> listOf(QualifiedRatedResolveResult(expression,
-                                                                  listOf<PyExpression?>(),
-                                                                  RatedResolveResult.RATE_NORMAL,
-                                                                  false))
-      else -> listOf()
-    }
-  }
-
-  private fun clarifyResolveResult(result: QualifiedRatedResolveResult, resolveContext: PyResolveContext): ClarifiedResolveResult? {
+  private fun clarifyResolveResult(result: QualifiedRatedResolveResult, context: TypeEvalContext): ClarifiedResolveResult? {
     val resolved = result.element
 
     if (resolved is PyCallExpression) { // foo = classmethod(foo)
@@ -337,8 +308,6 @@ object PyCallExpressionHelper {
       }
     }
     else if (resolved is PyFunction) {
-      val context = resolveContext.typeEvalContext
-
       val property = resolved.property
       if (property != null && property.getter.valueOrNull() == resolved && isQualifiedByInstance(resolved, result.qualifiers, context)) {
         val type = context.getReturnType(resolved)
@@ -350,16 +319,13 @@ object PyCallExpressionHelper {
     return if (resolved != null) ClarifiedResolveResult(result, resolved, null) else null
   }
 
-  private fun toCallableType(
+  private fun adjustCallableType(
+    callableType: PyCallableType,
     callExpression: PyCallExpression,
     resolveResult: ClarifiedResolveResult,
-    inferredType: PyType?,
     context: TypeEvalContext,
-  ): PyCallableType? {
-    val clarifiedResolved = resolveResult.clarifiedResolved as? PyTypedElement ?: return null
-
-    val callableType = inferredType as? PyCallableType ?: return null
-
+  ): PyCallableType {
+    val clarifiedResolved = resolveResult.clarifiedResolved
     if (clarifiedResolved is PyCallable) {
       val originalModifier = if (clarifiedResolved is PyFunction) clarifiedResolved.modifier else null
       val resolvedModifier = originalModifier ?: resolveResult.wrappedModifier
