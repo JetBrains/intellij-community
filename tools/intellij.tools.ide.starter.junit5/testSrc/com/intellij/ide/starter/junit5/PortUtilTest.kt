@@ -49,7 +49,10 @@ class PortUtilTest {
 
     val classPath = System.getProperty("java.class.path")
     val classpathFile = Files.createTempFile("", "classpath-${System.currentTimeMillis()}.txt")
-    Files.writeString(classpathFile, classPath)
+    // Java @argfile tokenizes on whitespace unless the entry is quoted; wrap the whole classpath
+    // in quotes so paths like ".../IntelliJ IDEA.app/..." survive parsing.
+    val escaped = classPath.replace("\\", "\\\\").replace("\"", "\\\"")
+    Files.writeString(classpathFile, "\"$escaped\"")
 
     val pb = ProcessBuilder(listOf(getJavaBin(), "-cp", "@${classpathFile.toAbsolutePath()}", neededApp, port.toString()))
 
