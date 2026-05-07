@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNonLoadReason
 import com.intellij.ide.plugins.PluginSetBuilder
 import com.intellij.ide.plugins.PluginVersionIsSuperseded
+import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
 import com.intellij.ide.plugins.ProductPluginInitContext
 import com.intellij.ide.plugins.isBrokenPlugin
@@ -144,9 +145,10 @@ object PluginAutoUpdater {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
     val exclusionReasons = mutableMapOf<PluginMainDescriptor, PluginNonLoadReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(
+    val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
-    ) { plugin, reason ->
+    )
+    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { plugin, reason ->
       if (reason !is PluginVersionIsSuperseded) {
         exclusionReasons[plugin] = reason
       }

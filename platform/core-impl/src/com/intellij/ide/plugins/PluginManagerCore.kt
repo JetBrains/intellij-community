@@ -535,7 +535,7 @@ object PluginManagerCore {
   ): PluginManagerState {
     var initStagesActivity = parentActivity?.startChild("selectPluginsToLoad") // no safe end() call, because if it fails, it won't matter
     val excludedFromLoading = IdentityHashMap<PluginMainDescriptor, PluginNonLoadReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(discoveredPlugins.pluginLists) { plugin, reason ->
+    val pluginsToLoad = initContext.selectPluginsToLoad(discoveredPlugins) { plugin, reason ->
       excludedFromLoading[plugin] = reason
     }
     initStagesActivity = initStagesActivity?.endAndStart("selectPluginsToLoad post-process")

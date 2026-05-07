@@ -34,9 +34,10 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 fun PluginInitializationContext.selectPluginsToLoad(
-  discoveredPlugins: List<DiscoveredPluginsList>,
+  discoveryResult: PluginsDiscoveryResult,
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): UnambiguousPluginSet {
+  val discoveredPlugins = discoveryResult.pluginLists
   if (discoveredPlugins.isEmpty()) {
     return UnambiguousPluginSet.tryBuild(emptyList())!!
   }

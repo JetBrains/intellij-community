@@ -1067,7 +1067,7 @@ public final class ConfigImportHelper {
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
       var loadablePlugins = PluginInitContextSelectPluginsToLoadKt.selectPluginsToLoad(
         initContext,
-        oldIdePlugins.getPluginLists(),
+        oldIdePlugins,
         (plugin, reason) -> {
           if (reason instanceof PluginVersionIsSuperseded) {
             return Unit.INSTANCE;
