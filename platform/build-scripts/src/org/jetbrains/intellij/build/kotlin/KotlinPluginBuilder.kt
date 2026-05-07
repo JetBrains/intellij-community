@@ -62,6 +62,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.compiler-plugins.compiler-plugin-support.gradle",
       "kotlin.compiler-plugins.lombok.gradle",
       "kotlin.compiler-plugins.kotlinx-serialization.gradle",
+      "kotlin.compiler-plugins.noarg.gradle",
       "intellij.kotlin.compilerPlugins.kapt",
       "intellij.kotlin.compilerPlugins.serialization",
       "intellij.kotlin.compilerPlugins.serialization.maven",

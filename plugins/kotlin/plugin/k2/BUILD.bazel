@@ -158,6 +158,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
     "//plugins/kotlin/compiler-plugins/lombok/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
+    "//plugins/kotlin/compiler-plugins/noarg/gradle",
   ]
 )
 
@@ -315,6 +316,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle:gradle_test_lib",
     "//plugins/kotlin/compiler-plugins/lombok/gradle:gradle_test_lib",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle:gradle_test_lib",
+    "//plugins/kotlin/compiler-plugins/noarg/gradle:gradle_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end
