@@ -1444,6 +1444,33 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, my_field: str", ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  @TestFor(issues = "PY-89012")
+  public void testPydanticFieldInsideAnnotatedContributesDefaultAndAliasToConstructorSignature() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset())
+      .check("*, A: str | None = ..., B: str | None = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89012")
+  public void testPydanticFieldInsideAnnotatedContributesDefaultAndAliasToConstructorSignatureExtraMetadataAfter() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset())
+      .check("*, A: str | None = ..., B: str | None = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  @TestFor(issues = "PY-89012")
+  public void testPydanticFieldInsideAnnotatedContributesDefaultAndAliasToConstructorSignatureExtraMetadataBefore() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset())
+      .check("*, A: str | None = ..., B: str | None = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());

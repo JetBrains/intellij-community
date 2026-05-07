@@ -13,12 +13,16 @@ import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import java.io.IOException
@@ -34,9 +38,37 @@ class PyDataclassFieldStubImpl private constructor(
 ) : PyDataclassFieldStub {
   companion object {
     fun create(expression: PyTargetExpression): PyDataclassFieldStub? {
-      val callExpr = expression.findAssignedValue() as? PyCallExpression ?: return null
-      val predefinedType = calculateCalleeNameAndType(callExpr) ?: return null
-      return analyzeArguments(callExpr, predefinedType)
+      val fieldInitializer = getFieldInitializerCall(expression) ?: return null
+      val predefinedType = calculateCalleeNameAndType(fieldInitializer) ?: return null
+      return analyzeArguments(fieldInitializer, predefinedType)
+    }
+
+    private fun getFieldInitializerCall(expression: PyTargetExpression): PyCallExpression? {
+      val assignedValueCall = expression.findAssignedValue() as? PyCallExpression
+      if (assignedValueCall != null) return assignedValueCall
+
+      // `Field(...)` inside `Annotated[...]` is only used for Pydantic models.
+      return getPydanticFieldSpecifierCallFromAnnotated(expression)
+    }
+
+    private fun getPydanticFieldSpecifierCallFromAnnotated(field: PyTargetExpression): PyCallExpression? {
+      val annotated = field.annotation?.value as? PySubscriptionExpression ?: return null
+
+      val operand = annotated.operand as? PyReferenceExpression ?: return null
+      val resolvedNames = PyResolveUtil.resolveImportedElementQNameLocally(operand).map { it.toString() }
+      if (resolvedNames.none { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT }) {
+        return null
+      }
+
+      val index = PyPsiUtils.flattenParens(annotated.indexExpression) as? PyTupleExpression ?: return null
+      return index.elements
+        .drop(1)
+        .mapNotNull { PyPsiUtils.flattenParens(it) as? PyCallExpression }
+        .firstOrNull { call ->
+          val callee = call.callee as? PyReferenceExpression ?: return@firstOrNull false
+          PyResolveUtil.resolveImportedElementQNameLocally(callee)
+            .any { it.toString() in PyDataclassNames.Pydantic.PYDANTIC_FIELD_QUALIFIED_NAMES }
+        }
     }
 
     @Throws(IOException::class)

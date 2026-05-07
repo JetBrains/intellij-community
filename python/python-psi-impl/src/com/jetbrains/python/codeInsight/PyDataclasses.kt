@@ -840,8 +840,13 @@ fun resolveDataclassFieldParameters(
       )
     }
   }
-  if (field.calleeName == null) return null
-  val fieldSpecifierDeclaration = PyResolveUtil.resolveQualifiedNameInScope(field.calleeName!!, ScopeUtil.getScopeOwner(dataclass)!!, context)
+
+  // Field(...) inside Annotated[...] is a Pydantic-specific extension.
+  val annotatedPydanticFieldCalleeName =
+    if (isPydanticModel(dataclass, context)) fieldStub?.calleeName else null
+
+  val fieldCalleeName = field.calleeName ?: annotatedPydanticFieldCalleeName ?: return null
+  val fieldSpecifierDeclaration = PyResolveUtil.resolveQualifiedNameInScope(fieldCalleeName, ScopeUtil.getScopeOwner(dataclass)!!, context)
     .filterIsInstance<PyQualifiedNameOwner>()
     .firstOrNull {
       val qualifiedName = it.qualifiedName

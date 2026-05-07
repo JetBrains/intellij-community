@@ -6939,6 +6939,21 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues = "PY-89012")
+  public void testPydanticFieldInsideAnnotatedConstructorSignature() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestExpressionUnderCaret("(*, A: str | None, B: str | None) -> MyModel", """
+          from typing import Annotated
+          from pydantic import BaseModel, Field
+
+          class MyModel(BaseModel):
+              a: str | None = Field(default=None, alias="A")
+              b: Annotated[str | None, Field(default=None, alias="B")]
+
+          MyMo<caret>del()
+          """);
+  }
+
   // PY-85027
   public void testBoundMethodDecoratedWithParamSpec() {
     doTest("(x: float | int, y: float | int) -> float | int", """

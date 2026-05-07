@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -1319,6 +1320,20 @@ public class PyStubsTest extends PyTestCase {
     assertNull(customStub.unsafeHashValue());
     assertTrue(customStub.frozenValue());
     assertNull(customStub.kwOnly());
+    assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-89012")
+  public void testPydanticFieldInsideAnnotatedStub() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Model");
+    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
+      .getStub()
+      .getCustomStub(PyDataclassFieldStub.class);
+    assertNotNull(fieldStub);
+    assertTrue(fieldStub.hasDefault());
+    assertEquals("B", fieldStub.getAlias());
     assertNotParsed(file);
   }
 
