@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -163,7 +164,15 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     if (foldingElement == null) {
       return state
     }
-    val document = ReadAction.computeBlocking<Document, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) }
+    val document = ReadAction.computeBlocking<Document, RuntimeException> {
+      if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
+        //otherwise we will decompile files and cause performance issues
+        FileDocumentManager.getInstance().getCachedDocument(file)
+      }
+      else {
+        FileDocumentManager.getInstance().getDocument(file)
+      }
+    }
     return if (document != null) {
       val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
       state.withFoldingState(foldingState)
