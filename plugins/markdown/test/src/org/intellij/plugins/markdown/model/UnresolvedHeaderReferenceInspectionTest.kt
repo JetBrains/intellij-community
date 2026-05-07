@@ -17,6 +17,10 @@ class UnresolvedHeaderReferenceInspectionTest: BasePlatformTestCase() {
 
   fun `test anchors in web links are ignored`() = doTest()
 
+  fun `test anchors in non markdown file links are ignored`() = doTest()
+
+  fun `test github line fragments in non markdown file links are ignored`() = doTest()
+
   fun `test header with uppercase anchor is resolved`() = doTest()
 
   override fun setUp() {
