@@ -1,4 +1,4 @@
-name: Gradle Wrappers Validation
+Gradle_wrappers_validationname: Gradle Wrappers Validation
 on:
   push:
     branches:
