@@ -197,7 +197,7 @@ import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringR
 public class UsageViewImpl implements UsageViewEx {
   private static final String DUMB_AWARE_KEY = "DumbAware";
   private final int myUniqueIdentifier;
-  private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
+  private static final GroupNode.NodeComparator NODE_COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   public static final @NonNls String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
@@ -607,7 +607,7 @@ public class UsageViewImpl implements UsageViewEx {
   private void fireEvents() {
     ThreadingAssertions.assertEventDispatchThread();
 
-    syncModelWithSwingNodes();
+    ReadAction.runBlocking(() -> syncModelWithSwingNodes());
     fireEventsForChangedNodes();
   }
 
@@ -647,7 +647,10 @@ public class UsageViewImpl implements UsageViewEx {
    * and applying all those changes to the swing list of children to synchronize those
    */
   @RequiresEdt
+  @RequiresReadLock
   private void syncModelWithSwingNodes() {
+    ThreadingAssertions.assertEventDispatchThread();
+    ThreadingAssertions.assertReadAccess();
     List<NodeChange> nodeChanges;
     synchronized (modelToSwingNodeChanges) {
       nodeChanges = new ArrayList<>(modelToSwingNodeChanges);
@@ -700,7 +703,7 @@ public class UsageViewImpl implements UsageViewEx {
                 nodesToFire.add(childNode);
 
                 parentNode.insertNewNode(childNode, 0);
-                swingChildren.sort(COMPARATOR);
+                swingChildren.sort(NODE_COMPARATOR);
                 indicesToFire.add(swingChildren.indexOf(change.childNode));
 
                 if (childNode instanceof UsageNode) {
