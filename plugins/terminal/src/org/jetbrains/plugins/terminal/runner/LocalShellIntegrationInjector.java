@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -82,7 +81,8 @@ public final class LocalShellIntegrationInjector {
     String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, eelDescriptor) : null;
     if (remoteRcFilePath != null) {
       boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName, eelDescriptor);
-      if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
+      if (ShellNameUtil.isBash(shellName)
+          || (eelDescriptor == LocalEelDescriptor.INSTANCE && OS.CURRENT == OS.macOS && shellName.equals(ShellNameUtil.SH_NAME))) {
         addBashRcFileArgument(envs, arguments, resultCommand, remoteRcFilePath);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
