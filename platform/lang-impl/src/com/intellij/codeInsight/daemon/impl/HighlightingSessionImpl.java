@@ -129,6 +129,19 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return ContainerUtil.getLastItem(sessions);
   }
 
+  static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+                                                            @NotNull DaemonProgressIndicator progressIndicator,
+                                                            @NotNull ProperTextRange visibleRange) {
+    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
+    if (sessions == null) {
+      return createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0);
+    }
+    else {
+      return sessions.getFirst();
+    }
+  }
+
   @RequiresEdt
   @ApiStatus.Internal
   static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
@@ -409,5 +422,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                               boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);
+  }
+
+  @NotNull HighlightingSessionImpl recreateWithRenewedPsiFile(@NotNull PsiFile psiFile, @NotNull DaemonProgressIndicator daemonProgressIndicator) {
+    clearHighlightingSession(daemonProgressIndicator, psiFile, this);
+    return createHighlightingSession(psiFile, daemonProgressIndicator, myEditorColorsScheme, myVisibleRange, myCanChangeFileSilently, myDaemonCancelEventCount);
   }
 }

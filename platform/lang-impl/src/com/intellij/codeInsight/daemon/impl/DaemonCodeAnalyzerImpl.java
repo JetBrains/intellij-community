@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
@@ -1248,18 +1249,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
-          HighlightingSession session;
+          ProgressIndicator progressIndicator;
           if (virtualFile == null || !virtualFile.isValid()) {
-            session = null;
+            progressIndicator = null;
           }
           else {
-            session = queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY, mainDocumentPasses);
+            progressIndicator = queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY, mainDocumentPasses);
           }
-          submitted |= session != null;
-          if (session != null) {
-            createdIndicators.add(session.getProgressIndicator());
+          submitted |= progressIndicator != null;
+          if (progressIndicator != null) {
+            createdIndicators.add(progressIndicator);
           }
-          result.add("submit fileEditor: "+fileEditor+" submitted="+submitted+(session==null? "" : " under "+session.getProgressIndicator()));
+          result.add("submit fileEditor: "+fileEditor+" submitted="+submitted+(progressIndicator==null? "" : " under "+progressIndicator));
         }
       }
       if (LOG.isDebugEnabled()) {
@@ -1301,10 +1302,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * throw PCE if it really wasn't an appropriate moment to ask
    */
   @RequiresEdt
-  HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
-                                          @NotNull VirtualFile virtualFile,
-                                          int @NotNull [] passesToIgnore,
-                                          @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
+  ProgressIndicator queuePassesCreation(@NotNull FileEditor fileEditor,
+                                        @NotNull VirtualFile virtualFile,
+                                        int @NotNull [] passesToIgnore,
+                                        @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter backgroundHighlighter;
 
@@ -1356,9 +1357,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               // refresh the current file and cache it (in background) so that FileDocumentManager.getCachedDocument above could retrieve it later
               Document renewedDocument = editor == null ? FileDocumentManager.getInstance().getDocument(virtualFile) : editor.getDocument();
               if (renewedDocument != null) {
-                CodeInsightContext renewedContext = editor != null
-                                                    ? EditorContextManager.getEditorContext(editor, myProject)
-                                                    : CodeInsightContexts.anyContext();
+                CodeInsightContext renewedContext = editor == null ? CodeInsightContexts.anyContext() : EditorContextManager.getEditorContext(editor, myProject);
                 PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument, renewedContext);
                 if (psiFile != null && !isRunning()) {
                   // if for some reason the TextEditorBackgroundHighlighter.getCachedFileToHighlight() returned null,
@@ -1383,7 +1382,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session, "; fileStatusMap:",  (editor == null ? null : myFileStatusMap.toString(editor.getDocument())));
     }
-    return session;
+    return progress;
   }
 
   @RequiresBackgroundThread
@@ -1394,7 +1393,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
-                                  @NotNull HighlightingSessionImpl session,
+                                  @NotNull HighlightingSessionImpl initialSession,
                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (LOG.isTraceEnabled()) {
@@ -1403,6 +1402,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         HighlightingPass[] passes = ReadAction.computeBlocking(() -> {
+          CodeInsightContext context = fileEditor instanceof TextEditor te ?
+                                       EditorContextManager.getEditorContext(te.getEditor(), myProject) :
+                                       CodeInsightContextManager.getInstance(myProject).getCodeInsightContext(psiFile.getViewProvider());
+          PsiFile renewedPsiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
+          if (renewedPsiFile == null) {
+            return HighlightingPass.EMPTY_ARRAY;
+          }
+          HighlightingSessionImpl resultSession = renewedPsiFile == psiFile ? initialSession : initialSession.recreateWithRenewedPsiFile(renewedPsiFile, progress);
           if (progress.isCanceled() ||
               myProject.isDisposed() ||
               getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ||
@@ -1419,13 +1426,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             stopAndRestartMyProcess(progress, null, reason);
             return HighlightingPass.EMPTY_ARRAY;
           }
-          if (session.isCanceled()) {
+          if (resultSession.isCanceled()) {
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
-            stopAndRestartMyProcess(progress, null, session + " is canceled");
+            stopAndRestartMyProcess(progress, null, resultSession + " is canceled");
             throw new ProcessCanceledException();
           }
           myListeners.flushUpdateFileStatusQueue(); // finish updating FileStatusMap on PSI changes
-          session.additionalSetupFromBackground(psiFile);
+          resultSession.additionalSetupFromBackground(psiFile);
           try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
             HighlightingPass[] r = backgroundEditorHighlighter.createPassesForEditor();
             if (passesToIgnore.length != 0) {

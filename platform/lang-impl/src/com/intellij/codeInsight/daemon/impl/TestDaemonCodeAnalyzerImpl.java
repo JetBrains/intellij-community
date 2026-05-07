@@ -203,8 +203,8 @@ public final class TestDaemonCodeAnalyzerImpl {
       CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
       PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
       FileASTNode fileNode = psiFile.getNode();
-      HighlightingSession session = daemonCodeAnalyzer.queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>());
-      if (session == null) {
+      ProgressIndicator progress = daemonCodeAnalyzer.queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>());
+      if (progress == null) {
         DaemonCodeAnalyzerImpl.LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
           "; fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
           "; getCachedFileToHighlight()=" + TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context) +
@@ -212,7 +212,6 @@ public final class TestDaemonCodeAnalyzerImpl {
           "; virtualFile=" + virtualFile + "(" + virtualFile.getClass() + ")");
         throw new ProcessCanceledException();
       }
-      ProgressIndicator progress = session.getProgressIndicator();
       // there can be PCE in FJP during queuePassesCreation; "no PCE" guarantees that session is not null
       progress.checkCanceled();
       //noinspection IncorrectCancellationExceptionHandling
@@ -244,6 +243,8 @@ public final class TestDaemonCodeAnalyzerImpl {
                                      ThreadDumper.dumpThreadsToString());
         }
 
+        HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progress,
+                                                                                                                          editor.calculateVisibleRange());
         session.applyFileLevelHighlightsRequests();
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions
@@ -387,8 +388,10 @@ public final class TestDaemonCodeAnalyzerImpl {
     myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
   }
 
+  @RequiresEdt
   public void waitUpdateExpensiveFlags(@NotNull Document document) throws TimeoutException {
     assert ApplicationManager.getApplication().isUnitTestMode();
+    ThreadingAssertions.assertEventDispatchThread();
     myDaemonCodeAnalyzer.myListeners.waitUpdateExpensiveFlags(document, 1, TimeUnit.MINUTES);
   }
 
