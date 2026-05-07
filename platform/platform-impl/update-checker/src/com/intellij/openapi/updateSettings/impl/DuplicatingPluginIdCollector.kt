@@ -18,7 +18,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
@@ -104,16 +105,7 @@ internal class DuplicationPluginIdCachedValuesService : PersistentStateComponent
   }
 
   private fun collectDuplicatingPluginDataSafely(): List<DuplicatingPluginIdData> {
-    try {
-      return collectDuplicatingPluginData()
-    }
-    catch (e: Exception) {
-      when (e) {
-        is ControlFlowException -> throw e
-        else -> thisLogger().error(e)
-      }
-      return emptyList()
-    }
+    return runCatching { collectDuplicatingPluginData() }.getOrLogException(thisLogger()) ?: emptyList()
   }
 
   private fun collectDuplicatingPluginData(): List<DuplicatingPluginIdData> {
@@ -140,7 +132,10 @@ internal class DuplicationPluginIdCachedValuesService : PersistentStateComponent
     for (initialHost in customHosts) {
       val host = cleanupDownloadUrl(initialHost)
       val strippedHost = stripHost(host)
-      val pluginModels = RepositoryHelper.loadPluginModels(host, null, null)
+      val pluginResult = runCatching { RepositoryHelper.loadPluginModels(host, null, null) }
+      val pluginModels = pluginResult.getOrHandleException {
+        thisLogger().warn("Fail to get plugins from $host", it)
+      } ?: continue
       for (model in pluginModels) {
         val data = dataMap.getOrPut(model.pluginId) { Data() }
         data.hosts.add(host)
