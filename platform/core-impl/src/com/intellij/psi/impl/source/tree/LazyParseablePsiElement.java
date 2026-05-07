@@ -59,7 +59,8 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
 
   @Override
   public @NotNull LazyParseablePsiElement clone() {
-    LazyParseablePsiElement clone = (LazyParseablePsiElement)super.clone();
+    LazyParseablePsiElement clone = isParsed() ? (LazyParseablePsiElement)super.clone()
+                                               : (LazyParseablePsiElement)cloneWithoutCopyingChildren();
     clone.setPsi(clone);
     return clone;
   }

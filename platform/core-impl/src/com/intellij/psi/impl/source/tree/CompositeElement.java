@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,18 +57,33 @@ public class CompositeElement extends TreeElement {
     super(type);
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public @NotNull CompositeElement clone() {
+    CompositeElement clone = cloneWithoutCopyingChildren();
+    copyChildrenToClone(clone);
+    return clone;
+  }
+
+  /**
+   * Is used by {@link LazyParseablePsiElement} to clone itself when it is not parsed yet. In this case, we don't need to copy children, as they will be lazily parsed for the clone.
+   */
+  @ApiStatus.Internal
+  protected final @NotNull CompositeElement cloneWithoutCopyingChildren() {
     CompositeElement clone = (CompositeElement)super.clone();
 
     clone.firstChild = null;
     clone.lastChild = null;
     clone.myWrapper = null;
-    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
-      clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
-    }
     clone.clearCaches();
     return clone;
+  }
+
+  private void copyChildrenToClone(@NotNull CompositeElement clone) {
+    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
+      TreeElement childClone = (TreeElement)child.clone();
+      clone.rawAddChildrenWithoutNotifications(childClone);
+    }
   }
 
   public void subtreeChanged() {
