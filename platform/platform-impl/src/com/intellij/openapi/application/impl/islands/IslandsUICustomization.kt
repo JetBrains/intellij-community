@@ -51,9 +51,11 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.isInternal
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
+import com.intellij.toolWindow.ToolWindowRightToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.AbstractBorderPainter
 import com.intellij.ui.ClientProperty
@@ -80,6 +82,7 @@ import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -91,6 +94,7 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Toolkit
@@ -104,6 +108,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
@@ -926,19 +931,50 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return !IdeBackgroundUtil.isEditorBackgroundImageSet(project) // the border looks ugly with a background image
   }
 
+  private fun getLastOffset(component: JComponent): Point {
+    val rootPane = component.rootPane
+
+    val componentStart = Point()
+    SwingUtilities.convertPointToScreen(componentStart, component)
+
+    val rightStart = Point()
+    val rightSide = UIUtil.findComponentOfType(rootPane, ToolWindowRightToolbar::class.java)!!
+    SwingUtilities.convertPointToScreen(rightStart, rightSide)
+
+    val bottomStart = Point()
+    val bottomSide = UIUtil.findComponentOfType(rootPane, IdeStatusBarImpl::class.java)!!
+    SwingUtilities.convertPointToScreen(bottomStart, bottomSide)
+
+    val xDelta = rightStart.x - componentStart.x - component.width
+    val yDelta = bottomStart.y - componentStart.y - component.height
+
+    return JBPoint(if (xDelta == 0) 0 else 1, if (yDelta == 0) 0 else 1)
+  }
+
   private fun paintIslandAreaRaw(component: JComponent, g: Graphics2D) {
     val ctx = ScaleContext.create(g)
+
+    val width = PaintUtil.alignIntToInt(component.width, ctx, PaintUtil.RoundingMode.CEIL, null)
+    val height = PaintUtil.alignIntToInt(component.height, ctx, PaintUtil.RoundingMode.CEIL, null)
+    val arcValue = JBUI.getInt("Island.arc", 20)
+
+    if (arcValue == 0) {
+      if (isIslandBorderLineNeeded(component)) {
+        g.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
+        val lastOffset = getLastOffset(component)
+        g.drawRect(0, 0, width + lastOffset.x, height + lastOffset.y)
+      }
+      return
+    }
 
     val offset = PaintUtil.alignIntToInt(JBUI.scale(JBUI.getInt("Island.borderWidth", 6) / 2), ctx, PaintUtil.RoundingMode.CEIL, null)
     val offset2 = offset * 2
     val offsetF = offset.toFloat()
 
-    val width = PaintUtil.alignIntToInt(component.width, ctx, PaintUtil.RoundingMode.CEIL, null)
-    val height = PaintUtil.alignIntToInt(component.height, ctx, PaintUtil.RoundingMode.CEIL, null)
     val widthF = width.toFloat()
     val heightF = height.toFloat()
 
-    val arc = PaintUtil.alignIntToInt(JBUI.getInt("Island.arc", 20), ctx, PaintUtil.RoundingMode.CEIL, null)
+    val arc = PaintUtil.alignIntToInt(arcValue, ctx, PaintUtil.RoundingMode.CEIL, null)
     val arcSizeF = JBUIScale.scale(arc / 2f)
 
     g.color = getMainBackgroundColor()

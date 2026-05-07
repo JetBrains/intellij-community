@@ -211,6 +211,7 @@ abstract class ProjectFrameHelper internal constructor(
     }
 
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      IdeRootPaneBorderHelper.update(frame.rootPane)
       frame.background = JBColor.PanelBackground
       balloonLayout.queueRelayout()
     })

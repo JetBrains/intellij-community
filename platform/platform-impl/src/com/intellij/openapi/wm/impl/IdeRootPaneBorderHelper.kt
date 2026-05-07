@@ -34,8 +34,18 @@ internal object IdeRootPaneBorderHelper {
       installLinuxBorder(app, coroutineScope, frame, frameDecorator, rootPane)
     }
     else {
-      rootPane.border = UIManager.getBorder("Window.border")
+      setWindowBorder(rootPane)
     }
+  }
+
+  fun update(rootPane: JRootPane) {
+    if (!OS.isGenericUnix()) {
+      setWindowBorder(rootPane)
+    }
+  }
+
+  private fun setWindowBorder(rootPane: JRootPane) {
+    rootPane.border = UIManager.getBorder("Window.border")
   }
 
   private fun installLinuxBorder(

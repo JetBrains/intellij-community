@@ -720,8 +720,8 @@
     <bundledColorScheme id="Dark" path="themes/expUI/expUI_darkScheme.xml"/>
     <bundledColorScheme id="Darcula Contrast" path="themes/expUI/expUI_darculaContrastScheme.xml"/>
 
-    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
-    <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
+    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/islands/HighContrast.theme.json"/>
+    <bundledColorScheme id="High contrast" path="themes/islands/highContrastScheme.xml"/>
 
     <bundledColorScheme id="Islands Dark" path="/themes/islands/IslandSchemeDark.xml"/>
 

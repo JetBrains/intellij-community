@@ -782,7 +782,9 @@ fun createLoadBundledSchemeRequests(
     for (item in BundledColorSchemeEPName.filterableLazySequence()) {
       val pluginDescriptor = item.pluginDescriptor
       val bean = item.instance ?: continue
-      val resourcePath = (bean.path ?: continue).removePrefix("/").let { if (it.endsWith(".xml")) it else "$it.xml" }
+      val path = (bean.path ?: continue)
+        .let { if (!ExperimentalUI.isNewUI() && it == "/themes/islands/highContrastScheme.xml") "/themes/highContrastScheme.xml" else it }
+      val resourcePath = path.removePrefix("/").let { if (it.endsWith(".xml")) it else "$it.xml" }
 
       yield(object : SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme> {
         override val pluginId: PluginId = pluginDescriptor.pluginId

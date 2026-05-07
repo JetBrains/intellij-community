@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -57,7 +58,10 @@ class UIThemeProvider {
   @Throws(IOException::class)
   @Internal
   fun getThemeJson(pluginDescriptor: PluginDescriptor): ByteArray? {
-    return ResourceUtil.getResourceAsBytes((path ?: return null).removePrefix("/"), pluginDescriptor.getClassLoader())
+    val path = (this@UIThemeProvider.path ?: return null)
+      .let { if (!ExperimentalUI.isNewUI() && it == "/themes/islands/HighContrast.theme.json") "/themes/HighContrast.theme.json" else it }
+    return ResourceUtil.getResourceAsBytes(path.removePrefix("/"),
+                                           pluginDescriptor.getClassLoader())
   }
 
   internal fun createTheme(parentTheme: UITheme?,
