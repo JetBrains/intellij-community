@@ -266,7 +266,7 @@ object UniversalFileChooser {
           val fileView = getActiveFileView()
           if (fileView == null) { e.presentation.isEnabled = false; return }
           val parent = fileView.fileTree.getNewFileParent()
-          e.presentation.isEnabled = parent != null && Files.isDirectory(parent) && Files.isWritable(parent)
+          e.presentation.isEnabled = parent != null && parent.parent != null && Files.isDirectory(parent) && Files.isWritable(parent)
         }
 
         override fun actionPerformed(e: AnActionEvent) {

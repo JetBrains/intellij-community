@@ -230,7 +230,7 @@ class NioFileTreeModel(
     companion object {
       fun isValid(path: Path?): Boolean = path != null && Files.exists(path)
 
-      fun isLeaf(path: Path?): Boolean = path != null && !Files.isDirectory(path)
+      fun isLeaf(path: Path?): Boolean = path != null && (path.parent != null && !Files.isDirectory(path))
 
       fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
         val list = descriptor.roots
@@ -271,6 +271,13 @@ class NioFileTreeModel(
         updateHidden(NioFileChooserUtil.isHidden(path, attrs))
         updateSymlink(isSymlink)
         updateWritable(Files.isWritable(p))
+      }
+      else if (p.parent ==null) {
+        updateIcon(PlatformIcons.FOLDER_ICON)
+        updateValid(true)
+        updateHidden(false)
+        updateSymlink(false)
+        updateWritable(false)
       }
       else {
         var icon: Icon? = NioFileChooserUtil.getIcon(p)
