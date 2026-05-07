@@ -28,6 +28,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("BlockingMethodInNonBlockingContext", "RAW_RUN_BLOCKING", "OPT_IN_USAGE")
 class ProcessExecutor(
@@ -274,7 +275,9 @@ class ProcessExecutor(
       }
     }
 
-    ioThreads.forEach { catchAll { it.join() } }
+    catchAll { process.inputStream.close() }
+    catchAll { process.errorStream.close() }
+    ioThreads.forEach { catchAll { it.join(30.seconds.inWholeMilliseconds) } }
 
     if (analyzeProcessExit) {
       analyzeProcessExit(process)
