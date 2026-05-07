@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.toNioPathOrNull
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
-import java.io.File
-import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal class FileSchemeResourcesProcessor(
   private val baseFile: VirtualFile?,
@@ -16,11 +17,20 @@ internal class FileSchemeResourcesProcessor(
   }
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-    val resource = if (resourceName.startsWith("file:/")) {
-      VfsUtil.findFileByIoFile(File(URL(resourceName).path), true)
-    } else {
-      projectRoot?.findFileByRelativePath(resourceName)
-    } ?: return null
-    return ResourceProvider.loadExternalResource(resource)
+    val resourcePath = Path.of(resourceName)
+    if (isChildOfProjectRoot(resourcePath)) {
+      val resource = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resourcePath) ?: return null
+      return ResourceProvider.loadExternalResource(resource)
+    }
+
+    return runCatching {
+      if (!Files.isRegularFile(resourcePath)) return null
+      ResourceProvider.loadExternalResource(resourcePath)
+    }.getOrNull()
+  }
+
+  private fun isChildOfProjectRoot(resourcePath: Path): Boolean {
+    val projectPath = projectRoot?.toNioPathOrNull() ?: return false
+    return resourcePath.startsWith(projectPath)
   }
 }

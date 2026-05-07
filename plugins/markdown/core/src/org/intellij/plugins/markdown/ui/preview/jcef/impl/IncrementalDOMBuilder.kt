@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
+import com.intellij.ide.trustedProjects.TrustedProjects.isProjectTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
@@ -119,6 +120,9 @@ class IncrementalDOMBuilder(
   }
 
   private fun actuallyProcessImageNode(node: Node, baseFile: VirtualFile, projectRoot: VirtualFile) {
+    val fileSchemeResourceProcessor = fileSchemeResourceProcessor ?: return
+    val projectPath = projectRoot.toNioPathOrNull() ?: return
+
     var path = node.attr("src")
     val hasFileHost = path.startsWith("file:/")
     if (hasFileHost && !node.hasAttr("from-extension")) {
@@ -129,20 +133,27 @@ class IncrementalDOMBuilder(
       if (SystemInfo.isWindows) {
         path = StringUtil.replace(path, "\\", "/")
       }
+
       if (!path.startsWith('/')) {
-        val resolved = baseFile.findFileByRelativePath(path) ?: return
-        path = VfsUtilCore.getRelativePath(resolved, projectRoot) ?: path
-      }
-      if (SystemInfo.isWindows && path.startsWith("/")) {
-        path = path.trimStart('/')
+        path = findRelativePath(baseFile, path) ?: return
+      } else {
+        if (SystemInfo.isWindows) {
+          path = path.trimStart('/')
+        }
+        path = findRelativePath(projectRoot, path) ?: path
       }
       path = FileUtil.toSystemIndependentName(path)
     }
-    if (fileSchemeResourceProcessor != null) {
-      val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, path)
-      node.attr("data-original-src", path)
-      node.attr("src", processed)
-    }
+
+    if (!hasFileHost && !isProjectTrusted(projectPath) && !path.startsWith(projectPath.toString())) return
+
+    val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, path)
+    node.attr("data-original-src", path)
+    node.attr("src", processed)
+  }
+
+  private fun findRelativePath(baseFile: VirtualFile, relPath: String): String? {
+    return baseFile.findFileByRelativePath(relPath)?.toNioPathOrNull()?.normalize()?.toString()
   }
 
   private fun shouldPreprocessImageNode(node: Node): Boolean {
