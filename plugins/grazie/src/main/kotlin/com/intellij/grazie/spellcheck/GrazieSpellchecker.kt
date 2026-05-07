@@ -2,7 +2,6 @@
 package com.intellij.grazie.spellcheck
 
 import ai.grazie.detector.heuristics.rule.RuleFilter
-import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic.dynamicFolder
 import com.intellij.grazie.GraziePlugin
@@ -29,12 +28,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.nio.file.Files
-import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -63,16 +63,20 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
-    private val isFirstInvocation = AtomicBoolean(true)
+    private val mutex = Mutex() // to avoid CPU overload by multiple uncancelled suggestion calculations
 
     fun check(word: String): Boolean? {
       if (word.isBlank()) return true
-      return synchronized(speller) {
-        computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
-          runCancellableOnFirstInvocation {
-            val sentence = tool.getRawAnalyzedSentence(word)
-            // First token is always sentence start
-            if (sentence.nonWhitespaceTokenCount <= 2) return@runCancellableOnFirstInvocation !speller.isMisspelled(word)
+      val sentence = tool.getRawAnalyzedSentence(word)
+      // First token is always sentence start
+      if (sentence.nonWhitespaceTokenCount <= 2) return !speller.isMisspelled(word)
+
+      // If a word ends with apostrophe, then we don't need to run expensive `match`
+      if (word.endsWith("'") || word.endsWith("’")) return !speller.isMisspelled(word.dropLast(1))
+
+      return runWithCheckCanceled {
+        mutex.withLock {
+          computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
             if (speller.match(sentence).isEmpty()) {
               if (!speller.isMisspelled(word)) true
               else {
@@ -89,29 +93,16 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    fun suggest(text: String): Set<String> = synchronized(speller) {
+    suspend fun suggest(text: String): Set<String> = mutex.withLock {
       computeWithClassLoader<Set<String>, Throwable>(GraziePlugin.classLoader) {
-        runWithCheckCanceled {
-          speller.match(tool.getRawAnalyzedSentence(text))
-            .flatMap { match ->
-              match.suggestedReplacements.map {
-                text.replaceRange(match.fromPos, match.toPos, it)
-              }
+        speller.match(tool.getRawAnalyzedSentence(text))
+          .flatMap { match ->
+            match.suggestedReplacements.map {
+              text.replaceRange(match.fromPos, match.toPos, it)
             }
-            .toSet()
-        }
+          }
+          .toSet()
       }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun <T> runCancellableOnFirstInvocation(block: () -> T): T {
-      if (!isFirstInvocation.get()) return block()
-      val result = runWithCheckCanceled {
-        block()
-      }
-      isFirstInvocation.set(false)
-      return result
     }
   }
 
@@ -177,12 +168,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
 
     return runWithCheckCanceled {
-      filtered
-        .asSequence()
-        .flatMap { speller ->
-          speller.suggest(word)
-        }
-        .toLinkedSet()
+      filtered.flatMapTo(LinkedHashSet()) { speller -> speller.suggest(word) }
     }
   }
 
