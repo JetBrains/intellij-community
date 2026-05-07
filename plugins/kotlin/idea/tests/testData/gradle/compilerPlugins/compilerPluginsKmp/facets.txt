@@ -1,0 +1,43 @@
+MODULES
+project
+
+project.commonMain
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.commonTest
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.jvmMain
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.jvmTest
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.linuxArm64Main
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar
+
+project.linuxArm64Test
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar
+
+project.linuxMain
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.linuxTest
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.linuxX64Main
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar
+
+project.linuxX64Test
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar
+
+project.nativeMain
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+project.nativeTest
+    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+
+
+Test configuration:
+- showing only following facet fields: compilerArguments
+- showing only following compiler arguments: pluginClasspaths

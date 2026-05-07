@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        {{kts_kotlin_plugin_repositories}}
+    }
+    plugins {
+        kotlin("multiplatform") version "{{kgp_version}}"
+        kotlin("plugin.serialization") version "{{kgp_version}}"
+        kotlin("plugin.noarg") version "{{kgp_version}}"
+        kotlin("plugin.lombok") version "{{kgp_version}}"
+    }
+}
