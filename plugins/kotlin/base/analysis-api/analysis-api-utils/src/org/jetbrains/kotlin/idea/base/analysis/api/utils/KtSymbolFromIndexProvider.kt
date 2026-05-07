@@ -118,7 +118,7 @@ class KtSymbolFromIndexProvider(
 
         return getClassLikeSymbols(
             classDeclarations = KotlinClassShortNameIndex.getAllElements(name.asString(), useSiteModule.project, scope) {
-                it.isAcceptable(psiFilter)
+                !it.isLocal && it.isAcceptable(psiFilter)
             },
             typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(name.asString(), useSiteModule.project, scope) {
                 it.isAcceptable(psiFilter)
