@@ -42,21 +42,17 @@ class IdeLaunchEventTest {
 
     val context = Starter.newContext(testInfo.hyphenateWithClass(), TestCases.IU.withProject(NoProject).useRelease())
 
-    context.runIDE(
-      commands = CommandChain().exitApp(),
-      runTimeout = 5.seconds,
-      expectedKill = true
-    )
-
-    context.runIDE(
-      commands = CommandChain().exitApp(),
-      runTimeout = 5.seconds,
-      expectedKill = true
-    )
-
+    repeat(2) {
+      context.runIDE(
+        commands = CommandChain().exitApp(),
+        runTimeout = 5.seconds,
+        expectedKill = true
+      )
+    }
     runBlocking(Dispatchers.IO) {
       eventually(duration = 2.seconds, poll = 100.milliseconds) {
-        firedEvents.shouldHaveSize(8)
+        firedEvents.filterIsInstance<IdeAfterLaunchEvent>().shouldHaveSize(2)
+        firedEvents.filterIsInstance<IdeBeforeKillEvent>().shouldHaveSize(2)
       }
     }
 
@@ -65,6 +61,7 @@ class IdeLaunchEventTest {
       firedEvents.filterIsInstance<IdeLaunchEvent>().shouldHaveSize(2)
       firedEvents.filterIsInstance<IdeBeforeKillEvent>().shouldHaveSize(2)
       firedEvents.filterIsInstance<IdeAfterLaunchEvent>().shouldHaveSize(2)
+      firedEvents.shouldHaveSize(8)
     }
   }
 }
