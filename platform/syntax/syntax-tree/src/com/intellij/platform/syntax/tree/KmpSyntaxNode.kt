@@ -40,15 +40,15 @@ class KmpSyntaxNode internal constructor(
   internal val startLexemeIndex: Int,
   internal val nextMarkerStartLexemeIndex: Int,
   internal val markerIndex: Int,
-  private val documentLanguage: SyntaxLanguage,
   val languageProvider: SyntaxElementLanguageProvider,
+  documentLanguage: SyntaxLanguage?, // invariant: this is not-null for root
 ) : SyntaxNode {
   companion object {
     private fun rootWithContext(
       context: WalkerContext,
       tokens: TokenList,
-      documentLanguage: SyntaxLanguage,
       languageProvider: SyntaxElementLanguageProvider,
+      documentLanguage: SyntaxLanguage?,
     ): KmpSyntaxNode = KmpSyntaxNode(
       parent = null,
       prevSibling = null,
@@ -57,8 +57,8 @@ class KmpSyntaxNode internal constructor(
       startLexemeIndex = context.startLexemeIndex,
       nextMarkerStartLexemeIndex = context.startLexemeIndex,
       markerIndex = 0,
-      documentLanguage,
       languageProvider,
+      documentLanguage,
     )
 
     fun root(
@@ -81,8 +81,8 @@ class KmpSyntaxNode internal constructor(
         extensions = extensions,
       ),
       tokens,
-      documentLanguage,
       languageProvider,
+      documentLanguage,
     )
   }
 
@@ -93,6 +93,7 @@ class KmpSyntaxNode internal constructor(
     startLexemeIndex: Int = this.startLexemeIndex,
     nextMarkerStartLexemeIndex: Int = this.nextMarkerStartLexemeIndex,
     markerIndex: Int = this.markerIndex,
+    documentLanguage: SyntaxLanguage?,
   ): KmpSyntaxNode = KmpSyntaxNode(
     parent = parent,
     prevSibling = prevSibling,
@@ -118,7 +119,7 @@ class KmpSyntaxNode internal constructor(
   override val language: SyntaxLanguage =
     languageProvider.getLanguage(elementType)
     ?: parent?.language
-    ?: documentLanguage
+    ?: documentLanguage!!
 
   override fun equals(other: Any?): Boolean =
     (other === this) || (other is KmpSyntaxNode &&
@@ -169,7 +170,7 @@ class KmpSyntaxNode internal constructor(
       when {
         ast.kind(markerIndex) == MarkerKind.Error -> null
         isChameleon() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
-          ?.copy(parent = this)
+          ?.copy(parent = this, documentLanguage = null)
 
         ast.collapsed(markerIndex) -> null // this is a collapsed non-lazy-parseable node, meaning it's a leaf
 
@@ -180,7 +181,8 @@ class KmpSyntaxNode internal constructor(
               markerIndex = -1,
               nextMarkerStartLexemeIndex = startLexemeIndex,
               prevSibling = null,
-              parent = this
+              parent = this,
+              documentLanguage = null,
             )
 
             childMarkerIndex == -1 -> null
@@ -188,7 +190,8 @@ class KmpSyntaxNode internal constructor(
               markerIndex = childMarkerIndex,
               prevSibling = null,
               nextMarkerStartLexemeIndex = startLexemeIndex + ast.lexemeRelOffset(childMarkerIndex),
-              parent = this
+              parent = this,
+              documentLanguage = null,
             )
 
 
@@ -200,7 +203,7 @@ class KmpSyntaxNode internal constructor(
     }
 
     isChameleon() && !isCopyOfParent() -> {
-      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this)
+      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this, documentLanguage = null)
     }
 
     else -> {
@@ -267,7 +270,8 @@ class KmpSyntaxNode internal constructor(
         startLexemeIndex = siblingLexemeIndex,
         nextMarkerStartLexemeIndex = startLexemeIndex,
         markerIndex = markerIndex,
-        prevSibling = this
+        prevSibling = this,
+        documentLanguage = null,
       )
 
       else -> null
@@ -288,8 +292,8 @@ class KmpSyntaxNode internal constructor(
             startLexemeIndex = startLexemeIndex
           ),
           tokens,
-          documentLanguage,
           languageProvider,
+          documentLanguage = null,
         )
 
         else -> {
@@ -310,8 +314,8 @@ class KmpSyntaxNode internal constructor(
               ast = tree,
             ),
             chameleonTokens,
-            documentLanguage,
             languageProvider,
+            documentLanguage = null,
           )
         }
       }
