@@ -17,6 +17,7 @@
 
 package com.pme.exe.res;
 
+import com.pme.util.StreamUtil;
 import java.io.DataInput;
 import java.io.IOException;
 
@@ -30,6 +31,7 @@ public class DataEntry extends LevelEntry {
   private final DWord mySize;
   private final RawResource myRawResource;
   private final DWord myLanguage;
+  private final long myStreamOffset;  // Android Studio: b/363795669
 
   public DataEntry(ResourceSectionReader section, DWord offset, DWord language) {
     super("DataEntry");
@@ -40,6 +42,7 @@ public class DataEntry extends LevelEntry {
     addMember(new DWord("Reserved"));
     addOffsetHolder(new ValuesSub(offset, section.getStartOffset()));
     myRawResource = new RawResource(section, myRVA, mySize);
+    myStreamOffset = section.getStartOffset().getValue() + offset.getValue();  // Android Studio: b/363795669
   }
 
   public RawResource getRawResource() {
@@ -56,6 +59,9 @@ public class DataEntry extends LevelEntry {
 
   @Override
   public void read(DataInput stream) throws IOException {
+    if (StreamUtil.getOffset(stream) != myStreamOffset) {  // Android Studio: b/363795669
+      StreamUtil.seek(stream, myStreamOffset);
+    }
     super.read(stream);
     initRawData();
   }
