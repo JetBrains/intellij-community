@@ -79,6 +79,7 @@ internal class FileInvalidationTest {
       "module1", moduleName2,
       "Step 3 (module2 added on same root): first module should still win, expected 'module1' but got '$moduleName2'",
     )
+    psiFileModuleContext.hashCode() // keep a hard reference to the file with module1 context, so that it doesn't get GCed and make sure it keeps being preferred
 
     PsiTestUtil.removeAllRoots(module1, null)
     while (!CodeInsightContextManagerImpl.getInstanceImpl(project).isContextInvalidationComplete()) {
