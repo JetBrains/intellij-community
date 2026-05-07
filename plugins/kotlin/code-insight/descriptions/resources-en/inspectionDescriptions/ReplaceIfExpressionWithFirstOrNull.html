@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports <code>if</code> expressions that check whether a list, array, or string is not empty and then return the first element or <code>null</code>.
+<p>Using <code>firstOrNull()</code> makes the code shorter and more idiomatic.</p>
+<p>The quick-fix replaces the whole <code>if</code> expression with <code>firstOrNull()</code>.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun firstChild(children: List&lt;String&gt;): String? {
+      return if (children.isNotEmpty()) {
+          children[0]
+      } else {
+          null
+      }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun firstChild(children: List&lt;String&gt;): String? {
+      return children.firstOrNull()
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

@@ -563,6 +563,13 @@
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.replace.isempty.with.ifempty.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ReplaceIfExpressionWithFirstOrNullInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.replace.if.expression.with.first.or.null.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FilterIsInstanceResultIsAlwaysEmptyInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"

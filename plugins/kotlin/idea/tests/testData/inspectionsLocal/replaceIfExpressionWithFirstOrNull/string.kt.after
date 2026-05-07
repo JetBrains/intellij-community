@@ -1,0 +1,6 @@
+// FIX: Replace with 'firstOrNull()'
+// WITH_STDLIB
+
+fun test(text: String): Char? {
+    return text.firstOrNull()
+}
