@@ -53,7 +53,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
-    registrar.register(new ImportClassFix(ref));
     PsiElement refParent = ref.getParent();
     if (!(refParent instanceof PsiMethodCallExpression)) {
       registrar.register(new StaticImportConstantFix(containingFile, ref));

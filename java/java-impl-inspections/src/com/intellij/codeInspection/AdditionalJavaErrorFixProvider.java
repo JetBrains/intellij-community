@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvide
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpressionStatement;
@@ -29,6 +31,10 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
+
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PACKAGE_LOCAL;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PRIVATE;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PROTECTED;
 
 /**
  * Some quick-fixes not accessible from the java.analysis module are registered here.
@@ -55,11 +61,31 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
       }
       return null;
     });
-    fix(JavaErrorKinds.REFERENCE_UNRESOLVED, error -> {
-      PsiJavaCodeReferenceElement psi = error.psi();
-      if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, psi)) return null;
-      return MigrateFromJavaLangIoInspection.createCanBeIOFix(psi);
+    fixes(JavaErrorKinds.REFERENCE_UNRESOLVED, (error, sink) -> {
+      PsiJavaCodeReferenceElement ref = error.psi();
+      if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, ref)) {
+        sink.accept(MigrateFromJavaLangIoInspection.createCanBeIOFix(ref));
+      }
+      registerReferenceFixes(ref, sink);
     });
+    fixes(JavaErrorKinds.TYPE_UNKNOWN_CLASS, (error, sink) -> {
+      PsiJavaCodeReferenceElement element = error.psi().getInnermostComponentReferenceElement();
+      if (element != null) {
+        registerReferenceFixes(element, sink);
+      }
+    });
+    JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
+      if (error.psi() instanceof PsiJavaCodeReferenceElement ref) {
+        registerReferenceFixes(ref, sink);
+      }
+    };
+    fixes(ACCESS_PRIVATE, accessFix);
+    fixes(ACCESS_PROTECTED, accessFix);
+    fixes(ACCESS_PACKAGE_LOCAL, accessFix);
+  }
+  
+  private static void registerReferenceFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull Consumer<? super CommonIntentionAction> sink) {
+    sink.accept(new ImportClassFix(ref));
   }
 
   private static void registerErrorElementFixes(@NotNull Consumer<? super CommonIntentionAction> info,
