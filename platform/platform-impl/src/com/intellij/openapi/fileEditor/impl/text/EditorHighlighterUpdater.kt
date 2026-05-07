@@ -113,7 +113,7 @@ open class EditorHighlighterUpdater(
     }, parentDisposable)
   }
 
-  private fun checkUpdateHighlighters(key: String, updateSynchronously: Boolean) {
+  private fun checkUpdateHighlighters(key: String?, updateSynchronously: Boolean) {
     if (file != null) {
       val fileType = file.fileType
       val needUpdate = (fileType.name == key || (fileType is LanguageFileType && fileType.language.id == key))
