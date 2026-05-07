@@ -550,7 +550,12 @@ private class PluginSetConstraintsResolver(
     override val representativeModule: PluginModuleDescriptor,
     override val sortedDescriptors: ArrayList<IdeaPluginDescriptorImpl> = ArrayList(),
   ) : RuntimeModuleGroup {
-    override fun toString(): String = "$representativeModule (size=${sortedDescriptors.size})"
+    override fun toString(): String = buildString {
+      append(representativeModule.shortLogDescription)
+      if (sortedDescriptors.size > 1) {
+        append(" (${sortedDescriptors.joinToString(limit = 5, truncated = "... size=${sortedDescriptors.size}") { it.shortLogDescription }})")
+      }
+    }
   }
 
   private class RuntimeModuleGroupGraphImpl(
