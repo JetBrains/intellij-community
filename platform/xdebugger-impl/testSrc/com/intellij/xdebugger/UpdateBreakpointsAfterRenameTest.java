@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.DisableOnDebug;
 import org.junit.rules.TestRule;
@@ -20,8 +19,7 @@ import java.nio.file.Path;
 
 @RunWith(JUnit4.class)
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
-  @Rule
-  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
+  public TestRule timeout = asOuterRule(new DisableOnDebug(Timeout.seconds(10)));
 
   @Test
   public void testRenameFile() throws IOException {

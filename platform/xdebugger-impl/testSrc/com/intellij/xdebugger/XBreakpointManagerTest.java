@@ -17,7 +17,6 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.DisableOnDebug;
 import org.junit.rules.TestRule;
@@ -35,8 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
-  @Rule
-  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
+  public TestRule timeout = asOuterRule(new DisableOnDebug(Timeout.seconds(10)));
 
   @Test
   public void testAddRemove() {

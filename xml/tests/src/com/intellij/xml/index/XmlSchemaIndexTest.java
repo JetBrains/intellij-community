@@ -12,7 +12,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.DisableOnDebug;
 import org.junit.rules.TestRule;
@@ -42,8 +41,7 @@ import java.util.List;
 public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
 
-  @Rule
-  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
+  public TestRule timeout = asOuterRule(new DisableOnDebug(Timeout.seconds(10)));
 
   private static @NotNull Collection<String> computeTagNames(@NotNull VirtualFile file) throws IOException {
     List<String> tags = new ArrayList<>();
