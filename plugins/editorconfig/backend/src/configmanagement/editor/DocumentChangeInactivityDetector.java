@@ -1,50 +1,53 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class DocumentChangeInactivityDetector implements DocumentListener {
-  private static final int CHECK_DELAY = 500; // ms
-
-  private final    ScheduledExecutorService myExecutorService;
-
+class DocumentChangeInactivityDetector {
   private static final Logger LOG = Logger.getInstance(DocumentChangeInactivityDetector.class);
+  private static final int CHECK_DELAY = 500; // ms
+  private final ScheduledExecutorService myExecutorService =
+    AppExecutorUtil.createBoundedScheduledExecutorService("DocumentChangeInactivityDetector", 1);
+  private volatile long myLastChangeTime;
+  private volatile long myLastDocStamp;
+  private final Document myDocument;
+  private final List<InactivityListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private volatile long     myLastChangeTime;
-  private volatile long     myLastDocStamp;
-  private final    Document myDocument;
-
-  private final List<InactivityListener> myListeners = new ArrayList<>();
-
-  DocumentChangeInactivityDetector(@NotNull Document document) {
+  DocumentChangeInactivityDetector(@NotNull Document document, @NotNull Disposable parentDisposable) {
     myDocument = document;
-    myExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("DocumentChangeInactivityDetector", 1);
+    Disposer.register(parentDisposable, ()->stop());
+    document.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        DocumentChangeInactivityDetector.this.documentChanged(event);
+      }
+    }, parentDisposable);
+    start();
   }
 
   void addListener(@NotNull InactivityListener listener) {
     myListeners.add(listener);
   }
 
-  void removeListener(@NotNull InactivityListener listener) {
-    myListeners.remove(listener);
-  }
-
-  void start() {
+  private void start() {
     myLastChangeTime = System.currentTimeMillis();
     myExecutorService.scheduleWithFixedDelay(() -> checkLastUpdate(), CHECK_DELAY, CHECK_DELAY, TimeUnit.MILLISECONDS);
   }
 
-  void stop() {
+  private void stop() {
+    myListeners.clear();
     myExecutorService.shutdown();
   }
 
@@ -62,8 +65,7 @@ class DocumentChangeInactivityDetector implements DocumentListener {
     }
   }
 
-  @Override
-  public void documentChanged(@NotNull DocumentEvent event) {
+  private void documentChanged(@NotNull DocumentEvent event) {
     myLastChangeTime = System.currentTimeMillis();
     myLastDocStamp = event.getOldTimeStamp();
   }

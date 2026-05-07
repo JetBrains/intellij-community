@@ -37,7 +37,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
@@ -259,7 +258,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
   volatile boolean myPreparingToSuspendAll = false;
 
-  List<Runnable> mySuspendAllListeners = new ArrayList<>();
+  final List<Runnable> mySuspendAllListeners = new ArrayList<>();
 
   private Job otherThreadsJob;
   private int myOtherThreadsReachBreakpointNumber = 0;
