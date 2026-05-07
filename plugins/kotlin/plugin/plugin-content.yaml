@@ -134,7 +134,6 @@
   - name: intellij.kotlin.compilerPlugins.support.gradle
   - name: intellij.kotlin.compilerPlugins.support.maven
   - name: kotlin.compiler-plugins.lombok.gradle
-  - name: kotlin.compiler-plugins.noarg.gradle
   - name: kotlin.compiler-plugins.assignment.gradle
   - name: intellij.kotlin.compilerPlugins.power-assert.gradle
   - name: intellij.kotlin.compilerPlugins.kapt
@@ -142,6 +141,7 @@
   - name: intellij.kotlin.compilerPlugins.serialization.gradle
   - name: intellij.kotlin.compilerPlugins.serialization.maven
   - name: intellij.kotlin.compilerPlugins.dataframe.maven
+  - name: intellij.kotlin.compilerPlugins.noarg.gradle
   - name: intellij.kotlin.compilerPlugins.noarg.maven
   - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
   - name: intellij.kotlin.compilerPlugins.assignment.fixes

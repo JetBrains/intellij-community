@@ -81,7 +81,6 @@
     <module name="intellij.kotlin.completion.ml"/>
     <module name="intellij.kotlin.compilerPlugins.support.maven"/>
     <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
-    <module name="kotlin.compiler-plugins.noarg.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
     <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
     <module name="kotlin.compiler-plugins.parcelize.gradle"/>
