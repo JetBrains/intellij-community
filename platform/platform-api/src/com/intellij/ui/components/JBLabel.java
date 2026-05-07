@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.JBComponent;
 import com.intellij.util.ui.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -461,5 +462,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     if (myEditorPane != null) {
       myEditorPane.setToolTipText(text);
     }
+  }
+
+  @ApiStatus.Internal
+  public @Nullable JEditorPane getEditorPane() {
+    return myEditorPane;
   }
 }

@@ -22,6 +22,7 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
 private val DEMOS = arrayOf(
+  ::demoExamples,
   ::demoBasics,
   ::demoRowLayout,
   ::demoComponentLabels,
@@ -32,7 +33,6 @@ private val DEMOS = arrayOf(
   ::demoAvailability,
   ::demoValidation,
   ::demoBinding,
-  ::demoTips
 )
 
 internal class UiDslShowcaseAction : DumbAwareAction() {

@@ -415,8 +415,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
 
-            link(UIBundle.message("color.blindness.link.to.help")
-            ) { HelpManager.getInstance().invokeHelp("Colorblind_Settings") }
+            link(UIBundle.message("color.blindness.link.to.help")) {
+              HelpManager.getInstance().invokeHelp("Colorblind_Settings")
+            }.applyToComponent {
+              setExternalLinkIcon()
+            }
           }
         }
 
