@@ -15,12 +15,9 @@ jvm_library(
   resources = [":gradle_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/lang-core",
-    "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
     "//plugins/kotlin/gradle/gradle-java",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
-    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/base/plugin",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.gradle` end

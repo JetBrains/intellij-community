@@ -2,27 +2,20 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.gradleJava
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationImportHandler
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
-import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
+import java.nio.file.Path
 
-class KotlinSerializationGradleImportHandler : GradleProjectImportHandler {
-    override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
-        KotlinSerializationImportHandler.modifyCompilerArguments(facet, pluginJarRegex)
-    }
+class KotlinSerializationGradleImportHandler : AbstractGradleImportHandler() {
 
-    override fun importByModule(facet: KotlinFacet, moduleNode: DataNode<ModuleData>) {
-        KotlinSerializationImportHandler.modifyCompilerArguments(facet, pluginJarRegex)
-    }
-
-    private val pluginJarRegex = listOf(
+    override val pluginJarsRegex: List<Regex> = listOf(
         "$PLUGIN_COMPILER_EMBEDDABLE_JAR_NAME-.*\\.jar".toRegex(),
         "$PLUGIN_COMPILER_JAR_NAME-.*\\.jar".toRegex(),
         "$PLUGIN_GRADLE_JAR_NAME-.*\\.jar".toRegex()
     )
+    override val replacedJar: Path by lazy {
+        KotlinArtifacts.kotlinxSerializationCompilerPluginPath
+    }
 
     companion object {
         private const val PLUGIN_GRADLE_JAR_NAME = "kotlin-serialization"

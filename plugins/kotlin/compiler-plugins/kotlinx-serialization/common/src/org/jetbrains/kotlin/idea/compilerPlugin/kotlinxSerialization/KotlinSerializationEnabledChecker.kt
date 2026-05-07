@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.projectStructure.unwrapModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -17,8 +18,12 @@ interface KotlinSerializationEnabledChecker {
         override fun isEnabledFor(moduleDescriptor: ModuleDescriptor): Boolean {
             val module = moduleDescriptor.getCapability(ModuleInfo.Capability)?.unwrapModuleSourceInfo()?.module ?: return false
             val pluginClasspath = KotlinCommonCompilerArgumentsHolder.getInstance(module).pluginClasspaths ?: return false
-            return pluginClasspath.any(KotlinSerializationImportHandler::isPluginJarPath)
+            return pluginClasspath.any { it.isPluginJarPath() }
         }
+
+        private fun String.isPluginJarPath(): Boolean =
+            endsWith(KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
+
     }
 
     companion object {

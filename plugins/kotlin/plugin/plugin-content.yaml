@@ -147,6 +147,7 @@
   - name: kotlin.compiler-plugins.compiler-plugin-support.gradle
   - name: intellij.kotlin.compilerPlugins.support.maven
   - name: kotlin.compiler-plugins.lombok.gradle
+  - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
   - name: intellij.kotlin.compilerPlugins.kapt
   - name: kotlin.compiler-plugins.kotlinx-serialization.common
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle

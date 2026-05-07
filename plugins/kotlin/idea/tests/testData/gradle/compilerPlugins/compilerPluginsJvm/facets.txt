@@ -2,12 +2,12 @@ MODULES
 project
 
 project.main
-    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlinx-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.submodule
 
 project.test
-    kotlin-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlinx-serialization-compiler-plugin.jar, kotlin-noarg-compiler-plugin.jar, lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 
 Test configuration:
