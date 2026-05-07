@@ -141,10 +141,9 @@
   - name: intellij.kotlin.compilerPlugins.parcelize
   - name: kotlin.compiler-plugins.parcelize.gradle
   - name: kotlin.compiler-plugins.allopen.common.k1
-  - name: kotlin.compiler-plugins.allopen.gradle
   - name: intellij.kotlin.compilerPlugins.allopen.maven
   - name: intellij.kotlin.compilerPlugins.support
-  - name: kotlin.compiler-plugins.compiler-plugin-support.gradle
+  - name: intellij.kotlin.compilerPlugins.support.gradle
   - name: intellij.kotlin.compilerPlugins.support.maven
   - name: kotlin.compiler-plugins.lombok.gradle
   - name: intellij.kotlin.compilerPlugins.power-assert.gradle
@@ -158,7 +157,6 @@
   - name: kotlin.compiler-plugins.noarg.gradle
   - name: intellij.kotlin.compilerPlugins.noarg.maven
   - name: kotlin.compiler-plugins.sam-with-receiver.common
-  - name: kotlin.compiler-plugins.sam-with-receiver.gradle
   - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
   - name: kotlin.compiler-plugins.assignment.common.k1
   - name: intellij.kotlin.compilerPlugins.assignment.fixes

@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="kotlin.base.scripting.k1"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1.IdeAssignPluginResolutionAltererExtension"/>

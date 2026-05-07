@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.powerAssert.gradleJava">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.support.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->

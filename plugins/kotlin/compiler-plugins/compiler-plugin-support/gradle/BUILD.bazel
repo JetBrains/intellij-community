@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.gradle` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "gradle",
-  module_name = "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+  module_name = "intellij.kotlin.compilerPlugins.support.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":gradle_resources"],
@@ -27,4 +27,4 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.gradle` end

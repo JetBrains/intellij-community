@@ -1,0 +1,7 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.compilerPlugin">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="kotlin.gradle.gradle-java"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

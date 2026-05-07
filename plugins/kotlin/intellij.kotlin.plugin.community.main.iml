@@ -67,10 +67,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
@@ -82,7 +81,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.fixes" exported="" />

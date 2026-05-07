@@ -134,11 +134,26 @@
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.internal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.serialization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.kapt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.decompiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
