@@ -610,7 +610,6 @@
         "pressedBackground": "#3333FF"
       },
       "Dropdown": {
-        "borderInsets": "12,6,12,6",
         "background": "#000000",
         "hoverBackground": "#3333FF",
         "pressedBackground": "#3333FF",
