@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.diagnostic.PluginException
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
@@ -33,6 +34,7 @@ import com.intellij.workspaceModel.ide.impl.workspaceModelMetrics
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
 /**
@@ -147,17 +149,24 @@ internal class NonIncrementalContributors(private val project: Project) {
           }
         }
       }
-      ModuleManager.getInstance(project).modules.forEach { module ->
-        policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module)).forEach { pointer ->
-          val file = pointer.file
-          if (file != null) {
-            val correctedRoot = RootFileValidityChecker.correctRoot(file, module, policy)
-            if (correctedRoot != null) {
-              excludedFiles.put(correctedRoot, WorkspaceFileKindMask.CONTENT or excludedFiles.getInt(correctedRoot))
+      val hasExcludeRootsForModule = overrideMap.computeIfAbsent(policy.javaClass.name) {
+        runCatching {
+          policy.javaClass.getMethod("getExcludeRootsForModule", ModuleRootModel::class.java).declaringClass != DirectoryIndexExcludePolicy::class.java
+        }.getOrDefault(true)
+      }
+      if (hasExcludeRootsForModule) {
+        ModuleManager.getInstance(project).modules.forEach { module ->
+          policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module)).forEach { pointer ->
+            val file = pointer.file
+            if (file != null) {
+              val correctedRoot = RootFileValidityChecker.correctRoot(file, module, policy)
+              if (correctedRoot != null) {
+                excludedFiles.put(correctedRoot, WorkspaceFileKindMask.CONTENT or excludedFiles.getInt(correctedRoot))
+              }
             }
-          }
-          else {
-            excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(pointer.url))
+            else {
+              excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(pointer.url))
+            }
           }
         }
       }
@@ -217,6 +226,7 @@ internal class NonIncrementalContributors(private val project: Project) {
     private val totalUpdateTimeMs = MillisecondsMeasurer()
     private val excludeRootsComputationTimeMs = MillisecondsMeasurer()
     private val fileSetsComputationTimeMs = MillisecondsMeasurer()
+    private val overrideMap = ConcurrentHashMap<String, Boolean>()
 
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
