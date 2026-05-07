@@ -5,20 +5,81 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions
+import com.intellij.platform.eel.channels.EelDelicateApi
 import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
 class EnvironmentVariablesOptionsBuilder {
+  private var mode: EnvironmentVariablesOptions.Mode = EnvironmentVariablesOptions.Mode.DEFAULT
+
   private var onlyActual: Boolean = false
+
+  fun mode(arg: EnvironmentVariablesOptions.Mode): EnvironmentVariablesOptionsBuilder = apply {
+    this.mode = arg
+  }
+
+  /**
+   * Platform-defined fallback, never throws [EnvironmentVariablesException].
+   *
+   * * On remote POSIX Eel — like [LOGIN_NON_INTERACTIVE], but on error returns [MINIMAL] instead of throwing.
+   * * On remote Windows Eel — registry view (like [LOGIN_NON_INTERACTIVE]).
+   * * On local Windows/Linux — like [MINIMAL] (historical: the IDE rarely called the shell for env).
+   * * On local macOS — like [LOGIN_NON_INTERACTIVE] + [MINIMAL], with values cached at start (historical).
+   */
+  fun default(): EnvironmentVariablesOptionsBuilder =
+    mode(EnvironmentVariablesOptions.Mode.DEFAULT)
+
+  /**
+   *  **Use with caution, avoid when possible.**
+   *
+   * Full interactive shell session.
+   *
+   * * On POSIX — interactive shell loading `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` etc.
+   *   Reads all environment variables unlike [LOGIN_NON_INTERACTIVE], but interactive shells aren't meant
+   *   to run without a user. Real-world cases that broke users:
+   *   * `ssh-add` in `~/.bashrc` waits for a passphrase — the shell hangs forever, IDE becomes unusable.
+   *   * `~/.bashrc` starts `screen` or `tmux` — the shell hangs forever.
+   *   * `~/.bashrc` starts `ssh-agent` — the OS gets polluted with unused agents.
+   *   * `~/.bashrc` calls `curl` for weather/news/jokes — CPU usage grows, IDE slows down.
+   * * On Windows — PowerShell with the user's `$PROFILE` loaded.
+   *   Falls back to the registry view if PowerShell is unavailable or fails within the timeout.
+   *
+   * **Notice:** MAY throw [EnvironmentVariablesException].
+   */
+  @EelDelicateApi
+  fun loginInteractive(): EnvironmentVariablesOptionsBuilder =
+    mode(EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
+
+  /**
+   * Fresh-logon snapshot.
+   *
+   * * On POSIX — non-interactive shell loading `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` etc.
+   *   May skip parts of `~/.bashrc` (e.g. `[ -z "$PS1" ] && return` early-exits).
+   * * On Windows — registry view: `HKLM\...\Session Manager\Environment` merged with `HKCU\Environment`.
+   *   No shell profile.
+   *
+   * **Notice:** MAY throw [EnvironmentVariablesException].
+   */
+  fun loginNonInteractive(): EnvironmentVariablesOptionsBuilder =
+    mode(EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE)
+
+  /**
+   * Fastest path: inherited environment of the IJent process, no shell, no registry.
+   * `PATH` is guaranteed; nothing else is.
+   *
+   * Never throws [EnvironmentVariablesException].
+   */
+  fun minimal(): EnvironmentVariablesOptionsBuilder =
+    mode(EnvironmentVariablesOptions.Mode.MINIMAL)
 
   /**
    * The implementation MAY cache the environment variables by default because they rarely change in real life.
    * By setting this value to `true`, the cache will be refreshed, and the result will contain the freshest environment variables.
    *
    * Makes sense only for remote Eels (via IJent)
-   * or with such [EelExecPosixApi.PosixEnvironmentVariablesOptions.mode] that invoke a shell.
+   * or with such [mode] that invoke a shell.
    * In other cases this option has no effect.
    */
   fun onlyActual(arg: Boolean): EnvironmentVariablesOptionsBuilder = apply {
@@ -27,9 +88,13 @@ class EnvironmentVariablesOptionsBuilder {
 
   fun build(): EnvironmentVariablesOptions =
     EnvironmentVariablesOptionsImpl(
+      mode = mode,
       onlyActual = onlyActual,
     )
 }
 
 @GeneratedBuilder.Result
-internal class EnvironmentVariablesOptionsImpl(override val onlyActual: Boolean) : EnvironmentVariablesOptions
+internal class EnvironmentVariablesOptionsImpl(
+  override val mode: EnvironmentVariablesOptions.Mode,
+  override val onlyActual: Boolean,
+) : EnvironmentVariablesOptions

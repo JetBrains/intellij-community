@@ -93,28 +93,28 @@ class EelLocalExecPosixApi(
       ?: object : EelExecPosixApi.PosixEnvironmentVariablesOptions, EelExecApi.EnvironmentVariablesOptions by opts {}
 
     return when (val mode = opts.mode) {
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT -> {
+      EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT -> {
         EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
       }
 
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
+      EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL -> {
         EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
       }
 
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE,
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE,
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
         environmentVariablesCache.getDeferred(mode, opts)
       }
     }
   }
 
-  private fun makeEnvironmentVariablesDeferred(mode: EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode?): Deferred<Map<String, String>> {
+  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode?): Deferred<Map<String, String>> {
     val interactive = when (mode) {
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
 
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT,
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL,
+      EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT,
+      EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL,
       null
         -> error("unreachable")
     }

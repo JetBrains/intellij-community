@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 class EelExecApiEnvironmentVariableCache(
-  private val makeEnvironmentVariablesDeferred: (EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode?) -> Deferred<Map<String, String>>,
+  private val makeEnvironmentVariablesDeferred: (EelExecApi.EnvironmentVariablesOptions.Mode?) -> Deferred<Map<String, String>>,
 ) {
   /**
    * If the first feature is present, it is already completed successfully.
@@ -35,10 +35,10 @@ class EelExecApiEnvironmentVariableCache(
         }
   }
 
-  private val environmentVariablesCache = ConcurrentHashMap<Optional<EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode>, EnvVarCache>()
+  private val environmentVariablesCache = ConcurrentHashMap<Optional<EelExecApi.EnvironmentVariablesOptions.Mode>, EnvVarCache>()
 
   fun getDeferred(
-    mode: EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode?,
+    mode: EelExecApi.EnvironmentVariablesOptions.Mode?,
     opts: EelExecApi.EnvironmentVariablesOptions,
   ): EelExecApi.EnvironmentVariablesDeferred {
     val cacheKey = Optional.ofNullable(mode)

@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.eel.EelExecPosixApi
-import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions.Mode
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
