@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.C
 import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Disposed
 import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.InProgress
 import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Success
-import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
 import com.intellij.codeWithMe.ClientId
@@ -76,6 +75,29 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   val indicator: CompletionProgressIndicator?
 ) : Disposable {
 
+  /**
+   * Called by [CodeCompletionHandlerBase] when a new completion is about to start while this phase
+   * is the current one. The implementation must perform any teardown required by its state (cancel
+   * the current indicator, close the lookup, restore the prefix, transition to [NoCompletion], etc.)
+   * so that the caller can install a fresh completion session on top of [NoCompletion] or
+   * [CommittingDocuments].
+   *
+   * The return value is the effective invocation count to use for the new session.
+   * When [repeated] is `true`, phases that own a live indicator promote the count via
+   * [CompletionProgressIndicator.nextInvocationCount] (`max(prev + 1, 2)`), so pressing the same
+   * completion shortcut a second time produces the next completion level (Basic → Second-Basic).
+   * Otherwise, the supplied [invocationCount] is returned unchanged.
+   *
+   * @param invocationCount invocation count requested by the caller — `0` for autopopup,
+   *                        `1` for the first user-triggered completion, `>=2` for explicit
+   *                        higher-level completion.
+   *
+   * @param repeated        `true` iff the new completion targets the same editor and
+   *                        [CompletionType] as the current indicator and the existing lookup
+   *                        is at least noticeable; see [CompletionProgressIndicator.isRepeatedInvocation].
+   *
+   * @return the invocation count to use for the new session.
+   */
   abstract fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int
 
   override fun dispose() {}
