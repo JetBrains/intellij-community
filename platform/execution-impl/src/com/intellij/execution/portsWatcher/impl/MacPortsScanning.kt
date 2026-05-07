@@ -54,9 +54,9 @@ internal suspend fun scanMacListeningPorts(eelApi: EelApi, pids: Set<Long>): Set
     val stdout = processResult.stdout.decodeToString()
     val exitValue = processResult.exitCode
     if (exitValue != 0) {
-      LOG.warn("lsof returned non-zero exit code ($exitValue) for pid $pidToCheck")
-      LOG.warn("lsof STDOUT:\n$stdout")
-      LOG.warn("lsof STDERR:\n${processResult.stderr.decodeToString()}")
+      LOG.debug { "lsof returned non-zero exit code ($exitValue) for pid $pidToCheck" }
+      LOG.debug { "lsof STDOUT:\n$stdout" }
+      LOG.debug { "lsof STDERR:\n${processResult.stderr.decodeToString()}" }
       continue
     }
 
