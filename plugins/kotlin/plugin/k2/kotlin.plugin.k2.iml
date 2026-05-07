@@ -141,5 +141,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
   </component>
 </module>

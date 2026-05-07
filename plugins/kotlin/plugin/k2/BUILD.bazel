@@ -148,6 +148,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
     "//plugins/kotlin/compiler-plugins/lombok/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
+    "//plugins/kotlin/compiler-plugins/noarg/gradle",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end
