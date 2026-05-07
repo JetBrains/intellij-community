@@ -232,19 +232,19 @@ Any Kotlin default turns the parameter into an optional JSON-schema property. Pr
 suspend fun read_file(
   @McpDescription(Constants.FILE_PATH_DESCRIPTION)
   file_path: String,
-  @McpDescription("Read mode: 'slice', 'lines', 'line_columns', 'offsets', or 'indentation'")
-  mode: String = "slice",
   @McpDescription("1-based line number to start reading from")
-  start_line: Int = 1,
+  offset: Int = 1,
+  @McpDescription("Maximum number of lines to return")
+  limit: Int = 2000,
   /* … */
 ): String
 ```
 
-From [`ReadToolset.kt:68-74`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt).
+From [`ReadToolset.kt:44-50`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt).
 
 > **Important:** the framework only propagates the *optional* flag to the JSON schema — the actual default *value* is **not** emitted
 > because it's not stored as metadata in bytecode. If you want the LLM to see a default, **write it into the `@McpDescription` text manually
-**, e.g. `"Read mode: 'slice', 'lines', … (default: slice)"`. This is a common omission in new tools. See [§17.2](#172-schema-generation)
+**, e.g. `"Maximum number of lines to return (default: 2000)"`. This is a common omission in new tools. See [§17.2](#172-schema-generation)
 > for the mechanism.
 
 ### 4.3 Reuse description constants
@@ -336,7 +336,7 @@ suspend fun read_file(/* … */): String { /* … */
 }
 ```
 
-For large outputs always cap with a parameter like `max_lines` or `limit`; see [§15.2](#152-paginated--truncated-output).
+For large outputs always cap with a parameter like `limit`; see [§15.2](#152-paginated--truncated-output).
 
 ### 5.3 `@Serializable` data class
 
@@ -784,13 +784,13 @@ Every parameter needs a description that states, at minimum:
 - Units: milliseconds, bytes, lines.
 - `null` / missing semantics.
 
-Good examples in [`ReadToolset.kt:73-94`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt):
+Good examples in [`ReadToolset.kt:47-50`](src/com/intellij/mcpserver/toolsets/general/ReadToolset.kt):
 
 ```kotlin
-@McpDescription("1-based end line for lines/line_columns mode (inclusive for lines; exclusive for line_columns)")
-end_line: Int? = null,
-@McpDescription("0-based start offset for offsets mode (requires end_offset)")
-start_offset: Int? = null,
+@McpDescription("1-based line number to start reading from")
+offset: Int = 1,
+@McpDescription("Maximum number of lines to return")
+limit: Int = DEFAULT_READ_LIMIT,
 ```
 
 ### 13.4 Interpolate constants into descriptions whenever you can
@@ -807,7 +807,7 @@ limit: Int = Constants.MAX_LINES_COUNT_VALUE,
 limit: Int = Constants.MAX_LINES_COUNT_VALUE,
 ```
 
-This works whenever the referenced value is itself a `const val` (Kotlin compile-time constant) — primitives and `String` literals. Use it everywhere it compiles: defaults for `limit` / `max_lines` / `timeout` / `max_depth`, size bounds mentioned in descriptions, mode enumerations backed by `const val`, etc. If the referenced value is not `const` (e.g., a `val` computed at runtime), fall back to writing the number by hand and accept the drift risk — there is no runtime-string-interpolation path for `@McpDescription` arguments because annotations only accept compile-time constants.
+This works whenever the referenced value is itself a `const val` (Kotlin compile-time constant) — primitives and `String` literals. Use it everywhere it compiles: defaults for `limit` / `timeout` / `max_depth`, size bounds mentioned in descriptions, mode enumerations backed by `const val`, etc. If the referenced value is not `const` (e.g., a `val` computed at runtime), fall back to writing the number by hand and accept the drift risk — there is no runtime-string-interpolation path for `@McpDescription` arguments because annotations only accept compile-time constants.
 
 ---
 
@@ -890,7 +890,7 @@ high-level path.
 
 ### 15.2 Paginated / truncated output
 
-Heavy-output tools should accept `limit` / `max_lines` / `offset` and flag truncation in the result. Pattern from [
+Heavy-output tools should accept `limit` / `offset` and flag truncation in the result. Pattern from [
 `SearchToolset.kt:91-95`](src/com/intellij/mcpserver/toolsets/general/SearchToolset.kt):
 
 ```kotlin
@@ -971,7 +971,7 @@ Blocks on filesystem / network IO    → withContext(Dispatchers.IO) { }
 
 ### 16.3 Smells to avoid
 
-- Returning a huge `String` without a `limit` / `max_lines` parameter.
+- Returning a huge `String` without a `limit` parameter.
 - Catching `CancellationException` (always rethrow or avoid catching it).
 - Running blocking IO on the default dispatcher.
 - Hardcoding user-facing strings instead of `McpServerBundle.message(...)`.

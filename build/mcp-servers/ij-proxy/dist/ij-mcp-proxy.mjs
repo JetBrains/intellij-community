@@ -22317,7 +22317,7 @@ async function isTrackedPath(relativePath, projectPath) {
 
 // proxy-tools/shared.ts
 import path from "path";
-var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, FULL_READ_END_LINE = 2147483647, NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
+var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, READ_FILE_MAX_LINE_LENGTH = 500, NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
 }), positiveIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
   message: "must be a positive integer"
@@ -22337,11 +22337,6 @@ function toPositiveInt(value, fallback, label) {
   if (value === void 0 || value === null)
     return fallback;
   return parseWithMessage(positiveIntSchema, value, `${label} must be a positive integer`);
-}
-function toNonNegativeInt(value, fallback, label) {
-  if (value === void 0 || value === null)
-    return fallback;
-  return parseWithMessage(nonNegativeIntSchema, value, `${label} must be a non-negative integer`);
 }
 function resolvePathInProject(projectPath, inputPath, label) {
   let rawPath = requireString(inputPath, label), absolute = path.isAbsolute(rawPath) ? path.normalize(rawPath) : path.resolve(projectPath, rawPath), relative = path.relative(projectPath, absolute);
@@ -22565,14 +22560,20 @@ function normalizeLineEndings(text) {
 `).replace(/\r/g, `
 `);
 }
+function formatReadLine(line) {
+  if (line.length <= READ_FILE_MAX_LINE_LENGTH)
+    return line;
+  let boundaryIndex = READ_FILE_MAX_LINE_LENGTH - 1, boundaryChar = line.charCodeAt(boundaryIndex);
+  if (boundaryChar >= 55296 && boundaryChar <= 56319)
+    return Array.from(line).slice(0, READ_FILE_MAX_LINE_LENGTH).join("");
+  return line.slice(0, READ_FILE_MAX_LINE_LENGTH);
+}
 async function readFileTextExact(relativePath, callUpstreamTool) {
   try {
     let result = await callUpstreamTool("read_file", {
       file_path: relativePath,
-      mode: "lines",
-      start_line: 1,
-      end_line: FULL_READ_END_LINE,
-      max_lines: FULL_READ_MAX_LINES
+      offset: 1,
+      limit: FULL_READ_MAX_LINES
     }), text = extractTextFromResult(result);
     if (typeof text === "string")
       return renderRawTextFromReadOutput(text);
@@ -23481,31 +23482,19 @@ function formatEntry(entry) {
 }
 
 // proxy-tools/handlers/read.ts
-var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR2 = "file content truncated while reading", MODE_VALUES = /* @__PURE__ */ new Set(["slice", "lines", "line_columns", "offsets", "indentation"]);
+var DEFAULT_READ_LIMIT = 2000, TRUNCATION_ERROR2 = "file content truncated while reading";
 async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format = "numbered" } = {}) {
   let normalizedArgs = normalizeReadArgs(args), includeLineNumbers = format !== "raw", { relative, absolute } = resolvePathInProject(projectPath, normalizedArgs.filePath, "file_path");
   if (format !== "raw" && readCapabilities.hasReadFile)
     return callNativeReadTool(normalizedArgs, relative, callUpstreamTool);
-  if (!readCapabilities.hasReadFile && format !== "raw" && normalizedArgs.mode === "indentation")
+  if (!readCapabilities.hasReadFile && format !== "raw")
     try {
-      return await readIndentationMode(relative, normalizedArgs.startLine, normalizedArgs.maxLines, resolveIndentationOptions(normalizedArgs), includeLineNumbers, callUpstreamTool);
+      return await readSliceMode(relative, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
     } catch (error48) {
       if (!isTruncationError(error48))
         throw error48;
       try {
-        return await readIndentationModeFromSearch(projectPath, relative, absolute, normalizedArgs.startLine, normalizedArgs.maxLines, resolveIndentationOptions(normalizedArgs), includeLineNumbers, callUpstreamTool);
-      } catch {
-        throw error48;
-      }
-    }
-  if (!readCapabilities.hasReadFile && format !== "raw" && normalizedArgs.mode === "slice")
-    try {
-      return await readSliceMode(relative, normalizedArgs.startLine, normalizedArgs.maxLines, includeLineNumbers, callUpstreamTool);
-    } catch (error48) {
-      if (!isTruncationError(error48))
-        throw error48;
-      try {
-        return await readSliceModeFromSearch(projectPath, relative, absolute, normalizedArgs.startLine, normalizedArgs.maxLines, includeLineNumbers, callUpstreamTool);
+        return await readSliceModeFromSearch(projectPath, relative, absolute, normalizedArgs.offset, normalizedArgs.limit, includeLineNumbers, callUpstreamTool);
       } catch {
         throw error48;
       }
@@ -23516,124 +23505,19 @@ async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilit
   return renderReadFromText(normalizeLineEndings(text), normalizedArgs, includeLineNumbers);
 }
 function normalizeReadArgs(args) {
-  let filePath = requireString(args.file_path, "file_path"), mode = normalizeMode(args.mode), startLine = toPositiveInt(args.start_line, 1, "start_line") ?? 1, maxLines = toPositiveInt(args.max_lines, DEFAULT_READ_LIMIT, "max_lines") ?? DEFAULT_READ_LIMIT, endLine = args.end_line === void 0 || args.end_line === null ? null : toPositiveInt(args.end_line, void 0, "end_line") ?? null, startColumn = args.start_column === void 0 || args.start_column === null ? null : toPositiveInt(args.start_column, void 0, "start_column") ?? null, endColumn = args.end_column === void 0 || args.end_column === null ? null : toPositiveInt(args.end_column, void 0, "end_column") ?? null, startOffset = args.start_offset === void 0 || args.start_offset === null ? null : toNonNegativeInt(args.start_offset, void 0, "start_offset") ?? null, endOffset = args.end_offset === void 0 || args.end_offset === null ? null : toNonNegativeInt(args.end_offset, void 0, "end_offset") ?? null, contextLines = toNonNegativeInt(args.context_lines, 0, "context_lines") ?? 0, maxLevels = args.max_levels === void 0 || args.max_levels === null ? null : toNonNegativeInt(args.max_levels, void 0, "max_levels") ?? null, includeSiblings = parseOptionalBoolean(args.include_siblings, "include_siblings"), includeHeader = parseOptionalBoolean(args.include_header, "include_header");
-  switch (mode) {
-    case "slice":
-      requireNoRangeParamsForMode(mode, endLine, startColumn, endColumn, startOffset, endOffset, maxLevels, includeSiblings, includeHeader, contextLines);
-      break;
-    case "lines":
-      if (requireNoLineColumnParams(mode, startColumn, endColumn), requireNoOffsetParams(mode, startOffset, endOffset), requireNoIndentationParams(mode, maxLevels, includeSiblings, includeHeader), endLine == null)
-        throw Error("end_line is required for mode 'lines'");
-      if (endLine < startLine)
-        throw Error("end_line must be >= start_line");
-      break;
-    case "line_columns":
-      if (requireNoOffsetParams(mode, startOffset, endOffset), requireNoIndentationParams(mode, maxLevels, includeSiblings, includeHeader), startColumn == null)
-        throw Error("start_column is required for mode 'line_columns'");
-      if (endColumn == null)
-        throw Error("end_column is required for mode 'line_columns'");
-      if (endLine != null && endLine < startLine)
-        throw Error("end_line must be >= start_line");
-      break;
-    case "offsets":
-      if (requireNoLineColumnParams(mode, startColumn, endColumn), requireNoIndentationParams(mode, maxLevels, includeSiblings, includeHeader), endLine != null)
-        throw Error("end_line is not supported in mode 'offsets'");
-      if (startOffset == null)
-        throw Error("start_offset is required for mode 'offsets'");
-      if (endOffset == null)
-        throw Error("end_offset is required for mode 'offsets'");
-      if (endOffset < startOffset)
-        throw Error("end_offset must be >= start_offset");
-      break;
-    case "indentation":
-      requireNoRangeParamsForMode(mode, endLine, startColumn, endColumn, startOffset, endOffset, null, null, null, contextLines);
-      break;
-  }
+  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset") ?? 1, limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit") ?? DEFAULT_READ_LIMIT;
   return {
     filePath,
-    mode,
-    startLine,
-    maxLines,
-    endLine,
-    startColumn,
-    endColumn,
-    startOffset,
-    endOffset,
-    contextLines,
-    maxLevels,
-    includeSiblings,
-    includeHeader
-  };
-}
-function normalizeMode(mode) {
-  let normalized = (typeof mode === "string" ? mode : String(mode ?? "slice")).trim().toLowerCase();
-  if (MODE_VALUES.has(normalized))
-    return normalized;
-  throw Error("mode must be one of: slice, lines, line_columns, offsets, indentation");
-}
-function parseOptionalBoolean(value, label) {
-  if (value === void 0 || value === null)
-    return null;
-  if (typeof value === "boolean")
-    return value;
-  throw Error(`${label} must be a boolean`);
-}
-function requireNoLineColumnParams(mode, startColumn, endColumn) {
-  if (startColumn != null || endColumn != null)
-    throw Error(`start_column/end_column are not supported in mode '${mode}'`);
-}
-function requireNoOffsetParams(mode, startOffset, endOffset) {
-  if (startOffset != null || endOffset != null)
-    throw Error(`start_offset/end_offset are not supported in mode '${mode}'`);
-}
-function requireNoIndentationParams(mode, maxLevels, includeSiblings, includeHeader) {
-  if (maxLevels != null || includeSiblings != null || includeHeader != null)
-    throw Error(`max_levels/include_siblings/include_header are not supported in mode '${mode}'`);
-}
-function requireNoRangeParamsForMode(mode, endLine, startColumn, endColumn, startOffset, endOffset, maxLevels, includeSiblings, includeHeader, contextLines) {
-  if (endLine != null)
-    throw Error(`end_line is not supported in mode '${mode}'`);
-  if (startColumn != null || endColumn != null)
-    throw Error(`start_column/end_column are not supported in mode '${mode}'`);
-  if (startOffset != null || endOffset != null)
-    throw Error(`start_offset/end_offset are not supported in mode '${mode}'`);
-  if (contextLines !== 0)
-    throw Error(`context_lines is not supported in mode '${mode}'`);
-  if (maxLevels != null || includeSiblings != null || includeHeader != null)
-    throw Error("max_levels/include_siblings/include_header are only supported in mode 'indentation'");
-}
-function resolveIndentationOptions(args) {
-  return {
-    maxLevels: args.maxLevels ?? 0,
-    includeSiblings: args.includeSiblings ?? !1,
-    includeHeader: args.includeHeader ?? !0
+    offset,
+    limit
   };
 }
 async function callNativeReadTool(args, relativePath, callUpstreamTool) {
   let upstreamArgs = {
     file_path: relativePath,
-    mode: args.mode,
-    start_line: args.startLine,
-    max_lines: args.maxLines,
-    context_lines: args.contextLines
-  };
-  if (args.endLine != null)
-    upstreamArgs.end_line = args.endLine;
-  if (args.startColumn != null)
-    upstreamArgs.start_column = args.startColumn;
-  if (args.endColumn != null)
-    upstreamArgs.end_column = args.endColumn;
-  if (args.startOffset != null)
-    upstreamArgs.start_offset = args.startOffset;
-  if (args.endOffset != null)
-    upstreamArgs.end_offset = args.endOffset;
-  if (args.maxLevels != null)
-    upstreamArgs.max_levels = args.maxLevels;
-  if (args.includeSiblings != null)
-    upstreamArgs.include_siblings = args.includeSiblings;
-  if (args.includeHeader != null)
-    upstreamArgs.include_header = args.includeHeader;
-  let result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
+    offset: args.offset,
+    limit: args.limit
+  }, result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
   if (typeof text === "string")
     return text;
   if (typeof result === "string")
@@ -23641,115 +23525,29 @@ async function callNativeReadTool(args, relativePath, callUpstreamTool) {
   throw Error("Failed to read file contents");
 }
 function renderReadFromText(text, args, includeLineNumbers) {
-  let index = buildTextIndex(text);
-  switch (args.mode) {
-    case "slice":
-      return renderSlice(index, args.startLine, args.maxLines, includeLineNumbers);
-    case "lines":
-      return renderRangeWithContext(index, args.startLine, args.endLine ?? args.startLine, args.contextLines, args.maxLines, includeLineNumbers);
-    case "line_columns": {
-      let startOffset = resolveLineColumnOffset(index, args.startLine, args.startColumn ?? 1, "start"), endLine = args.endLine ?? args.startLine, endOffset = resolveLineColumnOffset(index, endLine, args.endColumn ?? 1, "end");
-      if (endOffset < startOffset)
-        throw Error("end position must be >= start position");
-      let inclusiveEndLine = resolveInclusiveEndLine(index, startOffset, endOffset, args.startLine);
-      return renderRangeWithContext(index, args.startLine, inclusiveEndLine, args.contextLines, args.maxLines, includeLineNumbers);
-    }
-    case "offsets": {
-      let startOffset = args.startOffset ?? 0, endOffset = args.endOffset ?? 0;
-      if (endOffset > index.textLength)
-        throw Error("end_offset exceeds file length");
-      let startLine = resolveLineNumberAtOffset(index, startOffset) + 1, inclusiveEndLine = resolveInclusiveEndLine(index, startOffset, endOffset, startLine);
-      return renderRangeWithContext(index, startLine, inclusiveEndLine, args.contextLines, args.maxLines, includeLineNumbers);
-    }
-    case "indentation":
-      return readIndentationFromText(text, args.startLine, args.maxLines, resolveIndentationOptions(args), includeLineNumbers);
-  }
+  let lines = splitLines2(text);
+  if (args.offset > lines.length)
+    throw Error("offset exceeds file length");
+  return sliceLines(lines, args.offset, args.limit, includeLineNumbers);
 }
-function buildTextIndex(text) {
-  let lines = text.split(`
-`), lineStartOffsets = [], offset = 0;
-  for (let index = 0;index < lines.length; index += 1)
-    if (lineStartOffsets.push(offset), offset += lines[index].length, index < lines.length - 1)
-      offset += 1;
-  return {
-    lines,
-    lineStartOffsets,
-    textLength: text.length
-  };
-}
-function renderSlice(index, startLine, maxLines, includeLineNumbers) {
-  if (startLine > index.lines.length)
-    throw Error("start_line exceeds file length");
-  let endLine = Math.min(startLine + maxLines - 1, index.lines.length);
-  return renderLineRange(index.lines, startLine, endLine, includeLineNumbers);
-}
-function renderRangeWithContext(index, startLine, inclusiveEndLine, contextLines, maxLines, includeLineNumbers) {
-  let rangeLines = inclusiveEndLine - startLine + 1, contextPerSide = capContextLines(rangeLines, contextLines, maxLines), readStartLine = Math.max(1, startLine - contextPerSide), readEndLine = Math.min(index.lines.length, inclusiveEndLine + contextPerSide);
-  return renderLineRange(index.lines, readStartLine, readEndLine, includeLineNumbers);
-}
-function capContextLines(rangeLines, requestedContext, maxLines) {
-  if (rangeLines <= 0)
-    throw Error("range must be greater than zero");
-  if (rangeLines > maxLines)
-    throw Error(`range exceeds max_lines; increase max_lines to at least ${rangeLines}`);
-  if (requestedContext <= 0)
-    return 0;
-  let perSideCap = Math.floor((maxLines - rangeLines) / 2);
-  return Math.min(requestedContext, perSideCap);
-}
-function renderLineRange(lines, startLine, endLine, includeLineNumbers) {
-  let output = [];
-  for (let lineNumber = startLine;lineNumber <= endLine; lineNumber += 1) {
-    let rawLine = lines[lineNumber - 1] ?? "", display = includeLineNumbers ? formatLine(rawLine) : rawLine;
-    output.push(formatOutputLine(lineNumber, display, includeLineNumbers));
+function sliceLines(lines, offset, limit, includeLineNumbers) {
+  let endLine = Math.min(offset - 1 + limit, lines.length), output = [];
+  for (let index = offset - 1;index < endLine; index += 1) {
+    let rawLine = lines[index], display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
+    output.push(formatOutputLine(index + 1, display, includeLineNumbers));
   }
   return output.join(`
 `);
-}
-function resolveLineColumnOffset(index, lineNumber, column, label) {
-  if (lineNumber > index.lines.length)
-    throw Error(`${label} line exceeds file length`);
-  let lineIndex = lineNumber - 1, maxColumn = index.lines[lineIndex].length + 1;
-  if (column > maxColumn)
-    throw Error(`${label} column exceeds line length`);
-  return index.lineStartOffsets[lineIndex] + column - 1;
-}
-function resolveInclusiveEndLine(index, startOffset, endOffset, fallbackLine) {
-  return endOffset > startOffset ? resolveLineNumberAtOffset(index, endOffset - 1) + 1 : fallbackLine;
-}
-function resolveLineNumberAtOffset(index, offset) {
-  let low = 0, high = index.lineStartOffsets.length - 1;
-  while (low <= high) {
-    let middle = Math.floor((low + high) / 2), currentStart = index.lineStartOffsets[middle], nextStart = middle + 1 < index.lineStartOffsets.length ? index.lineStartOffsets[middle + 1] : index.textLength + 1;
-    if (offset < currentStart) {
-      high = middle - 1;
-      continue;
-    }
-    if (offset >= nextStart) {
-      low = middle + 1;
-      continue;
-    }
-    return middle;
-  }
-  return Math.max(0, index.lineStartOffsets.length - 1);
-}
-function formatLine(line) {
-  if (line.length <= MAX_LINE_LENGTH)
-    return line;
-  let boundaryIndex = MAX_LINE_LENGTH - 1, boundaryChar = line.charCodeAt(boundaryIndex);
-  if (boundaryChar >= 55296 && boundaryChar <= 56319)
-    return Array.from(line).slice(0, MAX_LINE_LENGTH).join("");
-  return line.slice(0, MAX_LINE_LENGTH);
 }
 function formatOutputLine(lineNumber, lineText, includeLineNumbers) {
   if (!includeLineNumbers)
     return lineText;
   return `L${lineNumber}: ${lineText}`;
 }
-async function readSliceMode(relativePath, startLine, maxLines, includeLineNumbers, callUpstreamTool) {
-  let requestedLines = startLine + maxLines - 1;
+async function readSliceMode(relativePath, offset, limit, includeLineNumbers, callUpstreamTool) {
+  let requestedLines = offset + limit - 1;
   if (requestedLines <= 0)
-    throw Error("max_lines must be greater than zero");
+    throw Error("limit must be greater than zero");
   let maxLinesCount = Math.max(3, requestedLines), text = await readFileTextLegacy(relativePath, {
     maxLinesCount,
     truncateMode: "START"
@@ -23763,218 +23561,24 @@ async function readSliceMode(relativePath, startLine, maxLines, includeLineNumbe
   }
   if (truncated && requestedLines > lines.length)
     throw Error(TRUNCATION_ERROR2);
-  if (startLine > lines.length)
-    throw Error("start_line exceeds file length");
-  return sliceLines(lines, startLine, maxLines, includeLineNumbers);
+  if (offset > lines.length)
+    throw Error("offset exceeds file length");
+  return sliceLines(lines, offset, limit, includeLineNumbers);
 }
-async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, startLine, maxLines, includeLineNumbers, callUpstreamTool) {
-  let requestedLines = startLine + maxLines - 1;
+async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, includeLineNumbers, callUpstreamTool) {
+  let requestedLines = offset + limit - 1;
   if (requestedLines <= 0)
-    throw Error("max_lines must be greater than zero");
+    throw Error("limit must be greater than zero");
   let { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
-  if (maxLineNumber < startLine) {
+  if (maxLineNumber < offset) {
     if (hasMore)
       throw Error(TRUNCATION_ERROR2);
-    throw Error("start_line exceeds file length");
+    throw Error("offset exceeds file length");
   }
-  let endLine = Math.min(startLine + maxLines - 1, maxLineNumber), output = [];
-  for (let lineNumber = startLine;lineNumber <= endLine; lineNumber += 1) {
-    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatLine(rawLine) : rawLine;
+  let endLine = Math.min(offset + limit - 1, maxLineNumber), output = [];
+  for (let lineNumber = offset;lineNumber <= endLine; lineNumber += 1) {
+    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatReadLine(rawLine) : rawLine;
     output.push(formatOutputLine(lineNumber, display, includeLineNumbers));
-  }
-  return output.join(`
-`);
-}
-function measureIndent(line) {
-  let indent = 0;
-  for (let char of line)
-    if (char === " ")
-      indent += 1;
-    else if (char === "\t")
-      indent += TAB_WIDTH;
-    else
-      break;
-  return indent;
-}
-function trimEmptyRecords(records) {
-  while (records.length > 0 && records[0].raw.trim() === "")
-    records.shift();
-  while (records.length > 0 && records[records.length - 1].raw.trim() === "")
-    records.pop();
-}
-function iterateLines(text, onLine) {
-  let lineStart = 0, lineNumber = 1, length = text.length;
-  for (let i = 0;i <= length; i += 1) {
-    if (!(i === length || text.charCodeAt(i) === 10))
-      continue;
-    let lineEnd = i;
-    if (lineEnd > lineStart && text.charCodeAt(lineEnd - 1) === 13)
-      lineEnd -= 1;
-    let line = text.slice(lineStart, lineEnd);
-    if (onLine(line, lineNumber) === !1)
-      return lineNumber;
-    lineNumber += 1, lineStart = i + 1;
-  }
-  return lineNumber - 1;
-}
-async function readIndentationMode(relativePath, startLine, maxLines, options, includeLineNumbers, callUpstreamTool) {
-  if (maxLines <= 0)
-    throw Error("max_lines must be greater than zero");
-  let maxLinesCount = Math.max(3, startLine + maxLines), text = await readFileTextLegacy(relativePath, {
-    maxLinesCount,
-    truncateMode: "START"
-  }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text);
-  try {
-    return readIndentationFromText(trimmedText, startLine, maxLines, options, includeLineNumbers);
-  } catch (error48) {
-    if (wasTruncated && isStartLineError(error48)) {
-      let refreshed = await readFileTextLegacy(relativePath, {
-        maxLinesCount: Math.max(3, startLine + maxLines),
-        truncateMode: "NONE"
-      }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed);
-      try {
-        return readIndentationFromText(refreshedText, startLine, maxLines, options, includeLineNumbers);
-      } catch (refreshedError) {
-        if (refreshedTruncated && isStartLineError(refreshedError))
-          throw Error(TRUNCATION_ERROR2);
-        throw refreshedError;
-      }
-    }
-    throw error48;
-  }
-}
-async function readIndentationModeFromSearch(projectPath, relativePath, absolutePath, startLine, maxLines, options, includeLineNumbers, callUpstreamTool) {
-  if (maxLines <= 0)
-    throw Error("max_lines must be greater than zero");
-  let requestedLines = startLine + maxLines, { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
-  if (maxLineNumber < startLine) {
-    if (hasMore)
-      throw Error(TRUNCATION_ERROR2);
-    throw Error("start_line exceeds file length");
-  }
-  let cappedMaxLine = Math.min(requestedLines, maxLineNumber), lines = [];
-  for (let lineNumber = 1;lineNumber <= cappedMaxLine; lineNumber += 1)
-    lines.push(lineMap.get(lineNumber) ?? "");
-  let text = lines.join(`
-`);
-  return readIndentationFromText(text, startLine, maxLines, options, includeLineNumbers);
-}
-function readIndentationFromText(text, startLine, maxLines, options, includeLineNumbers) {
-  if (maxLines <= 0)
-    throw Error("max_lines must be greater than zero");
-  let targetLimit = maxLines, maxBefore = Math.max(0, targetLimit - 1), maxAfter = maxBefore, beforeBuffer = [], beforeStart = 0, afterBuffer = [], anchorRecord = null, minIndent = 0, previousIndent = 0, inBlockComment = !1, belowDone = !1, seenMinIndent = !1;
-  if (iterateLines(text, (line, lineNumber) => {
-    if (line === TRUNCATION_MARKER)
-      return !1;
-    let trimmed = line.trim(), isBlank = trimmed === "", isHeader = !1;
-    if (!isBlank) {
-      if (inBlockComment) {
-        if (isHeader = !0, trimmed.includes(BLOCK_COMMENT_END))
-          inBlockComment = !1;
-      } else if (COMMENT_PREFIXES.some((prefix) => trimmed.startsWith(prefix)))
-        isHeader = !0;
-      else if (trimmed.startsWith(BLOCK_COMMENT_START)) {
-        if (isHeader = !0, !trimmed.includes(BLOCK_COMMENT_END))
-          inBlockComment = !0;
-      } else if (trimmed.startsWith("*"))
-        isHeader = !0;
-      else if (trimmed.startsWith(ANNOTATION_PREFIX))
-        isHeader = !0;
-    }
-    let indent = previousIndent;
-    if (!isBlank)
-      indent = measureIndent(line), previousIndent = indent;
-    let effectiveIndent = indent;
-    if (lineNumber < startLine) {
-      if (maxBefore > 0) {
-        if (beforeBuffer.push({ number: lineNumber, raw: line, effectiveIndent, isHeader }), beforeBuffer.length - beforeStart > maxBefore) {
-          if (beforeStart += 1, beforeStart > 2048)
-            beforeBuffer.splice(0, beforeStart), beforeStart = 0;
-        }
-      }
-      return !0;
-    }
-    if (lineNumber === startLine) {
-      if (anchorRecord = { number: lineNumber, raw: line, effectiveIndent, isHeader }, minIndent = options.maxLevels === 0 ? 0 : Math.max(0, effectiveIndent - options.maxLevels * TAB_WIDTH), maxAfter === 0)
-        return !1;
-      return !0;
-    }
-    if (!anchorRecord)
-      return !0;
-    if (belowDone || afterBuffer.length >= maxAfter)
-      return !1;
-    if (effectiveIndent < minIndent)
-      return belowDone = !0, !1;
-    if (!options.includeSiblings && effectiveIndent === minIndent) {
-      if (seenMinIndent)
-        return belowDone = !0, !1;
-      seenMinIndent = !0;
-    }
-    if (afterBuffer.push({ number: lineNumber, raw: line, effectiveIndent, isHeader }), afterBuffer.length >= maxAfter)
-      return !1;
-    return !0;
-  }), beforeStart > 0)
-    beforeBuffer.splice(0, beforeStart), beforeStart = 0;
-  if (!anchorRecord)
-    throw Error("start_line exceeds file length");
-  let headerRecords = [];
-  if (options.includeHeader && beforeBuffer.length > 0) {
-    let idx = beforeBuffer.length - 1;
-    while (idx >= 0 && beforeBuffer[idx].isHeader)
-      idx -= 1;
-    let start = idx + 1;
-    if (start < beforeBuffer.length) {
-      let contiguous = beforeBuffer.slice(start), maxHeader = Math.max(0, targetLimit - 1), takeCount = Math.min(contiguous.length, maxHeader);
-      if (takeCount > 0)
-        headerRecords = contiguous.slice(contiguous.length - takeCount), beforeBuffer.splice(beforeBuffer.length - takeCount, takeCount);
-    }
-  }
-  let available = 1 + beforeBuffer.length + afterBuffer.length + headerRecords.length, finalLimit = Math.min(targetLimit, available);
-  if (finalLimit === 1) {
-    let lineText = includeLineNumbers ? formatLine(anchorRecord.raw) : anchorRecord.raw;
-    return formatOutputLine(anchorRecord.number, lineText, includeLineNumbers);
-  }
-  let i = beforeBuffer.length - 1, j = 0, iCounterMinIndent = 0, jCounterMinIndent = 0, out = headerRecords.length > 0 ? [...headerRecords, anchorRecord] : [anchorRecord];
-  while (out.length < finalLimit) {
-    let progressed = 0;
-    if (i >= 0) {
-      let record3 = beforeBuffer[i];
-      if (record3.effectiveIndent >= minIndent) {
-        if (out.unshift(record3), progressed += 1, i -= 1, record3.effectiveIndent === minIndent && !options.includeSiblings)
-          if (options.includeHeader && record3.isHeader || iCounterMinIndent === 0)
-            iCounterMinIndent += 1;
-          else
-            out.shift(), progressed -= 1, i = -1;
-        if (out.length >= finalLimit)
-          break;
-      } else
-        i = -1;
-    }
-    if (j < afterBuffer.length) {
-      let record3 = afterBuffer[j];
-      if (record3.effectiveIndent >= minIndent) {
-        if (out.push(record3), progressed += 1, j += 1, record3.effectiveIndent === minIndent && !options.includeSiblings) {
-          if (jCounterMinIndent > 0)
-            out.pop(), progressed -= 1, j = afterBuffer.length;
-          jCounterMinIndent += 1;
-        }
-      } else
-        j = afterBuffer.length;
-    }
-    if (progressed === 0)
-      break;
-  }
-  return trimEmptyRecords(out), out.map((record3) => {
-    let lineText = includeLineNumbers ? formatLine(record3.raw) : record3.raw;
-    return formatOutputLine(record3.number, lineText, includeLineNumbers);
-  }).join(`
-`);
-}
-function sliceLines(lines, startLine, maxLines, includeLineNumbers) {
-  let end = Math.min(startLine - 1 + maxLines, lines.length), output = [];
-  for (let index = startLine - 1;index < end; index += 1) {
-    let rawLine = lines[index], display = includeLineNumbers ? formatLine(rawLine) : rawLine;
-    output.push(formatOutputLine(index + 1, display, includeLineNumbers));
   }
   return output.join(`
 `);
@@ -23997,9 +23601,6 @@ function stripTrailingLineBreak(text) {
 `) || text.endsWith("\r"))
     return text.slice(0, -1);
   return text;
-}
-function isStartLineError(error48) {
-  return error48 instanceof Error && error48.message === "start_line exceeds file length";
 }
 function isTruncationError(error48) {
   return error48 instanceof Error && error48.message === TRUNCATION_ERROR2;
@@ -24602,6 +24203,7 @@ function toContainerPath(workspacePath, relativePath) {
 }
 
 // proxy-tools/container-handlers.ts
+var DEFAULT_READ_LIMIT2 = 2000;
 function toPosix(p) {
   return p.replace(/\\/g, "/");
 }
@@ -24647,8 +24249,11 @@ async function handleContainerReadFile(args, projectPath, callUpstreamTool, sess
   if (!text)
     throw Error(`[container:${session.sessionId}] File not found: ${containerPath}`);
   let lines = text.split(`
-`), offset = typeof args.offset === "number" ? args.offset : 1, limit = typeof args.limit === "number" ? args.limit : lines.length, sliced = lines.slice(offset - 1, offset - 1 + limit), maxLineNo = offset + sliced.length - 1, numWidth = String(maxLineNo).length, numbered = sliced.map((line, i) => {
-    return `${String(offset + i).padStart(numWidth, " ")}	${line}`;
+`), offset = toPositiveInt(args.offset, 1, "offset") ?? 1, limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT2, "limit") ?? DEFAULT_READ_LIMIT2;
+  if (offset > lines.length)
+    throw Error(`[container:${session.sessionId}] offset exceeds file length`);
+  let numbered = lines.slice(offset - 1, offset - 1 + limit).map((line, i) => {
+    return `L${offset + i}: ${formatReadLine(line)}`;
   }).join(`
 `);
   return tagContainer(session, numbered);
@@ -24862,61 +24467,21 @@ function objectSchema(properties, required2) {
     additionalProperties: !1
   };
 }
-function createReadSchema(includeIndentation) {
-  let properties = {
+function createReadSchema() {
+  return objectSchema({
     file_path: {
       type: "string",
       description: "Path relative to the project root."
     },
-    mode: {
-      type: "string",
-      description: "Read mode: 'slice', 'lines', 'line_columns', 'offsets', or 'indentation'."
-    },
-    start_line: {
+    offset: {
       type: "number",
       description: "1-based line number to start reading from."
     },
-    max_lines: {
+    limit: {
       type: "number",
-      description: "Maximum number of lines to return (slice uses as line count; all modes cap output)."
-    },
-    end_line: {
-      type: "number",
-      description: "1-based end line for lines/line_columns mode (inclusive for lines; exclusive for line_columns)."
-    },
-    start_column: {
-      type: "number",
-      description: "1-based start column for line_columns mode."
-    },
-    end_column: {
-      type: "number",
-      description: "1-based end column for range read (exclusive)."
-    },
-    start_offset: {
-      type: "number",
-      description: "0-based start offset for offsets mode (requires end_offset)."
-    },
-    end_offset: {
-      type: "number",
-      description: "0-based end offset for offsets mode (exclusive)."
-    },
-    context_lines: {
-      type: "number",
-      description: "Number of context lines to include around the range (per side)."
+      description: "Maximum number of lines to return."
     }
-  };
-  if (includeIndentation)
-    properties.max_levels = {
-      type: "number",
-      description: "Indentation mode: maximum indentation levels to include (0 = only anchor block)."
-    }, properties.include_siblings = {
-      type: "boolean",
-      description: "Indentation mode: include sibling blocks at the same indentation level."
-    }, properties.include_header = {
-      type: "boolean",
-      description: "Indentation mode: include header comments/annotations directly above anchor."
-    };
-  return objectSchema(properties, ["file_path"]);
+  }, ["file_path"]);
 }
 function createListDirSchema() {
   return objectSchema({
@@ -25051,8 +24616,8 @@ function buildToolSpec(name, description, inputSchema, annotations, context) {
 var TOOL_VARIANTS = [
   {
     name: "read_file",
-    description: "Reads a local file and returns numbered lines (1-indexed) as text. Supports slice, lines, line_columns, offsets, and indentation modes.",
-    schemaFactory: () => createReadSchema(!0),
+    description: "Reads a local file and returns numbered lines (1-indexed) as text. Supports optional offset and limit line controls.",
+    schemaFactory: () => createReadSchema(),
     handlerFactory: ({ projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession }) => {
       if (containerSession)
         return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession);

@@ -9,7 +9,7 @@ import {createMockToolCaller, createSeededRng, randInt, randString} from './test
 import {TRUNCATION_MARKER} from '../shared'
 
 describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
-  it('maps legacy slice reads to get_file_text_by_path', async () => {
+  it('maps legacy reads to get_file_text_by_path', async () => {
     await withProxy({
       onToolCall({name}) {
         if (name === 'get_file_text_by_path') {
@@ -24,8 +24,8 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          start_line: 2,
-          max_lines: 2
+          offset: 2,
+          limit: 2
         }
       })
       const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
@@ -39,21 +39,18 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
-  it('passes JetBrains read_file arguments through when upstream supports read_file', async () => {
+  it('passes offset and limit through when upstream supports read_file', async () => {
     const tools = [buildUpstreamTool('read_file', {
       file_path: {type: 'string'},
-      mode: {type: 'string'},
-      start_line: {type: 'number'},
-      max_lines: {type: 'number'},
-      end_line: {type: 'number'},
-      context_lines: {type: 'number'}
+      offset: {type: 'number'},
+      limit: {type: 'number'}
     }, ['file_path'])]
 
     await withProxy({
       tools,
       onToolCall({name}) {
         if (name === 'read_file') {
-          return {text: 'L1: alpha\nL2: beta\nL3: gamma'}
+          return {text: 'L2: beta\nL3: gamma'}
         }
         return {text: '{}'}
       }
@@ -64,23 +61,17 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          mode: 'lines',
-          start_line: 2,
-          end_line: 2,
-          context_lines: 1,
-          max_lines: 3
+          offset: 2,
+          limit: 2
         }
       })
       const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
 
       strictEqual(call.name, 'read_file')
       strictEqual(call.args.file_path, 'sample.txt')
-      strictEqual(call.args.mode, 'lines')
-      strictEqual(call.args.start_line, 2)
-      strictEqual(call.args.end_line, 2)
-      strictEqual(call.args.context_lines, 1)
-      strictEqual(call.args.max_lines, 3)
-      strictEqual(response.result.content[0].text, 'L1: alpha\nL2: beta\nL3: gamma')
+      strictEqual(call.args.offset, 2)
+      strictEqual(call.args.limit, 2)
+      strictEqual(response.result.content[0].text, 'L2: beta\nL3: gamma')
     })
   })
 
@@ -110,8 +101,8 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          start_line: 3,
-          max_lines: 1
+          offset: 3,
+          limit: 1
         }
       })
       const initial = await withTimeout(readCall, TOOL_CALL_TIMEOUT_MS, 'tools/call')
@@ -130,6 +121,18 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
 describe('read handler (unit)', () => {
   const projectPath = '/project/root'
 
+  it('reads default lines with numbering from the legacy fallback', async () => {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
+    })
+
+    const result = await handleReadTool({
+      file_path: 'sample.txt'
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
+
+    strictEqual(result, 'L1: alpha\nL2: beta\nL3: gamma')
+  })
+
   it('reads a slice of lines with numbering from the legacy fallback', async () => {
     const {callUpstreamTool, calls} = createMockToolCaller({
       get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
@@ -137,81 +140,14 @@ describe('read handler (unit)', () => {
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      start_line: 2,
-      max_lines: 2
+      offset: 2,
+      limit: 2
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2: beta\nL3: gamma')
     const legacyCall = calls.find((call) => call.name === 'get_file_text_by_path')
     strictEqual(legacyCall.args.maxLinesCount, 3)
     strictEqual(legacyCall.args.truncateMode, 'START')
-  })
-
-  it('reads lines mode with context from reconstructed raw text', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\ndelta\n'})
-    })
-
-    const result = await handleReadTool({
-      file_path: 'sample.txt',
-      mode: 'lines',
-      start_line: 2,
-      end_line: 3,
-      context_lines: 1,
-      max_lines: 4
-    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
-
-    strictEqual(result, 'L1: alpha\nL2: beta\nL3: gamma\nL4: delta')
-  })
-
-  it('reads line_columns mode using the containing lines', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
-    })
-
-    const result = await handleReadTool({
-      file_path: 'sample.txt',
-      mode: 'line_columns',
-      start_line: 2,
-      start_column: 2,
-      end_line: 3,
-      end_column: 3,
-      max_lines: 2
-    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
-
-    strictEqual(result, 'L2: beta\nL3: gamma')
-  })
-
-  it('reads offsets mode using the containing lines', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
-    })
-
-    const result = await handleReadTool({
-      file_path: 'sample.txt',
-      mode: 'offsets',
-      start_offset: 6,
-      end_offset: 12,
-      max_lines: 2
-    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
-
-    strictEqual(result, 'L2: beta\nL3: gamma')
-  })
-
-  it('supports indentation mode with start_line and flat indentation options', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: 'root\n  child\n    grand\n'})
-    })
-
-    const result = await handleReadTool({
-      file_path: 'sample.txt',
-      mode: 'indentation',
-      start_line: 2,
-      max_lines: 1,
-      max_levels: 1
-    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
-
-    strictEqual(result, 'L2:   child')
   })
 
   it('passes through native read_file responses when available', async () => {
@@ -221,24 +157,26 @@ describe('read handler (unit)', () => {
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      start_line: 2,
-      max_lines: 2
+      offset: 2,
+      limit: 2
     }, projectPath, callUpstreamTool, {hasReadFile: true}, {format: 'numbered'})
 
     strictEqual(result, 'L2: beta\nL3: gamma')
     strictEqual(calls.length, 1)
     strictEqual(calls[0].name, 'read_file')
     strictEqual(calls[0].args.file_path, 'sample.txt')
+    strictEqual(calls[0].args.offset, 2)
+    strictEqual(calls[0].args.limit, 2)
   })
 
-  it('fuzz: slice output matches the requested range', async () => {
+  it('fuzz: output matches the requested range', async () => {
     const rng = createSeededRng(4242)
 
     for (let i = 0; i < 12; i += 1) {
       const lineCount = randInt(rng, 1, 10)
       const lines = Array.from({length: lineCount}, () => randString(rng, 6))
-      const startLine = randInt(rng, 1, lineCount)
-      const maxLines = randInt(rng, 1, lineCount)
+      const offset = randInt(rng, 1, lineCount)
+      const limit = randInt(rng, 1, lineCount)
 
       const {callUpstreamTool} = createMockToolCaller({
         get_file_text_by_path: () => ({text: `${lines.join('\n')}\n`})
@@ -246,13 +184,13 @@ describe('read handler (unit)', () => {
 
       const result = await handleReadTool({
         file_path: 'sample.txt',
-        start_line: startLine,
-        max_lines: maxLines
+        offset,
+        limit
       }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
-      const endLine = Math.min(startLine - 1 + maxLines, lineCount)
+      const endLine = Math.min(offset - 1 + limit, lineCount)
       const expected = []
-      for (let index = startLine - 1; index < endLine; index += 1) {
+      for (let index = offset - 1; index < endLine; index += 1) {
         expected.push(`L${index + 1}: ${lines[index]}`)
       }
       strictEqual(result, expected.join('\n'))
@@ -273,8 +211,8 @@ describe('read handler (unit)', () => {
     await rejects(
       () => handleReadTool({
         file_path: 'sample.txt',
-        start_line: 3,
-        max_lines: 1
+        offset: 3,
+        limit: 1
       }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
       /file content truncated while reading/
     )

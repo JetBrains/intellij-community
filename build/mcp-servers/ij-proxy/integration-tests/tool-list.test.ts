@@ -32,9 +32,8 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   const upstreamToolsWithReadFile = [
     buildUpstreamTool('read_file', {
       file_path: {type: 'string'},
-      mode: {type: 'string'},
-      start_line: {type: 'number'},
-      max_lines: {type: 'number'}
+      offset: {type: 'number'},
+      limit: {type: 'number'}
     }, ['file_path'], readOnlyAnnotations)
   ]
   const upstreamToolsWithApplyPatch = [
@@ -125,7 +124,8 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       ok(readTool)
       const properties = readTool.inputSchema?.properties ?? {}
       ok('file_path' in properties)
-      ok('mode' in properties)
+      ok('offset' in properties)
+      ok('limit' in properties)
       ok(readTool.annotations?.readOnlyHint === true)
       ok(readTool.annotations?.openWorldHint === false)
     })

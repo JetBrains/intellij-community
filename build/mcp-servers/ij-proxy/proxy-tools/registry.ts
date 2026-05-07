@@ -108,8 +108,8 @@ function buildToolSpec(
 const TOOL_VARIANTS: ToolVariant[] = [
   {
     name: 'read_file',
-    description: 'Reads a local file and returns numbered lines (1-indexed) as text. Supports slice, lines, line_columns, offsets, and indentation modes.',
-    schemaFactory: () => createReadSchema(true),
+    description: 'Reads a local file and returns numbered lines (1-indexed) as text. Supports optional offset and limit line controls.',
+    schemaFactory: () => createReadSchema(),
     handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession}) => {
       if (containerSession) return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession)
       return (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'})

@@ -13,62 +13,19 @@ function objectSchema(properties: Record<string, JsonSchemaProperty>, required?:
   }
 }
 
-export function createReadSchema(includeIndentation: boolean): ToolInputSchema {
+export function createReadSchema(): ToolInputSchema {
   const properties: Record<string, JsonSchemaProperty> = {
     file_path: {
       type: 'string',
       description: 'Path relative to the project root.'
     },
-    mode: {
-      type: 'string',
-      description: "Read mode: 'slice', 'lines', 'line_columns', 'offsets', or 'indentation'."
-    },
-    start_line: {
+    offset: {
       type: 'number',
       description: '1-based line number to start reading from.'
     },
-    max_lines: {
+    limit: {
       type: 'number',
-      description: 'Maximum number of lines to return (slice uses as line count; all modes cap output).'
-    },
-    end_line: {
-      type: 'number',
-      description: '1-based end line for lines/line_columns mode (inclusive for lines; exclusive for line_columns).'
-    },
-    start_column: {
-      type: 'number',
-      description: '1-based start column for line_columns mode.'
-    },
-    end_column: {
-      type: 'number',
-      description: '1-based end column for range read (exclusive).'
-    },
-    start_offset: {
-      type: 'number',
-      description: '0-based start offset for offsets mode (requires end_offset).'
-    },
-    end_offset: {
-      type: 'number',
-      description: '0-based end offset for offsets mode (exclusive).'
-    },
-    context_lines: {
-      type: 'number',
-      description: 'Number of context lines to include around the range (per side).'
-    }
-  }
-
-  if (includeIndentation) {
-    properties.max_levels = {
-      type: 'number',
-      description: 'Indentation mode: maximum indentation levels to include (0 = only anchor block).'
-    }
-    properties.include_siblings = {
-      type: 'boolean',
-      description: 'Indentation mode: include sibling blocks at the same indentation level.'
-    }
-    properties.include_header = {
-      type: 'boolean',
-      description: 'Indentation mode: include header comments/annotations directly above anchor.'
+      description: 'Maximum number of lines to return.'
     }
   }
 

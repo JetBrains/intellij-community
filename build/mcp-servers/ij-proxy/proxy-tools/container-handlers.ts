@@ -11,8 +11,10 @@
 import path from 'node:path'
 import type {ContainerSessionConfig} from '../container-session'
 import {toContainerPath} from '../container-session'
-import {requireString} from './shared'
+import {formatReadLine, requireString, toPositiveInt} from './shared'
 import type {ToolArgs, UpstreamToolCaller} from './types'
+
+const DEFAULT_READ_LIMIT = 2000
 
 /**
  * Normalize a filesystem path to POSIX form (forward slashes) so it can be
@@ -95,18 +97,15 @@ export async function handleContainerReadFile(
   const text = extractText(result)
   if (!text) throw new Error(`[container:${session.sessionId}] File not found: ${containerPath}`)
 
-  // Add line numbers to match the default read_file format
   const lines = text.split('\n')
-  const offset = typeof args.offset === 'number' ? args.offset : 1
-  const limit = typeof args.limit === 'number' ? args.limit : lines.length
+  const offset = toPositiveInt(args.offset, 1, 'offset') ?? 1
+  const limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, 'limit') ?? DEFAULT_READ_LIMIT
+  if (offset > lines.length) throw new Error(`[container:${session.sessionId}] offset exceeds file length`)
   const sliced = lines.slice(offset - 1, offset - 1 + limit)
-  const maxLineNo = offset + sliced.length - 1
-  const numWidth = String(maxLineNo).length
 
   const numbered = sliced
     .map((line, i) => {
-      const lineNo = String(offset + i).padStart(numWidth, ' ')
-      return `${lineNo}\t${line}`
+      return `L${offset + i}: ${formatReadLine(line)}`
     })
     .join('\n')
   return tagContainer(session, numbered)

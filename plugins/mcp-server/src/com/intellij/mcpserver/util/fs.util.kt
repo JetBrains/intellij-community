@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -157,12 +156,6 @@ fun resolveReadFile(project: Project, filePath: String): VirtualFile {
   return file
 }
 
-// TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-fun isFileAccessible(project: Project, virtualFile: VirtualFile): Boolean {
-  val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-  return isUnderProjectDirectory(project, virtualFile) || fileIndex.isInProjectOrExcluded(virtualFile)
-}
-
 private fun normalizeReadFilePath(filePath: String): String {
   val normalizedPath = FileUtilRt.toSystemIndependentName(filePath).trim()
   if (normalizedPath.isEmpty()) {
@@ -210,7 +203,7 @@ fun looksLikeVfsUrl(filePath: String): Boolean {
 }
 
 // TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on
-private fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
+internal fun isUnderProjectDirectory(project: Project, virtualFile: VirtualFile): Boolean {
   val filePath = virtualFile.toNioPathOrNull()
                  ?: try {
                    Path.of(virtualFile.path)

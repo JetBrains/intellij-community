@@ -6,7 +6,7 @@ import type {SearchEntry, SearchItem, ToolResultLike, UpstreamToolCaller} from '
 
 export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
 const FULL_READ_MAX_LINES = 200_000
-const FULL_READ_END_LINE = 2_147_483_647
+const READ_FILE_MAX_LINE_LENGTH = 500
 const NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/
 
 export interface ResolvedPath {
@@ -266,6 +266,16 @@ export function normalizeLineEndings(text: string): string {
   return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 }
 
+export function formatReadLine(line: string): string {
+  if (line.length <= READ_FILE_MAX_LINE_LENGTH) return line
+  const boundaryIndex = READ_FILE_MAX_LINE_LENGTH - 1
+  const boundaryChar = line.charCodeAt(boundaryIndex)
+  if (boundaryChar >= 0xD800 && boundaryChar <= 0xDBFF) {
+    return Array.from(line).slice(0, READ_FILE_MAX_LINE_LENGTH).join('')
+  }
+  return line.slice(0, READ_FILE_MAX_LINE_LENGTH)
+}
+
 export async function readFileTextExact(
   relativePath: string,
   callUpstreamTool: UpstreamToolCaller
@@ -273,10 +283,8 @@ export async function readFileTextExact(
   try {
     const result = await callUpstreamTool('read_file', {
       file_path: relativePath,
-      mode: 'lines',
-      start_line: 1,
-      end_line: FULL_READ_END_LINE,
-      max_lines: FULL_READ_MAX_LINES
+      offset: 1,
+      limit: FULL_READ_MAX_LINES
     })
     const text = extractTextFromResult(result)
     if (typeof text === 'string') {
