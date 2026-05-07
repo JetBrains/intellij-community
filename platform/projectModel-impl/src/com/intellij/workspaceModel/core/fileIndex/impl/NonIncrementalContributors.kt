@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -24,6 +23,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
@@ -38,9 +38,10 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
 /**
- * Integrates data provided by [DirectoryIndexExcludePolicy] and [AdditionalLibraryRootsProvider] extensions to [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex].
- * Since these extensions don't support incremental updates, the corresponding parts of the index are rebuilt from scratch in [updateIfNeeded]
- * method after [resetCache] was called.
+ * Integrates data provided by [DirectoryIndexExcludePolicy] and [AdditionalLibraryRootsProvider] extensions
+ * to [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex].
+ * Since these extensions don't support incremental updates, the corresponding parts of the index are rebuilt from scratch
+ * in the [updateIfNeeded] method after [resetCache] was called.
  */
 internal class NonIncrementalContributors(private val project: Project) {
   private var allRoots = emptySet<VirtualFile>()
@@ -49,17 +50,16 @@ internal class NonIncrementalContributors(private val project: Project) {
   private var upToDate = false
   private val lock = Any()
 
-  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
-                     fileSetsByPackagePrefix: PackagePrefixStorage,
-                     nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry) {
-    if (upToDate) {
-      return
-    }
+  @RequiresReadLock
+  fun updateIfNeeded(
+    fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+    fileSetsByPackagePrefix: PackagePrefixStorage,
+    nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry,
+  ) {
+    if (upToDate) return
+
     synchronized(lock) {
-      if (upToDate) {
-        return
-      }
-      ApplicationManager.getApplication().assertReadAccessAllowed()
+      if (upToDate) return
 
       val excludeRootsComputationTime: Long
       val fileSetsComputationTime: Long
@@ -117,13 +117,13 @@ internal class NonIncrementalContributors(private val project: Project) {
       fileSetsComputationTimeMs.duration.addAndGet(fileSetsComputationTime)
     }
   }
-  
+
   private fun computeCustomExcludedRoots(): Pair<Object2IntMap<VirtualFile>, Set<VirtualFileUrl>> {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val excludedFiles = Object2IntOpenHashMap<VirtualFile>()
     val excludedUrls = HashSet<VirtualFileUrl>()
 
-    DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project).forEach { policy -> 
+    DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project).forEach { policy ->
       policy.excludeUrlsForProject.forEach { url ->
         val file = VirtualFileManager.getInstance().findFileByUrl(url)
         if (file != null) {
@@ -179,7 +179,10 @@ internal class NonIncrementalContributors(private val project: Project) {
     AdditionalLibraryRootsProvider.EP_NAME.extensionList.forEach { provider ->
       for (library in provider.getAdditionalProjectLibraries(project)) {
         if (library == null) {
-          PluginException.logPluginError(LOG, "The result of AdditionalLibraryRootsProvider.getAdditionalProjectLibraries on ${provider.javaClass} includes 'null' item", null, provider.javaClass)
+          PluginException.logPluginError(
+            LOG, "The result of AdditionalLibraryRootsProvider.getAdditionalProjectLibraries on ${provider.javaClass} includes 'null' item",
+            null, provider.javaClass
+          )
           continue
         }
 
@@ -209,10 +212,13 @@ internal class NonIncrementalContributors(private val project: Project) {
     }
     return result
   }
-  
+
   private fun <T> checkNotNull(result: T?, methodName: String, library: SyntheticLibrary): T? {
     if (result == null) {
-      PluginException.logPluginError(LOG, "Contract violation: SyntheticLibrary::$methodName is marked as '@NotNull', but its implementation in $library returned 'null'", null, library.javaClass)
+      PluginException.logPluginError(
+        LOG, "Contract violation: SyntheticLibrary::$methodName is marked as '@NotNull', but its implementation in $library returned 'null'",
+        null, library.javaClass
+      )
     }
     return result
   }
@@ -232,10 +238,8 @@ internal class NonIncrementalContributors(private val project: Project) {
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
     }
 
-    fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {
-      return entityPointer is NonIncrementalMarker
-    }
-    
+    fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean = entityPointer is NonIncrementalMarker
+
     private val LOG = logger<NonIncrementalContributors>()
 
     init {
@@ -243,12 +247,14 @@ internal class NonIncrementalContributors(private val project: Project) {
       val nonIncrementalContributorsUpdateCounter = meter.counterBuilder("workspaceModel.non.incremental.contributors.total.update.time.ms").buildObserver()
       val excludeRootsComputationCounter = meter.counterBuilder("workspaceModel.non.incremental.contributors.exclude.roots.computation.time.ms").buildObserver()
       val fileSetsComputationCounter = meter.counterBuilder("workspaceModel.non.incremental.contributors.file.sets.computation.time.ms").buildObserver()
-
-      meter.batchCallback({
-                            nonIncrementalContributorsUpdateCounter.record(totalUpdateTimeMs.asMilliseconds())
-                            excludeRootsComputationCounter.record(excludeRootsComputationTimeMs.asMilliseconds())
-                            fileSetsComputationCounter.record(fileSetsComputationTimeMs.asMilliseconds())
-                          }, nonIncrementalContributorsUpdateCounter, excludeRootsComputationCounter, fileSetsComputationCounter)
+      meter.batchCallback(
+        {
+          nonIncrementalContributorsUpdateCounter.record(totalUpdateTimeMs.asMilliseconds())
+          excludeRootsComputationCounter.record(excludeRootsComputationTimeMs.asMilliseconds())
+          fileSetsComputationCounter.record(fileSetsComputationTimeMs.asMilliseconds())
+        },
+        nonIncrementalContributorsUpdateCounter, excludeRootsComputationCounter, fileSetsComputationCounter
+      )
     }
   }
 }
@@ -260,11 +266,7 @@ private class UnifiedLibraryExclusionCondition(
   private val condition: Condition<in VirtualFile>,
 ) : WorkspaceFileSetExclusionCondition {
   override fun shouldExclude(file: VirtualFile): Boolean = condition.value(file)
-
-  override fun equals(other: Any?): Boolean {
-    return other is UnifiedLibraryExclusionCondition && library == other.library
-  }
-
+  override fun equals(other: Any?): Boolean = other is UnifiedLibraryExclusionCondition && library == other.library
   override fun hashCode(): Int = library.hashCode()
 }
 

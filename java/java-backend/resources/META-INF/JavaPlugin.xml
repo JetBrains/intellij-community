@@ -964,7 +964,7 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ReferenceItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.NonImportedClassProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.InnerScopeVariableItemProvider"/>
-    
+
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
     <completion.skip implementation="com.intellij.codeInsight.completion.DeprecatedSkipper" id="skipDeprecated"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
@@ -1065,8 +1065,8 @@
               nameKey="settings.inlay.java.external.annotations"
               descriptionKey="inlay.annotation.hints.external.annotations" />
     </codeInsight.declarativeInlayProvider>
-    <codeInsight.declarativeInlayProviderCustomSettingsProvider 
-      language="JAVA" providerId="java.annotation.hints" 
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider
+      language="JAVA" providerId="java.annotation.hints"
       implementationClass="com.intellij.codeInsight.hints.AnnotationInlaySettingsProvider"/>
 
     <codeInsight.declarativeInlayProvider language="JAVA"
