@@ -8,6 +8,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -72,6 +73,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -121,57 +124,72 @@ public abstract class ExternalSystemImportingTestCase extends NioExternalSystemT
   }
 
   public static void installExecutionOutputPrinter(@NotNull Disposable parentDisposable) {
+    var outputPrinter = new ExecutionOutputPrinter(parentDisposable);
     var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
     var notificationListener = new ExternalSystemTaskNotificationListener() {
 
-      private final @NotNull TaskOutput stdOutput = new TaskOutput();
-      private final @NotNull TaskOutput errOutput = new TaskOutput();
-
       @Override
       public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        stdOutput.append(id, id + "\\n");
+        try {
+          outputPrinter.open(id);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        outputPrinter.print(id, "Sync: %s\n".formatted(id), ProcessOutputType.SYSTEM);
+        outputPrinter.print(id, "Project: %s\n".formatted(projectPath), ProcessOutputType.SYSTEM);
+        outputPrinter.print(id, "\n", ProcessOutputType.SYSTEM);
       }
 
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
-        if (processOutputType.isStdout()) {
-          stdOutput.append(id, text.replace("\n", "\\n").replace("\r", "\\r"));
-        }
-        else {
-          errOutput.append(id, text);
-        }
+        outputPrinter.print(id, text, processOutputType);
       }
 
       @Override
       public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
-        errOutput.append(id, ExceptionUtil.getThrowableText(exception));
+        outputPrinter.print(id, ExceptionUtil.getThrowableText(exception), ProcessOutputType.STDERR);
       }
 
       @Override
-      @SuppressWarnings("UseOfSystemOutOrSystemErr")
       public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        stdOutput.append(id, "\n");
-        stdOutput.flush(id, System.out);
-        errOutput.flush(id, System.err);
+        outputPrinter.close(id);
       }
     };
     notificationManager.addNotificationListener(notificationListener, parentDisposable);
   }
 
-  private static class TaskOutput {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static class ExecutionOutputPrinter {
 
-    private final @NotNull ConcurrentHashMap<ExternalSystemTaskId, StringBuilder> buffer = new ConcurrentHashMap<>();
+    private final @NotNull Disposable myParentDisposable;
+    private final @NotNull ConcurrentHashMap<ExternalSystemTaskId, PrintStream> myStreams = new ConcurrentHashMap<>();
 
-    private void append(@NotNull ExternalSystemTaskId id, @NotNull String output) {
-      buffer.computeIfAbsent(id, _ -> new StringBuilder())
-        .append(output);
+    private ExecutionOutputPrinter(@NotNull Disposable disposable) {
+      myParentDisposable = disposable;
     }
 
-    private void flush(@NotNull ExternalSystemTaskId id, @NotNull PrintStream stream) {
-      var output = buffer.remove(id);
-      if (output != null){
-        stream.print(output);
+    private void open(@NotNull ExternalSystemTaskId id) throws IOException {
+      var outputDir = Files.createDirectories(PathManager.getSystemDir().resolve("testlog", "syncOutput"));
+      var outputFile = Files.createTempFile(outputDir, FileUtil.sanitizeFileName(id.toString()) + "_", ".txt");
+      var outputStream = new PrintStream(Files.newOutputStream(outputFile), true, StandardCharsets.UTF_8);
+      myStreams.put(id, outputStream);
+      Disposer.register(myParentDisposable, () -> close(id));
+
+      System.out.println("Sync output: " + outputFile.toUri());
+    }
+
+    private void print(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
+      var stream = myStreams.get(id);
+      if (stream != null) stream.print(text);
+      if (processOutputType.isStderr()) System.err.print(text);
+    }
+
+    private void close(@NotNull ExternalSystemTaskId id) {
+      var stream = myStreams.remove(id);
+      if (stream != null) {
         stream.flush();
+        stream.close();
       }
     }
   }
