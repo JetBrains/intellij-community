@@ -5,6 +5,7 @@
 
 package org.toml.lang.psi
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.util.text.StringUtil
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.TomlBundle
-import org.toml.TomlIcons
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
 import org.toml.lang.psi.TomlElementTypes.BOOLEAN
@@ -31,7 +31,7 @@ object TomlFileType : LanguageFileType(TomlLanguage), FileTypeIdentifiableByVirt
     override fun getName(): String = "TOML"
     override fun getDescription(): String = TomlBundle.message("filetype.toml.description")
     override fun getDefaultExtension(): String = "toml"
-    override fun getIcon(): Icon = TomlIcons.TomlFile
+    override fun getIcon(): Icon = AllIcons.FileTypes.Toml
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
     override fun isAvailableForOverride(): Boolean = true

@@ -5,13 +5,13 @@
 
 package org.toml.ide.colors
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.util.io.StreamUtil
-import org.toml.TomlIcons
 import org.toml.ide.TomlHighlighter
 import org.toml.lang.TomlLanguage
 import javax.swing.Icon
@@ -27,7 +27,7 @@ class TomlColorSettingsPage : ColorSettingsPage {
 
     override fun getDisplayName(): String = TomlLanguage.displayName
     override fun getHighlighter(): SyntaxHighlighter = TomlHighlighter()
-    override fun getIcon(): Icon = TomlIcons.TomlFile
+    override fun getIcon(): Icon = AllIcons.FileTypes.Toml
     override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = tagToDescriptorMap
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> = attributesDescriptors
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY

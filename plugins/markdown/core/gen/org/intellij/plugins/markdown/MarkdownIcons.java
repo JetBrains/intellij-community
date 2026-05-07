@@ -40,5 +40,4 @@ public final class MarkdownIcons {
   }
 
   /** 12x12 */ public static final @NotNull Icon ImageGutter = load("icons/imageGutter.svg", 2010654469, 2);
-  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("icons/expui/markdown.svg", "icons/MarkdownPlugin.svg", -1740905249, 0);
 }

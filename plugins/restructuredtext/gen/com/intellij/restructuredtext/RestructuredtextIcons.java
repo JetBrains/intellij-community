@@ -14,5 +14,4 @@ public final class RestructuredtextIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, RestructuredtextIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Rst = load("com/intellij/restructuredtext/icons/rest/rst.svg", 1703404962, 2);
 }
