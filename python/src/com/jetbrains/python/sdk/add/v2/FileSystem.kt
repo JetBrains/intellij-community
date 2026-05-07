@@ -116,7 +116,6 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: P,
-    languageLevel: LanguageLevel,
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk>
 
@@ -168,7 +167,6 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun setupSdk(
       project: Project?,
       pythonBinaryPath: PathHolder.Eel,
-      languageLevel: LanguageLevel,
       targetPanelExtension: TargetPanelExtension?,
     ): PyResult<Sdk> {
 
@@ -373,9 +371,10 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun setupSdk(
       project: Project?,
       pythonBinaryPath: PathHolder.Target,
-      languageLevel: LanguageLevel,
       targetPanelExtension: TargetPanelExtension?,
     ): PyResult<Sdk> {
+
+      val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
       val (additionalData, customSdkSuggestedName) = run {
         val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())).also {

@@ -220,7 +220,6 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   val newSdk = fileSystem.setupSdk(
     project = moduleOrProject.project,
     pythonBinaryPath = homePath!!,
-    languageLevel = pythonInfo.languageLevel,
     targetPanelExtension = targetPanelExtension
   ).getOr { return it }
 
