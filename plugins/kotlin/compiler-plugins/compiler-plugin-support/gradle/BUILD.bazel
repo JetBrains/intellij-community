@@ -10,6 +10,8 @@ jvm_library(
   resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/util",

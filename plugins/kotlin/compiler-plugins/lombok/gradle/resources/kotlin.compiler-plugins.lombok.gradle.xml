@@ -11,7 +11,4 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava.LombokGradleProjectImportHandler"/>
   </extensions>
-  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava.LombokGradleProjectResolverExtension" order="last"/>
-  </extensions>
 </idea-plugin>
