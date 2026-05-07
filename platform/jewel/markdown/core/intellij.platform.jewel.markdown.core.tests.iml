@@ -26,6 +26,9 @@
     <content url="file://$MODULE_DIR$/src/test/kotlin">
       <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
     </content>
+    <content url="file://$MODULE_DIR$/src/testFixtures/kotlin">
+      <sourceFolder url="file://$MODULE_DIR$/src/testFixtures/kotlin" isTestSource="true" />
+    </content>
     <content url="file://$MODULE_DIR$/src/test/resources">
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
     </content>
