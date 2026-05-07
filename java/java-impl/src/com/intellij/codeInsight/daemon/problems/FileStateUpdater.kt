@@ -15,6 +15,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import java.util.IdentityHashMap
 
 /**
  * Mapping between psi members and their properties model.
@@ -109,11 +110,16 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       val (snapshot, changes) = fileStateCache.getState(psiFile) ?: return
       if (changes.isEmpty()) return
       val manager = SmartPointerManager.getInstance(project)
-      val oldSnapshot = snapshot.toMutableMap()
-      changes.forEach { (psiMember, prevMember) ->
-        val memberPointer = manager.createSmartPsiElementPointer(psiMember)
-        if (prevMember == null) oldSnapshot.remove(memberPointer)
-        else oldSnapshot[memberPointer] = prevMember
+      val oldSnapshot = IdentityHashMap<SmartPsiElementPointer<PsiMember>, ScopedMember>(snapshot.size)
+      for ((pointer, scopedMember) in snapshot) {
+        if (pointer.element !in changes.keys) {
+          oldSnapshot[pointer] = scopedMember
+        }
+      }
+      for ((psiMember, prevMember) in changes) {
+        if (prevMember != null) {
+          oldSnapshot[manager.createSmartPsiElementPointer(psiMember)] = prevMember
+        }
       }
       fileStateCache.setState(psiFile, oldSnapshot, emptyMap())
     }
