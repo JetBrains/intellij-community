@@ -33,6 +33,7 @@ import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
+import org.jetbrains.plugins.terminal.createEnvVariablesMap
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.ShellExecOptions
@@ -319,9 +320,14 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
     val shellPathWithShellIntegration = if (eelApi.descriptor.osFamily.isPosix) "zsh" else "powershell.exe"
     TerminalProjectOptionsProvider.getInstance(project)::shellPath.setValueInTest(shellPathWithShellIntegration, testDisposable)
     fileLogger().info("Running on ${workingDir.descriptor} in ${workingDir.nioDir} (${workingDir.eelDir})")
-    val startupOptionsBuilder = ShellStartupOptions.Builder().workingDirectory(workingDir.nioDir.toString())
-    initialEnvironmentCallback?.invoke(startupOptionsBuilder.envVariables as MutableMap<String, String>)
-    val startupOptions = startupOptionsBuilder.build()
+
+    val envVariables = createEnvVariablesMap(eelApi.descriptor.osFamily)
+    initialEnvironmentCallback?.invoke(envVariables)
+    val startupOptions = ShellStartupOptions.Builder()
+      .workingDirectory(workingDir.nioDir.toString())
+      .envVariables(envVariables)
+      .build()
+
     val terminalRunner = LocalTerminalDirectRunner(project)
     val configuredOptions = terminalRunner.configureStartupOptions(startupOptions)
     Assertions.assertThat(configuredOptions.eelDescriptorNotNull).isEqualTo(workingDir.descriptor)

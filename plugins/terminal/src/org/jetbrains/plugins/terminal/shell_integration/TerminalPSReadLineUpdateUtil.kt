@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.shell_integration
 
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.PathUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -53,7 +54,7 @@ internal object TerminalPSReadLineUpdateUtil {
   }
 
   private fun configureAskingForUpdate(options: ShellStartupOptions): ShellStartupOptions {
-    val newEnvs = createEnvVariablesMap(options.envVariables)
+    val newEnvs = createEnvVariablesMap(EelOsFamily.Windows, options.envVariables)
     newEnvs[ASK_UPDATE_ENV] = "true"
     addLocalizationEnvVars(newEnvs)
     return options.builder().envVariables(newEnvs).build()

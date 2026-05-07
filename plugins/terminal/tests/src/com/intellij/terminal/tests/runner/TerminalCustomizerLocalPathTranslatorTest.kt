@@ -20,8 +20,8 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
-import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
+import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -34,6 +34,7 @@ import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.createEnvVariablesMap
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.OS
@@ -433,9 +434,12 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
     initialEnvironmentCallback: ((MutableMap<String, String>) -> Unit)? = null,
   ): CustomizationResult {
     fileLogger().info("Running on ${workingDir.descriptor} in ${workingDir.nioDir} (${workingDir.eelDir})")
-    val startupOptionsBuilder = ShellStartupOptions.Builder().workingDirectory(workingDir.nioDir.toString())
-    initialEnvironmentCallback?.invoke(startupOptionsBuilder.envVariables as MutableMap<String, String>)
-    val startupOptions = startupOptionsBuilder.build()
+    val envVariables = createEnvVariablesMap(workingDir.descriptor.osFamily)
+    initialEnvironmentCallback?.invoke(envVariables)
+    val startupOptions = ShellStartupOptions.Builder()
+      .workingDirectory(workingDir.nioDir.toString())
+      .envVariables(envVariables)
+      .build()
     val terminalRunner = LocalTerminalDirectRunner(project)
     val configuredOptions = terminalRunner.configureStartupOptions(startupOptions)
     return CustomizationResult(configuredOptions.envVariables)

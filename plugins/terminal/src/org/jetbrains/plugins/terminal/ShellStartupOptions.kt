@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.terminal.ui.TerminalWidget
@@ -90,7 +91,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
     var initialTermSize: TermSize?,
     var widget: TerminalWidget?,
     var shellIntegration: ShellIntegration? = null,
-    var envVariables: Map<String, String> = createEnvVariablesMap(),
+    var envVariables: Map<String, String> = emptyMap(),
     internal var startupMoment: TerminalStartupMoment? = null,
   ) {
 
@@ -142,6 +143,6 @@ fun shellStartupOptions(workingDirectory: @MultiRoutingFileSystemPath String?, m
 }
 
 @JvmOverloads
-fun createEnvVariablesMap(content: Map<String, String> = emptyMap()): MutableMap<String, String> {
-  return if (SystemInfo.isWindows) CollectionFactory.createCaseInsensitiveStringMap(content) else HashMap(content)
+fun createEnvVariablesMap(osFamily: EelOsFamily, content: Map<String, String> = emptyMap()): MutableMap<String, String> {
+  return if (osFamily.isWindows) CollectionFactory.createCaseInsensitiveStringMap(content) else HashMap(content)
 }

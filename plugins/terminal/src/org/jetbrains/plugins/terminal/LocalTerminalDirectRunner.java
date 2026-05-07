@@ -97,7 +97,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     });
     EelDescriptor eelDescriptor = options.getEelDescriptorNotNull();
 
-    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(eelDescriptor.getOsFamily(), options.getEnvVariables());
     if (shouldApplyLocalTerminalCustomizers(eelDescriptor)) {
       //noinspection deprecation
       for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {

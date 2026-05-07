@@ -68,8 +68,10 @@ public final class LocalShellIntegrationInjector {
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
 
+    EelDescriptor eelDescriptor = options.getEelDescriptorNotNull();
+
     List<String> arguments = new ArrayList<>(shellCommand.subList(1, shellCommand.size()));
-    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
+    Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(eelDescriptor.getOsFamily(), options.getEnvVariables());
     ShellIntegration integration = null;
 
     List<String> resultCommand = new ArrayList<>();
@@ -77,7 +79,6 @@ public final class LocalShellIntegrationInjector {
 
     String shellName = PathUtil.getFileName(shellExe);
     Path rcFile = findRCFile(shellName);
-    EelDescriptor eelDescriptor = options.getEelDescriptorNotNull();
     String remoteRcFilePath = rcFile != null ? transferAndGetRemotePath(rcFile, eelDescriptor) : null;
     if (remoteRcFilePath != null) {
       boolean addBlocksIntegration = supportsBlocksShellIntegration(shellName, eelDescriptor);
