@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -40,7 +40,11 @@ internal class ExistingJdkConfigurationActivity : ProjectActivity {
     if (!registeredJdks.isEmpty()) {
       val jdk = registeredJdks.firstOrNull { it.homePath in javaHomePaths } ?:
                 registeredJdks.maxByOrNull { JavaSdk.getInstance().getVersion(it)?.ordinal ?: 0 }
-      jdk?.let { rootManager.projectSdk = it }
+      if (jdk != null) {
+        backgroundWriteAction {
+          rootManager.projectSdk = jdk
+        }
+      }
       return
     }
 
@@ -55,7 +59,7 @@ internal class ExistingJdkConfigurationActivity : ProjectActivity {
         ?.first
     } ?: return
 
-    edtWriteAction {
+    backgroundWriteAction {
       rootManager.projectSdk = service<AddJdkService>().createIncompleteJdk(jdkPathToSetup)
     }
   }
