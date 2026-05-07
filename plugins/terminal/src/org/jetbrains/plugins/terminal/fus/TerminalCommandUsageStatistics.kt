@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
@@ -78,13 +77,12 @@ object TerminalCommandUsageStatistics {
   }
 
   private fun isRelativePath(executable: String): Boolean {
-    return executable.startsWith("./") || SystemInfo.isWindows && executable.startsWith(".\\")
+    return executable.startsWith("./") || executable.startsWith(".\\")
   }
 
   private fun toKnownCommand(userCommand: List<String>, knownCommandsData: KnownCommandsData): CommandData? {
-    val executable: String = (userCommand.getOrNull(0) ?: return null).let {
-      if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
-    }.lowercase(Locale.ENGLISH)
+    val executableWithExt = userCommand.getOrNull(0) ?: return null
+    val executable: String = TerminalShellInfoStatistics.trimKnownExt(executableWithExt.lowercase(Locale.ENGLISH))
 
     if (executable !in knownCommandsData.commands) {
       return null

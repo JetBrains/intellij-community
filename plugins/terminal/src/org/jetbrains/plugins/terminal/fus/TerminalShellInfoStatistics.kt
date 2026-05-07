@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItem
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.system.OS
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
@@ -77,7 +76,7 @@ object TerminalShellInfoStatistics {
                                         "xonsh",
                                         "zsh")
 
-  private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
+  private val KNOWN_EXTENSIONS: List<String> = listOf("exe", "bat", "cmd")
 
   private val JSON: Json = Json { ignoreUnknownKeys = true }
 
@@ -162,14 +161,14 @@ object TerminalShellInfoStatistics {
    */
   fun getShellNameForStat(shellCommand: String?): String {
     if (shellCommand == null) return UNSPECIFIED_SHELL_NAME
-    val command = ParametersListUtil.parse(shellCommand, false, OS.CURRENT != OS.Windows)
+    val command = ParametersListUtil.parse(shellCommand, false, true)
     val shellPath = command.firstOrNull() ?: return UNSPECIFIED_SHELL_NAME
     val shellName = PathUtil.getFileName(shellPath).lowercase(Locale.ENGLISH)
     val trimmedName = trimKnownExt(shellName)
     return if (KNOWN_SHELLS.contains(trimmedName)) trimmedName else OTHER_SHELL_NAME
   }
 
-  private fun trimKnownExt(name: String): String {
+  internal fun trimKnownExt(name: String): String {
     val ext = PathUtil.getFileExtension(name)
     return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length - 1) else name
   }
