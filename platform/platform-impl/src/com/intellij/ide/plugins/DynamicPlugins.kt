@@ -4,10 +4,13 @@ package com.intellij.ide.plugins
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+
+private val LOG = Logger.getInstance(DynamicPlugins::class.java)
 
 @ApiStatus.Internal
 object DynamicPlugins {
@@ -39,7 +42,11 @@ object DynamicPlugins {
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    return DynamicPluginsLegacyImpl.unloadPlugin(pluginDescriptor, options)
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return unloadPlugin(pluginDescriptor, options)
   }
 
   @JvmOverloads
