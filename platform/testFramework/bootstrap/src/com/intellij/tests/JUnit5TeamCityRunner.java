@@ -9,9 +9,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteFinished;
 import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted;
-import junit.framework.JUnit4TestAdapter;
-import junit.framework.JUnit4TestAdapterCache;
-import junit.framework.TestResult;
 import junit.framework.TestSuite;
 import org.junit.platform.commons.logging.LogRecordListener;
 import org.junit.platform.commons.logging.LoggerFactory;
@@ -37,10 +34,6 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
-import org.junit.runner.notification.RunNotifier;
 import org.junit.vintage.engine.VintageTestEngine;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 import org.opentest4j.AssertionFailedError;
@@ -236,7 +229,7 @@ public final class JUnit5TeamCityRunner {
   private static Set<Path> getClassRoots(ClassLoader classLoader) throws Throwable {
     //noinspection unchecked
     List<Path> testRoots = (List<Path>)MethodHandles.publicLookup()
-      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
+      .findStatic(Class.forName("com.intellij.TestCaseLoader", false, classLoader),
                   "getClassRoots", MethodType.methodType(List.class))
       .invokeExact();
     return new HashSet<>(testRoots);
@@ -275,42 +268,6 @@ public final class JUnit5TeamCityRunner {
     catch (IOException e) {
       throw new RuntimeException("Cannot save list of test classes to " + path.toAbsolutePath(), e);
     }
-  }
-
-  public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
-    return new JUnit4TestAdapterCache() {
-      @Override
-      public RunNotifier getNotifier(final TestResult result, final JUnit4TestAdapter adapter) {
-        RunNotifier notifier = new RunNotifier();
-        notifier.addListener(new RunListener() {
-          @Override
-          public void testFailure(Failure failure) {
-            result.addError(asTest(failure.getDescription()), failure.getException());
-          }
-
-          @Override
-          public void testFinished(Description description) {
-            result.endTest(asTest(description));
-          }
-
-          @Override
-          public void testStarted(Description description) {
-            result.startTest(asTest(description));
-          }
-
-          @Override
-          public void testIgnored(Description description) {
-            result.addError(asTest(description), IgnoreException.INSTANCE);
-          }
-
-          @Override
-          public void testAssumptionFailure(Failure failure) {
-            testFailure(failure);
-          }
-        });
-        return notifier;
-      }
-    };
   }
 
   public static class TCLogRecordListener extends LogRecordListener {

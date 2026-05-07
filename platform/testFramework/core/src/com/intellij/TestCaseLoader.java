@@ -5,14 +5,19 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.bucketing.BucketingScheme;
 import com.intellij.testFramework.bucketing.HashingBucketingScheme;
 import com.intellij.testFramework.bucketing.TestsDurationBucketingScheme;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.Decompressor;
+import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -29,19 +34,29 @@ import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
@@ -428,6 +443,97 @@ public class TestCaseLoader {
       current = current.getSuperclass();
     }
     return null;
+  }
+
+  public static @Unmodifiable List<Path> getClassRoots() {
+    return TeamCityLogger.block("Collecting tests from ...", () -> {
+      List<Path> paths = doGetClassRoots();
+      saveTestRootsForDebug(paths);
+      return paths;
+    });
+  }
+
+  private static @Unmodifiable List<Path> doGetClassRoots() {
+    String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
+    if (jarsToRunTestsFrom != null) {
+      String[] jars = jarsToRunTestsFrom.split(";");
+      List<Path> classpath = ContainerUtil.map(Objects.requireNonNull(System.getProperty("java.class.path")).split(File.pathSeparator), Paths::get);
+      List<Path> testPaths = Arrays.stream(jars)
+        .map(jarName -> {
+               List<? extends Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
+               if (resultJars.size() != 1) {
+                 String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+                 throw new IllegalStateException(
+                   (resultJars.isEmpty() ? "Cannot find " : "More than one ") + jarName + " in " + classpathPretty
+                 );
+               }
+
+               return resultJars.get(0);
+             }
+        )
+        .map(Path::normalize)
+        .map(jar -> {
+          try {
+            if (!Files.exists(jar)) {
+              throw new IllegalStateException(jar + " doesn't exist");
+            }
+
+            String jarNameWithoutExtension = StringUtil.substringBefore(jar.getFileName().toString(), ".");
+            Path out = Paths.get(PathManager.getHomePath(), "out", "jar-dependencies-to-test", jarNameWithoutExtension);
+            new Decompressor.Zip(jar).extract(out);
+            return out;
+          }
+          catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .collect(Collectors.toList());
+
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests system property");
+      return testPaths;
+    }
+
+    String testRoots = System.getProperty("test.roots");
+    if (testRoots != null) {
+      System.out.println("Collecting tests from roots specified by test.roots system property");
+      return ContainerUtil.map(testRoots.split(File.pathSeparator), Paths::get);
+    }
+    ClassLoader loader = TestCaseLoader.class.getClassLoader();
+    if (loader instanceof URLClassLoader) {
+      System.out.println("Collecting tests from TestCaseLoader class loader (" + URLClassLoader.class.getName() + ")");
+      return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
+    }
+    if (loader instanceof UrlClassLoader) {
+      List<Path> paths = ((UrlClassLoader)loader).getFiles();
+      System.out.println("Collecting tests from TestCaseLoader class loader (" + UrlClassLoader.class.getName() + ")");
+      return paths;
+    }
+    System.out.println("Collecting tests from java.class.path system property");
+    return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
+  }
+
+  private static List<Path> getClassRoots(URL[] urls) {
+    List<Path> classLoaderRoots = ContainerUtil.map(urls, url -> {
+      try {
+        return Paths.get(url.toURI());
+      }
+      catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    System.out.println("Collecting tests from " + classLoaderRoots);
+    return classLoaderRoots;
+  }
+
+  private static void saveTestRootsForDebug(@NotNull List<Path> paths) {
+    try {
+      Path tempFile = Files.createTempFile("TestCaseLoader-test-roots-path", ".txt");
+      System.out.println("Saving test roots for further debugging to " + tempFile);
+      Files.writeString(tempFile, String.join("\n", ContainerUtil.map(paths, Path::toString)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @ApiStatus.Experimental

@@ -556,7 +556,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     var testClasspath = buildList {
       addAll(context.getModuleRuntimeClasspath(runContextModule, forTests = true))
 
-      //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
+      //module with "com.intellij.TestCaseLoader" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = outputProvider.findRequiredModule("intellij.platform.testFramework.core")
       addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
     }.distinct()
