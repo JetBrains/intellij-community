@@ -16,20 +16,27 @@
 package com.intellij.ide.actions.exclusion;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExclusionHandler<Node> {
   DataKey<ExclusionHandler> EXCLUSION_HANDLER = DataKey.create("tree.exclusion.handler");
 
+  @RequiresEdt
   boolean isNodeExclusionAvailable(@NotNull Node node);
 
+  @RequiresEdt
   boolean isNodeExcluded(@NotNull Node node);
 
+  @RequiresEdt
   void excludeNode(@NotNull Node node);
 
+  @RequiresEdt
   void includeNode(@NotNull Node node);
 
+  @RequiresEdt
   boolean isActionEnabled(boolean isExcludeAction);
 
+  @RequiresEdt
   void onDone(boolean isExcludeAction);
 }

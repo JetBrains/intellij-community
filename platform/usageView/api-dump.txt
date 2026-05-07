@@ -321,6 +321,7 @@ com.intellij.usages.UsageView
 - addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String,Z,Z):V
 - a:appendUsage(com.intellij.usages.Usage):V
 - a:close():V
+- a:dispose():V
 - a:excludeUsages(com.intellij.usages.Usage[]):V
 - a:getComponent():javax.swing.JComponent
 - a:getExcludedUsages():java.util.Set

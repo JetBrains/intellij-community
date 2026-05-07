@@ -58,6 +58,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageDocumentProcessor;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -479,6 +480,7 @@ public class ReplaceInProjectManager {
     return true;
   }
 
+  @RequiresEdt
   private void replaceUsagesUnderCommand(@NotNull ReplaceContext replaceContext, @NotNull Set<? extends Usage> usagesSet,
                                          boolean replaceAll, boolean disposeUsageView) {
     if (usagesSet.isEmpty()) {

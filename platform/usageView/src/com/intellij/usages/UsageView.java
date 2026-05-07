@@ -7,6 +7,7 @@ import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,20 +42,29 @@ public interface UsageView extends Disposable {
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
   void appendUsage(@NotNull Usage usage);
+  @RequiresEdt
   void removeUsage(@NotNull Usage usage);
+  @RequiresEdt
   void includeUsages(Usage @NotNull [] usages);
+  @RequiresEdt
   void excludeUsages(Usage @NotNull [] usages);
+  @RequiresEdt
   void selectUsages(Usage @NotNull [] usages);
 
+  @RequiresEdt
   void close();
   boolean isSearchInProgress();
 
+  @RequiresEdt
   void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
+  @RequiresEdt
   default void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, boolean dumbAware){
     addButtonToLowerPane(runnable, text);
   }
 
+  @RequiresEdt
   void addButtonToLowerPane(@NotNull Action action);
+  @RequiresEdt
   default void addButtonToLowerPane(@NotNull Action action, boolean dumbAware) {
     addButtonToLowerPane(action);
   }
@@ -64,11 +74,13 @@ public interface UsageView extends Disposable {
    */
   default void setRerunAction(@NotNull Action rerunAction) {}
 
+  @RequiresEdt
   void setAdditionalComponent(@Nullable JComponent component);
 
   /**
    * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    */
+  @RequiresEdt
   void addPerformOperationAction(@NotNull Runnable processRunnable,
                                  @Nullable @NlsContexts.Command String commandName,
                                  @NotNull @NlsContexts.DialogMessage String cannotMakeString,
@@ -78,6 +90,7 @@ public interface UsageView extends Disposable {
    * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
+  @RequiresEdt
   void addPerformOperationAction(@NotNull Runnable processRunnable,
                                  @Nullable String commandName,
                                  @NotNull String cannotMakeString,
@@ -89,6 +102,7 @@ public interface UsageView extends Disposable {
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    * @param dumbAware if true, the action can be performed in dumb mode (without indexes)
    */
+  @RequiresEdt
   default void addPerformOperationAction(@NotNull Runnable processRunnable,
                                          @Nullable String commandName,
                                          @NotNull String cannotMakeString,
@@ -105,6 +119,7 @@ public interface UsageView extends Disposable {
   @Unmodifiable
   Set<Usage> getExcludedUsages();
 
+  @RequiresEdt
   @NotNull
   @Unmodifiable
   Set<Usage> getSelectedUsages();
@@ -115,9 +130,11 @@ public interface UsageView extends Disposable {
   @NotNull
   @Unmodifiable List<Usage> getSortedUsages();
 
+  @RequiresEdt
   @NotNull
   JComponent getComponent();
 
+  @RequiresEdt
   default @NotNull JComponent getPreferredFocusableComponent() {
     return getComponent();
   }
@@ -129,6 +146,7 @@ public interface UsageView extends Disposable {
    * Reloads the whole tree model once instead of firing individual remove event for each node.
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
+  @RequiresEdt
   void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
   default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
@@ -146,6 +164,11 @@ public interface UsageView extends Disposable {
      * @param usages unmodifiable set or nodes that were excluded or included
      * @param excluded if {@code true} usages were excluded otherwise they were included
      */
+    @RequiresEdt
     void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
   }
+
+  @RequiresEdt
+  @Override
+  void dispose();
 }

@@ -18,7 +18,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
@@ -50,6 +49,9 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -133,10 +135,12 @@ final class SearchForUsagesRunnable implements Runnable {
     return HtmlChunk.link(SEARCH_IN_PROJECT_HREF_TARGET, UsageViewBundle.message("link.display.name.search.in.project")).toString();
   }
 
+  @RequiresEdt
   private void notifyByFindBalloon(@Nullable HyperlinkListener listener,
                                    @NotNull MessageType messageType,
                                    @NotNull List<String> lines,
                                    @NotNull Collection<String> unloadedModulesBelongingToScope) {
+    ThreadingAssertions.assertEventDispatchThread();
     UsageViewContentManager.getInstance(myProject); // in case tool window not registered
 
     Collection<VirtualFile> largeFiles = myProcessPresentation.getLargeFiles();
@@ -176,9 +180,12 @@ final class SearchForUsagesRunnable implements Runnable {
     ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
+  @RequiresBackgroundThread
   private @NotNull @Unmodifiable Collection<String> getUnloadedModulesBelongingToScope() {
     return ReadAction.computeBlocking(() -> {
-      if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
+      if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) {
+        return Collections.emptySet();
+      }
       Collection<UnloadedModuleDescription> unloadedInSearchScope =
         ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
       Set<UnloadedModuleDescription> unloadedInUseScope = getUnloadedModulesBelongingToUseScopes();
@@ -198,9 +205,13 @@ final class SearchForUsagesRunnable implements Runnable {
   private Set<UnloadedModuleDescription> getUnloadedModulesBelongingToUseScopes() {
     Set<UnloadedModuleDescription> resolveScope = new LinkedHashSet<>();
     for (UsageTarget target : mySearchFor) {
-      if (!(target instanceof PsiElementUsageTarget)) return null;
+      if (!(target instanceof PsiElementUsageTarget)) {
+        return null;
+      }
       PsiElement element = ((PsiElementUsageTarget)target).getElement();
-      if (element == null) return null;
+      if (element == null) {
+        return null;
+      }
       SearchScope useScope = element.getUseScope();
       if (useScope instanceof GlobalSearchScope) {
         resolveScope.addAll(((GlobalSearchScope)useScope).getUnloadedModulesBelongingToScope());
@@ -351,7 +362,9 @@ final class SearchForUsagesRunnable implements Runnable {
 
   private void openView(@NotNull UsageViewEx usageView) {
     SwingUtilities.invokeLater(() -> {
-      if (myProject.isDisposed()) return;
+      if (myProject.isDisposed()) {
+        return;
+      }
       myUsageViewManager.showUsageView(usageView, myPresentation);
       if (myListener != null) {
         myListener.usageViewCreated(usageView);
@@ -370,13 +383,14 @@ final class SearchForUsagesRunnable implements Runnable {
     snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName(), "FindUsagesTotal");
   }
 
+  @RequiresBackgroundThread
   private void searchUsages() {
+    ThreadingAssertions.assertBackgroundThread();
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
-    if (current == null) throw new IllegalStateException("must run find usages under progress");
-    ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      CoreProgressManager.assertUnderProgress(indicator);
+    if (current == null) {
+      throw new IllegalStateException("must run find usages under progress");
     }
+    ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     TooManyUsagesStatus.createFor(indicator);
 
     UsageSearcher usageSearcher = mySearcherFactory.get();
@@ -385,7 +399,9 @@ final class SearchForUsagesRunnable implements Runnable {
 
     usageSearcher.generate(usage -> {
       ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-      if (currentIndicator == null) throw new IllegalStateException("must run find usages under progress");
+      if (currentIndicator == null) {
+        throw new IllegalStateException("must run find usages under progress");
+      }
       ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(current);
       ProgressManager.checkCanceled();
 
@@ -438,8 +454,9 @@ final class SearchForUsagesRunnable implements Runnable {
     }
   }
 
+  @RequiresBackgroundThread
   private void endSearchForUsages() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     int usageCount = myUsageCountWithoutDefinition.get();
     Collection<String> unloadedModulesBelongingToScope = getUnloadedModulesBelongingToScope();
     if (usageCount == 0) {
