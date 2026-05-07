@@ -51,7 +51,7 @@ public fun MarkdownStyling.Companion.light(
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.light(inlinesStyling),
     heading: Heading = Heading.light(baseTextStyle),
-    blockQuote: BlockQuote = BlockQuote.light(textColor = baseTextStyle.color),
+    blockQuote: BlockQuote = BlockQuote.light(),
     code: Code = Code.light(editorTextStyle),
     list: List = List.light(baseTextStyle),
     image: Image = Image.default(),
@@ -65,16 +65,16 @@ public fun MarkdownStyling.Companion.light(
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, editorTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
-    blockQuote: BlockQuote = BlockQuote.dark(textColor = baseTextStyle.color),
+    blockQuote: BlockQuote = BlockQuote.dark(),
     code: Code = Code.dark(editorTextStyle),
     list: List = List.dark(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.dark(),
-    htmlBlock: HtmlBlock = HtmlBlock.dark(editorTextStyle.copy(color = blockContentColorLight)),
+    htmlBlock: HtmlBlock = HtmlBlock.dark(editorTextStyle.copy(color = blockContentColorDark)),
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
