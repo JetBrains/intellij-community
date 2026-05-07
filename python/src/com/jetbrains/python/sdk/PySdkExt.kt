@@ -173,35 +173,11 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { isPythonSdk(it) && it.isAssociatedWithModule(module) }
 }
 
-
+/**
+ * Please use [com.jetbrains.python.sdk.add.v2.FileSystem.setupSdk] instead
+ */
 @Internal
-suspend fun createSdk(
-  pythonBinaryPath: PathHolder.Eel,
-  sdkAdditionalData: PythonSdkAdditionalData? = null,
-): PyResult<Sdk> {
-  val pythonBinaryPathAsString = pythonBinaryPath.path.pathString
-  val existingSdks = PythonSdkUtil.getAllSdks()
-  existingSdks.find {
-    it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
-    it.homePath == pythonBinaryPathAsString
-  }?.let { return PyResult.success(it) }
-
-  val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
-    StandardFileSystems.local().refreshAndFindFileByPath(pythonBinaryPathAsString)
-  } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
-
-  val sdk = SdkConfigurationUtil.setupSdk(
-    existingSdks.toTypedArray(),
-    pythonBinaryVirtualFile,
-    PythonSdkType.getInstance(),
-    sdkAdditionalData,
-    null)
-
-  return PyResult.success(sdk)
-}
-
-@Internal
-suspend fun <P : PathHolder> createSdk(
+internal suspend fun <P : PathHolder> createSdk(
   pythonBinaryPath: P,
   suggestedSdkName: String? = null,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
