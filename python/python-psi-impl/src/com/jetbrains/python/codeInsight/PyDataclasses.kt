@@ -147,11 +147,17 @@ object PyDataclassNames {
     const val GENERIC_MODEL: String = "pydantic.generics.GenericModel"
     const val POPULATE_BY_NAME: String = "populate_by_name"
     const val MODEL_CONFIG: String = "model_config"
+    const val PYDANTIC_CONFIG: String = "__pydantic_config__"
     const val MODEL_METACLASS: String = "pydantic._internal._model_construction.ModelMetaclass"
     val BASE_MODEL_QUALIFIED_NAMES: Set<String> = setOf(BASE_MODEL, BASE_MODEL_MAIN, GENERIC_MODEL)
     const val PYDANTIC_FIELD: String = "pydantic.Field"
     const val PYDANTIC_FIELDS_FIELD: String = "pydantic.fields.Field"
     val PYDANTIC_FIELD_QUALIFIED_NAMES: Set<String> = setOf(PYDANTIC_FIELD, PYDANTIC_FIELDS_FIELD)
+    const val DATACLASS_DECORATOR: String = "pydantic.dataclasses.dataclass"
+
+    val DECORATOR_PARAMETERS: Set<String> = setOf(
+      "config"
+    )
   }
 }
 
@@ -313,11 +319,17 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
       // Process decorators that have dataclass_transform-compatible keyword arguments.
       if (decorator.qualifiedName == null) continue
       val decoratorKeywordArguments = decorator.arguments.filterIsInstance<PyKeywordArgument>()
-      if (decoratorKeywordArguments.map { it.name }.any { it in PyDataclassNames.DataclassTransform.DECORATOR_OR_CLASS_PARAMETERS }) {
+      if (decoratorKeywordArguments
+          .map { it.name }
+          .any { it in PyDataclassNames.DataclassTransform.DECORATOR_OR_CLASS_PARAMETERS + PyDataclassNames.Pydantic.DECORATOR_PARAMETERS }
+      ) {
         val builder = PyDataclassParametersBuilder(PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM, decorator.qualifiedName!!)
         decoratorKeywordArguments.forEach {
           builder.update(it.keyword, it)
         }
+
+        collectPydanticDataclassParametersFromConfigExpression(builder, cls,decoratorKeywordArguments, context)
+
         return builder.build()
       }
     }
@@ -335,7 +347,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
     }
   }
 
-  val modelConfigParamsBuilder = parseDataclassParametersFromModelConfigAttribute(cls, context)
+  val modelConfigParamsBuilder = parsePydanticDataclassParametersFromModelConfig(cls, context)
   if (modelConfigParamsBuilder != null) {
     return modelConfigParamsBuilder
   }
@@ -894,6 +906,10 @@ private fun isPydanticModel(
   pyClass: PyClass,
   context: TypeEvalContext
 ): Boolean {
+  if (hasPydanticDataclassDecorator(pyClass, context)) {
+    return true
+  }
+
   val ancestorQNames = pyClass.getAncestorClasses(context)
     .filterIsInstance<PyQualifiedNameOwner>()
     .mapNotNull { it.qualifiedName }
@@ -906,6 +922,17 @@ private fun isPydanticModel(
   val metaClassType = pyClass.getMetaClassType(true, context) as? PyClassType
   val metaClassName = metaClassType?.pyClass?.qualifiedName
   return metaClassName != null && metaClassName == PyDataclassNames.Pydantic.MODEL_METACLASS
+}
+
+private fun hasPydanticDataclassDecorator(
+  pyClass: PyClass,
+  context: TypeEvalContext,
+): Boolean {
+  return pyClass.decoratorList?.decorators.orEmpty().any { decorator ->
+    resolveDecoratorStubSafe(decorator, context)
+      .filterIsInstance<PyQualifiedNameOwner>()
+      .any { it.qualifiedName == PyDataclassNames.Pydantic.DATACLASS_DECORATOR }
+  }
 }
 
 fun resolvePopulateByNameFromAncestorsStubs(cls: PyClass, context: TypeEvalContext): Boolean? {
@@ -926,35 +953,103 @@ fun resolvePopulateByNameFromAncestorsStubs(cls: PyClass, context: TypeEvalConte
   return null
 }
 
-private fun parseDataclassParametersFromModelConfigAttribute(cls: PyClass, context: TypeEvalContext?): Pair<PyDataclassStub, DataclassParameterArgumentMapping>? {
-  val modelConfig = cls.findClassAttribute(PyDataclassNames.Pydantic.MODEL_CONFIG, false, context) ?: return null
-  val configValue = modelConfig.findAssignedValue() ?: return null
+private fun collectPydanticDataclassParametersFromConfigExpression(
+  parametersBuilder: PyDataclassParametersBuilder,
+  cls: PyClass,
+  decoratorArguments: List<PyKeywordArgument>,
+  context: TypeEvalContext?,
+) {
+  val decoratorConfigValue = decoratorArguments
+    .firstOrNull { it.keyword == "config" }
+    ?.valueExpression
+    ?.resolveAssignedValueIfReference(context)
 
-  val builder = PyDataclassParametersBuilder(PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM, null)
-  var foundParameter = false
-
-  if (configValue is PyCallExpression) {
-    configValue.arguments
-      .filterIsInstance<PyKeywordArgument>()
-      .forEach { arg ->
-        val keyword = arg.keyword
-        if (keyword != null && keyword == PyDataclassNames.Pydantic.POPULATE_BY_NAME) {
-          builder.update(keyword, arg.valueExpression)
-          foundParameter = true
-        }
-      }
+  if (decoratorConfigValue != null &&
+      updatePydanticDataclassParametersFromConfigExpression(parametersBuilder, decoratorConfigValue)) {
+    return
   }
 
-  if (configValue is PyDictLiteralExpression) {
-    for (element in configValue.elements) {
-      val key = (element.key as? PyStringLiteralExpression)?.stringValue
-      if (key != null && key in PyDataclassNames.DataclassTransform.DECORATOR_OR_CLASS_PARAMETERS) {
-        builder.update(key, element.value)
-        foundParameter = true
+  val classConfigValue = cls
+                           .findClassAttribute(PyDataclassNames.Pydantic.PYDANTIC_CONFIG, false, context)
+                           ?.findAssignedValue()
+                           ?.resolveAssignedValueIfReference(context)
+                         ?: return
+
+  updatePydanticDataclassParametersFromConfigExpression(parametersBuilder, classConfigValue)
+}
+
+private fun PyExpression.resolveAssignedValueIfReference(context: TypeEvalContext?): PyExpression {
+  val referenceExpression = this as? PyReferenceExpression ?: return this
+
+  val resolved = if (context?.maySwitchToAST(this) == true) {
+    referenceExpression.reference.resolve()
+  }
+  else {
+    PyResolveUtil.resolveLocally(referenceExpression)
+  }
+
+  return (resolved as? PyTargetExpression)?.findAssignedValue() ?: this
+}
+
+private fun parsePydanticDataclassParametersFromModelConfig(
+  cls: PyClass,
+  context: TypeEvalContext?,
+): Pair<PyDataclassStub, DataclassParameterArgumentMapping>? {
+  val configAttributeName = if (context != null && hasPydanticDataclassDecorator(cls, context)) {
+    PyDataclassNames.Pydantic.PYDANTIC_CONFIG
+  }
+  else {
+    PyDataclassNames.Pydantic.MODEL_CONFIG
+  }
+
+  val configValue = cls
+    .findClassAttribute(configAttributeName, false, context)
+    ?.findAssignedValue()
+    ?.resolveAssignedValueIfReference(context) ?: return null
+
+  val builder = PyDataclassParametersBuilder(
+    PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM,
+    null,
+  )
+
+  return if (updatePydanticDataclassParametersFromConfigExpression(builder, configValue)) {
+    builder.build()
+  }
+  else {
+    null
+  }
+}
+
+private fun updatePydanticDataclassParametersFromConfigExpression(
+  builder: PyDataclassParametersBuilder,
+  configValue: PyExpression?,
+): Boolean {
+  var foundParameter = false
+
+  when (configValue) {
+    is PyCallExpression -> {
+      configValue.arguments
+        .filterIsInstance<PyKeywordArgument>()
+        .forEach { arg ->
+          val keyword = arg.keyword
+          if (keyword != null && keyword == PyDataclassNames.Pydantic.POPULATE_BY_NAME) {
+            builder.update(keyword, arg.valueExpression)
+            foundParameter = true
+          }
+        }
+    }
+
+    is PyDictLiteralExpression -> {
+      configValue.elements.forEach { element ->
+        val key = (element.key as? PyStringLiteralExpression)?.stringValue
+        if (key != null && key == PyDataclassNames.Pydantic.POPULATE_BY_NAME) {
+          builder.update(key, element.value)
+          foundParameter = true
+        }
       }
     }
   }
 
-  return if (foundParameter) builder.build() else null
+  return foundParameter
 }
 

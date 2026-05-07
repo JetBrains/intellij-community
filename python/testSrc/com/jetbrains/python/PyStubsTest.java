@@ -1337,6 +1337,32 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  @TestFor(issues = "PY-88897")
+  public void testPydanticDecoratorConfigImportedFromAnotherFileDoesNotCauseUnstubbing() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    final PyFile modelFile = getTestFile(getTestName(true) + "/model.py");
+    final PyFile configFile = getTestFile(getTestName(true) + "/config.py");
+    @Nullable PyClass modelClass = modelFile.findTopLevelClass("Model");
+    assertNotNull(modelClass);
+    PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(stub);
+    assertNull(stub.populateByName());
+    assertNotParsed(modelFile);
+    assertNotParsed(configFile);
+  }
+
+  @TestFor(issues = "PY-88897")
+  public void testPydanticDecoratorConfigDoesNotCauseUnstubbing() {
+    myFixture.copyDirectoryToProject("pydantic", "pydantic");
+    PyFile file = getTestFile();
+    @Nullable PyClass modelClass = file.findTopLevelClass("Model");
+    assertNotNull(modelClass);
+    PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(stub);
+    assertTrue(stub.populateByName());
+    assertNotParsed(file);
+  }
+
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
   }

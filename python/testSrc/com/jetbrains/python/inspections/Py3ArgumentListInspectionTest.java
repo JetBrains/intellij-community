@@ -668,4 +668,123 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testDataclassTransformDecoratorOnOverloadNotImplementation() {
     doMultiFileTest();
   }
+
+  // PY-88897
+  public void testPydanticPopulateByNameFromDecoratorConfigVariable() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+                 from pydantic import Field, ConfigDict
+                 from pydantic.dataclasses import dataclass
+
+                 my_config = ConfigDict(populate_by_name=True)
+
+                 @dataclass(config=my_config)
+                 class Model:
+                     __pydantic_config__ = ConfigDict(populate_by_name=False)
+
+                     a1: str = Field(alias="a2", frozen=True)
+
+                 _ = Model(a1="value")
+                 _ = Model(a2="value")
+                 """);
+  }
+
+  // PY-88897
+  public void testPydanticPopulateByNameFromDecoratorConfigExplicitFalse() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+                 from pydantic import Field, ConfigDict
+                 from pydantic.dataclasses import dataclass
+
+                 @dataclass(config=ConfigDict(populate_by_name=False))
+                 class Model:
+                     __pydantic_config__ = ConfigDict(populate_by_name=True)
+
+                     a1: str = Field(alias="a2", frozen=True)
+
+                 _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
+                 _ = Model(a2="value")
+                 """);
+  }
+
+  // PY-88897
+  public void testPydanticPopulateByNameFallsBackToPydanticConfigWithoutDecoratorConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+                 from pydantic import Field, ConfigDict
+                 from pydantic.dataclasses import dataclass
+
+                 @dataclass
+                 class Model:
+                     __pydantic_config__ = ConfigDict(populate_by_name=True)
+
+                     a1: str = Field(alias="a2", frozen=True)
+
+                 _ = Model(a1="value")
+                 _ = Model(a2="value")
+                 """);
+  }
+
+  // PY-88897
+  public void testPydanticDataclassKwOnlyDecoratorArgument() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+               from pydantic.dataclasses import dataclass
+
+               @dataclass(kw_only=True)
+               class Model:
+                   a: str
+
+               _ = Model(a="value")
+               _ = Model(<warning descr="Unexpected argument">"value"</warning><warning descr="Parameter 'a' unfilled">)</warning>
+               """);
+  }
+
+  // PY-88897
+  public void testPydanticDataclassKwOnlyDecoratorArgumentCombinedWithConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+               from pydantic import ConfigDict, Field
+               from pydantic.dataclasses import dataclass
+
+               @dataclass(kw_only=True, config=ConfigDict(populate_by_name=True))
+               class Model:
+                   a: str = Field(alias="b")
+
+               _ = Model(a="value")
+               _ = Model<warning descr="Unexpected argument(s)Possible callees:(*, b: str)(*, a: str)">("value"<warning descr="Parameter(s) unfilledPossible callees:(*, b: str)(*, a: str)">)</warning></warning>
+               """);
+  }
+
+  // PY-88897
+  public void testPydanticPopulateByNameIsDisabledByDefaultWithoutConfig() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+               from pydantic import Field
+               from pydantic.dataclasses import dataclass
+
+               @dataclass
+               class Model:
+                   a1: str = Field(alias="a2", frozen=True)
+
+               _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
+               _ = Model(a2="value")
+               """);
+  }
+
+  // PY-88897
+  public void testPydanticPopulateByNameIsDisabledWhenConfigOmitsIt() {
+    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
+    doTestByText("""
+               from pydantic import Field, ConfigDict
+               from pydantic.dataclasses import dataclass
+
+               @dataclass(config=ConfigDict())
+               class Model:
+                   a1: str = Field(alias="a2", frozen=True)
+
+               _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
+               _ = Model(a2="value")
+               """);
+  }
 }
