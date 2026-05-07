@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options
 
-import com.intellij.codeInsight.NullableNotNullDialog
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.CompilerWorkspaceConfiguration
@@ -82,8 +82,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
         cbAssertNotNull = checkBox(JavaCompilerBundle.message("add.notnull.assertions"))
           .component
         configureAnnotations = link(JavaCompilerBundle.message("settings.configure.annotations")) {
-          NullableNotNullDialog.showDialogWithInstrumentationOptions(project)
-          cbAssertNotNull.setSelected(!NullableNotNullManager.getInstance(project).getInstrumentedNotNulls().isEmpty())
+          JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS_INSTRUMENTATION.showConfigurationDialog(null, project)
+          cbAssertNotNull.isSelected = !NullableNotNullManager.getInstance(project).getInstrumentedNotNulls().isEmpty()
         }
           .component
       }

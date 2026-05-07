@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
-import com.intellij.codeInsight.options.JavaControlButtonKind;
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix;
 import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
 import com.intellij.codeInspection.AddAssertStatementFix;
@@ -248,7 +248,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
                message("inspection.data.flow.report.match.exception.problem")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
-      JavaControlButtonKind.NULLABILITY_ANNOTATIONS.button()
+      JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()
     );
   }
 }

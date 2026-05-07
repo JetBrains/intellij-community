@@ -3,7 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.options.JavaControlButtonKind
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -17,7 +17,7 @@ import com.intellij.util.containers.FactoryMap
 
 class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getOptionsPane(): OptPane = OptPane.pane(
-    JavaControlButtonKind.DEPENDENCY_CONFIGURATION.button(),
+    JavaConfigurationDialogKind.DEPENDENCY_CONFIGURATION.button(),
   )
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
-import com.intellij.codeInsight.options.JavaControlButtonKind;
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -76,7 +76,7 @@ public final class ReturnNullInspection extends BaseInspection {
       checkbox("m_reportArrayMethods", InspectionGadgetsBundle.message("return.of.null.arrays.option")),
       checkbox("m_reportCollectionMethods", InspectionGadgetsBundle.message("return.of.null.collections.option")),
       checkbox("m_reportObjectMethods", InspectionGadgetsBundle.message("return.of.null.objects.option")),
-      JavaControlButtonKind.NULLABILITY_ANNOTATIONS.button());
+      JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button());
   }
 
   @Override

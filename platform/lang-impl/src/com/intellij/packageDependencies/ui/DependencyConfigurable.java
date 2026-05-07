@@ -7,7 +7,6 @@ import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
@@ -25,10 +24,8 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -292,16 +289,5 @@ public final class DependencyConfigurable implements Configurable, Configurable.
       newList.set(index2, r1);
       setItems(newList);
     }
-  }
-
-  /**
-   * @return a JButton to open a dialog to edit this configurable
-   */
-  public static JButton getConfigureButton(@NotNull Project project) {
-    var button = new JButton(CodeInsightBundle.message("jvm.inspections.dependency.configure.button.text"));
-    button.addActionListener(e -> {
-      ShowSettingsUtil.getInstance().editConfigurable(button, new DependencyConfigurable(project));
-    });
-    return button;
   }
 }

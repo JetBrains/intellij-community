@@ -16,13 +16,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -92,51 +89,43 @@ public final class EntryPointsManagerImpl extends EntryPointsManagerBase impleme
     }.show();
   }
 
-  public static JButton createConfigureAnnotationsButton(Project project, boolean implicitWritesOnly) {
-    JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
-    configureAnnotations.addActionListener(_ -> getInstance(project).configureAnnotations(implicitWritesOnly));
-    return configureAnnotations;
-  }
+  /**
+   * Show the dialog to configure entry points
+   * 
+   * @param project project to configure entry points for
+   */
+  public static void showEntryPointsDialog(Project project) {
+    EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
+    ArrayList<ClassPattern> list = new ArrayList<>();
+    for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
+      list.add(new ClassPattern(pattern));
+    }
+    ClassPatternsPanel panel = new ClassPatternsPanel(list);
+    new DialogWrapper(project) {
 
-  public static JButton createConfigureClassPatternsButton(Project project) {
-    JButton configureClassPatterns = new JButton(JavaBundle.message("button.code.patterns"));
-    configureClassPatterns.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EntryPointsManagerBase entryPointsManagerBase = getInstance(project);
-        ArrayList<ClassPattern> list = new ArrayList<>();
-        for (ClassPattern pattern : entryPointsManagerBase.getPatterns()) {
-          list.add(new ClassPattern(pattern));
-        }
-        ClassPatternsPanel panel = new ClassPatternsPanel(list);
-        new DialogWrapper(project) {
-
-          {
-            init();
-            setTitle(JavaBundle.message("dialog.title.configure.code.patterns"));
-          }
-
-          @Override
-          protected JComponent createCenterPanel() {
-            return panel;
-          }
-
-          @Override
-          protected void doOKAction() {
-            String error = panel.getValidationError(project);
-            if (error != null) {
-              Messages.showErrorDialog(panel, error);
-              return;
-            }
-            Set<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
-            patterns.clear();
-            patterns.addAll(list);
-            DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EntryPointsManagerImpl.createConfigureClassPatternsButton");
-            super.doOKAction();
-          }
-        }.show();
+      {
+        init();
+        setTitle(JavaBundle.message("dialog.title.configure.code.patterns"));
       }
-    });
-    return configureClassPatterns;
+
+      @Override
+      protected JComponent createCenterPanel() {
+        return panel;
+      }
+
+      @Override
+      protected void doOKAction() {
+        String error = panel.getValidationError(project);
+        if (error != null) {
+          Messages.showErrorDialog(panel, error);
+          return;
+        }
+        Set<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
+        patterns.clear();
+        patterns.addAll(list);
+        DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EntryPointsManagerImpl.createConfigureClassPatternsButton");
+        super.doOKAction();
+      }
+    }.show();
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.options.JavaControlButtonKind;
+import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -56,7 +56,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         "inspection.nullable.problems.notnull.to.nullable.assignment.conflicts")),
       checkbox("REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER", JavaBundle.message(
         "inspection.nullable.problems.redundant.nullability.inside.container")),
-      JavaControlButtonKind.NULLABILITY_ANNOTATIONS.button()
+      JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()
     );
   }
 

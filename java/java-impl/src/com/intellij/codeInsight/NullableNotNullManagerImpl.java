@@ -512,13 +512,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return OptionController.fieldsOf(this)
       .withRootPane(() -> pane(
         tabs(
-          tab(NullableNotNullDialog.NULLABLE,
+          tab(AnnotationUtil.NULLABLE_SHORT,
               stringList("myNullables", JavaBundle.message("nullable.notnull.annotations.panel.title", "Nullable"),
                          new JavaClassValidator().annotationsOnly()),
               string("myDefaultNullable", JavaBundle.message("nullable.notnull.annotation.used.label"))
                 .description(JavaBundle.message("nullable.notnull.annotation.used.label.description"))
           ),
-          tab(NullableNotNullDialog.NOT_NULL,
+          tab(AnnotationUtil.NOT_NULL_SHORT,
               stringList("myNotNulls", JavaBundle.message("nullable.notnull.annotations.panel.title", "NotNull"),
                          new JavaClassValidator().annotationsOnly()),
               string("myDefaultNotNull", JavaBundle.message("nullable.notnull.annotation.used.label"))

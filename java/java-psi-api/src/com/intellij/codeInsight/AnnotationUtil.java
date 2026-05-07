@@ -78,10 +78,12 @@ import java.util.stream.Stream;
 
 @ApiStatus.NonExtendable
 public class AnnotationUtil {
-  public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
-  public static final String UNKNOWN_NULLABILITY = "org.jetbrains.annotations.UnknownNullability";
-  public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
-  public static final String NOT_NULL_BY_DEFAULT = "org.jetbrains.annotations.NotNullByDefault";
+  public static final @NlsSafe String NULLABLE = "org.jetbrains.annotations.Nullable";
+  public static final @NlsSafe String NULLABLE_SHORT = "Nullable";
+  public static final @NlsSafe String UNKNOWN_NULLABILITY = "org.jetbrains.annotations.UnknownNullability";
+  public static final @NlsSafe String NOT_NULL = "org.jetbrains.annotations.NotNull";
+  public static final @NlsSafe String NOT_NULL_SHORT = "NotNull";
+  public static final @NlsSafe String NOT_NULL_BY_DEFAULT = "org.jetbrains.annotations.NotNullByDefault";
 
   public static final String J_SPECIFY_NON_NULL = "org.jspecify.annotations.NonNull";
   public static final String J_SPECIFY_NULLABLE = "org.jspecify.annotations.Nullable";
