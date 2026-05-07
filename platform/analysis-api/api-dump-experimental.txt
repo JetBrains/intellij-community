@@ -97,6 +97,10 @@ a:com.intellij.codeInsight.completion.CompletionService
 - highlightMessage():java.lang.String
 - highlightReference(com.intellij.lang.annotation.AnnotationBuilder):com.intellij.lang.annotation.AnnotationBuilder
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
+*:com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback
+- com.intellij.codeInsight.intention.IntentionAction
+- a:getFallbackModCommandAction():com.intellij.modcommand.ModCommandAction
+- s:getFallbackModCommandActionFor(com.intellij.codeInsight.intention.IntentionAction):com.intellij.modcommand.ModCommandAction
 com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - *s:snippet(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
 *f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
