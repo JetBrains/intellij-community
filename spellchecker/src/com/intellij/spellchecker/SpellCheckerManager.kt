@@ -55,13 +55,15 @@ import com.intellij.spellchecker.state.DictionaryStateListener
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.util.function.Consumer
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<SpellCheckerManager>()
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledDictionaryProvider>("com.intellij.spellchecker.bundledDictionaryProvider")
@@ -91,6 +93,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     private set
 
   private var suggestionProvider: SuggestionProvider? = null
+  private val settings by lazy { SpellCheckerSettings.getInstance(project) }
 
   init {
     fullConfigurationReload()
@@ -143,45 +146,48 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     fillEngineDictionary(spellChecker)
   }
 
-  fun updateBundledDictionaries(removedDictionaries: List<String?>) {
+  @RequiresEdt
+  fun removeDictionaries(removedDictionaries: List<String>) {
+    if (removedDictionaries.isEmpty()) return
     val spellChecker = spellChecker ?: return
-    for (provider in BUNDLED_EP_NAME.extensionList) {
-      for (dictionary in provider.bundledDictionaries) {
-        if (!spellChecker.isDictionaryLoad(dictionary)) {
-          loadBundledDictionary(provider = provider, dictionary = dictionary, spellChecker = spellChecker)
+    for (name in removedDictionaries) {
+      spellChecker.removeDictionary(name)
+    }
+    restartInspections("SpellCheckerManager.removeDictionaries")
+  }
+
+  private val lock = Any()
+
+  @RequiresBackgroundThread
+  fun updateBundledDictionaries() {
+    val spellChecker = spellChecker ?: return
+
+    // if all custom dictionaries are loaded, then there is nothing to update
+    val customDictionariesPaths = settings.customDictionariesPaths
+    if (customDictionariesPaths.all { spellChecker.isDictionaryLoad(it) }) return
+
+    synchronized(lock) {
+      if (customDictionariesPaths.all { spellChecker.isDictionaryLoad(it) }) return
+      loadBundledDictionaries(spellChecker)
+      for (provider in RuntimeDictionaryProvider.EP_NAME.extensionList) {
+        for (dictionary in provider.dictionaries) {
+          val shouldDictionaryBeLoaded = !settings.runtimeDisabledDictionariesNames.contains(dictionary.name)
+          val isDictionaryLoaded = spellChecker.isDictionaryLoad(dictionary.name)
+          if (isDictionaryLoaded && !shouldDictionaryBeLoaded) {
+            spellChecker.removeDictionary(dictionary.name)
+          }
+          else if (!isDictionaryLoaded && shouldDictionaryBeLoaded) {
+            spellChecker.addDictionary(dictionary)
+          }
         }
       }
-    }
 
-    val settings = SpellCheckerSettings.getInstance(project)
-    for (provider in RuntimeDictionaryProvider.EP_NAME.extensionList) {
-      for (dictionary in provider.dictionaries) {
-        val dictionaryShouldBeLoad = !settings.runtimeDisabledDictionariesNames.contains(dictionary.name)
-        val dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary.name)
-        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
-          spellChecker.removeDictionary(dictionary.name)
-        }
-        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-          spellChecker.addDictionary(dictionary)
-        }
-      }
-    }
-
-    if (settings.customDictionariesPaths != null) {
-      for (dictionary in settings.customDictionariesPaths) {
+      for (dictionary in customDictionariesPaths) {
         if (!spellChecker.isDictionaryLoad(dictionary)) {
           loadDictionary(dictionary)
         }
       }
     }
-
-    if (!removedDictionaries.isEmpty()) {
-      for (name in removedDictionaries) {
-        spellChecker.removeDictionary(name!!)
-      }
-    }
-
-    restartInspections("SpellCheckerManager.updateBundledDictionaries")
   }
 
   val userDictionaryWords: Set<String>

@@ -69,6 +69,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
 
   override fun getTransformation(): Transformation = Transformation()
 
+  private val manager by lazy { SpellCheckerManager.getInstance(project) }
   private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
   private val replacingRules: Set<RuleDictionary> = getReplacingRules()
@@ -107,6 +108,7 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
   @OptIn(ExperimentalCoroutinesApi::class)
   private val suggestionCache = Caffeine.newBuilder().maximumSize(1024).build<SuggestionRequest, List<String>> { request ->
     val speller = speller!!
+    manager.updateBundledDictionaries()
     synchronized(speller) {
       speller.suggest(request.word, request.maxSuggestions).take(request.maxSuggestions)
     }
@@ -176,10 +178,8 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
     if (word.length > MAX_WORD_LENGTH) {
       return true
     }
-    if (speller.isAlien(word)) {
-      return true
-    }
-    return !speller.isMisspelled(word, caseSensitive = false)
+    manager.updateBundledDictionaries()
+    return speller.isAlien(word) || !speller.isMisspelled(word, caseSensitive = false)
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
