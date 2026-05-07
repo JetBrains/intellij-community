@@ -311,7 +311,7 @@ internal class JpsModuleToBazel {
       fun makeJarPath(library: Library, file: MavenFileDescription): String {
         val path = "external/" +
                    library.target.container.repoLabel.removePrefix("@") +
-                   "++_repo_rules+" +
+                   "++http_file+" +
                    "${fileToHttpRuleFile(file.mavenCoordinates)}/" +
                    "${file.mavenCoordinates.artifactId}-${file.mavenCoordinates.version}" +
                    (if (file.mavenCoordinates.classifier != null) "-${file.mavenCoordinates.classifier}" else "") +
