@@ -10,7 +10,6 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.SimpleTreeStructure
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenProfileKind
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
@@ -27,7 +26,6 @@ import org.jetbrains.idea.maven.utils.MavenUIUtil.CheckboxHandler
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.awt.event.InputEvent
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
 import java.util.function.Consumer
 import javax.swing.tree.TreePath
 import kotlin.concurrent.Volatile
@@ -44,8 +42,6 @@ class MavenProjectsStructure(
   enum class MavenStructureDisplayMode {
     SHOW_ALL, SHOW_PROJECTS, SHOW_GOALS
   }
-
-  private val boundedUpdateService: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1)
 
   private val myRoot: RootNode = RootNode(this)
   private val myModel: StructureTreeModel<MavenProjectsStructure?>
@@ -77,13 +73,11 @@ class MavenProjectsStructure(
   }
 
   fun update() {
-    boundedUpdateService.execute(Runnable {
-      val projects = this.projectsManager.getProjects()
-      val deleted: MutableSet<MavenProject?> = ConcurrentHashMap.newKeySet<MavenProject?>()
-      deleted.addAll(myProjectToNodeMapping.keys)
-      projects.forEach(Consumer { o: MavenProject? -> deleted.remove(o) })
-      doUpdateProjects(projects, deleted)
-    })
+    val projects = this.projectsManager.getProjects()
+    val deleted: MutableSet<MavenProject?> = ConcurrentHashMap.newKeySet<MavenProject?>()
+    deleted.addAll(myProjectToNodeMapping.keys)
+    projects.forEach(Consumer { o: MavenProject? -> deleted.remove(o) })
+    doUpdateProjects(projects, deleted)
   }
 
   fun updateFrom(node: SimpleNode?) {
@@ -101,7 +95,7 @@ class MavenProjectsStructure(
   }
 
   fun updateProjects(updated: MutableList<MavenProject>, deleted: MutableCollection<MavenProject?>) {
-    boundedUpdateService.execute(Runnable { doUpdateProjects(updated, deleted) })
+    doUpdateProjects(updated, deleted)
   }
 
   private fun doUpdateProjects(updated: MutableList<MavenProject>, deleted: MutableCollection<MavenProject?>) {
@@ -153,17 +147,15 @@ class MavenProjectsStructure(
   }
 
   fun updateProfiles() {
-    boundedUpdateService.execute(Runnable { myRoot.updateProfiles() })
+    myRoot.updateProfiles()
   }
 
   fun updateIgnored(projects: MutableList<MavenProject?>) {
-    boundedUpdateService.execute(Runnable {
-      for (each in projects) {
-        val node = findNodeFor(each)
-        if (node == null) continue
-        node.updateIgnored()
-      }
-    })
+    for (each in projects) {
+      val node = findNodeFor(each)
+      if (node == null) continue
+      node.updateIgnored()
+    }
   }
 
   fun accept(visitor: TreeVisitor) {
@@ -171,19 +163,15 @@ class MavenProjectsStructure(
   }
 
   fun updateGoals() {
-    boundedUpdateService.execute(Runnable {
-      for (each in myProjectToNodeMapping.values) {
-        each.updateGoals()
-      }
-    })
+    for (each in myProjectToNodeMapping.values) {
+      each.updateGoals()
+    }
   }
 
   fun updateRunConfigurations() {
-    boundedUpdateService.execute(Runnable {
-      for (each in myProjectToNodeMapping.values) {
-        each.updateRunConfigurations()
-      }
-    })
+    for (each in myProjectToNodeMapping.values) {
+      each.updateRunConfigurations()
+    }
   }
 
   fun select(project: MavenProject?) {
@@ -216,7 +204,7 @@ class MavenProjectsStructure(
   }
 
   fun updatePluginsTree(pluginsNode: PluginsNode, pluginInfos: MutableList<MavenPluginWithArtifact>) {
-    boundedUpdateService.execute(UpdatePluginsTreeTask(pluginsNode, pluginInfos))
+    UpdatePluginsTreeTask(pluginsNode, pluginInfos).run()
   }
 
   private inner class UpdatePluginsTreeTask(
@@ -231,19 +219,17 @@ class MavenProjectsStructure(
         val pluginInfo = readPluginInfo(next.artifact)
         pluginNodes.add(PluginNode(this@MavenProjectsStructure, myParentNode, next.plugin, pluginInfo))
       }
-      myParentNode.getPluginNodes().clear()
+      myParentNode.pluginNodes.clear()
       if (isUnloading) return
       myParentNode.getPluginNodes().addAll(pluginNodes)
-      myParentNode.sort(myParentNode.getPluginNodes())
+      myParentNode.sort(myParentNode.pluginNodes)
       myParentNode.childrenChanged()
     }
   }
 
   fun updateRepositoryStatus(state: MavenIndexUpdateState) {
-    boundedUpdateService.execute(Runnable {
-      myProjectToNodeMapping.values.forEach(Consumer { pn: ProjectNode? ->
-        pn!!.getRepositoriesNode().updateStatus(state)
-      })
+    myProjectToNodeMapping.values.forEach(Consumer { pn: ProjectNode? ->
+      pn!!.getRepositoriesNode().updateStatus(state)
     })
   }
 
