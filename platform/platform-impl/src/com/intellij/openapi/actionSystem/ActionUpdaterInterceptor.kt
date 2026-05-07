@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.components.serviceAsync
@@ -54,8 +55,9 @@ interface ActionUpdaterInterceptor {
   fun treatDefaultActionGroupAsDynamic(): Boolean = false
 
   companion object {
-    val isDefaultImpl: Boolean = PluginManagerCore.getPlugin(
-      PluginId.getId("com.intellij.jetbrains.rd.client")) == null
+    val isDefaultImpl: Boolean =
+      PluginManagerCore.getPlugin(PluginId.getId("com.intellij.jetbrains.rd.client")) == null &&
+      PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId.getId("intellij.platform.frontend.split.base", "jetbrains")) == null
 
     fun treatDefaultActionGroupAsDynamic(): Boolean = when {
       isDefaultImpl -> false
