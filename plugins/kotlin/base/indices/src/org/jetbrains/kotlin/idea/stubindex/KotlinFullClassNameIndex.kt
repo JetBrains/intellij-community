@@ -7,6 +7,12 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
+/**
+ * Indexes Kotlin [KtClassOrObject] declarations by fully qualified name.
+ *
+ * Unlike [KotlinClassShortNameIndex], this index is limited to declarations with a fully qualified name
+ * and therefore **does not contain local declarations**.
+ */
 class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
         @JvmField
