@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
+import kotlin.concurrent.atomics.AtomicReference
 
 interface LspServer {
     val handlers: LspHandlers
@@ -27,7 +28,7 @@ suspend fun serveLsp(
     withLspImpl(incoming, outgoing) { lspClient ->
         resource { cc ->
             withCoroutineScope { scope ->
-                var handlersDef: LspHandlers? = null
+                val handlersDef = AtomicReference<LspHandlers?>(null)
                 val exitSignal = CompletableDeferred<Unit>()
                 cc(object : LspHandlers {
                     override fun requestHandler(requestTypeName: String): LspRequestHandler<*, *, *>? =
@@ -38,8 +39,8 @@ suspend fun serveLsp(
                                     scope.launch {
                                         val server = handlers(initializeParams, lspClient)
                                         server.use { server ->
+                                            handlersDef.store(server.handlers)
                                             def.complete(server.initializeResult)
-                                            handlersDef = server.handlers
                                             exitSignal.await()
                                         }
                                     }
@@ -52,7 +53,7 @@ suspend fun serveLsp(
                             }
 
                             else -> {
-                                handlersDef?.requestHandler(requestTypeName)
+                                handlersDef.load()?.requestHandler(requestTypeName)
                             }
                         }
 
@@ -65,7 +66,7 @@ suspend fun serveLsp(
                             }
 
                             else -> {
-                                handlersDef?.notificationHandler(notificationTypeName)
+                                handlersDef.load()?.notificationHandler(notificationTypeName)
                             }
                         }
                 })
