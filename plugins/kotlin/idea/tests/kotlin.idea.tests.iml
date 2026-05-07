@@ -97,7 +97,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.dataframe.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" scope="RUNTIME" />

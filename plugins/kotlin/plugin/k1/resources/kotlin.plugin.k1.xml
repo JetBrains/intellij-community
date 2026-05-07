@@ -87,7 +87,6 @@
     <module name="kotlin.compiler-plugins.parcelize.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.scripting"/>
     <module name="intellij.kotlin.compilerPlugins.kapt"/>
-    <module name="kotlin.compiler-plugins.kotlinx-serialization.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
     <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
     <module name="kotlin.compiler-plugins.lombok.gradle"/>

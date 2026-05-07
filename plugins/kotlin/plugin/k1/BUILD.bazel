@@ -60,7 +60,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
     "//plugins/kotlin/compiler-plugins/kapt",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
     "//plugins/kotlin/compiler-plugins/noarg/common",
     "//plugins/kotlin/compiler-plugins/noarg/gradle",

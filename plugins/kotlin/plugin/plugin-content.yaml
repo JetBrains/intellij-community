@@ -149,8 +149,8 @@
   - name: intellij.kotlin.compilerPlugins.power-assert.gradle
   - name: intellij.kotlin.compilerPlugins.kapt
   - name: kotlin.compiler-plugins.kotlinx-serialization.common
-  - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
   - name: intellij.kotlin.compilerPlugins.serialization
+  - name: intellij.kotlin.compilerPlugins.serialization.gradle
   - name: intellij.kotlin.compilerPlugins.serialization.maven
   - name: intellij.kotlin.compilerPlugins.dataframe.maven
   - name: kotlin.compiler-plugins.noarg.common

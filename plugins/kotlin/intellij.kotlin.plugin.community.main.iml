@@ -73,7 +73,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.dataframe.maven" exported="" />
