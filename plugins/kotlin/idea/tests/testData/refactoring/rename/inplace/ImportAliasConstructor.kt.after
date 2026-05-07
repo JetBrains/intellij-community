@@ -1,0 +1,9 @@
+// RENAME: variable
+// NEW_NAME: A
+package foo
+
+import foo.SimpleClass as A
+
+class SimpleClass
+
+fun x(): A = A<caret>()

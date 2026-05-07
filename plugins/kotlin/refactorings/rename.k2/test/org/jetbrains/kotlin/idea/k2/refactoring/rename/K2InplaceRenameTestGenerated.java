@@ -465,6 +465,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingTypeParameterByContainingClassTypeParameter1.kt");
     }
 
+    @TestMetadata("ImportAliasConstructor.kt")
+    public void testImportAliasConstructor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ImportAliasConstructor.kt");
+    }
+
     @TestMetadata("InvokeToFoo.kt")
     public void testInvokeToFoo() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/InvokeToFoo.kt");
