@@ -431,7 +431,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
                                                                 MavenTasksManager.getInstance(myProject),
                                                                 MavenShortcutsManager.getInstance(myProject),
                                                                 this,
-                                                                myTree))
+                                                                myTree!!))
   }
 
   @ApiStatus.Internal

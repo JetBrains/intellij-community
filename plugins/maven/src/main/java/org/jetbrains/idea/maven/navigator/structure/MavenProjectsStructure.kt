@@ -1,363 +1,315 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.navigator.structure;
+package org.jetbrains.idea.maven.navigator.structure
 
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenProfileKind;
-import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.MavenPluginWithArtifact;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
-import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
-import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenUIUtil;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.ui.tree.AsyncTreeModel
+import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.tree.TreeVisitor
+import com.intellij.ui.treeStructure.SimpleNode
+import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.ui.treeStructure.SimpleTreeStructure
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.model.MavenProfileKind
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
+import org.jetbrains.idea.maven.project.MavenPluginWithArtifact
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
+import org.jetbrains.idea.maven.tasks.MavenTasksManager
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
+import org.jetbrains.idea.maven.utils.MavenUIUtil
+import org.jetbrains.idea.maven.utils.MavenUIUtil.CheckBoxState
+import org.jetbrains.idea.maven.utils.MavenUIUtil.CheckboxHandler
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.awt.event.InputEvent
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.function.Consumer
+import javax.swing.tree.TreePath
+import kotlin.concurrent.Volatile
 
-import javax.swing.tree.TreePath;
-import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-
-public final class MavenProjectsStructure extends SimpleTreeStructure {
-  public enum MavenStructureDisplayMode {
+class MavenProjectsStructure(
+  val project: Project,
+  val displayMode: MavenStructureDisplayMode,
+  val projectsManager: MavenProjectsManager,
+  val tasksManager: MavenTasksManager,
+  val shortcutsManager: MavenShortcutsManager,
+  val projectsNavigator: MavenProjectsNavigator,
+  tree: SimpleTree,
+) : SimpleTreeStructure() {
+  enum class MavenStructureDisplayMode {
     SHOW_ALL, SHOW_PROJECTS, SHOW_GOALS
   }
 
-  private final ExecutorService boundedUpdateService;
+  private val boundedUpdateService: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1)
 
-  private final Project myProject;
-  private final MavenStructureDisplayMode myDisplayMode;
-  private final MavenProjectsManager myProjectsManager;
-  private final MavenTasksManager myTasksManager;
-  private final MavenShortcutsManager myShortcutsManager;
-  private final MavenProjectsNavigator myProjectsNavigator;
+  private val myRoot: RootNode = RootNode(this)
+  private val myModel: StructureTreeModel<MavenProjectsStructure?>
+  private val myTree: SimpleTree
 
-  private final RootNode myRoot;
-  private final StructureTreeModel<MavenProjectsStructure> myModel;
-  private final SimpleTree myTree;
-  private volatile boolean isUnloading = false;
+  @Volatile
+  private var isUnloading = false
 
-  private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new ConcurrentHashMap<>();
+  private val myProjectToNodeMapping: MutableMap<MavenProject, ProjectNode> = ConcurrentHashMap<MavenProject, ProjectNode>()
 
-  public MavenProjectsStructure(Project project,
-                                MavenStructureDisplayMode displayMode,
-                                MavenProjectsManager projectsManager,
-                                MavenTasksManager tasksManager,
-                                MavenShortcutsManager shortcutsManager,
-                                MavenProjectsNavigator projectsNavigator,
-                                SimpleTree tree) {
-    myProject = project;
-    myDisplayMode = displayMode;
-    myRoot = new RootNode(this);
-    myProjectsManager = projectsManager;
-    myTasksManager = tasksManager;
-    myShortcutsManager = shortcutsManager;
-    myProjectsNavigator = projectsNavigator;
-    boundedUpdateService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1);
-    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
-          isUnloading = true;
+  init {
+    project.getMessageBus().simpleConnect()
+      .subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          if (MavenUtil.INTELLIJ_PLUGIN_ID == pluginDescriptor.getPluginId().idString) {
+            isUnloading = true
+          }
         }
-      }
-    });
+      })
 
-    myTree = tree;
-    configureTree(myTree);
-    myModel = new StructureTreeModel<>(this, projectsNavigator);
-    tree.setModel(new AsyncTreeModel(myModel, projectsNavigator));
+    myTree = tree
+    configureTree(myTree)
+    myModel = StructureTreeModel<MavenProjectsStructure?>(this, projectsNavigator)
+    tree.setModel(AsyncTreeModel(myModel, projectsNavigator))
   }
 
-  Project getProject() {
-    return myProject;
+  override fun getRootElement(): RootNode {
+    return myRoot
   }
 
-  MavenProjectsManager getProjectsManager() {
-    return myProjectsManager;
+  fun update() {
+    boundedUpdateService.execute(Runnable {
+      val projects = this.projectsManager.getProjects()
+      val deleted: MutableSet<MavenProject?> = ConcurrentHashMap.newKeySet<MavenProject?>()
+      deleted.addAll(myProjectToNodeMapping.keys)
+      projects.forEach(Consumer { o: MavenProject? -> deleted.remove(o) })
+      doUpdateProjects(projects, deleted)
+    })
   }
 
-  MavenProjectsNavigator getProjectsNavigator() {
-    return myProjectsNavigator;
-  }
-
-  public MavenTasksManager getTasksManager() {
-    return myTasksManager;
-  }
-
-  public MavenShortcutsManager getShortcutsManager() {
-    return myShortcutsManager;
-  }
-
-  MavenStructureDisplayMode getDisplayMode() {
-    return myDisplayMode;
-  }
-
-  private static void configureTree(final SimpleTree tree) {
-    tree.setRootVisible(false);
-    tree.setShowsRootHandles(true);
-
-    MavenUIUtil.installCheckboxRenderer(tree, new MavenUIUtil.CheckboxHandler() {
-      @Override
-      public void toggle(TreePath treePath, InputEvent e) {
-        SimpleNode node = tree.getNodeFor(treePath);
-        if (node != null) {
-          node.handleDoubleClickOrEnter(tree, e);
-        }
-      }
-
-      @Override
-      public boolean isVisible(Object userObject) {
-        return userObject instanceof ProfileNode;
-      }
-
-      @Override
-      public MavenUIUtil.CheckBoxState getState(Object userObject) {
-        MavenProfileKind state = ((ProfileNode)userObject).getState();
-        return switch (state) {
-          case NONE -> MavenUIUtil.CheckBoxState.UNCHECKED;
-          case EXPLICIT -> MavenUIUtil.CheckBoxState.CHECKED;
-          case IMPLICIT -> MavenUIUtil.CheckBoxState.PARTIAL;
-        };
-      }
-    });
-  }
-
-  @Override
-  public @NotNull RootNode getRootElement() {
-    return myRoot;
-  }
-
-  public void update() {
-    boundedUpdateService.execute(() -> {
-      List<MavenProject> projects = getProjectsManager().getProjects();
-      Set<MavenProject> deleted = ConcurrentHashMap.newKeySet();
-      deleted.addAll(myProjectToNodeMapping.keySet());
-      projects.forEach(deleted::remove);
-      doUpdateProjects(projects, deleted);
-    });
-  }
-
-  void updateFrom(SimpleNode node) {
+  fun updateFrom(node: SimpleNode?) {
     if (node != null) {
-      myModel.invalidate(node, true);
+      myModel.invalidate(node, true)
     }
   }
 
-  void updateUpTo(SimpleNode node) {
-    SimpleNode each = node;
+  fun updateUpTo(node: SimpleNode?) {
+    var each = node
     while (each != null) {
-      updateFrom(each);
-      each = each.getParent();
+      updateFrom(each)
+      each = each.parent
     }
   }
 
-  public void updateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
-    boundedUpdateService.execute(() -> doUpdateProjects(updated, deleted));
+  fun updateProjects(updated: MutableList<MavenProject>, deleted: MutableCollection<MavenProject?>) {
+    boundedUpdateService.execute(Runnable { doUpdateProjects(updated, deleted) })
   }
 
-  private void doUpdateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
-    for (MavenProject each : updated) {
-      ProjectNode node = findNodeFor(each);
+  private fun doUpdateProjects(updated: MutableList<MavenProject>, deleted: MutableCollection<MavenProject?>) {
+    for (each in updated) {
+      var node = findNodeFor(each)
       if (node == null) {
-        node = new ProjectNode(this, each);
-        myProjectToNodeMapping.put(each, node);
+        node = ProjectNode(this, each)
+        myProjectToNodeMapping[each] = node
       }
-      doUpdateProject(node);
+      doUpdateProject(node)
     }
 
-    for (MavenProject each : deleted) {
-      ProjectNode node = myProjectToNodeMapping.remove(each);
+    for (each in deleted) {
+      val node = myProjectToNodeMapping.remove(each)
       if (node != null) {
-        ProjectsGroupNode parent = node.getGroup();
-        parent.remove(node);
+        val parent = node.getGroup()
+        parent.remove(node)
       }
     }
 
-    myRoot.updateProfiles();
+    myRoot.updateProfiles()
   }
 
-  private void doUpdateProject(ProjectNode node) {
-    MavenProject project = node.getMavenProject();
+  private fun doUpdateProject(node: ProjectNode) {
+    val project = node.getMavenProject()
 
-    ProjectsGroupNode newParentNode = myRoot;
+    var newParentNode: ProjectsGroupNode? = myRoot
 
-    if (getProjectsNavigator().getGroupModules()) {
-      MavenProject aggregator = getProjectsManager().findAggregator(project);
+    if (this.projectsNavigator.groupModules) {
+      val aggregator = this.projectsManager.findAggregator(project)
       if (aggregator != null) {
-        ProjectNode aggregatorNode = findNodeFor(aggregator);
+        val aggregatorNode = findNodeFor(aggregator)
         if (aggregatorNode != null && aggregatorNode.isVisible()) {
-          newParentNode = aggregatorNode;
+          newParentNode = aggregatorNode
         }
       }
     }
 
-    node.updateProject();
-    reconnectNode(node, newParentNode);
+    node.updateProject()
+    reconnectNode(node, newParentNode!!)
 
-    ProjectsGroupNode newModulesParentNode = getProjectsNavigator().getGroupModules() && node.isVisible() ? node : myRoot;
-    for (MavenProject each : getProjectsManager().getModules(project)) {
-      ProjectNode moduleNode = findNodeFor(each);
-      if (moduleNode != null && !moduleNode.getParent().equals(newModulesParentNode)) {
-        reconnectNode(moduleNode, newModulesParentNode);
+    val newModulesParentNode = if (this.projectsNavigator.groupModules && node.isVisible()) node else myRoot
+    for (each in this.projectsManager.getModules(project)) {
+      val moduleNode = findNodeFor(each)
+      if (moduleNode != null && moduleNode.getParent() != newModulesParentNode) {
+        reconnectNode(moduleNode, newModulesParentNode)
       }
     }
   }
 
-  private static void reconnectNode(ProjectNode node, ProjectsGroupNode newParentNode) {
-    ProjectsGroupNode oldParentNode = node.getGroup();
-    if (oldParentNode == null || !oldParentNode.equals(newParentNode)) {
-      if (oldParentNode != null) {
-        oldParentNode.remove(node);
+  fun updateProfiles() {
+    boundedUpdateService.execute(Runnable { myRoot.updateProfiles() })
+  }
+
+  fun updateIgnored(projects: MutableList<MavenProject?>) {
+    boundedUpdateService.execute(Runnable {
+      for (each in projects) {
+        val node = findNodeFor(each)
+        if (node == null) continue
+        node.updateIgnored()
       }
-      newParentNode.add(node);
-    }
-    else {
-      newParentNode.sortProjects();
-    }
+    })
   }
 
-  public void updateProfiles() {
-    boundedUpdateService.execute(() -> myRoot.updateProfiles());
+  fun accept(visitor: TreeVisitor) {
+    (myTree.getModel() as TreeVisitor.Acceptor).accept(visitor)
   }
 
-  public void updateIgnored(List<MavenProject> projects) {
-    boundedUpdateService.execute(() -> {
-      for (MavenProject each : projects) {
-        ProjectNode node = findNodeFor(each);
-        if (node == null) continue;
-        node.updateIgnored();
+  fun updateGoals() {
+    boundedUpdateService.execute(Runnable {
+      for (each in myProjectToNodeMapping.values) {
+        each.updateGoals()
       }
-    });
+    })
   }
 
-  public void accept(@NotNull TreeVisitor visitor) {
-    ((TreeVisitor.Acceptor)myTree.getModel()).accept(visitor);
-  }
-
-  public void updateGoals() {
-    boundedUpdateService.execute(() -> {
-      for (ProjectNode each : myProjectToNodeMapping.values()) {
-        each.updateGoals();
+  fun updateRunConfigurations() {
+    boundedUpdateService.execute(Runnable {
+      for (each in myProjectToNodeMapping.values) {
+        each.updateRunConfigurations()
       }
-    });
+    })
   }
 
-  public void updateRunConfigurations() {
-    boundedUpdateService.execute(() -> {
-      for (ProjectNode each : myProjectToNodeMapping.values()) {
-        each.updateRunConfigurations();
-      }
-    });
+  fun select(project: MavenProject?) {
+    val node = findNodeFor(project)
+    if (node != null) select(node)
   }
 
-  public void select(MavenProject project) {
-    ProjectNode node = findNodeFor(project);
-    if (node != null) select(node);
+  fun select(node: SimpleNode) {
+    myModel.select(node, myTree, Consumer { `_`: TreePath? -> })
   }
 
-  public void select(SimpleNode node) {
-    myModel.select(node, myTree, _ -> {
-    });
-  }
-
-  private ProjectNode findNodeFor(MavenProject project) {
-    return myProjectToNodeMapping.get(project);
+  private fun findNodeFor(project: MavenProject?): ProjectNode? {
+    return myProjectToNodeMapping.get(project)
   }
 
   @ApiStatus.Internal
-  public enum DisplayKind {
+  enum class DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
 
-  boolean showOnlyBasicPhases() {
-    if (getDisplayMode() == MavenStructureDisplayMode.SHOW_GOALS) {
-      return false;
+  fun showOnlyBasicPhases(): Boolean {
+    if (this.displayMode == MavenStructureDisplayMode.SHOW_GOALS) {
+      return false
     }
-    return getProjectsNavigator().getShowBasicPhasesOnly();
+    return this.projectsNavigator.showBasicPhasesOnly
   }
 
-  public static <T extends MavenSimpleNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-    final List<T> filtered = new ArrayList<>();
-    for (SimpleNode node : getSelectedNodes(tree)) {
-      if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
-        filtered.clear();
-        break;
-      }
-      //noinspection unchecked
-      filtered.add((T)node);
-    }
-    return filtered;
-  }
-
-  private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
-    List<SimpleNode> nodes = new ArrayList<>();
-    TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths != null) {
-      for (TreePath treePath : treePaths) {
-        nodes.add(tree.getNodeFor(treePath));
-      }
-    }
-    return nodes;
-  }
-
-  public enum ErrorLevel {
+  enum class ErrorLevel {
     NONE, ERROR
   }
 
-  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginWithArtifact> pluginInfos) {
-    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, pluginInfos));
+  fun updatePluginsTree(pluginsNode: PluginsNode, pluginInfos: MutableList<MavenPluginWithArtifact>) {
+    boundedUpdateService.execute(UpdatePluginsTreeTask(pluginsNode, pluginInfos))
   }
 
-  private class UpdatePluginsTreeTask implements Runnable {
-    private final @NotNull PluginsNode myParentNode;
-    private final List<MavenPluginWithArtifact> myPluginInfos;
-
-    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginWithArtifact> pluginInfos) {
-      myParentNode = parentNode;
-      myPluginInfos = pluginInfos;
-    }
-
-
-    @Override
-    public void run() {
-      List<PluginNode> pluginNodes = new ArrayList<>();
-      var iterator = myPluginInfos.iterator();
+  private inner class UpdatePluginsTreeTask(
+    private val myParentNode: PluginsNode,
+    private val myPluginInfos: MutableList<MavenPluginWithArtifact>,
+  ) : Runnable {
+    override fun run() {
+      val pluginNodes: MutableList<PluginNode?> = ArrayList<PluginNode?>()
+      val iterator = myPluginInfos.iterator()
       while (!isUnloading && iterator.hasNext()) {
-        var next = iterator.next();
-        var pluginInfo = MavenArtifactUtil.readPluginInfo(next.getArtifact());
-        pluginNodes.add(new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo));
+        val next = iterator.next()
+        val pluginInfo = readPluginInfo(next.artifact)
+        pluginNodes.add(PluginNode(this@MavenProjectsStructure, myParentNode, next.plugin, pluginInfo))
       }
-      myParentNode.getPluginNodes().clear();
-      if (isUnloading) return;
-      myParentNode.getPluginNodes().addAll(pluginNodes);
-      myParentNode.sort(myParentNode.getPluginNodes());
-      myParentNode.childrenChanged();
+      myParentNode.getPluginNodes().clear()
+      if (isUnloading) return
+      myParentNode.getPluginNodes().addAll(pluginNodes)
+      myParentNode.sort(myParentNode.getPluginNodes())
+      myParentNode.childrenChanged()
     }
   }
 
-  public void updateRepositoryStatus(@NotNull MavenIndexUpdateState state) {
-    boundedUpdateService.execute(() -> {
-      myProjectToNodeMapping.values().forEach(pn -> {
-        pn.getRepositoriesNode().updateStatus(state);
-      });
-    });
+  fun updateRepositoryStatus(state: MavenIndexUpdateState) {
+    boundedUpdateService.execute(Runnable {
+      myProjectToNodeMapping.values.forEach(Consumer { pn: ProjectNode? ->
+        pn!!.getRepositoriesNode().updateStatus(state)
+      })
+    })
+  }
+
+  companion object {
+    private fun configureTree(tree: SimpleTree) {
+      tree.setRootVisible(false)
+      tree.setShowsRootHandles(true)
+
+      MavenUIUtil.installCheckboxRenderer(tree, object : CheckboxHandler {
+        override fun toggle(treePath: TreePath?, e: InputEvent?) {
+          val node = tree.getNodeFor(treePath)
+          if (node != null) {
+            node.handleDoubleClickOrEnter(tree, e)
+          }
+        }
+
+        override fun isVisible(userObject: Any?): Boolean {
+          return userObject is ProfileNode
+        }
+
+        override fun getState(userObject: Any): CheckBoxState {
+          val state = (userObject as ProfileNode).getState()
+          return when (state) {
+            MavenProfileKind.NONE -> CheckBoxState.UNCHECKED
+            MavenProfileKind.EXPLICIT -> CheckBoxState.CHECKED
+            MavenProfileKind.IMPLICIT -> CheckBoxState.PARTIAL
+          }
+        }
+      })
+    }
+
+    private fun reconnectNode(node: ProjectNode, newParentNode: ProjectsGroupNode) {
+      val oldParentNode = node.getGroup()
+      if (oldParentNode == null || oldParentNode != newParentNode) {
+        if (oldParentNode != null) {
+          oldParentNode.remove(node)
+        }
+        newParentNode.add(node)
+      }
+      else {
+        newParentNode.sortProjects()
+      }
+    }
+
+    @JvmStatic
+    fun <T : MavenSimpleNode?> getSelectedNodes(tree: SimpleTree, nodeClass: Class<T?>?): MutableList<T?> {
+      val filtered: MutableList<T?> = ArrayList<T?>()
+      for (node in getSelectedNodes(tree)) {
+        if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
+          filtered.clear()
+          break
+        }
+        filtered.add(node as T?)
+      }
+      return filtered
+    }
+
+    private fun getSelectedNodes(tree: SimpleTree): MutableList<SimpleNode?> {
+      val nodes: MutableList<SimpleNode?> = ArrayList<SimpleNode?>()
+      val treePaths = tree.getSelectionPaths()
+      if (treePaths != null) {
+        for (treePath in treePaths) {
+          nodes.add(tree.getNodeFor(treePath))
+        }
+      }
+      return nodes
+    }
   }
 }
