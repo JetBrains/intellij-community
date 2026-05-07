@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -66,6 +68,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
+
+    if (IdeProductMode.isFrontend() && updatedOptions.getEelDescriptorNotNull() == LocalEelDescriptor.INSTANCE) {
+      throw new IllegalStateException(("""
+                                         It is prohibited to start a local process in RemDev mode. Something went wrong.
+                                         Requested options: %s
+                                         Configured options: %s
+                                         """).formatted(baseOptions, updatedOptions));
+    }
+
     if (updatedOptions.getProcessType() == TerminalProcessType.SHELL && enableShellIntegration()) {
       updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
                                                                             isGenOneTerminalEnabled(),
