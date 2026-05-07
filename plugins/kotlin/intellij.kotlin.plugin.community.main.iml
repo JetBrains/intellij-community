@@ -90,6 +90,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.power-assert.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.api" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.impl.shared" exported="" />
