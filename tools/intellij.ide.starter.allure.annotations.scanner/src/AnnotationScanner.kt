@@ -11,6 +11,7 @@ import java.util.stream.Collectors
 private val PACKAGE_LINE = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
 private val QUALIFIED_ANNOTATION = Regex("""^@(\w+)\.(\w+)""")
 private val CLASS_DECLARATION = Regex("""\bclass\s+(\w+)\b""")
+private val TEST_NAME_SUFFIX = Regex(""".*(Test|Tests|TestCase|TestSuite)$""")
 
 private val ANNOTATION_QUALIFIERS = setOf(
   "Components", "Subsystems", "Layers",
@@ -45,11 +46,23 @@ private data class TestRecord(
   val lastRun: LastRun = LastRun(),
 )
 
+private data class UnannotatedRecord(
+  val file: String,
+  val fqn: String,
+)
+
 private data class Report(
   val generatedAt: String,
   val repoCommit: String?,
   val tests: List<TestRecord>,
+  val unannotated: List<UnannotatedRecord>,
 )
+
+private sealed class ScanResult {
+  data class Annotated(val record: TestRecord) : ScanResult()
+  data class Unannotated(val file: String, val fqn: String) : ScanResult()
+  data object Skip : ScanResult()
+}
 
 private class Args(
   val sourceRoots: List<Path>,
@@ -102,6 +115,7 @@ fun main(args: Array<String>) {
   val parsed = parseArgs(args)
 
   val records = mutableListOf<TestRecord>()
+  val unannotated = mutableListOf<UnannotatedRecord>()
   for (root in parsed.sourceRoots) {
     if (!Files.exists(root)) {
       System.err.println("warn: source root does not exist: $root")
@@ -117,8 +131,11 @@ fun main(args: Array<String>) {
         .collect(Collectors.toList())
     }
     for (file in files) {
-      val rec = scanFile(file, parsed.repoRoot)
-      if (rec != null) records.add(rec)
+      when (val r = scanFile(file, parsed.repoRoot)) {
+        is ScanResult.Annotated -> records.add(r.record)
+        is ScanResult.Unannotated -> unannotated.add(UnannotatedRecord(r.file, r.fqn))
+        ScanResult.Skip -> {}
+      }
     }
   }
 
@@ -126,6 +143,7 @@ fun main(args: Array<String>) {
     generatedAt = Instant.now().toString(),
     repoCommit = currentGitHead(parsed.repoRoot),
     tests = records.sortedBy { it.fqn },
+    unannotated = unannotated.sortedBy { it.fqn },
   )
 
   Files.createDirectories(parsed.output.parent)
@@ -134,15 +152,20 @@ fun main(args: Array<String>) {
     GsonBuilder().setPrettyPrinting().disableHtmlEscaping().serializeNulls().create().toJson(report),
   )
 
-  println("Scanned ${parsed.sourceRoots.size} source root(s); wrote ${records.size} record(s) to ${parsed.output}")
+  println(
+    "Scanned ${parsed.sourceRoots.size} source root(s); " +
+    "wrote ${records.size} annotated and ${unannotated.size} unannotated record(s) " +
+    "to ${parsed.output}"
+  )
 }
 
-private fun scanFile(file: Path, repoRoot: Path): TestRecord? {
+private fun scanFile(file: Path, repoRoot: Path): ScanResult {
   val text = Files.readString(file)
   val pkg = PACKAGE_LINE.find(text)?.groupValues?.get(1).orEmpty()
 
   val buffer = mutableListOf<Pair<String, String>>()
   var className: String? = null
+  var firstClassSeen: String? = null
 
   val lines = text.lines()
   var i = 0
@@ -172,15 +195,19 @@ private fun scanFile(file: Path, repoRoot: Path): TestRecord? {
       }
       // Annotation may be on the same line as the class declaration.
       val classMatch = CLASS_DECLARATION.find(line)
-      if (classMatch != null && buffer.isNotEmpty()) {
-        className = classMatch.groupValues[1]
-        break
+      if (classMatch != null) {
+        if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
+        if (buffer.isNotEmpty()) {
+          className = classMatch.groupValues[1]
+          break
+        }
       }
       continue
     }
 
     val classMatch = CLASS_DECLARATION.find(line)
     if (classMatch != null) {
+      if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
       if (buffer.isNotEmpty()) {
         className = classMatch.groupValues[1]
         break
@@ -193,20 +220,36 @@ private fun scanFile(file: Path, repoRoot: Path): TestRecord? {
     buffer.clear()
   }
 
-  val resolvedClassName = className ?: return null
-  if (buffer.isEmpty()) return null
-
   val relPath = repoRoot.relativize(file.toAbsolutePath()).toString().replace('\\', '/')
-  return TestRecord(
-    file = relPath,
-    fqn = if (pkg.isNotEmpty()) "$pkg.$resolvedClassName" else resolvedClassName,
-    subsystems = buffer.filter { it.first == "Subsystems" }.map { it.second },
-    components = buffer.filter { it.first == "Components" }.map { it.second },
-    layers = buffer.filter { it.first == "Layers" }.map { it.second },
-    owners = buffer.filter { it.first == "Owners" }.map { it.second },
-    features = buffer.filter { it.first == "Features" }.map { it.second },
-    stories = buffer.filter { it.first == "Stories" }.map { it.second },
-  )
+
+  val resolvedClassName = className
+  if (resolvedClassName != null && buffer.isNotEmpty()) {
+    return ScanResult.Annotated(
+      TestRecord(
+        file = relPath,
+        fqn = if (pkg.isNotEmpty()) "$pkg.$resolvedClassName" else resolvedClassName,
+        subsystems = buffer.filter { it.first == "Subsystems" }.map { it.second },
+        components = buffer.filter { it.first == "Components" }.map { it.second },
+        layers = buffer.filter { it.first == "Layers" }.map { it.second },
+        owners = buffer.filter { it.first == "Owners" }.map { it.second },
+        features = buffer.filter { it.first == "Features" }.map { it.second },
+        stories = buffer.filter { it.first == "Stories" }.map { it.second },
+      )
+    )
+  }
+
+  // No labels attached to any class in this file. Surface the file in
+  // the unannotated list only when the first top-level class name looks
+  // test-y — otherwise it's almost certainly a helper utility and we
+  // don't want to flood the list.
+  val firstClass = firstClassSeen
+  if (firstClass != null && TEST_NAME_SUFFIX.matches(firstClass)) {
+    return ScanResult.Unannotated(
+      file = relPath,
+      fqn = if (pkg.isNotEmpty()) "$pkg.$firstClass" else firstClass,
+    )
+  }
+  return ScanResult.Skip
 }
 
 private fun parenBalance(line: String): Int {
