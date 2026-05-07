@@ -46,6 +46,9 @@ public final class LocalTerminalStartCommandBuilder {
       shellCommand = List.of(shellPath);
     }
     else {
+      // TODO: OS of the target environment should be used here.
+      //  But to understand the target environment, we need to parse the shell command...
+      //  This loop need to be untangled.
       shellCommand = ParametersListUtil.parse(shellPath, false, OS.CURRENT != OS.Windows);
     }
     EelDescriptor eelDescriptor = eelDescriptorProvider.apply(shellCommand);
