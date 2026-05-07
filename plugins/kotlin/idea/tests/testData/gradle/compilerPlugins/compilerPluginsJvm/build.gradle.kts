@@ -4,4 +4,5 @@ plugins {
     kotlin("plugin.noarg")
     kotlin("plugin.lombok")
     kotlin("plugin.assignment")
+    kotlin("plugin.power-assert")
 }

@@ -279,6 +279,7 @@
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.power-assert.gradle"/>
 
     <module name="intellij.kotlin.injection"/>
     <module name="kotlin.base.injection"/>
