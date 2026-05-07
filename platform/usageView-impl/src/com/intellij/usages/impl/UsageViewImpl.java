@@ -575,12 +575,7 @@ public class UsageViewImpl implements UsageViewEx {
      * The one that was added or the one that replaced the first
      */
     @Nullable Node childNode
-  ) {
-    @NotNull Node getParentNode() {
-      return parentNode;
-    }
-  }
-
+  ) {}
 
   /**
    * Set of node changes coming from the model to be applied to the Swing elements
@@ -661,7 +656,7 @@ public class UsageViewImpl implements UsageViewEx {
     List<Node> nodesToFire = new ArrayList<>();
 
     //first grouping changes by parent node
-    Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(Collectors.groupingBy(change1 -> change1.getParentNode()));
+    Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(Collectors.groupingBy(change1 -> change1.parentNode()));
     for (Map.Entry<Node, List<NodeChange>> entry : groupByParent.entrySet()) {
       Node parentNode = entry.getKey();
       synchronized (parentNode) {
@@ -1269,7 +1264,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
       myTree.getSelectionModel().clearSelection();
       for (UsageState usageState : states) {
-        usageState.restore();
+        usageState.restore(this);
       }
     }
     finally {
@@ -2382,28 +2377,20 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private final class UsageState {
-    private final Usage myUsage;
-    private final boolean mySelected;
-
-    private UsageState(@NotNull Usage usage, boolean isSelected) {
-      myUsage = usage;
-      mySelected = isSelected;
-    }
-
+  private record UsageState(@NotNull Usage usage, boolean isSelected) {
     @RequiresEdt
-    private void restore() {
+    private void restore(@NotNull UsageViewImpl usageView) {
       ThreadingAssertions.assertEventDispatchThread();
-      UsageNode node = myUsageNodes.get(myUsage);
+      UsageNode node = usageView.myUsageNodes.get(usage);
       if (node == NULL_NODE || node == null) {
         return;
       }
       DefaultMutableTreeNode parentGroupingNode = (DefaultMutableTreeNode)node.getParent();
       if (parentGroupingNode != null) {
         TreePath treePath = new TreePath(parentGroupingNode.getPath());
-        myTree.expandPath(treePath);
-        if (mySelected) {
-          myTree.addSelectionPath(treePath.pathByAddingChild(node));
+        usageView.myTree.expandPath(treePath);
+        if (isSelected) {
+          usageView.myTree.addSelectionPath(treePath.pathByAddingChild(node));
         }
       }
     }
