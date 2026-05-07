@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
-class JsonOrXmlPlistReaderTest {
+class JsonOrXmlOrYamlPlistReaderTest {
   @Test
   fun parseJson() {
     val read = createReader().read("{}".encodeToByteArray())
@@ -35,5 +35,5 @@ class JsonOrXmlPlistReaderTest {
     }
   }
 
-  private fun createReader(): JsonOrXmlPlistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = XmlPlistReaderForTests())
+  private fun createReader(): JsonOrXmlOrYamlPlistReader = JsonOrXmlOrYamlPlistReader(xmlReader = XmlPlistReaderForTests(), yamlReader = null)
 }

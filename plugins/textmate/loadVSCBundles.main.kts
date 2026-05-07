@@ -1,20 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Repository("https://repo.maven.apache.org/maven2")
 @file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0")
-@file:DependsOn("org.yaml:snakeyaml:2.4")
 @file:OptIn(ExperimentalPathApi::class, ExperimentalSerializationApi::class)
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
-import org.yaml.snakeyaml.Yaml
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,15 +37,9 @@ import kotlin.io.path.walk
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-enum class CopyTransform {
-  COPY,
-  YAML_TO_JSON,
-}
-
 data class CopySpec(
   val source: String,
   val destination: String = source,
-  val transform: CopyTransform = CopyTransform.COPY,
 )
 
 class BundleSource(private val copies: List<CopySpec>, private val sourceRootProvider: () -> Path) {
@@ -70,12 +61,6 @@ class CopyBuilder {
 
   fun copy(source: String, destination: String = source) {
     copies.add(CopySpec(normalizeCopyPath(source), normalizeCopyPath(destination)))
-  }
-
-  fun copyYamlAsJson(source: String, destination: String = source.removeSuffix(".yaml") + ".json") {
-    require(source.endsWith(".yaml")) { "YAML source must end with .yaml: $source" }
-    require(destination.endsWith(".json")) { "JSON destination must end with .json: $destination" }
-    copies.add(CopySpec(normalizeCopyPath(source), normalizeCopyPath(destination), CopyTransform.YAML_TO_JSON))
   }
 
   fun build(): List<CopySpec> = copies.toList()
@@ -161,7 +146,7 @@ run {
                           copy("LICENSE")
                           copy("package.json")
                           copy("syntaxes/bazelrc.configuration.json")
-                          copyYamlAsJson("syntaxes/bazelrc.tmLanguage.yaml", "syntaxes/bazelrc.tmLanguage.json")
+                          copy("syntaxes/bazelrc.tmLanguage.yaml")
                           copy("syntaxes/starlark.configuration.json")
                           copy("syntaxes/starlark.tmLanguage.json")
                         })
@@ -364,13 +349,7 @@ fun copyMapping(sourceRoot: Path, bundleTarget: Path, mapping: CopySpec) {
   }
 
   val target = bundleTarget.resolve(mapping.destination).createParentDirectories()
-  when (mapping.transform) {
-    CopyTransform.COPY -> source.copyToRecursively(target, overwrite = false, followLinks = true)
-    CopyTransform.YAML_TO_JSON -> {
-      require(source.isRegularFile()) { "YAML-to-JSON transform requires a file source: $source" }
-      target.writeText(json.encodeToString(JsonElement.serializer(), yamlToJsonElement(readYaml(source))))
-    }
-  }
+  source.copyToRecursively(target, overwrite = false, followLinks = true)
 }
 
 fun gitSource(repoUrl: String, sourceRoot: String = ".", block: CopyBuilder.() -> Unit): BundleSource {
@@ -519,7 +498,7 @@ fun cleanupPackageJsons(): Int {
       val packageJson = bundleDirectory.resolve("package.json")
       if (packageJson.isRegularFile()) {
         val packageNls = bundleDirectory.resolve("package.nls.json").takeIf { it.isRegularFile() }
-        packageJson.writeText(json.encodeToString(JsonElement.serializer(), cleanupPackageJson(packageJson, packageNls)))
+        packageJson.writeText(json.encodeToString(JsonElement.serializer(), cleanupPackageJson(bundleDirectory.name, packageJson, packageNls)))
         packageNls?.deleteIfExists()
         rewrittenPackageCount++
       }
@@ -529,7 +508,7 @@ fun cleanupPackageJsons(): Int {
   return rewrittenPackageCount
 }
 
-fun cleanupPackageJson(packageJson: Path, packageNls: Path?): JsonObject {
+fun cleanupPackageJson(bundleName: String, packageJson: Path, packageNls: Path?): JsonObject {
   val packageObject = readJson(packageJson).jsonObject
   val cleanedPackage = if (packageNls != null) {
     localizeStrings(packageObject, readJson(packageNls).jsonObject).jsonObject
@@ -537,12 +516,37 @@ fun cleanupPackageJson(packageJson: Path, packageNls: Path?): JsonObject {
   else {
     packageObject
   }
+  val rewrittenPackage = rewriteKnownPackagePaths(bundleName, cleanedPackage)
 
   val selectedFields = listOf("name", "displayName", "version", "description", "license", "contributes")
   return buildJsonObject {
     for (field in selectedFields) {
-      cleanedPackage[field]?.let { put(field, it) }
+      rewrittenPackage[field]?.let { put(field, it) }
     }
+  }
+}
+
+fun rewriteKnownPackagePaths(bundleName: String, packageObject: JsonObject): JsonObject {
+  return when (bundleName) {
+    "bazel" -> replaceJsonString(packageObject, "./syntaxes/bazelrc.tmLanguage.json", "./syntaxes/bazelrc.tmLanguage.yaml").jsonObject
+    else -> packageObject
+  }
+}
+
+fun replaceJsonString(element: JsonElement, oldValue: String, newValue: String): JsonElement {
+  return when (element) {
+    is JsonObject -> buildJsonObject {
+      for ((key, value) in element) {
+        put(key, replaceJsonString(value, oldValue, newValue))
+      }
+    }
+    is JsonArray -> buildJsonArray {
+      for (value in element) {
+        add(replaceJsonString(value, oldValue, newValue))
+      }
+    }
+    is JsonPrimitive if element.isString && element.content == oldValue -> JsonPrimitive(newValue)
+    else -> element
   }
 }
 
@@ -583,34 +587,4 @@ fun minifyJsonFiles(): Int {
 
 fun readJson(path: Path): JsonElement = path.bufferedReader().use { reader ->
   json.parseToJsonElement(reader.readText())
-}
-
-fun readYaml(path: Path): Any? = path.bufferedReader().use { reader ->
-  // red-code in IDE but works
-  Yaml().load<Any?>(reader.readText())
-}
-
-fun yamlToJsonElement(value: Any?): JsonElement {
-  return when (value) {
-    null -> JsonNull
-    is JsonElement -> value
-    is Map<*, *> -> buildJsonObject {
-      for ((key, itemValue) in value) {
-        put(key.toString(), yamlToJsonElement(itemValue))
-      }
-    }
-    is Iterable<*> -> buildJsonArray {
-      for (itemValue in value) {
-        add(yamlToJsonElement(itemValue))
-      }
-    }
-    is Array<*> -> buildJsonArray {
-      for (itemValue in value) {
-        add(yamlToJsonElement(itemValue))
-      }
-    }
-    is Boolean -> JsonPrimitive(value)
-    is Number -> JsonPrimitive(value)
-    else -> JsonPrimitive(value.toString())
-  }
 }

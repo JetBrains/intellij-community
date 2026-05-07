@@ -9,8 +9,7 @@ import org.jetbrains.plugins.textmate.bundles.readTextMateBundle
 import org.jetbrains.plugins.textmate.bundles.readVSCBundle
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
-import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
-import org.jetbrains.plugins.textmate.plist.JsonPlistReader
+import org.jetbrains.plugins.textmate.plist.JsonOrXmlOrYamlPlistReader
 import org.jetbrains.plugins.textmate.plist.PlistReaderCore
 import org.jetbrains.plugins.textmate.plist.XmlPlistReaderForTests
 
@@ -50,10 +49,10 @@ object TestUtil {
   const val GIT: @NonNls String = "git-base"
   const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
-  fun readBundle(bundleName: String, xmlPlistReader: PlistReaderCore): TextMateBundleReader {
+  fun readBundle(bundleName: String, xmlPlistReader: PlistReaderCore, yamlPlistReader: PlistReaderCore? = null): TextMateBundleReader {
     val resourceReader = TestUtilMultiplatform.getResourceReader(bundleName)
     val bundleType = BundleType.detectBundleType(resourceReader, bundleName)
-    val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)
+    val plistReader = JsonOrXmlOrYamlPlistReader(xmlReader = xmlPlistReader, yamlReader = yamlPlistReader)
     return when (bundleType) {
       BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
       BundleType.SUBLIME -> readSublimeBundle(bundleName, plistReader, resourceReader)
