@@ -21,6 +21,7 @@ import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
@@ -60,6 +61,10 @@ public abstract class Entry {
 
   private static final int NULL_NAME_ID = -1;
   private static final int EMPTY_NAME_ID = 0;
+  /**
+   * A magic string that is written instead of the file name to signify that the file id and file name hash are stored instead of the name
+   */
+  private static final String FILE_ID_MAGIC = "<FILE_ID_AND_HASH>";
 
   protected static int toNameId(@NonNls String name) {
     if (name == null) return NULL_NAME_ID;
@@ -75,12 +80,25 @@ public abstract class Entry {
 
   public Entry(DataInput in) throws IOException {
     String name = DataStreamUtil.readString(in);
-    myNameId = toNameId(name);
-    myNameHash = calcNameHash(name);
+    if (name.equals(FILE_ID_MAGIC)) {
+      myNameId = in.readInt();
+      myNameHash = in.readInt();
+    }
+    else {
+      myNameId = toNameId(name);
+      myNameHash = calcNameHash(name);
+    }
   }
 
   public void write(DataOutput out) throws IOException {
-    DataStreamUtil.writeString(out, getName());
+    if (Registry.is("lvcs.store.entry.file.id")) {
+      DataStreamUtil.writeString(out, FILE_ID_MAGIC);
+      out.writeInt(myNameId);
+      out.writeInt(myNameHash);
+    }
+    else {
+      DataStreamUtil.writeString(out, getName());
+    }
   }
 
   public @NlsSafe String getName() {

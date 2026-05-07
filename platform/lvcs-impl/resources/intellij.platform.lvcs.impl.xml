@@ -108,7 +108,11 @@
     <registryKey key="lvcs.store.write.cache.in.memory"
                  defaultValue="true"
                  restartRequired="true"
-                 description="Whether to use an in-memory write cache in front of the actual local history storage to avoid writing on EDT under a write-lock"/>
+                 description="Whether to use an in-memory write cache in front of the actual local history storage to avoid writing on EDT under a write-lock. !!! Requires lvcs.store.entry.file.id to be enabled to work properly !!!"/>
+    <registryKey key="lvcs.store.entry.file.id"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Whether to store VFS file id instead of file name to avoid VFS access on shutdown"/>
 
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
     <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
