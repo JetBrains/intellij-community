@@ -1417,12 +1417,11 @@ open class FileEditorManagerImpl(
     fileEntry: FileEntry? = null,
     hint: FileEditorOpenOptionsHint? = null,
   ): EditorComposite? {
-    val provider = COMPOSITE_PROVIDER_EP.findFirstSafe { it.canOpenFile(file) }
-    if (provider != null) {
-      val composite = provider.createComposite(project, file, window, fileEntry, hint)
-      if (composite != null) {
-        return composite
-      }
+    val providerComposite = COMPOSITE_PROVIDER_EP.computeSafeIfAny {
+      it.createComposite(project, file, window, fileEntry, hint)
+    }
+    if (providerComposite != null) {
+      return providerComposite
     }
 
     val compositeCoroutineScope = window.owner.coroutineScope.childScope("EditorComposite(file=${file.name})")
@@ -1473,7 +1472,7 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  protected open fun createCompositeInstance(
+  internal fun createCompositeInstance(
     file: VirtualFile,
     model: Flow<EditorCompositeModel>,
     coroutineScope: CoroutineScope,
@@ -2263,24 +2262,21 @@ open class FileEditorManagerImpl(
     }
   }
 
-  internal suspend fun openFilesOnStartup(
+  internal suspend fun prepareFilesOnStartupForOpen(
     items: List<FileToOpen>,
     window: EditorWindow,
-    requestFocus: Boolean,
     isLazyComposite: Boolean,
-    windowAdded: suspend () -> Unit,
-  ) {
+  ): List<TabToOpenOnStartup?> {
     if (items.isEmpty()) {
       LOG.info("no files to reopen")
-      return
+      return emptyList()
     }
 
     val uiSettings = UISettings.getInstance()
 
-    val tabs = mutableListOf<TabInfo>()
+    val tabs = mutableListOf<TabToOpenOnStartup?>()
     val editorActionGroup = serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
 
-    var tabToSelect: TabInfo? = null
     for (item in items) {
       val fileEntry = item.fileEntry
       val file = item.file
@@ -2297,6 +2293,7 @@ open class FileEditorManagerImpl(
       }
       if (composite == null) {
         LOG.warn("Couldn't create composite for ${file.url}, file won't be reopened")
+        tabs.add(null)
         continue
       }
 
@@ -2330,10 +2327,7 @@ open class FileEditorManagerImpl(
         editorActionGroup = editorActionGroup,
         customizer = customizer,
       )
-      tabs.add(tabInfo)
-      if (tabToSelect == null && fileEntry.currentInTab) {
-        tabToSelect = tabInfo
-      }
+      tabs.add(TabToOpenOnStartup(tab = tabInfo, fileEntry.currentInTab))
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
       openedCompositeEntries.add(editorCompositeEntry)
@@ -2343,8 +2337,20 @@ open class FileEditorManagerImpl(
         editorCompositeEntry.delayedState = null
       }
     }
+    return tabs
+  }
 
+  @RequiresEdt
+  internal fun openTabsOnStartup(
+    window: EditorWindow,
+    requestFocus: Boolean,
+    windowAdded: suspend () -> Unit,
+    openedFiles: List<TabToOpenOnStartup>,
+  ) {
     openFileSetModificationCount.increment()
+
+    val tabs = openedFiles.map { it.tab }
+    val tabToSelect = openedFiles.firstOrNull { it.isCurrentTab }?.tab
 
     window.tabbedPane.setTabs(tabs)
 
@@ -2373,8 +2379,8 @@ open class FileEditorManagerImpl(
       window.watchForTabActions(composite = composite, tab = tab)
     }
 
-    items.firstOrNull { it.fileEntry.currentInTab }?.let {
-      selectionHistory.addRecord(it.file to window)
+    tabToSelect?.let {
+      selectionHistory.addRecord(it.composite.file to window)
     }
   }
 
@@ -2677,7 +2683,7 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
 internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean =
   FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
 
-private fun isSingletonDockWindow(window: EditorWindow): Boolean {
+internal fun isSingletonDockWindow(window: EditorWindow): Boolean {
   val windowDockContainer = getWindowDockContainer(window)
   if (windowDockContainer == null || windowDockContainer == window.manager.dockContainer) {
     return false
@@ -2717,6 +2723,13 @@ private data class ProviderChange(
   @JvmField val newProviders: List<FileEditorProvider>,
   @JvmField val editorTypeIdsToRemove: List<String>,
 )
+
+internal data class TabToOpenOnStartup(
+  val tab: TabInfo,
+  val isCurrentTab: Boolean,
+) {
+  val composite: EditorComposite get() = tab.composite
+}
 
 @Internal
 interface EditorCompositeProvider {

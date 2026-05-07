@@ -23,7 +23,6 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
-import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -48,7 +47,6 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
@@ -107,6 +105,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -1149,12 +1148,16 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       val windowAddedDeferred = CompletableDeferred<Unit>()
       try {
         window = windowDeferred.await()
-        fileEditorManager.openFilesOnStartup(
+        val openedFiles = fileEditorManager.prepareFilesOnStartupForOpen(
           items = items,
           window = window,
-          requestFocus = requestFocus,
           isLazyComposite = isLazyComposite,
+        )
+        fileEditorManager.openTabsOnStartup(
+          window = window,
+          requestFocus = requestFocus,
           windowAdded = suspend { windowAddedDeferred.await() },
+          openedFiles = openedFiles.filterNotNull(),
         )
         window.updateTabsVisibility()
         addChild(window.component)
@@ -1222,7 +1225,7 @@ private fun computeFileEntry(
   val fileProvider = suspend { fileProviderDeferred.await() }
 
   // In the case of the JetBrains client, the model isn't used since the editor composite is requested from the backend
-  val model = if (PlatformUtils.isJetBrainsClient()) {
+  val model: Flow<EditorCompositeModel> = if (PlatformUtils.isJetBrainsClient()) {
     emptyFlow()
   }
   else {
@@ -1234,12 +1237,32 @@ private fun computeFileEntry(
     )
   }
 
+  return setupFileTab(compositeCoroutineScope,
+                      fileEditorManager,
+                      fileProviderDeferred,
+                      fileEntry,
+                      delayedTasks,
+                      notFullyPreparedFile,
+                      placeholderIcon,
+                      model)
+}
+
+private fun setupFileTab(
+  compositeCoroutineScope: CoroutineScope,
+  fileEditorManager: FileEditorManagerImpl,
+  fileDeferred: Deferred<VirtualFile>,
+  fileEntry: FileEntry,
+  delayedTasks: MutableCollection<Job>,
+  notFullyPreparedFile: VirtualFile,
+  placeholderIcon: EmptyIcon,
+  model: Flow<EditorCompositeModel>,
+): FileToOpen {
   val tabTitleTask = compositeCoroutineScope.async(context = CoroutineName("editor tab title compute"), start = CoroutineStart.LAZY) {
-    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider())
+    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileDeferred.await())
   }
   val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
     compositeCoroutineScope.async(context = CoroutineName("editor tab icon compute"), start = CoroutineStart.LAZY) {
-      val file = fileProvider()
+      val file = fileDeferred.await()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
       }
@@ -1251,7 +1274,7 @@ private fun computeFileEntry(
 
   val tabFileColorTask = compositeCoroutineScope.async(CoroutineName("editor tab file status color compute")) {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
-    val file = fileProvider()
+    val file = fileDeferred.await()
     readAction {
       (fileStatusManager.getStatus(file).color ?: UIUtil.getLabelForeground()) to
         getForegroundColorForFile(fileEditorManager.project, file)
