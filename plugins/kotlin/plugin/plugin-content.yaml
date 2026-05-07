@@ -160,7 +160,7 @@
   - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
   - name: kotlin.compiler-plugins.assignment.common.k1
   - name: intellij.kotlin.compilerPlugins.assignment.fixes
-  - name: kotlin.compiler-plugins.assignment.gradle
+  - name: intellij.kotlin.compilerPlugins.assignment.gradle
   - name: intellij.kotlin.compilerPlugins.assignment.maven
   - name: intellij.kotlin.compilerPlugins.lombok.maven
   - name: intellij.kotlin.compilerPlugins.scripting

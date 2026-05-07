@@ -91,7 +91,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.gradle" scope="RUNTIME" />

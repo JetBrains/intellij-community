@@ -91,7 +91,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.compilerPlugins.samWithReceiver.maven",
       "kotlin.compiler-plugins.assignment.common.k1",
       "intellij.kotlin.compilerPlugins.assignment.fixes",
-      "kotlin.compiler-plugins.assignment.gradle",
+      "intellij.kotlin.compilerPlugins.assignment.gradle",
       "intellij.kotlin.compilerPlugins.assignment.maven",
       "intellij.kotlin.compilerPlugins.lombok.maven",
       "intellij.kotlin.compilerPlugins.scripting",

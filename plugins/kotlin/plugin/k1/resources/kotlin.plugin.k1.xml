@@ -91,7 +91,6 @@
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.common.k1"/>
-    <module name="kotlin.compiler-plugins.assignment.gradle"/>
     <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
 
     <module name="kotlin.jvm.shared"/>

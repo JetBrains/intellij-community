@@ -122,6 +122,7 @@ jvm_library(
     "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/assignment/common:kotlin-compilerPlugins-assignment-fixes",
+    "//plugins/kotlin/compiler-plugins/assignment/gradle",
     "//plugins/kotlin/compiler-plugins/assignment/maven",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/k2:kotlin-compilerPlugins-serialization",
     "//plugins/kotlin/compiler-plugins/parcelize/k2:kotlin-compilerPlugins-parcelize",
@@ -164,7 +165,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/lombok/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
     "//plugins/kotlin/compiler-plugins/noarg/gradle",
-    "//plugins/kotlin/compiler-plugins/assignment/gradle",
     "//plugins/kotlin/compiler-plugins/power-assert/gradle",
   ]
 )
