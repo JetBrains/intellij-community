@@ -43,6 +43,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,9 +79,11 @@ class XBreakpointVisualRepresentation(
           }
         }
         finally {
-          // Guarantee that the highlighter is removed when the scope is canceled
-          removeHighlighter()
-          redrawInlineInlays()
+          withContext(NonCancellable) {
+            // Guarantee that the highlighter is removed when the scope is canceled
+            removeHighlighter()
+            redrawInlineInlays()
+          }
         }
       }
     }
