@@ -4,6 +4,7 @@ package com.intellij.tests
 
 import org.junit.platform.engine.FilterResult
 import org.junit.platform.engine.TestDescriptor
+import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.PostDiscoveryFilter
 import java.io.IOException
 import java.nio.file.Path
@@ -22,14 +23,25 @@ class ShardFilter private constructor(
 ) : PostDiscoveryFilter {
   override fun apply(testDescriptor: TestDescriptor): FilterResult {
     return when {
-      !testDescriptor.isTest -> included
-      testDescriptor.isInShard() -> included
-      else -> excluded
+      // a simple test
+      testDescriptor.isTest -> testDescriptor.shardDecision()
+      // parametrized test
+      testDescriptor.isDynamicTestMethod() -> testDescriptor.shardDecision()
+      // classes, nested classes, engine root, etc.
+      else -> included
     }
   }
 
+  private fun TestDescriptor.shardDecision(): FilterResult =
+    if (isInShard()) included else excluded
+
   private fun TestDescriptor.isInShard() =
     abs(uniqueId.toString().hashCode() % totalShards) == shardIndex
+
+  // method-backed container (e.g., @ParameterizedTest, @TestFactory, @RepeatedTest)
+  // goes into 1 shard because the invocations are produced dynamically at execution time
+  private fun TestDescriptor.isDynamicTestMethod(): Boolean =
+    isContainer && !isTest && source.orElse(null) is MethodSource
 
   companion object {
     @JvmStatic
