@@ -533,7 +533,7 @@ private fun configureCompilerOptions(
         options.joinToString(" ") {
             if (it.contains($$"$KOTLIN_BUNDLED$") || it.contains($$"$TEST_")) {
                 val pathMacroManager = PathMacroManager.getInstance(project)
-                pathMacroManager.expandPath(it)
+                pathMacroManager.expandPathNonNull(it)
             } else {
                 it
             }

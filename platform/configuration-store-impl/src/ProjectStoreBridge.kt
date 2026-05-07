@@ -14,7 +14,6 @@ import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.ModulePathMacroManager
-import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.serviceAsync
@@ -334,7 +333,7 @@ private abstract class JpsStorageContentWriter(
       return ModulePathMacroManager(PathMacros.getInstance(), { project.getProjectFilePath() }, { filePath }).replacePathMap
     }
     else {
-      return ProjectPathMacroManager.getInstance(project).replacePathMap
+      return PathMacroManager.getInstance(project).replacePathMap
     }
   }
 }

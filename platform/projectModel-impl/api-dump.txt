@@ -113,24 +113,26 @@ c:com.intellij.openapi.components.PathMacroManager
 - <init>(com.intellij.openapi.application.PathMacros):V
 - collapsePath(java.lang.String,Z):java.lang.String
 - collapsePaths(org.jdom.Element,Z):V
-- s:collapsePaths(org.jdom.Element,Z,com.intellij.application.options.ReplacePathToMacroMap):V
+- sf:collapsePaths(org.jdom.Element,Z,com.intellij.application.options.ReplacePathToMacroMap):V
 - p:computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - expandPath(java.lang.String):java.lang.String
 - expandPaths(org.jdom.Element):V
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
-- s:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
-- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
-- getMacroFilter():com.intellij.openapi.application.PathMacroFilter
+- sf:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
+- sf:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
+- f:getMacroFilter():com.intellij.openapi.application.PathMacroFilter
 - f:getReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
-- ps:pathsEqual(java.lang.String,java.lang.String):Z
+- psf:pathsEqual(java.lang.String,java.lang.String):Z
 com.intellij.openapi.components.PathMacroSubstitutor
 - collapsePath(java.lang.String):java.lang.String
 - a:collapsePath(java.lang.String,Z):java.lang.String
+- collapsePathNonNull(java.lang.String):java.lang.String
 - collapsePaths(org.jdom.Element):V
 - a:collapsePaths(org.jdom.Element,Z):V
 - collapsePathsRecursively(java.lang.String):java.lang.String
 - collapsePathsRecursively(org.jdom.Element):V
 - a:expandPath(java.lang.String):java.lang.String
+- expandPathNonNull(java.lang.String):java.lang.String
 - a:expandPaths(org.jdom.Element):V
 f:com.intellij.openapi.components.impl.ModulePathMacroManager
 - com.intellij.openapi.components.PathMacroManager

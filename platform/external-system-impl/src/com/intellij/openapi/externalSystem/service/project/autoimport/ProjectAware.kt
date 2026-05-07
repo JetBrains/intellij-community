@@ -42,8 +42,8 @@ class ProjectAware(
         val path = FileUtil.toCanonicalPath(it.path)
         // The path string can be changed after serialization and deserialization inside persistent component state.
         // To avoid that we resolve the path using IDE path macros configuration.
-        val collapsedPath = pathMacroManager.collapsePath(path)
-        val expandedPath = pathMacroManager.expandPath(collapsedPath)
+        val collapsedPath = pathMacroManager.collapsePathNonNull(path)
+        val expandedPath = pathMacroManager.expandPathNonNull(collapsedPath)
         expandedPath
       }.toSet()
     }

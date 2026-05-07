@@ -1,168 +1,158 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.components;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.components
 
-import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.impl.ModulePathMacroManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.OSAgnosticPathUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.PathUtilRt;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import com.intellij.application.options.PathMacrosCollector
+import com.intellij.application.options.PathMacrosImpl
+import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.openapi.application.PathMacroFilter
+import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.util.PathUtilRt
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-import java.util.Map;
+open class PathMacroManager private constructor(private var pathMacros: PathMacrosImpl? = null) : PathMacroSubstitutor {
+  constructor(pathMacros: PathMacros?) : this(pathMacros as? PathMacrosImpl)
+  private var replacePathToMacroMap: ReplacePathToMacroMap? = null
+  private var pathMacrosModificationCount: Long = 0
 
-public class PathMacroManager implements PathMacroSubstitutor {
-  public static @NotNull PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
-    if (componentManager instanceof Module module) {
-      return new ModulePathMacroManager(module, PathMacros.getInstance());
+  private fun getPathMacros(): PathMacrosImpl {
+    return pathMacros ?: PathMacrosImpl.getInstanceEx().also { pathMacros = it }
+  }
+
+  val macroFilter: PathMacroFilter
+    get() = createFilter()
+
+  open val expandMacroMap: ExpandMacroToPathMap
+    get() {
+      val result = ExpandMacroToPathMap()
+      getPathMacros().addMacroExpands(result)
+      PathMacroUtil.getGlobalSystemMacros().forEach { (key, value) ->
+        result.addMacroExpand(key, value)
+      }
+      return result
     }
-    else {
-      return componentManager.getService(PathMacroManager.class);
+
+  val replacePathMap: ReplacePathToMacroMap
+    @Synchronized
+    get() {
+      val currentModificationCount = getPathMacros().modificationCount
+      var map = replacePathToMacroMap
+      if (map != null && currentModificationCount == pathMacrosModificationCount) {
+        return map
+      }
+
+      map = computeReplacePathMap()
+      replacePathToMacroMap = map
+      pathMacrosModificationCount = currentModificationCount
+      return map
     }
-  }
 
-  public static @NotNull PathMacroManager getInstance(@NotNull Module module) {
-    return new ModulePathMacroManager(module, PathMacros.getInstance());
-  }
-
-  private PathMacrosImpl pathMacros;
-
-  private ReplacePathToMacroMap replacePathToMacroMap;
-  private long pathMacrosModificationCount;
-
-  public PathMacroManager(@Nullable PathMacros pathMacros) {
-    this.pathMacros = (PathMacrosImpl)pathMacros;
-  }
-
-  private static @NotNull CompositePathMacroFilter createFilter() {
-    return PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.computeIfAbsent(PathMacroManager.class, () -> {
-      return new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
-    });
-  }
-
-  public @NotNull PathMacroFilter getMacroFilter() {
-    return createFilter();
+  protected open fun computeReplacePathMap(): ReplacePathToMacroMap {
+    val result = ReplacePathToMacroMap()
+    getPathMacros().addMacroReplacements(result)
+    PathMacroUtil.getGlobalSystemMacros().forEach { (key, value) ->
+      result.addMacroReplacement(value, key)
+    }
+    return result
   }
 
   @ApiStatus.Internal
-  public static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
-    if (path != null) {
-      doAddFileHierarchyReplacements(result, Strings.trimEnd(path, "/"), '$' + macroName + '$');
-    }
+  protected fun resetCachedReplacePathMap() {
+    replacePathToMacroMap = null
   }
 
-  private static void doAddFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String path, @NotNull String macro) {
-    String parentPath = PathUtilRt.getParentPath(path);
-    if (!parentPath.isEmpty()) {
-      doAddFileHierarchyReplacements(result, parentPath, macro + "/..");
-    }
-    result.put(macro, path);
+  override fun expandPath(text: String?): String? {
+    return if (text == null || Strings.isEmpty(text)) text
+    else expandMacroMap.substitute(text, SystemInfoRt.isFileSystemCaseSensitive)
   }
 
-  @ApiStatus.Internal
-  protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
-    if (path == null) return;
-
-    String macro = '$' + macroName + '$';
-    path = Strings.trimEnd(FileUtilRt.toSystemIndependentName(path), "/");
-    boolean overwrite = true;
-    while (Strings.isNotEmpty(path) && path.contains("/") && !"/".equals(path)) {
-      result.addReplacement(path, macro, overwrite);
-      if (path.equals(stopAt)) break;
-      macro += "/..";
-      path = OSAgnosticPathUtil.getParent(path);
-      overwrite = false;
-    }
+  override fun collapsePath(text: String?, recursively: Boolean): String? {
+    return if (text == null || Strings.isEmpty(text)) text
+    else replacePathMap.substitute(text, SystemInfoRt.isFileSystemCaseSensitive, recursively).toString()
   }
 
-  public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
-    ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-    getPathMacros().addMacroExpands(result);
-    for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
-      result.addMacroExpand(entry.getKey(), entry.getValue());
-    }
-    return result;
+  override fun expandPaths(element: Element) {
+    expandMacroMap.substitute(element, SystemInfoRt.isFileSystemCaseSensitive)
   }
 
-  public final synchronized @NotNull ReplacePathToMacroMap getReplacePathMap() {
-    long pathMacrosModificationCount = getPathMacros().getModificationCount();
-    if (replacePathToMacroMap != null && pathMacrosModificationCount == this.pathMacrosModificationCount) {
-      return replacePathToMacroMap;
-    }
-
-    replacePathToMacroMap = computeReplacePathMap();
-    this.pathMacrosModificationCount = pathMacrosModificationCount;
-    return replacePathToMacroMap;
-  }
-
-  protected @NotNull ReplacePathToMacroMap computeReplacePathMap() {
-    ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    getPathMacros().addMacroReplacements(result);
-    for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
-      result.addMacroReplacement(entry.getValue(), entry.getKey());
-    }
-    return result;
+  override fun collapsePaths(element: Element, recursively: Boolean) {
+    collapsePaths(element, recursively, replacePathMap)
   }
 
   @ApiStatus.Internal
-  protected void resetCachedReplacePathMap() {
-    replacePathToMacroMap = null;
-  }
-
-  @Override
-  @Contract("null -> null; !null -> !null")
-  public String expandPath(@Nullable String text) {
-    if (Strings.isEmpty(text)) {
-      return text;
+  companion object {
+    @JvmStatic
+    fun getInstance(componentManager: ComponentManager): PathMacroManager {
+      return if (componentManager is Module) {
+        ModulePathMacroManager(componentManager, PathMacros.getInstance())
+      }
+      else {
+        componentManager.getService(PathMacroManager::class.java)
+      }
     }
-    return getExpandMacroMap().substitute(text, SystemInfoRt.isFileSystemCaseSensitive);
-  }
 
-  @Contract("null, _ -> null; !null, _ -> !null")
-  @Override
-  public String collapsePath(@Nullable String text, boolean recursively) {
-    if (Strings.isEmpty(text)) {
-      return text;
+    @JvmStatic
+    fun getInstance(module: Module): PathMacroManager {
+      return ModulePathMacroManager(module, PathMacros.getInstance())
     }
-    return getReplacePathMap().substitute(text, SystemInfoRt.isFileSystemCaseSensitive, recursively).toString();
-  }
 
-  @Override
-  public void expandPaths(@NotNull Element element) {
-    getExpandMacroMap().substitute(element, SystemInfoRt.isFileSystemCaseSensitive);
-  }
-
-  @Override
-  public void collapsePaths(@NotNull Element element, boolean recursively) {
-    collapsePaths(element, recursively, getReplacePathMap());
-  }
-
-  public static void collapsePaths(@NotNull Element element, boolean recursively, @NotNull ReplacePathToMacroMap map) {
-    map.substitute(element, SystemInfoRt.isFileSystemCaseSensitive, recursively, createFilter());
-  }
-
-  private @NotNull PathMacrosImpl getPathMacros() {
-    if (pathMacros == null) {
-      pathMacros = PathMacrosImpl.getInstanceEx();
+    private fun createFilter(): CompositePathMacroFilter {
+      return PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.computeIfAbsent(PathMacroManager::class.java) {
+        CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.extensionList)
+      }
     }
-    return pathMacros;
-  }
 
-  protected static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    return path1 != null && path2 != null &&
-           FileUtil.pathsEqual(FileUtilRt.toSystemIndependentName(path1), FileUtilRt.toSystemIndependentName(path2));
+    @JvmStatic
+    @ApiStatus.Internal
+    fun addFileHierarchyReplacements(result: ExpandMacroToPathMap, macroName: String, path: String?) {
+      path?.let {
+        doAddFileHierarchyReplacements(result, Strings.trimEnd(it, "/"), "\$$macroName\$")
+      }
+    }
+
+    private fun doAddFileHierarchyReplacements(result: ExpandMacroToPathMap, path: String, macro: String) {
+      val parentPath = PathUtilRt.getParentPath(path)
+      if (parentPath.isNotEmpty()) {
+        doAddFileHierarchyReplacements(result, parentPath, "$macro/..")
+      }
+      result.put(macro, path)
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun addFileHierarchyReplacements(result: ReplacePathToMacroMap, macroName: String, path: String?, stopAt: String?) {
+      if (path == null) {
+        return
+      }
+      var macro = "\$$macroName\$"
+      var currentPath: String? = Strings.trimEnd(FileUtilRt.toSystemIndependentName(path), "/")
+      var overwrite = true
+      while (!currentPath.isNullOrEmpty() && currentPath.contains("/") && currentPath != "/") {
+        result.addReplacement(currentPath, macro, overwrite)
+        if (currentPath == stopAt) break
+        macro += "/.."
+        currentPath = OSAgnosticPathUtil.getParent(currentPath)
+        overwrite = false
+      }
+    }
+
+    @JvmStatic
+    fun collapsePaths(element: Element, recursively: Boolean, map: ReplacePathToMacroMap) {
+      map.substitute(element, SystemInfoRt.isFileSystemCaseSensitive, recursively, createFilter())
+    }
+
+    @JvmStatic
+    protected fun pathsEqual(path1: String?, path2: String?): Boolean {
+      return path1 != null && path2 != null && FileUtil.pathsEqual(FileUtilRt.toSystemIndependentName(path1),
+                                                                   FileUtilRt.toSystemIndependentName(path2))
+    }
   }
 }

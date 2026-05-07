@@ -177,8 +177,8 @@ object StorageDiagnosticData {
   ): StatsPerStorage {
     val macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication())
     return StatsPerStorage(
-      mapStats.mapKeys { macroManager.collapsePath(it.key.pathString) }.toSortedMap(),
-      enumeratorStats.mapKeys { macroManager.collapsePath(it.key.pathString) }.toSortedMap()
+      mapStats.mapKeys { macroManager.collapsePathNonNull(it.key.pathString) }.toSortedMap(),
+      enumeratorStats.mapKeys { macroManager.collapsePathNonNull(it.key.pathString) }.toSortedMap()
     )
   }
 
