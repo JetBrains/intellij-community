@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsByReceiverTypeStubIndexHelper
 import org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex
@@ -138,8 +137,8 @@ class KtSymbolFromIndexProvider(
         val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
 
         return getClassLikeSymbols(
-            classDeclarations = KotlinFullClassNameIndex.getAllElements(useSiteModule.project, scope, keyFilter) {
-                it.isAcceptable(psiFilter)
+            classDeclarations = KotlinClassShortNameIndex.getAllElements(useSiteModule.project, scope, keyFilter) {
+                !it.isLocal && it.isAcceptable(psiFilter)
             },
             typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(useSiteModule.project, scope, keyFilter) {
                 it.isAcceptable(psiFilter)
@@ -180,11 +179,11 @@ class KtSymbolFromIndexProvider(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (KtEnumEntry) -> Boolean = { true },
-    ): Sequence<KaEnumEntrySymbol> = KotlinFullClassNameIndex.getAllElements<KtEnumEntry>(
+    ): Sequence<KaEnumEntrySymbol> = KotlinClassShortNameIndex.getAllElements<KtEnumEntry>(
         project = useSiteModule.project,
         scope = scope,
         keyFilter = keyFilter(nameFilter),
-    ) { it.isAcceptable(psiFilter) }
+    ) { !it.isLocal && it.isAcceptable(psiFilter) }
         .map { it.symbol }
 
     context(_: KaSession)
