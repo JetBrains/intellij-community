@@ -160,6 +160,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
     "//plugins/kotlin/compiler-plugins/noarg/gradle",
     "//plugins/kotlin/compiler-plugins/assignment/gradle",
+    "//plugins/kotlin/compiler-plugins/power-assert/gradle",
   ]
 )
 
@@ -319,6 +320,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle:gradle_test_lib",
     "//plugins/kotlin/compiler-plugins/noarg/gradle:gradle_test_lib",
     "//plugins/kotlin/compiler-plugins/assignment/gradle:gradle_test_lib",
+    "//plugins/kotlin/compiler-plugins/power-assert/gradle:gradle_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end
