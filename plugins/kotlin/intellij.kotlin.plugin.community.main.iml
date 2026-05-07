@@ -84,7 +84,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.fixes" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.scripting" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" exported="" />
