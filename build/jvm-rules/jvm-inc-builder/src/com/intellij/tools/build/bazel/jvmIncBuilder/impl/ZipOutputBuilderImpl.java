@@ -47,7 +47,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final @Nullable ZipFile myReadZipFile;
   private final boolean myCreateIndex;
 
-  private final Map<String, byte[]> mySwap;
+  private final @Nullable Map<String, byte[]> mySwap;
   private final Map<String, Set<String>> myDirIndex = new HashMap<>();
   private boolean myHasChanges;
 
@@ -56,10 +56,10 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
   
   public ZipOutputBuilderImpl(@NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
-    this(new HashMap<>(), readZipPath, writeZipPath, false);
+    this(null, readZipPath, writeZipPath, false);
   }
   
-  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath, boolean createIndex) throws IOException {
+  public ZipOutputBuilderImpl(@Nullable Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath, boolean createIndex) throws IOException {
     myReadZipPath = readZipPath;
     myWriteZipPath = writeZipPath;
     mySwap = dataSwap;
@@ -126,7 +126,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
     }
     if (content != null) {
-      myEntries.put(entryName, createEntryData(mySwap, entryName, content));
+      myEntries.put(entryName, mySwap == null? createEntryData(entryName, content) : createEntryData(mySwap, entryName, content));
       addToPackageIndex(entryName);
       myHasChanges = true;
     }
@@ -233,7 +233,9 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       myExistingDirectories.clear();
       myDirIndex.clear();
       myEntries.clear();
-      mySwap.clear();
+      if (mySwap != null) {
+        mySwap.clear();
+      }
     }
   }
 
@@ -353,7 +355,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     };
   }
 
-  private EntryData createEntryData(Map<String, byte[]> swap, String entryName, byte[] content) {
+  private EntryData createEntryData(@NotNull Map<String, byte[]> swap, String entryName, byte[] content) {
     swap.put(entryName, content);
     return new CachingDataEntry(content) {
       private ZipEntry entry;
