@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
-    private fun isSuitableFile(file: PsiFile): Boolean =
+    private fun isSuitableGradleKtsFile(file: PsiFile): Boolean =
         file is KtFile && FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
 
     override fun getConfigurationAvoidanceInspectionVisitor(
@@ -49,7 +49,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(
         holder: ProblemsHolder,
@@ -59,7 +59,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getRedundantKotlinStdLibInspectionVisitor(
         holder: ProblemsHolder,
@@ -69,7 +69,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getAvoidApplyPluginMethodInspectionVisitor(
         holder: ProblemsHolder,
@@ -79,7 +79,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        file is KtFile && FileUtilRt.fileNameEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
 
     override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(
         holder: ProblemsHolder,
@@ -90,7 +90,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getAvoidDuplicateDependenciesInspectionVisitor(
         holder: ProblemsHolder,
@@ -100,7 +100,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getTaskMissingDescriptionInspectionVisitor(
         holder: ProblemsHolder,
@@ -110,7 +110,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean =
-        isSuitableFile(file)
+        isSuitableGradleKtsFile(file)
 
     override fun getAvoidDuplicateRepositoriesInspectionVisitor(
         holder: ProblemsHolder,
