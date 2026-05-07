@@ -528,6 +528,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
   private suspend fun readFiles(vararg files: VirtualFile) {
     projectsManager.addManagedFilesWithProfiles(listOf(*files), MavenExplicitProfiles.NONE, null, null, true)
+    awaitConfiguration()
   }
 
   private val rootNodes: List<ProjectNode>

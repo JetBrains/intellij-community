@@ -29,6 +29,8 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.RemoteTransferUIManager.forceDirectTransfer
 import com.intellij.ui.content.ContentFactory
@@ -54,6 +56,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
 import org.jetbrains.idea.maven.tasks.MavenTasksManager
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenEelUtil.checkJdkAndShowNotification
 import org.jetbrains.idea.maven.utils.MavenEelUtil.restartMavenConnectorsIfJdkIncorrect
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -393,29 +396,31 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
   private fun doScheduleStructureRequest(r: Runnable) {
     val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID) ?: return
 
-    project.service<CoroutineScopeService>().cs.launch {
-      val files = MavenProjectsManager.getInstance(myProject).getState().originalFiles
-      val hasMavenProjects = files != null && !files.isEmpty()
+    project.trackActivityBlocking(MavenActivityKey) {
+      project.service<CoroutineScopeService>().cs.launchTracked {
+        val files = MavenProjectsManager.getInstance(myProject).getState().originalFiles
+        val hasMavenProjects = files != null && !files.isEmpty()
 
-      if (toolWindow.isAvailable() != hasMavenProjects) {
-        withContext(Dispatchers.EDT) {
-          MavenLog.LOG.info("Set MavenToolWindow availability: $hasMavenProjects")
-          toolWindow.setAvailable(hasMavenProjects)
-          if (hasMavenProjects
-              && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null
-          ) {
-            toolWindow.activate(null)
+        if (toolWindow.isAvailable() != hasMavenProjects) {
+          withContext(Dispatchers.EDT) {
+            MavenLog.LOG.info("Set MavenToolWindow availability: $hasMavenProjects")
+            toolWindow.setAvailable(hasMavenProjects)
+            if (hasMavenProjects
+                && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null
+            ) {
+              toolWindow.activate(null)
+            }
           }
         }
+
+        if (this@MavenProjectsNavigator.myStructure.get() == null)
+          withContext(Dispatchers.EDT) {
+            initStructure()
+            TreeState.createFrom(myState.treeState).applyTo(myTree!!)
+          }
+
+        r.run()
       }
-
-      if (this@MavenProjectsNavigator.myStructure.get() == null)
-        withContext(Dispatchers.EDT) {
-          initStructure()
-          TreeState.createFrom(myState.treeState).applyTo(myTree!!)
-        }
-
-      r.run()
     }
   }
 
