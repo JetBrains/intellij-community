@@ -10,4 +10,6 @@ object TestAppProject : ProjectInfoSpec by ReusableLocalProjectInfo(
   projectDir = JarUtils.extractResource("projects/TestApp", Files.createTempDirectory("ui-test-resource-"))
 )
 
-object HelloWorldProject : ProjectInfoSpec by RemoteArchiveProjectInfo("https://repo.labs.intellij.net/artifactory/idea-test-data/hello-world.zip")
+object HelloWorldProject : ProjectInfoSpec by ReusableLocalProjectInfo(
+projectDir = JarUtils.extractResource("projects/hello-world", Files.createTempDirectory("ui-test-resource-"))
+)
