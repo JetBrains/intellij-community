@@ -146,6 +146,7 @@
   - name: intellij.kotlin.compilerPlugins.support
   - name: kotlin.compiler-plugins.compiler-plugin-support.gradle
   - name: intellij.kotlin.compilerPlugins.support.maven
+  - name: kotlin.compiler-plugins.lombok.gradle
   - name: intellij.kotlin.compilerPlugins.kapt
   - name: kotlin.compiler-plugins.kotlinx-serialization.common
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
@@ -162,7 +163,6 @@
   - name: intellij.kotlin.compilerPlugins.assignment.fixes
   - name: kotlin.compiler-plugins.assignment.gradle
   - name: intellij.kotlin.compilerPlugins.assignment.maven
-  - name: kotlin.compiler-plugins.lombok.gradle
   - name: intellij.kotlin.compilerPlugins.lombok.maven
   - name: intellij.kotlin.compilerPlugins.scripting
   - name: kotlin.compiler-plugins.android-extensions-stubs

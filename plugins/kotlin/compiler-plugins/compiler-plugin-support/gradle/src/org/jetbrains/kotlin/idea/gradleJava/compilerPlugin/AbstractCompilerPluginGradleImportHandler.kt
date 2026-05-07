@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import java.nio.file.Path
 
+@Deprecated("Compiler plugin should be imported on KGP side")
 abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : AnnotationBasedPluginModel> : AbstractCompilerPluginGradleImportHandler<T>() {
     abstract val annotationOptionName: String
 
@@ -34,6 +36,7 @@ abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : Anno
     }
 }
 
+@Deprecated("Use AbstractGradleImportHandler instead", replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler"))
 abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
@@ -76,4 +79,50 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
 
     private fun getPluginSetupBySourceSet(sourceSetNode: DataNode<GradleSourceSetData>) =
             ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE)?.let { getPluginSetupByModule(it) }
+}
+
+abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
+    abstract val pluginJarsRegex: List<Regex>
+    abstract val replacedJar: Path
+
+    override fun importByModule(facet: KotlinFacet, moduleNode: DataNode<ModuleData>) {
+        processCompilerPluginClasspath(facet, pluginJarsRegex, replacedJar)
+    }
+
+    override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
+        processCompilerPluginClasspath(facet, pluginJarsRegex, replacedJar)
+    }
+
+    private fun processCompilerPluginClasspath(
+        facet: KotlinFacet,
+        pluginJarsRegex: List<Regex>,
+        replacedJar: Path,
+    ) {
+        val facetSettings = facet.configuration.settings
+        facetSettings.updateCompilerArguments {
+            var isAlreadyReplaced = false
+
+            val newPluginClasspaths = buildList {
+                for (jarFile in this@updateCompilerArguments.pluginClasspaths ?: emptyArray<String>()) {
+                    val jarFileName = Path.of(jarFile).fileName.toString()
+                    val matches = pluginJarsRegex.any { regex -> jarFileName.matches(regex) }
+                    if (matches) {
+                        if (!isAlreadyReplaced) {
+                            // replace only first occurrence
+                            add(replacedJar.toString())
+                            isAlreadyReplaced = true
+                        } else {
+                            // we do not expect several matching jars in classpath,
+                            // but if it happens, we just skip them
+                            continue
+                        }
+                    } else {
+                        // no need to modify -- leave as it is
+                        add(jarFile)
+                    }
+                }
+            }
+            this.pluginClasspaths = newPluginClasspaths.toTypedArray()
+        }
+    }
 }

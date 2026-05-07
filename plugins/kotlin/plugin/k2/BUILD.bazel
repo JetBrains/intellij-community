@@ -145,6 +145,8 @@ jvm_library(
     "//plugins/kotlin/jvm/k2:kotlin-jvm",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end

@@ -138,5 +138,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
   </component>
 </module>
