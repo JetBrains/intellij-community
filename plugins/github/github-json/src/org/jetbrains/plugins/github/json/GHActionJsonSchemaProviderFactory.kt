@@ -8,12 +8,15 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.github.extensions.isGithubActionFile
 import org.jetbrains.plugins.github.extensions.isGithubWorkflowFile
 import org.jetbrains.plugins.github.i18n.GithubBundle
 
 private const val ACTION_SCHEMA_PATH = "/schemas/github-action.json"
+private const val ACTION_SCHEMA_URL = "https://json.schemastore.org/github-action.json"
 private const val WORKFLOW_SCHEMA_PATH = "/schemas/github-workflow.json"
+private const val WORKFLOW_SCHEMA_URL = "https://json.schemastore.org/github-workflow.json"
 
 internal class GHActionJsonSchemaProviderFactory: JsonSchemaProviderFactory {
   override fun getProviders(project: Project): List<JsonSchemaFileProvider?> {
@@ -28,6 +31,8 @@ internal class GHActionJsonSchemaProviderFactory: JsonSchemaProviderFactory {
     override fun getSchemaFile(): VirtualFile? = javaClass.getResource(ACTION_SCHEMA_PATH)?.let(VfsUtil::findFileByURL)
 
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
+
+    override fun getRemoteSource(): @NonNls String = ACTION_SCHEMA_URL
   }
 
   private class WorkflowJsonSchemaProvider: JsonSchemaFileProvider {
@@ -38,5 +43,7 @@ internal class GHActionJsonSchemaProviderFactory: JsonSchemaProviderFactory {
     override fun getSchemaFile(): VirtualFile? = javaClass.getResource(WORKFLOW_SCHEMA_PATH)?.let(VfsUtil::findFileByURL)
 
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
+
+    override fun getRemoteSource(): @NonNls String = WORKFLOW_SCHEMA_URL
   }
 }

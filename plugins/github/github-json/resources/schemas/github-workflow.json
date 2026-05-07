@@ -62,16 +62,16 @@
         }
       ]
     },
-    "container": {
+    "jobContainer": {
       "type": "object",
       "properties": {
         "image": {
-          "$comment": "https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idcontainerimage",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontainerimage",
           "description": "The Docker image to use as the container to run the action. The value can be the Docker Hub image name or a registry name.",
           "type": "string"
         },
         "credentials": {
-          "$comment": "https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idcontainercredentials",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontainercredentials",
           "description": "If the image's container registry requires authentication to pull the image, you can use credentials to set a map of the username and password. The credentials are the same values that you would provide to the `docker login` command.",
           "type": "object",
           "properties": {
@@ -84,12 +84,12 @@
           }
         },
         "env": {
-          "$comment": "https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idcontainerenv",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontainerenv",
           "$ref": "#/definitions/env",
-          "description": "Sets an array of environment variables in the container."
+          "description": "Sets a map of environment variables in the container."
         },
         "ports": {
-          "$comment": "https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idcontainerports",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontainerports",
           "description": "Sets an array of ports to expose on the container.",
           "type": "array",
           "items": {
@@ -105,18 +105,87 @@
           "minItems": 1
         },
         "volumes": {
-          "$comment": "https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idcontainervolumes",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontainervolumes",
           "description": "Sets an array of volumes for the container to use. You can use volumes to share data between services or other steps in a job. You can specify named Docker volumes, anonymous Docker volumes, or bind mounts on the host.\nTo specify a volume, you specify the source and destination path: <source>:<destinationPath>\nThe <source> is a volume name or an absolute path on the host machine, and <destinationPath> is an absolute path in the container.",
           "type": "array",
           "items": {
-            "type": "string",
-            "pattern": "^[^:]+:[^:]+$"
+            "type": "string"
           },
           "minItems": 1
         },
         "options": {
-          "$comment": "https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#jobsjob_idcontaineroptions",
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idcontaineroptions",
           "description": "Additional Docker container resource options. For a list of options, see https://docs.docker.com/engine/reference/commandline/create/#options.",
+          "type": "string"
+        }
+      },
+      "required": ["image"],
+      "additionalProperties": false
+    },
+    "serviceContainer": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idimage",
+          "description": "The Docker image to use as the service container to run the action. The value can be the Docker Hub image name or a registry name.",
+          "type": "string"
+        },
+        "credentials": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idcredentials",
+          "description": "If the image's container registry requires authentication to pull the image, you can use credentials to set a map of the username and password. The credentials are the same values that you would provide to the `docker login` command.",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          }
+        },
+        "env": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idenv",
+          "$ref": "#/definitions/env",
+          "description": "Sets a map of environment variables in the service container."
+        },
+        "ports": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idports",
+          "description": "Sets an array of ports to expose on the service container.",
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "volumes": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idvolumes",
+          "description": "Sets an array of volumes for the service container to use. You can use volumes to share data between services or other steps in a job. You can specify named Docker volumes, anonymous Docker volumes, or bind mounts on the host.\nTo specify a volume, you specify the source and destination path: <source>:<destinationPath>\nThe <source> is a volume name or an absolute path on the host machine, and <destinationPath> is an absolute path in the container.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "options": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idoptions",
+          "description": "Additional Docker container resource options. For a list of options, see https://docs.docker.com/engine/reference/commandline/create/#options.",
+          "type": "string"
+        },
+        "command": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_idcommand",
+          "description": "Overrides the Docker image's default command (`CMD`). The value is passed as arguments after the image name in the `docker create` command. If you also specify `entrypoint`, `command` provides the arguments to that entrypoint.",
+          "type": "string"
+        },
+        "entrypoint": {
+          "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idservicesservice_identrypoint",
+          "description": "Overrides the Docker image's default `ENTRYPOINT`. The value is a single string defining the executable to run. Use this when you need to replace the image's entrypoint entirely. You can combine `entrypoint` with `command` to pass arguments to the custom entrypoint.",
           "type": "string"
         }
       },
@@ -163,6 +232,9 @@
         "actions": {
           "$ref": "#/definitions/permissions-level"
         },
+        "artifact-metadata": {
+          "$ref": "#/definitions/permissions-level"
+        },
         "attestations": {
           "$ref": "#/definitions/permissions-level"
         },
@@ -183,6 +255,10 @@
         },
         "issues": {
           "$ref": "#/definitions/permissions-level"
+        },
+        "models": {
+          "type": "string",
+          "enum": ["read", "none"]
         },
         "packages": {
           "$ref": "#/definitions/permissions-level"
@@ -247,6 +323,19 @@
           "$comment": "https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#example-using-environment-name-and-url",
           "description": "A deployment URL",
           "type": "string"
+        },
+        "deployment": {
+          "$comment": "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments",
+          "description": "Whether to create a deployment for this job. Setting to false lets the job use environment secrets and variables without creating a deployment record. Wait timers and required reviewers still apply.",
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/expressionSyntax"
+            }
+          ],
+          "default": true
         }
       },
       "required": ["name"],
@@ -334,53 +423,6 @@
       "$ref": "#/definitions/globs",
       "description": "When using the push and pull_request events, you can configure a workflow to run when at least one file does not match paths-ignore or at least one modified file matches the configured paths. Path filters are not evaluated for pushes to tags.\nThe paths-ignore and paths keywords accept glob patterns that use the * and ** wildcard characters to match more than one path name. For more information, see https://help.github.com/en/github/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet.\nYou can exclude paths using two types of filters. You cannot use both of these filters for the same event in a workflow.\n- paths-ignore - Use the paths-ignore filter when you only need to exclude path names.\n- paths - Use the paths filter when you need to filter paths for positive matches and exclude paths."
     },
-    "ref": {
-      "properties": {
-        "branches": {
-          "$ref": "#/definitions/branch"
-        },
-        "branches-ignore": {
-          "$ref": "#/definitions/branch"
-        },
-        "tags": {
-          "$ref": "#/definitions/branch"
-        },
-        "tags-ignore": {
-          "$ref": "#/definitions/branch"
-        },
-        "paths": {
-          "$ref": "#/definitions/path"
-        },
-        "paths-ignore": {
-          "$ref": "#/definitions/path"
-        }
-      },
-      "oneOf": [
-        {
-          "type": "object",
-          "allOf": [
-            {
-              "not": {
-                "required": ["branches", "branches-ignore"]
-              }
-            },
-            {
-              "not": {
-                "required": ["tags", "tags-ignore"]
-              }
-            },
-            {
-              "not": {
-                "required": ["paths", "paths-ignore"]
-              }
-            }
-          ]
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
     "shell": {
       "$comment": "https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell",
       "description": "You can override the default shell settings in the runner's operating system using the shell keyword. You can use built-in shell keywords, or you can define a custom set of shell options.",
@@ -392,6 +434,34 @@
           "$comment": "https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#custom-shell",
           "type": "string",
           "enum": ["bash", "pwsh", "python", "sh", "cmd", "powershell"]
+        }
+      ]
+    },
+    "snapshot": {
+      "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idsnapshot",
+      "description": "You can use `jobs.<job_id>.snapshot` to generate a custom image.\nAdd the snapshot keyword to the job, using either the string syntax or mapping syntax as shown in https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images#generating-a-custom-image.\nEach job that includes the snapshot keyword creates a separate image. To generate only one image or image version, include all workflow steps in a single job. Each successful run of a job that includes the snapshot keyword creates a new version of that image.\nFor more information, see https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images.",
+      "oneOf": [
+        {
+          "$comment": "https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images#string-syntax",
+          "type": "string",
+          "description": "You can use the string syntax with `snapshot` to define the image name. This method creates a new image or adds a new version to an existing image with the same name. You cannot specify a version number using this syntax."
+        },
+        {
+          "$comment": "https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images#mapping-syntax",
+          "type": "object",
+          "additionalProperties": false,
+          "description": "You can use the mapping syntax with `snapshot` to define both the `image-name` and the optional `version`. When you specify a major version, the minor versioning automatically increments if that major version already exists. Patch versions are not supported.",
+          "properties": {
+            "image-name": {
+              "type": "string"
+            },
+            "version": {
+              "$comment": "https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images#specifying-a-version-in-your-workflow",
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+|\\*)?$"
+            }
+          },
+          "required": ["image-name"]
         }
       ]
     },
@@ -492,8 +562,15 @@
     "types": {
       "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#onevent_nametypes",
       "description": "Selects the types of activity that will trigger a workflow run. Most GitHub events are triggered by more than one type of activity. For example, the event for the release resource is triggered when a release is published, unpublished, created, edited, deleted, or prereleased. The types keyword enables you to narrow down activity that causes the workflow to run. When only one activity type triggers a webhook event, the types keyword is unnecessary.\nYou can use an array of event types. For more information about each event and their activity types, see https://help.github.com/en/articles/events-that-trigger-workflows#webhook-events.",
-      "type": "array",
-      "minItems": 1
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "working-directory": {
       "$comment": "https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstepsrun",
@@ -660,6 +737,9 @@
         "needs": {
           "$ref": "#/definitions/jobNeeds"
         },
+        "snapshot": {
+          "$ref": "#/definitions/snapshot"
+        },
         "permissions": {
           "$ref": "#/definitions/permissions"
         },
@@ -681,7 +761,10 @@
                       "type": "string"
                     }
                   ],
-                  "minItems": 1
+                  "minItems": 1,
+                  "additionalItems": {
+                    "type": "string"
+                  }
                 }
               ]
             },
@@ -816,7 +899,7 @@
               "type": "string"
             },
             {
-              "$ref": "#/definitions/container"
+              "$ref": "#/definitions/jobContainer"
             }
           ]
         },
@@ -825,7 +908,7 @@
           "description": "Additional containers to host services for a job in a workflow. These are useful for creating databases or cache services like redis. The runner on the virtual machine will automatically create a network and manage the life cycle of the service containers.\nWhen you use a service container for a job or your step uses container actions, you don't need to set port information to access the service. Docker automatically exposes all ports between containers on the same network.\nWhen both the job and the action run in a container, you can directly reference the container by its hostname. The hostname is automatically mapped to the service name.\nWhen a step does not use a container action, you must access the service using localhost and bind the ports.",
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/container"
+            "$ref": "#/definitions/serviceContainer"
           }
         },
         "concurrency": {
@@ -842,6 +925,130 @@
         }
       },
       "required": ["runs-on"],
+      "additionalProperties": false
+    },
+    "workflowDispatchInput": {
+      "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_id",
+      "description": "A string identifier to associate with the input. The value of <input_id> is a map of the input's metadata. The <input_id> must be a unique identifier within the inputs object. The <input_id> must start with a letter or _ and contain only alphanumeric characters, -, or _.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_iddescription",
+          "description": "A string description of the input parameter.",
+          "type": "string"
+        },
+        "deprecationMessage": {
+          "description": "A string shown to users using the deprecated input.",
+          "type": "string"
+        },
+        "required": {
+          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_idrequired",
+          "description": "A boolean to indicate whether the action requires the input parameter. Set to true when the parameter is required.",
+          "type": "boolean"
+        },
+        "default": {
+          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_iddefault",
+          "description": "A string representing the default value. The default value is used when an input parameter isn't specified in a workflow file."
+        },
+        "type": {
+          "$comment": "https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputsinput_idtype",
+          "description": "A string representing the type of the input.",
+          "type": "string",
+          "enum": ["string", "choice", "boolean", "number", "environment"]
+        },
+        "options": {
+          "$comment": "https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows",
+          "description": "The options of the dropdown list, if the type is a choice.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "boolean"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "number"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "environment"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "choice"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["options"]
+          }
+        }
+      ],
       "additionalProperties": false
     }
   },
@@ -1209,46 +1416,83 @@
             },
             "pull_request": {
               "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/events-that-trigger-workflows#pull-request-event-pull_request",
-              "$ref": "#/definitions/ref",
               "description": "Runs your workflow anytime the pull_request event occurs. More than one activity type triggers this event. For information about the REST API, see https://developer.github.com/v3/pulls.\nNote: Workflows do not run on private base repositories when you open a pull request from a forked repository.\nWhen you create a pull request from a forked repository to the base repository, GitHub sends the pull_request event to the base repository and no pull request events occur on the forked repository.\nWorkflows don't run on forked repositories by default. You must enable GitHub Actions in the Actions tab of the forked repository.\nThe permissions for the GITHUB_TOKEN in forked repositories is read-only. For more information about the GITHUB_TOKEN, see https://help.github.com/en/articles/virtual-environments-for-github-actions.",
-              "properties": {
-                "types": {
-                  "$ref": "#/definitions/types",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "assigned",
-                      "unassigned",
-                      "labeled",
-                      "unlabeled",
-                      "opened",
-                      "edited",
-                      "closed",
-                      "reopened",
-                      "synchronize",
-                      "converted_to_draft",
-                      "ready_for_review",
-                      "locked",
-                      "unlocked",
-                      "milestoned",
-                      "demilestoned",
-                      "review_requested",
-                      "review_request_removed",
-                      "auto_merge_enabled",
-                      "auto_merge_disabled",
-                      "enqueued",
-                      "dequeued"
-                    ]
-                  },
-                  "default": ["opened", "synchronize", "reopened"]
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "types": {
+                          "$ref": "#/definitions/types",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "assigned",
+                              "unassigned",
+                              "labeled",
+                              "unlabeled",
+                              "opened",
+                              "edited",
+                              "closed",
+                              "reopened",
+                              "synchronize",
+                              "converted_to_draft",
+                              "ready_for_review",
+                              "locked",
+                              "unlocked",
+                              "milestoned",
+                              "demilestoned",
+                              "review_requested",
+                              "review_request_removed",
+                              "auto_merge_enabled",
+                              "auto_merge_disabled",
+                              "enqueued",
+                              "dequeued"
+                            ]
+                          },
+                          "default": ["opened", "synchronize", "reopened"]
+                        },
+                        "branches": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "branches-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "paths": {
+                          "$ref": "#/definitions/path"
+                        },
+                        "paths-ignore": {
+                          "$ref": "#/definitions/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "not": {
+                        "required": ["branches", "branches-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["tags", "tags-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["paths", "paths-ignore"]
+                      }
+                    }
+                  ]
                 }
-              },
-              "patternProperties": {
-                "^(branche|tag|path)s(-ignore)?$": {
-                  "type": "array"
-                }
-              },
-              "additionalProperties": false
+              ]
             },
             "pull_request_review": {
               "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/events-that-trigger-workflows#pull-request-review-event-pull_request_review",
@@ -1282,54 +1526,129 @@
             },
             "pull_request_target": {
               "$comment": "https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target",
-              "$ref": "#/definitions/ref",
               "description": "This event is similar to pull_request, except that it runs in the context of the base repository of the pull request, rather than in the merge commit. This means that you can more safely make your secrets available to the workflows triggered by the pull request, because only workflows defined in the commit on the base repository are run. For example, this event allows you to create workflows that label and comment on pull requests, based on the contents of the event payload.",
-              "properties": {
-                "types": {
-                  "$ref": "#/definitions/types",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "assigned",
-                      "unassigned",
-                      "labeled",
-                      "unlabeled",
-                      "opened",
-                      "edited",
-                      "closed",
-                      "reopened",
-                      "synchronize",
-                      "converted_to_draft",
-                      "ready_for_review",
-                      "locked",
-                      "unlocked",
-                      "review_requested",
-                      "review_request_removed",
-                      "auto_merge_enabled",
-                      "auto_merge_disabled"
-                    ]
-                  },
-                  "default": ["opened", "synchronize", "reopened"]
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "types": {
+                          "$ref": "#/definitions/types",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "assigned",
+                              "unassigned",
+                              "labeled",
+                              "unlabeled",
+                              "opened",
+                              "edited",
+                              "closed",
+                              "reopened",
+                              "synchronize",
+                              "converted_to_draft",
+                              "ready_for_review",
+                              "locked",
+                              "unlocked",
+                              "review_requested",
+                              "review_request_removed",
+                              "auto_merge_enabled",
+                              "auto_merge_disabled"
+                            ]
+                          },
+                          "default": ["opened", "synchronize", "reopened"]
+                        },
+                        "branches": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "branches-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "paths": {
+                          "$ref": "#/definitions/path"
+                        },
+                        "paths-ignore": {
+                          "$ref": "#/definitions/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "not": {
+                        "required": ["branches", "branches-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["tags", "tags-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["paths", "paths-ignore"]
+                      }
+                    }
+                  ]
                 }
-              },
-              "patternProperties": {
-                "^(branche|tag|path)s(-ignore)?$": {}
-              },
-              "additionalProperties": false
+              ]
             },
             "push": {
               "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/events-that-trigger-workflows#push-event-push",
-              "$ref": "#/definitions/ref",
               "description": "Runs your workflow when someone pushes to a repository branch, which triggers the push event.\nNote: The webhook payload available to GitHub Actions does not include the added, removed, and modified attributes in the commit object. You can retrieve the full commit object using the REST API. For more information, see https://developer.github.com/v3/repos/commits/#get-a-single-commit.",
-              "patternProperties": {
-                "^(branche|tag|path)s(-ignore)?$": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "branches": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "branches-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "tags-ignore": {
+                          "$ref": "#/definitions/branch"
+                        },
+                        "paths": {
+                          "$ref": "#/definitions/path"
+                        },
+                        "paths-ignore": {
+                          "$ref": "#/definitions/path"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "not": {
+                        "required": ["branches", "branches-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["tags", "tags-ignore"]
+                      }
+                    },
+                    {
+                      "not": {
+                        "required": ["paths", "paths-ignore"]
+                      }
+                    }
+                  ]
                 }
-              },
-              "additionalProperties": false
+              ]
             },
             "registry_package": {
               "$comment": "https://help.github.com/en/actions/reference/events-that-trigger-workflows#registry-package-event-registry_package",
@@ -1406,10 +1725,6 @@
                           "description": "A string description of the input parameter.",
                           "type": "string"
                         },
-                        "deprecationMessage": {
-                          "description": "A string shown to users using the deprecated input.",
-                          "type": "string"
-                        },
                         "required": {
                           "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_idrequired",
                           "description": "A boolean to indicate whether the action requires the input parameter. Set to true when the parameter is required.",
@@ -1433,6 +1748,33 @@
                   },
                   "additionalProperties": false
                 },
+                "outputs": {
+                  "$comment": "https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onworkflow_calloutputs",
+                  "description": "When using the workflow_call keyword, you can optionally specify inputs that are passed to the called workflow from the caller workflow.",
+                  "type": "object",
+                  "patternProperties": {
+                    "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+                      "$comment": "https://docs.github.com/en/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#outputsoutput_id",
+                      "description": "A string identifier to associate with the output. The value of <output_id> is a map of the output's metadata. The <output_id> must be a unique identifier within the outputs object. The <output_id> must start with a letter or _ and contain only alphanumeric characters, -, or _.",
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "$comment": "https://docs.github.com/en/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#outputsoutput_iddescription",
+                          "description": "A string description of the output parameter.",
+                          "type": "string"
+                        },
+                        "value": {
+                          "$comment": "https://docs.github.com/en/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#outputsoutput_idvalue",
+                          "description": "The value that the output parameter will be mapped to. You can set this to a string or an expression with context. For example, you can use the steps context to set the value of an output to the output value of a step.",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["value"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "secrets": {
                   "$comment": "https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#onworkflow_callsecrets",
                   "description": "A map of the secrets that can be used in the called workflow. Within the called workflow, you can use the secrets context to refer to a secret.",
@@ -1451,7 +1793,6 @@
                           "type": "boolean"
                         }
                       },
-                      "required": ["required"],
                       "additionalProperties": false
                     }
                   },
@@ -1469,135 +1810,7 @@
                   "type": "object",
                   "patternProperties": {
                     "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-                      "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_id",
-                      "description": "A string identifier to associate with the input. The value of <input_id> is a map of the input's metadata. The <input_id> must be a unique identifier within the inputs object. The <input_id> must start with a letter or _ and contain only alphanumeric characters, -, or _.",
-                      "type": "object",
-                      "properties": {
-                        "description": {
-                          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_iddescription",
-                          "description": "A string description of the input parameter.",
-                          "type": "string"
-                        },
-                        "deprecationMessage": {
-                          "description": "A string shown to users using the deprecated input.",
-                          "type": "string"
-                        },
-                        "required": {
-                          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_idrequired",
-                          "description": "A boolean to indicate whether the action requires the input parameter. Set to true when the parameter is required.",
-                          "type": "boolean"
-                        },
-                        "default": {
-                          "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/metadata-syntax-for-github-actions#inputsinput_iddefault",
-                          "description": "A string representing the default value. The default value is used when an input parameter isn't specified in a workflow file."
-                        },
-                        "type": {
-                          "$comment": "https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputsinput_idtype",
-                          "description": "A string representing the type of the input.",
-                          "type": "string",
-                          "enum": [
-                            "string",
-                            "choice",
-                            "boolean",
-                            "number",
-                            "environment"
-                          ]
-                        },
-                        "options": {
-                          "$comment": "https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows",
-                          "description": "The options of the dropdown list, if the type is a choice.",
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "minItems": 1
-                        }
-                      },
-                      "allOf": [
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "string"
-                              }
-                            },
-                            "required": ["type"]
-                          },
-                          "then": {
-                            "properties": {
-                              "default": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "boolean"
-                              }
-                            },
-                            "required": ["type"]
-                          },
-                          "then": {
-                            "properties": {
-                              "default": {
-                                "type": "boolean"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "number"
-                              }
-                            },
-                            "required": ["type"]
-                          },
-                          "then": {
-                            "properties": {
-                              "default": {
-                                "type": "number"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "environment"
-                              }
-                            },
-                            "required": ["type"]
-                          },
-                          "then": {
-                            "properties": {
-                              "default": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "choice"
-                              }
-                            },
-                            "required": ["type"]
-                          },
-                          "then": {
-                            "required": ["options"]
-                          }
-                        }
-                      ],
-                      "required": ["description"],
-                      "additionalProperties": false
+                      "$ref": "#/definitions/workflowDispatchInput"
                     }
                   },
                   "additionalProperties": false
@@ -1636,15 +1849,22 @@
               "description": "You can use the GitHub API to trigger a webhook event called repository_dispatch when you want to trigger a workflow for activity that happens outside of GitHub. For more information, see https://developer.github.com/v3/repos/#create-a-repository-dispatch-event.\nTo trigger the custom repository_dispatch webhook event, you must send a POST request to a GitHub API endpoint and provide an event_type name to describe the activity type. To trigger a workflow run, you must also configure your workflow to use the repository_dispatch event."
             },
             "schedule": {
-              "$comment": "https://help.github.com/en/github/automating-your-workflow-with-github-actions/events-that-trigger-workflows#scheduled-events-schedule",
-              "description": "You can schedule a workflow to run at specific UTC times using POSIX cron syntax (https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07). Scheduled workflows run on the latest commit on the default or base branch. The shortest interval you can run scheduled workflows is once every 5 minutes.\nNote: GitHub Actions does not support the non-standard syntax @yearly, @monthly, @weekly, @daily, @hourly, and @reboot.\nYou can use crontab guru (https://crontab.guru/). to help generate your cron syntax and confirm what time it will run. To help you get started, there is also a list of crontab guru examples (https://crontab.guru/examples.html).",
+              "$comment": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+              "description": "You can schedule a workflow to run at specific UTC times using POSIX cron syntax (https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07). You can optionally specify a timezone using an IANA timezone string (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for timezone-aware scheduling. Scheduled workflows run on the latest commit on the default or base branch. The shortest interval you can run scheduled workflows is once every 5 minutes.\nNote: GitHub Actions does not support the non-standard syntax @yearly, @monthly, @weekly, @daily, @hourly, and @reboot.\nYou can use crontab guru (https://crontab.guru/) to help generate your cron syntax and confirm what time it will run. To help you get started, there is also a list of crontab guru examples (https://crontab.guru/examples.html).",
               "type": "array",
               "items": {
+                "type": "object",
                 "properties": {
                   "cron": {
+                    "description": "A cron expression that represents a schedule. A scheduled workflow will run at most once every 5 minutes.",
+                    "type": "string"
+                  },
+                  "timezone": {
+                    "description": "A string that represents the time zone a scheduled workflow will run relative to in IANA format (e.g. 'America/New_York' or 'Europe/London'). If omitted, the workflow will run relative to midnight UTC.",
                     "type": "string"
                   }
                 },
+                "required": ["cron"],
                 "additionalProperties": false
               },
               "minItems": 1

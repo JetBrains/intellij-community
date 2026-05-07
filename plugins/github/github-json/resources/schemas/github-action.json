@@ -32,7 +32,7 @@
         "using": {
           "$comment": "https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#runsusing",
           "description": "The application used to execute the code specified in `main`.",
-          "enum": ["node12", "node16", "node20"]
+          "enum": ["node12", "node16", "node20", "node24"]
         },
         "main": {
           "$comment": "https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#runsmain",
@@ -123,7 +123,7 @@
               },
               "if": {
                 "$comment": "https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#runsstepsif",
-                "description": "You can use the if conditional to prevent a step from running unless a condition is met. You can use any supported context and expression to create a conditional.\nExpressions in an if conditional do not require the ${{ }} syntax. For more information, see https://help.github.com/en/articles/contexts-and-expression-syntax-for-github-actions.",
+                "description": "You can use the if conditional to prevent a step from running unless a condition is met. You can use any supported context and expression to create a conditional.\nExpressions in an if conditional do not require the ${{ }} syntax. However, you must always use the ${{ }} expression syntax or escape with '', \"\", or () when the expression starts with !, since ! is reserved notation in YAML format. For more information, see https://help.github.com/en/articles/contexts-and-expression-syntax-for-github-actions",
                 "type": "string"
               },
               "env": {
