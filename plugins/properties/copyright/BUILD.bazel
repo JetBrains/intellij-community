@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.properties.copyright` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "copyright_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "copyright",
   module_name = "intellij.properties.copyright",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":copyright_resources"]
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources"
 )
 
 jvm_library(

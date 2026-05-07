@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.jackson.databind` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "databind_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "databind",
   module_name = "intellij.libraries.jackson.databind",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":databind_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = [
     "@lib//:libraries-jackson-databind-jackson-databind",
     "//libraries/jackson/annotations",

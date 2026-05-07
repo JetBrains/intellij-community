@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.platform.externalSystem.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "externalSystem-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "externalSystem-impl",
   module_name = "intellij.platform.externalSystem.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":externalSystem-impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -136,12 +131,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.externalSystem.impl` end
 
 ### auto-generated section `build intellij.platform.externalSystem.tests` start
-resourcegroup(
-  name = "externalSystem-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "externalSystem-tests",
   module_name = "intellij.platform.externalSystem.tests",
@@ -163,7 +152,8 @@ jvm_library(
   module_name = "intellij.platform.externalSystem.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":externalSystem-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.whatsNew` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_whatsNew",
@@ -10,18 +10,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "whatsNew_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "whatsNew",
   module_name = "intellij.platform.whatsNew",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":whatsNew_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_whatsNew",
   deps = [
     "//platform/core-api:core",
@@ -97,12 +92,6 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "whatsNew-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "whatsNew-tests",
   module_name = "intellij.platform.whatsNew.tests",
@@ -115,7 +104,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":whatsNew-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   kotlinc_opts = ":custom_whatsNew-tests",
   associates = [
     "//platform/whatsNew",

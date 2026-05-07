@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.sh.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "core_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "core",
   module_name = "intellij.sh.core",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":core_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -88,12 +83,6 @@ exports_files([
 ### auto-generated section `iml intellij.sh.core` end
 
 ### auto-generated section `build intellij.sh.tests` start
-resourcegroup(
-  name = "tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "tests",
   module_name = "intellij.sh.tests",
@@ -116,7 +105,8 @@ jvm_library(
   module_name = "intellij.sh.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",

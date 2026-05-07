@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.community.aliasProvider` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "aliasProvider_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "aliasProvider",
   module_name = "intellij.python.community.aliasProvider",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":aliasProvider_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   runtime_deps = [
     "//python/python-parser:parser",
     "//python/python-ast:ast",

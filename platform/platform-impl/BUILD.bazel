@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -18,18 +18,13 @@ kt_javac_options(
   no_proc = True
 )
 
-resourcegroup(
-  name = "ide-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "ide-impl",
   module_name = "intellij.platform.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":ide-impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:mac-provided",

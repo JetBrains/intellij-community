@@ -3,12 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "spellchecker_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "spellchecker_resources_1",
   srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
@@ -18,10 +12,9 @@ jvm_library(
   module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [
-    ":spellchecker_resources",
-    ":spellchecker_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":spellchecker_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

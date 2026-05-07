@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.jvm.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_k1",
@@ -10,18 +10,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "k1_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "k1",
   module_name = "kotlin.jvm.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k1_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_k1",
   deps = [
     "@lib//:kotlin-stdlib",

@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "community-junit5Tests-framework_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "community-junit5Tests-framework",
@@ -22,7 +16,8 @@ jvm_library(
   module_name = "intellij.python.community.junit5Tests.framework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":community-junit5Tests-framework_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "@lib//:junit4",
     "@lib//:junit5",

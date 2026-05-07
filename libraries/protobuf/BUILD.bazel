@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.protobuf` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "protobuf_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "protobuf",
   module_name = "intellij.libraries.protobuf",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":protobuf_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-protobuf-protobuf"],
   runtime_deps = ["@lib//:libraries-protobuf-protobuf"]
 )

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.workspace.storage.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_tests",
@@ -9,12 +9,6 @@ create_kotlinc_options(
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
   ]
-)
-
-resourcegroup(
-  name = "tests_test_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -36,7 +30,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":tests_test_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_tests",
   associates = [
     "//platform/workspace/storage",

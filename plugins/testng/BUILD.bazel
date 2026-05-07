@@ -3,12 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "testng_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "testng_resources_1",
   srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
@@ -18,10 +12,9 @@ jvm_library(
   module_name = "intellij.testng",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [
-    ":testng_resources",
-    ":testng_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":testng_resources"],
   deps = [
     "//java/openapi:java",
     "//java/java-syntax:syntax",
@@ -142,12 +135,6 @@ exports_files([
 ### auto-generated section `iml intellij.testng` end
 
 ### auto-generated section `build intellij.testng.tests` start
-resourcegroup(
-  name = "testng-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "testng-tests",
   module_name = "intellij.testng.tests",
@@ -160,7 +147,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
-  resources = [":testng-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//plugins/testng",
     "//plugins/testng:testng_test_lib",

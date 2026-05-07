@@ -7,21 +7,14 @@ resourcegroup(
   strip_prefix = "gen-resources"
 )
 
-resourcegroup(
-  name = "vcs-github_resources_1",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "vcs-github",
   module_name = "intellij.vcs.github",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [
-    ":vcs-github_resources",
-    ":vcs-github_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":vcs-github_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -189,12 +182,6 @@ exports_files([
 ### auto-generated section `iml intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github.tests` start
-resourcegroup(
-  name = "vcs-github-tests_test_resources",
-  srcs = glob(["test-resources/**/*"]),
-  strip_prefix = "test-resources"
-)
-
 jvm_library(
   name = "vcs-github-tests",
   module_name = "intellij.vcs.github.tests",
@@ -207,7 +194,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":vcs-github-tests_test_resources"],
+  resources = glob(["test-resources/**/*"]),
+  resource_strip_prefix = "test-resources",
   associates = [
     "//plugins/github/github-core:vcs-github",
     "//plugins/github/github-core:vcs-github_test_lib",

@@ -20,20 +20,15 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.platform.jewel.detektPlugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "detekt-plugin_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "detekt-plugin",
   module_name = "intellij.platform.jewel.detektPlugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = [":detekt-plugin_resources"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -69,12 +64,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.jewel.detektPlugin` end
 
 ### auto-generated section `build intellij.platform.jewel.detektPlugin.tests` start
-resourcegroup(
-  name = "detektPlugin-tests_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
-)
-
 jvm_library(
   name = "detektPlugin-tests",
   module_name = "intellij.platform.jewel.detektPlugin.tests",
@@ -87,7 +76,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  resources = [":detektPlugin-tests_test_resources"],
+  resources = glob(["src/test/resources/**/*"]),
+  resource_strip_prefix = "src/test/resources",
   associates = [
     "//platform/jewel/detekt-plugin",
     "//platform/jewel/detekt-plugin:detekt-plugin_test_lib",

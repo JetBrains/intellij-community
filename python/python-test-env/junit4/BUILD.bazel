@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.python.test.env.junit4` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "junit4_test_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "junit4",
@@ -25,7 +19,8 @@ jvm_library(
   module_name = "intellij.python.test.env.junit4",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":junit4_test_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:junit4",

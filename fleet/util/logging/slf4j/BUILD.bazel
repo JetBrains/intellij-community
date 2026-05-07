@@ -13,12 +13,6 @@ create_kotlinc_options(
 
 resourcegroup(
   name = "slf4j_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "slf4j_resources_1",
   srcs = glob(["resourcesJvmMain/**/*"]),
   strip_prefix = "resourcesJvmMain"
 )
@@ -28,10 +22,9 @@ jvm_library(
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = [
-    ":slf4j_resources",
-    ":slf4j_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":slf4j_resources"],
   kotlinc_opts = ":custom_slf4j",
   deps = [
     "@lib//:kotlin-stdlib",

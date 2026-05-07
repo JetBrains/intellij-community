@@ -3,12 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "gradle_resources",
-  srcs = glob(["plugin-resources/**/*"]),
-  strip_prefix = "plugin-resources"
-)
-
-resourcegroup(
-  name = "gradle_resources_1",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
@@ -18,10 +12,9 @@ jvm_library(
   module_name = "intellij.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["generated/**/*.kt", "generated/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [
-    ":gradle_resources",
-    ":gradle_resources_1",
-  ],
+  resources = glob(["plugin-resources/**/*"]),
+  resource_strip_prefix = "plugin-resources",
+  resource_jars = [":gradle_resources"],
   deps = [
     "//plugins/gradle/settings",
     "//platform/analysis-api:analysis",
@@ -221,12 +214,6 @@ exports_files([
 ### auto-generated section `iml intellij.gradle.common` end
 
 ### auto-generated section `build intellij.gradle.tests` start
-resourcegroup(
-  name = "gradle-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "gradle-tests",
   module_name = "intellij.gradle.tests",
@@ -252,7 +239,8 @@ jvm_library(
   module_name = "intellij.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
-  resources = [":gradle-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   deps = [
     "@lib//:jmock",
     "@lib//:jmock-junit4",
@@ -413,12 +401,6 @@ jps_test(
 ### auto-generated section `test intellij.gradle.tests` end
 
 ### auto-generated section `build intellij.gradle.tests.main` start
-resourcegroup(
-  name = "gradle-tests-main_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "gradle-tests-main",
   module_name = "intellij.gradle.tests.main",
@@ -432,7 +414,8 @@ jvm_library(
   module_name = "intellij.gradle.tests.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":gradle-tests-main_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   runtime_deps = [
     ":gradle-tests-main",
     "//platform/bootstrap/coroutine",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.searchEverywhereLucene.plugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "searchEverywhereLucene-plugin_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "searchEverywhereLucene-plugin",
   module_name = "intellij.searchEverywhereLucene.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":searchEverywhereLucene-plugin_resources"]
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources"
 )
 
 jvm_library(

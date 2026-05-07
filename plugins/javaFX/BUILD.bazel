@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.javaFX` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "javaFX_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "javaFX",
   module_name = "intellij.javaFX",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":javaFX_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -134,18 +129,13 @@ exports_files([
 ### auto-generated section `iml intellij.javaFX` end
 
 ### auto-generated section `build intellij.javaFX.properties` start
-resourcegroup(
-  name = "javaFX-properties_resources",
-  srcs = glob(["properties/resources/**/*"]),
-  strip_prefix = "properties/resources"
-)
-
 jvm_library(
   name = "javaFX-properties",
   module_name = "intellij.javaFX.properties",
   visibility = ["//visibility:public"],
   srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
-  resources = [":javaFX-properties_resources"],
+  resources = glob(["properties/resources/**/*"]),
+  resource_strip_prefix = "properties/resources",
   deps = [
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",

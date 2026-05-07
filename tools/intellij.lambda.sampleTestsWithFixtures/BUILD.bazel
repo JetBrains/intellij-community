@@ -1,16 +1,10 @@
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_lambda-sampleTestsWithFixtures",
   x_context_parameters = True
-)
-
-resourcegroup(
-  name = "lambda-sampleTestsWithFixtures_test_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -26,7 +20,8 @@ jvm_library(
   module_name = "intellij.lambda.sampleTestsWithFixtures",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":lambda-sampleTestsWithFixtures_test_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_lambda-sampleTestsWithFixtures",
   deps = [
     "@lib//:kodein-di-jvm",

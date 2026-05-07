@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.testng` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "testng_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "testng",
   module_name = "intellij.libraries.testng",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":testng_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:test_n_g"],
   runtime_deps = ["@lib//:test_n_g"]
 )

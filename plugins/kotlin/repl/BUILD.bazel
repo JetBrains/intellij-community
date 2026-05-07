@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.repl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_repl",
@@ -11,18 +11,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "repl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "repl",
   module_name = "kotlin.repl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":repl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_repl",
   deps = [
     "@lib//:kotlin-stdlib",

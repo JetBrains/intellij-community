@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.maven.server.eventListener` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "server-eventListener_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "server-eventListener",
   module_name = "intellij.maven.server.eventListener",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
-  resources = [":server-eventListener_resources"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",

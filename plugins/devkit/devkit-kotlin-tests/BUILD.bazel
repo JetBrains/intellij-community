@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.devkit.kotlin.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "kotlin-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-tests",
@@ -24,7 +18,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":kotlin-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   associates = [
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",

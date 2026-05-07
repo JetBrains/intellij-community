@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.featuresTrainer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "featuresTrainer_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.python.featuresTrainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":featuresTrainer_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
@@ -105,12 +100,6 @@ exports_files([
 ### auto-generated section `iml intellij.python.featuresTrainer` end
 
 ### auto-generated section `build intellij.python.featuresTrainer.tests` start
-resourcegroup(
-  name = "featuresTrainer-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "featuresTrainer-tests",
   module_name = "intellij.python.featuresTrainer.tests",
@@ -123,7 +112,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":featuresTrainer-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//python/python-features-trainer:featuresTrainer",
     "//python/python-features-trainer:featuresTrainer_test_lib",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.filePrediction` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "filePrediction_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "filePrediction",
   module_name = "intellij.filePrediction",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":filePrediction_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -85,12 +80,6 @@ exports_files([
 ### auto-generated section `iml intellij.filePrediction` end
 
 ### auto-generated section `build intellij.filePrediction.tests` start
-resourcegroup(
-  name = "filePrediction-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "filePrediction-tests",
   module_name = "intellij.filePrediction.tests",
@@ -103,7 +92,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":filePrediction-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   associates = [
     "//plugins/filePrediction",
     "//plugins/filePrediction:filePrediction_test_lib",

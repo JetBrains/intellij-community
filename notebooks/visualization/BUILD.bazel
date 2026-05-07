@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.notebooks.visualization` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_visualization",
@@ -10,18 +10,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "visualization_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "visualization",
   module_name = "intellij.notebooks.visualization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":visualization_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_visualization",
   deps = [
     "//libraries/gson",

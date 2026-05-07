@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "kotlin-gradle-codeInsight-toml_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-gradle-codeInsight-toml",
   module_name = "intellij.kotlin.gradle.codeInsight.toml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-gradle-codeInsight-toml_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//plugins/toml/core",
     "@lib//:kotlinc-kotlin-compiler-common",

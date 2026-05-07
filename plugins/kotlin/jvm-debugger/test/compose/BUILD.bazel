@@ -17,13 +17,7 @@ jps_test(
 ### skip generation section `test intellij.kotlin.jvm.debugger.test.compose`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "compose_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compose",
@@ -39,7 +33,8 @@ jvm_library(
   module_name = "intellij.kotlin.jvm.debugger.test.compose",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":compose_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",

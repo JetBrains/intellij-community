@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.codeInsight.descriptions` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "descriptions_resources",
-  srcs = glob(["resources-en/**/*"]),
-  strip_prefix = "resources-en"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "descriptions",
   module_name = "intellij.kotlin.codeInsight.descriptions",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":descriptions_resources"]
+  resources = glob(["resources-en/**/*"]),
+  resource_strip_prefix = "resources-en"
 )
 
 jvm_library(

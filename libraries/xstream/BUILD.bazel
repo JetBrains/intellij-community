@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.xstream` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "xstream_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "xstream",
   module_name = "intellij.libraries.xstream",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":xstream_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-xstream-xstream"],
   runtime_deps = [
     "@lib//:libraries-xstream-xstream",

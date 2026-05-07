@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.markdown.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "tests_test_resources",
-  srcs = glob(["data/**/*"]),
-  strip_prefix = "data"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -51,7 +45,8 @@ jvm_library(
   module_name = "intellij.markdown.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":tests_test_resources"],
+  resources = glob(["data/**/*"]),
+  resource_strip_prefix = "data",
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/core:markdown_test_lib",

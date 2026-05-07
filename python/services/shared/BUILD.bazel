@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.community.services.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "shared_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "shared",
   module_name = "intellij.python.community.services.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":shared_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
@@ -55,12 +50,6 @@ exports_files([
 ### auto-generated section `iml intellij.python.community.services.shared` end
 
 ### auto-generated section `build intellij.python.community.services.shared.tests` start
-resourcegroup(
-  name = "python-community-services-shared-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "python-community-services-shared-tests",
   module_name = "intellij.python.community.services.shared.tests",
@@ -73,7 +62,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":python-community-services-shared-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",

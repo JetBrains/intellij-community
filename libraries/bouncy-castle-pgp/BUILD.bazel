@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.bouncy.castle.pgp` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "bouncy-castle-pgp_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "bouncy-castle-pgp",
   module_name = "intellij.libraries.bouncy.castle.pgp",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":bouncy-castle-pgp_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"],
   runtime_deps = ["@lib//:libraries-bouncy-castle-pgp-bouncy-castle-pgp"]
 )

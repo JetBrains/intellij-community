@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.junit.v6.rt.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "junit-v6-rt-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "junit-v6-rt-tests",
@@ -21,7 +15,8 @@ jvm_library(
   module_name = "intellij.junit.v6.rt.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":junit-v6-rt-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.completion.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_kotlin-completion-impl",
@@ -13,18 +13,13 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-resourcegroup(
-  name = "kotlin-completion-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "kotlin-completion-impl",
   module_name = "intellij.kotlin.completion.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-completion-impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_kotlin-completion-impl",
   deps = [
     "@lib//:kotlin-stdlib",

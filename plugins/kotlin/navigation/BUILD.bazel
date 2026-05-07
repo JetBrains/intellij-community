@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.navigation` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_navigation",
@@ -11,18 +11,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "navigation_resources",
-  srcs = glob(["resouces/**/*"]),
-  strip_prefix = "resouces"
-)
-
 jvm_library(
   name = "navigation",
   module_name = "intellij.kotlin.navigation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":navigation_resources"],
+  resources = glob(["resouces/**/*"]),
+  resource_strip_prefix = "resouces",
   kotlinc_opts = ":custom_navigation",
   deps = [
     "@lib//:kotlin-stdlib",

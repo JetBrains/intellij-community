@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.platform.polySymbols` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "polySymbols_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "polySymbols",
   module_name = "intellij.platform.polySymbols",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "src-web/**/*.kt", "src-web/**/*.java", "src-web/**/*.form"], allow_empty = True),
-  resources = [":polySymbols_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
@@ -83,18 +78,13 @@ exports_files([
 ### auto-generated section `iml intellij.platform.polySymbols` end
 
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
-resourcegroup(
-  name = "polySymbols-testFramework_resources",
-  srcs = glob(["testFrameworkResources/**/*"]),
-  strip_prefix = "testFrameworkResources"
-)
-
 jvm_library(
   name = "polySymbols-testFramework",
   module_name = "intellij.platform.polySymbols.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["testFramework/**/*.kt", "testFramework/**/*.java", "testFramework/**/*.form"], allow_empty = True),
-  resources = [":polySymbols-testFramework_resources"],
+  resources = glob(["testFrameworkResources/**/*"]),
+  resource_strip_prefix = "testFrameworkResources",
   deps = [
     "//platform/lang-impl",
     "//platform/editor-ui-api:editor-ui",
@@ -174,12 +164,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
-resourcegroup(
-  name = "polySymbols-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "polySymbols-tests",
   module_name = "intellij.platform.polySymbols.tests",
@@ -216,7 +200,8 @@ jvm_library(
   module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":polySymbols-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.idea.community.customization` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "customization_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "customization",
   module_name = "intellij.idea.community.customization",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":customization_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   runtime_deps = [
     "//java/ide-resources",
     "@lib//:idea-community-customization-tips-idea-ce",

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.uiTests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_ui-tests",
@@ -11,12 +11,6 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
   x_context_parameters = True
-)
-
-resourcegroup(
-  name = "ui-tests_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
 )
 
 jvm_library(
@@ -33,7 +27,8 @@ jvm_library(
   module_name = "intellij.platform.jewel.uiTests",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  resources = [":ui-tests_test_resources"],
+  resources = glob(["src/test/resources/**/*"]),
+  resource_strip_prefix = "src/test/resources",
   kotlinc_opts = ":custom_ui-tests",
   deps = [
     "//libraries/kotlinx/coroutines/core",

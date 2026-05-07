@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.xpath` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "xpath_resources",
-  srcs = glob(["xpath-lang/resources/**/*"]),
-  strip_prefix = "xpath-lang/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-lang/src/**/*.form", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-view/src/**/*.form", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
-  resources = [":xpath_resources"],
+  resources = glob(["xpath-lang/resources/**/*"]),
+  resource_strip_prefix = "xpath-lang/resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -117,12 +112,6 @@ exports_files([
 ### auto-generated section `iml intellij.xpath` end
 
 ### auto-generated section `build intellij.xpath.tests` start
-resourcegroup(
-  name = "xpath-tests_test_resources",
-  srcs = glob(["xpath-lang/testData/**/*"]),
-  strip_prefix = "xpath-lang/testData"
-)
-
 jvm_library(
   name = "xpath-tests",
   module_name = "intellij.xpath.tests",
@@ -136,7 +125,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
-  resources = [":xpath-tests_test_resources"],
+  resources = glob(["xpath-lang/testData/**/*"]),
+  resource_strip_prefix = "xpath-lang/testData",
   associates = [
     "//plugins/xpath",
     "//plugins/xpath:xpath_test_lib",

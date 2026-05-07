@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.python.test.env.junit5` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "junit5_test_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "junit5",
@@ -32,7 +26,8 @@ jvm_library(
   module_name = "intellij.python.test.env.junit5",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":junit5_test_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:jetbrains-annotations",
     "//python/python-test-env/core",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.projectWizard.compose` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "compose_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compose",
   module_name = "intellij.kotlin.projectWizard.compose",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":compose_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -75,12 +70,6 @@ exports_files([
 ### auto-generated section `iml intellij.kotlin.projectWizard.compose` end
 
 ### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` start
-resourcegroup(
-  name = "kotlin-projectWizard-compose-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "kotlin-projectWizard-compose-tests",
   module_name = "intellij.kotlin.projectWizard.compose.tests",
@@ -93,7 +82,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":kotlin-projectWizard-compose-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   associates = [
     "//plugins/kotlin/project-wizard/compose",
     "//plugins/kotlin/project-wizard/compose:compose_test_lib",

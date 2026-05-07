@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "compose-foundation-desktop_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compose-foundation-desktop",
   module_name = "intellij.libraries.compose.foundation.desktop",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":compose-foundation-desktop_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = [
     "//libraries/compose-runtime-desktop",
     "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",

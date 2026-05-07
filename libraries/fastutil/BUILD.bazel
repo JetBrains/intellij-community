@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.fastutil` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "fastutil_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "fastutil",
   module_name = "intellij.libraries.fastutil",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":fastutil_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-fastutil-fastutil-min"],
   runtime_deps = ["@lib//:libraries-fastutil-fastutil-min"]
 )

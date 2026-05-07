@@ -70,14 +70,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel.tests` start
-load("@rules_jvm//:jvm.bzl", "resourcegroup")
-
-resourcegroup(
-  name = "testFramework-junit5-eel-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "testFramework-junit5-eel-tests",
   module_name = "intellij.platform.testFramework.junit5.eel.tests",
@@ -91,7 +83,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":testFramework-junit5-eel-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",

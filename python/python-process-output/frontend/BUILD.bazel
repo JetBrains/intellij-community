@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.python.processOutput.frontend` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_frontend",
@@ -9,18 +9,13 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-resourcegroup(
-  name = "frontend_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "frontend",
   module_name = "intellij.python.processOutput.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":frontend_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_frontend",
   deps = [
     "//platform/platform-frontend:frontend",
@@ -125,12 +120,6 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-resourcegroup(
-  name = "python-processOutput-frontend-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "python-processOutput-frontend-tests",
   module_name = "intellij.python.processOutput.frontend.tests",
@@ -144,7 +133,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":python-processOutput-frontend-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   kotlinc_opts = ":custom_python-processOutput-frontend-tests",
   associates = [
     "//python/python-process-output/frontend",

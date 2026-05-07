@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.repository.search` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_repository-search",
@@ -11,18 +11,13 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "repository-search_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "repository-search",
   module_name = "intellij.repository.search",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":repository-search_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:package-search-api-client"],
   runtime_deps = [
     "//platform/core-api:core",

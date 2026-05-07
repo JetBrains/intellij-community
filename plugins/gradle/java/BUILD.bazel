@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.gradle.java` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "java_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "java",
   module_name = "intellij.gradle.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":java_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle",
@@ -163,12 +158,6 @@ exports_files([
 ### auto-generated section `iml intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
-resourcegroup(
-  name = "java-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "java-tests",
   module_name = "intellij.gradle.java.tests",
@@ -188,7 +177,8 @@ jvm_library(
   module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
-  resources = [":java-tests_test_resources"],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
   deps = [
     "@lib//:jmock",
     "@lib//:junit4",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.platform.configurationStore.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "configurationStore-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "configurationStore-impl",
   module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":configurationStore-impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
@@ -115,12 +110,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.configurationStore.impl` end
 
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
-resourcegroup(
-  name = "configurationStore-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "configurationStore-tests",
   module_name = "intellij.platform.configurationStore.tests",
@@ -134,7 +123,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":configurationStore-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/configuration-store-impl:configurationStore-impl_test_lib",

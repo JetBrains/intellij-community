@@ -1,16 +1,10 @@
 ### auto-generated section `build intellij.tools.ide.metrics.collector` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_ide-metrics-collector",
   opt_in = ["kotlin.time.ExperimentalTime"]
-)
-
-resourcegroup(
-  name = "ide-metrics-collector_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -18,7 +12,8 @@ jvm_library(
   module_name = "intellij.tools.ide.metrics.collector",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":ide-metrics-collector_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_ide-metrics-collector",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -82,12 +77,6 @@ create_kotlinc_options(
   opt_in = ["kotlin.time.ExperimentalTime"]
 )
 
-resourcegroup(
-  name = "ide-metrics-collector-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "ide-metrics-collector-tests",
   module_name = "intellij.tools.ide.metrics.collector.tests",
@@ -100,7 +89,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":ide-metrics-collector-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   kotlinc_opts = ":custom_ide-metrics-collector-tests",
   associates = [
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",

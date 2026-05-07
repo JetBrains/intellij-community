@@ -1,17 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
-
-resourcegroup(
-  name = "testFramework_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "testFramework_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "libraries_junit4_provided",
@@ -28,7 +16,8 @@ jvm_library(
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":testFramework_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
@@ -124,7 +113,8 @@ jvm_library(
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":testFramework_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   exports = [
     "@lib//:junit5-provided",
     "@lib//:junit5Params-provided",

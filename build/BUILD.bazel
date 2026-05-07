@@ -181,7 +181,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.dependencyGraph",
   visibility = ["//visibility:public"],
   srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
-  resources = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
+  resource_jars = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "@community//build:build-javac-rt",
@@ -226,7 +226,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.javac.rt",
   visibility = ["//visibility:public"],
   srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
-  resources = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
+  resource_jars = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",

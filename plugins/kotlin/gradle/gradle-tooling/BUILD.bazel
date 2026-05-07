@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.gradle.tooling` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "kotlin-gradle-tooling_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-gradle-tooling",
   module_name = "intellij.kotlin.gradle.tooling",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":kotlin-gradle-tooling_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   runtime_deps = ["//plugins/gradle/tooling-extension-api:toolingExtension"]
 )
 

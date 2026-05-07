@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.toml.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "tests_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -29,7 +23,8 @@ jvm_library(
   module_name = "intellij.toml.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  resources = [":tests_test_resources"],
+  resources = glob(["src/test/resources/**/*"]),
+  resource_strip_prefix = "src/test/resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",

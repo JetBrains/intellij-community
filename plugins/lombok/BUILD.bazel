@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.lombok` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "lombok_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "lombok",
   module_name = "intellij.lombok",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
-  resources = [":lombok_resources"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   deps = [
     "//plugins/lombok/generated",
     "//platform/analysis-api:analysis",
@@ -119,20 +114,16 @@ exports_files([
 ### auto-generated section `iml intellij.lombok` end
 
 ### auto-generated section `build intellij.lombok.tests` start
-resourcegroup(
-  name = "lombok-tests_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
-)
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
 
 resourcegroup(
-  name = "lombok-tests_test_resources_1",
+  name = "lombok-tests_test_resources",
   srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
 resourcegroup(
-  name = "lombok-tests_test_resources_2",
+  name = "lombok-tests_test_resources_1",
   srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
@@ -149,10 +140,11 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
-  resources = [
+  resources = glob(["src/test/resources/**/*"]),
+  resource_strip_prefix = "src/test/resources",
+  resource_jars = [
     ":lombok-tests_test_resources",
     ":lombok-tests_test_resources_1",
-    ":lombok-tests_test_resources_2",
   ],
   associates = [
     "//plugins/lombok",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.platform.coverage.agent` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "coverage-agent_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "coverage-agent",
   module_name = "intellij.platform.coverage.agent",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":coverage-agent_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
   runtime_deps = ["@lib//:platform-coverage-agent-intellij-coverage"]
 )

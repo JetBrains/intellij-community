@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.maven` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
-
-resourcegroup(
-  name = "maven_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "platform_java-guiForms-rt_provided",
@@ -22,7 +16,8 @@ jvm_library(
   module_name = "intellij.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
-  resources = [":maven_resources"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.netty.codec.http` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "libraries-netty-codec-http_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "libraries-netty-codec-http",
   module_name = "intellij.libraries.netty.codec.http",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":libraries-netty-codec-http_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-netty-codec-http-netty-codec-http"],
   runtime_deps = [
     "@lib//:libraries-netty-codec-http-netty-codec-http",

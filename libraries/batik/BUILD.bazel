@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.batik` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "batik_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "batik",
   module_name = "intellij.libraries.batik",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":batik_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = [
     "@lib//:libraries-batik-batik-transcoder",
     "@lib//:libraries-batik-xml-apis-ext",

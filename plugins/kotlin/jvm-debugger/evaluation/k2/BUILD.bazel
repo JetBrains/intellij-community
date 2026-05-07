@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "kotlin-jvm-debugger-evaluation_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-jvm-debugger-evaluation",
   module_name = "intellij.kotlin.jvm.debugger.evaluation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-jvm-debugger-evaluation_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

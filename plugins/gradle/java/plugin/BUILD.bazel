@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.gradle.java.plugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "plugin_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "plugin",
   module_name = "intellij.gradle.java.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":plugin_resources"]
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources"
 )
 
 jvm_library(

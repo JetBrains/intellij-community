@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_autolink",
@@ -14,18 +14,13 @@ create_kotlinc_options(
   x_explicit_api_mode = "strict"
 )
 
-resourcegroup(
-  name = "autolink_resources",
-  srcs = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
-
 jvm_library(
   name = "autolink",
   module_name = "intellij.platform.jewel.markdown.extensions.autolink",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = [":autolink_resources"],
+  resources = glob(["src/main/resources/**/*"]),
+  resource_strip_prefix = "src/main/resources",
   kotlinc_opts = ":custom_autolink",
   deps = [
     "@lib//:kotlin-stdlib",

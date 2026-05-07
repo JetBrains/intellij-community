@@ -1,16 +1,10 @@
 ### auto-generated section `build intellij.platform.debugger.impl.ui` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_ui",
   x_context_parameters = True
-)
-
-resourcegroup(
-  name = "ui_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -18,7 +12,8 @@ jvm_library(
   module_name = "intellij.platform.debugger.impl.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":ui_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_ui",
   deps = [
     "@lib//:jetbrains-annotations",

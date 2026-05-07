@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.turboComplete.languages.kotlin.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
-
-resourcegroup(
-  name = "k1_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "plugins_kotlin_completion_kotlin-completion-impl-k1_provided",
@@ -17,7 +11,8 @@ jvm_library(
   module_name = "intellij.turboComplete.languages.kotlin.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k1_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",

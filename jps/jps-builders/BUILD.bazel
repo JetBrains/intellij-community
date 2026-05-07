@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.platform.jps.build` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "build_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "build",
   module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":build_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -117,12 +112,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.jps.build` end
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
-resourcegroup(
-  name = "build-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "build-tests",
   module_name = "intellij.platform.jps.build.tests",
@@ -141,7 +130,8 @@ jvm_library(
   module_name = "intellij.platform.jps.build.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":build-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",

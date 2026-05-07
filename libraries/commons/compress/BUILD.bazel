@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.commons.compress` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "compress_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compress",
   module_name = "intellij.libraries.commons.compress",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":compress_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-commons-compress-commons-compress"],
   runtime_deps = [
     "@lib//:libraries-commons-compress-commons-compress",

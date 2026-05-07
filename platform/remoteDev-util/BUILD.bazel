@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.remoteDev.util` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "remoteDev-util_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "remoteDev-util",
   module_name = "intellij.remoteDev.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "modelGenerated/**/*.kt", "modelGenerated/**/*.java"], allow_empty = True),
-  resources = [":remoteDev-util_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/rd/core",

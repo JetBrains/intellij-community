@@ -211,14 +211,6 @@ jps_test(
 ### auto-generated section `test intellij.platform.vcs.tests` end
 
 ### auto-generated section `build intellij.platform.vcs.tests.main` start
-load("@rules_jvm//:jvm.bzl", "resourcegroup")
-
-resourcegroup(
-  name = "vcs-tests-main_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "vcs-tests-main",
   module_name = "intellij.platform.vcs.tests.main",
@@ -232,7 +224,8 @@ jvm_library(
   module_name = "intellij.platform.vcs.tests.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":vcs-tests-main_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   runtime_deps = [
     ":vcs-tests-main",
     "//platform/bootstrap/coroutine",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.venv` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "venv_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "venv",
   module_name = "intellij.python.venv",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":venv_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -60,12 +55,6 @@ exports_files([
 ### auto-generated section `iml intellij.python.venv` end
 
 ### auto-generated section `build intellij.python.venv.tests` start
-resourcegroup(
-  name = "venv-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "venv-tests",
   module_name = "intellij.python.venv.tests",
@@ -79,7 +68,8 @@ jvm_library(
   module_name = "intellij.python.venv.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":venv-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   runtime_deps = [
     ":venv-tests",
     "@lib//:kotlin-stdlib",

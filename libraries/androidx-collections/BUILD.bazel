@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.androidx.collections` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "androidx-collections_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "androidx-collections",
   module_name = "intellij.libraries.androidx.collections",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":androidx-collections_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-androidx-collections-androidx-collection"],
   runtime_deps = ["@lib//:libraries-androidx-collections-androidx-collection"]
 )

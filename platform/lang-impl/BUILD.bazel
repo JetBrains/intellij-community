@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.lang.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -12,18 +12,13 @@ kt_javac_options(
   no_proc = True
 )
 
-resourcegroup(
-  name = "lang-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "lang-impl",
   module_name = "intellij.platform.lang.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":lang-impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",

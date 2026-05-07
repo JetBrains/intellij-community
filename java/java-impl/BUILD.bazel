@@ -1,22 +1,10 @@
 ### auto-generated section `build intellij.java.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_impl",
   x_explicit_api_mode = "strict"
-)
-
-resourcegroup(
-  name = "impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "impl_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -24,7 +12,8 @@ jvm_library(
   module_name = "intellij.java.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":impl_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_impl",
   deps = [
     "//platform/analysis-api:analysis",
@@ -138,7 +127,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":impl_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   kotlinc_opts = ":custom_impl",
   associates = [":impl"],
   deps = [

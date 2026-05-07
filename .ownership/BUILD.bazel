@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.codeowners` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "codeowners_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "codeowners",
   module_name = "intellij.codeowners",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":codeowners_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
   runtime_deps = [
     "@lib//:kotlin-stdlib",

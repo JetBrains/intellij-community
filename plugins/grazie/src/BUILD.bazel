@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.grazie.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "core_resources",
-  srcs = glob(["main/resources/**/*"]),
-  strip_prefix = "main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "core",
   module_name = "intellij.grazie.core",
   visibility = ["//visibility:public"],
   srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
-  resources = [":core_resources"],
+  resources = glob(["main/resources/**/*"]),
+  resource_strip_prefix = "main/resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",

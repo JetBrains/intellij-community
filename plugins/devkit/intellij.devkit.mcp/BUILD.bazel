@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.devkit.mcp` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "mcp_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "mcp",
   module_name = "intellij.devkit.mcp",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":mcp_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//plugins/devkit/devkit-core:core",
     "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",

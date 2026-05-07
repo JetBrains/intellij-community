@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.base.analysis` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_analysis",
@@ -13,18 +13,13 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-resourcegroup(
-  name = "analysis_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "analysis",
   module_name = "intellij.kotlin.base.analysis",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":analysis_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_analysis",
   deps = [
     "@lib//:kotlin-stdlib",

@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.kotlin.base.plugin.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "kotlin-base-plugin-testFramework_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-base-plugin-testFramework",
   module_name = "intellij.kotlin.base.plugin.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-base-plugin-testFramework_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:jetbrains-annotations",
     "//libraries/commons/compress",

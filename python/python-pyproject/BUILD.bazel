@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.pyproject` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "pyproject_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "pyproject",
   module_name = "intellij.python.pyproject",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [":pyproject_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
@@ -94,12 +89,6 @@ exports_files([
 ### auto-generated section `iml intellij.python.pyproject` end
 
 ### auto-generated section `build intellij.python.pyproject.tests` start
-resourcegroup(
-  name = "pyproject-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "pyproject-tests",
   module_name = "intellij.python.pyproject.tests",
@@ -113,7 +102,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":pyproject-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//python/python-pyproject:pyproject",
     "//python/python-pyproject:pyproject_test_lib",

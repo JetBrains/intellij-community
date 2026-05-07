@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
-
-resourcegroup(
-  name = "telemetry_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "libraries_kotlinx_coroutines_core_provided",
@@ -17,7 +11,8 @@ jvm_library(
   module_name = "intellij.platform.diagnostic.telemetry",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":telemetry_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib-provided",

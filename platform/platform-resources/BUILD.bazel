@@ -3,12 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "resources_resources",
-  srcs = glob(["generated/**/*"]),
-  strip_prefix = "generated"
-)
-
-resourcegroup(
-  name = "resources_resources_1",
   srcs = glob(["src/**/*"]),
   strip_prefix = "src"
 )
@@ -18,10 +12,9 @@ jvm_library(
   module_name = "intellij.platform.resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [
-    ":resources_resources",
-    ":resources_resources_1",
-  ],
+  resources = glob(["generated/**/*"]),
+  resource_strip_prefix = "generated",
+  resource_jars = [":resources_resources"],
   runtime_deps = ["//platform/platform-impl/concurrency"]
 )
 

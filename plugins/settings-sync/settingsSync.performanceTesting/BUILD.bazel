@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.settingsSync.performanceTesting` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "settingsSync.performanceTesting_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "settingsSync.performanceTesting",
   module_name = "intellij.settingsSync.performanceTesting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":settingsSync.performanceTesting_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/platform-impl:ide-impl",

@@ -1,11 +1,5 @@
 ### auto-generated section `build kotlin.fir-all-tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "fir-all-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "fir-all-tests",
@@ -121,7 +115,8 @@ jvm_library(
   module_name = "kotlin.fir-all-tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":fir-all-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   runtime_deps = [
     ":fir-all-tests",
     "//plugins/kotlin/plugin/k2",

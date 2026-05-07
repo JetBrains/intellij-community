@@ -3,12 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "psi-impl_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "psi-impl_resources_1",
   srcs = glob(["resources-gen/**/*"]),
   strip_prefix = "resources-gen"
 )
@@ -18,10 +12,9 @@ jvm_library(
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [
-    ":psi-impl_resources",
-    ":psi-impl_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":psi-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",

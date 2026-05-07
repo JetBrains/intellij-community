@@ -1,17 +1,11 @@
 ### auto-generated section `build kotlin.base.injection` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 create_kotlinc_options(
   name = "custom_kotlin-base-injection",
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
   x_context_parameters = True
-)
-
-resourcegroup(
-  name = "kotlin-base-injection_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
 )
 
 jvm_provided_library(
@@ -24,7 +18,8 @@ jvm_library(
   module_name = "kotlin.base.injection",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-base-injection_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_kotlin-base-injection",
   deps = [
     "@lib//:kotlin-stdlib",

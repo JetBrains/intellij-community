@@ -49,14 +49,6 @@ exports_files([
 ### auto-generated section `iml intellij.platform.concurrency` end
 
 ### auto-generated section `build intellij.platform.concurrency.tests` start
-load("@rules_jvm//:jvm.bzl", "resourcegroup")
-
-resourcegroup(
-  name = "concurrency-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "concurrency-tests",
   module_name = "intellij.platform.concurrency.tests",
@@ -70,7 +62,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":concurrency-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",

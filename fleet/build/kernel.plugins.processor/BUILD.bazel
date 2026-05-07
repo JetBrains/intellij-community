@@ -17,7 +17,7 @@ kt_jvm_library(
 
 ### auto-generated section `build fleet.build.kernel.plugins.processor` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_kernel.plugins.processor",
@@ -32,18 +32,13 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
-resourcegroup(
-  name = "kernel.plugins.processor_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
 jvm_library(
   name = "kernel.plugins.processor",
   module_name = "fleet.build.kernel.plugins.processor",
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
-  resources = [":kernel.plugins.processor_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_kernel.plugins.processor",
   deps = [
     "@lib//:kotlin-stdlib",

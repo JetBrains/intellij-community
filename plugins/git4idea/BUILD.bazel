@@ -9,12 +9,6 @@ create_kotlinc_options(
 
 resourcegroup(
   name = "vcs-git_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "vcs-git_resources_1",
   srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
@@ -24,10 +18,9 @@ jvm_library(
   module_name = "intellij.vcs.git",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  resources = [
-    ":vcs-git_resources",
-    ":vcs-git_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":vcs-git_resources"],
   kotlinc_opts = ":custom_vcs-git",
   deps = [
     "//platform/analysis-api:analysis",
@@ -259,12 +252,6 @@ create_kotlinc_options(
   opt_in = ["kotlin.RequiresOptIn"]
 )
 
-resourcegroup(
-  name = "vcs-git-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "vcs-git-tests",
   module_name = "intellij.vcs.git.tests",
@@ -285,7 +272,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":vcs-git-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   kotlinc_opts = ":custom_vcs-git-tests",
   associates = [
     "//plugins/git4idea:vcs-git",

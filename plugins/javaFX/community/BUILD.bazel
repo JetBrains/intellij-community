@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.javaFX.community` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "community_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "community",
   module_name = "intellij.javaFX.community",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":community_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["//plugins/javaFX"],
   runtime_deps = [
     "//plugins/javaFX",

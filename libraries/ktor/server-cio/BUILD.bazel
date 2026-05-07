@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.libraries.ktor.server.cio` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "libraries-ktor-server-cio_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "libraries-ktor-server-cio",
   module_name = "intellij.libraries.ktor.server.cio",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":libraries-ktor-server-cio_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   exports = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"],
   runtime_deps = ["@lib//:libraries-ktor-server-cio-ktor-server-cio-internal"]
 )

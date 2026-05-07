@@ -13,12 +13,6 @@ create_kotlinc_options(
 
 resourcegroup(
   name = "common_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
-
-resourcegroup(
-  name = "common_resources_1",
   srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
@@ -28,10 +22,9 @@ jvm_library(
   module_name = "intellij.repository.search.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
-  resources = [
-    ":common_resources",
-    ":common_resources_1",
-  ],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
+  resource_jars = [":common_resources"],
   kotlinc_opts = ":custom_common",
   deps = [
     "//platform/core-api:core",
@@ -117,12 +110,6 @@ create_kotlinc_options(
   ]
 )
 
-resourcegroup(
-  name = "repository-search-common-tests_test_resources",
-  srcs = glob(["src/test/resources/**/*"]),
-  strip_prefix = "src/test/resources"
-)
-
 jvm_library(
   name = "repository-search-common-tests",
   module_name = "intellij.repository.search.common.tests",
@@ -136,7 +123,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
-  resources = [":repository-search-common-tests_test_resources"],
+  resources = glob(["src/test/resources/**/*"]),
+  resource_strip_prefix = "src/test/resources",
   kotlinc_opts = ":custom_repository-search-common-tests",
   associates = [
     "//plugins/repository-search/common",

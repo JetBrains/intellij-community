@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.python.community.services.systemPython` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "system-python_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "system-python",
   module_name = "intellij.python.community.services.systemPython",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":system-python_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
@@ -71,12 +66,6 @@ exports_files([
 ### auto-generated section `iml intellij.python.community.services.systemPython` end
 
 ### auto-generated section `build intellij.python.community.services.systemPython.tests` start
-resourcegroup(
-  name = "python-community-services-systemPython-tests_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "python-community-services-systemPython-tests",
   module_name = "intellij.python.community.services.systemPython.tests",
@@ -90,7 +79,8 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  resources = [":python-community-services-systemPython-tests_test_resources"],
+  resources = glob(["testResources/**/*"]),
+  resource_strip_prefix = "testResources",
   associates = [
     "//python/services/system-python",
     "//python/services/system-python:system-python_test_lib",

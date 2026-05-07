@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.classic.ui` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "classic-ui_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "classic-ui",
   module_name = "intellij.classic.ui",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":classic-ui_resources"]
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources"
 )
 
 jvm_library(

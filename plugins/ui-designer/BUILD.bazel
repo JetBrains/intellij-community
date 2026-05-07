@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.java.guiForms.designer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "java-guiForms-designer_resources",
-  srcs = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "java-guiForms-designer",
   module_name = "intellij.java.guiForms.designer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":java-guiForms-designer_resources"],
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources",
   deps = [
     "//java/openapi:java",
     "//java/java-syntax:syntax",
@@ -174,14 +169,10 @@ exports_files([
 ### auto-generated section `iml intellij.java.guiForms.designer` end
 
 ### auto-generated section `build intellij.java.guiForms.designer.tests` start
-resourcegroup(
-  name = "java-guiForms-designer-tests_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
 
 resourcegroup(
-  name = "java-guiForms-designer-tests_test_resources_1",
+  name = "java-guiForms-designer-tests_test_resources",
   srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
@@ -202,10 +193,9 @@ jvm_library(
   testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [
-    ":java-guiForms-designer-tests_test_resources",
-    ":java-guiForms-designer-tests_test_resources_1",
-  ],
+  resources = glob(["testData/**/*"]),
+  resource_strip_prefix = "testData",
+  resource_jars = [":java-guiForms-designer-tests_test_resources"],
   associates = [
     "//plugins/ui-designer:java-guiForms-designer",
     "//plugins/ui-designer:java-guiForms-designer_test_lib",

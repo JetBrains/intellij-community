@@ -1,18 +1,13 @@
 ### auto-generated section `build intellij.grazie.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
-
-resourcegroup(
-  name = "yaml_resources",
-  srcs = glob(["main/resources/**/*"]),
-  strip_prefix = "main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "yaml",
   module_name = "intellij.grazie.yaml",
   visibility = ["//visibility:public"],
   srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
-  resources = [":yaml_resources"],
+  resources = glob(["main/resources/**/*"]),
+  resource_strip_prefix = "main/resources",
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
