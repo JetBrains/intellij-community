@@ -8,6 +8,7 @@ import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.UUID
+import java.net.URLEncoder
 
 /**
  * Builds and prints [TeamCity service messages](https://www.jetbrains.com/help/teamcity/service-messages.html).
@@ -301,6 +302,7 @@ object TeamCityReporter {
         TestOutcome.FAILED -> {
           if (owner != null) {
             reportTestMetadata(effectiveName, owner, "Code Owner", flowId, type = MetadataType.TEXT)
+            reportTestMetadata(effectiveName, "https://codeowners.labs.jb.gg/group/${URLEncoder.encode(owner, Charsets.UTF_8).replace("+", "%20")}", "'$owner' Owner Details", flowId, type = MetadataType.LINK)
           }
           reportTestFailed(effectiveName, message, flowId, nodeId = effectiveName, parentNodeId = "0", details = details)
         }
