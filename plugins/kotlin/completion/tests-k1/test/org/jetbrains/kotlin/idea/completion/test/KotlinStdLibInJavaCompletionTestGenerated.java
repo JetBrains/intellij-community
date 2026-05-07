@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestRoot("completion/tests-k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/injava/stdlib")
+@TestMetadata("../testData/inJava")
 public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinInJavaCompletionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
@@ -32,6 +32,6 @@ public class KotlinStdLibInJavaCompletionTestGenerated extends AbstractK1KotlinI
 
     @TestMetadata("List.java")
     public void testList() throws Exception {
-        runTest("../testData/injava/stdlib/List.java");
+        runTest("../testData/inJava/List.java");
     }
 }
