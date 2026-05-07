@@ -612,7 +612,6 @@ object PluginManagerCore {
       val (adaptedPluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
         input = PluginSubsystemInput(initContext, discoveredPlugins),
         resolvedPluginSet = resolvedPluginSet,
-        incompletePlugins = incompletePlugins,
         registerLoadingError = ::registerLoadingError,
       )
 
@@ -688,14 +687,24 @@ object PluginManagerCore {
     return pluginSet to cycleErrors
   }
 
-  private fun adaptResolvedPluginSetAsOldPluginSet(
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  fun adaptResolvedPluginSetAsOldPluginSet(
     input: PluginSubsystemInput,
     resolvedPluginSet: ResolvedPluginSet,
-    incompletePlugins: Map<PluginId, PluginMainDescriptor>,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
   ): Pair<PluginSet, List<PluginLoadingError>> {
     val cycleErrors = ArrayList<PluginLoadingError>()
-    val broadResolveContext = lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
+    val mostRecentExcludedPlugins = input.discoveryResult.pluginLists.asSequence()
+      .flatMap { it.plugins }
+      .filter { resolvedPluginSet.originalPluginSet.resolvePluginId(it.pluginId) == null }
+      .groupBy { it.pluginId }
+      .mapValues {
+        if (it.value.size == 1) it.value.first()
+        else it.value.sortedWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) }.last() // take the latest version among excluded disregarding compatibility
+      }
+    val allPlugins = resolvedPluginSet.originalPluginSet.plugins + mostRecentExcludedPlugins.values
+    val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
     for (plugin in resolvedPluginSet.originalPluginSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         descriptor.isMarkedForLoading = resolvedPluginSet.isResolved(descriptor)
@@ -741,7 +750,7 @@ object PluginManagerCore {
           resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>().sortedWith(topologicalComparator)
         }
       ),
-      allPlugins = (resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values).toSet(),
+      allPlugins = allPlugins.toSet(),
       enabledPlugins = resolvedPluginSet.originalPluginSet.plugins.filter { resolvedPluginSet.isResolved(it) },
       enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
       enabledPluginAndV1ModuleMap = enabledPluginAndV1ModuleMap,
