@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.terminal.shell_integration
 
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.PathUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -17,6 +19,7 @@ import org.jetbrains.plugins.terminal.util.ShellNameUtil
  * To fix the problem with text background rendering:
  * https://learn.microsoft.com/windows/terminal/troubleshooting#black-lines-in-powershell-51-6x-70
  */
+@OptIn(LowLevelLocalMachineAccess::class)
 internal object TerminalPSReadLineUpdateUtil {
   private const val ASK_UPDATE_ENV = "__JETBRAINS_INTELLIJ_ASK_PSREADLINE_UPDATE"
 
@@ -28,6 +31,14 @@ internal object TerminalPSReadLineUpdateUtil {
   @JvmStatic
   fun configureOptions(options: ShellStartupOptions): ShellStartupOptions {
     if (!isPowerShell(options)) {
+      return options
+    }
+
+    // Skip PSReadLine update notification if the process is started remotely.
+    // EEL API doesn't provide a way to check the OS version, so we can't check that the target OS is exactly Windows 10.
+    // Anyway, having remote Windows machine is very unlikely, so it is safe to skip the update notification.
+    val eelDescriptor = options.eelDescriptorNotNull
+    if (eelDescriptor != LocalEelDescriptor) {
       return options
     }
 
