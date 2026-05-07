@@ -3,8 +3,10 @@
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.compilerPlugins.support.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>
-    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

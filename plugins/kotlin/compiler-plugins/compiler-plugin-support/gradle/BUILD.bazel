@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.gradle` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "gradle",
-  module_name = "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+  module_name = "intellij.kotlin.compilerPlugins.support.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = glob(["resources/**/*"]),
@@ -26,7 +26,7 @@ jvm_library(
 jvm_library(
   name = "gradle_test_lib",
   testonly = True,
-  module_name = "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+  module_name = "intellij.kotlin.compilerPlugins.support.gradle",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -41,10 +41,10 @@ jvm_library(
     "//plugins/gradle:gradle-common_test_lib",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.gradle` end
 
-### auto-generated section `iml kotlin.compiler-plugins.compiler-plugin-support.gradle` start
+### auto-generated section `iml intellij.kotlin.compilerPlugins.support.gradle` start
 exports_files([
-  "kotlin.compiler-plugins.compiler-plugin-support.gradle.iml",
+  "intellij.kotlin.compilerPlugins.support.gradle.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml kotlin.compiler-plugins.compiler-plugin-support.gradle` end
+### auto-generated section `iml intellij.kotlin.compilerPlugins.support.gradle` end

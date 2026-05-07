@@ -3,7 +3,7 @@
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.gradle.gradle"/>
-    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.support.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->
