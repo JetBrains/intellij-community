@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginScrambleRequest
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.antToRegex
@@ -37,7 +38,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 
-private class ScrambleTask(@JvmField val pluginLayout: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
+private class ScrambleTask(@JvmField val descriptor: PluginBuildDescriptor)
 
 internal suspend fun buildPlugins(
   plugins: Collection<PluginLayout>,
@@ -50,10 +51,12 @@ internal suspend fun buildPlugins(
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
   copyFiles: Boolean = true,
+  layoutOnly: Boolean = false,
+  additionalScrambleDescriptorsProvider: (suspend () -> Collection<PluginBuildDescriptor>)? = null,
   pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildDescriptor> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
-  val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
+  val isScramblingSkipped = layoutOnly || context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
   val results = plugins.mapConcurrent(workerDispatcher = Dispatchers.IO) { pluginLayout ->
     withContext(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
@@ -82,16 +85,20 @@ internal suspend fun buildPlugins(
     val platformEntries = platformEntriesProvider?.let { provider ->
       spanBuilder("wait for platform lib for scrambling").use { provider() }
     } ?: emptyList()
+    val descriptors = results.map { it.first }
+    val laidOutDescriptors = additionalScrambleDescriptorsProvider?.let { provider ->
+      provider() + descriptors
+    } ?: descriptors
     coroutineScope {
       for (scrambleTask in scrambleTasks) {
-        launch(CoroutineName("scramble plugin ${scrambleTask.pluginLayout.directoryName}")) {
+        launch(CoroutineName("scramble plugin ${scrambleTask.descriptor.layout.directoryName}")) {
           scrambleTool.scramblePlugin(
-            pluginLayout = scrambleTask.pluginLayout,
-            platformLayout = state.platformLayout,
-            targetDir = scrambleTask.pluginDir,
-            additionalPluginDir = scrambleTask.targetDir,
-            layouts = plugins,
-            platformContent = platformEntries,
+            request = PluginScrambleRequest(
+              currentDescriptor = scrambleTask.descriptor,
+              laidOutDescriptors = laidOutDescriptors,
+              platformLayout = state.platformLayout,
+              platformContent = platformEntries,
+            ),
             context = context,
           )
         }
@@ -99,6 +106,41 @@ internal suspend fun buildPlugins(
     }
   }
   return results.map { it.first }
+}
+
+/**
+ * Run per-plugin scramble for the given already-laid-out plugin descriptors. Co-scramble plugins
+ * (those with [PluginLayout.scrambleWithPlatform]) are skipped. Used by the orchestrator after
+ * the platform ZKM run, since regular plugins that were laid out early still need their per-plugin
+ * scramble to happen.
+ */
+internal suspend fun scrambleAlreadyLaidOutPlugins(
+  descriptors: Collection<PluginBuildDescriptor>,
+  state: DistributionBuilderState,
+  platformEntries: List<DistributionFileEntry>,
+  context: BuildContext,
+) {
+  val scrambleTool = context.proprietaryBuildTools.scrambleTool ?: return
+  if (context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)) return
+  val toScramble = descriptors.filter {
+    !it.layout.scrambleWithPlatform && it.layout.pathsToScramble.isNotEmpty()
+  }
+  if (toScramble.isEmpty()) return
+  coroutineScope {
+    for (descriptor in toScramble) {
+      launch(CoroutineName("scramble plugin ${descriptor.layout.directoryName}")) {
+        scrambleTool.scramblePlugin(
+          request = PluginScrambleRequest(
+            currentDescriptor = descriptor,
+            laidOutDescriptors = descriptors,
+            platformLayout = state.platformLayout,
+            platformContent = platformEntries,
+          ),
+          context = context,
+        )
+      }
+    }
+  }
 }
 
 private suspend fun CoroutineScope.buildPlugin(
@@ -165,6 +207,7 @@ private suspend fun CoroutineScope.buildPlugin(
     }
   }
 
+  val descriptor = PluginBuildDescriptor(dir = pluginDir, os = os, arch = arch, layout = pluginLayout, distribution = task)
   var scrambleTask: ScrambleTask? = null
   if (!pluginLayout.pathsToScramble.isEmpty()) {
     val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
@@ -176,11 +219,11 @@ private suspend fun CoroutineScope.buildPlugin(
     }
     else {
       // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
-      scrambleTask = ScrambleTask(pluginLayout = pluginLayout, pluginDir = pluginDir, targetDir = targetDir)
+      scrambleTask = ScrambleTask(descriptor)
     }
   }
 
-  return PluginBuildDescriptor(dir = pluginDir, os = os, arch = arch, layout = pluginLayout, distribution = task) to scrambleTask
+  return descriptor to scrambleTask
 }
 
 private fun checkOutputOfPluginModules(

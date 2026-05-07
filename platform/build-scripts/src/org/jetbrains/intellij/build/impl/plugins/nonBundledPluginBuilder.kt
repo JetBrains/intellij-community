@@ -46,6 +46,7 @@ import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.nonBundledPluginsStageDir
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.validateCoScramblePluginsAreNotPublished
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
@@ -100,6 +101,7 @@ private suspend fun buildNonBundledPlugins(
   if (pluginsToPublish.isEmpty()) {
     return emptyList()
   }
+  validateCoScramblePluginsAreNotPublished(pluginsToPublish)
 
   val buildKeymapPluginsTask = if (context.options.buildStepsToSkip.contains(BuildOptions.KEYMAP_PLUGINS_STEP)) {
     null

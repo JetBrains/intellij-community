@@ -146,7 +146,9 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   return embeddedModules
 }
 
-internal data class PluginBuildDescriptor(
+/** Build-scripts internal; not part of the public build API. */
+@org.jetbrains.annotations.ApiStatus.Internal
+data class PluginBuildDescriptor(
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,

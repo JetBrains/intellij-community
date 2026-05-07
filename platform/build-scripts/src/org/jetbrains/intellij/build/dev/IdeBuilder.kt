@@ -46,6 +46,8 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.collectAllPluginClasspathDirs
+import org.jetbrains.intellij.build.impl.collectCoScrambleEntries
 import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
@@ -79,6 +81,7 @@ import kotlin.String
 import kotlin.Suppress
 import kotlin.Unit
 import kotlin.also
+import kotlin.checkNotNull
 import kotlin.io.path.createDirectories
 import kotlin.io.path.moveTo
 import kotlin.let
@@ -279,15 +282,67 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         }
       }
 
-      val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-        buildPluginsForDevMode(
-          request = request,
-          context = context,
-          runDir = runDir,
-          platformLayout = platformLayout,
-          searchableOptionSet = searchableOptionSetDeferred.await(),
-          platformEntriesProvider = { platformLayoutResultDeferred.await().distributionEntries },
-        )
+      val pluginBuildStrategy = selectDevModePluginBuildStrategy(request = request, context = context)
+      val pluginsLayoutDeferred = if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
+        // Lay out ALL plugins early (no scrambling). The platform ZKM run below scrambles
+        // co-scramble plugin jars in the same call and needs every plugin's lib/modules on its
+        // scramble classpath; per-plugin scramble runs after platform scramble.
+        async(CoroutineName("lay out plugins")) {
+          layoutAllPluginsForDevMode(
+            request = request,
+            context = context,
+            runDir = runDir,
+            platformLayout = platformLayout,
+            searchableOptionSet = searchableOptionSetDeferred.await(),
+          )
+        }
+      }
+      else {
+        null
+      }
+
+      val platformScrambleResultDeferred = async(CoroutineName("scramble platform")) {
+        val platformLayoutResult = platformLayoutResultDeferred.await()
+        if (context.productProperties.scrambleMainJar) {
+          request.scrambleTool?.let { scrambleTool ->
+            spanBuilder("scramble platform").use {
+              val descriptors = pluginsLayoutDeferred?.await().orEmpty()
+              val coScrambleEntries = if (descriptors.isEmpty()) emptyList() else collectCoScrambleEntries(descriptors)
+              scrambleTool.scramble(
+                platformLayout = platformLayout.await(),
+                platformContent = platformLayoutResult.distributionEntries,
+                coScrambleEntries = coScrambleEntries,
+                // Skip the per-plugin lib/ walk when nothing opts in — pure platform scramble doesn't
+                // need cross-plugin classpath.
+                classpathDirs = if (coScrambleEntries.isEmpty()) emptyList() else collectAllPluginClasspathDirs(descriptors),
+                context = context,
+              )
+            }
+          }
+        }
+        platformLayoutResult
+      }
+
+      val pluginDistributionEntriesDeferred = async(CoroutineName("scramble plugins")) {
+        if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
+          scrambleAlreadyLaidOutPluginsForDevMode(
+            descriptors = checkNotNull(pluginsLayoutDeferred).await(),
+            context = context,
+            runDir = runDir,
+            platformLayout = platformLayout,
+            platformEntriesProvider = { platformScrambleResultDeferred.await().distributionEntries },
+          )
+        }
+        else {
+          buildPluginsForDevMode(
+            request = request,
+            context = context,
+            runDir = runDir,
+            platformLayout = platformLayout,
+            searchableOptionSet = searchableOptionSetDeferred.await(),
+            platformEntriesProvider = { platformScrambleResultDeferred.await().distributionEntries },
+          )
+        }
       }
 
       // write and update core classpath from platform and plugins distribution
@@ -323,17 +378,10 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
 
       launch(CoroutineName("post-process distribution")) {
         // ensure platform dist files added to the list
-        val platformFileEntries = platformLayoutResultDeferred.await().distributionEntries
+        val platformFileEntries = platformScrambleResultDeferred.await().distributionEntries
         // ensure plugin dist files added to the list
         val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
         val platformLayout = platformLayout.await()
-
-        // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
-        request.scrambleTool?.let { scrambleTool ->
-          spanBuilder("scramble platform").use {
-            scrambleTool.scramble(platformLayout = platformLayout, platformContent = platformFileEntries, context = context)
-          }
-        }
 
         val pluginClasspathJob = launch {
           val (pluginEntries, additionalEntries) = pluginDistributionEntries
@@ -350,7 +398,6 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
             val byteOut = ByteArrayOutputStream()
             val out = DataOutputStream(byteOut)
             val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-            platformLayoutResultDeferred.join()
             writePluginClassPathHeader(
               out = out,
               isJarOnly = !request.isUnpackedDist,

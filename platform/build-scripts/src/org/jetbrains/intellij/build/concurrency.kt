@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -14,8 +15,11 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * Workers inherit the caller context by default. Blocking actions should pass [workerDispatcher],
  * typically [kotlinx.coroutines.Dispatchers.IO], to avoid occupying the caller dispatcher.
+ *
+ * Build-scripts internal; not part of the public build API.
  */
-internal suspend fun <T> Collection<T>.forEachConcurrent(
+@ApiStatus.Internal
+suspend fun <T> Collection<T>.forEachConcurrent(
   concurrency: Int = Runtime.getRuntime().availableProcessors(),
   workerDispatcher: CoroutineDispatcher? = null,
   action: suspend (T) -> Unit,

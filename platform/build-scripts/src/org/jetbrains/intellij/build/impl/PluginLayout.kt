@@ -85,6 +85,49 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.zkmScriptStub]
    */
   var zkmScriptStub: String? = null
+    set(value) {
+      if (value != null) {
+        check(coScrambleZkmScriptInclude == null) {
+          "zkmScriptStub(...) cannot be used with coScrambleZkmScriptInclude(...): " +
+          "per-plugin ZKM stubs are not merged into the platform co-scramble run"
+        }
+        check(!scrambleWithPlatform) {
+          "zkmScriptStub(...) cannot be used with scrambleWithPlatform(): " +
+          "per-plugin ZKM stubs are ignored for co-scramble plugins"
+        }
+      }
+      field = value
+    }
+
+  /**
+   * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.coScrambleZkmScriptInclude]
+   */
+  var coScrambleZkmScriptInclude: String? = null
+    set(value) {
+      if (value != null) {
+        check(zkmScriptStub == null) {
+          "coScrambleZkmScriptInclude(...) cannot be used with zkmScriptStub(...): " +
+          "use zkmScriptStub(...) for per-plugin scrambling or coScrambleZkmScriptInclude(...) for platform co-scrambling"
+        }
+      }
+      field = value
+    }
+
+  /**
+   * If `true`, this plugin's [pathsToScramble] are scrambled in the same ZKM run as the platform,
+   * so cross-references between the plugin and the platform get one consistent mapping. Set via
+   * [PluginLayoutSpec.scrambleWithPlatform].
+   */
+  var scrambleWithPlatform: Boolean = false
+    set(value) {
+      if (value) {
+        check(zkmScriptStub == null) {
+          "scrambleWithPlatform() cannot be used with zkmScriptStub(...): " +
+          "per-plugin ZKM stubs are ignored for co-scramble plugins"
+        }
+      }
+      field = value
+    }
   var pluginCompatibilityExactVersion: Boolean = false
   var pluginCompatibilitySameRelease: Boolean = false
   var retainProductDescriptorForBundledPlugin: Boolean = false
@@ -545,6 +588,24 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     fun zkmScriptStub(communityRelativePath: String) {
       layout.zkmScriptStub = communityRelativePath
+    }
+
+    /**
+     * Specifies a fragment to inject into the platform ZKM script when [scrambleWithPlatform] is used.
+     * The path is relative to [org.jetbrains.intellij.build.BuildPaths.communityHomeDir].
+     */
+    fun coScrambleZkmScriptInclude(communityRelativePath: String) {
+      layout.coScrambleZkmScriptInclude = communityRelativePath
+    }
+
+    /**
+     * Scrambles this plugin's [pathsToScramble] in the same ZKM run as the platform, producing one
+     * consistent renaming across both. Use this when the plugin contains code (typically reflection)
+     * that calls into platform classes scrambled by the platform pass — separate runs cannot
+     * guarantee identical method-parameter changes / reflection rewrites.
+     */
+    fun scrambleWithPlatform() {
+      layout.scrambleWithPlatform = true
     }
 
     /**

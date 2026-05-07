@@ -176,7 +176,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
         else if (name.endsWith(".class")) {
           val relativePath = join(zipRelPath, "!/", name)
 
-          checkIfSubPathIsForbidden(relativePath, errors)
+          checkIfSubPathIsForbidden(reportedPath = relativePath, classFilePath = name, errors = errors)
 
           val contentCheckRequired = versionRules.isNotEmpty() && !name.endsWith("module-info.class") && !isMultiVersion(name)
           if (contentCheckRequired) {
@@ -187,23 +187,21 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
     }
   }
 
-  private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
-    if (forbiddenSubPathExceptions.contains(relPath)) {
-      Span.current().addEvent("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
-      return
-    }
-
-    // Check if relPath starts with any exception prefix
-    if (forbiddenSubPathExceptions.any { relPath.startsWith(it) }) {
-      Span.current().addEvent("$relPath matches an exception prefix and will be excepted from the forbidden sub paths check.")
+  private fun checkIfSubPathIsForbidden(reportedPath: String, errors: MutableCollection<String>, classFilePath: String = reportedPath) {
+    if (matchesForbiddenSubPathException(reportedPath) || matchesForbiddenSubPathException(classFilePath)) {
+      Span.current().addEvent("$reportedPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
       return
     }
 
     for (f in forbiddenSubPaths) {
-      if (relPath.contains(f)) {
-        errors.add("$relPath: .class file has a forbidden sub-path: $f")
+      if (classFilePath.contains(f)) {
+        errors.add("$reportedPath: .class file has a forbidden sub-path: $f")
       }
     }
+  }
+
+  private fun matchesForbiddenSubPathException(path: String): Boolean {
+    return forbiddenSubPathExceptions.contains(path) || forbiddenSubPathExceptions.any { path.startsWith(it) }
   }
 
   private fun checkVersion(path: String, stream: InputStream, errors: MutableCollection<String>) {

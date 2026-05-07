@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
+import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
@@ -41,9 +42,12 @@ import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.plugins.BundledPluginsBuildResult
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
+import org.jetbrains.intellij.build.impl.plugins.scrambleAlreadyLaidOutPlugins
+import org.jetbrains.intellij.build.impl.plugins.writeBundledPluginInfoAfterScramble
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport
@@ -98,46 +102,153 @@ internal suspend fun buildDistribution(
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
     val moduleOutputPatcher = ModuleOutputPatcher()
-    val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
-      spanBuilder("build platform lib").use {
-        buildPlatform(
-          moduleOutputPatcher = moduleOutputPatcher,
+
+    // Standalone publish zips for co-scramble plugins would be unscrambled; these plugins are bundled-only.
+    validateCoScramblePluginsAreNotPublished(state.pluginsToPublish)
+
+    val coScramblePluginLayouts = if (!isUpdateFromSources &&
+                                      context.productProperties.scrambleMainJar &&
+                                      !context.isStepSkipped(BuildOptions.SCRAMBLING_STEP) &&
+                                      context.proprietaryBuildTools.scrambleTool != null) {
+      collectCoScramblePluginLayouts(pluginLayouts)
+    }
+    else {
+      emptySet()
+    }
+    if (coScramblePluginLayouts.isEmpty()) {
+      val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
+        spanBuilder("build platform lib").use {
+          buildPlatform(
+            moduleOutputPatcher = moduleOutputPatcher,
+            state = state,
+            searchableOptionSet = searchableOptionSet,
+            context = context,
+            isUpdateFromSources = isUpdateFromSources,
+          )
+        }
+      }
+
+      val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
+        val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
+        buildNonBundledPlugins(
+          pluginsToPublish = state.pluginsToPublish,
+          compressPluginArchive = compressPluginArchive,
+          buildPlatformLibJob = buildPlatformJob,
           state = state,
           searchableOptionSet = searchableOptionSet,
-          context = context,
           isUpdateFromSources = isUpdateFromSources,
+          descriptorCacheContainer = platformLayout.descriptorCacheContainer,
+          context = context,
         )
       }
-    }
 
-    val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
-      val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
-      buildNonBundledPlugins(
-        pluginsToPublish = state.pluginsToPublish,
-        compressPluginArchive = compressPluginArchive,
-        buildPlatformLibJob = buildPlatformJob,
+      val bundledPluginsResult = buildBundledPluginsForAllPlatforms(
         state = state,
-        searchableOptionSet = searchableOptionSet,
+        pluginLayouts = pluginLayouts,
         isUpdateFromSources = isUpdateFromSources,
+        buildPlatformJob = buildPlatformJob,
+        searchableOptionSetDescriptor = searchableOptionSet,
         descriptorCacheContainer = platformLayout.descriptorCacheContainer,
         context = context,
       )
+
+      val platformItems = buildPlatformJob.await()
+      val bundledPluginItems = bundledPluginsResult.descriptors
+      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
+
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
     }
+    else {
+      val additionalPluginsDeferred = async(CoroutineName("build additional plugins")) {
+        copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
+      }
+      // Lay out only co-scramble plugins and their explicit scramble-classpath closure before platform scramble.
+      val coScramblePluginLayoutJob: Deferred<BundledPluginsBuildResult> = async(traceContext + CoroutineName("lay out co-scramble plugins")) {
+        buildBundledPluginsForAllPlatforms(
+          state = state,
+          pluginLayouts = coScramblePluginLayouts,
+          isUpdateFromSources = isUpdateFromSources,
+          // never await platform here (would deadlock); per-plugin scramble runs after platform scramble below
+          buildPlatformJob = CompletableDeferred(emptyList()),
+          searchableOptionSetDescriptor = searchableOptionSet,
+          descriptorCacheContainer = platformLayout.descriptorCacheContainer,
+          context = context,
+          layoutOnly = true,
+          includeAdditionalPlugins = false,
+        )
+      }
 
-    val bundledPluginItems = buildBundledPluginsForAllPlatforms(
-      state = state,
-      pluginLayouts = pluginLayouts,
-      isUpdateFromSources = isUpdateFromSources,
-      buildPlatformJob = buildPlatformJob,
-      searchableOptionSetDescriptor = searchableOptionSet,
-      descriptorCacheContainer = platformLayout.descriptorCacheContainer,
-      context = context,
-    )
+      val coScrambleEntriesDeferred: Deferred<List<ScrambleTool.CoScrambleEntry>> = async(traceContext + CoroutineName("collect co-scramble entries")) {
+        collectCoScrambleEntries(coScramblePluginLayoutJob.await().descriptors)
+      }
 
-    val platformItems = buildPlatformJob.await()
-    context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
+      val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
+        spanBuilder("build platform lib").use {
+          buildPlatform(
+            moduleOutputPatcher = moduleOutputPatcher,
+            state = state,
+            searchableOptionSet = searchableOptionSet,
+            context = context,
+            isUpdateFromSources = isUpdateFromSources,
+            coScrambleEntriesProvider = { coScrambleEntriesDeferred.await() },
+            classpathDirsProvider = { collectAllPluginClasspathDirs(coScramblePluginLayoutJob.await().descriptors) },
+          )
+        }
+      }
 
-    ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+      val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
+        val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
+        buildNonBundledPlugins(
+          pluginsToPublish = state.pluginsToPublish,
+          compressPluginArchive = compressPluginArchive,
+          buildPlatformLibJob = buildPlatformJob,
+          state = state,
+          searchableOptionSet = searchableOptionSet,
+          isUpdateFromSources = isUpdateFromSources,
+          descriptorCacheContainer = platformLayout.descriptorCacheContainer,
+          context = context,
+        )
+      }
+
+      val coScramblePluginsResult = coScramblePluginLayoutJob.await()
+      val platformItems = buildPlatformJob.await()
+      val remainingPluginLayouts = pluginLayouts.asSequence()
+        .filter { !coScramblePluginLayouts.contains(it) }
+        .toCollection(LinkedHashSet())
+      val remainingPluginsResult = buildBundledPluginsForAllPlatforms(
+        state = state,
+        pluginLayouts = remainingPluginLayouts,
+        isUpdateFromSources = false,
+        // remaining plugins are laid out after platform scramble; per-plugin scramble runs below
+        buildPlatformJob = CompletableDeferred(emptyList()),
+        searchableOptionSetDescriptor = searchableOptionSet,
+        descriptorCacheContainer = platformLayout.descriptorCacheContainer,
+        context = context,
+        layoutOnly = true,
+        includeAdditionalPlugins = false,
+      )
+      val bundledPluginItems = orderBundledPluginDescriptors(coScramblePluginsResult.descriptors + remainingPluginsResult.descriptors)
+      // Per-plugin scramble for non-co-scramble plugins runs after platform scramble.
+      scrambleAlreadyLaidOutPlugins(
+        descriptors = bundledPluginItems,
+        state = state,
+        platformEntries = platformItems,
+        context = context,
+      )
+      // Write plugin classpath/info now that descriptors reflect the scrambled layout.
+      writeBundledPluginInfoAfterScramble(
+        state = state,
+        isUpdateFromSources = false,
+        descriptors = bundledPluginItems,
+        additionalPlugins = additionalPluginsDeferred.await(),
+        descriptorCacheContainer = platformLayout.descriptorCacheContainer,
+        context = context,
+      )
+
+      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
+
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+    }
   }
 
   coroutineScope {
@@ -193,6 +304,8 @@ suspend fun buildPlatform(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
   context: BuildContext,
+  coScrambleEntriesProvider: (suspend () -> List<ScrambleTool.CoScrambleEntry>)? = null,
+  classpathDirsProvider: (suspend () -> List<Path>)? = null,
 ): List<DistributionFileEntry> {
   val distributionFileEntries = buildLib(
     moduleOutputPatcher = moduleOutputPatcher,
@@ -206,10 +319,123 @@ suspend fun buildPlatform(
       Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
     }
     else {
-      tool.scramble(platformLayout = state.platformLayout, platformContent = distributionFileEntries, context = context)
+      val coScrambleEntries: List<ScrambleTool.CoScrambleEntry>
+      val classpathDirs: List<Path>
+      if (context.isStepSkipped(BuildOptions.SCRAMBLING_STEP)) {
+        coScrambleEntries = emptyList()
+        classpathDirs = emptyList()
+      }
+      else {
+        coScrambleEntries = coScrambleEntriesProvider?.invoke() ?: emptyList()
+        classpathDirs = classpathDirsProvider?.invoke() ?: emptyList()
+      }
+      tool.scramble(
+        platformLayout = state.platformLayout,
+        platformContent = distributionFileEntries,
+        coScrambleEntries = coScrambleEntries,
+        classpathDirs = classpathDirs,
+        context = context,
+      )
     }
   }
   return distributionFileEntries
+}
+
+fun collectCoScrambleEntries(descriptors: List<PluginBuildDescriptor>): List<ScrambleTool.CoScrambleEntry> {
+  if (descriptors.isEmpty()) return emptyList()
+  val result = ArrayList<ScrambleTool.CoScrambleEntry>(descriptors.size)
+  for (descriptor in descriptors) {
+    val layout = descriptor.layout
+    if (!layout.scrambleWithPlatform) continue
+    for (jarRelative in layout.pathsToScramble) {
+      result.add(ScrambleTool.CoScrambleEntry(
+        jarFile = descriptor.dir.resolve(jarRelative),
+        pluginLayout = layout,
+        pluginDir = descriptor.dir,
+      ))
+    }
+  }
+  return result
+}
+
+fun collectCoScramblePluginLayouts(pluginLayouts: Collection<PluginLayout>): Set<PluginLayout> {
+  if (pluginLayouts.none { it.scrambleWithPlatform }) return emptySet()
+
+  val layoutsByMainModule = LinkedHashMap<String, PluginLayout>(pluginLayouts.size)
+  for (layout in pluginLayouts) {
+    layoutsByMainModule.putIfAbsent(layout.mainModule, layout)
+  }
+
+  val result = LinkedHashSet<PluginLayout>()
+  val queue = ArrayDeque<PluginLayout>()
+  for (layout in pluginLayouts) {
+    if (layout.scrambleWithPlatform && result.add(layout)) {
+      queue.addLast(layout)
+    }
+  }
+
+  while (!queue.isEmpty()) {
+    val layout = queue.removeFirst()
+    for (entry in layout.scrambleClasspathPlugins) {
+      val dependency = layoutsByMainModule.get(entry.pluginMainModuleName) ?: error(
+        "Plugin '${layout.directoryName}' is configured with scrambleWithPlatform() and references " +
+        "scrambleClasspathPlugin('${entry.pluginMainModuleName}'), but that plugin is not bundled in this product"
+      )
+      if (result.add(dependency)) {
+        queue.addLast(dependency)
+      }
+    }
+  }
+
+  return result
+}
+
+/**
+ * Co-scramble plugins are valid only as bundled plugins. A standalone publish zip is built through
+ * the per-plugin path, where [PluginLayout.scrambleWithPlatform] layouts are intentionally rejected.
+ */
+fun validateCoScramblePluginsAreNotPublished(pluginsToPublish: Collection<PluginLayout>) {
+  for (layout in pluginsToPublish) {
+    check(!layout.scrambleWithPlatform) {
+      "Plugin '${layout.directoryName}' is configured with scrambleWithPlatform() but is also configured to be published. " +
+      "Co-scramble plugins are bundled-only."
+    }
+  }
+}
+
+/**
+ * Walks every laid-out plugin's `lib/` directory and returns every directory containing jars
+ * (e.g. `lib`, `lib/modules`, plugin-specific subdirs like `lib/frontend-split`). Pass to
+ * [ScrambleTool.scramble]'s `classpathDirs` so the run can resolve any cross-plugin reference
+ * during trim/obfuscate.
+ */
+fun collectAllPluginClasspathDirs(descriptors: List<PluginBuildDescriptor>): List<Path> {
+  if (descriptors.isEmpty()) return emptyList()
+  val result = LinkedHashSet<Path>()
+  for (descriptor in descriptors) {
+    val libDir = descriptor.dir.resolve("lib")
+    if (!Files.isDirectory(libDir)) continue
+    Files.walk(libDir).use { stream ->
+      stream
+        .filter { Files.isDirectory(it) }
+        .sorted(compareBy<Path> { it.toString() })
+        .forEach(result::add)
+    }
+  }
+  return result.toList()
+}
+
+private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildDescriptor>): List<PluginBuildDescriptor> {
+  if (descriptors.size < 2) return descriptors
+  val distributionOrder = HashMap<Pair<OsFamily?, JvmArchitecture?>, Int>(SUPPORTED_DISTRIBUTIONS.size + 1)
+  distributionOrder.put(Pair(null, null), 0)
+  for ((index, distribution) in SUPPORTED_DISTRIBUTIONS.withIndex()) {
+    distributionOrder.put(Pair(distribution.os, distribution.arch), index + 1)
+  }
+  return descriptors.sortedWith(
+    compareBy<PluginBuildDescriptor> { distributionOrder.get(Pair(it.os, it.arch)) ?: Int.MAX_VALUE }
+      .thenBy { it.layout.mainModule }
+  )
 }
 
 @VisibleForTesting
@@ -231,6 +457,66 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
   )
   return context.getDistFiles(os = null, arch = null, libcImpl = null).filter { it.relativePath == PLUGIN_CLASSPATH }
 }
+
+/**
+ * Lays out the given bundled plugins (no scrambling) so the caller can invoke [buildPlatform] with
+ * `coScrambleEntriesProvider` / `classpathDirsProvider` populated from [collectCoScrambleEntries]
+ * and [collectAllPluginClasspathDirs]. Per-plugin scramble for the laid-out plugins runs later via
+ * [testScrambleAlreadyLaidOutPlugins].
+ */
+@VisibleForTesting
+suspend fun testLayoutBundledPlugins(
+  state: DistributionBuilderState,
+  pluginLayouts: Set<PluginLayout>,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+  includeAdditionalPlugins: Boolean = true,
+): BundledPluginsBuildResult {
+  return buildBundledPluginsForAllPlatforms(
+    state = state,
+    pluginLayouts = pluginLayouts,
+    isUpdateFromSources = false,
+    // never await platform here (would deadlock)
+    buildPlatformJob = CompletableDeferred(emptyList()),
+    searchableOptionSetDescriptor = null,
+    descriptorCacheContainer = descriptorCacheContainer,
+    context = context,
+    layoutOnly = true,
+    includeAdditionalPlugins = includeAdditionalPlugins,
+  )
+}
+
+/**
+ * Per-plugin scramble pass for plugins that were laid out earlier via [testLayoutBundledPlugins],
+ * followed by writing plugin-classpath info (so [BuildContext.getDistFiles] reflects it). Co-scramble
+ * plugins ([PluginLayout.scrambleWithPlatform]) are skipped during scramble — they were already
+ * scrambled in the platform ZKM run.
+ */
+@VisibleForTesting
+suspend fun testScrambleAlreadyLaidOutPlugins(
+  descriptors: List<PluginBuildDescriptor>,
+  state: DistributionBuilderState,
+  platformEntries: List<DistributionFileEntry>,
+  additionalPlugins: List<Pair<Path, List<Path>>>?,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+) {
+  scrambleAlreadyLaidOutPlugins(
+    descriptors = descriptors,
+    state = state,
+    platformEntries = platformEntries,
+    context = context,
+  )
+  writeBundledPluginInfoAfterScramble(
+    state = state,
+    isUpdateFromSources = false,
+    descriptors = descriptors,
+    additionalPlugins = additionalPlugins,
+    descriptorCacheContainer = descriptorCacheContainer,
+    context = context,
+  )
+}
+
 
 /**
  * Validates module structure to ensure all module dependencies are included.
@@ -287,7 +573,7 @@ fun nonBundledPluginsStageDir(context: BuildContext): Path {
 internal const val PLUGINS_DIRECTORY = "plugins"
 internal const val LIB_DIRECTORY = "lib"
 
-internal const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpath.txt"
+const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpath.txt"
 
 internal val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
 
