@@ -207,6 +207,8 @@ internal class ToolbarFrameHeader(
       }
     }
     repaintWhenProjectGradientOffsetChanged(this)
+
+    getAccessibleContext().accessibleName = "" // The main toolbar will provide the accessible name instead
   }
 
   private fun isMainMenuBottomBorder(): Boolean {

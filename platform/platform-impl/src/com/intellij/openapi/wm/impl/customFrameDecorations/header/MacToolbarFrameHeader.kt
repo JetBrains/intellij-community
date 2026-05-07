@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.impl.getProjectFrameTypeId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.UIBundle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.foundation.MacUtil
@@ -267,7 +266,6 @@ internal class MacToolbarFrameHeader(
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleCustomHeader()
-      accessibleContext.accessibleName = UIBundle.message("frame.header.accessible.group.name")
     }
     return accessibleContext
   }

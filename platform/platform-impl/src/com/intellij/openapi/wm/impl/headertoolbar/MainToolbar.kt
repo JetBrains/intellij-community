@@ -45,6 +45,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
@@ -385,18 +386,22 @@ class MainToolbar(
     if (accessibleContext == null) {
       accessibleContext = AccessibleMainToolbar()
     }
-    accessibleContext.accessibleName = if (ExperimentalUI.isNewUI() && UISettings.getInstance().mainMenuDisplayMode == MainMenuDisplayMode.SEPARATE_TOOLBAR) {
-      UIBundle.message("main.toolbar.accessible.group.name")
-    }
-    else {
-      ""
-    }
     return accessibleContext
   }
 
   @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
+
+    override fun getAccessibleName(): String {
+      if (!ExperimentalUI.isNewUI()) {
+        return ""
+      }
+
+      val shortcut = KeymapUtil.getFirstKeyboardShortcutText("FocusMainToolbar")
+      return if (shortcut.isNotEmpty()) UIBundle.message("main.toolbar.accessible.group.name.with.shortcut", shortcut)
+      else UIBundle.message("main.toolbar.accessible.group.name")
+    }
   }
 }
 
