@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.webTypes
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.isInCancellableContext
 import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.polySymbols.impl.objectMapper
@@ -16,7 +17,10 @@ import java.util.concurrent.CancellationException
 @ApiStatus.Internal
 fun InputStream.readWebTypes(): WebTypes =
   use { stream ->
-    if (!isInCancellableContext()) {
+    // EDT: CoroutineStart.UNDISPATCHED installs a Job (isInCancellableContext=true) but
+    // runWithCheckCanceled forbids EDT — take the direct synchronous path instead.
+    val app = ApplicationManager.getApplication()
+    if (!isInCancellableContext() || app.isDispatchThread) {
       return objectMapper.readValue(stream, WebTypes::class.java)
     }
     // Not really practical to use DiskQueryRelay here, since streams are not realy reusable

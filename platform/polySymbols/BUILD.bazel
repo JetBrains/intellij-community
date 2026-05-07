@@ -215,6 +215,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "@lib//:junit4",
+    "//platform/testFramework/junit5",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/usageView",
