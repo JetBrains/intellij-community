@@ -16,12 +16,16 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +55,12 @@ public abstract class PyInspection extends LocalInspectionTool {
     if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(this.getClass())) {
       return true;
     }
+    if (file instanceof PyFileImpl) {
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
+      if (isInjectedIntoNonPythonHost(injectedLanguageManager, file) && !hasPythonRuntime(injectedLanguageManager, file)) {
+        return true;
+      }
+    }
     return isSuppressForCodeFragment(element) || super.isSuppressedFor(element);
   }
 
@@ -60,5 +70,36 @@ public abstract class PyInspection extends LocalInspectionTool {
 
   protected boolean isSuppressForCodeFragment() {
     return false;
+  }
+
+  private static boolean hasPythonRuntime(@NotNull InjectedLanguageManager injectedLanguageManager, @NotNull PsiFile containingFile) {
+    final PsiFile topLevelFile = injectedLanguageManager.getTopLevelFile(containingFile);
+    if (PythonSdkUtil.findPythonSdk(topLevelFile) != null) {
+      return true;
+    }
+
+    final PythonRuntimeService pythonRuntimeService = PythonRuntimeService.getInstance();
+    return pythonRuntimeService.isInScratchFile(topLevelFile) || pythonRuntimeService.isExternallyIndexedFile(topLevelFile);
+  }
+
+  private static boolean isInjectedIntoNonPythonHost(@NotNull InjectedLanguageManager injectedLanguageManager,
+                                                     @NotNull PsiFile containingFile) {
+    final PsiElement injectionHost = injectedLanguageManager.getInjectionHost(containingFile);
+    if (injectionHost == null) {
+      return false;
+    }
+
+    final PsiFile topLevelFile = injectedLanguageManager.getTopLevelFile(containingFile);
+    if (topLevelFile == containingFile) {
+      return false;
+    }
+
+    return getBaseLanguageOrLanguage(topLevelFile) != getBaseLanguageOrLanguage(containingFile);
+  }
+
+  private static @NotNull Language getBaseLanguageOrLanguage(@NotNull PsiFile file) {
+    final Language language = file.getLanguage();
+    final Language baseLanguage = language.getBaseLanguage();
+    return baseLanguage != null ? baseLanguage : language;
   }
 }
