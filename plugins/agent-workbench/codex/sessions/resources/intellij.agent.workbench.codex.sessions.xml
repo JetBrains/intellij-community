@@ -20,6 +20,8 @@
       id="agentWorkbenchCodex"
       order="before agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptor"/>
+    <agent.workbench.mcpConfigProviderContributor
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexAwbMcpConfigProviderContributor"/>
     <advancedSetting
       id="agent.workbench.codex.prompt.suggestion.model"
       default="off"

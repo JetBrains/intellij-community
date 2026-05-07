@@ -15,9 +15,28 @@
       qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
       interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionLaunchContributor"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.mcpStreamUrlProvider"
+      interface="com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.mcpConfigProviderContributor"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchFusCollector"/>
+    <registryKey key="agent.workbench.mcp.use.direct.http"
+                 defaultValue="false"
+                 description="When enabled, AWB writes a merged `&lt;projectPath&gt;/.awb/awb-mcp.json` containing the IDE's current streamable-HTTP MCP URL plus the user's other servers, and launches the agent CLI with `--mcp-config &lt;file&gt; --strict-mcp-config`. When disabled, AWB falls through to whatever the user's checked-in `.mcp.json` does (commonly the legacy ij-proxy stdio path)."/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <sessionLaunchContributor implementation="com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigContributor"/>
   </extensions>
 </idea-plugin>

@@ -47,7 +47,13 @@ object AgentSessionLaunchSpecs {
       )
       fallbackResumeLaunchSpec(provider, sessionId)
     }
-    return augment(projectPath = projectPath, provider = provider, launchSpec = baseLaunchSpec)
+    val augmented = augment(projectPath = projectPath, provider = provider, launchSpec = baseLaunchSpec)
+    return AgentSessionLaunchContributors.applyAll(
+      projectPath = projectPath,
+      provider = provider,
+      sessionId = sessionId,
+      launchSpec = augmented,
+    )
   }
 }
 

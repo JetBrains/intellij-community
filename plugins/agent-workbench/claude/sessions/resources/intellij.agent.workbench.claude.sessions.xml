@@ -19,6 +19,8 @@
     <agent.workbench.sessionProvider
       id="agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptor"/>
+    <agent.workbench.mcpConfigProviderContributor
+      implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAwbMcpConfigProviderContributor"/>
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaStatusBarWidgetFactory"/>

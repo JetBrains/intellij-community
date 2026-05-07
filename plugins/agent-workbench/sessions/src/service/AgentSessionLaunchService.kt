@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributors
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -73,11 +74,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.invariantSeparatorsPathString
-import java.util.concurrent.atomic.AtomicBoolean
-import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AgentSessionLaunchService>()
 
@@ -219,6 +220,8 @@ class AgentSessionLaunchService internal constructor(
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
     promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
+    extraEnvVariables: Map<String, String> = emptyMap(),
+    extraCommandArgs: List<String> = emptyList(),
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     AgentSessionProviders.find(thread.provider)?.onConversationOpened()
@@ -281,11 +284,30 @@ class AgentSessionLaunchService internal constructor(
           )
         }
         AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
+        // When the caller passes extras (e.g. AWB container env vars), augment the
+        // resume launch spec so the respawned CLI receives them. Without this the
+        // resume path would reuse whatever env was baked in at first spawn — which
+        // breaks `${VAR}` placeholders in `.mcp.json` after IDE restart.
+        val launchSpecOverride = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty()) {
+          val baseResumeSpec = AgentSessionLaunchSpecs.resolveResume(
+            projectPath = normalizedPath,
+            provider = effectiveThread.provider,
+            sessionId = effectiveThread.id,
+          )
+          baseResumeSpec.copy(
+            command = if (extraCommandArgs.isNotEmpty()) baseResumeSpec.command + extraCommandArgs else baseResumeSpec.command,
+            envVariables = if (extraEnvVariables.isNotEmpty()) baseResumeSpec.envVariables + extraEnvVariables else baseResumeSpec.envVariables,
+          )
+        }
+        else {
+          null
+        }
+
         chatOpenExecutor.openChat(
           normalizedPath = normalizedPath,
           thread = effectiveThread,
           subAgent = null,
-          launchSpecOverride = null,
+          launchSpecOverride = launchSpecOverride,
           initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
         )
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
@@ -385,14 +407,24 @@ class AgentSessionLaunchService internal constructor(
           provider = provider,
           launchSpec = baseLaunchSpec,
         )
+        // Apply launch contributors (e.g. AwbMcpConfigContributor writing the merged
+        // `.awb/awb-mcp.json` and adding `--mcp-config`). sessionId is null for new
+        // launches; contributors that only make sense on resume should early-return
+        // when null.
+        val withContributors = AgentSessionLaunchContributors.applyAll(
+          projectPath = normalizedPath,
+          provider = provider,
+          sessionId = null,
+          launchSpec = augmentedSpec,
+        )
         val launchSpec = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty()) {
-          augmentedSpec.copy(
-            command = if (extraCommandArgs.isNotEmpty()) augmentedSpec.command + extraCommandArgs else augmentedSpec.command,
-            envVariables = if (extraEnvVariables.isNotEmpty()) augmentedSpec.envVariables + extraEnvVariables else augmentedSpec.envVariables,
+          withContributors.copy(
+            command = if (extraCommandArgs.isNotEmpty()) withContributors.command + extraCommandArgs else withContributors.command,
+            envVariables = if (extraEnvVariables.isNotEmpty()) withContributors.envVariables + extraEnvVariables else withContributors.envVariables,
           )
         }
         else {
-          augmentedSpec
+          withContributors
         }
         val identity = baseLaunchSpec.containerSessionId?.let { sessionId ->
           buildAgentSessionIdentity(provider, sessionId)
@@ -622,6 +654,8 @@ class AgentSessionLaunchService internal constructor(
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
             promptLaunchResolved = ::reportPromptLaunchResolved,
+            extraEnvVariables = request.containerSessionEnvVariables,
+            extraCommandArgs = request.containerSessionExtraArgs,
           )
         }
         AgentPromptLaunchResult.SUCCESS
