@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -85,6 +86,9 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
     List<Pair<TextRange, String>> result = new ArrayList<>();
 
     for (int i = 0; i + 1 < input.length(); ++i) {
+      if (i % 10 == 0) {
+        ProgressManager.checkCanceled();
+      }
 
       if (isSingleQuote() && input.charAt(i) == '\'' && input.charAt(i + 1) == '\'') {
         result.add(Pair.create(TextRange.from(i, 2), "'"));
@@ -190,7 +194,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
   }
 
   private static final class Escaper {
-    private static final int[][] ONE_LETTER_CONVERSIONS = new int[][] {
+    private static final int[][] ONE_LETTER_CONVERSIONS = new int[][]{
       {'0', 0},
       {'a', 7},
       {'b', 8},
