@@ -74,15 +74,19 @@ object LogPacker {
         LogProvider.EP.extensionList.forEach { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
             if (!filter.add(entry.entryName)) return@forEach
-            entry.files.forEach { dir ->
+            entry.files.forEach { path ->
               coroutineContext.ensureActive()
-              if (dir.exists()) {
-                val dirPrefix = when {
-                  entry.entryName.isEmpty() -> ""
-                  entry.createSubdirectories -> "${entry.entryName}/${dir.name}"
+              if (path.isDirectory()) {
+                val prefix = when {
+                  entry.entryName.isBlank() -> ""
+                  entry.createSubdirectories -> "${entry.entryName}/${path.name}"
                   else -> entry.entryName
                 }
-                zip.addDirectory(dirPrefix, dir)
+                zip.addDirectory(prefix, path)
+              }
+              else if (path.exists()) {
+                val prefix = if (entry.entryName.isNotBlank() && entry.createSubdirectories) "${entry.entryName}/" else ""
+                zip.addFile("${prefix}${path.name}", path)
               }
             }
           }
