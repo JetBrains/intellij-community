@@ -3,10 +3,18 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections
+
+@ApiStatus.Internal
+@IntellijInternalApi
+class PluginSubsystemInput(
+  val initContext: PluginInitializationContext,
+  val discoveryResult: PluginsDiscoveryResult,
+)
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
@@ -19,6 +27,7 @@ class PluginSet internal constructor(
   private val enabledModules: List<PluginModuleDescriptor>,
   private val topologicalComparator: Comparator<PluginModuleDescriptor>,
   val resolvedPluginSet: ResolvedPluginSet?,
+  val input: PluginSubsystemInput,
 ) {
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
@@ -67,11 +76,19 @@ class PluginSet internal constructor(
     unsortedPlugins.removeIf { it.pluginId == plugin.pluginId }
     unsortedPlugins.add(plugin)
 
+    // just follows the existing logic
+    val newDiscoveryResult = PluginsDiscoveryResult.build(
+      input.discoveryResult.pluginLists.map {
+        val filteredList = it.plugins.filter { !it.legacyEquals(plugin) }
+        DiscoveredPluginsList(filteredList, it.source)
+      } + DiscoveredPluginsList(listOf(plugin), PluginsSourceContext.Custom) // should be fine for now...
+    )
+
     // FIXME handle potential conflict
     // FIXME this method loses information (takes only currently loaded plugins)
     val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(unsortedPlugins.toList())
                                   ?: error("plugin substitution creates a conflict: $plugin")
-    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet)
+    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet, newDiscoveryResult)
   }
 
   fun withoutPlugin(plugin: PluginMainDescriptor, disable: Boolean = true): PluginSetBuilder {
@@ -82,8 +99,17 @@ class PluginSet internal constructor(
       newAllPlugins.removeIf { it.legacyEquals(plugin) }
       newAllPlugins
     }
+    // just follows the existing logic
+    val newDiscoveryResult = if (disable) input.discoveryResult else {
+      PluginsDiscoveryResult.build(
+        input.discoveryResult.pluginLists.map {
+          val filteredList = it.plugins.filter { !it.legacyEquals(plugin) }
+          DiscoveredPluginsList(filteredList, it.source)
+        }
+      )
+    }
     val newUnambiguousPluginSet = UnambiguousPluginSet.tryBuild(newAllPlugins.toList())!!
-    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet)
+    return PluginSetBuilder(ProductPluginInitContext(), newUnambiguousPluginSet, newDiscoveryResult)
   }
 
   /**

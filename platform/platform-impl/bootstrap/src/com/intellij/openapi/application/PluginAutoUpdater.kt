@@ -154,7 +154,7 @@ object PluginAutoUpdater {
       }
     }
     val nonLoadReasonsCollector = ArrayList<PluginNonLoadReason>()
-    val pluginSet = PluginSetBuilder(initContext, pluginsToLoad)
+    val pluginSet = PluginSetBuilder(initContext, pluginsToLoad, composedDiscoveryResult)
       .createPluginSetWithEnabledModulesMap(exclusionReasons.keys, nonLoadReasonsCollector)
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     for ((id, updateDesc) in updates) {

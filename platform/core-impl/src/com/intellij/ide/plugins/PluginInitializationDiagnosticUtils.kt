@@ -177,6 +177,7 @@ object PluginInitializationDiagnosticUtils {
     val oldLoadingErrors = ArrayList<PluginNonLoadReason>()
     val (oldSet, _) = oldPluginSetBuilder(
       initContext,
+      PluginsDiscoveryResult.build(emptyList()),
       pluginsToLoad,
       incompletePlugins,
       idMap,

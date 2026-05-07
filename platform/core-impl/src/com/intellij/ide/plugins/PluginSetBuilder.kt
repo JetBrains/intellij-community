@@ -16,7 +16,11 @@ import java.util.Arrays
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class PluginSetBuilder(initContext: PluginInitializationContext, @JvmField val unsortedPlugins: UnambiguousPluginSet) {
+class PluginSetBuilder(
+  private val initContext: PluginInitializationContext,
+  @JvmField val unsortedPlugins: UnambiguousPluginSet,
+  private val discoveryResult: PluginsDiscoveryResult,
+) {
   private val moduleGraph: ModuleGraph
   private val sortedModulesWithDependencies: ModulesWithDependencies
   private val builder: DFSTBuilder<PluginModuleDescriptor>
@@ -287,6 +291,7 @@ class PluginSetBuilder(initContext: PluginInitializationContext, @JvmField val u
       },
       topologicalComparator = topologicalComparator,
       resolvedPluginSet = null,
+      input = PluginSubsystemInput(initContext, discoveryResult)
     )
   }
 

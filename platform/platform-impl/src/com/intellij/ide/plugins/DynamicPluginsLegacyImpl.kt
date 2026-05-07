@@ -244,7 +244,7 @@ internal object DynamicPluginsLegacyImpl {
 
     val newPluginSet = UnambiguousPluginSet.tryBuild(allPlugins.toList())
                        ?: return emptyList() // conflict appeared
-    var comparator = PluginSetBuilder(ProductPluginInitContext(), newPluginSet).topologicalComparator
+    var comparator = PluginSetBuilder(ProductPluginInitContext(), newPluginSet, pluginSet.input.discoveryResult).topologicalComparator
 
     if (!load) {
       comparator = comparator.reversed()

@@ -603,13 +603,14 @@ object PluginManagerCore {
 
     val (pluginSet, cycleErrors) = if (fallbackToOldPluginSetResolution()) {
       initStagesActivity = initStagesActivity?.endAndStart("pluginSetBuilder")
-      oldPluginSetBuilder(initContext, pluginsToLoad, incompletePlugins, idMap, fullIdMap, fullContentModuleIdMap, pluginNonLoadReasons, ::registerLoadingError)
+      oldPluginSetBuilder(initContext, discoveredPlugins, pluginsToLoad, incompletePlugins, idMap, fullIdMap, fullContentModuleIdMap, pluginNonLoadReasons, ::registerLoadingError)
     }
     else {
       initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
       val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
       PluginInitializationDiagnosticUtils.logExclusionTree(resolvedPluginSet, incompletePlugins)
       val (adaptedPluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
+        input = PluginSubsystemInput(initContext, discoveredPlugins),
         resolvedPluginSet = resolvedPluginSet,
         incompletePlugins = incompletePlugins,
         registerLoadingError = ::registerLoadingError,
@@ -647,6 +648,7 @@ object PluginManagerCore {
 
   internal fun oldPluginSetBuilder(
     initContext: PluginInitializationContext,
+    discoveredPlugins: PluginsDiscoveryResult,
     pluginsToLoad: UnambiguousPluginSet,
     incompletePlugins: HashMap<PluginId, PluginMainDescriptor>,
     idMap: Map<PluginId, PluginModuleDescriptor>,
@@ -655,7 +657,7 @@ object PluginManagerCore {
     pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason>,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
   ): Pair<PluginSet, List<PluginLoadingError>> {
-    val pluginSetBuilder = PluginSetBuilder(initContext, pluginsToLoad)
+    val pluginSetBuilder = PluginSetBuilder(initContext, pluginsToLoad, discoveredPlugins)
     val cycleErrors = pluginSetBuilder.checkPluginCycles()
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
       incompletePlugins = incompletePlugins.values.toList(),
@@ -687,6 +689,7 @@ object PluginManagerCore {
   }
 
   private fun adaptResolvedPluginSetAsOldPluginSet(
+    input: PluginSubsystemInput,
     resolvedPluginSet: ResolvedPluginSet,
     incompletePlugins: Map<PluginId, PluginMainDescriptor>,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
@@ -745,6 +748,7 @@ object PluginManagerCore {
       enabledModules = resolvedModules.keys.toList(),
       topologicalComparator = topologicalComparator,
       resolvedPluginSet = resolvedPluginSet,
+      input = input,
     )
     return pluginSet to cycleErrors
   }
