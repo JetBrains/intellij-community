@@ -40,6 +40,7 @@ import java.util.List;
  */
 @ApiStatus.Internal
 final class CanISilentlyChange {
+  @RequiresEdt
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     List<FileEditor> editors = FileEditorManager.getInstance(project).getAllEditorList(virtualFile);

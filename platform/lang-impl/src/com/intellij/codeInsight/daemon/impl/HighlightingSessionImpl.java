@@ -193,9 +193,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     ThreadingAssertions.assertBackgroundThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     CanISilentlyChange.Result result = canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH;
-    HighlightingSessionImpl session = createHighlightingSession(psiFile, indicator, editorColorsScheme, visibleRange,
-                                                                result,
-                                                                0);
+    HighlightingSessionImpl session = createHighlightingSession(psiFile, indicator, editorColorsScheme, visibleRange, result, 0);
     try {
       session.additionalSetupFromBackground(psiFile);
       runnable.accept(session);
@@ -418,7 +416,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @ApiStatus.Internal
   @RequiresEdt
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
+  static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
                                               boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);

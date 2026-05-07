@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,12 +38,16 @@ public abstract class UndoManager {
     return isUndoInProgress() || isRedoInProgress();
   }
 
+  @RequiresEdt
   public abstract void undo(@Nullable FileEditor editor);
 
+  @RequiresEdt
   public abstract void redo(@Nullable FileEditor editor);
 
+  @RequiresEdt
   public abstract boolean isUndoAvailable(@Nullable FileEditor editor);
 
+  @RequiresEdt
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
   public abstract @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoActionNameAndDescription(FileEditor editor);

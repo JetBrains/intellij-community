@@ -35,6 +35,7 @@ import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -461,6 +462,7 @@ public class UndoManagerImpl extends UndoManager {
     return Pair.create(name.trim(), description.trim());
   }
 
+  @RequiresEdt
   private boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ThreadingAssertions.assertEventDispatchThread();
     return isUndoRedoAvailableUnsafe(editor, undo);
