@@ -5,18 +5,17 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment.gradleJava
 
-import com.intellij.openapi.externalSystem.model.Key
-import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_OPTION_NAME
-import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
-import org.jetbrains.kotlin.idea.gradleTooling.model.assignment.AssignmentModel
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
 import java.nio.file.Path
 
-class AssignmentGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<AssignmentModel>() {
-    override val compilerPluginId: String = PLUGIN_ID
-    override val pluginName: String = "assignment"
-    override val annotationOptionName: String = ANNOTATION_OPTION_NAME
-    override val pluginJarFromIdea: Path = KotlinArtifacts.assignmentCompilerPluginPath
-    override val modelKey: Key<AssignmentModel> = AssignmentProjectResolverExtension.KEY
+class AssignmentGradleProjectImportHandler : AbstractGradleImportHandler() {
+
+    override val pluginJarsRegex: List<Regex> = listOf("$ASSIGNMENT_COMPILER_PLUGIN_JAR_NAME-.*\\.jar".toRegex())
+    override val replacedJar: Path = KotlinArtifacts.assignmentCompilerPluginPath
+
+    companion object {
+        private const val ASSIGNMENT_COMPILER_PLUGIN_JAR_NAME = "kotlin-assignment-compiler-plugin-embeddable"
+    }
+
 }

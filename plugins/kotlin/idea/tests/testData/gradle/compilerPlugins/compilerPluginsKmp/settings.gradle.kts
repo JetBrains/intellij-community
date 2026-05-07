@@ -7,5 +7,6 @@ pluginManagement {
         kotlin("plugin.serialization") version "{{kgp_version}}"
         kotlin("plugin.noarg") version "{{kgp_version}}"
         kotlin("plugin.lombok") version "{{kgp_version}}"
+        kotlin("plugin.assignment") version "{{kgp_version}}"
     }
 }

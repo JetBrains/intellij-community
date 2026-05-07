@@ -3,4 +3,5 @@ plugins {
     kotlin("plugin.serialization")
     kotlin("plugin.noarg")
     kotlin("plugin.lombok")
+    kotlin("plugin.assignment")
 }
