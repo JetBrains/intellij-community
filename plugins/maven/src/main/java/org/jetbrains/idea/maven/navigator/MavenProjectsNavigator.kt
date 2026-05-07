@@ -19,14 +19,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx.ProjectJdkListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -86,9 +84,11 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
   init {
     project.getMessageBus()
       .connect(MavenDisposable.getInstance(project))
-      .subscribe<MavenImportListener>(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun importFinished(importedProjects: MutableCollection<MavenProject?>, newModules: MutableList<Module>) {
-          scheduleStructureUpdate()
+      .subscribe(MavenSyncListener.TOPIC, object : MavenSyncListener {
+        override fun syncFinished(project: Project) {
+          if (this@MavenProjectsNavigator.project == project) {
+            scheduleStructureUpdate()
+          }
         }
       })
   }
@@ -392,7 +392,6 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
 
   private fun doScheduleStructureRequest(r: Runnable) {
     val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID) ?: return
-    val navigator = this
 
     project.service<CoroutineScopeService>().cs.launch {
       val files = MavenProjectsManager.getInstance(myProject).getState().originalFiles
@@ -410,7 +409,7 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
         }
       }
 
-      if (navigator.myStructure.get() == null)
+      if (this@MavenProjectsNavigator.myStructure.get() == null)
         withContext(Dispatchers.EDT) {
           initStructure()
           TreeState.createFrom(myState.treeState).applyTo(myTree!!)
@@ -446,22 +445,6 @@ class MavenProjectsNavigator(project: Project) : MavenSimpleProjectComponent(
 
     override fun profilesChanged() {
       scheduleStructureRequest(Runnable { myStructure.get()!!.updateProfiles() })
-    }
-
-    override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>)  {
-      scheduleUpdateProjects(updated.map { it.first }, ArrayList(deleted))
-    }
-
-    override fun projectsResolved(projects: List<MavenProject>) {
-      scheduleUpdateProjects(projects, emptyList())
-    }
-
-    override fun pluginsResolved(projects: List<MavenProject>) {
-      scheduleUpdateProjects(projects, emptyList())
-    }
-
-    fun scheduleUpdateProjects(projects: List<MavenProject>, deleted: List<MavenProject>) {
-      scheduleStructureRequest(Runnable { myStructure.get()!!.updateProjects(projects, deleted) })
     }
   }
 
