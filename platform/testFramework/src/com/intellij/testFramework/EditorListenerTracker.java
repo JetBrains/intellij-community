@@ -25,7 +25,8 @@ public final class EditorListenerTracker {
     "com.intellij.copyright.CopyrightManagerDocumentListener$",
     "com.intellij.model.BranchServiceImpl$",
     "com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener",
-    "com.intellij.grazie.ide.inspection.auto.ChangeTracker$"
+    "com.intellij.grazie.ide.inspection.auto.ChangeTracker$",
+    "com.intellij.ml.llm.nextEdits.backend.logs.statistics.components.NextEditCaretFeatures$"
   );
 
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
