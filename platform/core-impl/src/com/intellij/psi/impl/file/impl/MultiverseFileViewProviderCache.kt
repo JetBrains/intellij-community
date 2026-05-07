@@ -41,7 +41,7 @@ internal class MultiverseFileViewProviderCache(
   // todo IJPL-339 we need atomic update for values of the maps???
 
   // todo IJPL-339 don't store map for a single item
-  private val cache = AtomicMapCache<VirtualFile, FileProviderMap, FullCacheMap> {
+  private val cache = AtomicMapCache<VirtualFile, FileProviderMap> {
     CollectionFactory.createConcurrentWeakValueMap()
   }
 
@@ -212,7 +212,8 @@ internal class MultiverseFileViewProviderCache(
 
   override fun remove(file: VirtualFile): Iterable<FileViewProvider>? {
     log.doTrace { "remove $file" }
-    val map = cache.cache.remove(file) ?: return null
+    val cacheMap = cache.getCacheIfInitialized() ?: return null
+    val map = cacheMap.remove(file) ?: return null
     return map.entries.asSequence().map { it.value }.asIterable()
   }
 
@@ -221,7 +222,7 @@ internal class MultiverseFileViewProviderCache(
    */
   override fun remove(file: VirtualFile, context: CodeInsightContext, viewProvider: AbstractFileViewProvider): Boolean {
     log.doTrace { "remove $file $context $viewProvider" }
-    val result = cache.isInitialized && cache.cache[file]?.remove(context, viewProvider) == true
+    val result = cache.getCacheIfInitialized()?.get(file)?.remove(context, viewProvider) == true
     log.doTrace { "remove finished $file $context $viewProvider, result=$result" }
     return result
   }
@@ -235,9 +236,8 @@ internal class MultiverseFileViewProviderCache(
   }
 
   private fun doIfInitialized(block: (FullCacheMap) -> Unit) {
-    if (cache.isInitialized) {
-      block(cache.cache)
-    }
+    val map = cache.getCacheIfInitialized() ?: return
+    block(map)
   }
 
   override fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext? {

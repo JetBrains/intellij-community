@@ -81,6 +81,7 @@ internal sealed interface FileViewProviderCache {
 
   /**
    * Removes cached value for ([file], [context]) pair only if the cached value equals [viewProvider]
+   * @return `true` if the value was removed
    */
   fun remove(file: VirtualFile, context: CodeInsightContext, viewProvider: AbstractFileViewProvider): Boolean
 

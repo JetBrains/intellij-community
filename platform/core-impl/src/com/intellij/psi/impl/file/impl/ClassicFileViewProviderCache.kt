@@ -22,7 +22,7 @@ internal class ClassicFileViewProviderCache(
   val newFileViewProviderFactory: NewFileViewProviderFactory,
 ) : FileViewProviderCache {
 
-  private val cache = AtomicMapCache<VirtualFile, FileViewProvider, ConcurrentMap<VirtualFile, FileViewProvider>> {
+  private val cache = AtomicMapCache<VirtualFile, FileViewProvider> {
     CollectionFactory.createConcurrentWeakValueMap()
   }
 
@@ -42,13 +42,12 @@ internal class ClassicFileViewProviderCache(
   }
 
   override fun forEachKey(block: Consumer<VirtualFile>) {
-    if (!(cache.isInitialized)) return
-    cache.cache.keys.forEach(block)
+    val map = cache.getCacheIfInitialized() ?: return
+    map.keys.forEach(block)
   }
 
   override fun forEach(block: FileViewProviderCache.CacheEntryConsumer) {
-    if (!(cache.isInitialized)) return
-    val map = cache.cache
+    val map = cache.getCacheIfInitialized() ?: return
     map.forEach { (file: VirtualFile, provider: FileViewProvider?) -> // provider might be collected
       if (provider != null) {
         block.consume(file, anyContext(), provider)
@@ -61,7 +60,7 @@ internal class ClassicFileViewProviderCache(
   }
 
   override fun getRaw(file: VirtualFile, context: CodeInsightContext): FileViewProvider? {
-    return cache.cache[file]
+    return cache.getCacheIfInitialized()?.get(file)
   }
 
   override fun getAndReanimateIfNecessary(
@@ -77,25 +76,24 @@ internal class ClassicFileViewProviderCache(
   }
 
   override fun removeAllFileViewProvidersAndSet(vFile: VirtualFile, viewProvider: FileViewProvider) {
-    cache.cache[vFile] = viewProvider
+    cache[vFile] = viewProvider
   }
 
   override fun remove(file: VirtualFile): Iterable<FileViewProvider>? {
-    val removed = cache.cache.remove(file) ?: return null
+    val removed = cache.getCacheIfInitialized()?.remove(file) ?: return null
     return listOf(removed)
   }
 
   override fun remove(file: VirtualFile, context: CodeInsightContext, viewProvider: AbstractFileViewProvider): Boolean {
-    if (!cache.isInitialized) return false
-    return this.cache.cache.remove(file, viewProvider)
+    return this.cache.getCacheIfInitialized()?.remove(file, viewProvider) ?: false
   }
 
   override fun processQueue() {
-    if (!(cache.isInitialized)) return
+    val map = cache.getCacheIfInitialized() ?: return
 
     // cache.cache is in fact ConcurrentWeakValueHashMap.
     // calling cache.cache.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
-    cache.cache.remove(NULL)
+    map.remove(NULL)
   }
 
   override fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext? {

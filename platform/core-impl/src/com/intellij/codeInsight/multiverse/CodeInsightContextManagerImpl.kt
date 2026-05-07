@@ -35,7 +35,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
@@ -51,10 +50,10 @@ class CodeInsightContextManagerImpl(
       CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
   }
 
-  private val allContexts: AtomicMapCache<VirtualFile, ContextOrArray, ConcurrentMap<VirtualFile, ContextOrArray>> =
+  private val allContexts: AtomicMapCache<VirtualFile, ContextOrArray> =
     AtomicMapCache { CollectionFactory.createConcurrentWeakKeySoftValueMap() }
 
-  private val preferredContext: AtomicMapCache<VirtualFile, CodeInsightContext, ConcurrentMap<VirtualFile, CodeInsightContext>> =
+  private val preferredContext: AtomicMapCache<VirtualFile, CodeInsightContext> =
     AtomicMapCache { CollectionFactory.createConcurrentWeakKeySoftValueMap() }
 
   private val _changeFlow = MutableSharedFlow<Unit>()
