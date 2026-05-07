@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bind
@@ -19,9 +20,8 @@ import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
 @Suppress("DialogTitleCapitalization")
-@Demo(title = "Binding",
-      description = "It is possible to bind component values to properties. Such properties are applied only when DialogPanel.apply is invoked. " +
-                    "Methods DialogPanel.isModified and DialogPanel.reset are also supported automatically for bound properties",
+@Demo(title = "demo.binding.title",
+      description = "demo.binding.description",
       scrollbar = true)
 fun demoBinding(parentDisposable: Disposable): DialogPanel {
   lateinit var lbIsModified: JLabel
@@ -33,7 +33,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
   fun initValidation() {
     alarm.addRequest(Runnable {
       val modified = panel.isModified()
-      lbIsModified.text = "isModified: $modified"
+      lbIsModified.text = DevkitUiDslBundle.message("demo.binding.is.modified", modified)
       lbIsModified.bold(modified)
       lbModel.text = "<html>$model"
 
@@ -43,30 +43,30 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
 
   panel = panel {
     row {
-      checkBox("Checkbox")
+      checkBox(DevkitUiDslBundle.message("demo.binding.checkbox"))
         .bindSelected(model::checkbox)
     }
-    row("textField:") {
+    row(DevkitUiDslBundle.message("demo.binding.text.field")) {
       textField()
         .bindText(model::textField)
     }
-    row("intTextField(0..100):") {
+    row(DevkitUiDslBundle.message("demo.binding.int.text.field")) {
       intTextField()
         .bindIntText(model::intTextField)
     }
-    row("comboBox:") {
+    row(DevkitUiDslBundle.message("demo.binding.combo.box")) {
       comboBox(Color.entries)
         .bindItem(model::comboBoxColor.toNullableProperty())
     }
-    row("slider:") {
+    row(DevkitUiDslBundle.message("demo.binding.slider")) {
       slider(0, 100, 10, 50)
         .bindValue(model::slider)
     }
-    row("spinner:") {
+    row(DevkitUiDslBundle.message("demo.binding.spinner")) {
       spinner(0..100)
         .bindIntValue(model::spinner)
     }
-    buttonsGroup("radioButton:") {
+    buttonsGroup(DevkitUiDslBundle.message("demo.binding.radio.button")) {
       for (value in Color.entries) {
         row {
           radioButton(value.name, value)
@@ -74,12 +74,12 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       }
     }.bind(model::radioButtonColor)
 
-    group("DialogPanel Control") {
+    group(DevkitUiDslBundle.message("demo.binding.group.control")) {
       row {
-        button("Reset") {
+        button(DevkitUiDslBundle.message("demo.binding.reset")) {
           panel.reset()
         }
-        button("Apply") {
+        button(DevkitUiDslBundle.message("demo.binding.apply")) {
           panel.apply()
         }
         lbIsModified = label("").component

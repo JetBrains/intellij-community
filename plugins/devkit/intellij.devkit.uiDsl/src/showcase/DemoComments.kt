@@ -1,68 +1,72 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 
-@Demo(title = "Comments",
-      description = "Comment is a gray (depends on color scheme) small text. There are three types of comments",
+@Demo(title = "demo.comments.title",
+      description = "demo.comments.description",
       scrollbar = true)
 fun demoComments(): DialogPanel {
   return panel {
-    group("Cell Comment") {
+    group(DevkitUiDslBundle.message("demo.comments.group.cell")) {
       row {
-        text("Comments related to a cell must be assigned directly to that cell. This ensures proper layout placement and improves support for the accessibility framework")
+        text(DevkitUiDslBundle.message("demo.comments.cell.text"))
       }
 
       row {
         textField()
-          .text("textField1")
-          .commentRight("Right comment to textField1")
+          .text(DevkitUiDslBundle.message("demo.comments.text.field1"))
+          .commentRight(DevkitUiDslBundle.message("demo.comments.text.field1.right"))
         textField()
-          .text("textField2")
-          .comment("Bottom comment to textField2")
+          .text(DevkitUiDslBundle.message("demo.comments.text.field2"))
+          .comment(DevkitUiDslBundle.message("demo.comments.text.field2.bottom"))
         textField()
-          .text("textField3")
-          .contextHelp("Context help related to the component, displayed in a popup")
+          .text(DevkitUiDslBundle.message("demo.comments.text.field3"))
+          .contextHelp(DevkitUiDslBundle.message("demo.comments.text.field3.context.help"))
       }
     }
 
-    group("Row Comment") {
-      row("Label:") {
+    group(DevkitUiDslBundle.message("demo.comments.group.row")) {
+      row(DevkitUiDslBundle.message("demo.comments.label")) {
         textField()
-      }.rowComment("A row comment is placed below the row")
+      }.rowComment(DevkitUiDslBundle.message("demo.comments.row.comment"))
     }
 
-    group("Arbitrary Comment") {
+    group(DevkitUiDslBundle.message("demo.comments.group.arbitrary")) {
       row {
-        comment("Arbitrary comments can be placed anywhere. They are not related to any cell or row")
+        comment(DevkitUiDslBundle.message("demo.comments.arbitrary"))
       }
     }
 
-    group("Common Info") {
+    group(DevkitUiDslBundle.message("demo.comments.group.common")) {
       row {
-        comment(
-          "Comments can be an html text with some clickable <a href='link'>link</a> and even <a href='several links'>several links</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons") {
-          Messages.showMessageDialog("Link '${it.description}' is clicked", "Message", null)
+        comment(DevkitUiDslBundle.message("demo.comments.html.comment")) {
+          Messages.showMessageDialog(
+            DevkitUiDslBundle.message("demo.comments.link.clicked", it.description),
+            DevkitUiDslBundle.message("demo.comments.message"),
+            null,
+          )
         }
       }
 
-      val longString = (1..8).joinToString { "A very long string" }
+      val longString = (1..8).joinToString { DevkitUiDslBundle.message("demo.comments.long.string") }
 
       row {
-        comment("Comments with MAX_LINE_LENGTH_WORD_WRAP are wrapped automatically<br>$longString")
+        comment(DevkitUiDslBundle.message("demo.comments.word.wrap", longString))
       }
 
 
       row {
-        comment("Comments can deny word wrapping by MAX_LINE_LENGTH_NO_WRAP", maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+        comment(DevkitUiDslBundle.message("demo.comments.no.wrap"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
       }
 
       row {
-        comment("Long comments can use maxLineLength, here it is 60<br>$longString", maxLineLength = 60)
+        comment(DevkitUiDslBundle.message("demo.comments.max.line.length", longString), maxLineLength = 60)
       }
     }
   }

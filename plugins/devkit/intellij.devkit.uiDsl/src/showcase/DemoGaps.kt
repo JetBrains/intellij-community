@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.RowLayout
@@ -8,67 +9,60 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 
-@Demo(title = "Gaps",
-  description = "<br>\u2022 Horizontal gaps are managed by Cell.gap method. Between label and related component RightGap.SMALL is used, " +
-                "otherwise medium gap is used (there is no such enum value)<br>" +
-                "\u2022 Left indent can be added by Panel.indent<br>" +
-                "\u2022 For two columns mode use Panel.twoColumnsRow or RightGap.COLUMNS<br>" +
-                "\u2022 Vertical gaps are absent by default (there is minimum space between components) and can be added by Row.topGap " +
-                "and Row.bottomGap methods. Such gaps should be appended to 'related' rows " +
-                "(so if row is hidden with gaps remaining layout is not broken). " +
-                "Note that some elements like Panel.group can add additional space around",
-  scrollbar = true
-)
+@Suppress("DialogTitleCapitalization")
+@Demo(title = "demo.gaps.title",
+      description = "demo.gaps.description",
+      scrollbar = true)
 fun demoGaps(): DialogPanel {
   return panel {
-    group("Situations Requiring RightGap.SMALL") {
+    group(DevkitUiDslBundle.message("demo.gaps.group.right.small")) {
       row {
-        val checkBox = checkBox("Use mail:")
+        val checkBox = checkBox(DevkitUiDslBundle.message("demo.gaps.use.mail"))
           .gap(RightGap.SMALL)
         textField()
           .enabledIf(checkBox.selected)
-      }.rowComment("Gaps after check boxes/radio buttons when they are intended to serve as labels")
-      row("Width:") {
+      }.rowComment(DevkitUiDslBundle.message("demo.gaps.checkbox.label.comment"))
+      row(DevkitUiDslBundle.message("demo.gaps.width")) {
         textField()
           .gap(RightGap.SMALL)
-        label("pixels")
-      }.rowComment("Gaps between related components, such as a text field and the label that follows it")
+        label(DevkitUiDslBundle.message("demo.gaps.pixels"))
+      }.rowComment(DevkitUiDslBundle.message("demo.gaps.related.comment"))
     }
 
-    group("Panel.indent") {
+    group(DevkitUiDslBundle.message("demo.gaps.group.indent")) {
       row {
-        label("Not indented row")
+        label(DevkitUiDslBundle.message("demo.gaps.not.indented"))
       }
       indent {
         row {
-          label("Indented row, Panel.group and Panel.groupRowsRange are more useful often")
+          label(DevkitUiDslBundle.message("demo.gaps.indented"))
         }
       }
     }
 
-    group("Two Columns Mode") {
+    group(DevkitUiDslBundle.message("demo.gaps.group.two.columns")) {
       twoColumnsRow({
-        checkBox("First column")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.first.column"))
       }, {
-        checkBox("Second column")
-      }).rowComment("Panel.twoColumnsRow is used")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.second.column"))
+      }).rowComment(DevkitUiDslBundle.message("demo.gaps.two.columns.row.comment"))
       row {
-        checkBox("Column 1")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.column1"))
           .gap(RightGap.COLUMNS)
-        checkBox("Column 2")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.column2"))
       }.layout(RowLayout.PARENT_GRID)
-        .rowComment("RightGap.COLUMNS is used")
+        .rowComment(DevkitUiDslBundle.message("demo.gaps.right.gap.columns.comment"))
     }
 
-    group("Examples for Vertical Gaps") {
+    group(DevkitUiDslBundle.message("demo.gaps.group.vertical")) {
       row {
-        checkBox("Option 1")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.option1"))
       }
       row {
-        checkBox("Option 2")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.option2"))
       }
       row {
-        checkBox("Option unrelated to previous two options")
+        checkBox(DevkitUiDslBundle.message("demo.gaps.option.unrelated"))
       }.topGap(TopGap.MEDIUM)
     }
   }

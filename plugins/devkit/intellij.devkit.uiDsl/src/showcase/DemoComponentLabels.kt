@@ -1,38 +1,35 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 
 @Suppress("DialogTitleCapitalization")
-@Demo(title = "Components Labels",
-      description = "When modifiable components have text labels they must be connected together by one of two possible ways: " +
-                    "Row(\"label\") or Cell.label(\"label\"). These methods do a lot additional things: use correct spacing between label and component, " +
-                    "support mnemonics, add accessible context for modifiable components")
+@Demo(title = "demo.component.labels.title", description = "demo.component.labels.description")
 fun demoComponentLabels(): DialogPanel {
   return panel {
-    row("&Row label:") {
+    row(DevkitUiDslBundle.message("demo.component.labels.row.label")) {
       textField()
       textField()
-        .label("Cell label at &left:")
+        .label(DevkitUiDslBundle.message("demo.component.labels.cell.label.left"))
     }
 
     row {
       textField()
-        .label("Cell label at &top:", LabelPosition.TOP)
+        .label(DevkitUiDslBundle.message("demo.component.labels.cell.label.top"), LabelPosition.TOP)
     }
 
-    group("CheckBox/RadioButton labels") {
-      row("Row1:") {
-        checkBox("Checkbox")
+    group(DevkitUiDslBundle.message("demo.component.labels.group.checkbox")) {
+      row(DevkitUiDslBundle.message("demo.component.labels.row1")) {
+        checkBox(DevkitUiDslBundle.message("demo.component.labels.checkbox"))
       }
-      row("Row2:") {
+      row(DevkitUiDslBundle.message("demo.component.labels.row2")) {
         textField()
       }
       row {
-        comment("According to <a href='https://plugins.jetbrains.com/docs/intellij/layout.html#checkboxes-and-radio-buttons'>UI Guidelines</a> " +
-                "space after labels is increased if CheckBox/RadioButton is used")
+        comment(DevkitUiDslBundle.message("demo.component.labels.guidelines.comment"))
       }
     }
   }

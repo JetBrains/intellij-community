@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.internal.Module
 import com.intellij.internal.showSources
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
@@ -44,7 +46,7 @@ internal class UiDslShowcaseAction : DumbAwareAction() {
   }
 }
 
-private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
+private class UiDslShowcaseDialog(val project: Project?, dialogTitle: @NlsContexts.DialogTitle String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {
@@ -72,11 +74,11 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
 
     val content = panel {
       row {
-        label("<html>Description: ${annotation.description}")
+        label(DevkitUiDslBundle.message("dialog.description", DevkitUiDslBundle.message(annotation.description)))
       }
 
       row {
-        link("View source") {
+        link(DevkitUiDslBundle.message("dialog.view.source")) {
           showSources(project, Module.DEVKIT_UI_DSL, demo.javaMethod!!.declaringClass)
         }
       }.bottomGap(BottomGap.MEDIUM)
@@ -111,6 +113,6 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
       }
     }
 
-    tabbedPane.add(annotation.title, content)
+    tabbedPane.add(DevkitUiDslBundle.message(annotation.title), content)
   }
 }

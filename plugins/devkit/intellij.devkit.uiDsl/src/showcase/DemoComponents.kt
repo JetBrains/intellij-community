@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -20,127 +21,145 @@ import com.intellij.ui.dsl.builder.text
 import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
-@Demo(title = "Components",
-      description = "There are many different components supported by UI DSL. Here are some of them.",
+@Demo(title = "demo.components.title",
+      description = "demo.components.description",
       scrollbar = true)
 fun demoComponents(): DialogPanel {
   val panel = panel {
     row {
-      checkBox("checkBox")
+      checkBox(DevkitUiDslBundle.message("demo.components.checkbox"))
     }
 
     row {
-      threeStateCheckBox("threeStateCheckBox")
+      threeStateCheckBox(DevkitUiDslBundle.message("demo.components.three.state.checkbox"))
     }
 
     var radioButtonValue = 2
     buttonsGroup {
-      row("radioButton") {
-        radioButton("Value 1", 1)
-        radioButton("Value 2", 2)
+      row(DevkitUiDslBundle.message("demo.components.radio.button")) {
+        radioButton(DevkitUiDslBundle.message("demo.components.value1"), 1)
+        radioButton(DevkitUiDslBundle.message("demo.components.value2"), 2)
       }
     }.bind({ radioButtonValue }, { radioButtonValue = it })
 
     row {
-      button("button") {}
+      button(DevkitUiDslBundle.message("demo.components.button")) {}
     }
 
-    row("actionButton:") {
-      val action = object : DumbAwareAction("Action text", "Action description", AllIcons.Actions.QuickfixOffBulb) {
+    row(DevkitUiDslBundle.message("demo.components.action.button")) {
+      val action = object : DumbAwareAction(
+        DevkitUiDslBundle.message("demo.components.action.text"),
+        DevkitUiDslBundle.message("demo.components.action.description"),
+        AllIcons.Actions.QuickfixOffBulb,
+      ) {
         override fun actionPerformed(e: AnActionEvent) {
         }
       }
       actionButton(action)
     }
 
-    row("actionsButton:") {
-      actionsButton(object : DumbAwareAction("Action one") {
+    row(DevkitUiDslBundle.message("demo.components.actions.button")) {
+      actionsButton(object : DumbAwareAction(DevkitUiDslBundle.message("demo.components.action.one")) {
         override fun actionPerformed(e: AnActionEvent) {
         }
       },
-        object : DumbAwareAction("Action two") {
+        object : DumbAwareAction(DevkitUiDslBundle.message("demo.components.action.two")) {
           override fun actionPerformed(e: AnActionEvent) {
           }
         })
     }
 
-    row("segmentedButton:") {
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) {
+    row(DevkitUiDslBundle.message("demo.components.segmented.button")) {
+      val buttonLast = DevkitUiDslBundle.message("demo.components.button.last")
+      segmentedButton(listOf(
+        DevkitUiDslBundle.message("demo.components.button1"),
+        DevkitUiDslBundle.message("demo.components.button2"),
+        buttonLast,
+      )) {
         text = it
-        if (it == "Button Last") {
+        if (it == buttonLast) {
           icon = AllIcons.General.Information
         }
       }.apply {
-        selectedItem = "Button 2"
+        selectedItem = DevkitUiDslBundle.message("demo.components.button2")
       }
     }
 
-    row("tabbedPaneHeader:") {
-      tabbedPaneHeader(listOf("Tab 1", "Tab 2", "Last Tab"))
+    row(DevkitUiDslBundle.message("demo.components.tabbed.pane.header")) {
+      tabbedPaneHeader(listOf(
+        DevkitUiDslBundle.message("demo.components.tab1"),
+        DevkitUiDslBundle.message("demo.components.tab2"),
+        DevkitUiDslBundle.message("demo.components.last.tab"),
+      ))
     }
 
-    row("label:") {
-      label("Some label")
+    row(DevkitUiDslBundle.message("demo.components.label")) {
+      label(DevkitUiDslBundle.message("demo.components.some.label"))
     }
 
-    row("text:") {
-      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons")
+    row(DevkitUiDslBundle.message("demo.components.text")) {
+      text(DevkitUiDslBundle.message("demo.components.text.value"))
     }
 
-    row("link:") {
-      link("Focusable link") {}
+    row(DevkitUiDslBundle.message("demo.components.link")) {
+      link(DevkitUiDslBundle.message("demo.components.focusable.link")) {}
     }
 
-    row("browserLink:") {
-      browserLink("jetbrains.com", "https://www.jetbrains.com")
+    row(DevkitUiDslBundle.message("demo.components.browser.link")) {
+      browserLink(DevkitUiDslBundle.message("demo.components.browser.link.text"), "https://www.jetbrains.com")
     }
 
-    row("dropDownLink:") {
-      dropDownLink("Item 1", listOf("Item 1", "Item 2", "Item 3"))
+    row(DevkitUiDslBundle.message("demo.components.drop.down.link")) {
+      val item1 = DevkitUiDslBundle.message("demo.components.item1")
+      dropDownLink(item1, listOf(
+        item1,
+        DevkitUiDslBundle.message("demo.components.item2"),
+        DevkitUiDslBundle.message("demo.components.item3"),
+      ))
     }
 
-    row("icon:") {
+    row(DevkitUiDslBundle.message("demo.components.icon")) {
       icon(AllIcons.Actions.QuickfixOffBulb)
     }
 
-    row("contextHelp:") {
-      contextHelp("If the context help relates to a specific component, <b>Cell.contextHelp</b> must be used. " +
-                  "See API documentation for more details", "Context Help Title")
+    row(DevkitUiDslBundle.message("demo.components.context.help")) {
+      contextHelp(DevkitUiDslBundle.message("demo.components.context.help.text"),
+                  DevkitUiDslBundle.message("demo.components.context.help.title"))
     }
 
-    row("textField:") {
+    row(DevkitUiDslBundle.message("demo.components.text.field")) {
       textField()
     }
 
-    row("passwordField:") {
-      passwordField().text("password")
+    row(DevkitUiDslBundle.message("demo.components.password.field")) {
+      passwordField().text(DevkitUiDslBundle.message("demo.components.password"))
     }
 
-    row("textFieldWithBrowseButton:") {
+    row(DevkitUiDslBundle.message("demo.components.text.field.with.browse")) {
       textFieldWithBrowseButton()
     }
 
-    row("expandableTextField:") {
+    row(DevkitUiDslBundle.message("demo.components.expandable.text.field")) {
       expandableTextField()
     }
 
-    row("extendableTextField:") {
+    row(DevkitUiDslBundle.message("demo.components.extendable.text.field")) {
       extendableTextField()
     }
 
-    row("intTextField(0..100):") {
+    row(DevkitUiDslBundle.message("demo.components.int.text.field")) {
       intTextField(0..100)
     }
 
-    row("spinner(0..100):") {
+    row(DevkitUiDslBundle.message("demo.components.spinner.int")) {
       spinner(0..100)
     }
 
-    row("spinner(0.0..100.0, 0.01):") {
+    row(DevkitUiDslBundle.message("demo.components.spinner.double")) {
       spinner(0.0..100.0, 0.01)
     }
 
-    row("slider(0, 10, 1, 5):") {
+    row(DevkitUiDslBundle.message("demo.components.slider")) {
       slider(0, 10, 1, 5)
         .labelTable(mapOf(
           0 to JLabel("0"),
@@ -150,7 +169,7 @@ fun demoComponents(): DialogPanel {
     }
 
     row {
-      label("textArea:")
+      label(DevkitUiDslBundle.message("demo.components.text.area"))
         .align(AlignY.TOP)
         .gap(RightGap.SMALL)
       textArea()
@@ -158,8 +177,11 @@ fun demoComponents(): DialogPanel {
         .align(AlignX.FILL)
     }.layout(RowLayout.PARENT_GRID)
 
-    row("comboBox:") {
-      comboBox(listOf("Item 1", "Item 2"))
+    row(DevkitUiDslBundle.message("demo.components.combo.box")) {
+      comboBox(listOf(
+        DevkitUiDslBundle.message("demo.components.item1"),
+        DevkitUiDslBundle.message("demo.components.item2"),
+      ))
     }
   }
 

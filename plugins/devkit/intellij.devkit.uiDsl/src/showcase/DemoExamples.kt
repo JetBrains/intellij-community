@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral")
-
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
@@ -18,128 +17,130 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.layout.selected
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
-@Demo(title = "Examples",
-      description = "Here are some useful examples, tips and tricks",
+@Demo(title = "demo.examples.title",
+      description = "demo.examples.description",
       scrollbar = true)
 fun demoExamples(): DialogPanel {
   val panel = panel {
-    group("Initializing components with extension functions") {
+    group(DevkitUiDslBundle.message("demo.examples.group.initializing")) {
       row {
-        label("Bold text")
+        label(DevkitUiDslBundle.message("demo.examples.bold.text"))
           .bold()
-          .commentRight("'bold()' works for any component")
+          .commentRight(DevkitUiDslBundle.message("demo.examples.bold.comment"))
       }
       row {
-        checkBox("Selected CheckBox")
+        checkBox(DevkitUiDslBundle.message("demo.examples.selected.checkbox"))
           .selected(true)
-          .commentRight("'selected(true)'")
+          .commentRight(DevkitUiDslBundle.message("demo.examples.selected.true.comment"))
       }
       buttonsGroup {
         row {
-          radioButton("RadioButton")
-          radioButton("Selected RadioButton")
+          radioButton(DevkitUiDslBundle.message("demo.examples.radio.button"))
+          radioButton(DevkitUiDslBundle.message("demo.examples.selected.radio.button"))
             .selected(true)
-            .commentRight("'selected(true)'")
+            .commentRight(DevkitUiDslBundle.message("demo.examples.selected.true.comment"))
         }
       }
       row {
         textField()
-          .text("Initial text")
-          .commentRight("'text(\"Initial text\")'")
+          .text(DevkitUiDslBundle.message("demo.examples.initial.text"))
+          .commentRight(DevkitUiDslBundle.message("demo.examples.text.initial.comment"))
       }
     }
 
-    group("CheckBox/RadioButton examples") {
-      buttonsGroup("CheckBox/RadioButton Group:") {
+    group(DevkitUiDslBundle.message("demo.examples.group.checkbox.radio")) {
+      buttonsGroup(DevkitUiDslBundle.message("demo.examples.checkbox.radio.group")) {
         row {
-          checkBox("CheckBox 1")
-            .orderedContextHelp("Use a colon in the 'buttonsGroup' title",
-                                "Left indentation for group elements",
-                                "The vertical spacing after the group title is reduced according to the UX spec")
+          checkBox(DevkitUiDslBundle.message("demo.examples.checkbox1"))
+            .orderedContextHelp(DevkitUiDslBundle.message("demo.examples.checkbox1.help.1"),
+                                DevkitUiDslBundle.message("demo.examples.checkbox1.help.2"),
+                                DevkitUiDslBundle.message("demo.examples.checkbox1.help.3"))
         }
         row {
-          checkBox("CheckBox 2")
-          browserLink("How it works", "https://www.jetbrains.com/")
-            .commentRight("External links must be marked with the external link icon")
+          checkBox(DevkitUiDslBundle.message("demo.examples.checkbox2"))
+          browserLink(DevkitUiDslBundle.message("demo.examples.how.it.works"), "https://www.jetbrains.com/")
+            .commentRight(DevkitUiDslBundle.message("demo.examples.external.link.comment"))
         }
       }
 
       buttonsGroup {
-        row("Single line:") {
-          radioButton("Option 1")
+        row(DevkitUiDslBundle.message("demo.examples.single.line")) {
+          radioButton(DevkitUiDslBundle.message("demo.examples.option1"))
             .selected(true)
-          radioButton("Option 2")
-          radioButton("Option 3")
-          orderedContextHelp("Horizontal spacing between the label and the CheckBox/RadioButton is increased according to the UX spec",
-                             "RadioButtons in a group must be wrapped with 'buttonsGroup {...}'",
-                             "javax.swing.ButtonGroup is not needed")
+          radioButton(DevkitUiDslBundle.message("demo.examples.option2"))
+          radioButton(DevkitUiDslBundle.message("demo.examples.option3"))
+          orderedContextHelp(DevkitUiDslBundle.message("demo.examples.single.line.help.1"),
+                             DevkitUiDslBundle.message("demo.examples.single.line.help.2"),
+                             DevkitUiDslBundle.message("demo.examples.single.line.help.3"))
         }
       }
 
       var radioButtonValue = 0
       buttonsGroup {
-        row("Bind value:") {
-          radioButton("Value = 1", 1)
-          radioButton("Value = 2", 2)
-            .commentRight("'buttonsGroup.bind'")
-          orderedContextHelp("No RadioButton is selected when the bound value does not match any option; use .selected(true) to define the default selection")
+        row(DevkitUiDslBundle.message("demo.examples.bind.value")) {
+          radioButton(DevkitUiDslBundle.message("demo.examples.value.1"), 1)
+          radioButton(DevkitUiDslBundle.message("demo.examples.value.2"), 2)
+            .commentRight(DevkitUiDslBundle.message("demo.examples.buttons.group.bind.comment"))
+          orderedContextHelp(DevkitUiDslBundle.message("demo.examples.bind.value.help"))
         }
       }.bind({ radioButtonValue }, { radioButtonValue = it })
 
       row {
-        val checkBox = checkBox("Option:")
+        val checkBox = checkBox(DevkitUiDslBundle.message("demo.examples.option"))
           .gap(RightGap.SMALL)
           .component
         textField()
           .enabledIf(checkBox.selected)
-          .commentRight("'enabledIf'")
-        orderedContextHelp("Components that depend on the CheckBox are automatically enabled and disabled using .enabledIf(checkBox.selected)",
-                           "Decrease the horizontal space after the CheckBox with 'gap(RightGap.SMALL)'")
+          .commentRight(DevkitUiDslBundle.message("demo.examples.enabled.if.comment"))
+        orderedContextHelp(DevkitUiDslBundle.message("demo.examples.option.help.1"),
+                           DevkitUiDslBundle.message("demo.examples.option.help.2"))
       }
     }
 
-    group("TextField") {
-      row("Default field:") {
+    group(DevkitUiDslBundle.message("demo.examples.group.text.field")) {
+      row(DevkitUiDslBundle.message("demo.examples.default.field")) {
         textField()
-          .orderedContextHelp("Labels should end with a colon",
-                              "By default, components don’t occupy the full width",
-                              "All components in a group/panel are aligned to a common left edge based on the longest label")
+          .orderedContextHelp(DevkitUiDslBundle.message("demo.examples.default.field.help.1"),
+                              DevkitUiDslBundle.message("demo.examples.default.field.help.2"),
+                              DevkitUiDslBundle.message("demo.examples.default.field.help.3"))
       }
 
       row("") {
         textField()
           .align(AlignX.FILL)
-          .orderedContextHelp("Use 'row(\"\")' when no label is needed",
-                              "Use 'align(AlignX.FILL)' for full width")
+          .orderedContextHelp(DevkitUiDslBundle.message("demo.examples.empty.row.help.1"),
+                              DevkitUiDslBundle.message("demo.examples.empty.row.help.2"))
       }
-      row("Don't align very long labels with short ones:") {
+      row(DevkitUiDslBundle.message("demo.examples.long.label")) {
         textField()
           .columns(COLUMNS_MEDIUM)
           .gap(RightGap.SMALL)
-        label("seconds")
+        label(DevkitUiDslBundle.message("demo.examples.seconds"))
 
-        orderedContextHelp("Use&nbsp;'layout(RowLayout.INDEPENDENT)' to align the row independently from other rows",
-                           "Use 'gap(RightGap.SMALL)' to reduce the horizontal space before the related label 'seconds'",
-                           "Use 'columns(COLUMNS_MEDIUM)' or similar constants to customize the text field width")
+        orderedContextHelp(DevkitUiDslBundle.message("demo.examples.long.label.help.1"),
+                           DevkitUiDslBundle.message("demo.examples.long.label.help.2"),
+                           DevkitUiDslBundle.message("demo.examples.long.label.help.3"))
       }.layout(RowLayout.INDEPENDENT)
 
-      row("Row 1:") {
+      row(DevkitUiDslBundle.message("demo.examples.row1")) {
         textField()
           .resizableColumn()
           .align(AlignX.FILL)
 
-        button("Test") {
+        button(DevkitUiDslBundle.message("demo.examples.test")) {
           // Perform an action here
         }
-        orderedContextHelp("Use 'resizableColumn()' to allow the column to take up the available width, and 'align(AlignX.FILL)' to expand the text field horizontally",
-                           "Use&nbsp;'layout(RowLayout.PARENT_GRID)' to align the components in 'Row 1' and 'Row 2' in a grid-like layout",
-                           "Use 'cell()' in 'Row 2' to reserve a grid cell; otherwise, the last component will take up the remaining width")
+        orderedContextHelp(DevkitUiDslBundle.message("demo.examples.row1.help.1"),
+                           DevkitUiDslBundle.message("demo.examples.row1.help.2"),
+                           DevkitUiDslBundle.message("demo.examples.row1.help.3"))
       }.layout(RowLayout.PARENT_GRID)
 
-      row("Row 2:") {
+      row(DevkitUiDslBundle.message("demo.examples.row2")) {
         textField()
           // .resizableColumn() is not needed because the column is already specified as resizable in 'Row 1'
           .align(AlignX.FILL)
@@ -147,33 +148,32 @@ fun demoExamples(): DialogPanel {
       }.layout(RowLayout.PARENT_GRID)
     }
 
-    group("Comments") {
+    group(DevkitUiDslBundle.message("demo.examples.group.comments")) {
       row {
-        checkBox("A very complex option")
-          .commentRight("Requires restart")
-          .contextHelp("Some description of 'contextHelp'", "A Title")
-          .comment("It's important to connect comments to the related cells: " +
-                   "they are displayed in the correct location with appropriate styling " +
-                   "and used by the accessibility framework")
+        checkBox(DevkitUiDslBundle.message("demo.examples.complex.option"))
+          .commentRight(DevkitUiDslBundle.message("demo.examples.requires.restart"))
+          .contextHelp(DevkitUiDslBundle.message("demo.examples.context.help.description"),
+                       DevkitUiDslBundle.message("demo.examples.context.help.title"))
+          .comment(DevkitUiDslBundle.message("demo.examples.complex.option.comment"))
       }
     }
 
-    group("Buttons") {
+    group(DevkitUiDslBundle.message("demo.examples.group.buttons")) {
       row {
-        button("Default Button") {
+        button(DevkitUiDslBundle.message("demo.examples.default.button")) {
           // Perform an action here
         }.widthGroup("GroupName")
           .applyToComponent {
             putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
           }
 
-        button("Button") {
+        button(DevkitUiDslBundle.message("demo.examples.button")) {
           // Perform an action here
         }.widthGroup("GroupName")
 
-        comment("'widthGroup'")
-        orderedContextHelp("All components in the same 'widthGroup' are assigned the maximum width of the group. Cannot be used with 'align(AlignX.FILL)'",
-                           "'widthGroup' can be used for any components, e.g. text fields")
+        comment(DevkitUiDslBundle.message("demo.examples.width.group.comment"))
+        orderedContextHelp(DevkitUiDslBundle.message("demo.examples.buttons.help.1"),
+                           DevkitUiDslBundle.message("demo.examples.buttons.help.2"))
       }
     }
   }
@@ -181,19 +181,21 @@ fun demoExamples(): DialogPanel {
   return panel
 }
 
-private fun <T : JComponent> Cell<T>.orderedContextHelp(vararg lines: String): Cell<T> {
+private fun <T : JComponent> Cell<T>.orderedContextHelp(@Nls vararg lines: String): Cell<T> {
   return contextHelp(getOrderedList(*lines))
 }
 
-private fun Row.orderedContextHelp(vararg lines: String) {
+private fun Row.orderedContextHelp(@Nls vararg lines: String) {
   contextHelp(getOrderedList(*lines))
 }
 
-private fun getOrderedList(vararg lines: String): @NlsContexts.Tooltip String {
+private fun getOrderedList(@Nls vararg lines: String): @NlsContexts.Tooltip String {
   assert(lines.isNotEmpty())
   if (lines.size == 1) {
     return lines[0]
   }
 
-  return lines.mapIndexed { i, s -> "${i + 1}.&nbsp;$s" }.joinToString("<br>")
+  @NonNls val separator = "<br>"
+  @Suppress("HardCodedStringLiteral")
+  return lines.mapIndexed { i, s -> "${i + 1}.&nbsp;$s" }.joinToString(separator)
 }

@@ -1,34 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.showcase
 
+import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 
-@Demo(title = "Basics",
-  description = "UI DSL builder builds content row by row. Every row consist of cells, last cell in row occupies all remaining width. " +
-                "Rows have layout property (see RowLayout) which specify policy of cells layout in row.<br>" +
-                "Result of builder is a grid like structure (see GridLayout), where near cells can be merged into one cell. " +
-                "Every cell can contain some component or a sub-grid.")
+@Demo(title = "demo.basics.title", description = "demo.basics.description")
 fun demoBasics(): DialogPanel {
   return panel {
-    row("Row1 label:") {
+    row(DevkitUiDslBundle.message("demo.basics.row1.label")) {
       textField()
-      label("Some text")
+      label(DevkitUiDslBundle.message("demo.basics.row1.text"))
     }
 
-    row("Row2:") {
-      label("This text is aligned with previous row")
+    row(DevkitUiDslBundle.message("demo.basics.row2.label")) {
+      label(DevkitUiDslBundle.message("demo.basics.row2.text"))
     }
 
-    row("Row3:") {
-      label("Rows 3 and 4 are in common parent grid")
+    row(DevkitUiDslBundle.message("demo.basics.row3.label")) {
+      label(DevkitUiDslBundle.message("demo.basics.rows.parent.grid"))
       textField()
     }.layout(RowLayout.PARENT_GRID)
 
-    row("Row4:") {
+    row(DevkitUiDslBundle.message("demo.basics.row4.label")) {
       textField()
-      label("Rows 3 and 4 are in common parent grid")
+      label(DevkitUiDslBundle.message("demo.basics.rows.parent.grid"))
     }.layout(RowLayout.PARENT_GRID)
   }
 }
