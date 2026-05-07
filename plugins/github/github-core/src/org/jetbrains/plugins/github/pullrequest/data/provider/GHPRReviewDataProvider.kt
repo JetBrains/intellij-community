@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 
 @CodeReviewDomainEntity
 interface GHPRReviewDataProvider {
@@ -49,12 +50,13 @@ interface GHPRReviewDataProvider {
   /**
    * Only for cases when the comment is created on the diff of an individual commit and there's an active review.
    */
-  suspend fun addComment(reviewId: String,
-                         body: String,
-                         commitSha: String,
-                         fileName: String,
-                         side: Side,
-                         line: Int): GHPullRequestReviewComment
+  suspend fun addComment(
+    reviewId: String,
+    body: String,
+    commitSha: String,
+    fileName: String,
+    location: GHPRReviewCommentLocation,
+  ): GHPullRequestReviewComment
 
   suspend fun addComment(replyToCommentId: String, body: String): GHPullRequestReviewComment
 

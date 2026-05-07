@@ -155,7 +155,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       }
       else {
         val commitSha = position.value.change.revisionNumberAfter.asString()
-        reviewDataProvider.addComment(reviewId, it, commitSha, filePath, location.side, line)
+        reviewDataProvider.addComment(reviewId, it, commitSha, filePath, location)
       }
       cancel()
     }

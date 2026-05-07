@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThr
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 
 private val LOG = logger<GHPRReviewDataProviderImpl>()
 
@@ -137,12 +138,13 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
     return review.body
   }
 
-  override suspend fun addComment(reviewId: String,
-                                  body: String,
-                                  commitSha: String,
-                                  fileName: String,
-                                  side: Side,
-                                  line: Int): GHPullRequestReviewComment {
+  override suspend fun addComment(
+    reviewId: String,
+    body: String,
+    commitSha: String,
+    fileName: String,
+    location: GHPRReviewCommentLocation,
+  ): GHPullRequestReviewComment {
     /*
     The GraphQL threads API doesn't allow specifying the commit
     (https://docs.github.com/en/graphql/reference/input-objects#addpullrequestreviewthreadinput)
@@ -156,7 +158,8 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
     */
     val patch = changesProvider.loadPatchFromMergeBase(commitSha, fileName)
     check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
-    val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line) ?: error("Can't map file line to diff")
+    val locationInDiff = location.side to location.lineIdx
+    val position = PatchHunkUtil.findDiffFileLineIndex(patch, locationInDiff) ?: error("Can't map file line to diff")
     val comment = reviewService.addComment(reviewId, body, commitSha, fileName, position)
     withContext(NonCancellable) {
       updateReview(reviewId) { it.copy(commentsCount = it.commentsCount + 1) }
