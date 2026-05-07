@@ -28,8 +28,10 @@ import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.io.awaitExit
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -110,11 +112,16 @@ internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>
   }
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 @Throws(EelPathException::class)
 private suspend fun doBuildStartupEelContext(workingDirectory: Path, shellCommand: List<String>): TerminalStartupEelContext {
   val executable = shellCommand.firstOrNull()
-  if (OS.CURRENT == OS.Windows && executable != null &&
-      (ShellNameUtil.isPowerShell(executable) || OSAgnosticPathUtil.isAbsoluteDosPath(executable))) {
+  // TODO: this check is very fragile and should be replaced with a more robust solution.
+  //  For example, delegating choosing the correct working directory / shell pair to the clients of this API.
+  if (!IdeProductMode.isFrontend  // This check targets only local Windows case
+      && OS.CURRENT == OS.Windows
+      && executable != null
+      && (ShellNameUtil.isPowerShell(executable) || OSAgnosticPathUtil.isAbsoluteDosPath(executable))) {
     // Enforce running a Windows shell locally even if the project is opened in WSL.
     //
     // Although WSL can run Windows processes, it's best to avoid it:
