@@ -23,7 +23,7 @@
       <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.ExtractSetFromComparisonChainAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
@@ -365,7 +365,7 @@
       <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.expressions</categoryKey>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
