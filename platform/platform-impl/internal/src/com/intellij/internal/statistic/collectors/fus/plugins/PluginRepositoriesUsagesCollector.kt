@@ -4,8 +4,10 @@ package com.intellij.internal.statistic.collectors.fus.plugins
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 
@@ -37,23 +39,38 @@ private fun getFromProperty(propertyName: String): List<String> =
 
 private val GROUP = EventLogGroup("plugin.repositories", 1)
 private val NUMBER_OF_CUSTOM_REPOSITORIES_FIELD =
-  EventFields.Int("number_of_custom_repositories",
-                  "Number of all custom plugin repositories provided to IDE (with duplicates removed)")
+  RoundingIntEventField("number_of_custom_repositories",
+                        "Number of all custom plugin repositories provided to IDE (with duplicates removed)")
 private val NUMBER_OF_USER_CONFIGURABLE_CUSTOM_REPOSITORIES_FIELD =
-  EventFields.Int("number_of_configurable_custom_repositories",
-                  "Number of custom plugin repositories that are visible and configurable through a dialog in plugin settings")
+  RoundingIntEventField("number_of_configurable_custom_repositories",
+                        "Number of custom plugin repositories that are visible and configurable through a dialog in plugin settings")
 private val NUMBER_OF_REPOSITORIES_FROM_IDEA_PLUGIN_HOST_PROPERTY_FIELD =
-  EventFields.Int("number_of_repositories_from_idea_plugin_host_property",
-                  "Number of custom plugin repositories that are configured via 'idea.plugin.hosts' property")
+  RoundingIntEventField("number_of_repositories_from_idea_plugin_host_property",
+                        "Number of custom plugin repositories that are configured via 'idea.plugin.hosts' property")
 private val NUMBER_OF_REPOS_FROM_UPDATE_PROVIDERS_FIELD =
-  EventFields.Int("number_of_repositories_from_update_settings_providers",
-                  "Number of custom plugin repositories provided by UpdateSettingsProvider extension point")
+  RoundingIntEventField("number_of_repositories_from_update_settings_providers",
+                        "Number of custom plugin repositories provided by UpdateSettingsProvider extension point")
 private val NUMBER_OF_REPOS_FROM_BUILD_IN_PROPERTY =
-  EventFields.Int("number_of_repositories_from_build_in_property",
-                  "Number of custom plugin repositories that are configured via 'intellij.plugins.custom.built.in.repository.url' property")
+  RoundingIntEventField("number_of_repositories_from_build_in_property",
+                        "Number of custom plugin repositories that are configured via 'intellij.plugins.custom.built.in.repository.url' property")
 private val CUSTOM_REPOSITORIES_EVENT = GROUP.registerVarargEvent("custom.repositories.configured",
                                                                   NUMBER_OF_CUSTOM_REPOSITORIES_FIELD,
                                                                   NUMBER_OF_USER_CONFIGURABLE_CUSTOM_REPOSITORIES_FIELD,
                                                                   NUMBER_OF_REPOSITORIES_FROM_IDEA_PLUGIN_HOST_PROPERTY_FIELD,
                                                                   NUMBER_OF_REPOS_FROM_UPDATE_PROVIDERS_FIELD,
                                                                   NUMBER_OF_REPOS_FROM_BUILD_IN_PROPERTY)
+
+private class RoundingIntEventField(override val name: String, override val description: String) : PrimitiveEventField<Int>() {
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, roundNumber(value))
+  }
+
+  private fun roundNumber(value: Int): Int {
+    if (value < 5) return value
+    return StatisticsUtil.roundToPowerOfTwo(value)
+  }
+}
