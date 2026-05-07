@@ -609,7 +609,7 @@
                      language="kotlin"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
+                     enabledByDefault="true" unfair="true"
                      level="WARNING" key="inspection.k.doc.unresolved.link.display.name" bundle="messages.KotlinBundle"/>
 
     <registryKey key="kotlin.kdoc.should.report.samples"
@@ -754,6 +754,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceMapKeysCallChainWithKeysInspection"
                      language="kotlin"
                      groupPath="Kotlin"
+                     cleanupTool="true"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="INFORMATION"
