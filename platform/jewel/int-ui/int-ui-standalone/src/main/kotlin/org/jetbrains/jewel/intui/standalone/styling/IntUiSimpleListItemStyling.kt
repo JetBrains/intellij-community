@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
@@ -35,7 +36,7 @@ public fun SimpleListItemStyle.Companion.lightFullWidth(
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
 public fun SimpleListItemStyle.Companion.darkFullWidth(
-    colors: SimpleListItemColors = SimpleListItemColors.light(),
+    colors: SimpleListItemColors = SimpleListItemColors.dark(),
     metrics: SimpleListItemMetrics = SimpleListItemMetrics.fullWidth(),
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
@@ -63,8 +64,8 @@ public fun SimpleListItemColors.Companion.light(
 public fun SimpleListItemColors.Companion.dark(
     background: Color = Color.Unspecified,
     backgroundActive: Color = background,
-    backgroundSelected: Color = IntUiLightTheme.colors.gray(2),
-    backgroundSelectedActive: Color = IntUiLightTheme.colors.blue(2),
+    backgroundSelected: Color = IntUiDarkTheme.colors.gray(2),
+    backgroundSelectedActive: Color = IntUiDarkTheme.colors.blue(2),
     content: Color = Color.Unspecified,
     contentActive: Color = Color.Unspecified,
     contentSelected: Color = Color.Unspecified,
