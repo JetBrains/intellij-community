@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPosixApi
@@ -13,8 +12,11 @@ import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTION
 import org.jetbrains.plugins.terminal.TerminalStartupEelContext
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION
@@ -106,8 +108,9 @@ internal class WslShellExecCommand(
       return null
     }
 
+    @OptIn(LowLevelLocalMachineAccess::class)
     internal fun isWslCommand(command: List<String>): Boolean {
-      if (SystemInfo.isWindows) {
+      if (!IdeProductMode.isFrontend && OS.CURRENT == OS.Windows) {
         val exePath = command.getOrNull(0) ?: return false
         val exeFileName = PathUtil.getFileName(exePath)
         return exeFileName.equals("wsl.exe", true) || exeFileName.equals("wsl", true)
