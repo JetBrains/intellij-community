@@ -7,8 +7,11 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationServic
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
@@ -32,8 +35,8 @@ import kotlin.math.max
 private val GROUP = EventLogGroup("duplicating.plugin.ids.in.ide.plugin.repositories", 1)
 
 private val IS_ON_MARKETPLACE_FIELD = EventFields.Boolean("is_on_marketplace")
-private val NUMBER_OF_REPOSITORIES_FIELD = EventFields.Int("number_of_repositories")
-private val NUMBER_OF_DIFFERENT_BASE_URLS_OF_REPOSITORIES_FIELD = EventFields.Int("number_of_different_base_urls_of_repositories")
+private val NUMBER_OF_REPOSITORIES_FIELD = RoundingIntEventField("number_of_repositories")
+private val NUMBER_OF_DIFFERENT_BASE_URLS_OF_REPOSITORIES_FIELD = RoundingIntEventField("number_of_different_base_urls_of_repositories")
 private val FOUND_DUPLICATING_PLUGIN_EVENT = GROUP.registerVarargEvent("found.duplicating.plugin.id",
                                                                        IS_ON_MARKETPLACE_FIELD,
                                                                        EventFields.PluginInfo,
@@ -69,6 +72,21 @@ internal class DuplicatingPluginIdStateCollector : ApplicationUsagesCollector() 
                                             NUMBER_OF_REPOSITORIES_FIELD.with(it.pluginHostsCount),
                                             NUMBER_OF_DIFFERENT_BASE_URLS_OF_REPOSITORIES_FIELD.with(it.strippedPluginHostsCount))
     }.toSet()
+  }
+}
+
+private class RoundingIntEventField(override val name: String) : PrimitiveEventField<Int>() {
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, roundNumber(value))
+  }
+
+  private fun roundNumber(value: Int): Int {
+    if (value < 5) return value
+    return StatisticsUtil.roundToPowerOfTwo(value)
   }
 }
 
