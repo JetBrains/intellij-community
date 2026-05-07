@@ -69,7 +69,7 @@ object LogPacker {
         coroutineContext.ensureActive()
 
         val filter = mutableSetOf<String>()  // temporary guard for recursive TBE provider
-        LogProvider.EP.extensionList.forEach { logProvider ->
+        LogProvider.EP.forEachExtensionSafe { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
             if (!filter.add(entry.entryName)) return@forEach
             entry.files.forEach { path ->
