@@ -539,6 +539,7 @@ private fun createAndroidPluginLayout(
     //spec.withModule("intellij.android.app-quality-insights.play-vitals.model", "android.jar")
     //spec.withModule("intellij.android.app-quality-insights.play-vitals.ide", "android.jar")
     //spec.withModule("intellij.android.app-quality-insights.play-vitals.view", "android.jar")
+    spec.withModule("intellij.android.app-publishing", "android.jar")
     spec.withModule("intellij.android.build-attribution", "android.jar")
     spec.withModule("intellij.android.compose-common", "android.jar")
     spec.withModule("intellij.android.device", "android.jar")
