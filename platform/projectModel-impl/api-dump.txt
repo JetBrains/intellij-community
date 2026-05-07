@@ -140,11 +140,10 @@ f:com.intellij.openapi.components.impl.ModulePathMacroManager
 - computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - s:createInstance(java.util.function.Supplier,java.util.function.Supplier):com.intellij.openapi.components.impl.ModulePathMacroManager
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
-c:com.intellij.openapi.components.impl.ProjectPathMacroManager
+f:com.intellij.openapi.components.impl.ProjectPathMacroManager
 - com.intellij.openapi.components.PathMacroManager
 - <init>(com.intellij.openapi.project.Project):V
-- p:computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
-- s:createInstance(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):com.intellij.openapi.components.impl.ProjectPathMacroManager
+- sf:createInstance(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):com.intellij.openapi.components.impl.ProjectPathMacroManager
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
 com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:COMPONENT_STORE_LOADING_ENABLED:com.intellij.openapi.util.Key
