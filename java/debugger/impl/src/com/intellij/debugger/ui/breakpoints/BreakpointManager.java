@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.LightOrRealThreadInfo;
 import com.intellij.debugger.engine.RealThreadInfo;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -19,6 +20,7 @@ import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -693,8 +695,15 @@ public class BreakpointManager {
     myLogMessageDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
-    myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess);
+  void beforeLoggingBreakpoint(@NotNull SuspendContextImpl context) {
+    myLogMessageDispatcher.getMulticaster().beforeLoggingBreakpoint(context);
+  }
+
+  void multicastLogMessage(@NotNull Breakpoint<?> breakpoint,
+                           @NotNull String message,
+                           @NotNull DebugProcessImpl debugProcess,
+                           @Nullable List<StackFrameItem> stack) {
+    myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess, stack);
     XDebugSession session = debugProcess.getSession().getXDebugSession();
     XBreakpointManagerImpl manager = XDebuggerManager.getInstance(myProject).getBreakpointManager() instanceof XBreakpointManagerImpl managerImpl ? managerImpl : null;
     if (session != null && manager != null) {

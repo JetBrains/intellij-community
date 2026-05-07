@@ -2,6 +2,8 @@
 package com.intellij.debugger.ui.breakpoints
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.memory.utils.StackFrameItem
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventListener
 
@@ -9,6 +11,11 @@ import java.util.EventListener
  * Listener for breakpoint messages: evaluate and log, stack trace, "breakpoint hit", etc.
  */
 @ApiStatus.Internal
-fun interface BreakpointLogMessageListener : EventListener {
-  fun onLogMessage(breakpoint: Breakpoint<*>, message: String, debugProcess: DebugProcessImpl)
+interface BreakpointLogMessageListener : EventListener {
+  /** Note that it's called only for non-instrumented logging breakpoints. */
+  fun beforeLoggingBreakpoint(context: SuspendContextImpl) {
+  }
+
+  fun onLogMessage(breakpoint: Breakpoint<*>, message: String, debugProcess: DebugProcessImpl, stack: List<StackFrameItem?>?) {
+  }
 }
