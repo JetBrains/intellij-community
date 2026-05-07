@@ -359,7 +359,6 @@ public abstract class TodoTreeBuilder implements Disposable {
     //if (!(file instanceof LightVirtualFile) && file.getParent() != null) {
     if (!(file instanceof LightVirtualFile)) {
       myDirtyFileSet.add(file);
-      clearRemoteTodosCache(file);
     }
   }
 

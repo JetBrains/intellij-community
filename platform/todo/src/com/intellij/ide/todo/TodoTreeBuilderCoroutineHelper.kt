@@ -31,8 +31,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.client.durable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.toList
@@ -48,6 +50,7 @@ private val LOG = logger<TodoTreeBuilderCoroutineHelper>()
 
 internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBuilder) : Disposable {
   private val scope = CoroutineScope(SupervisorJob())
+  private var remoteCacheRefreshJob: Job? = null
 
   init {
     Disposer.register(treeBuilder, this)
@@ -108,13 +111,35 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
     scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
-
-
       readActionBlocking {
         files.asSequence()
           .filter { it.isValid }
           .forEach { treeBuilder.markFileAsDirty(it) }
 
+        treeBuilder.updateVisibleTree()
+      }
+
+      if (shouldUseSplitTodo()) {
+        scheduleRemoteCacheRefresh(files)
+      }
+    }
+  }
+
+  private fun scheduleRemoteCacheRefresh(files: List<VirtualFile>) {
+    remoteCacheRefreshJob?.cancel()
+    remoteCacheRefreshJob = scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
+      val filter = treeBuilder.todoTreeStructure.todoFilter
+      for (file in files) {
+        if (!file.isValid) continue
+        runCatching {
+          treeBuilder.cacheRemoteTodos(file, findAllTodosSuspend(treeBuilder.project, file, filter))
+        }.onFailure { e ->
+          if (e is CancellationException) throw e
+          LOG.warn("Failed to retrieve TODOs for ${file.path}", e)
+          treeBuilder.clearRemoteTodosCache(file)
+        }
+      }
+      readActionBlocking {
         treeBuilder.updateVisibleTree()
       }
     }
