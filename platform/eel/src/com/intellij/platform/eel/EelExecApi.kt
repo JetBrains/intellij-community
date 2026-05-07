@@ -340,6 +340,11 @@ sealed interface EelExecApi {
      */
     val filePrefix: String get() = ""
 
+    /**
+     * Create an entrypoint executable file with an exact name.
+     */
+    val exactName: String? get() = null
+
     val lifecycle: ExternalCliLifecycle get() = ExternalCliLifecycle.Default
 
     /**

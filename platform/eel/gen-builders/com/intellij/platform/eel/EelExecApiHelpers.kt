@@ -332,6 +332,8 @@ object EelExecApiHelpers {
   ) : OwnedBuilder<ExternalCliEntrypoint> {
     private var envVariablesToCapture: List<String> = emptyList()
 
+    private var exactName: String? = null
+
     private var filePrefix: String = ""
 
     private var lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Default
@@ -355,6 +357,13 @@ object EelExecApiHelpers {
     }
 
     /**
+     * Create an entrypoint executable file with an exact name.
+     */
+    fun exactName(arg: String?): CreateExternalCli = apply {
+      this.exactName = arg
+    }
+
+    /**
      * Prefix for an entrypoint executable file that will be created. Since the path to the entrypoint is passed to some command-line tool,
      * using a self-explaining prefix makes the command line more readable and easier to debug.
      */
@@ -375,6 +384,7 @@ object EelExecApiHelpers {
       owner.createExternalCli(
         ExternalCliOptionsImpl(
           envVariablesToCapture = envVariablesToCapture,
+          exactName = exactName,
           filePrefix = filePrefix,
           lifecycle = lifecycle,
         )

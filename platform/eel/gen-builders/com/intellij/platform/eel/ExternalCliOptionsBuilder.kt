@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 class ExternalCliOptionsBuilder {
   private var envVariablesToCapture: List<String> = emptyList()
 
+  private var exactName: String? = null
+
   private var filePrefix: String = ""
 
   private var lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Default
@@ -36,6 +38,13 @@ class ExternalCliOptionsBuilder {
   }
 
   /**
+   * Create an entrypoint executable file with an exact name.
+   */
+  fun exactName(arg: String?): ExternalCliOptionsBuilder = apply {
+    this.exactName = arg
+  }
+
+  /**
    * Prefix for an entrypoint executable file that will be created. Since the path to the entrypoint is passed to some command-line tool,
    * using a self-explaining prefix makes the command line more readable and easier to debug.
    */
@@ -50,6 +59,7 @@ class ExternalCliOptionsBuilder {
   fun build(): ExternalCliOptions =
     ExternalCliOptionsImpl(
       envVariablesToCapture = envVariablesToCapture,
+      exactName = exactName,
       filePrefix = filePrefix,
       lifecycle = lifecycle,
     )
@@ -58,6 +68,7 @@ class ExternalCliOptionsBuilder {
 @GeneratedBuilder.Result
 internal class ExternalCliOptionsImpl(
   override val envVariablesToCapture: List<String>,
+  override val exactName: String?,
   override val filePrefix: String,
   override val lifecycle: EelExecApi.ExternalCliLifecycle,
 ) : ExternalCliOptions
