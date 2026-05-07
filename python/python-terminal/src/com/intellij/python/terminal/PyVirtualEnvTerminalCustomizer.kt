@@ -7,12 +7,15 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.PySdkUtil
@@ -24,7 +27,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.nio.file.Path
-import javax.swing.JCheckBox
 import kotlin.io.path.isExecutable
 
 
@@ -178,27 +180,15 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 
   @ApiStatus.Internal
-  override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
-    val settings = PyVirtualEnvTerminalSettings.getInstance(project)
-
-    var myCheckbox: JCheckBox = JCheckBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text"))
-
-    override fun createComponent() = myCheckbox
-
-    override fun isModified() = myCheckbox.isSelected != settings.virtualEnvActivate
-
-    override fun apply() {
-      settings.virtualEnvActivate = myCheckbox.isSelected
-    }
-
-    override fun reset() {
-      myCheckbox.isSelected = settings.virtualEnvActivate
+  override fun getConfigurable(project: Project): UnnamedConfigurable = object : UiDslUnnamedConfigurable.Simple() {
+    override fun Panel.createContent() {
+      val settings = PyVirtualEnvTerminalSettings.getInstance(project)
+      row {
+        checkBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text")).bindSelected(settings::virtualEnvActivate)
+      }
     }
   }
-
-
 }
-
 
 @ApiStatus.Internal
 internal class SettingsState {
