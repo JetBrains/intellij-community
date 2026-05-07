@@ -248,7 +248,7 @@ private class RunWidgetButtonLook : HeaderToolbarButtonLook(
     val color = if (isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND else JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
 
     return when (state) {
-      ActionButtonComponent.NORMAL -> color
+      ActionButtonComponent.NORMAL, ActionButtonComponent.SELECTED -> color
       ActionButtonComponent.PUSHED -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.PRESSED_BACKGROUND, color)
       else -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.HOVER_BACKGROUND, color)
     }

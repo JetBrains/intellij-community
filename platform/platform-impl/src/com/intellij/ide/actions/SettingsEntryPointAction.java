@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginManagementPolicy;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -84,6 +86,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -521,7 +524,9 @@ public final class SettingsEntryPointAction extends ActionGroup
         Dimension size = button.getSize();
         JBInsets.removeFrom(size, insets);
 
-        g2.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(button.getPopState() != ActionButtonComponent.NORMAL));
+        int state = button.getPopState();
+        boolean hoverBackground = state == ActionButtonComponent.POPPED || state == ActionButtonComponent.PUSHED;
+        g2.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(hoverBackground));
         g2.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
 
         g2.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
@@ -534,6 +539,11 @@ public final class SettingsEntryPointAction extends ActionGroup
                        (height - myFirstIcon.getIconHeight()) / 2);
         look.paintIcon(g2, button, mySecondIcon, insets.left + offset + iconSize + offset + (iconSize - mySecondIcon.getIconWidth()) / 2,
                        (height - mySecondIcon.getIconHeight()) / 2);
+
+        if (button.isFocusOwner()) {
+          DarculaNewUIUtil.INSTANCE.drawRoundedRectangle(g2, new Rectangle(insets.left, insets.top, size.width, size.height),
+                                                         JBUI.CurrentTheme.Focus.focusColor(), radius, DarculaUIUtil.BW.getFloat());
+        }
       }
       finally {
         g2.dispose();

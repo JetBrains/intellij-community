@@ -1858,6 +1858,14 @@
       <action id="MergeMenuWithWindowTitleAction" class="com.intellij.ide.actions.MergeMenuWithWindowTitleAction"/>
     </group>
 
+    <action id="FocusMainToolbar" class="com.intellij.openapi.wm.impl.headertoolbar.FocusMainToolbarAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt PAGE_UP"/>
+      <keyboard-shortcut keymap="Visual Studio" first-keystroke="alt PAGE_UP" remove="true"/>
+      <keyboard-shortcut keymap="Visual Studio OSX" first-keystroke="alt PAGE_UP" remove="true"/>
+      <keyboard-shortcut keymap="Visual Studio for Mac" first-keystroke="alt PAGE_UP" remove="true"/>
+      <keyboard-shortcut keymap="Xcode" first-keystroke="alt PAGE_UP" remove="true"/>
+    </action>
+
     <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction"
             internal="true"/>
 

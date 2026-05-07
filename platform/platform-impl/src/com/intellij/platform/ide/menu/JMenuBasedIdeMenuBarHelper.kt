@@ -101,8 +101,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     val menuBarComponent = menuBar.component
     if (menuBarComponent is MergedMainMenu) {
       val mainMenuWithButton = menuBarComponent.parent as? MainMenuWithButton
-      if (mainMenuWithButton?.mainMenuButton?.button?.isShowing == true) {
-        mainMenuWithButton.mainMenuButton.expandableMenu?.switchState(selectOnlyHeaderMenu = true)
+      if (mainMenuWithButton?.mainMenuButton?.activateTopLevelMenu() == true) {
         return
       }
     }

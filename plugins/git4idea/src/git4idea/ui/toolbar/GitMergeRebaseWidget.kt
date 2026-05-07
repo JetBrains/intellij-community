@@ -74,7 +74,7 @@ private class ColoredActionButtonLook : HeaderToolbarButtonLook() {
     }
 
     return when (state) {
-      ActionButtonComponent.NORMAL -> buttonColor
+      ActionButtonComponent.NORMAL, ActionButtonComponent.SELECTED -> buttonColor
       ActionButtonComponent.PUSHED -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.PRESSED_BACKGROUND, buttonColor)
       else -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.HOVER_BACKGROUND, buttonColor)
     }

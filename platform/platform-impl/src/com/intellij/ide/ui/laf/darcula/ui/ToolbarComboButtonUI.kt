@@ -3,6 +3,11 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -19,8 +24,9 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.RenderingHints
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -31,6 +37,8 @@ private const val BEFORE_CHEVRON_GAP = 2
 internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
   private val clickListener = MyClickListener()
   private val hoverListener = MyHoverListener()
+  private val focusListener = MyFocusAdapter()
+  private var showPopupAction: AnAction? = null
 
   companion object {
     // JvmStatic for Swing - used as a component UI.
@@ -50,14 +58,31 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     tryUpdateHtmlRenderer(widget, widget.text)
     hoverListener.addTo(widget)
     clickListener.installOn(widget)
+    widget.addFocusListener(focusListener)
+    installKeyboardActions(widget)
   }
 
   override fun uninstallUI(c: JComponent) {
     val widget = c as ToolbarComboButton
+    uninstallKeyboardActions(widget)
     widget.removePropertyChangeListener(this)
     tryUpdateHtmlRenderer(widget, "")
     hoverListener.removeFrom(widget)
     clickListener.uninstall(widget)
+    widget.removeFocusListener(focusListener)
+  }
+
+  private fun installKeyboardActions(widget: ToolbarComboButton) {
+    showPopupAction = DumbAwareAction.create { e ->
+      widget.doClick(e.inputEvent?.modifiersEx ?: 0)
+    }.also {
+      it.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_DOWN, KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), widget)
+    }
+  }
+
+  private fun uninstallKeyboardActions(widget: ToolbarComboButton) {
+    showPopupAction?.unregisterCustomShortcutSet(widget)
+    showPopupAction = null
   }
 
   override fun paint(g: Graphics, c: JComponent) {
@@ -190,6 +215,10 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
         val hoverBackground = if (ProjectWindowCustomizerService.getInstance().isActive()) combo.transparentHoverBackground else combo.hoverBackground
         hoverBackground?.let(innerRectPainter)
       }
+      if (combo.isFocusOwner) {
+        DarculaNewUIUtil.drawRoundedRectangle(g2, innerRect, JBUI.CurrentTheme.Focus.focusColor(),
+                                              JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float, DarculaUIUtil.BW.float)
+      }
     }
     finally {
       g2.dispose()
@@ -199,11 +228,7 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
   private class MyClickListener: ClickListener() {
     override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
       (e.component as? ToolbarComboButton)?.let { combo ->
-        if (combo.isEnabled) {
-          val ae = ActionEvent(combo, 0, null, System.currentTimeMillis(), e.getModifiersEx())
-          combo.model.getActionListeners().forEach { listener: ActionListener -> listener.actionPerformed(ae) }
-          return true
-        }
+        return combo.doClick(e.modifiersEx)
       }
       return false
     }
@@ -219,5 +244,15 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     }
 
     override fun mouseMoved(c: Component, x: Int, y: Int) {}
+  }
+
+  private class MyFocusAdapter : FocusAdapter() {
+    override fun focusGained(e: FocusEvent?) {
+      e?.component?.repaint()
+    }
+
+    override fun focusLost(e: FocusEvent?) {
+      e?.component?.repaint()
+    }
   }
 }

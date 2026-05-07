@@ -4,6 +4,8 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -30,6 +32,8 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 @ApiStatus.Internal
 public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
@@ -45,7 +49,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   private static final @NotNull JBColor COLOR = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground());
   private static final Object HOVER_PROP = "MainToolbarComboBoxButtonUI.isHovered";
 
-  private final HoverListener listener = new HoverListener() {
+  private final HoverListener hoverListener = new HoverListener() {
 
     @Override
     public void mouseEntered(@NotNull Component component, int x, int y) {
@@ -65,6 +69,18 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     public void mouseMoved(@NotNull Component component, int x, int y) {}
   };
 
+  private final FocusAdapter focusListener = new FocusAdapter() {
+    @Override
+    public void focusGained(FocusEvent e) {
+      e.getComponent().repaint();
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+      e.getComponent().repaint();
+    }
+  };
+
   @Override
   public void installUI(JComponent c) {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
@@ -75,13 +91,15 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     c.setBorder(border);
     c.setOpaque(true);
 
-    listener.addTo(c);
+    hoverListener.addTo(c);
+    c.addFocusListener(focusListener);
   }
 
   @Override
   public void uninstallUI(JComponent c) {
     super.uninstallUI(c);
-    listener.removeFrom(c);
+    hoverListener.removeFrom(c);
+    c.removeFocusListener(focusListener);
   }
 
   @Override
@@ -90,6 +108,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
 
     if (c.isOpaque()) paintBackground(g, button, button.getBackground());
     if (button.isEnabled() && button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintHover(g, button);
+    if (button.isFocusOwner()) paintFocusBorder(g, button);
     paintContents(g, button);
   }
 
@@ -187,5 +206,11 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     } finally {
       g2.dispose();
     }
+  }
+
+  private static void paintFocusBorder(Graphics g, ComboBoxAction.ComboBoxButton button) {
+    DarculaNewUIUtil.INSTANCE.drawRoundedRectangle(g, button.getVisibleRect(), JBUI.CurrentTheme.Focus.focusColor(),
+                                                   JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().getFloat(),
+                                                   DarculaUIUtil.BW.getFloat());
   }
 }

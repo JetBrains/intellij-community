@@ -6,10 +6,12 @@ import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
@@ -26,6 +28,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.ToolbarWidthCalculationEvent
 import com.intellij.openapi.wm.impl.headertoolbar.ToolbarWidthCalculationListener
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.openapi.wm.impl.headertoolbar.installHeaderToolbarFocusTraversalPolicy
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScreenUtil
@@ -48,8 +51,10 @@ import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Color
+import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
+import java.awt.FocusTraversalPolicy
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GridBagConstraints
@@ -58,6 +63,7 @@ import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -105,6 +111,10 @@ internal class ToolbarFrameHeader(
     isCompactHeader = isAlwaysCompact || isCompactHeader()
 
     mainMenuWithButton.mainMenuButton.expandableMenu = expandableMenu
+    mainMenuButtonComponent.isFocusable = true
+    DumbAwareAction.create {
+      mainMenuWithButton.mainMenuButton.activateTopLevelMenu()
+    }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_SPACE, KeyEvent.VK_ENTER), mainMenuButtonComponent)
     layout = object : GridBagLayout() {
       override fun preferredLayoutSize(parent: Container?): Dimension {
         val size = super.preferredLayoutSize(parent)
@@ -432,6 +442,7 @@ internal class ToolbarFrameHeader(
       add(mainMenuWithButton, gb.next().fillCellVertically().weighty(1.0))
       add(toolbarPlaceholder, gb.next().weightx(1.0).fillCell())
       isVisible = ShowMode.getCurrent() != ShowMode.MENU
+      installHeaderToolbarFocusTraversalPolicy(this, ToolbarFrameHeaderFocusTraversalPolicy())
     }
 
     val result = NonOpaquePanel(CardLayout()).apply {
@@ -441,6 +452,46 @@ internal class ToolbarFrameHeader(
     }
 
     return result
+  }
+
+  internal fun getMenuButtonFocusTarget(): Component? {
+    return mainMenuButtonComponent.takeIf { it.isShowing && it.isVisible && it.isEnabled && it.isFocusable }
+  }
+
+  private inner class ToolbarFrameHeaderFocusTraversalPolicy : FocusTraversalPolicy() {
+    override fun getComponentAfter(aContainer: Container, aComponent: Component): Component? {
+      return if (aComponent === mainMenuButtonComponent) {
+        getMainToolbarFocusTarget(forward = true) ?: getMenuButtonFocusTarget()
+      }
+      else {
+        getMenuButtonFocusTarget() ?: getMainToolbarFocusTarget(forward = true)
+      }
+    }
+
+    override fun getComponentBefore(aContainer: Container, aComponent: Component): Component? {
+      return if (aComponent === mainMenuButtonComponent) {
+        getMainToolbarFocusTarget(forward = false) ?: getMenuButtonFocusTarget()
+      }
+      else {
+        getMenuButtonFocusTarget() ?: getMainToolbarFocusTarget(forward = false)
+      }
+    }
+
+    override fun getFirstComponent(aContainer: Container): Component? {
+      return getMainToolbarFocusTarget(forward = true) ?: getMenuButtonFocusTarget()
+    }
+
+    override fun getLastComponent(aContainer: Container): Component? {
+      return getMenuButtonFocusTarget() ?: getMainToolbarFocusTarget(forward = false)
+    }
+
+    // Prevents from being focused automatically
+    override fun getDefaultComponent(aContainer: Container): Component? = null
+
+    private fun getMainToolbarFocusTarget(forward: Boolean): Component? {
+      val items = toolbar?.getFocusableItems().orEmpty()
+      return if (forward) items.firstOrNull() else items.lastOrNull()
+    }
   }
 
   private fun updateHeaderContentBorder(iconRightPosition: Boolean) {

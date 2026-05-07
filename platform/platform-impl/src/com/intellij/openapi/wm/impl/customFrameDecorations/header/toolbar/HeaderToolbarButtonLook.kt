@@ -2,6 +2,8 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.ScalableIcon
@@ -14,6 +16,7 @@ import com.intellij.ui.icons.RgbImageFilterSupplier
 import com.intellij.ui.icons.getDisabledIcon
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.GrayFilter
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.ApiStatus
@@ -35,12 +38,12 @@ val lightThemeDarkHeaderDisableFilter: RgbImageFilterSupplier = object : RgbImag
 fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
   if (ProjectWindowCustomizerService.getInstance().isActive()) {
     return when (state) {
-      ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
+      ActionButtonComponent.NORMAL, ActionButtonComponent.SELECTED -> if (component.isBackgroundSet) component.background else null
       else -> JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
     }
   }
   return when (state) {
-    ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
+    ActionButtonComponent.NORMAL, ActionButtonComponent.SELECTED -> if (component.isBackgroundSet) component.background else null
     ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.Icon.pressedBackground")
                                     ?: UIManager.getColor("ActionButton.pressedBackground")
     else -> UIManager.getColor("MainToolbar.Icon.hoverBackground")
@@ -56,6 +59,18 @@ open class HeaderToolbarButtonLook(
   }
 
   override fun getStateBackground(component: JComponent, state: Int): Color? = getHeaderBackgroundColor(component, state)
+
+  override fun paintBorder(g: Graphics, component: JComponent?, state: Int) {
+    if (component?.isFocusOwner != true) {
+      return
+    }
+
+    val rect = Rectangle(component.size)
+    JBInsets.removeFrom(rect, component.insets)
+    DarculaNewUIUtil.drawRoundedRectangle(
+      g, rect, JBUI.CurrentTheme.Focus.focusColor(), buttonArc.float, DarculaUIUtil.BW.float
+    )
+  }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
 

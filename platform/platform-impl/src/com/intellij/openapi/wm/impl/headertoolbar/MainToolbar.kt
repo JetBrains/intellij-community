@@ -69,6 +69,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.asDisposable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -145,6 +146,7 @@ class MainToolbar(
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
   private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
+  private val focusSupport = MainToolbarFocusSupport(toolbar = this, parentDisposable = coroutineScope.asDisposable())
 
   init {
     this.background = background
@@ -155,6 +157,7 @@ class MainToolbar(
     else {
       DefaultMainToolbarFlavor
     }
+    focusSupport.install()
     showingScope("Main toolbar update") {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
         updateToolbarActions()
@@ -193,6 +196,10 @@ class MainToolbar(
     return components.filterIsInstance<ActionToolbar>().sumOf { it.component.preferredSize.width} + 4 * JBUI.scale(layoutGap)
   }
 
+  internal fun focusFirstItem() = focusSupport.focusFirstItem()
+
+  internal fun getFocusableItems(): List<Component> = focusSupport.getFocusableAndEnabledItems()
+
   private fun updateToolbarActions() {
     for (component in components) {
       if (component is ActionToolbarImpl) {
@@ -224,6 +231,7 @@ class MainToolbar(
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
       }
+      focusSupport.registerComponent(this@MainToolbar)
 
       customizationGroupPopupHandler?.let { installClickListener(popupHandler = it, customTitleBar = customTitleBar) }
       widgets

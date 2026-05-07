@@ -39,6 +39,16 @@ open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractTool
 
   override fun getLeftGap(): Int = insets.left + margin.left
 
+  internal fun doClick(modifiersEx: Int = 0): Boolean {
+    if (!isEnabled) {
+      return false
+    }
+
+    val ae = ActionEvent(this@ToolbarComboButton, ActionEvent.ACTION_PERFORMED, null, System.currentTimeMillis(), modifiersEx)
+    model.getActionListeners().forEach { l -> l.actionPerformed(ae) }
+    return true
+  }
+
   override fun getAccessibleContext(): AccessibleContext? {
     if (accessibleContext == null) {
       accessibleContext = object : AccessibleJComponent(), AccessibleAction {
@@ -64,12 +74,7 @@ open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractTool
           }
 
         override fun doAccessibleAction(i: Int): Boolean {
-          if (i == 0) {
-            val ae = ActionEvent(this@ToolbarComboButton, 0, null, System.currentTimeMillis(), 0)
-            model.getActionListeners().forEach { l -> l.actionPerformed(ae) }
-            return true
-          }
-          return false
+          return i == 0 && doClick()
         }
       }
     }

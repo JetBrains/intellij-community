@@ -164,6 +164,13 @@ class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.Gener
     button.update() // Update shortcut in tooltip
   }
 
+  internal fun activateTopLevelMenu(): Boolean {
+    val expandableMenu = expandableMenu ?: return false
+    if (!button.isShowing) return false
+    expandableMenu.switchState(selectOnlyHeaderMenu = true)
+    return true
+  }
+
   @ApiStatus.Internal
   inner class ShowMenuAction(icon: Icon, val getItemToSelect: () -> Int) : LightEditCompatible, DumbAwareAction(IdeBundle.messagePointer("main.toolbar.menu.button"), icon) {
 
