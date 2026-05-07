@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
@@ -226,6 +227,7 @@ internal object ClassLookupElementFactory {
 
         return withClassifierSymbolInfo(samInterfaceSymbol, element)
             .withTypeText(samInterfaceSymbol.defaultType.renderVerbose())
+            .withIcon(KotlinIcons.FUNCTION)
     }
 }
 

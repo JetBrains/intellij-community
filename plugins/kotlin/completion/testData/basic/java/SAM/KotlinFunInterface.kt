@@ -4,4 +4,4 @@ fun interface MyInterface {
 
 var a: MyInterface = <caret>
 
-// EXIST: {"lookupString":"MyInterface","itemText":"MyInterface","tailText":" {...} (function: () -> Unit) (<root>)","typeText":"MyInterface"}
+// EXIST: {"lookupString":"MyInterface","itemText":"MyInterface","tailText":" {...} (function: () -> Unit) (<root>)","typeText":"MyInterface", "icon":"Function"}
