@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -38,6 +39,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -158,10 +160,8 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
           if (!plugin.isBundled) {
             downloader.setOldFile(plugin.pluginPath)
           }
+          val updateFile = downloadPluginUpdateToTempFile(downloader) ?: return@itemStep
           val updatePathInAutoUpdateDir = withContext(Dispatchers.IO) {
-            val updateFile = coroutineToIndicator {
-              downloader.tryDownloadPlugin(ProgressManager.getInstanceOrNull()?.progressIndicator)
-            }
             val autoUpdateDir = PluginAutoUpdateRepository.getAutoUpdateDirPath()
             val updatePathInAutoUpdatesDir = autoUpdateDir.resolve(updateFile.fileName)
             if (!autoUpdateDir.exists()) {
@@ -228,6 +228,26 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
         serviceIfCreated<PluginAutoUpdateService>()?.dropDownloadedUpdates()
       }
     }
+  }
+}
+
+internal suspend fun downloadPluginUpdateToTempFile(downloader: PluginDownloader): Path? {
+  return try {
+    withContext(Dispatchers.IO) {
+      coroutineToIndicator {
+        downloader.tryDownloadPlugin(ProgressManager.getInstanceOrNull()?.progressIndicator)
+      }
+    }
+  }
+  catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: IOException) {
+    LOG.info("Failed to download update for plugin ${downloader.pluginName}", e)
+    null
   }
 }
 
