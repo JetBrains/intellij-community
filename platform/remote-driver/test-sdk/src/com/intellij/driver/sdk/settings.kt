@@ -32,11 +32,11 @@ interface UpdateSettings {
 }
 
 fun Driver.setOpenNewProjectsInSameWindow() {
-  updateGeneralSettings { setConfirmOpenNewProject(1) }
+  updateGeneralSettings(RdTarget.BACKEND) { setConfirmOpenNewProject(1) }
 }
 
 fun Driver.setOpenNewProjectsInNewWindow() {
-  updateGeneralSettings { setConfirmOpenNewProject(0) }
+  updateGeneralSettings(RdTarget.BACKEND) { setConfirmOpenNewProject(0) }
 }
 
 fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT): AdvancedSettingsRef {
@@ -58,6 +58,6 @@ fun Driver.turnOffConfirmExit() {
   }
 }
 
-fun Driver.updateGeneralSettings(settingToChange: GeneralSettingsRef.() -> Unit) {
-  service(GeneralSettingsRef::class).apply { settingToChange() }
+fun Driver.updateGeneralSettings(rdTarget: RdTarget = RdTarget.DEFAULT, settingToChange: GeneralSettingsRef.() -> Unit) {
+  service(GeneralSettingsRef::class, rdTarget).apply { settingToChange() }
 }
