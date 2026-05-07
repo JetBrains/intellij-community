@@ -148,7 +148,7 @@ object ExceptionAutoReportUtil {
     // if level is ALL or NONE, then we report exceptions based on regular rules
     val level = getForcedAutoReportLevel()
     if (level == ForcedReportLevel.FREEZES && !isFreeze(throwable)) {
-      thisLogger().debug("Ignoring it as not a freeze: ${throwable.javaClass}. Only freezes are allowed to be auto-reported.")
+      thisLogger().debug("Ignoring it as not a freeze: ${getThrowableFqn(throwable)}. Only freezes are allowed to be auto-reported.")
       return null
     }
 
@@ -179,7 +179,15 @@ object ExceptionAutoReportUtil {
            && ApplicationManager.getApplication().isEAP
   }
 
-  fun isFreeze(throwable: Throwable): Boolean = throwable is Freeze
+  fun isFreeze(throwable: Throwable): Boolean {
+    return throwable is Freeze
+           || throwable is RemoteSerializedThrowable && throwable.classFqn == Freeze::class.qualifiedName
+  }
+
+  fun getThrowableFqn(throwable: Throwable): String? {
+    if (throwable is RemoteSerializedThrowable) return throwable.classFqn
+    return throwable::class.qualifiedName
+  }
 
   @TestOnly
   fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(emptyList()), null, emptyList())
