@@ -4,12 +4,16 @@ package com.intellij.codeInspection.inferNullity;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -56,21 +60,20 @@ import com.intellij.util.Query;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.SwingUtilities;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.nj2k.J2KNullityInferrer
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
-  public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
   private int numAnnotationsAdded;
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<>();
-  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<>();
+  private final Map<SmartPsiElementPointer<? extends PsiModifierListOwner>, InferredNullability> inferred = new LinkedHashMap<>();
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 
@@ -172,62 +175,18 @@ public class NullityInferrer {
     while (prevNumAnnotationsAdded < numAnnotationsAdded && pass < MAX_PASSES);
   }
 
-  @TestOnly
-  public void apply(final @NotNull Project project) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-      annotateNullable(manager, pointer.getElement());
-    }
-
-    for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-      annotateNotNull(manager, pointer.getElement());
-    }
-
-    if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
-      throw new RuntimeException(NOTHING_FOUND_TO_INFER);
-    }
-  }
-
   public static void nothingFoundMessage(final Project project) {
     SwingUtilities.invokeLater(
       () -> Messages.showInfoMessage(project, JavaBundle.message("dialog.message.no.places.found.to.infer.nullable.notnull"),
                                      JavaBundle.message("dialog.title.infer.nullity.results")));
   }
 
-  private static boolean annotateNotNull(@NotNull NullableNotNullManager manager,
-                                         final @Nullable PsiModifierListOwner element) {
-    if (element == null ||
-        element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
-      return false;
-    }
-    invoke(element, manager.getDefaultAnnotation(Nullability.NOT_NULL, element), manager.getNullables());
-    return true;
-  }
-
-  private static boolean annotateNullable(@NotNull NullableNotNullManager manager,
-                                          final @Nullable PsiModifierListOwner element) {
-    if (element == null) return false;
-    invoke(element, manager.getDefaultAnnotation(Nullability.NULLABLE, element), manager.getNotNulls());
-    return true;
-  }
-
-  private static void invoke(final @NotNull PsiModifierListOwner element,
-                             final @NotNull String fqn, final @NotNull List<String> toRemove) {
-    new AddAnnotationPsiFix(fqn, element, ArrayUtil.toStringArray(toRemove)).applyFix();
-  }
-
   public int getCount() {
-    return myNotNullSet.size() + myNullableSet.size();
+    return inferred.size();
   }
 
   public static boolean apply(@NotNull NullableNotNullManager manager, UsageInfo info) {
-    if (info instanceof NullableUsageInfo) {
-      return annotateNullable(manager, (PsiModifierListOwner)info.getElement());
-    }
-    if (info instanceof NotNullUsageInfo) {
-      return annotateNotNull(manager, (PsiModifierListOwner)info.getElement());
-    }
-    return false;
+    return info instanceof InferredNullability inferredNullability && inferredNullability.apply(manager);
   }
 
   private boolean shouldIgnore(@NotNull PsiModifierListOwner element) {
@@ -247,12 +206,7 @@ public class NullityInferrer {
 
   private void registerAnnotation(@NotNull PsiModifierListOwner declaration, boolean isNullable) {
     final SmartPsiElementPointer<PsiModifierListOwner> declarationPointer = myPointerManager.createSmartPsiElementPointer(declaration);
-    if (isNullable) {
-      myNullableSet.add(declarationPointer);
-    }
-    else {
-      myNotNullSet.add(declarationPointer);
-    }
+    inferred.put(declarationPointer, isNullable ? new NullableInferred(declaration) : new NotNullInferred(declaration));
     numAnnotationsAdded++;
   }
 
@@ -265,59 +219,85 @@ public class NullityInferrer {
     }
   }
 
-  private static final class NullableUsageInfo extends UsageInfo {
-    private NullableUsageInfo(@NotNull PsiElement element) {
+  @NotNullByDefault
+  private static final class NullableInferred extends InferredNullability {
+    NullableInferred(PsiModifierListOwner element) {
       super(element);
+    }
+
+    @Override
+    public boolean apply(NullableNotNullManager manager) {
+      PsiModifierListOwner element = (PsiModifierListOwner)getElement();
+      if (element == null) return false;
+      invoke(element, AddAnnotationModCommandAction.createAddNullableFix(element));
+      return true;
     }
   }
 
-  private static final class NotNullUsageInfo extends UsageInfo {
-    private NotNullUsageInfo(@NotNull PsiElement element) {
+  @NotNullByDefault
+  private static final class NotNullInferred extends InferredNullability {
+    NotNullInferred(PsiModifierListOwner element) {
       super(element);
+    }
+
+    @Override
+    public boolean apply(NullableNotNullManager manager) {
+      PsiModifierListOwner element = (PsiModifierListOwner)getElement();
+      if (element == null || element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
+
+      invoke(element, AddAnnotationModCommandAction.createAddNotNullFix(element));
+      return true;
     }
   }
 
-  void collect(@NotNull List<? super UsageInfo> usages) {
-    collect(usages, true);
-    collect(usages, false);
+  private static void invoke(final @NotNull PsiModifierListOwner element, @Nullable ModCommandAction action) {
+    if (action == null) return;
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return;
+    ActionContext context = ActionContext.from(null, containingFile).withElement(element);
+    ModCommandExecutor.executeInteractively(context, action.getFamilyName(), null, () -> {
+      return action.getPresentation(context) == null ? ModCommand.nop() : action.perform(context);
+    });
   }
 
-  private void collect(@NotNull List<? super UsageInfo> usages, boolean nullable) {
-    final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
-    for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
-      ReadAction.run(() -> {
+  @NotNullByDefault
+  private static abstract class InferredNullability extends UsageInfo {
+    protected InferredNullability(PsiModifierListOwner element) {
+      super(element);
+    }
+
+    public abstract boolean apply(NullableNotNullManager manager);
+  }
+
+  public void collect(@NotNull List<? super UsageInfo> usages) {
+    inferred.keySet().removeIf((elementPointer) -> {
+      return ReadAction.nonBlocking(() -> {
         PsiModifierListOwner element = elementPointer.getElement();
-        if (element != null && !shouldIgnore(element)) {
-          usages.add(nullable ? new NullableUsageInfo(element) : new NotNullUsageInfo(element));
-        }
-      });
-    }
+        return element == null || shouldIgnore(element);
+      }).executeSynchronously();
+    });
+    usages.addAll(inferred.values());
   }
 
   private boolean isNotNull(@Nullable PsiModifierListOwner owner) {
-    if (owner == null) return false;
-    if (NullableNotNullManager.isNotNull(owner)) {
-      return true;
-    }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-    return myNotNullSet.contains(pointer);
+    return owner != null && (NullableNotNullManager.isNotNull(owner) || getInferredNullability(owner) instanceof NotNullInferred);
   }
 
   private boolean isNullable(@Nullable PsiModifierListOwner owner) {
-    if (owner == null) return false;
-    if (NullableNotNullManager.isNullable(owner)) {
-      return true;
-    }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-    return myNullableSet.contains(pointer);
+    return owner != null && (NullableNotNullManager.isNullable(owner) || getInferredNullability(owner) instanceof NullableInferred);
   }
 
   private boolean hasNullability(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     if (info != null && !info.isInferred() && info.getNullability() != Nullability.UNKNOWN) return true;
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
-    return myNotNullSet.contains(pointer) || myNullableSet.contains(pointer);
+    return getInferredNullability(owner) != null;
+  }
+
+  private InferredNullability getInferredNullability(@NotNull PsiModifierListOwner owner) {
+    return inferred.get(myPointerManager.createSmartPsiElementPointer(owner));
   }
 
   private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor {

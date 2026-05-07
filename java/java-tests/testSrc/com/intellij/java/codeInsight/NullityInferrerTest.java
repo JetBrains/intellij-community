@@ -2,19 +2,24 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.inferNullity.NullityInferrer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
+  public static final String TEST_DATA_PATH = "/codeInsight/nullityinferrer";
 
   private static final DefaultLightProjectDescriptor DEFAULT_LIGHT_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
@@ -50,15 +55,8 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testParameterCheckedForInstanceof() {
-    try {
-      doTest(false);
-      fail("Should infer nothing");
-    }
-    catch (RuntimeException e) {
-      if (!Comparing.strEqual(e.getMessage(), NullityInferrer.NOTHING_FOUND_TO_INFER)) {
-        fail();
-      }
-    }
+    var inferredNullabilities = configureByFileAndGetInferredNullabilities(false);
+    assertTrue("Should infer nothing", inferredNullabilities.isEmpty());
   }
 
   public void testParameterUsedInForeachIteratedValue() {
@@ -104,11 +102,17 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest(boolean annotateLocalVariables) {
-    final String nullityPath = "/codeInsight/nullityinferrer";
-    configureByFile(nullityPath + "/before" + getTestName(false) + ".java");
-    final NullityInferrer nullityInferrer = new NullityInferrer(annotateLocalVariables, getProject());
+    var inferredNullabilities = configureByFileAndGetInferredNullabilities(annotateLocalVariables);
+    inferredNullabilities.forEach(u -> NullityInferrer.apply(NullableNotNullManager.getInstance(getProject()), u));
+    checkResultByFile(TEST_DATA_PATH + "/after" + getTestName(false) + ".java");
+  }
+
+  private @NotNull List<UsageInfo> configureByFileAndGetInferredNullabilities(boolean annotateLocalVariables) {
+    configureByFile(TEST_DATA_PATH + "/before" + getTestName(false) + ".java");
+    NullityInferrer nullityInferrer = new NullityInferrer(annotateLocalVariables, getProject());
     nullityInferrer.collect(getFile());
-    nullityInferrer.apply(getProject());
-    checkResultByFile(nullityPath + "/after" + getTestName(false)+ ".java");
+    List<UsageInfo> usages = new ArrayList<>();
+    nullityInferrer.collect(usages);
+    return usages;
   }
 }
