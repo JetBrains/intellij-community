@@ -26,6 +26,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation.ensureActive
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -165,7 +166,9 @@ object DependencyParser {
         LOG.debug("Parsing servers responded in ${System.currentTimeMillis() - start}ms for ${sentenceStrings.size} sentences")
 
         if (trees == null) emptyMap()
-        else sentences.zip(trees).associate { it.first to support.buildTree(it.second, labels[it.first.sentence]) }
+        else sentences.zip(trees).associate {
+          it.first to support.buildTree(it.second, labels[it.first.sentence]) { ProgressManager.checkCanceled() }
+        }
       }
     }
 
