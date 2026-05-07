@@ -124,7 +124,6 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
@@ -2281,16 +2280,8 @@ open class FileEditorManagerImpl(
       val fileEntry = item.fileEntry
       val file = item.file
       // In the case of the JetBrains client, the editor composite is requested from the backend
-      val composite = if (PlatformUtils.isJetBrainsClient()) {
-        createCompositeAndModel(file, window, fileEntry, hint = null)
-      }
-      else {
-        createCompositeInstance(
-          file = file,
-          model = item.model,
-          coroutineScope = item.scope,
-        )
-      }
+      val composite = createCompositeAndModel(file, window, fileEntry, hint = item.hint)
+
       if (composite == null) {
         LOG.warn("Couldn't create composite for ${file.url}, file won't be reopened")
         tabs.add(null)
@@ -2733,7 +2724,11 @@ internal data class TabToOpenOnStartup(
 
 @Internal
 interface EditorCompositeProvider {
-  fun canOpenFile(file: VirtualFile): Boolean
+  /**
+   * Returns true if this provider can also open the files that cannot be opened otherwise.
+   * The files that have no [FileEditorProvider] assigned, but will be still successfully handled by [createComposite] method,
+   */
+  fun canOpenFile(file: VirtualFile): Boolean = false
 
   fun createComposite(
     project: Project, file: VirtualFile,
