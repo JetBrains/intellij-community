@@ -22,6 +22,9 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
+import com.intellij.openapi.options.newEditor.SettingsFrameFactory
+import com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
@@ -139,9 +142,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     val filteredGroups = filterEmptyGroups(groups)
 
     if (!isModal) {
-      // Use FrameWrapper (JFrame) for non-modal mode, like tool windows in "Window" mode
-      val frame = com.intellij.openapi.options.newEditor.SettingsFrame.getOrCreate(project, filteredGroups, toSelect, filter)
-      frame.show()
+      if (Registry.`is`("ide.settings.non.modal.project.switcher")) {
+        SettingsFrameFactory.getInstance().show(project!!, filteredGroups, toSelect, filter)
+      }
+      else {
+        SettingsNonModalDialogFactory.getInstance().show(project, filteredGroups, toSelect, filter)
+      }
     } else {
       createDialogWrapper(project, filteredGroups, toSelect, filter).show()
     }
@@ -162,9 +168,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     val isModal = project.isDefault || !useNonModalSettingsWindow()
     withContext(Dispatchers.EDT) {
       if (!isModal) {
-        // Use FrameWrapper (JFrame) for non-modal mode, like tool windows in "Window" mode
-        val frame = com.intellij.openapi.options.newEditor.SettingsFrame.getOrCreate(project, filterEmptyGroups(groups), null, null)
-        frame.show()
+        if (Registry.`is`("ide.settings.non.modal.project.switcher")) {
+          SettingsFrameFactory.getInstance().show(project, filterEmptyGroups(groups), null, null)
+        }
+        else {
+          SettingsNonModalDialogFactory.getInstance().show(project, filterEmptyGroups(groups), null, null)
+        }
       } else {
         val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
         settingsDialogFactory.create(project, filterEmptyGroups(groups), null, null).show()

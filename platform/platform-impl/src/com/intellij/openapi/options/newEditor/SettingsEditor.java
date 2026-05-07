@@ -12,6 +12,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.UiDataProvider;
@@ -103,6 +104,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   /** Whether to auto-reset unmodified configurables when navigating back to them (non-modal windows). */
   private final boolean myUseLeaveState;
   private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
+  private final @Nullable AnAction myExtraHeaderAction;
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
 
@@ -129,9 +131,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @Nullable String filter,
                  boolean useLeaveState,
                  @NotNull ISettingsTreeViewFactory factory,
-                 @NotNull SpotlightPainterFactory spotlightPainterFactory) {
+                 @NotNull SpotlightPainterFactory spotlightPainterFactory,
+                 @Nullable AnAction extraHeaderAction) {
     super(parent);
     myUseLeaveState = useLeaveState;
+    myExtraHeaderAction = extraHeaderAction;
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -308,8 +312,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       void postUpdateCurrent(Configurable configurable) {
         if (myUseLeaveState && configurable != null) {
           Boolean leaveState = myLeaveState.remove(configurable);
-          if (leaveState == Boolean.FALSE) {
+          LOG.debug("postUpdateCurrent: configurable=" + configurable.getDisplayName() + ", leaveState=" + leaveState);
+          if (leaveState == Boolean.FALSE && Boolean.TRUE.equals(isModifiedSafely(configurable))) {
+            LOG.warn("postUpdateCurrent: resetting " + configurable.getDisplayName());
             configurable.reset();
+            SettingsEditor.this.filter.context.fireReset(configurable);
           }
         }
       }
@@ -503,8 +510,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
     group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
+    if (myExtraHeaderAction != null) {
+      group.add(myExtraHeaderAction);
+    }
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
+    toolbar.setOpaque(false);
     JPanel panel = new JPanel(new GridBagLayout());
+    panel.setOpaque(false);
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.anchor = GridBagConstraints.NORTH;
@@ -650,13 +662,30 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   /**
+   * Calls {@link Configurable#isModified()} on {@code configurable} and returns the result,
+   * or {@code null} if the call throws (with a warning logged).
+   * Some configurables (e.g. {@code CustomizationConfigurable}) NPE before
+   * {@link Configurable#createComponent()} has been called.
+   */
+  private static @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+    try {
+      return configurable.isModified();
+    }
+    catch (Exception e) {
+      LOG.warn("isModified() failed for " + configurable.getDisplayName(), e);
+      return null;
+    }
+  }
+
+  /**
    * Records the current configurable's modified state at window deactivation time.
    * Call this when the settings window loses focus so the result can be used on reactivation.
    */
   public void recordWindowLeaveState() {
     Configurable current = filter.context.getCurrentConfigurable();
     if (current != null) {
-      myLeaveState.put(current, current.isModified());
+      Boolean modified = isModifiedSafely(current);
+      if (modified != null) myLeaveState.put(current, modified);
     }
   }
 
@@ -673,7 +702,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     Configurable current = filter.context.getCurrentConfigurable();
     if (current == null) return;
     Boolean leaveState = myLeaveState.remove(current);
-    if (leaveState == Boolean.FALSE && current.isModified()) {
+    Boolean isModified = isModifiedSafely(current);
+    if (isModified == null) return;
+    LOG.debug("resetUnmodifiedOnWindowFocus: current=" + current.getDisplayName() + ", leaveState=" + leaveState + ", isModified=" + isModified);
+    if (leaveState == Boolean.FALSE && isModified) {
+      LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
       current.reset();
       filter.context.fireReset(current);
     }

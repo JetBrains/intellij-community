@@ -1318,6 +1318,8 @@
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory" open="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory" open="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsFrameFactory" open="true"/>
 
     <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
     <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>

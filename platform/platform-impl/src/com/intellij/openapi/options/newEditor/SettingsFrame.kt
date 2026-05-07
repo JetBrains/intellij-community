@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -37,9 +36,6 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.WindowState
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.DeferredIconListener
@@ -85,7 +81,7 @@ import javax.swing.border.CompoundBorder
  * One instance per application; opening settings from a different project switches the frame to that project.
  */
 @ApiStatus.Internal
-internal class SettingsFrame private constructor(
+open class SettingsFrame @ApiStatus.Internal constructor(
   private var project: Project,
   groups: List<ConfigurableGroup>,
   configurable: Configurable?,
@@ -112,6 +108,7 @@ internal class SettingsFrame private constructor(
       groups: List<ConfigurableGroup>,
       configurable: Configurable?,
       filter: String?,
+      frameFactory: ((Project, List<ConfigurableGroup>, Configurable?, String?) -> SettingsFrame)? = null,
     ): SettingsFrame {
       val existing = ourInstance
       if (existing != null && !existing.isDisposed) {
@@ -127,7 +124,8 @@ internal class SettingsFrame private constructor(
         }
         return existing
       }
-      return SettingsFrame(project, groups, configurable, filter).also { ourInstance = it }
+      return (frameFactory?.invoke(project, groups, configurable, filter)
+              ?: SettingsFrame(project, groups, configurable, filter)).also { ourInstance = it }
     }
 
     private fun openProjects(): List<Project> =
@@ -151,10 +149,7 @@ internal class SettingsFrame private constructor(
   /** Kept so we can rewire it to the new editor when switching projects. */
   private var applyButton: JButton? = null
 
-  /** Manages the frame header. Non-null only when [Registry.is("ide.settings.non.modal.custom.header")] is true. */
-  private var headerHelper: SettingsFrameCustomHeaderHelper? = null
-
-  /** Combo box for switching between open projects. Non-null only when the custom header is disabled. */
+  /** Combo box for switching between open projects. */
   private var projectWidget: ComboBoxWithWidePopup<Project>? = null
 
   /** The project-switcher panel — created once and re-attached to each new editor on switch. */
@@ -168,6 +163,20 @@ internal class SettingsFrame private constructor(
 
   /** Disposable for the current editor. Disposed and recreated on each project switch. */
   private var editorDisposable: Disposable
+
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /** Returns the project currently shown in this frame. */
+  protected fun getProject(): Project = project
+
+  /** Called once, right after the frame first becomes visible. */
+  protected open fun onShow() {}
+
+  /** Called after [SettingsEditor.apply] succeeds and before [close]. */
+  protected open fun afterApply() {}
+
+  /** Called after settings are cancelled (Cancel button / ESC / window-X) and before [close]. */
+  protected open fun afterCancel() {}
 
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -185,12 +194,7 @@ internal class SettingsFrame private constructor(
     mainPanel.add(contentArea, BorderLayout.CENTER)
     mainPanel.add(createButtonPanel(), BorderLayout.SOUTH)
 
-    if (Registry.`is`("ide.settings.non.modal.custom.header")) {
-      headerHelper = SettingsFrameCustomHeaderHelper(project, mainPanel, frameDisposable)
-    }
-    else {
-      editor.setTreeTopComponent(createProjectWidget())
-    }
+    editor.setTreeTopComponent(createProjectWidget())
 
     component = mainPanel
     MnemonicHelper.init(mainPanel)
@@ -209,8 +213,6 @@ internal class SettingsFrame private constructor(
     val window = getFrame()
     if (window is JFrame) {
       val rootPane = window.rootPane
-      window.isAlwaysOnTop = Registry.`is`("ide.settings.non.modal.always.on.top")
-
       // Cmd/Ctrl+F: open search
       EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { findShortcut ->
         SearchTextField.FindAction().registerCustomShortcutSet(findShortcut, rootPane, frameDisposable)
@@ -220,7 +222,10 @@ internal class SettingsFrame private constructor(
       // pressing ESC while a search filter is active clears the filter instead of closing the frame.
       val closeHandler = ActionListener { e ->
         val current = EventQueue.getCurrentEvent()
-        if (editor.cancel(current as? KeyEvent ?: e)) close()
+        if (editor.cancel(current as? KeyEvent ?: e)) {
+          afterCancel()
+          close()
+        }
       }
       rootPane.registerKeyboardAction(closeHandler, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                       JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -230,6 +235,7 @@ internal class SettingsFrame private constructor(
       window.addWindowListener(object : WindowAdapter() {
         override fun windowClosing(e: WindowEvent) {
           editor.cancel(e)
+          afterCancel()
         }
       })
 
@@ -283,27 +289,10 @@ internal class SettingsFrame private constructor(
       })
 
     // Repaint the project combo box when a deferred project icon finishes loading.
-    if (!Registry.`is`("ide.settings.non.modal.custom.header")) {
-      bus.connect(frameDisposable)
-        .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
-          override fun evaluated(deferred: DeferredIcon, result: Icon) { projectWidget?.repaint() }
-        })
-    }
-
-    // When the IDE application loses OS focus (user switches to browser/terminal), clear
-    // isAlwaysOnTop so the settings window drops behind other apps. Restore it when the IDE
-    // regains focus. This makes always-on-top mean "float above the IDE only, not every app".
-    if (window is JFrame) {
-      bus.connect(frameDisposable)
-        .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
-          override fun applicationActivated(ideFrame: IdeFrame) {
-            if (Registry.`is`("ide.settings.non.modal.always.on.top")) getFrame().isAlwaysOnTop = true
-          }
-          override fun applicationDeactivated(ideFrame: IdeFrame) {
-            getFrame().isAlwaysOnTop = false
-          }
-        })
-    }
+    bus.connect(frameDisposable)
+      .subscribe(DeferredIconListener.TOPIC, object : DeferredIconListener {
+        override fun evaluated(deferred: DeferredIcon, result: Icon) { projectWidget?.repaint() }
+      })
 
     // canExitApplication fires before any frame is hidden — the settings window is still visible
     // and the editor context is intact. Shows Apply / Don't Save / Cancel; returning false vetoes
@@ -330,14 +319,6 @@ internal class SettingsFrame private constructor(
 
   }
 
-  // ── Custom frame header ───────────────────────────────────────────────────────
-
-  override fun createFrameCustomHeader(frame: JFrame): CustomHeader =
-    headerHelper!!.createFrameCustomHeader(frame)
-
-  override fun useCustomWindowDecoration(): Boolean =
-    headerHelper?.usesCustomWindowDecoration ?: false
-
   // ── Editor factory ────────────────────────────────────────────────────────────
 
   private fun makeEditor(
@@ -351,6 +332,7 @@ internal class SettingsFrame private constructor(
     true,  // useLeaveState: auto-reset unmodified configurables when navigating back
     ISettingsTreeViewFactory { f, g -> SettingsTreeView(f, g) },
     spotlightPainterFactory,
+    null,  // extraHeaderAction: no pin button in legacy project-switcher mode
   )
 
   // ── Project widget ────────────────────────────────────────────────────────────
@@ -458,7 +440,11 @@ internal class SettingsFrame private constructor(
       CommonBundle.getCancelButtonText(),
       Messages.getWarningIcon(),
     )) {
-      Messages.YES -> { editor.apply(); true }
+      Messages.YES -> {
+        editor.apply()
+        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
+        true
+      }
       Messages.NO -> { editor.cancel(null); true }
       else -> false
     }
@@ -467,7 +453,7 @@ internal class SettingsFrame private constructor(
   /** Unconditionally replaces the editor with one for [newProject]. */
   private fun doSwitchProject(newProject: Project, toSelect: Configurable?, filter: String?) {
     project = newProject
-    headerHelper?.update(newProject) ?: refreshProjectWidget(newProject)
+    refreshProjectWidget(newProject)
 
     // Capture UI state before disposing the old editor
     val currentConfigurableId = editor.currentConfigurable
@@ -546,16 +532,8 @@ internal class SettingsFrame private constructor(
       window.requestFocus()
       return
     }
-    // On macOS without custom decorations, zero the transparent title bar height so that
-    // SettingsInnerHeader fills the title bar area at the traffic-light level (y=0).
-    // setTransparentTitleBar (called from createContents → super.show) reads this property.
-    // Also hide the native macOS title text so it doesn't appear in the center of the header.
-    if (OS.CURRENT == OS.macOS && !IdeFrameDecorator.isCustomDecorationActive() && window is JFrame
-        && Registry.`is`("ide.settings.non.modal.custom.header")) {
-      window.rootPane.putClientProperty("Window.transparentTitleBarHeight", 0)
-      window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
-    }
     super.show()
+    onShow()
   }
 
   override fun dispose() {
@@ -606,6 +584,7 @@ internal class SettingsFrame private constructor(
         UIUtil.stopFocusedEditing(getFrame())
         if (editor.apply()) {
           SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
+          afterApply()
           close()
         }
       }
@@ -619,7 +598,10 @@ internal class SettingsFrame private constructor(
     val cancelButton = DialogWrapper.createJButtonForAction(
       object : AbstractAction(CommonBundle.getCancelButtonText()) {
         override fun actionPerformed(e: ActionEvent) {
-          if (editor.cancel(e)) close()
+          if (editor.cancel(e)) {
+            afterCancel()
+            close()
+          }
         }
       }, null)
 
