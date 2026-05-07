@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.EelPlatformKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
@@ -55,6 +56,7 @@ public final class LocalOptionsConfigurer {
       baseOptions.getProcessType(),
       project,
       eelContext.getEelDescriptor(),
+      eelContext.getPlatform(),
       eelContext.getShellCommand().getCommand()
     );
 
@@ -136,6 +138,7 @@ public final class LocalOptionsConfigurer {
                                                                      @NotNull TerminalProcessType processType,
                                                                      @NotNull Project project,
                                                                      @NotNull EelDescriptor eelDescriptor,
+                                                                     @NotNull EelPlatform platform,
                                                                      @NotNull List<String> shellCommand) {
     final var isWindows = EelPlatformKt.isWindows(eelDescriptor.getOsFamily());
 
@@ -167,7 +170,7 @@ public final class LocalOptionsConfigurer {
     envs.put(TERMINAL_EMULATOR, "JetBrains-JediTerm");
     envs.put(TERM_SESSION_ID, UUID.randomUUID().toString());
 
-    TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
+    TerminalEnvironment.INSTANCE.setCharacterEncoding(platform, envs);
 
     // user-defined envs are passed for trusted projects only (IJPL-111912)
     EnvironmentVariablesData trustedEnvData = TrustedProjects.isProjectTrusted(project) ? envData : null;

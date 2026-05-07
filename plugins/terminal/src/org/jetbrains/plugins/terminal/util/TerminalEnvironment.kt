@@ -4,9 +4,10 @@ package org.jetbrains.plugins.terminal.util
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.impl.wsl.WslConstants.WSLENV
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.isMac
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -20,8 +21,8 @@ object TerminalEnvironment {
   const val TERM_SESSION_ID: String = "TERM_SESSION_ID"
   private const val COLON: String = ":"
 
-  fun setCharacterEncoding(env: MutableMap<String, String>) {
-    if (SystemInfo.isMac) {
+  fun setCharacterEncoding(platform: EelPlatform, env: MutableMap<String, String>) {
+    if (platform.isMac) {
       val charsetName = AdvancedSettings.getString("terminal.character.encoding")
       val charset = try {
         charset(charsetName)

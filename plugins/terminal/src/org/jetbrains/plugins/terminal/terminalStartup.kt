@@ -12,6 +12,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.EelExecWindowsApi
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.environmentVariables
@@ -88,7 +89,11 @@ internal fun startProcess(
 
 internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>): TerminalStartupEelContext {
   if (!shouldUseEelApi()) {
-    return TerminalStartupEelContext(workingDir.asEelPath(LocalEelDescriptor), ShellExecCommandImpl(shellCommand))
+    return TerminalStartupEelContext(
+      workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+      shellCommand = ShellExecCommandImpl(shellCommand),
+      platform = localEel.platform,
+    )
   }
   return runBlockingMaybeCancellable {
     try {
@@ -96,7 +101,11 @@ internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>
     }
     catch (e: Exception) {
       log.warn("Cannot find EelDescriptor", e)
-      TerminalStartupEelContext(workingDir.asEelPath(LocalEelDescriptor), ShellExecCommandImpl(shellCommand))
+      TerminalStartupEelContext(
+        workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+        shellCommand = ShellExecCommandImpl(shellCommand),
+        platform = localEel.platform,
+      )
     }
   }
 }
@@ -116,8 +125,9 @@ private suspend fun doBuildStartupEelContext(workingDirectory: Path, shellComman
     //    e.g. 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'.
     // 4. Using two interoperability layers to run a local Windows process is generally unnecessary.
     return TerminalStartupEelContext(
-      EelPath.parse(workingDirectory.toString(), LocalEelDescriptor),
-      ShellExecCommandImpl(shellCommand)
+      workingDirectory = EelPath.parse(workingDirectory.toString(), LocalEelDescriptor),
+      shellCommand = ShellExecCommandImpl(shellCommand),
+      platform = localEel.platform,
     )
   }
 
@@ -131,14 +141,16 @@ private suspend fun doBuildStartupEelContext(workingDirectory: Path, shellComman
 
   val workingDirectoryEelPath = workingDirectory.asEelPath()
   return TerminalStartupEelContext(
-    workingDirectoryEelPath,
-    ShellExecCommandImpl(shellCommand)
+    workingDirectory = workingDirectoryEelPath,
+    shellCommand = ShellExecCommandImpl(shellCommand),
+    platform = workingDirectoryEelPath.descriptor.toEelApi().platform
   )
 }
 
 internal class TerminalStartupEelContext(
   val workingDirectory: EelPath,
   val shellCommand: ShellExecCommand,
+  val platform: EelPlatform,
 ) {
   val eelDescriptor: EelDescriptor
     get() = workingDirectory.descriptor

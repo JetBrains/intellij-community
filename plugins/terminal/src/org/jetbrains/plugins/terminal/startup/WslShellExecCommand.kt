@@ -49,8 +49,9 @@ internal class WslShellExecCommand(
       val eelApi = eelDescriptor.toWslEelApiIfAvailable()
       if (eelApi != null) {
         return TerminalStartupEelContext(
-          findRemoteWorkingDirectory(eelApi, workingDirectory),
-          createDefaultWslShellCommand(eelApi)
+          workingDirectory = findRemoteWorkingDirectory(eelApi, workingDirectory),
+          shellCommand = createDefaultWslShellCommand(eelApi),
+          platform = eelApi.platform,
         )
       }
     }
