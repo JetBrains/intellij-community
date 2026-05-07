@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.task.RunConfigurationTaskState
 import com.intellij.util.ThreeState
+import com.intellij.util.application
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
@@ -25,6 +25,9 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.DISABLE_STOP_OLD_IDLE_DAEMONS_KEY
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_TTL_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
 import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
 import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
@@ -81,7 +84,7 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
   }
 
   override fun dispose() {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
+    if (!USE_PRODUCTION_DISPOSE_FOR_TESTS && application.isUnitTestMode) return
     disconnectGradleConnections()
     stopIdleDaemonsOfOldVersions()
   }
@@ -149,7 +152,7 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
           // close obsolete connection, can not disconnect the connector here - it may cause build cancel for the new connection operations
           val unwrappedConnection = conn.connection as NonClosableConnection
           // do not block the current thread on "ProjectConnection.close" for existing running Gradle operation
-          ApplicationManager.getApplication().executeOnPooledThread {
+          application.executeOnPooledThread {
             unwrappedConnection.delegate.close()
           }
         }
@@ -245,11 +248,16 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
     private val LOG = logger<GradleConnectorServiceImpl>()
 
     /** disable stop IDLE Gradle daemons on IDE project close. Applicable for Gradle versions w/o disconnect support (older than 6.5). */
-    private val DISABLE_STOP_OLD_IDLE_DAEMONS = java.lang.Boolean.getBoolean("idea.gradle.disableStopIdleDaemonsOnProjectClose")
+    private val DISABLE_STOP_OLD_IDLE_DAEMONS: Boolean get() = java.lang.Boolean.getBoolean(DISABLE_STOP_OLD_IDLE_DAEMONS_KEY)
 
-    /** some longer running tests require a longer idle time */
-    private val USE_PRODUCTION_TTL_FOR_TESTS =
-      java.lang.Boolean.getBoolean("gradle.connector.useExternalSystemRemoteProcessIdleTtlForTests")
+    /** Some longer running tests require a longer idle time. */
+    private val USE_PRODUCTION_TTL_FOR_TESTS: Boolean get() = java.lang.Boolean.getBoolean(USE_PRODUCTION_TTL_FOR_TESTS_KEY)
+
+    /** Some tests need the production project-dispose cleanup without changing Gradle daemon TTL. */
+    private val USE_PRODUCTION_DISPOSE_FOR_TESTS: Boolean get() = java.lang.Boolean.getBoolean(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY)
+
+    /** Must stay strictly below ThreadLeakTracker's per-thread wait timeout to let Gradle daemon helper threads exit before leak checks fail. */
+    private const val TTL_FOR_TESTS = 5_000
 
     @ApiStatus.Internal
     internal fun createConnector(
@@ -305,9 +313,8 @@ internal class GradleConnectorServiceImpl(project: Project) : GradleConnectorSer
       if (connectorParams.verboseProcessing == true && connector is DefaultGradleConnector) {
         connector.setVerboseLogging(true)
       }
-      // do not spawn gradle daemons during test execution
-      val app = ApplicationManager.getApplication()
-      val ttl = if (!USE_PRODUCTION_TTL_FOR_TESTS && app != null && app.isUnitTestMode) 5000 else connectorParams.ttlMs ?: -1
+      // Use a short daemon TTL during test execution.
+      val ttl = if (!USE_PRODUCTION_TTL_FOR_TESTS && application.isUnitTestMode) TTL_FOR_TESTS else connectorParams.ttlMs ?: -1
       if (ttl > 0 && connector is DefaultGradleConnector) {
         connector.daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS)
       }

@@ -9,11 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.util.function.Function
 
-@ApiStatus.Internal
+@Internal
 interface GradleConnectorService {
 
   fun getKnownGradleUserHomes(): Set<String>
@@ -28,6 +28,15 @@ interface GradleConnectorService {
   ): R
 
   companion object {
+
+    @Internal
+    const val DISABLE_STOP_OLD_IDLE_DAEMONS_KEY: String = "idea.gradle.disableStopIdleDaemonsOnProjectClose"
+
+    @Internal
+    const val USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY: String = "gradle.connector.useProductionDisposeForTests"
+
+    @Internal
+    const val USE_PRODUCTION_TTL_FOR_TESTS_KEY: String = "gradle.connector.useExternalSystemRemoteProcessIdleTtlForTests"
 
     @JvmStatic
     fun getInstance(project: Project): GradleConnectorService {

@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
+import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.modules
@@ -43,6 +44,7 @@ import com.intellij.testFramework.registerServiceInstance
 import kotlinx.coroutines.delay
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
+import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -68,6 +70,13 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    // Phased sync cancellation can leave cached Tooling API connections alive until teardown.
+    // Use production disposal without production daemon TTL so Gradle reader threads can exit before leak checks.
+    setSystemProperty(USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY, true.toString(), testRootDisposable)
+  }
 
   @Test
   fun `test module naming`() {
