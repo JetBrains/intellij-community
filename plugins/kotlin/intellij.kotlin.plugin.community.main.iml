@@ -177,7 +177,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />

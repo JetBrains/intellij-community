@@ -140,7 +140,6 @@ jvm_library(
     "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-idea-base",
     "//plugins/kotlin/uast/uast-kotlin-idea",
     "//plugins/kotlin/features-trainer",
-    "//plugins/kotlin/compiler-plugins/lombok/gradle",
     "//plugins/kotlin/compiler-plugins/lombok/maven",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/utils",
