@@ -2,12 +2,13 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
@@ -83,8 +84,10 @@ data class ExtractMethodTemplateBuilder(
       val builder = TemplateBuilderImpl(file)
       templateFields.forEachIndexed { i, templateField ->
         val defaultText = document.getText(templateField.fieldRange)
-        val completionNames = templateField.completionNames
-        val expression = ConstantNode(defaultText).withLookupStrings(completionNames).withPopupAdvertisement(templateField.completionHint)
+        val expression = ConstantNode(defaultText)
+          .withLookupStrings(templateField.completionNames)
+          .withPopupAdvertisement(templateField.completionHint)
+          .withLookupFocusDegree(LookupFocusDegree.UNFOCUSED)
         builder.replaceRange(templateField.fieldRange, "Primary_$i", expression, true)
         templateField.updateRanges.forEachIndexed { j, range ->
           builder.replaceElement(range, "Secondary_${i}_${j}", " Primary_$i", false)

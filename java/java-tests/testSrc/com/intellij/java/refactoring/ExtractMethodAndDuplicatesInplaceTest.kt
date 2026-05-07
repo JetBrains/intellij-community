@@ -3,7 +3,9 @@ package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
@@ -458,7 +460,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   fun testRefactoringListener() {
     templateTest {
-      configureByFile("$BASE_PATH/${getTestName(false)}.java")
+      configureByDefaultFile()
       var startReceived = false
       var doneReceived = false
       val connection = project.messageBus.connect()
@@ -478,15 +480,40 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testNameLookupNotPreselected() {
+    templateTest {
+      configureByDefaultFile()
+      startRefactoring(editor)
+      val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
+      require(lookup != null) {
+        "Method-name suggestion lookup must be visible after Extract Method starts"
+      }
+      require(lookup.items.isNotEmpty()) {
+        "Sanity check: the scenario should produce at least one suggested method name"
+      }
+      assertEquals(
+        "Extract Method's name-suggestion lookup must not pre-select the first suggestion. " +
+        "Otherwise typing a custom name and pressing Enter replaces it with the highlighted " +
+        "suggestion.",
+        LookupFocusDegree.UNFOCUSED,
+        lookup.lookupFocusDegree
+      )
+    }
+  }
+
   private fun doTest(runnable: (TemplateState) -> Unit = { finishTemplate() }) {
     templateTest {
-      configureByFile("$BASE_PATH/${getTestName(false)}.java")
+      configureByDefaultFile()
       val template = startRefactoring(editor)
       runnable.invoke(template)
       if (getActiveTemplate() == null) {
         checkResultByFile("$BASE_PATH/${getTestName(false)}_after.java")
       }
     }
+  }
+
+  private fun configureByDefaultFile() {
+    configureByFile("$BASE_PATH/${getTestName(false)}.java")
   }
 
   private fun finishTemplate() {

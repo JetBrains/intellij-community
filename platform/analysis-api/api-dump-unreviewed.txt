@@ -745,7 +745,9 @@ f:com.intellij.codeInsight.template.impl.ConstantNode
 - calculateLookupItems(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.lookup.LookupElement[]
 - calculateResult(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.template.Result
 - getAdvertisingText():java.lang.String
+- getLookupFocusDegree():com.intellij.codeInsight.lookup.LookupFocusDegree
 - requiresCommittedPSI():Z
+- withLookupFocusDegree(com.intellij.codeInsight.lookup.LookupFocusDegree):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupItems(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupItems(com.intellij.codeInsight.lookup.LookupElement[]):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupStrings(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -20,6 +21,7 @@ public final class ConstantNode extends Expression {
   private final LookupElement[] myLookupElements;
 
   private final @Nullable @NlsContexts.PopupAdvertisement String myPopupAdvertisement;
+  private final @NotNull LookupFocusDegree myLookupFocusDegree;
 
   public ConstantNode(@NotNull String value) {
     this(new TextResult(value));
@@ -34,29 +36,43 @@ public final class ConstantNode extends Expression {
   }
 
   private ConstantNode(@Nullable Result value, @Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement, LookupElement @NotNull ... lookupElements) {
+    this(value, popupAdvertisement, LookupFocusDegree.FOCUSED, lookupElements);
+  }
+
+  private ConstantNode(@Nullable Result value,
+                       @Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement,
+                       @NotNull LookupFocusDegree lookupFocusDegree,
+                       LookupElement @NotNull ... lookupElements) {
     myValue = value;
     myPopupAdvertisement = popupAdvertisement;
+    myLookupFocusDegree = lookupFocusDegree;
     myLookupElements = lookupElements;
   }
 
   public ConstantNode withLookupItems(LookupElement @NotNull ... lookupElements) {
-    return new ConstantNode(myValue, lookupElements);
+    return new ConstantNode(myValue, myPopupAdvertisement, myLookupFocusDegree, lookupElements);
   }
 
   public ConstantNode withLookupItems(@NotNull Collection<? extends LookupElement> lookupElements) {
-    return new ConstantNode(myValue, lookupElements.toArray(LookupElement.EMPTY_ARRAY));
+    return new ConstantNode(myValue, myPopupAdvertisement, myLookupFocusDegree, lookupElements.toArray(LookupElement.EMPTY_ARRAY));
   }
 
   public ConstantNode withLookupStrings(String @NotNull ... lookupElements) {
-    return new ConstantNode(myValue, ContainerUtil.map2Array(lookupElements, LookupElement.class, LookupElementBuilder::create));
+    return new ConstantNode(myValue, myPopupAdvertisement, myLookupFocusDegree,
+                            ContainerUtil.map2Array(lookupElements, LookupElement.class, LookupElementBuilder::create));
   }
 
   public ConstantNode withLookupStrings(@NotNull Collection<String> lookupElements) {
-    return new ConstantNode(myValue, ContainerUtil.map2Array(lookupElements, LookupElement.class, LookupElementBuilder::create));
+    return new ConstantNode(myValue, myPopupAdvertisement, myLookupFocusDegree,
+                            ContainerUtil.map2Array(lookupElements, LookupElement.class, LookupElementBuilder::create));
   }
 
-  public ConstantNode withPopupAdvertisement(@Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement){
-    return new ConstantNode(myValue, popupAdvertisement, myLookupElements);
+  public ConstantNode withPopupAdvertisement(@Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement) {
+    return new ConstantNode(myValue, popupAdvertisement, myLookupFocusDegree, myLookupElements);
+  }
+
+  public ConstantNode withLookupFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
+    return new ConstantNode(myValue, myPopupAdvertisement, lookupFocusDegree, myLookupElements);
   }
 
   @Override
@@ -77,5 +93,10 @@ public final class ConstantNode extends Expression {
   @Override
   public @Nullable @NlsContexts.PopupAdvertisement String getAdvertisingText() {
     return myPopupAdvertisement;
+  }
+
+  @Override
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
+    return myLookupFocusDegree;
   }
 }
