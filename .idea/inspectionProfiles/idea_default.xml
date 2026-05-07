@@ -1129,6 +1129,7 @@
     <inspection_tool class="OctalIntegerJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OctalLiteral" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="OnlyOneElementUsed" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
+    <inspection_tool class="OptionalDependencyViaDependsTag" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="OptionalIsPresent" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="OptionalOfNullableMisuse" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="OverflowingLoopIndex" enabled="true" level="Strong Warning" enabled_by_default="true" />
