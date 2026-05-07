@@ -85,7 +85,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.compilerPlugins.serialization.maven",
       "intellij.kotlin.compilerPlugins.dataframe.maven",
       "kotlin.compiler-plugins.noarg.common",
-      "kotlin.compiler-plugins.noarg.gradle",
+      "intellij.kotlin.compilerPlugins.noarg.gradle",
       "intellij.kotlin.compilerPlugins.noarg.maven",
       "kotlin.compiler-plugins.sam-with-receiver.common",
       "intellij.kotlin.compilerPlugins.samWithReceiver.maven",

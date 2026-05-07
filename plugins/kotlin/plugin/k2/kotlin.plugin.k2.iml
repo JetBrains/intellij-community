@@ -156,7 +156,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.gradle" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.power-assert.gradle" scope="RUNTIME" />
   </component>

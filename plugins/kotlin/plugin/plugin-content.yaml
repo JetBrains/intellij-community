@@ -154,7 +154,7 @@
   - name: intellij.kotlin.compilerPlugins.serialization.maven
   - name: intellij.kotlin.compilerPlugins.dataframe.maven
   - name: kotlin.compiler-plugins.noarg.common
-  - name: kotlin.compiler-plugins.noarg.gradle
+  - name: intellij.kotlin.compilerPlugins.noarg.gradle
   - name: intellij.kotlin.compilerPlugins.noarg.maven
   - name: kotlin.compiler-plugins.sam-with-receiver.common
   - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
