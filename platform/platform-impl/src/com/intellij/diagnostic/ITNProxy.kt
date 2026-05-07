@@ -61,7 +61,7 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 @ApiStatus.Internal
 object ITNProxy {
   private const val DEFAULT_ENDPOINT = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
-  private const val REPORT_ENDPOINT_REGISTRY_KEY = "idea.diagnostic.itn.endpoint"
+  private const val REPORT_ENDPOINT_KEY = "ea.diagnostic.endpoint"
   private const val JETBRAINS_HOST_SUFFIX = ".jetbrains.com"
   private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
   private val LOG = logger<ITNProxy>()
@@ -208,7 +208,7 @@ object ITNProxy {
     val endpoint = getConfiguredReportEndpoint() ?: return DEFAULT_ENDPOINT
 
     if (!isEndpointValid(endpoint)) {
-      LOG.debug("Ignoring $REPORT_ENDPOINT_REGISTRY_KEY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
+      LOG.debug("Ignoring $REPORT_ENDPOINT_KEY=$endpoint: expected an HTTPS endpoint whose host ends with $JETBRAINS_HOST_SUFFIX")
       return DEFAULT_ENDPOINT
     }
 
@@ -217,11 +217,11 @@ object ITNProxy {
 
   private fun getConfiguredReportEndpoint(): String? {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      Registry.stringValue(REPORT_ENDPOINT_REGISTRY_KEY, "").trim().takeIf { it.isNotEmpty() }?.let {
+      Registry.stringValue(REPORT_ENDPOINT_KEY, "").trim().takeIf { it.isNotEmpty() }?.let {
         return it
       }
     }
-    return System.getProperty(REPORT_ENDPOINT_REGISTRY_KEY)?.trim()?.takeIf { it.isNotEmpty() }
+    return System.getProperty(REPORT_ENDPOINT_KEY)?.trim()?.takeIf { it.isNotEmpty() }
   }
 
   private fun isEndpointValid(endpoint: String): Boolean {

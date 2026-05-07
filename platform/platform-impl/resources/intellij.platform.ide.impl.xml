@@ -112,7 +112,7 @@
       restartRequired="true"
     />
     <registryKey
-      key="idea.diagnostic.itn.endpoint"
+      key="ea.diagnostic.endpoint"
       defaultValue=""
       description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"
     />
