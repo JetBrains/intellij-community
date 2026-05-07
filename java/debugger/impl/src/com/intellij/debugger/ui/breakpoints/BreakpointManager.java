@@ -693,7 +693,7 @@ public class BreakpointManager {
     myLogMessageDispatcher.addListener(listener, parentDisposable);
   }
 
-  void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
+  public void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
     myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess);
     XDebugSession session = debugProcess.getSession().getXDebugSession();
     XBreakpointManagerImpl manager = XDebuggerManager.getInstance(myProject).getBreakpointManager() instanceof XBreakpointManagerImpl managerImpl ? managerImpl : null;
