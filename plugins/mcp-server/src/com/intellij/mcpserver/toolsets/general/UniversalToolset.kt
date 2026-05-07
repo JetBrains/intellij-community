@@ -6,17 +6,22 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.impl.util.McpServerJson
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.reportToolActivity
+import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.util.execution.ParametersListUtil
 import kotlinx.coroutines.currentCoroutineContext
-import com.intellij.mcpserver.impl.util.McpServerJson
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlin.time.TimeSource
+import com.intellij.mcpserver.McpTool as McpToolDef
+
+private const val FLAG_PREFIX = "--"
 
 class UniversalToolset : McpToolset {
   @McpTool
@@ -25,75 +30,76 @@ class UniversalToolset : McpToolset {
     @McpDescription("Command-line string with tool name and arguments")
     command: String,
   ): String {
-    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.executing.universal.tool", command))
+    val dispatchEvent = ExecuteToolDispatchEvent()
+    try {
+      currentCoroutineContext().reportToolActivity(
+        McpServerBundle.message("tool.activity.executing.universal.tool", command))
 
-    // Parse command line
+      val parsedCommand = parseCommand(command).also { dispatchEvent.recordParsed(it.toolName, it.argsCount) }
+
+      val tool = findTool(parsedCommand.toolName, resolveRouterTools()).also { dispatchEvent.recordFound() }
+
+      val jsonArgs = buildArguments(tool, parsedCommand.args)
+      val result = invokeTool(tool, jsonArgs)
+
+      dispatchEvent.recordSuccess()
+      return result
+    }
+    finally {
+      dispatchEvent.emit()
+    }
+  }
+
+  private data class ParsedCommand(val toolName: String, val args: List<String>, val argsCount: Int)
+
+  private fun parseCommand(command: String): ParsedCommand {
     val parts = ParametersListUtil.parse(command, false, true)
-    if (parts.isEmpty()) {
-      mcpFail("Command is empty")
-    }
-
-    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler ?: mcpFail("Session handler not available")
-    val routerToolsProvider = sessionHandler.routerToolsProvider ?: mcpFail("Router tools provider not available")
-
-    val allTools = routerToolsProvider.mcpTools.value
-
-    val toolName = parts[0]
+    if (parts.isEmpty()) mcpFail("Command is empty")
     val args = parts.drop(1)
+    return ParsedCommand(
+      toolName = parts[0],
+      args = args,
+      argsCount = args.count { it.startsWith(FLAG_PREFIX) },
+    )
+  }
 
-    val tool = allTools.find { it.descriptor.name == toolName }
-                ?: mcpFail("Tool '$toolName' not found. Available tools: ${allTools.map { it.descriptor.name }.sorted().joinToString(", ")}")
+  private suspend fun resolveRouterTools(): List<McpToolDef> {
+    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
+                         ?: mcpFail("Session handler not available")
+    val routerToolsProvider = sessionHandler.routerToolsProvider
+                              ?: mcpFail("Router tools provider not available")
+    return routerToolsProvider.mcpTools.value
+  }
 
-    // Parse arguments into JSON object
-    val jsonArgs = parseArgsToJson(args, tool.descriptor.inputSchema.propertiesSchema)
+  private fun findTool(name: String, all: List<McpToolDef>): McpToolDef {
+    return all.find { it.descriptor.name == name }
+           ?: mcpFail("Tool '$name' not found. Available tools: ${all.map { it.descriptor.name }.sorted().joinToString(", ")}")
+  }
 
-    // Validate required parameters
-    val missingRequired = tool.descriptor.inputSchema.requiredProperties
-      .filter { !jsonArgs.containsKey(it) }
-    if (missingRequired.isNotEmpty()) {
-      mcpFail("Missing required parameters: ${missingRequired.joinToString(", ")}")
-    }
+  private fun buildArguments(tool: McpToolDef, rawArgs: List<String>): JsonObject {
+    val jsonArgs = parseArgsToJson(rawArgs, tool.descriptor.inputSchema.propertiesSchema)
+    val missing = tool.descriptor.inputSchema.requiredProperties.filter { it !in jsonArgs }
+    if (missing.isNotEmpty()) mcpFail("Missing required parameters: ${missing.joinToString(", ")}")
+    return jsonArgs
+  }
 
-    // Call the tool
+  private suspend fun invokeTool(tool: McpToolDef, jsonArgs: JsonObject): String {
     val result = tool.call(jsonArgs)
-    
-    if (result.isError) {
-      mcpFail("Tool execution failed: ${result}")
-    }
-    
+    if (result.isError) mcpFail("Tool execution failed: $result")
     return result.toString()
   }
 
-  private fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject {
-    val result = mutableMapOf<String, JsonElement>()
+  private fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject = buildJsonObject {
     var i = 0
-    
     while (i < args.size) {
       val arg = args[i]
-      
-      if (arg.startsWith("--")) {
-        val paramName = arg.substring(2)
-        
-        if (i + 1 >= args.size) {
-          mcpFail("Parameter '$paramName' requires a value")
-        }
-        
-        val value = args[i + 1]
-        
-        // Convert value to appropriate JSON type based on schema
-        val jsonValue = convertToJsonValue(paramName, value, propertiesSchema)
-        result[paramName] = jsonValue
-        
-        i += 2
-      } else {
-        mcpFail("Invalid argument format: '$arg'. Expected '--paramName value' format")
+      if (!arg.startsWith(FLAG_PREFIX)) {
+        mcpFail("Invalid argument format: '$arg'. Expected '${FLAG_PREFIX}paramName value' format")
       }
-    }
-    
-    return buildJsonObject {
-      result.forEach { (key, value) ->
-        put(key, value)
-      }
+      val name = arg.substring(FLAG_PREFIX.length)
+      val value = args.getOrNull(i + 1) ?: mcpFail("Parameter '$name' requires a value")
+      put(name, convertToJsonValue(name, value, propertiesSchema))
+      i += 2
     }
   }
 
@@ -115,6 +121,44 @@ class UniversalToolset : McpToolset {
         runCatching { McpServerJson.parseToJsonElement(value) }.getOrElse { JsonNull }
       }
       else -> JsonPrimitive(value)
+    }
+  }
+
+  /**
+   * Accumulates state for a single `execute_tool` invocation and emits it as a
+   * [McpServerCounterUsagesCollector.ExecuteToolDispatch] FUS event via [emit].
+   *
+   * Counters are mutated progressively as the dispatch advances, so the event still
+   * reports the last reached stage when an `mcpFail` aborts the call midway.
+   */
+  private class ExecuteToolDispatchEvent {
+    private val mark = TimeSource.Monotonic.markNow()
+    private var toolName: String = ""
+    private var argCount: Int = 0
+    private var found: Boolean = false
+    private var success: Boolean = false
+
+    fun recordParsed(toolName: String, argCount: Int) {
+      this.toolName = toolName
+      this.argCount = argCount
+    }
+
+    fun recordFound() {
+      found = true
+    }
+
+    fun recordSuccess() {
+      success = true
+    }
+
+    fun emit() {
+      McpServerCounterUsagesCollector.logExecuteToolDispatch(
+        dispatchedToolName = toolName,
+        argCount = argCount,
+        found = found,
+        success = success,
+        durationMs = mark.elapsedNow().inWholeMilliseconds,
+      )
     }
   }
 }

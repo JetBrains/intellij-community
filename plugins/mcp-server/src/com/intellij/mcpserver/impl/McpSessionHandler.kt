@@ -519,7 +519,7 @@ internal class McpSessionHandler(
                                     .put("mcp.side_effects.document_changes", initialDocumentContents.size.toLong())
                                     .build()
                             )
-                            McpServerCounterUsagesCollector.reportMcpCall(mcpTool.descriptor)
+                            McpServerCounterUsagesCollector.logMcpToolCall(mcpTool.descriptor)
                         }
                     }
                 } finally {
