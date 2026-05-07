@@ -13,9 +13,12 @@ import com.intellij.openapi.fileEditor.impl.PROVIDER_ELEMENT
 import com.intellij.openapi.fileEditor.impl.SELECTED_ATTRIBUTE_VALUE
 import com.intellij.openapi.fileEditor.impl.STATE_ELEMENT
 import com.intellij.openapi.fileEditor.impl.composite
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.platform.ide.IdeFingerprint
+import com.intellij.platform.ide.ideFingerprint
+import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.xmlb.jdomToJson
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -86,42 +89,63 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
   )
 }
 
-internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: Map<EditorComposite, FileEntry>) {
-  val selectedComposite = window.selectedComposite
-  val serializer = FileEntryTab.serializer()
-  for (tab in window.tabbedPane.tabs.tabs) {
-    val composite = tab.composite
+private fun writeFileEntry(
+  project: Project,
+  tab: TabInfo,
+  isSelected: Boolean,
+  delayedStates: Map<EditorComposite, FileEntry>,
+): Element {
+  val fileElement = Element("file")
 
-    if (!FileIdAdapter.getInstance().shouldSaveEditorState(composite.file)) {
-      continue
-    }
+  val composite = tab.composite
 
-    val fileElement = Element("file")
-
-    val delayedState = delayedStates.get(composite)
-    if (delayedState == null) {
-      fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(window.manager.project))
-    }
-    else {
-      fileElement.addContent(composite.writeDelayedStateAsHistoryEntry(delayedState))
-    }
-
-    if (composite.isPinned) {
-      fileElement.setAttribute(PINNED, "true")
-    }
-    if (composite === selectedComposite) {
-      fileElement.setAttribute(CURRENT_IN_TAB, "true")
-    }
-
-    fileElement.addContent(Element(TAB).addContent(CDATA(json.encodeToString(serializer, FileEntryTab(
-      tabTitle = tab.text,
-      foregroundColor = tab.defaultForeground?.rgb,
-      textAttributes = tab.editorAttributes?.let { editorAttributes ->
-        jdomToJson(Element("a").also { editorAttributes.writeExternal(it) })
-      },
-      icon = tab.icon?.let { findCachedImageIcon(it) }?.encodeToByteArray(),
-    )))))
-
-    result.addContent(fileElement)
+  val delayedState = delayedStates.get(composite)
+  if (delayedState == null) {
+    fileElement.addContent(composite.writeCurrentStateAsHistoryEntry(project))
   }
+  else {
+    fileElement.addContent(composite.writeDelayedStateAsHistoryEntry(delayedState))
+  }
+
+  if (composite.isPinned) {
+    fileElement.setAttribute(PINNED, "true")
+  }
+  if (isSelected) {
+    fileElement.setAttribute(CURRENT_IN_TAB, "true")
+  }
+
+  fileElement.addContent(Element(TAB).addContent(CDATA(json.encodeToString(FileEntryTab.serializer(), FileEntryTab(
+    tabTitle = tab.text,
+    foregroundColor = tab.defaultForeground?.rgb,
+    textAttributes = tab.editorAttributes?.let { editorAttributes ->
+      jdomToJson(Element("a").also { editorAttributes.writeExternal(it) })
+    },
+    icon = tab.icon?.let { findCachedImageIcon(it) }?.encodeToByteArray(),
+  )))))
+
+  return fileElement
+}
+
+private fun writeWindowEntries(window: EditorWindow, delayedStates: Map<EditorComposite, FileEntry>): List<Element> {
+  val project = window.manager.project
+  val selectedComposite = window.selectedComposite
+
+  return window.tabbedPane.tabs.tabs
+    .filter { tab -> FileIdAdapter.getInstance().shouldSaveEditorState(tab.composite.file) }
+    .map { tab -> writeFileEntry(project, tab, tab.composite === selectedComposite, delayedStates) }
+}
+
+internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: Map<EditorComposite, FileEntry>) {
+  val fileElements = writeWindowEntries(window, delayedStates)
+  for (element in fileElements) {
+    result.addContent(element)
+  }
+}
+
+@Internal
+fun createFileEntriesForWindow(window: EditorWindow): List<FileEntry> {
+  val fileElements = writeWindowEntries(window, emptyMap())
+
+  val ideFingerprint = ideFingerprint()
+  return fileElements.map { parseFileEntry(it, ideFingerprint) }
 }

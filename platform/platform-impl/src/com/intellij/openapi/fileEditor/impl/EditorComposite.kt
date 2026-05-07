@@ -98,6 +98,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -260,6 +261,9 @@ open class EditorComposite internal constructor(
 
   @Internal
   fun isAvailable(): Boolean = fileEditorWithProviders.value !== INITIAL_EMPTY
+
+  @Internal
+  fun isDisposed(): Boolean = !coroutineScope.isActive
 
   @Internal
   protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {

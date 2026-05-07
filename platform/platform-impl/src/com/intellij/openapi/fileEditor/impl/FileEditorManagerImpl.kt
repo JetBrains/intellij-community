@@ -890,6 +890,21 @@ open class FileEditorManagerImpl(
     closeFile(file = file, moveFocus = true, closeAllCopies = false)
   }
 
+  @Internal
+  fun closeUnusedPhantomComposite(composite: EditorComposite) {
+    require(!composite.isDisposed())
+    require(windows.none { it.composites().any { it == composite } })
+    WriteIntentReadAction.run {
+      project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+        .beforeFileClosed(this, composite.file)
+    }
+    disposeComposite(composite)
+    WriteIntentReadAction.run {
+      project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+        .fileClosed(this, composite.file)
+    }
+  }
+
   @RequiresEdt
   fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean) {
     if (closeAllCopies) {
@@ -1471,7 +1486,8 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  internal fun createCompositeInstance(
+  @Internal
+  fun createCompositeInstance(
     file: VirtualFile,
     model: Flow<EditorCompositeModel>,
     coroutineScope: CoroutineScope,
@@ -2261,7 +2277,8 @@ open class FileEditorManagerImpl(
     }
   }
 
-  internal suspend fun prepareFilesOnStartupForOpen(
+  @Internal
+  suspend fun prepareFilesOnStartupForOpen(
     items: List<FileToOpen>,
     window: EditorWindow,
     isLazyComposite: Boolean,
@@ -2331,8 +2348,9 @@ open class FileEditorManagerImpl(
     return tabs
   }
 
+  @Internal
   @RequiresEdt
-  internal fun openTabsOnStartup(
+  fun openTabsOnStartup(
     window: EditorWindow,
     requestFocus: Boolean,
     windowAdded: suspend () -> Unit,
@@ -2715,7 +2733,8 @@ private data class ProviderChange(
   @JvmField val editorTypeIdsToRemove: List<String>,
 )
 
-internal data class TabToOpenOnStartup(
+@Internal
+data class TabToOpenOnStartup(
   val tab: TabInfo,
   val isCurrentTab: Boolean,
 ) {

@@ -1247,7 +1247,8 @@ private fun computeFileEntry(
                       hint)
 }
 
-private fun setupFileTab(
+@Internal
+fun setupFileTab(
   compositeCoroutineScope: CoroutineScope,
   fileEditorManager: FileEditorManagerImpl,
   fileDeferred: Deferred<VirtualFile>,
@@ -1391,7 +1392,8 @@ private fun setupFileTab(
   )
 }
 
-internal data class FileToOpen(
+@Internal
+data class FileToOpen(
   @JvmField val file: VirtualFile,
   @JvmField val hint: FileEditorOpenOptionsHint?,
   @JvmField val fileEntry: FileEntry,

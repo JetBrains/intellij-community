@@ -699,7 +699,8 @@ class EditorWindow internal constructor(
   }
 
   @RequiresEdt
-  internal fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
+  @Internal
+  fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
     runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
