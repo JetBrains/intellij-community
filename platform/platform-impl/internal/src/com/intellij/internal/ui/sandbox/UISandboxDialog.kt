@@ -547,8 +547,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
   private fun showSources() {
     val leaf = selectedNode as? SandboxTreeLeaf ?: return
-    val src = "src/${leaf.sandboxPanel::class.java.name.replace('.', '/')}.kt"
-    showSources(project, Module.INTERNAL, src)
+    showSources(project, Module.INTERNAL, leaf.sandboxPanel::class.java)
   }
 }
 

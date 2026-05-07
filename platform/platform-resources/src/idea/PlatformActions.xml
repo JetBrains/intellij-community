@@ -1469,7 +1469,6 @@
           <action id="IconScaleTestAction" internal="true" class="com.intellij.internal.ui.ShowIconScaleTestAction"/>
         </group>
         <group id="Internal.UI.KotlinUiDsl" popup="true">
-          <action id="UiDslShowcaseAction" internal="true" class="com.intellij.internal.ui.uiDslShowcase.UiDslShowcaseAction"/>
           <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"
                   text="Show GridLayout Test"/>
         </group>

@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.ui.uiDslShowcase
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.uiDsl.showcase
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.bindValue
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.util.Alarm
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -102,7 +101,6 @@ private fun JComponent.bold(isBold: Boolean) {
   font = font.deriveFont(if (isBold) Font.BOLD else Font.PLAIN)
 }
 
-@ApiStatus.Internal
 internal data class Model(
   var checkbox: Boolean = false,
   var textField: String = "",
@@ -113,7 +111,6 @@ internal data class Model(
   var radioButtonColor: Color = Color.GREY,
 )
 
-@ApiStatus.Internal
 internal enum class Color {
   WHITE,
   GREY,

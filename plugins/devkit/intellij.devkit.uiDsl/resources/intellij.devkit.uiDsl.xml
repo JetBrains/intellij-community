@@ -9,9 +9,17 @@
 
   <resource-bundle>messages.DevkitUiDslBundle</resource-bundle>
 
+  <actions>
+    <action id="UiDslShowcaseAction" internal="true" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction">
+      <add-to-group group-id="Internal.UI.KotlinUiDsl" anchor="last"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="devkit.uiDsl.usage.notification.enabled" defaultValue="false"
                  description="Add an editor notification for the first-time use of the Kotlin UI DSL"/>
+
+    <editorNotificationProvider implementation="com.intellij.devkit.uiDsl.usageNotification.KotlinUiDslUsageNotificationProvider"/>
   </extensions>
 
 </idea-plugin>

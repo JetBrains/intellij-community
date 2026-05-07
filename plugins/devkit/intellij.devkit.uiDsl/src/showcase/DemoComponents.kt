@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.ui.uiDslShowcase
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.uiDsl.showcase
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,8 +21,8 @@ import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
 @Demo(title = "Components",
-  description = "There are many different components supported by UI DSL. Here are some of them.",
-  scrollbar = true)
+      description = "There are many different components supported by UI DSL. Here are some of them.",
+      scrollbar = true)
 fun demoComponents(): DialogPanel {
   val panel = panel {
     row {
