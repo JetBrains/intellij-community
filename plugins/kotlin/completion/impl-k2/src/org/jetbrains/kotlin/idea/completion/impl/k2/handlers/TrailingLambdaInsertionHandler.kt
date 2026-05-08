@@ -6,8 +6,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.ExpressionContext
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TextResult
+import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.openapi.editor.Editor
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -82,9 +87,10 @@ internal class TrailingLambdaInsertionHandler private constructor(
                 addTextSegment(" }")
             }
         }
-        TemplateManager.getInstance(context.project).startTemplate(context.editor, template)
-    }
 
+        val listener = TrailingLambdaTemplateListener(context.editor)
+        TemplateManager.getInstance(context.project).startTemplate(context.editor, template, listener)
+    }
 
     companion object {
         /**
@@ -116,6 +122,43 @@ internal class TrailingLambdaInsertionHandler private constructor(
         }
 
     }
+}
+
+/**
+ * This listener is responsible for listening to the user cancelling editing the template
+ * and will move the caret to the end of the template if the user cancels editing.
+ * In this case, the user likely wants to use the default names and continue in the end.
+ */
+private class TrailingLambdaTemplateListener(
+    private val editor: Editor
+) : TemplateEditingListener {
+    private var endOffset = -1
+
+    override fun beforeTemplateFinished(state: TemplateState, template: Template) {
+        val templateImpl = template as? TemplateImpl ?: return
+        val endSegmentNumber = templateImpl.endSegmentNumber
+        if (endSegmentNumber < 0) return
+        endOffset = state.getSegmentRange(endSegmentNumber).startOffset
+    }
+
+    override fun templateFinished(template: Template, brokenOff: Boolean) {
+        if (!brokenOff || endOffset < 0) return
+        editor.caretModel.moveToOffset(endOffset)
+    }
+
+    // This is not called when the user explicitly cancels the template using escape.
+    // Instead, templateFinished() with brokenOff = true is called in that case.
+    override fun templateCancelled(template: Template) {}
+
+    override fun currentVariableChanged(
+        templateState: TemplateState,
+        template: Template,
+        oldIndex: Int,
+        newIndex: Int
+    ) {
+    }
+
+    override fun waitingForInput(template: Template) {}
 }
 
 @Serializable
