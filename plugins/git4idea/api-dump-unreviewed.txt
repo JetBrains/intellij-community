@@ -2024,11 +2024,6 @@ e:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FETCH_PRUNE:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FOLLOW_TAGS:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FORCE_PUSH_WITH_LEASE:git4idea.config.GitVersionSpecialty
-- existsIn(com.intellij.openapi.project.Project):Z
-- existsIn(com.intellij.openapi.project.Project,git4idea.config.GitExecutable):Z
-- existsIn(com.intellij.openapi.vcs.AbstractVcs):Z
-- a:existsIn(git4idea.config.GitVersion):Z
-- existsIn(git4idea.repo.GitRepository):Z
 - s:valueOf(java.lang.String):git4idea.config.GitVersionSpecialty
 - s:values():git4idea.config.GitVersionSpecialty[]
 f:git4idea.config.HasGitRootsPredicate
