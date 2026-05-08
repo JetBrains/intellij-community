@@ -29,8 +29,7 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
         doTest()
     }
 
-    //KTIJ-38120
-    fun _testAnonymousObjectGenericJava() {
+    fun testAnonymousObjectGenericJava() {
         doTest()
     }
 
