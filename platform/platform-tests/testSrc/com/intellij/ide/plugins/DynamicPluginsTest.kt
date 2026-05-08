@@ -1151,8 +1151,8 @@ class DynamicPluginsTest {
 
     plugin("bar") {}.buildDir(barPluginPath)
     plugin("foo") {
+      namespace = "test_ns"
       content {
-        namespace = "test_ns"
         module("foo.a") {
           dependencies {
             plugin("bar")

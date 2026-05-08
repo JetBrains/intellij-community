@@ -7,7 +7,6 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import org.intellij.lang.annotations.Language
 
-
 class PluginSpec internal constructor(
   val id: String?,
   val name: String?,
@@ -48,6 +47,7 @@ class PluginSpec internal constructor(
 
 data class PluginSpecClassReference(val className: String, val classLoader: ClassLoader? = null)
 
+@PluginBuilderDsl
 class PluginSpecBuilder(
   var id: String? = null,
   var name: String? = null,
@@ -99,6 +99,7 @@ class PluginSpecBuilder(
   )
 }
 
+@PluginBuilderDsl
 class ContentModuleSpec internal constructor(
   val moduleId: String,
   val loadingRule: ModuleLoadingRuleValue,
@@ -106,10 +107,13 @@ class ContentModuleSpec internal constructor(
   val spec: PluginSpec,
 )
 
+@PluginBuilderDsl
 class DependsSpec internal constructor(val pluginId: String, val optional: Boolean, val configFile: String?, val spec: PluginSpec?) {
   init { require((configFile != null) == (spec != null)) }
 }
 
+@PluginBuilderDsl
 class ModuleDependencySpec internal constructor(val name: String, val namespace: String? = null)
 
+@PluginBuilderDsl
 class ExtensionsSpec internal constructor(val ns: String, @Language("XML") val content: String)

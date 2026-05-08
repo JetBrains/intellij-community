@@ -3,6 +3,7 @@ package com.intellij.platform.pluginSystem.testFramework
 
 import com.intellij.ide.plugins.PluginManagerState
 import com.intellij.ide.plugins.PluginSet
+import com.intellij.platform.testFramework.plugins.PluginBuilderDsl
 import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
 import com.intellij.platform.testFramework.plugins.buildDir
 import java.nio.file.Path
@@ -23,6 +24,7 @@ fun buildPluginSetState(pluginsDirPath: Path, builder: PluginSetSpecBuilder.() -
   return PluginSetTestBuilder.fromPath(pluginsDirPath).buildState()
 }
 
+@PluginBuilderDsl
 class PluginSetSpecBuilder internal constructor(private val pluginsDirPath: Path) {
   fun plugin(id: String? = null, body: PluginSpecBuilder.() -> Unit) {
     val pluginSpec = if (id != null) {
