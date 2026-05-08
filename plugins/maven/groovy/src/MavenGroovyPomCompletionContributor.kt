@@ -1,270 +1,252 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.groovy;
+package com.intellij.maven.groovy
 
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionService;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.impl.NegatingComparable;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
-import com.intellij.icons.AllIcons;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiLiteral;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.impl.GenericDomValueReference;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenVersionComparable;
-import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static org.jetbrains.idea.maven.dom.MavenDomUtil.POM_COMPLETION_ORIGINAL_FILE;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.impl.NegatingComparable
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.icons.AllIcons
+import com.intellij.lang.xml.XMLLanguage
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.tree.LeafElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlText
+import com.intellij.util.Consumer
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.xml.impl.GenericDomValueReference
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
+import org.jetbrains.idea.maven.dom.MavenDomUtil.POM_COMPLETION_ORIGINAL_FILE
+import org.jetbrains.idea.maven.dom.MavenVersionComparable
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil.invokeCompletion
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import java.util.Collections
 
 /**
  * @author Vladislav.Soroka
  */
-public final class MavenGroovyPomCompletionContributor extends CompletionContributor {
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final PsiElement position = parameters.getPosition();
-    if (!(position instanceof LeafElement)) return;
+class MavenGroovyPomCompletionContributor : CompletionContributor() {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    val position = parameters.position
+    if (position !is LeafElement) return
 
-    Project project = position.getProject();
-    VirtualFile virtualFile = parameters.getOriginalFile().getVirtualFile();
-    if(virtualFile == null) return;
+    val project = position.getProject()
+    val virtualFile = parameters.originalFile.getVirtualFile()
+    if (virtualFile == null) return
 
-    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
-    if (mavenProject == null) return;
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile)
+    if (mavenProject == null) return
 
-    List<String> methodCallInfo = MavenGroovyPomUtil.getGroovyMethodCalls(position);
-    if (methodCallInfo.isEmpty()) return;
+    val methodCallInfo = MavenGroovyPomUtil.getGroovyMethodCalls(position)
+    if (methodCallInfo.isEmpty()) return
 
-    StringBuilder buf = new StringBuilder();
-    for (String s : methodCallInfo) {
-      buf.append('<').append(s).append('>');
+    val buf = StringBuilder()
+    for (s in methodCallInfo) {
+      buf.append('<').append(s).append('>')
     }
-    for (String s : ContainerUtil.reverse(methodCallInfo)) {
-      buf.append('<').append(s).append("/>");
+    for (s in ContainerUtil.reverse(methodCallInfo)) {
+      buf.append('<').append(s).append("/>")
     }
 
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XMLLanguage.INSTANCE, buf);
-    psiFile.putUserData(POM_COMPLETION_ORIGINAL_FILE, virtualFile);
-    List<Object> variants = new ArrayList<>();
+    val psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XMLLanguage.INSTANCE, buf)
+    psiFile.putUserData(POM_COMPLETION_ORIGINAL_FILE, virtualFile)
+    val variants: MutableList<Any> = ArrayList()
 
 
-    String lastMethodCall = ContainerUtil.getLastItem(methodCallInfo);
-    Ref<Boolean> completeDependency = Ref.create(false);
-    Ref<Boolean> completeVersion = Ref.create(false);
-    psiFile.accept(new PsiRecursiveElementVisitor(true) {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        super.visitElement(element);
-        if (!completeDependency.get() && element.getParent() instanceof XmlTag &&
-            "dependency".equals(((XmlTag)element.getParent()).getName())) {
-          if ("artifactId".equals(lastMethodCall) || "groupId".equals(lastMethodCall)) {
-            completeDependency.set(true);
+    val lastMethodCall = methodCallInfo.lastOrNull()
+    val completeDependency = Ref.create<Boolean>(false)
+    val completeVersion = Ref.create<Boolean>(false)
+    psiFile.accept(object : PsiRecursiveElementVisitor(true) {
+      override fun visitElement(element: PsiElement) {
+        super.visitElement(element)
+        if (!completeDependency.get()!! && element.getParent() is XmlTag &&
+            "dependency" == (element.getParent() as XmlTag).getName()
+        ) {
+          if ("artifactId" == lastMethodCall || "groupId" == lastMethodCall) {
+            completeDependency.set(true)
           }
-          else if ("version".equals(lastMethodCall) || "dependency".equals(lastMethodCall)) {
-            completeVersion.set(true);
-            //completeDependency.set(true);
+          else if ("version" == lastMethodCall || "dependency" == lastMethodCall) {
+            completeVersion.set(true)
           }
         }
 
-        if (!completeDependency.get() && !completeVersion.get()) {
-          PsiReference[] references = getReferences(element);
-          for (PsiReference each : references) {
-            if (each instanceof GenericDomValueReference) {
-              Collections.addAll(variants, each.getVariants());
+        if (!completeDependency.get()!! && !completeVersion.get()!!) {
+          val references: Array<PsiReference?> = getReferences(element)
+          for (each in references) {
+            if (each is GenericDomValueReference<*>) {
+              Collections.addAll(variants, *each.getVariants())
             }
           }
         }
       }
-    });
-    for (Object variant : variants) {
-      if (variant instanceof LookupElement) {
-        result.addElement((LookupElement)variant);
+    })
+    for (variant in variants) {
+      if (variant is LookupElement) {
+        result.addElement(variant)
       }
       else {
-        result.addElement(LookupElementBuilder.create(variant));
+        result.addElement(LookupElementBuilder.create(variant))
       }
     }
 
     if (completeDependency.get()) {
-      MavenDependencySearchService searchService = MavenDependencySearchService.getInstance(project);
+      val searchService = getInstance(project)
 
-      for (String groupId : searchService.getGroupIdsBlocking("")) {
-        for (String artifactId : searchService.getArtifactIdsBlocking(groupId)) {
-          LookupElement builder = LookupElementBuilder.create(groupId + ':' + artifactId)
-            .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE);
-          result.addElement(builder);
+      for (groupId in searchService.getGroupIdsBlocking("")) {
+        for (artifactId in searchService.getArtifactIdsBlocking(groupId)) {
+          val builder: LookupElement = LookupElementBuilder.create("$groupId:$artifactId")
+            .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE)
+          result.addElement(builder)
         }
       }
     }
 
     if (completeVersion.get()) {
-      consumeDependencyElement(position, closableBlock -> {
+      consumeDependencyElement(position, Consumer { closableBlock: GrClosableBlock? ->
+        var groupId: String? = null
+        var artifactId: String? = null
+        for (methodCall in PsiTreeUtil.findChildrenOfType(closableBlock, GrMethodCall::class.java)) {
+          val arguments = methodCall.getArgumentList().getAllArguments()
+          if (arguments.size != 1) continue
+          val reference = arguments[0]!!.getReference()
+          if (reference == null) continue
 
-        String groupId = null;
-        String artifactId = null;
-        for (GrMethodCall methodCall : PsiTreeUtil.findChildrenOfType(closableBlock, GrMethodCall.class)) {
-          GroovyPsiElement[] arguments = methodCall.getArgumentList().getAllArguments();
-          if (arguments.length != 1) continue;
-          PsiReference reference = arguments[0].getReference();
-          if (reference == null) continue;
-
-          String callExpression = methodCall.getInvokedExpression().getText();
-          String argumentValue = reference.getCanonicalText();
-          if ("groupId".equals(callExpression)) {
-            groupId = argumentValue;
+          val callExpression = methodCall.getInvokedExpression().getText()
+          val argumentValue = reference.getCanonicalText()
+          if ("groupId" == callExpression) {
+            groupId = argumentValue
           }
-          else if ("artifactId".equals(callExpression)) {
-            artifactId = argumentValue;
+          else if ("artifactId" == callExpression) {
+            artifactId = argumentValue
           }
         }
-        completeVersions(result, project, groupId, artifactId, "");
-      }, element -> {
-        if (element.getParent() instanceof PsiLiteral) {
-          Object value = ((PsiLiteral)element.getParent()).getValue();
-          if (value == null) return;
+        completeVersions(result, project, groupId, artifactId, "")
+      }, Consumer { element: PsiElement? ->
+        if (element!!.getParent() is PsiLiteral) {
+          val value = (element.getParent() as PsiLiteral).getValue()
+          if (value == null) return@Consumer
 
-          String[] mavenCoordinates = value.toString().split(":");
-          if (mavenCoordinates.length < 3) return;
+          val mavenCoordinates = value.toString().split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+          if (mavenCoordinates.size < 3) return@Consumer
 
-          String prefix = mavenCoordinates[0] + ':' + mavenCoordinates[1] + ':';
-          completeVersions(result, project, mavenCoordinates[0], mavenCoordinates[1], prefix);
+          val prefix = mavenCoordinates[0] + ':' + mavenCoordinates[1] + ':'
+          completeVersions(result, project, mavenCoordinates[0], mavenCoordinates[1], prefix)
         }
-      });
+      })
     }
   }
 
-  private static void completeVersions(@NotNull CompletionResultSet completionResultSet,
-                                       @NotNull Project project,
-                                       @Nullable String groupId,
-                                       @Nullable String artifactId,
-                                       @NotNull String prefix) {
-    if (StringUtil.isEmptyOrSpaces(artifactId)) return;
-    CompletionResultSet newResultSet = completionResultSet.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-      new LookupElementWeigher("mavenVersionWeigher") {
-        @Override
-        public @Nullable Comparable weigh(@NotNull LookupElement element) {
-          return new NegatingComparable(new MavenVersionComparable(StringUtil.trimStart(element.getLookupString(), prefix)));
+  internal class MavenDependencyInsertHandler : InsertHandler<LookupElement?> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+      val s = item.getLookupString()
+      val idx = s.indexOf(':')
+      val groupId = s.substring(0, idx)
+      val artifactId = s.substring(idx + 1)
+
+      val startOffset = context.getStartOffset()
+      val psiFile = context.getFile()
+      val psiElement = psiFile.findElementAt(startOffset)
+
+      consumeDependencyElement(psiElement, Consumer { closableBlock: GrClosableBlock? ->
+        val textOffset = closableBlock!!.getTextOffset()
+        val value = "{groupId '" + groupId + "'\n" +
+                    "artifactId '" + artifactId + "'\n" +
+                    "version ''}"
+        context.document.replaceString(textOffset, textOffset + closableBlock.getTextLength(), value)
+        context.editor.getCaretModel().moveToOffset(textOffset + value.length - 2)
+
+        context.commitDocument()
+        ReformatCodeProcessor(psiFile.getProject(), psiFile, closableBlock.getTextRange(), false).run()
+        invokeCompletion(context, CompletionType.BASIC)
+      }, Consumer { element: PsiElement? ->
+        val textOffset = element!!.getTextOffset()
+        val value = "'$groupId:$artifactId:'"
+        context.document.replaceString(textOffset, textOffset + element.getTextLength(), value)
+        context.editor.getCaretModel().moveToOffset(textOffset + value.length - 1)
+        invokeCompletion(context, CompletionType.BASIC)
+      })
+    }
+
+    companion object {
+      val INSTANCE: InsertHandler<LookupElement?> = MavenDependencyInsertHandler()
+    }
+  }
+
+}
+
+private fun completeVersions(
+  completionResultSet: CompletionResultSet,
+  project: Project,
+  groupId: String?,
+  artifactId: String?,
+  prefix: String,
+) {
+  if (artifactId.isNullOrBlank()) return
+  val newResultSet = completionResultSet.withRelevanceSorter(
+    CompletionService.getCompletionService().emptySorter().weigh(
+      object : LookupElementWeigher("mavenVersionWeigher") {
+        override fun weigh(element: LookupElement): Comparable<*> {
+          return NegatingComparable(MavenVersionComparable(element.getLookupString().removePrefix(prefix)))
         }
-      }));
+      })
+  )
 
-    Set<String> versions;
+  val versions: Set<String>
 
-    if (StringUtil.isEmptyOrSpaces(groupId)) {
-      versions = Collections.emptySet();
-      //if (!(coordinates instanceof MavenDomPlugin)) return;
-      //
-      //versions = indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[0], artifactId);
-      //for (int i = 0; i < MavenArtifactUtil.DEFAULT_GROUPS.length; i++) {
-      //  versions = Sets.union(versions, indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[i], artifactId));
-      //}
-    }
-    else {
-      versions = MavenDependencySearchService.getInstance(project).getVersionsBlocking(groupId, artifactId);
-    }
-
-    for (String version : versions) {
-      newResultSet.addElement(LookupElementBuilder.create(prefix + version));
-    }
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.ReleaseVersionId));
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId));
+  if (groupId.isNullOrBlank()) {
+    versions = mutableSetOf()
+  }
+  else {
+    versions = getInstance(project).getVersionsBlocking(groupId, artifactId)
   }
 
-  private static PsiReference @NotNull [] getReferences(PsiElement psiElement) {
-    return psiElement instanceof XmlText ? psiElement.getParent().getReferences() : psiElement.getReferences();
+  for (version in versions) {
+    newResultSet.addElement(LookupElementBuilder.create(prefix + version))
   }
+  newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.ReleaseVersionId))
+  newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId))
+}
+
+private fun getReferences(psiElement: PsiElement): Array<PsiReference?> {
+  return if (psiElement is XmlText) psiElement.getParent().getReferences() else psiElement.getReferences()
+}
 
 
-  private static void consumeDependencyElement(PsiElement psiElement,
-                                               Consumer<GrClosableBlock> closureNotationConsumer,
-                                               Consumer<PsiElement> stringNotationConsumer) {
-    final GrClosableBlock owner = PsiTreeUtil.getParentOfType(psiElement, GrClosableBlock.class);
-    if (owner != null && owner.getParent() instanceof GrMethodCallExpression) {
-      String invokedExpressionText = ((GrMethodCallExpression)owner.getParent()).getInvokedExpression().getText();
-      if ("dependency".equals(invokedExpressionText)) {
-        closureNotationConsumer.consume(owner);
+private fun consumeDependencyElement(
+  psiElement: PsiElement?,
+  closureNotationConsumer: Consumer<GrClosableBlock>,
+  stringNotationConsumer: Consumer<PsiElement>,
+) {
+  val owner = PsiTreeUtil.getParentOfType(psiElement, GrClosableBlock::class.java)
+  if (owner != null && owner.getParent() is GrMethodCallExpression) {
+    val invokedExpressionText = (owner.getParent() as GrMethodCallExpression).getInvokedExpression().getText()
+    if ("dependency" == invokedExpressionText) {
+      closureNotationConsumer.consume(owner)
+    }
+    if ("dependencies" == invokedExpressionText) {
+      val methodCall = PsiTreeUtil.getParentOfType(psiElement, GrMethodCall::class.java)
+      if (methodCall != null && "dependency" == methodCall.getInvokedExpression().getText()) {
+        stringNotationConsumer.consume(psiElement)
       }
-      if ("dependencies".equals(invokedExpressionText)) {
-        GrMethodCall methodCall = PsiTreeUtil.getParentOfType(psiElement, GrMethodCall.class);
-        if (methodCall != null && "dependency".equals(methodCall.getInvokedExpression().getText())) {
-          stringNotationConsumer.consume(psiElement);
-        }
-      }
-    }
-  }
-
-  private static class MavenDependencyInsertHandler implements InsertHandler<LookupElement> {
-
-    private static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertHandler();
-
-    @Override
-    public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
-      String s = item.getLookupString();
-      int idx = s.indexOf(':');
-      String groupId = s.substring(0, idx);
-      String artifactId = s.substring(idx + 1);
-
-      int startOffset = context.getStartOffset();
-      PsiFile psiFile = context.getFile();
-      PsiElement psiElement = psiFile.findElementAt(startOffset);
-
-      consumeDependencyElement(psiElement, closableBlock -> {
-        int textOffset = closableBlock.getTextOffset();
-        String value = "{groupId '" + groupId + "'\n" +
-                       "artifactId '" + artifactId + "'\n" +
-                       "version ''}";
-        context.getDocument().replaceString(textOffset, textOffset + closableBlock.getTextLength(), value);
-        context.getEditor().getCaretModel().moveToOffset(textOffset + value.length() - 2);
-
-        context.commitDocument();
-        new ReformatCodeProcessor(psiFile.getProject(), psiFile, closableBlock.getTextRange(), false).run();
-
-        MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
-      }, element -> {
-        int textOffset = element.getTextOffset();
-        String value = '\'' + groupId + ":" + artifactId + ":'";
-        context.getDocument().replaceString(textOffset, textOffset + element.getTextLength(), value);
-        context.getEditor().getCaretModel().moveToOffset(textOffset + value.length() - 1);
-
-        MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
-      });
     }
   }
 }
-
