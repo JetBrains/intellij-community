@@ -39,6 +39,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -376,10 +377,12 @@ internal fun Project.closeProject(save: Boolean = false) {
 }
 
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
-  if (save) {
-    saveWorkspaceModel()
+  withContext(NonCancellable) {
+    if (save) {
+      saveWorkspaceModel()
+    }
+    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project = this@closeProjectAsync, save)
   }
-  ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project = this, save)
 }
 
 suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
