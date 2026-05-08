@@ -1160,7 +1160,7 @@ public class HighlightInfo implements Segment {
     }
     RangeHighlighterEx highlighter = offsetStore.highlighter();
     if (highlighter == null) {
-      throw new RuntimeException("highlighter is not created yet");
+      return "";
     }
     TextRange range = highlighter.getTextRange();
     if (!highlighter.isValid()) {
