@@ -1,5 +1,6 @@
 // "Remove annotation" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on getter.
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)
@@ -11,3 +12,4 @@ class Foo(val value: Int) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

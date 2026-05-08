@@ -1,5 +1,4 @@
 // "Propagate 'SubclassOptInRequired(A::class)' opt-in requirement to 'SomeImplementation'" "true"
-// ACTION: Add full qualifier
 // ACTION: Flip ',' (may change semantics)
 // ACTION: Implement interface
 // ACTION: Introduce import alias
@@ -10,6 +9,9 @@
 // ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@PropagateSubclassOptInRequired2.B', '@OptIn(PropagateSubclassOptInRequired2.B::class)' or '@SubclassOptInRequired(PropagateSubclassOptInRequired2.B::class)'
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // LANGUAGE_VERSION: 2.1
+// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@A', '@OptIn(A::class)' or '@SubclassOptInRequired(A::class)'
+// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@B', '@OptIn(B::class)' or '@SubclassOptInRequired(B::class)'
+// K2_AFTER_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@B', '@OptIn(B::class)' or '@SubclassOptInRequired(B::class)'
 
 @RequiresOptIn
 annotation class A
@@ -26,3 +28,4 @@ interface LibraryB
 @SubclassOptInRequired(A::class)
 interface SomeImplementation : LibraryA<caret>, LibraryB
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

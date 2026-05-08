@@ -1,5 +1,6 @@
 // "Move 'SomeOptInAnnotation' opt-in requirement from getter to property" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on getter.
 
 @RequiresOptIn
 annotation class SomeOptInAnnotation
@@ -8,3 +9,4 @@ annotation class SomeOptInAnnotation
 val someProperty: Int = 5
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix

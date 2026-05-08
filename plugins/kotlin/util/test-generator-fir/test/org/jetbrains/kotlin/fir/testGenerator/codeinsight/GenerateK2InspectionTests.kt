@@ -259,7 +259,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/suppress", pattern = pattern)
             model("${idea}/quickfix/suspiciousCollectionReassignment", pattern = pattern)
             model("${idea}/quickfix/removeAnnotation", pattern = pattern)
-            model("${idea}/quickfix/optIn", pattern = pattern)
+            model("${idea}/quickfix/optIn", pattern = Patterns.KT_OR_KTS)
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
             model("${idea}/quickfix/redundantInterpolationPrefix", pattern = pattern)

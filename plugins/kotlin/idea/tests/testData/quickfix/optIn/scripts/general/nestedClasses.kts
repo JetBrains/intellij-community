@@ -1,5 +1,6 @@
 // "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
 // PRIORITY: HIGH
+// ACTION: Introduce import alias
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClasses.kts'
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
@@ -12,6 +13,7 @@
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Inner'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Outer'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 annotation class MyExperimentalAPI
@@ -30,3 +32,4 @@ class Outer {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

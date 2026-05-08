@@ -1,7 +1,6 @@
 // "Opt in for 'PropertyTypeMarker' on constructor" "true"
 // PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// ACTION: Add full qualifier
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
@@ -13,6 +12,7 @@
 // ACTION: Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'
 // ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to constructor
 // ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to containing class 'PropertyTypeContainer'
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@PropertyTypeMarker' or '@OptIn(PropertyTypeMarker::class)'
 
 @RequiresOptIn
 annotation class PropertyTypeMarker
@@ -23,3 +23,4 @@ class PropertyTypeMarked
 class PropertyTypeContainer(val subject: Property<caret>TypeMarked)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

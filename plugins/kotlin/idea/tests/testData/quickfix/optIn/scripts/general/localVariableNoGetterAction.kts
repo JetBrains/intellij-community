@@ -2,6 +2,8 @@
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // ACTION: Remove annotation
 // ERROR: Opt-in requirement marker annotation cannot be used on variable
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on variable.
+// K2_AFTER_ERROR: Opt-in requirement marker annotation cannot be used on variable.
 
 @RequiresOptIn
 annotation class SomeOptInAnnotation

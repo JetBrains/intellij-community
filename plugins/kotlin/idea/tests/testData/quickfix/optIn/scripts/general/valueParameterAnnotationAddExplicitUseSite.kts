@@ -1,5 +1,6 @@
 // "Move 'SomeOptInAnnotation' opt-in requirement from value parameter to property" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on parameter.
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER)
@@ -9,3 +10,4 @@ class Foo(@SomeOptInAnnotation<caret> val value: Int) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveOptInRequirementToPropertyFix

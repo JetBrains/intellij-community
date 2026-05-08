@@ -5,6 +5,7 @@
 // ACTION: Opt in for 'UnstableApi' in containing file 'propagateOptIn8.kt'
 // ACTION: Opt in for 'UnstableApi' in module 'light_idea_test_case'
 // ACTION: Opt in for 'UnstableApi' on 'foo'
+// ACTION: Opt in for 'UnstableApi' on statement
 // ACTION: Propagate 'UnstableApi' opt-in requirement to 'foo'
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB

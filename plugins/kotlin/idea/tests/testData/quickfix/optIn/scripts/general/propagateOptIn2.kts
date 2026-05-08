@@ -2,6 +2,8 @@
 // PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // LANGUAGE_VERSION: 2.1
+// K2_ERROR: Base declaration of supertype 'Base' needs opt-in. The declaration override must be annotated with '@UnstableApi' or '@OptIn(UnstableApi::class)'
+// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi', '@OptIn(UnstableApi::class)' or '@SubclassOptInRequired(UnstableApi::class)'
 
 @RequiresOptIn
 annotation class UnstableApi
@@ -16,3 +18,4 @@ abstract class Derived : Base {
     override fun foo<caret>(){}
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

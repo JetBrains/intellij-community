@@ -1,11 +1,13 @@
 // "Opt in for 'B' on 'root'" "true"
 // PRIORITY: HIGH
+// ACTION: Introduce import alias
 // ACTION: Opt in for 'B' in containing file 'hasOptInAnnotation.kts'
 // ACTION: Opt in for 'B' in module 'light_idea_test_case'
 // ACTION: Opt in for 'B' on 'root'
 // ACTION: Opt in for 'B' on statement
 // ACTION: Propagate 'B' opt-in requirement to 'root'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@B' or '@OptIn(B::class)'
 @RequiresOptIn
 annotation class A
 
@@ -24,3 +26,4 @@ fun root() {
     <caret>f2()
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix

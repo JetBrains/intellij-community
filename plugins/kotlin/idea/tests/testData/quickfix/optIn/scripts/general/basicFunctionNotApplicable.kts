@@ -9,6 +9,12 @@
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@BasicFunctionNotApplicable.MyExperimentalAPI' or '@OptIn(BasicFunctionNotApplicable.MyExperimentalAPI::class)'
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@BasicFunctionNotApplicable.MyExperimentalAPI' or '@OptIn(BasicFunctionNotApplicable.MyExperimentalAPI::class)'
 // ERROR: This annotation is not applicable to target 'member function'
+// K2_ERROR: This annotation is not applicable to target 'member function'. Applicable targets: class
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_AFTER_ERROR: This annotation is not applicable to target 'member function'. Applicable targets: class
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 
 @RequiresOptIn
 @Target(AnnotationTarget.CLASS)

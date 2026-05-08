@@ -1,5 +1,4 @@
 // "Propagate 'TopMarker' opt-in requirement to 'topUserVal'" "true"
-// ACTION: Add full qualifier
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Introduce import alias
@@ -8,6 +7,8 @@
 // ACTION: Opt in for 'TopMarker' on 'topUserVal'
 // ACTION: Propagate 'TopMarker' opt-in requirement to 'topUserVal'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@TopMarker' or '@OptIn(TopMarker::class)'
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@TopMarker' or '@OptIn(TopMarker::class)'
 
 @RequiresOptIn
 annotation class TopMarker
@@ -22,3 +23,4 @@ annotation class TopAnn
 val topUserVal: @<caret>TopAnn TopClass? = null
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

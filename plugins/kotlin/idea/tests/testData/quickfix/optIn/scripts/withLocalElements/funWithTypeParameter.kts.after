@@ -1,12 +1,13 @@
 // "Opt in for 'Library' on 'bar'" "true"
 // PRIORITY: HIGH
-// ACTION: Add full qualifier
+// ACTION: Convert value parameter to context parameter
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'Library' in containing file 'funWithTypeParameter.kts'
 // ACTION: Opt in for 'Library' in module 'light_idea_test_case'
 // ACTION: Opt in for 'Library' on 'bar'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@Library' or '@OptIn(Library::class)'
 @RequiresOptIn
 annotation class Library()
 
@@ -23,3 +24,4 @@ val foo: MockLibrary = MockLibrary();
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

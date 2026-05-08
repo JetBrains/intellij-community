@@ -13267,16 +13267,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/optIn/scripts/general/samWithAnnotation.kts");
                 }
 
-                @TestMetadata("switchOn.kts")
-                public void testSwitchOn() throws Exception {
-                    runTest("testData/quickfix/optIn/scripts/general/switchOn.kts");
-                }
-
-                @TestMetadata("switchOnWithAnotherMarker.kts")
-                public void testSwitchOnWithAnotherMarker() throws Exception {
-                    runTest("testData/quickfix/optIn/scripts/general/switchOnWithAnotherMarker.kts");
-                }
-
                 @TestMetadata("typeAlias.kts")
                 public void testTypeAlias() throws Exception {
                     runTest("testData/quickfix/optIn/scripts/general/typeAlias.kts");

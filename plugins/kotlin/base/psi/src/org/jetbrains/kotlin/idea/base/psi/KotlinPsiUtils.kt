@@ -81,7 +81,7 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
         if (KtPsiUtil.isLocal(this)) return null
         val packageName = containingKtFile.packageFqName
-        val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
+        val classesNames = parentsOfType<KtDeclaration>().filterNot { it is KtScript }.map { it.name }.toList().asReversed()
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
     }
