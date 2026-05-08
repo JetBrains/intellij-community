@@ -19,7 +19,8 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.verifiers.DEFAULT_ILLEGAL_PREFIXES
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil

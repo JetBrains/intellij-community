@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
+import com.intellij.platform.buildScripts.licenses.CommunityLibraryLicenses
 import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
@@ -11,6 +12,8 @@ import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
@@ -220,12 +223,12 @@ abstract class ProductProperties {
    * It's used by the build scripts for the following:
    * * to inject URL of *.manifest file produced by [RepairUtilityBuilder][org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder] and
    *   in `repair` executable;
-   * * to specify URL of distributions in [SoftwareBillOfMaterials] files.
+   * * to specify URL of distributions in [com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials] files.
    */
   var baseDownloadUrl: String? = null
 
   /**
-   * See [SoftwareBillOfMaterials]
+   * See [com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials]
    */
   val sbomOptions: SoftwareBillOfMaterials.Options = SoftwareBillOfMaterials.Options()
 

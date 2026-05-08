@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.licenses
 
 import org.jetbrains.annotations.ApiStatus
 
@@ -41,8 +41,8 @@ interface SoftwareBillOfMaterials {
      * @param copyrightText https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field
      */
     class DistributionLicense(val name: String, val text: String, val url: String?, var copyrightText: String) {
-      internal companion object {
-        val JETBRAINS = DistributionLicense(
+      companion object {
+        val JETBRAINS: DistributionLicense = DistributionLicense(
           name = LibraryLicense.JETBRAINS_OWN,
           text = LibraryLicense.JETBRAINS_OWN,
           copyrightText = LibraryLicense.JETBRAINS_OWN,

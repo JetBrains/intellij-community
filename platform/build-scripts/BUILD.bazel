@@ -94,6 +94,7 @@ jvm_library(
     "//platform/build-scripts/product-dsl/plugin-graph",
     "//platform/build-scripts/api",
     "//platform/build-scripts/product-dsl",
+    "//platform/build-scripts/licenses",
   ],
   exports = [
     "//platform/build-scripts/api",
@@ -208,6 +209,7 @@ jvm_library(
     "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
     "//platform/build-scripts/api:api_test_lib",
     "//platform/build-scripts/product-dsl:product-dsl_test_lib",
+    "//platform/build-scripts/licenses:licenses_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts` end

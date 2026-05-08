@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -66,7 +65,7 @@ private suspend fun checkWebsiteUrls(licenses: List<LibraryLicense>, errors: Mut
     "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/rocksdbjni/",
   )
   val map = licenses.asSequence()
-    .filterNot { it.url == null || it.url in knownProblems || (it.licenseUrl ?: "").startsWith(it.url) }
+    .filterNot { it.url == null || it.url in knownProblems || (it.licenseUrl ?: "").startsWith(it.url!!) }
     .groupBy { it.url }
     .mapKeys { it.key!! }
   checkUrls(type = "Website", urls = map, errors = errors)

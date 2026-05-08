@@ -90,7 +90,7 @@ There are multiple tests ensuring the quality of the Community project. Changes 
 during safe-push if not done correctly, and prevent automated merging.
 
 1. New module dependencies have to be included in the list of 3p libraries with their licenses, which is stored in
-   [`CommunityLibraryLicenses.kt`](../../build-scripts/src/org/jetbrains/intellij/build/CommunityLibraryLicenses.kt).
+   [`CommunityLibraryLicenses.kt`](../../build-scripts/licenses/src/CommunityLibraryLicenses.kt).
    * If you're adding a new artefact from an existing library, as a separate JPS library, you need to add it to the
      existing library entry, using the `additionalLibraryNames()` API
    * For example, we already have an entry for Compose Multiplatform; if we need a new dependency that's not part of the

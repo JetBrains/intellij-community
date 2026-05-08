@@ -52,6 +52,7 @@ jvm_library(
     "//platform/buildData",
     "//platform/util/zip",
     "//platform/distribution-content:distributionContent-testFramework",
+    "//platform/build-scripts/licenses",
   ]
 )
 
@@ -92,6 +93,7 @@ jvm_library(
     "//platform/buildData:buildData_test_lib",
     "//platform/util/zip:zip_test_lib",
     "//platform/distribution-content:distributionContent-testFramework_test_lib",
+    "//platform/build-scripts/licenses:licenses_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end

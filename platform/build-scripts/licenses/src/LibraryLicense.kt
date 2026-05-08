@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.licenses
 
-import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import com.intellij.platform.buildScripts.licenses.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
+import kotlin.collections.get
 
 /**
  * Describes a library which is included in the distribution of an IntelliJ-based IDE.
@@ -76,7 +76,7 @@ data class LibraryLicense(
   val supplier: String? = null,
 
   /**
-   * See [LibraryUpstream]
+   * See [com.intellij.platform.buildScripts.licenses.LibraryUpstream]
    */
   var forkedFrom: LibraryUpstream? = null,
 
@@ -120,19 +120,19 @@ data class LibraryLicense(
       "ktorio",
     )
 
-    internal fun isJetBrainsOwnLibrary(library: LibraryLicense): Boolean {
+    fun isJetBrainsOwnLibrary(library: LibraryLicense): Boolean {
       return library.license == JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
         library.url?.startsWith("https://github.com/$it/") == true ||
         library.licenseUrl?.startsWith("https://github.com/$it/") == true
       }
     }
 
-    internal fun isJetBrainsOwnLibrary(library: JpsMavenRepositoryLibraryDescriptor): Boolean {
-      return library.groupId.startsWith("org.jetbrains") ||
-             library.groupId.startsWith("com.jetbrains") ||
-             library.groupId.startsWith("com.intellij") ||
-             library.groupId.startsWith("ai.grazie") ||
-             library.groupId.startsWith("io.ktor")
+    fun isJetBrainsOwnLibrary(groupId: String): Boolean {
+      return groupId.startsWith("org.jetbrains") ||
+             groupId.startsWith("com.jetbrains") ||
+             groupId.startsWith("com.intellij") ||
+             groupId.startsWith("ai.grazie") ||
+             groupId.startsWith("io.ktor")
     }
   }
 

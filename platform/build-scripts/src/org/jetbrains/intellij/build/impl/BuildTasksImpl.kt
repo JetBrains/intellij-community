@@ -39,7 +39,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded

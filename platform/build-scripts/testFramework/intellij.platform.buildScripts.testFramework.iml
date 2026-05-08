@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.distributionContent.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.licenses" />
   </component>
 </module>

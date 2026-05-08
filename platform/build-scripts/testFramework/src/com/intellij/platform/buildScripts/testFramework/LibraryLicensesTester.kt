@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind

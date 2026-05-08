@@ -428,5 +428,6 @@
     <orderEntry type="module" module-name="intellij.platform.pluginGraph" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.api" exported="" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.licenses" />
   </component>
 </module>

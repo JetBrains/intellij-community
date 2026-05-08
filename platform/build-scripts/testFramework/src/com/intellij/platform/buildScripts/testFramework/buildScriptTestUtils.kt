@@ -3,6 +3,7 @@ package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestLoggerFactory
@@ -24,7 +25,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds

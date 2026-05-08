@@ -4,6 +4,11 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
+import com.intellij.platform.buildScripts.licenses.LibraryUpstream
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Companion.Suppliers
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Options
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.sha256Hex
 import io.ktor.client.plugins.ClientRequestException
@@ -22,12 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
-import org.jetbrains.intellij.build.LibraryLicense
-import org.jetbrains.intellij.build.LibraryUpstream
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.downloadAsText
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.Checksums
