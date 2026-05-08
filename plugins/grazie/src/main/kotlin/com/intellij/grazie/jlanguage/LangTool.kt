@@ -45,7 +45,7 @@ object LangTool : GrazieStateLifecycle {
       GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
     }
 
-    Hunspell.setHunspellDictionaryFactory(::LuceneHunspellDictionary)
+    Hunspell.setHunspellStreamFactory { _, dic, aff -> LuceneHunspellDictionary(dic, aff) }
   }
 
   internal fun globalIdPrefix(lang: Lang): String = globalIdPrefix(lang.iso)
