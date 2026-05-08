@@ -353,6 +353,7 @@ def format_rest(docstring):
             'halt_level': 10000,
             'warning_stream': None,
             'docinfo_xform': False,
+            'syntax_highlight': 'none',
         },
     )
     document = writer.document
