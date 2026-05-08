@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.providerIconWithMode
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
+import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -22,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -29,56 +31,76 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import javax.swing.JComponent
 
 internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads constructor(
-  private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext? =
+    { event -> resolveAgentSessionsEditorTabNewThreadContext(event) },
   private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
-  resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
-  private val projectPathCandidates: (Project, (Project) -> Boolean) -> List<AgentPromptProjectPathCandidate>? = ::collectProjectPathCandidates,
   private val showProjectPopup: (List<AgentPromptProjectPathCandidate>, AnActionEvent, (AgentPromptProjectPathCandidate) -> Unit) -> Unit =
     ::showQuickStartProjectPopup,
-) : AgentSessionsEditorTabActionBase(resolveContext) {
+) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val context = resolveEditorTabContext(e)
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
-    val isVisible = context != null && actionModel.quickStartItem != null
-    e.presentation.isEnabledAndVisible = isVisible
-    e.presentation.icon = actionModel.quickStartItem?.let { providerIconWithMode(it.bridge.provider, it.mode) } ?: templatePresentation.icon
+    val context = resolveContext(e)
+    if (context == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode()).quickStartItem
+    if (quickStartItem == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.icon = providerIconWithMode(quickStartItem.bridge.provider, quickStartItem.mode)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val context = resolveEditorTabContext(e) ?: return
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode())
-    val candidates = projectPathCandidates(context.project, isDedicatedProject)
-    if (candidates == null) {
-      launchQuickStartThread(context.path, context.project, actionModel.quickStartItem, AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK, createNewSession)
-      return
-    }
-    showProjectPopup(candidates, e) { selected ->
-      launchQuickStartThread(
-        path = selected.path,
-        project = context.project,
-        quickStartItem = actionModel.quickStartItem,
-        entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK,
-        createNewSession = createNewSession,
-      )
+    val context = resolveContext(e) ?: return
+    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode()).quickStartItem ?: return
+    when (val target = context.target ?: return) {
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> {
+        launchQuickStartThread(
+          path = target.path,
+          project = context.project,
+          quickStartItem = quickStartItem,
+          entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK,
+          createNewSession = createNewSession,
+        )
+      }
+      is AgentSessionsEditorTabNewThreadTarget.Candidates -> {
+        showProjectPopup(target.candidates, e) { selected ->
+          launchQuickStartThread(
+            path = selected.path,
+            project = context.project,
+            quickStartItem = quickStartItem,
+            entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_QUICK,
+            createNewSession = createNewSession,
+          )
+        }
+      }
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads constructor(
-  private val isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
-  private val resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? =
-    ::resolveAgentChatEditorTabActionContext,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext? =
+    { event -> resolveAgentSessionsEditorTabNewThreadContext(event) },
   private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
-  private val projectPathCandidates: (Project, (Project) -> Boolean) -> List<AgentPromptProjectPathCandidate>? = ::collectProjectPathCandidates,
 ) : ActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
-    val context = resolveContext(e)
+    if (resolveContext(e) == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val menuModel = buildNewThreadMenuModel(allBridges())
-    if (context == null || !menuModel.hasEntries()) {
+    if (!menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -91,29 +113,85 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val context = e?.let(resolveContext) ?: return emptyArray()
+    val target = context.target ?: return emptyArray()
     val menuModel = buildNewThreadMenuModel(allBridges())
-    val candidates = projectPathCandidates(context.project, isDedicatedProject)
-    if (candidates == null) {
-      return buildNewThreadMenuActions(
-        path = context.path,
+    return when (target) {
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildNewThreadMenuActions(
+        path = target.path,
         project = context.project,
         menuModel = menuModel,
         entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
         createNewSession = createNewSession,
       )
+      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.map { candidate ->
+        buildProjectCandidatePopupGroup(
+          candidate = candidate,
+          project = context.project,
+          menuModel = menuModel,
+          entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
+          createNewSession = createNewSession,
+        )
+      }.toTypedArray()
     }
-    return candidates.map { candidate ->
-      buildProjectCandidatePopupGroup(
-        candidate = candidate,
-        project = context.project,
-        menuModel = menuModel,
-        entryPoint = AgentWorkbenchEntryPoint.EDITOR_TAB_POPUP,
-        createNewSession = createNewSession,
-      )
-    }.toTypedArray()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+}
+
+internal class AgentSessionsEditorTabNewThreadContext(
+  val project: Project,
+  private val resolveTarget: () -> AgentSessionsEditorTabNewThreadTarget?,
+) {
+  val target: AgentSessionsEditorTabNewThreadTarget?
+    get() = resolveTarget()
+}
+
+internal sealed class AgentSessionsEditorTabNewThreadTarget {
+  data class Direct(val path: String) : AgentSessionsEditorTabNewThreadTarget()
+  data class Candidates(val candidates: List<AgentPromptProjectPathCandidate>) : AgentSessionsEditorTabNewThreadTarget()
+}
+
+internal fun resolveAgentSessionsEditorTabNewThreadContext(
+  event: AnActionEvent,
+  isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
+  openInDedicatedFrame: () -> Boolean = ::openChatInDedicatedFrame,
+  openProjectPaths: () -> List<String> = ::collectOpenAgentSessionProjectPaths,
+  resolveChatContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+): AgentSessionsEditorTabNewThreadContext? {
+  val project = event.project ?: return null
+  val chatContext = resolveChatContext(event)
+  return when {
+    isDedicatedProject(project) -> AgentSessionsEditorTabNewThreadContext(project) {
+      resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths)
+    }
+    openInDedicatedFrame() -> null
+    else -> {
+      val target = resolveProjectFrameNewThreadTarget(project, chatContext) ?: return null
+      AgentSessionsEditorTabNewThreadContext(project) { target }
+    }
+  }
+}
+
+private fun resolveDedicatedFrameNewThreadTarget(
+  chatContext: AgentChatEditorTabActionContext?,
+  openProjectPaths: () -> List<String>,
+): AgentSessionsEditorTabNewThreadTarget? {
+  // Source-project candidates are resolved lazily on click/popup open. In a multi-project dedicated frame,
+  // require an explicit choice instead of silently using the active Agent tab's source path.
+  val candidates = buildAgentSessionProjectPathCandidates(openProjectPaths())
+  return when (candidates.size) {
+    0 -> chatContext?.let { AgentSessionsEditorTabNewThreadTarget.Direct(it.path) }
+    1 -> AgentSessionsEditorTabNewThreadTarget.Direct(candidates.single().path)
+    else -> AgentSessionsEditorTabNewThreadTarget.Candidates(candidates)
+  }
+}
+
+private fun resolveProjectFrameNewThreadTarget(
+  project: Project,
+  chatContext: AgentChatEditorTabActionContext?,
+): AgentSessionsEditorTabNewThreadTarget? {
+  val path = chatContext?.path ?: normalizeOpenableSourceProjectPath(project.basePath) ?: return null
+  return AgentSessionsEditorTabNewThreadTarget.Direct(path)
 }
 
 internal fun buildProjectCandidatePopupGroup(
@@ -134,29 +212,16 @@ internal fun buildProjectCandidatePopupGroup(
   return group
 }
 
-internal fun collectProjectPathCandidates(
-  project: Project,
-  isDedicatedProject: (Project) -> Boolean,
-): List<AgentPromptProjectPathCandidate>? {
-  return collectProjectPathCandidates(project, isDedicatedProject, ::collectOpenAgentSessionProjectPaths)
-}
-
-internal fun collectProjectPathCandidates(
-  project: Project,
-  isDedicatedProject: (Project) -> Boolean,
-  openProjectPaths: () -> List<String>,
-): List<AgentPromptProjectPathCandidate>? {
-  if (!isDedicatedProject(project)) return null
-  val candidates = buildAgentSessionProjectPathCandidates(openProjectPaths())
-  return candidates.takeIf { it.size > 1 }
-}
-
 private fun showQuickStartProjectPopup(
   candidates: List<AgentPromptProjectPathCandidate>,
   e: AnActionEvent,
   onResolved: (AgentPromptProjectPathCandidate) -> Unit,
 ) {
   val group = buildQuickStartProjectPopupGroup(candidates, onResolved)
+  showActionGroupPopup(group, e)
+}
+
+private fun showActionGroupPopup(group: ActionGroup, e: AnActionEvent) {
   val popup = JBPopupFactory.getInstance()
     .createActionGroupPopup(
       null,
@@ -197,3 +262,9 @@ internal fun resolveQuickStartProjectPopupAnchor(e: AnActionEvent): JComponent? 
   return (e.inputEvent?.component as? JComponent)
          ?: (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent)
 }
+
+private fun openChatInDedicatedFrame(): Boolean {
+  return AdvancedSettings.getBoolean(OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID)
+}
+
+private const val OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID = "agent.workbench.chat.open.in.dedicated.frame"

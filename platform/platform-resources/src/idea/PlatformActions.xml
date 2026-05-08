@@ -1022,6 +1022,8 @@
       <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
     </group>
 
+    <group id="EditorTabsToolbarActions" searchable="false"/>
+
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
       <reference ref="RecentFilesFallback"/>
       <reference ref="RecentLocations"/>

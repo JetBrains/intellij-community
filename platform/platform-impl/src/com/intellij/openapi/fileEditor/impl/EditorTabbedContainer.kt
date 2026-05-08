@@ -559,6 +559,9 @@ private class EditorTabbedContainerTransferHandler(private val window: EditorWin
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>): Boolean = containsFileDropTargets(transferFlavors)
 }
 
+private const val EDITOR_TABS_TOOLBAR_ACTION_GROUP_ID: String = "EditorTabsToolbarActions"
+private const val EDITOR_TABS_ENTRY_POINT_ACTION_GROUP_ID: String = "EditorTabsEntryPoint"
+
 private class EditorTabs(
   coroutineScope: CoroutineScope,
   parentDisposable: Disposable,
@@ -611,10 +614,12 @@ private class EditorTabs(
       }
     })
 
-    val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
+    val actionManager = ActionManager.getInstance()
+    val toolbarActions = actionManager.getAction(EDITOR_TABS_TOOLBAR_ACTION_GROUP_ID)
+    val source = actionManager.getAction(EDITOR_TABS_ENTRY_POINT_ACTION_GROUP_ID)
     source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     source.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
-    _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
+    _entryPointActionGroup = DefaultActionGroup(java.util.List.of(toolbarActions, source))
     InternalUICustomization.getInstance()?.installEditorBackground(this)
   }
 

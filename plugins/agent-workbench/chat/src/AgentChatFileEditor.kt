@@ -48,8 +48,6 @@ internal class AgentChatFileEditor(
     val providerActionIds = providerDescriptor?.editorTabActionIds.orEmpty()
     val actions = buildList {
       listOf(
-        NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID,
-        NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID,
         PREVIOUS_PROPOSED_PLAN_FROM_EDITOR_TAB_ACTION_ID,
         NEXT_PROPOSED_PLAN_FROM_EDITOR_TAB_ACTION_ID,
       ).forEach { actionId ->
@@ -287,8 +285,6 @@ private class DumbAwareAgentChatActionGroup : DefaultActionGroup, DumbAware {
   constructor(actions: List<AnAction>) : super(actions)
 }
 
-private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
-private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
 private const val PREVIOUS_PROPOSED_PLAN_FROM_EDITOR_TAB_ACTION_ID: String =
   AgentWorkbenchActionIds.Sessions.EditorTab.PREVIOUS_PROPOSED_PLAN
 private const val NEXT_PROPOSED_PLAN_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEXT_PROPOSED_PLAN

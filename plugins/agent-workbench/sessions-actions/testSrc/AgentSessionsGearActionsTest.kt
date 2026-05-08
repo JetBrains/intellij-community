@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -224,19 +225,29 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadActionsAreRegisteredInActionSystem() {
+  fun editorTabNewThreadActionIsRegisteredInActionSystem() {
     val actionManager = ActionManager.getInstance()
     val quickActionId = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
-    val popupGroupId = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+    val popupActionId = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
 
     assertThat(actionManager.getAction(quickActionId))
       .isNotNull
       .isInstanceOf(AgentSessionsEditorTabNewThreadQuickAction::class.java)
-    assertThat(actionManager.getAction(popupGroupId))
+    assertThat(actionManager.getAction(quickActionId)?.actionUpdateThread)
+      .isEqualTo(ActionUpdateThread.BGT)
+    assertThat(actionManager.getAction(popupActionId))
       .isNotNull
       .isInstanceOf(AgentSessionsEditorTabNewThreadPopupGroup::class.java)
-    assertThat(actionManager.getAction(popupGroupId)?.templatePresentation?.icon)
+    assertThat(actionManager.getAction(popupActionId)?.templatePresentation?.icon)
       .isEqualTo(AllIcons.General.Add)
+    assertThat(actionManager.getAction(popupActionId)?.actionUpdateThread)
+      .isEqualTo(ActionUpdateThread.BGT)
+    assertThat(actionManager.getAction("EditorTabsToolbarActions"))
+      .isNotNull
+    assertThat(actionManager.childActionIds("EditorTabsToolbarActions"))
+      .contains(quickActionId, popupActionId)
+    assertThat(actionManager.childActionIds("EditorTabActionGroup"))
+      .doesNotContain(quickActionId, popupActionId)
   }
 
   @Test
@@ -298,6 +309,7 @@ class AgentSessionsGearActionsTest {
             getId(action)?.let(::listOf).orEmpty()
           }
         }
+
         else -> getId(action)?.let(::listOf).orEmpty()
       }
     }
