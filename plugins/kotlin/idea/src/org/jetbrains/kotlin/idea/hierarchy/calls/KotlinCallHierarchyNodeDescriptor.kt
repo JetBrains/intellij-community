@@ -103,7 +103,7 @@ class KotlinCallHierarchyNodeDescriptor(
         myHighlightedText.ending.addText(elementText, mainTextAttributes)
         if (usageCount > 1) {
             myHighlightedText.ending.addText(
-                " " + IdeBundle.message("node.call.hierarchy.N.usages", usageCount),
+                IdeBundle.message("node.call.hierarchy.N.usages", usageCount),
                 getUsageCountPrefixAttributes(),
             )
         }

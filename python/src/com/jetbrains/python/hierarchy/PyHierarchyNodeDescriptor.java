@@ -64,7 +64,7 @@ public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor implement
       myHighlightedText.getEnding().addText(presentation.getPresentableText());
       int count = myUsages.size();
       if (count > 1) {
-        String text = " " + IdeBundle.message("node.call.hierarchy.N.usages", count);
+        String text = IdeBundle.message("node.call.hierarchy.N.usages", count);
         myHighlightedText.getEnding().addText(text, HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
       }
       String locationString = presentation.getLocationString();

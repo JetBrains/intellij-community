@@ -106,7 +106,7 @@ public final class CallHierarchyNodeDescriptor extends JavaHierarchyNodeDescript
 
     myHighlightedText = getEnclosingElementAppearance(enclosingElement, true);
     if (myUsageCount > 1) {
-      String usagesText = " " + IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount);
+      String usagesText = IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount);
       myHighlightedText.getEnding().addText(usagesText, getUsageCountPrefixAttributes());
     }
     if (!(FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
