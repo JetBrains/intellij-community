@@ -22,7 +22,6 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.TextDiffProviderBase;
 import com.intellij.diff.util.DiffBalloons;
@@ -552,9 +551,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       myResolveImportsPossible = mergeDiffData.isImportResolutionPossible();
 
       List<@NotNull MergeLineFragment> fragments = mergeDiffData.getFragmentsWithMetadata().getFragments();
-      List<@NotNull LineOffsets> offsets = mergeDiffData.getLineOffsets();
 
-      FoldingModelSupport.Data foldingState = myFoldingModel.createState(fragments, offsets, getFoldingModelSettings());
+      FoldingModelSupport.Data foldingState = myFoldingModel.createState(fragments, getFoldingModelSettings());
 
       return () -> apply(foldingState);
     }
