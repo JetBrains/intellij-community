@@ -10,4 +10,3 @@ fun main(args: Array<String>) {
 }
 
 // EXIST: {"lookupString":"longOptionName =","tailText":" Int","itemText":"longOptionName ="}
-// IGNORE_K2
