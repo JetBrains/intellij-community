@@ -62,9 +62,7 @@ class PyTypedDictType(
       }
       else {
         val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
-        val singleStarParameter = PyCallableParameterImpl.psi(
-          elementGenerator.createSingleStarParameter()
-        )
+        val singleStarParameter = PyCallableParameterImpl.keywordOnlySeparatorNonPsi()
 
         val fieldParameters = fields.map { (key, value) ->
           val ellipsis = elementGenerator.createEllipsis()

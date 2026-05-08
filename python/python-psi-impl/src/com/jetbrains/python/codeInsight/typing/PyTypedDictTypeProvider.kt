@@ -260,7 +260,7 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
     val parameters = listOf(
       PyCallableParameterImpl.nonPsi("typename", builtinCache.getStringType(languageLevel)),
       PyCallableParameterImpl.nonPsi("fields", strToTypeDictType),
-      PyCallableParameterImpl.psi(generator.createSingleStarParameter()),
+      PyCallableParameterImpl.keywordOnlySeparatorNonPsi(),
       PyCallableParameterImpl.psi(generator.createSlashParameter()),
       PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
                                      builtinCache.boolType,

@@ -356,8 +356,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         }
       }
 
-      val singleStarParameter = elementGenerator.createSingleStarParameter()
-      return positionalOrKeyword + listOf(PyCallableParameterImpl.psi(singleStarParameter)) + keyword
+      return positionalOrKeyword + listOf(PyCallableParameterImpl.keywordOnlySeparatorNonPsi()) + keyword
     }
 
     private data class FieldParameterInfo(

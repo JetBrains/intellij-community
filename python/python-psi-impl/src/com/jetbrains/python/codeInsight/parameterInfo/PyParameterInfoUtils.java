@@ -132,6 +132,14 @@ public final class PyParameterInfoUtils {
 
         @Override
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
+          if (parameter.isKeywordOnlySeparator()) {
+            hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+            currentParameterIndex[0]++;
+            ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
+            parameterDescriptions.add(parameterDescription);
+            return;
+          }
+
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
           ParameterDescription parameterDescription = new ParameterDescription(parameter.getName(), "", last);

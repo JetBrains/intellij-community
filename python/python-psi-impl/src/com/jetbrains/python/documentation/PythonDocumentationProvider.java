@@ -49,7 +49,6 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -324,7 +323,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         paramName = PyAstSlashParameter.TEXT;
         showType = false;
       }
-      else if (parameter.getParameter() instanceof PySingleStarParameter) {
+      else if (parameter.isKeywordOnlySeparator()) {
         paramName = PyAstSingleStarParameter.TEXT;
         showType = false;
       }

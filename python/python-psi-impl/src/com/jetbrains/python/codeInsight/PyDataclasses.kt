@@ -243,7 +243,7 @@ private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<Quali
   return PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getDecoratorAndTypeAndParameters(project) } +
          DECORATOR_AND_TYPE_AND_PARAMETERS.map {
            if (it.second == PyDataclassParameters.PredefinedType.STD) {
-             val parameters = mutableListOf(PyCallableParameterImpl.psi(generator.createSingleStarParameter()))
+             val parameters = mutableListOf(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
              parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
 
              Triple(it.first.qualifiedName, it.second, parameters)

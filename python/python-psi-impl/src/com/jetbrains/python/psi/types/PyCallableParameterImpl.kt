@@ -38,6 +38,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   private val myIsKeyword: Boolean = false,
   private val myIsSelf: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
+  private val myIsKeywordOnlySeparator: Boolean = false,
 ) : PyCallableParameter {
   @get:Nls
   override val name: @Nls String?
@@ -78,7 +79,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = parameter is PySlashParameter
 
   override val isKeywordOnlySeparator: Boolean
-    get() = parameter is PySingleStarParameter
+    get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
 
   override fun getPresentableText(includeDefaultValue: Boolean, context: TypeEvalContext?): String {
     return getPresentableText(includeDefaultValue, context, { it.isUnknown })
@@ -157,6 +158,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     val isNonPhysical = parameter == null && other.parameter == null
     return myIsPositional == other.myIsPositional &&
            myIsKeyword == other.myIsKeyword &&
+           myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
            myName == other.myName &&
            myType?.get() == other.myType?.get() &&
            parameter == other.parameter &&
@@ -170,7 +172,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
 
   override fun hashCode(): Int {
     return Objects.hash(
-      myName, myType?.get(), myDefaultValue?.text,
+      myName, myType?.get(), myDefaultValue?.text, myIsKeywordOnlySeparator,
       parameter, myIsPositional, myIsKeyword
     )
   }
@@ -194,6 +196,10 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     @JvmStatic
     fun keywordNonPsi(name: String?, type: PyType?): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), myIsKeyword = true)
+
+    @JvmStatic
+    fun keywordOnlySeparatorNonPsi(): PyCallableParameter =
+      PyCallableParameterImpl(myIsKeywordOnlySeparator = true)
 
     @JvmStatic
     fun psi(parameter: PyParameter): PyCallableParameter =

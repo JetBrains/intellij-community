@@ -248,7 +248,7 @@ private fun createTypedNamedTupleReplaceType(
   if (qualifierType.isDefinition) {
     parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
   }
-  parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
   val ellipsis = elementGenerator.createEllipsis()
 
@@ -272,7 +272,7 @@ private fun createUntypedNamedTupleReplaceType(
   if (qualifierType.isDefinition) {
     parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
   }
-  parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
   val ellipsis = elementGenerator.createEllipsis()
 

@@ -40,14 +40,13 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.PySequenceExpression
-import com.jetbrains.python.psi.PySingleStarParameter
-import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.PyStarArgument
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
@@ -1133,7 +1132,7 @@ object PyCallExpressionHelper {
     for (parameter in parameters) {
       val psi = parameter.parameter
 
-      if (psi is PyNamedParameter || psi == null) {
+      if (psi is PyNamedParameter || (psi == null && !parameter.isKeywordOnlySeparator)) {
         val parameterName = parameter.name
         if (!parameter.isSelf && !hasSlashParameter && !isLegacyPositionalOnly(parameter)) {
           positionalOnlyMode = false
@@ -1249,7 +1248,7 @@ object PyCallExpressionHelper {
       else if (psi is PySlashParameter) {
         positionalOnlyMode = false
       }
-      else if (psi is PySingleStarParameter) {
+      else if (parameter.isKeywordOnlySeparator) {
         keywordOnlyMode = true
       }
       else if (!parameter.hasDefaultValue()) {

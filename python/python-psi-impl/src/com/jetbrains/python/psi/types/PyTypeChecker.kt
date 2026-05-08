@@ -1716,8 +1716,25 @@ object PyTypeChecker {
             val paramPsi = param.parameter
             flattenUnpackedTuple(clone(param.getType(context)))
               .map { paramSubType ->
-                if (paramPsi != null) PyCallableParameterImpl.psi(paramPsi, paramSubType)
-                else PyCallableParameterImpl.nonPsi(param.name, paramSubType, param.defaultValue)
+                if (paramPsi != null) {
+                  PyCallableParameterImpl.psi(
+                    paramPsi,
+                    paramSubType
+                  )
+                }
+                else {
+                  PyCallableParameterImpl(
+                    param.name,
+                    Ref.create(paramSubType),
+                    param.defaultValue,
+                    param.parameter,
+                    param.isPositionalContainer,
+                    param.isKeywordContainer,
+                    param.isSelf,
+                    param.declarationElement,
+                    param.isKeywordOnlySeparator,
+                  )
+                }
               }
           }
 
