@@ -48,7 +48,7 @@ internal fun KtFile.addComposeCompilerPlugin(): Boolean {
   val pluginsBlock = findPluginsBlock()
   val factory = KtPsiFactory.contextual(this)
 
-  return if (pluginsBlock != null) addPluginToExistingBlock(pluginsBlock, factory) else addNewPluginsBlock(factory)
+  return if (pluginsBlock != null) factory.addPluginToExistingBlock(pluginsBlock) else factory.addNewPluginsBlock(this)
 }
 
 private fun KtFile.findPluginsBlock(): KtBlockExpression? {
@@ -62,28 +62,28 @@ private fun KtFile.findPluginsBlock(): KtBlockExpression? {
          ?: (pluginsCall.valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
 }
 
-private fun addPluginToExistingBlock(pluginsBlock: KtBlockExpression, factory: KtPsiFactory): Boolean {
-  val pluginStatement = factory.createExpression(COMPOSE_PLUGIN_EXPRESSION)
-  pluginsBlock.addBefore(factory.createNewLine(), pluginsBlock.rBrace)
+private fun KtPsiFactory.addPluginToExistingBlock(pluginsBlock: KtBlockExpression): Boolean {
+  val pluginStatement = createExpression(COMPOSE_PLUGIN_EXPRESSION)
+  pluginsBlock.addBefore(createNewLine(), pluginsBlock.rBrace)
   val added = pluginsBlock.addBefore(pluginStatement, pluginsBlock.rBrace)
   CodeStyleManager.getInstance(pluginsBlock.project).reformat(added)
   return true
 }
 
-private fun KtFile.addNewPluginsBlock(factory: KtPsiFactory): Boolean {
-  val script = childrenOfType<KtScript>().firstOrNull()
+private fun KtPsiFactory.addNewPluginsBlock(file: KtFile): Boolean {
+  val script = file.childrenOfType<KtScript>().firstOrNull()
   val block = script?.blockExpression ?: return false
-  val newPluginsBlock = factory.createExpression("plugins {\n$COMPOSE_PLUGIN_EXPRESSION\n}")
+  val newPluginsBlock = createExpression("plugins {\n$COMPOSE_PLUGIN_EXPRESSION\n}")
   val anchor = block.firstChild
   val added = if (anchor != null) {
     val result = block.addBefore(newPluginsBlock, anchor)
-    block.addBefore(factory.createNewLine(2), anchor)
+    block.addBefore(createNewLine(2), anchor)
     result
   }
   else {
     block.add(newPluginsBlock)
   }
-  CodeStyleManager.getInstance(project).reformat(added)
+  CodeStyleManager.getInstance(file.project).reformat(added)
   return true
 }
 

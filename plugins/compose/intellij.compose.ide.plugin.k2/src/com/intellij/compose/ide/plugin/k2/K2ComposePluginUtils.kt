@@ -18,12 +18,14 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.GradleExtension
@@ -70,11 +72,18 @@ internal fun refreshGradleProject(module: Module) {
   }
 }
 
-internal fun requiresComposePlugin(expression: KtCallExpression): Boolean = analyze(expression) {
+internal fun checkRequiresComposePlugin(expression: KtCallExpression): Boolean = analyze(expression) {
   val call = expression.resolveToCall()?.singleFunctionCallOrNull() as? KaCallableMemberCall<*, *>
              ?: return@analyze false
 
   isComposableInvocation(call) || isRememberInCompositionCall(call)
+}
+
+internal fun checkRequiresComposePlugin(expression: KtSimpleNameExpression): Boolean = analyze(expression) {
+  val variableAccess = expression.resolveToCall()?.singleVariableAccessCall() ?: return@analyze false
+  val propertySymbol = variableAccess.symbol as? KaPropertySymbol ?: return@analyze false
+  val getter = propertySymbol.getter ?: return@analyze false
+  COMPOSABLE_ANNOTATION_CLASS_ID in getter.annotations
 }
 
 @OptIn(KaExperimentalApi::class)

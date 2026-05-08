@@ -2,12 +2,13 @@
 package com.intellij.compose.ide.plugin.k2.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.compose.ide.plugin.k2.checkRequiresComposePlugin
 import com.intellij.compose.ide.plugin.k2.intentions.K2AddComposePluginQuickFix
-import com.intellij.compose.ide.plugin.k2.requiresComposePlugin
 import com.intellij.compose.ide.plugin.k2.isComposeCompilerPluginApplied
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal class K2ComposeMissingPluginInspection : ComposeMissingPluginInspection() {
 
@@ -15,5 +16,7 @@ internal class K2ComposeMissingPluginInspection : ComposeMissingPluginInspection
 
   override fun createQuickFix(): LocalQuickFix = K2AddComposePluginQuickFix()
 
-  override fun isComposableInvocation(expression: KtCallExpression): Boolean = requiresComposePlugin(expression)
+  override fun requiresComposePlugin(expression: KtCallExpression): Boolean = checkRequiresComposePlugin(expression)
+
+  override fun requiresComposePlugin(expression: KtSimpleNameExpression): Boolean = checkRequiresComposePlugin(expression)
 }

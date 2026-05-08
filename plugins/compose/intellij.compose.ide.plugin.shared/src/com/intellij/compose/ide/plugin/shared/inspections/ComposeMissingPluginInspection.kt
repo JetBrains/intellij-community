@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
@@ -27,7 +28,9 @@ abstract class ComposeMissingPluginInspection : AbstractKotlinInspection() {
 
   abstract fun createQuickFix(): LocalQuickFix
 
-  abstract fun isComposableInvocation(expression: KtCallExpression): Boolean
+  abstract fun requiresComposePlugin(expression: KtCallExpression): Boolean
+
+  abstract fun requiresComposePlugin(expression: KtSimpleNameExpression): Boolean
 
   override fun buildVisitor(
     holder: ProblemsHolder,
@@ -40,13 +43,22 @@ abstract class ComposeMissingPluginInspection : AbstractKotlinInspection() {
 
     return object : KtVisitorVoid() {
       override fun visitCallExpression(expression: KtCallExpression) {
-        if (isComposableInvocation(expression)) {
-          holder.registerProblem(
-            expression.calleeExpression ?: expression,
-            ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
-            createQuickFix(),
-          )
-        }
+        if (!requiresComposePlugin(expression)) return
+        holder.registerProblem(
+          expression.calleeExpression ?: expression,
+          ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
+          createQuickFix(),
+        )
+      }
+
+      override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        if (expression.parent is KtCallExpression) return
+        if (!requiresComposePlugin(expression)) return
+        holder.registerProblem(
+          expression,
+          ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
+          createQuickFix(),
+        )
       }
     }
   }

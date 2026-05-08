@@ -39,7 +39,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     }
   }
 
-  fun `test composable call is flagged when plugin is missing`() = assertHighlightedErrors(
+  fun `test composable call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
       @Composable fun MyComposable() {}
@@ -248,7 +248,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     expectedError("composableAdd")
   )
 
-  fun `test composable lambda parameter not flagged`() = assertHighlightedErrors(
+  fun `test composable lambda parameter is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -260,7 +260,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test composable return type flagged`() = assertHighlightedErrors(
+  fun `test composable return type is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -602,7 +602,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     expectedError("MyComposable")
   )
 
-  fun `test multiple files with composable calls across files`() {
+  fun `test multiple files with composable calls across files are flagged`() {
     myFixture.addFileToProject("Composables.kt", """
         import androidx.compose.runtime.Composable
 
@@ -735,7 +735,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test movableContentOf call is flagged when plugin is missing`() = assertHighlightedErrors(
+  fun `test movableContentOf call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
       import androidx.compose.runtime.annotation.RememberInComposition
@@ -753,7 +753,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     "baseComposable" atLine 9
   )
 
-  fun `test FocusRequester constructor is flagged when plugin is missing`() = assertHighlightedErrors(
+  fun `test FocusRequester constructor is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.annotation.RememberInComposition
 
@@ -766,4 +766,75 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     expectedError("FocusRequester")
   )
 
+  fun `test composable property access via top-level property is flagged`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.Composable
+
+      val currentTheme: String
+        @Composable get() = "dark"
+
+      fun caller() {
+        val t = currentTheme
+      }
+    """,
+    expectedError("currentTheme")
+  )
+
+  fun `test composable property access is flagged`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.Composable
+
+      class Theme {
+        val colors: String
+          @Composable get() = "colors"
+      }
+
+      fun caller(theme: Theme) {
+        val c = theme.colors
+      }
+    """,
+    expectedError("colors")
+  )
+
+  fun `test non-composable property access is not flagged`() = assertHighlightedErrors(
+    """
+      class Theme {
+        val colors: String = "colors"
+      }
+
+      fun caller(theme: Theme) {
+        val c = theme.colors
+      }
+    """
+  )
+
+  fun `test composable property access with get annotation target is flagged`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.Composable
+
+      interface Typography {
+        @get:Composable val labelTextStyle: String
+      }
+
+      fun caller(typography: Typography) {
+        val s = typography.labelTextStyle
+      }
+    """,
+    expectedError("labelTextStyle")
+  )
+
+  fun `test composable property access inside composable function is flagged`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.Composable
+
+      val currentTheme: String
+        @Composable get() = "dark"
+
+      @Composable
+      fun MyComposable() {
+        val t = currentTheme
+      }
+    """,
+    expectedError("currentTheme")
+  )
 }

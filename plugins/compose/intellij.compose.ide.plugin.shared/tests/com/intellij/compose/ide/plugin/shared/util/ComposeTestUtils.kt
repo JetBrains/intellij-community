@@ -76,7 +76,7 @@ private fun JavaCodeInsightTestFixture.createRememberInCompositionAnnotationInFi
 
       annotation class RememberInComposition
   """.trimIndent()
-  this.addFileToProject(fileRelativePath, annotationFileText)
+  addFileToProject(fileRelativePath, annotationFileText)
 }
 
 internal fun resolveTestDataDirectory(directoryPath: String): Path {
