@@ -61,6 +61,6 @@ fun asDefaultRoot(path: Path): UniversalFileChooserContributor.Root {
   val name = path.fileName?.toString() ?: path.toString()
   return UniversalFileChooserContributor.Root(
     name,
-    UniversalFileChooserContributor.Presentation(name, AllIcons.Empty),
+    UniversalFileChooserContributor.Presentation(name, ),
     path)
 }
