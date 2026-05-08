@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,9 @@ public abstract class WolfTheProblemSolver {
 
   public abstract boolean isProblemFile(@NotNull VirtualFile virtualFile);
 
+  @RequiresBackgroundThread
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
+  @RequiresBackgroundThread
   public abstract void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
@@ -35,6 +38,7 @@ public abstract class WolfTheProblemSolver {
 
   public abstract Problem convertToProblem(@NotNull VirtualFile virtualFile, int line, int column, String @NotNull [] message);
 
+  @RequiresBackgroundThread
   public abstract void reportProblems(@NotNull VirtualFile file, @NotNull Collection<? extends Problem> problems);
 
   public abstract boolean hasSyntaxErrors(@NotNull VirtualFile file);
@@ -46,6 +50,7 @@ public abstract class WolfTheProblemSolver {
    * @param source Identifies the component that discovered the problems. A file is highlighted as problematic
    *               if it has problems from GeneralHighlightingPass or from at least one source.
    */
+  @RequiresBackgroundThread
   public abstract void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source);
 
   /**
@@ -53,7 +58,9 @@ public abstract class WolfTheProblemSolver {
    * file has no problems from GeneralHighlightingPass or from any other sources, it will no longer be
    * highlighted as problematic.
    */
+  @RequiresBackgroundThread
   public abstract void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source);
 
+  @RequiresBackgroundThread
   public abstract void queue(@NotNull VirtualFile suspiciousFile);
 }

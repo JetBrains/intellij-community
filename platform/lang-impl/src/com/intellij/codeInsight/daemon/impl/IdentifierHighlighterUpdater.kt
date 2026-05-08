@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +35,7 @@ class IdentifierHighlighterUpdater(
   @RequiresBackgroundThread
   @ApiStatus.Internal
   suspend fun doCollectInformation(project: Project, visibleRange: ProperTextRange): IdentifierHighlightingResult {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertBackgroundThread()
     return IdentifierHighlightingManager.getInstance(project).getMarkupData(myEditor, visibleRange)
   }
 
@@ -108,8 +109,8 @@ class IdentifierHighlighterUpdater(
   @ApiStatus.Internal
   @TestOnly
   fun doCollectInformationForTestsSynchronously(): IdentifierHighlightingResult {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertBackgroundThread()
+    ThreadingAssertions.assertReadAccess()
     assert(ApplicationManager.getApplication().isUnitTestMode())
     return IdentifierHighlightingComputer(myPsiFile, myEditor, ProperTextRange.create(myPsiFile.textRange), myEditor.caretModel.offset).computeRanges()
   }

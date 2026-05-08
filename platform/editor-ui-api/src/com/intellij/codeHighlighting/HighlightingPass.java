@@ -5,6 +5,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,12 +28,14 @@ public interface HighlightingPass extends PossiblyDumbAware {
    *                 throw {@link com.intellij.openapi.progress.ProcessCanceledException} if some {@link ProgressIndicator} is canceled).
    *                 See also {@link ProgressIndicator#checkCanceled()}.
    */
+  @RequiresBackgroundThread
   void collectInformation(@NotNull ProgressIndicator progress);
 
   /**
    * Called to apply information collected by {@linkplain #collectInformation(ProgressIndicator)} to the editor.
    * This method is called from the event dispatch thread.
    */
+  @RequiresEdt
   void applyInformationToEditor();
 
   default @NotNull Condition<?> getExpiredCondition() {

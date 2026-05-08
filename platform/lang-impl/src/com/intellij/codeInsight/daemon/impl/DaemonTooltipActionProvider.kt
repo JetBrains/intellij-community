@@ -12,7 +12,6 @@ import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.util.NlsActions
@@ -20,6 +19,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.event.InputEvent
 import java.util.Objects
@@ -91,8 +92,9 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
 }
 
 
+@RequiresReadLock
 fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): IntentionAction? {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
+  ThreadingAssertions.assertReadAccess()
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
   highlightInfo.findRegisteredQuickFix<Any?> { desc, _ ->

@@ -60,6 +60,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -276,12 +278,13 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
   private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
   private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new HashSet<>());
 
+  @RequiresBackgroundThread
   private void createHighlightsForDescriptor(@NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement psiElement,
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull Consumer<? super HighlightInfo> infoProcessor) {
     String originalShortName = toolWrapper.getShortName();
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (descriptor instanceof ProblemDescriptorWithReporterName name) {
       String reportingToolName = name.getReportingToolShortName();
       LocalInspectionToolWrapper reassigned = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);

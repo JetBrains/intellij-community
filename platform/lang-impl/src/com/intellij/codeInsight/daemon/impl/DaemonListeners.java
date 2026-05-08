@@ -929,7 +929,8 @@ public final class DaemonListeners implements Disposable {
   @RequiresBackgroundThread
   @RequiresReadLock
   void flushUpdateFileStatusQueue() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
     myPsiChangeHandler.flushUpdateFileStatusQueue();
   }
   @TestOnly

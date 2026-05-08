@@ -35,6 +35,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +117,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     myHighlightVisitorRunner.createHighlightVisitorsFor(filteredVisitors->{
@@ -233,6 +235,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return myHighlights;
   }
 
+  @RequiresBackgroundThread
   private boolean collectHighlights(@NotNull TextRange restrictRange,
                                     @NotNull List<? extends PsiElement> elements1,
                                     @NotNull List<? extends PsiElement> elements2,
@@ -321,8 +324,9 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     ((AnnotationSessionImpl)annotationSession).setVR(priorityRange, highlightRange);
   }
 
+  @RequiresBackgroundThread
   private void reportErrorsToWolf(boolean hasErrors) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = getFile().getProject();
     if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries

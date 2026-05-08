@@ -14,7 +14,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.InjectionUtils;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
@@ -178,7 +178,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                               @NotNull PsiFile containingFile,
                               @NotNull List<? extends LineMarkerProvider> providers,
                               @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertReadAccess();
 
     if (myMode != Mode.SLOW) {
       //noinspection ForLoopReplaceableByForEach

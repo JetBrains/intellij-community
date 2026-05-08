@@ -145,6 +145,7 @@ public final class PassExecutorService implements Disposable {
     }
   }
 
+  @RequiresBackgroundThread
   void submitPasses(@NotNull Document document,
                     @NotNull VirtualFile virtualFile,
                     @NotNull PsiFile psiFile,
@@ -155,7 +156,7 @@ public final class PassExecutorService implements Disposable {
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(updateProgress, null, "PES is disposed");
       return;
     }
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
 
     List<TextEditorHighlightingPass> documentBoundPasses = new ArrayList<>();
     List<EditorBoundHighlightingPass> editorBoundPasses = new ArrayList<>();
@@ -232,13 +233,17 @@ public final class PassExecutorService implements Disposable {
     Map<ScheduledPass, Pair<ScheduledPass, Integer>> id2Visits = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(@Nullable PassExecutorService.ScheduledPass sp) {
-        if (sp == null) return 0;
+        if (sp == null) {
+          return 0;
+        }
         return ((TextEditorHighlightingPass)sp.myPass).getId() * 31 + sp.myFileEditor.hashCode();
       }
 
       @Override
       public boolean equals(@Nullable PassExecutorService.ScheduledPass sp1, @Nullable PassExecutorService.ScheduledPass sp2) {
-        if (sp1 == null || sp2 == null) return sp1 == sp2;
+        if (sp1 == null || sp2 == null) {
+          return sp1 == sp2;
+        }
         int id1 = ((TextEditorHighlightingPass)sp1.myPass).getId();
         int id2 = ((TextEditorHighlightingPass)sp2.myPass).getId();
         return id1 == id2 && sp1.myFileEditor == sp2.myFileEditor;
@@ -288,7 +293,9 @@ public final class PassExecutorService implements Disposable {
     ProgressManager.checkCanceled();
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
-    if (scheduledPass != null) return scheduledPass;
+    if (scheduledPass != null) {
+      return scheduledPass;
+    }
     scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown, Context.current());
     threadsToStartCountdown.incrementAndGet();
     toBeSubmitted.put(passId, scheduledPass);
@@ -417,9 +424,13 @@ public final class PassExecutorService implements Disposable {
       });
     }
 
+    @RequiresBackgroundThread
     private void doRun() {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
-      if (myUpdateProgress.isCanceled()) return;
+      ThreadingAssertions.assertBackgroundThread();
+
+      if (myUpdateProgress.isCanceled()) {
+        return;
+      }
 
       log(myUpdateProgress, myPass, "Started.");
 
@@ -517,12 +528,13 @@ public final class PassExecutorService implements Disposable {
     }
   }
 
+  @RequiresBackgroundThread
   private void applyInformationToEditorsLater(@NotNull FileEditor fileEditor,
                                               @NotNull HighlightingPass pass,
                                               @NotNull DaemonProgressIndicator updateProgress,
                                               @NotNull AtomicInteger threadsToStartCountdown,
                                               @NotNull Runnable callbackOnApplied) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     try {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (isDisposed() || !fileEditor.isValid()) {

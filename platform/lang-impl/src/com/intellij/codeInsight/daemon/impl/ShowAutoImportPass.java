@@ -65,8 +65,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   ShowAutoImportPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange, boolean canChangeFileSilently) {
     super(psiFile.getProject(), editor.getDocument(), false);
     myCanChangeFileSilently = canChangeFileSilently;
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
 
     myEditor = editor;
     myVisibleRange = visibleRange;

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Compani
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -38,6 +37,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -134,7 +134,7 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   }
 
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertBackgroundThread()
     val start = System.currentTimeMillis()
     val document = editor.getDocument()
     val modStamp = (document as DocumentEx).modificationSequence

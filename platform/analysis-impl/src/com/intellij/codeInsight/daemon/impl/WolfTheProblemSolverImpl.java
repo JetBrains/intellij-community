@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -226,7 +227,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void queue(@NotNull VirtualFile suspiciousFile) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (!isToBeHighlighted(suspiciousFile)) return;
     doQueue(suspiciousFile);
   }
@@ -265,7 +266,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (problems.isEmpty()) return;
     if (isToBeHighlighted(virtualFile)) {
       weHaveGotNonIgnorableProblems(virtualFile, problems);
@@ -274,7 +275,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (problems.isEmpty()) return;
     ProblemFileInfo storedProblems = myProblems.computeIfAbsent(virtualFile, _ -> new ProblemFileInfo());
     boolean fireListener = storedProblems.problems.isEmpty();
@@ -325,7 +326,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void reportProblems(@NotNull VirtualFile file, @NotNull Collection<? extends Problem> problems) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
 
     if (problems.isEmpty()) {
       clearProblems(file);
@@ -355,7 +356,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void reportProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     if (!isToBeHighlighted(file)) return;
 
     Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, _ -> ConcurrentCollectionFactory.createConcurrentSet());
@@ -373,7 +374,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void clearProblemsFromExternalSource(@NotNull VirtualFile file, @NotNull Object source) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     AtomicBoolean isLastExternalSource = new AtomicBoolean();
     myProblemsFromExternalSources.compute(file, (_, problems) -> {
       if (problems == null) return null;

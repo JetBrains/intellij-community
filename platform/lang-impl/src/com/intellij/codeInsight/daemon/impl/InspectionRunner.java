@@ -54,6 +54,9 @@ import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.InjectionUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
@@ -124,6 +127,8 @@ final class InspectionRunner {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   @Unmodifiable
   @NotNull
   List<InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
@@ -331,6 +336,8 @@ final class InspectionRunner {
     }
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread
   private void addRedundantSuppressions(@NotNull List<? extends InspectionContext> init,
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
@@ -664,9 +671,11 @@ final class InspectionRunner {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   private static boolean shouldInspect(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
     HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(psiFile.getProject());
     // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
     return highlightingLevelManager != null

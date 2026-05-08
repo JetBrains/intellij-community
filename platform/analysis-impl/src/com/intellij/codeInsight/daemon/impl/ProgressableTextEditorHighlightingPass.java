@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +124,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
 
   @Override

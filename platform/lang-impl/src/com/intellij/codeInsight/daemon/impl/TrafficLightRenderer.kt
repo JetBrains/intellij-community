@@ -67,6 +67,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SlowOperations
 import com.intellij.util.UtilBundle.message
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EdtInvocationManager
@@ -256,15 +257,17 @@ open class TrafficLightRenderer private constructor(
   @get:ApiStatus.Internal
   val daemonCodeAnalyzerStatus: DaemonCodeAnalyzerStatus
     get() {
-      ApplicationManager.getApplication().assertIsNonDispatchThread()
-      ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertBackgroundThread()
+    ThreadingAssertions.assertReadAccess()
       return getDaemonCodeAnalyzerStatus(this.severityRegistrar)
     }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   protected open fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
     // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertBackgroundThread()
+    ThreadingAssertions.assertReadAccess()
     val status = DaemonCodeAnalyzerStatus()
     status.errorAnalyzingFinished = true
     val psiFile = getPsiFile()

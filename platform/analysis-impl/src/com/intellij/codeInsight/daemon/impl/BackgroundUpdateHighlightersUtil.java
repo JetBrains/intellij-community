@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -28,6 +27,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -71,13 +71,15 @@ public final class BackgroundUpdateHighlightersUtil {
    * Sets highlights inside restrictedRange (it's the range we're updating), but outside priorityRange.
    * This method is usually called after {@link #setHighlightersInRange} where we set highlights inside priorityRange.
    */
+  @RequiresBackgroundThread
+  @RequiresReadLock
   static void setHighlightersOutsideRange(@NotNull List<? extends @NotNull HighlightInfo> infos,
                                           @NotNull TextRange restrictedRange,
                                           @NotNull TextRange priorityRange,
                                           int group,
                                           @NotNull HighlightingSession session) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertReadAccess();
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
     // ignore annotators/inspections, they are applied via HighlightInfoUpdater

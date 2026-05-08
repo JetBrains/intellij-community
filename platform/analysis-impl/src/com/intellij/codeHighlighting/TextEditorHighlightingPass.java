@@ -22,6 +22,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,15 +58,17 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private EditorColorsScheme myColorsScheme;
   private volatile CodeInsightContext myContext;
 
+  @RequiresBackgroundThread
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document, boolean runIntentionPassAfter) {
+    ThreadingAssertions.assertBackgroundThread();
     myDocument = document;
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
     myInitialPsiStamp = PsiModificationTracker.getInstance(project).getModificationCount();
-    ThreadingAssertions.assertBackgroundThread();
   }
 
+  @RequiresBackgroundThread
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
   }
@@ -135,8 +140,11 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
 
+  @RequiresEdt
   public abstract void doApplyInformationToEditor();
 
   public final int getId() {
@@ -147,6 +155,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myId = id;
   }
 
+  @RequiresBackgroundThread
   public @NotNull List<HighlightInfo> getInfos() {
     return Collections.emptyList();
   }

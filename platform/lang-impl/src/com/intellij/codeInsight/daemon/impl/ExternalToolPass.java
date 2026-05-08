@@ -231,7 +231,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
 
   @Override
   public @NotNull List<HighlightInfo> getInfos() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60);
 
     while (!externalUpdateTaskCompleted) {
