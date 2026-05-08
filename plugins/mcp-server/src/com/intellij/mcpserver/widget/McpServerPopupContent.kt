@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver.widget
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -27,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,7 +52,6 @@ import org.jetbrains.jewel.ui.component.Popup
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.tooltipStyle
-import java.awt.Toolkit.getDefaultToolkit
 
 private val spacing = IntelliJSpacingConfiguration()
 
@@ -59,29 +59,14 @@ private val spacing = IntelliJSpacingConfiguration()
 internal fun McpServerPopupContent(
   model: McpServerPopupModel,
   modifier: Modifier = Modifier,
-  onContentSizeChanged: (widthPx: Int, heightPx: Int) -> Unit = { _, _ -> },
 ) {
   var isEnabled by remember { mutableStateOf(model.initialEnabled) }
   val gaps = spacing.dialogUnscaledGaps
-  val density = LocalDensity.current
-  val screenHeightPx = remember { with(density) { getDefaultToolkit().screenSize.height.dp.roundToPx() } }
 
   Column(
     modifier = modifier
       .widthIn(min = McpServerStatusBarWidget.POPUP_WIDTH.dp)
-      // Relax height constraints so the Column measures at its true intrinsic height,
-      // then report the size in Compose px for the Swing popup to resize.
-      .layout { measurable, constraints ->
-        val relaxed = constraints.copy(minHeight = 0, maxHeight = maxOf(constraints.maxHeight, screenHeightPx))
-        val placeable = measurable.measure(relaxed)
-        onContentSizeChanged(placeable.width, placeable.height)
-        layout(
-          placeable.width.coerceIn(constraints.minWidth, constraints.maxWidth),
-          placeable.height.coerceIn(constraints.minHeight, constraints.maxHeight),
-        ) {
-          placeable.placeRelative(0, 0)
-        }
-      }
+      .animateContentSize()
       .padding(start = gaps.left.dp, end = gaps.right.dp, top = gaps.top.dp, bottom = gaps.bottom.dp)
   ) {
     HeaderRow(onSettingsClick = model::onSettingsClick)
@@ -316,10 +301,10 @@ fun McpPanelPreview() {
   Box {
     McpServerPopupContent(
       model = PreviewMcpServerPopupModel(),
-      onContentSizeChanged = { w, h ->
-        val wDp = with(density) { w.toDp().value.toInt() }
-        val hDp = with(density) { h.toDp().value.toInt() }
-        sizeText = "${wDp} x ${hDp}"
+      modifier = Modifier.onSizeChanged { size ->
+        val wDp = with(density) { size.width.toDp().value.toInt() }
+        val hDp = with(density) { size.height.toDp().value.toInt() }
+        sizeText = "$wDp x $hDp"
       },
     )
     Box(

@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.widget
 
+import androidx.compose.foundation.layout.width
 import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.impl.McpServerService
@@ -10,23 +11,25 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.BadgeIconSupplier
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.popup.PopupState
-import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.bridge.JewelComposePanel
+import org.jetbrains.jewel.bridge.component.resizeHostOnContentSizeChange
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import java.awt.Dimension
 import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.SwingUtilities
 
 internal class McpServerStatusBarWidget(private val project: Project) : CustomStatusBarWidget {
   private val popupState = PopupState.forPopup()
@@ -59,15 +62,14 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
     if (McpServerService.getInstance().isRunning) MCP_LOGO
     else BADGE_ICON_SUPPLIER.errorIcon
 
-  @org.jetbrains.annotations.Nls
+  @Nls
   private fun getCurrentTooltip(): String =
     if (McpServerService.getInstance().isRunning) McpServerBundle.message("mcp.server.status.bar.widget.tooltip.enabled")
     else McpServerBundle.message("mcp.server.status.bar.widget.tooltip.disabled")
 
+  @OptIn(ExperimentalJewelApi::class)
   private fun createAndShowPopup(component: JComponent) {
     var popupRef: JBPopup? = null
-    var panelRef: JComponent? = null
-    var lastHeight = 0
 
     val panel = JewelComposePanel(focusOnClickInside = true, config = {
       preferredSize = Dimension(POPUP_WIDTH, POPUP_HEIGHT)
@@ -84,23 +86,14 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
       }
       McpServerPopupContent(
         model = model,
-        onContentSizeChanged = { widthPx, heightPx ->
-          if (heightPx == lastHeight) return@McpServerPopupContent
-          lastHeight = heightPx
-          SwingUtilities.invokeLater {
-            val density = JBUIScale.sysScale(panelRef)
-            val widthDp = (widthPx / density).toInt()
-            val heightDp = (heightPx / density).toInt()
-            panelRef?.preferredSize = Dimension(widthDp, heightDp)
-            popupRef?.let { popup ->
-              popup.size = Dimension(widthDp, heightDp)
-              adjustPopupLocation(popup, component)
-            }
-          }
-        },
+        modifier = Modifier
+          .resizeHostOnContentSizeChange(
+            popup = { popupRef },
+            onResize = { popupRef?.let { adjustPopupLocation(it, component) } },
+          )
+          .width(POPUP_WIDTH.dp),
       )
     }
-    panelRef = panel
 
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, null)
