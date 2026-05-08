@@ -186,7 +186,9 @@ object UniversalFileChooser {
       val screenSize = Toolkit.getDefaultToolkit().screenSize
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
-      for (contributor in UniversalFileChooserContributor.EP_NAME.extensionList) {
+      val projectContributor = projectContributor(project)
+      val contributors = if (projectContributor != null) listOf(projectContributor) else UniversalFileChooserContributor.EP_NAME.extensionList
+      for (contributor in contributors) {
         val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, ::updateOkEnabled)
         fileViews.add(fileView)
         tabbedPane.addTab(contributor.tabTitle, fileView.topComponent)
@@ -441,13 +443,14 @@ object UniversalFileChooser {
       return ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
     }
 
+    private fun projectContributor(project: Project): UniversalFileChooserContributor? {
+      if (project.isDefault) return null
+      val basePath = project.basePath ?: project.projectFilePath ?: return null
+      return UniversalFileChooserContributor.findOwner(Path.of(basePath))
+    }
+
     private fun preselectProjectTab(project: Project) {
-      val projectContributor = if (project.isDefault) null
-      else {
-        project.projectFilePath?.let { projectPath ->
-          UniversalFileChooserContributor.findOwner(Path.of(projectPath))
-        }
-      }
+      val projectContributor = projectContributor(project)
       projectContributor?.let { contributor ->
         tabbedPane.indexOfTab(contributor.tabTitle)
           .takeIf { it >= 0 }?.let { tabbedPane.selectedIndex = it }
