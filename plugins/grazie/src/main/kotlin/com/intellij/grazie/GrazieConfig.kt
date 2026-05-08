@@ -41,6 +41,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.collections.orEmpty
 
 @State(
   name = "GraziConfig",
@@ -74,10 +75,6 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     companion object {
       val CURRENT: Version = NEW_UI
     }
-  }
-
-  init {
-    subscribe(GrazieScope.getInstance()) { syncOxfordSpelling() }
   }
 
   /**
@@ -158,7 +155,18 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     fun withLanguages(langs: Set<Lang>): State = copy(enabledLanguages = langs)
     fun withCheckingContext(context: CheckingContext): State = copy(checkingContext = context)
     fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
-    fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
+    fun withOxfordSpelling(useOxfordSpelling: Boolean): State {
+      fun updateOxfordSpellingRules(useOxfordSpelling: Boolean, rules: Set<String>) = if (useOxfordSpelling) rules + ltOxfordRules else rules - ltOxfordRules
+
+      val newState = TextStyleDomain.entries.fold(this) { acc, domain ->
+        if (domain == TextStyleDomain.Other) {
+          acc.copy(userEnabledRules = updateOxfordSpellingRules(useOxfordSpelling, acc.userEnabledRules))
+        } else {
+          acc.withDomainEnabledRules(domain, updateOxfordSpellingRules(useOxfordSpelling, acc.domainEnabledRules[domain].orEmpty()))
+        }
+      }
+      return newState.copy(useOxfordSpelling = useOxfordSpelling)
+    }
     fun withParameter(domain: TextStyleDomain, language: Language, parameter: Parameter, value: String?): State {
       if (domain == TextStyleDomain.Other) {
         val newLangParams = TreeMap(parameters[language] ?: emptyMap())
@@ -214,9 +222,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       else this.withDomainEnabledRules(domain, userEnabledRules).withDomainDisabledRules(domain, userDisabledRules)
     }
 
-    private fun getDomainEnabledRules(domain: TextStyleDomain) = domainEnabledRules[domain] ?: emptySet()
+    internal fun getDomainEnabledRules(domain: TextStyleDomain) = domainEnabledRules[domain] ?: emptySet()
 
-    private fun getDomainDisabledRules(domain: TextStyleDomain) = domainDisabledRules[domain] ?: emptySet()
+    internal fun getDomainDisabledRules(domain: TextStyleDomain) = domainDisabledRules[domain] ?: emptySet()
 
     fun withDomainEnabledRules(domain: TextStyleDomain, rules: Set<String>): State {
       val newRules = TreeMap(domainEnabledRules)
@@ -254,6 +262,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
   }
 
   companion object {
+    @JvmStatic
+    val ltOxfordRules: Set<String> = setOf("LanguageTool.EN.OXFORD_SPELLING_Z_NOT_S", "LanguageTool.EN.OXFORD_SPELLING_GRAM")
+
     private val defaultEnabledStrategies =
       Collections.unmodifiableSet(hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc"))
 
@@ -270,6 +281,34 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
         }.toSet()
 
       return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
+    }
+
+    @VisibleForTesting
+    fun migrateOxfordRuleIds(state: GrazieConfig.State): State {
+      fun findOxfordRulesToEnable(domain: TextStyleDomain): Set<String> {
+        fun getDisabledRules(domain: TextStyleDomain): Set<String> =
+          if (domain == TextStyleDomain.Other) state.userDisabledRules else state.getDomainDisabledRules(domain)
+        fun getEnabledRules(domain: TextStyleDomain): Set<String> =
+          if (domain == TextStyleDomain.Other) state.userEnabledRules else state.getDomainEnabledRules(domain)
+
+        val enabledOxfordRules = mutableSetOf<String>()
+        ltOxfordRules.forEach { rule ->
+          if (state.useOxfordSpelling && rule !in getDisabledRules(domain) && rule !in getEnabledRules(domain)) {
+            enabledOxfordRules.add(rule)
+          }
+        }
+        return enabledOxfordRules
+      }
+
+      return TextStyleDomain.entries.fold(state) { acc, domain ->
+        val rulesToEnable = findOxfordRulesToEnable(domain)
+        if (domain == TextStyleDomain.Other) {
+          acc.copy(userDisabledRules = acc.userDisabledRules - ltOxfordRules, userEnabledRules = acc.userEnabledRules + rulesToEnable)
+        } else {
+          acc.withDomainDisabledRules(domain, acc.domainDisabledRules[domain].orEmpty() - ltOxfordRules)
+            .withDomainEnabledRules(domain, acc.domainEnabledRules[domain].orEmpty() + rulesToEnable)
+        }
+      }
     }
 
     fun subscribe(parent: Disposable, subscription: (State) -> Unit) {
@@ -316,34 +355,13 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     myModCount.incrementAndGet()
     val prevState = myState
     myState = migrateLTRuleIds(VersionedState.migrate(state))
+    myState = migrateOxfordRuleIds(myState)
     if (myState.enabledLanguages.none { it.isEnglish() }) {
       myState = myState.copy(enabledLanguages = myState.enabledLanguages + Lang.AMERICAN_ENGLISH)
     }
 
     if (prevState != myState) {
-      if (prevState.useOxfordSpelling != state.useOxfordSpelling) {
-        syncOxfordSpelling()
-      }
       stateChanged(prevState, myState)
     }
   }
-
-  private val oxfordSpellingLtRules = listOf("LanguageTool.EN.OXFORD_SPELLING_Z_NOT_S", "LanguageTool.EN.OXFORD_SPELLING_GRAM")
-  private fun syncOxfordSpelling() {
-    application.invokeLater {
-      update { state ->
-        val useOxfordSpelling = get().useOxfordSpelling
-        TextStyleDomain.entries.fold(state) { acc, domain ->
-          if (domain == TextStyleDomain.Other) {
-            acc.copy(userDisabledRules = updateOxfordSpellingRules(useOxfordSpelling, acc.userDisabledRules))
-          } else {
-            acc.withDomainDisabledRules(domain, updateOxfordSpellingRules(useOxfordSpelling, acc.domainDisabledRules[domain].orEmpty()))
-          }
-        }
-      }
-    }
-  }
-
-  private fun updateOxfordSpellingRules(useOxfordSpelling: Boolean, rules: Set<String>): Set<String> =
-    if (useOxfordSpelling) rules - oxfordSpellingLtRules else rules + oxfordSpellingLtRules
 }
