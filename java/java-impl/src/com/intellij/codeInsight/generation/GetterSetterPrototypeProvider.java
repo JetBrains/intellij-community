@@ -60,9 +60,8 @@ public abstract class GetterSetterPrototypeProvider {
 
   public static boolean isReadOnlyProperty(PsiField field) {
     for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
-      if (DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
-        () -> provider.canGeneratePrototypeFor(field) && provider.isReadOnly(field))) {
-        return true;
+      if (DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> provider.canGeneratePrototypeFor(field))) {
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> provider.isReadOnly(field));
       }
     }
     return field.hasModifierProperty(PsiModifier.FINAL);
