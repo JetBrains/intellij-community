@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -13,7 +14,15 @@ import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.ex.DynamicGroupTool
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.codeInspection.nullable.NullableStuffInspection
 import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection
@@ -27,12 +36,16 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.AsyncDocumentation
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
+import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
@@ -1881,11 +1894,74 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Live template", ignoreCase = true) })
   }
 
+  fun testDynamicGroupToolInspection() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.enableInspections(MockDynamicGroupInspection(), MockDynamicGroupChildInspection())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int badToken<caret> = 1;
+        } 
+      }
+      """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    val command = elements.first { element ->
+      element.lookupString.contains("Replace bad token", ignoreCase = true) &&
+      element.`as`(CommandCompletionLookupElement::class.java) != null
+    }
+    selectItem(command)
+    myFixture.checkResult("""
+      class A { 
+        void foo() {
+          int goodToken = 1;
+        } 
+      }
+    """.trimIndent())
+  }
+
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
     override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {
       super.showInformationHint(editor, component, position, onHintHidden)
       called = true
     }
+  }
+
+  private class MockDynamicGroupInspection : LocalInspectionTool(), DynamicGroupTool {
+    override fun getShortName(): String = "MockDynamicGroupParent"
+    override fun getDisplayName(): String = "Mock dynamic group parent"
+    override fun getGroupDisplayName(): String = "Mock"
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+      return object : JavaElementVisitor() {
+        override fun visitLocalVariable(variable: PsiLocalVariable) {
+          val nameIdentifier = variable.nameIdentifier ?: return
+          if (nameIdentifier.text != "badToken") return
+          val fix = object : LocalQuickFix {
+            override fun getFamilyName(): String = "Replace bad token"
+            override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+              val identifier = descriptor.psiElement ?: return
+              val factory = JavaPsiFacade.getElementFactory(project)
+              identifier.replace(factory.createIdentifier("goodToken"))
+            }
+          }
+          val rawDescriptor = holder.manager.createProblemDescriptor(
+            nameIdentifier, "Bad token", fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly
+          ) as ProblemDescriptorBase
+          holder.registerProblem(ProblemDescriptorWithReporterName(rawDescriptor, "MockDynamicGroupChild"))
+        }
+      }
+    }
+
+    override fun getChildren(): List<LocalInspectionToolWrapper> =
+      listOf(LocalInspectionToolWrapper(MockDynamicGroupChildInspection()))
+  }
+
+  private class MockDynamicGroupChildInspection : LocalInspectionTool() {
+    override fun getShortName(): String = "MockDynamicGroupChild"
+    override fun getDisplayName(): String = "Mock dynamic group child"
+    override fun getGroupDisplayName(): String = "Mock"
   }
 }

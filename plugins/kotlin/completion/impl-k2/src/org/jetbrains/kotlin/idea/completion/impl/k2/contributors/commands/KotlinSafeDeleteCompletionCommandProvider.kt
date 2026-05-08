@@ -56,6 +56,6 @@ internal class KotlinSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCom
 
     override fun skipCommandFromHighlighting(command: CompletionCommand): Boolean {
         return command is DirectInspectionFixCompletionCommand &&
-                SKIPPED_INSPECTION_IDS.contains(command.inspectionId)
+                command.inspectionIds.any { SKIPPED_INSPECTION_IDS.contains(it) }
     }
 }

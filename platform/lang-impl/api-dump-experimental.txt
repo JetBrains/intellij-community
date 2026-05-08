@@ -353,11 +353,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:skipCommandFromHighlighting(com.intellij.codeInsight.completion.command.CompletionCommand):Z
 *f:com.intellij.codeInsight.completion.command.commands.DirectInspectionFixCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
-- <init>(java.lang.String,java.lang.String,java.lang.Integer,javax.swing.Icon,com.intellij.codeInsight.completion.command.HighlightInfoLookup,I,kotlin.jvm.functions.Function0):V
+- <init>(java.util.List,java.lang.String,java.lang.Integer,javax.swing.Icon,com.intellij.codeInsight.completion.command.HighlightInfoLookup,I,kotlin.jvm.functions.Function0):V
 - execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - getIcon():javax.swing.Icon
-- f:getInspectionId():java.lang.String
+- f:getInspectionIds():java.util.List
 - getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getPriority():java.lang.Integer

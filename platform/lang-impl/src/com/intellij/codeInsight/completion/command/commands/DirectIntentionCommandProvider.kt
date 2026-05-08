@@ -282,10 +282,11 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             val inspectionToolWrapper: LocalInspectionToolWrapper = entry.key ?: continue
             val descriptors: List<ProblemDescriptor?> = entry.value ?: continue
             for (descriptor in descriptors) {
-              var toolId = inspectionToolWrapper.shortName
+              val toolId = inspectionToolWrapper.shortName
               if (descriptor == null) continue
               val fixes = descriptor.fixes ?: continue
               if (descriptor !is ProblemDescriptorBase) continue
+              var additionalToolId: String? = null
               if (descriptor is ProblemDescriptorWithReporterName) {
                 //let's try to find the original tool
                 val wrappers = inspectionTools.filter {
@@ -293,7 +294,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                     .any { child -> child.shortName == descriptor.reportingToolShortName }
                 }
                 if (wrappers.size == 1) {
-                  toolId = wrappers.first()?.shortName ?: continue
+                  additionalToolId = wrappers.first()?.shortName ?: continue
                 }
                 else {
                   continue
@@ -324,7 +325,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                 val icon = if (isInfo) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
 
                 result[toolId + ":" + action.text] = CompletionCommandWithErrorLevel(DirectInspectionFixCompletionCommand(
-                  inspectionId = toolId,
+                  inspectionIds = if (additionalToolId == null) listOf(toolId) else listOf(toolId, additionalToolId),
                   presentableName = action.text,
                   priority = priority,
                   icon = icon,
