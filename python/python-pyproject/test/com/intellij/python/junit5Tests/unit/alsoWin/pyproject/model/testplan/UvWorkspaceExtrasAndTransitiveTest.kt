@@ -10,8 +10,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
@@ -24,14 +24,16 @@ internal class UvWorkspaceExtrasAndTransitiveTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("PY-89293 monorepo: local transitive dependencies are not resolved")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf("src")),
-      ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("extra-utils", "sub-project-b"), sourceRoots = listOf("src")),
-      ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = emptyList(), sourceRoots = listOf("src")),
-      ExpectedModule("extra-utils", contentRoot = "local-libs${SEP}extra-utils", deps = emptyList(), sourceRoots = emptyList()),
-    )
+    // PY-89293 monorepo: local transitive dependencies are not resolved
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf("src")),
+        ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("extra-utils", "sub-project-b"), sourceRoots = listOf("src")),
+        ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = emptyList(), sourceRoots = listOf("src")),
+        ExpectedModule("extra-utils", contentRoot = "local-libs${SEP}extra-utils", deps = emptyList(), sourceRoots = emptyList()),
+      )
+      }
   }
 }

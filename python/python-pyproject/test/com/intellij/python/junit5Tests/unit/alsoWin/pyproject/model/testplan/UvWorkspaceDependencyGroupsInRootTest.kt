@@ -10,8 +10,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
@@ -24,14 +24,16 @@ internal class UvWorkspaceDependencyGroupsInRootTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("PY-89205 uv workspace: Dependencies which are defined in dependency groups are not shown in Project Structure settings")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
-      ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
-      ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = listOf("sub-project-c"), sourceRoots = emptyList()),
-      ExpectedModule("sub-project-c", contentRoot = "sub-projects${SEP}sub-project-c", deps = listOf("."), sourceRoots = emptyList()),
-    )
+    // PY-89205 uv workspace: Dependencies which are defined in dependency groups are not shown in Project Structure settings
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
+        ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("sub-project-b", "sub-project-c"), sourceRoots = emptyList()),
+        ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = listOf("sub-project-c"), sourceRoots = emptyList()),
+        ExpectedModule("sub-project-c", contentRoot = "sub-projects${SEP}sub-project-c", deps = listOf("."), sourceRoots = emptyList()),
+      )
+    }
   }
 }
