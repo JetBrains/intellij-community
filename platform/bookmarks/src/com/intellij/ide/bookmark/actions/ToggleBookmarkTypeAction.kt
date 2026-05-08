@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -13,6 +14,10 @@ internal open class ToggleBookmarkTypeAction(private val type: BookmarkType)
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
+    if (event.place == ActionPlaces.ACTION_SEARCH) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     val manager = event.bookmarksManager
     val bookmark = event.contextBookmark
     event.presentation.isEnabledAndVisible = manager != null && bookmark != null
