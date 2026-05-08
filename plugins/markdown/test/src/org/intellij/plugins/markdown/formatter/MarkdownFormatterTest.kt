@@ -67,6 +67,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test emphasis`() = doTest()
 
+  fun `test links without blank lines`() = doTest(rightMargin = 80)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }

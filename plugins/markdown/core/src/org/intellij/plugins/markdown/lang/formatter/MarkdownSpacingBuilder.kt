@@ -70,6 +70,7 @@ internal object MarkdownSpacingBuilder {
       }
 
       //LINKS
+      .between(MarkdownElementTypes.LINK_DEFINITION, MarkdownElementTypes.LINK_DEFINITION).blankLines(0)
       .before(MarkdownElementTypes.LINK_DEFINITION).blankLines(1)
 
       // Ensure there is a single line after frontmatter header
