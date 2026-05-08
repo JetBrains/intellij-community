@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -13,11 +14,16 @@ import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -81,12 +87,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> extends ExpensivePsiIntentionAction implements HintAction, PriorityAction {
+public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> extends ExpensivePsiIntentionAction
+  implements HintAction, PriorityAction, IntentionActionWithModCommandFallback {
   private final @NotNull T myReferenceElement;
   private final @NotNull R myReference;
   private final PsiClass[] myClassesToImport;
@@ -169,8 +177,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private record CalcInfo(@NotNull PsiClass @NotNull [] classesToImport, ThreeState extensionsAllowToChangeFileSilently, boolean inContent) {}
   @RequiresBackgroundThread
   private CalcInfo calcClassesToImport() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = myContainingPsiFile;
     VirtualFile virtualFile = psiFile == null ? null : psiFile.getVirtualFile();
     Project project = psiFile == null ? null : psiFile.getProject();
@@ -444,7 +450,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     try {
       String name = getQualifiedName(myReferenceElement);
       if (name != null) {
-        Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
+        DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+        if (settings == null) return false;
+        Pattern pattern = Pattern.compile(settings.NO_AUTO_IMPORT_PATTERN);
         Matcher matcher = pattern.matcher(name);
         if (matcher.matches()) {
           return true;
@@ -568,5 +576,43 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         return importOptimizer != null ? importOptimizer : ImportClassFixBase.this.getModCommandFriendlyImportOptimizer();
       }
     };
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    return new ImportClassModCommand();
+  }
+
+  private class ImportClassModCommand implements ModCommandAction {
+    @Override
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      return Presentation.of(getText());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      ImportOptimizer importOptimizer = getModCommandFriendlyImportOptimizer();
+      List<? extends PsiClass> classes = getClassesToImport();
+      List<ModCommandAction> actions = classes.stream()
+        .limit(25)
+        .map(cls -> ModCommand.psiUpdateStep(myReferenceElement, Objects.requireNonNull(cls.getQualifiedName()), (ref, updater) -> {
+          PsiReference reference = ref.getReference();
+          if (reference == null) {
+            return;
+          }
+          bindReference(reference, cls);
+          if (importOptimizer != null &&
+              CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
+            importOptimizer.processFile(updater.getPsiFile()).run();
+          }
+        }))
+        .toList();
+      return ModCommand.chooseAction(QuickFixBundle.message("class.to.import.chooser.title"), actions);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return ImportClassFixBase.this.getFamilyName();
+    }
   }
 }
