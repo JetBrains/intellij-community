@@ -46,12 +46,12 @@ internal class MergeDiffBuilder(
 
     checkCanceled()
 
-    val sequences = ArrayList<CharSequence>(3)
+    var sequences = emptyList<CharSequence>()
     var psiFiles = emptyList<PsiFile>()
     var resolveImportsPossible = false
 
     val importRange: MergeRange? = readAction {
-      sequences.addAll(mergeRequest.contents.map { it.document.immutableCharSequence })
+      sequences = mergeRequest.contents.map { it.document.immutableCharSequence }
       psiFiles = if (conflictResolver.isAvailable() || isAutoResolveImportConflicts) initPsiFiles(project, mergeRequest) else emptyList()
       resolveImportsPossible = isAutoResolveImportConflicts && canImportsBeProcessedAutomatically(project, psiFiles)
       if (resolveImportsPossible) MergeImportUtil.getImportMergeRange(project, psiFiles) else null
