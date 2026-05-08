@@ -242,6 +242,17 @@ class KotlinBuildScriptManipulator(
         }
     }
 
+    override fun configurePluginInPluginsGroup(
+        kotlinPluginExpression: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion,
+        applyFalse: Boolean,
+        changedFiles: ChangedConfiguratorFiles
+    ) {
+        changedFiles.storeOriginalFileContent(scriptFile)
+        scriptFile.createPluginInPluginsGroupIfMissing(kotlinPluginExpression, addVersion, version, applyFalse)
+    }
+
     override fun configurePluginOptions(kotlinPluginName: String, changedFiles: ChangedConfiguratorFiles, vararg options: String) {
         scriptFile.apply {
             findOrCreateScriptInitializer(kotlinPluginName, false)?.let { block ->
@@ -618,7 +629,8 @@ class KotlinBuildScriptManipulator(
     private fun KtFile.createPluginInPluginsGroupIfMissing(
         pluginName: String,
         addVersion: Boolean,
-        version: IdeKotlinVersion
+        version: IdeKotlinVersion,
+        applyFalse: Boolean = false
     ) {
         getPluginsBlock()?.let {
             val existingPluginDefinition = it.findPluginInPluginsGroup(pluginName)
@@ -627,12 +639,25 @@ class KotlinBuildScriptManipulator(
                 existingPluginDefinition.entireExpression.delete()
             }
             if (existingPluginDefinition?.applyExpression != null || existingPluginDefinition?.versionExpression == null) {
-                it.addExpressionIfMissing(
-                    if (addVersion) {
-                        "$pluginName version \"${version.artifactVersion}\""
-                    } else pluginName
-                )
+                it.addExpressionIfMissing(pluginExpression(pluginName, addVersion, version, applyFalse))
             }
+        }
+    }
+
+    private fun pluginExpression(
+        pluginName: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion,
+        applyFalse: Boolean
+    ): String = buildString {
+        append(pluginName)
+        if (addVersion) {
+            append(" version \"")
+            append(version.artifactVersion)
+            append('"')
+        }
+        if (applyFalse) {
+            append(" apply false")
         }
     }
 

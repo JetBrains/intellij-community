@@ -67,6 +67,14 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         changedFiles: ChangedConfiguratorFiles
     )
 
+    fun configurePluginInPluginsGroup(
+        kotlinPluginExpression: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion,
+        applyFalse: Boolean,
+        changedFiles: ChangedConfiguratorFiles
+    )
+
     fun configurePluginOptions(
         kotlinPluginName: String,
         changedFiles: ChangedConfiguratorFiles,

@@ -205,6 +205,19 @@ class GroovyBuildScriptManipulator(
 
     }
 
+    override fun configurePluginInPluginsGroup(
+        kotlinPluginExpression: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion,
+        applyFalse: Boolean,
+        changedFiles: ChangedConfiguratorFiles
+    ) {
+        changedFiles.storeOriginalFileContent(scriptFile)
+
+        val pluginsBlock = scriptFile.getOrCreatePluginsBlock()
+        pluginsBlock.addLastExpressionInBlockIfNeeded(pluginExpression(kotlinPluginExpression, addVersion, version, applyFalse))
+    }
+
     override fun configurePluginOptions(kotlinPluginName: String, changedFiles: ChangedConfiguratorFiles, vararg options: String) {
         scriptFile.apply {
             val block = getBlockOrCreate(kotlinPluginName)
@@ -780,6 +793,23 @@ class GroovyBuildScriptManipulator(
             $$"$$configuration \"org.jetbrains.kotlin:$$artifactName:$kotlin_version\""
         } else {
             "$configuration 'org.jetbrains.kotlin:$artifactName'"
+        }
+    }
+
+    private fun pluginExpression(
+        pluginName: String,
+        addVersion: Boolean,
+        version: IdeKotlinVersion,
+        applyFalse: Boolean
+    ): String = buildString {
+        append(pluginName)
+        if (addVersion) {
+            append(" version '")
+            append(version.artifactVersion)
+            append('\'')
+        }
+        if (applyFalse) {
+            append(" apply false")
         }
     }
 

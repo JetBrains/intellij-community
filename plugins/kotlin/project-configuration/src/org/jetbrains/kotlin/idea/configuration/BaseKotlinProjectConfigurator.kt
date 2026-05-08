@@ -286,8 +286,9 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
     }
 
     private fun Collection<Module>.configuratorsByModule(): List<Pair<Module, List<KotlinProjectPostConfigurator>>>? {
-        val project = this.firstOrNull()?.project ?: return null
-        val effectiveModules = effectiveModules(project, this) ?: return null
+        val project = firstOrNull()?.project ?: return null
+        val effectiveModules =
+            effectiveModules(project, this)?.takeUnless { it.isEmpty() } ?: return null
         val configuratorsByModule = effectiveModules.mapNotNull { module ->
             val configuratorsByModules =
                 KotlinProjectPostConfigurator.EP_NAME.extensionList
