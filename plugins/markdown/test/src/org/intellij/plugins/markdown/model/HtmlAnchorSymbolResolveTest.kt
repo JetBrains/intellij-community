@@ -28,6 +28,9 @@ class HtmlAnchorSymbolResolveTest: BasePlatformTestCase() {
   fun `reference to own header is resolved`() = doTest("own-header")
 
   @Test
+  fun `reference to own a-name anchor is resolved`() = doTest("contributing")
+
+  @Test
   fun `reference to header in other file is resolved`() = doTest("header-near-main")
 
   private fun doTest(expectedAnchor: String) {

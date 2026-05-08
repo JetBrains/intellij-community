@@ -13,6 +13,7 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.PlatformIcons
 import org.intellij.plugins.markdown.MarkdownIcons
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
@@ -32,7 +33,8 @@ class HeaderAnchorLinkDestinationReference(
     val headers = HeaderAnchorIndex.collectHeaders(element.project, GlobalSearchScope.fileScope(file), anchorText)
     val headerSymbols = headers.mapNotNull { HeaderSymbol.createPointer(it)?.dereference() }
     val injectedSymbols = collectInjectedHtmlAnchors()
-    return headerSymbols + injectedSymbols
+    val inlineSymbols = collectInlineHtmlAnchors()
+    return headerSymbols + injectedSymbols + inlineSymbols
   }
 
   private fun collectInjectedHtmlAnchors(): Sequence<HtmlAnchorSymbol> {
@@ -65,9 +67,22 @@ class HeaderAnchorLinkDestinationReference(
     return result
   }
 
+  private fun collectInlineHtmlAnchors(): Sequence<HtmlAnchorSymbol> {
+    val traverser = SyntaxTraverser.psiTraverser(file).asSequence()
+    val htmlTags = traverser.filter { it.node?.elementType == MarkdownTokenTypes.HTML_TAG }
+    return htmlTags.mapNotNull { token ->
+      inlineAnchors.find(token.text)?.groups?.get(1)?.takeIf { it.value == anchorText }
+        ?.let { HtmlAnchorSymbol(file, TextRange.from(token.textRange.startOffset + it.range.first, it.value.length), anchorText) }
+    }
+  }
+
   private fun collectHtmlAnchorAttributesValues(file: PsiFile): Sequence<XmlAttributeValue> {
     val traverser = SyntaxTraverser.psiTraverser(file).asSequence()
     val values = traverser.filterIsInstance<XmlAttributeValue>()
     return values.filter { it.isValidAnchorAttributeValue() }
+  }
+
+  companion object {
+    private val inlineAnchors = Regex("""<a\s[^>]*\b(?:name|id)="([^"]+)"""")
   }
 }
