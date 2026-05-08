@@ -35,6 +35,7 @@ import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.nio.file.Files
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -64,15 +65,20 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
     private val mutex = Mutex() // to avoid CPU overload by multiple uncancelled suggestion calculations
+    private val isFirstInvocation = AtomicBoolean(true) // to avoid UI freezes on dictionary loading
 
     fun check(word: String): Boolean? {
       if (word.isBlank()) return true
       val sentence = tool.getRawAnalyzedSentence(word)
       // First token is always sentence start
-      if (sentence.nonWhitespaceTokenCount <= 2) return !speller.isMisspelled(word)
+      if (sentence.nonWhitespaceTokenCount <= 2) {
+        return runCancellableOnFirstInvocation { !speller.isMisspelled(word) }
+      }
 
       // If a word ends with apostrophe, then we don't need to run expensive `match`
-      if (word.endsWith("'") || word.endsWith("’")) return !speller.isMisspelled(word.dropLast(1))
+      if (word.endsWith("'") || word.endsWith("’")) {
+        return runCancellableOnFirstInvocation { !speller.isMisspelled(word.dropLast(1)) }
+      }
 
       return runWithCheckCanceled {
         mutex.withLock {
@@ -103,6 +109,16 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
           }
           .toSet()
       }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun <T> runCancellableOnFirstInvocation(block: () -> T): T {
+      if (!isFirstInvocation.get()) return block()
+      val result = runWithCheckCanceled {
+        block()
+      }
+      isFirstInvocation.set(false)
+      return result
     }
   }
 
