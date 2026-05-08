@@ -96,6 +96,7 @@ f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 - f:createHighlighter():org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory$Companion
 - f:getInstance(com.intellij.openapi.project.Project):org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
+f:org.jetbrains.jewel.bridge.component.HostPopupResizeKt
 f:org.jetbrains.jewel.bridge.icon.IntelliJIconKeyKt
 - sf:fromPlatformIcon(org.jetbrains.jewel.ui.icon.IntelliJIconKey$Companion,javax.swing.Icon,java.lang.Class):org.jetbrains.jewel.ui.icon.IconKey
 - bs:fromPlatformIcon$default(org.jetbrains.jewel.ui.icon.IntelliJIconKey$Companion,javax.swing.Icon,java.lang.Class,I,java.lang.Object):org.jetbrains.jewel.ui.icon.IconKey
