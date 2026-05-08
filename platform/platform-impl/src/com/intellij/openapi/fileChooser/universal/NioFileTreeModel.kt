@@ -214,12 +214,12 @@ class NioFileTreeModel(
       if (descriptorRoots != null) {
         val files = descriptorRoots
         if (files.isEmpty()) return emptyList()
-        return files.map { file -> Root(this, file) }
+        return files.map { file -> Root(this, file, contributorRoot = null) }
       }
-      val files = model.contributorRoots.mapNotNull { it.path }
+      val realRoots = model.contributorRoots.filter { it.path != null }
       val virtualRoots = model.contributorRoots.filter { it.path == null }
-      if (files.isEmpty() && virtualRoots.isEmpty()) return emptyList()
-      val realRootNodes = files.map { file -> Root(this, file) }
+      if (realRoots.isEmpty() && virtualRoots.isEmpty()) return emptyList()
+      val realRootNodes = realRoots.map { root -> Root(this, root.path!!, contributorRoot = root) }
       val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, root) }
       return realRootNodes + virtualRootNodes
     }
@@ -296,12 +296,23 @@ class NioFileTreeModel(
     override fun toString(): String = name ?: ""
   }
 
-  private open class Root(state: State, path: Path?, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) :
+  private open class Root(
+    state: State,
+    path: Path?,
+    attrs: BasicFileAttributes? = null,
+    isDirectory: Boolean? = null,
+    contributorRoot: UniversalFileChooserContributor.Root? = null,
+  ) :
     Node(path, attrs, isDirectory) {
     val tree: MapBasedTree<Path, Node> = MapBasedTree(false, { it.path }, state.path)
 
     init {
       tree.updateRoot(Pair.create(this, attrs?.let { !(isDirectory ?: it.isDirectory) } ?: State.isLeaf(path)))
+      if (contributorRoot != null) {
+        val presentation = contributorRoot.presentation
+        presentation.icon?.let { updateIcon(it) }
+        updateName(presentation.presentableName)
+      }
     }
 
     open fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
