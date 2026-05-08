@@ -6,9 +6,17 @@
 
     <module name="intellij.platform.backend"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <consoleFilterProvider implementation="com.intellij.java.terminal.NoJavaExecutableFilter"/>
+    <postStartupActivity implementation="com.intellij.java.terminal.JavaTerminalSettingsReloadActivity"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <shellExecOptionsCustomizer implementation="com.intellij.java.terminal.JdkCustomizer"/>
     <commandSpecsProvider implementation="com.intellij.java.terminal.JavaShellCommandSpecsProvider"/>
     <commandSpecsProvider implementation="com.intellij.java.terminal.JavacShellCommandSpecsProvider"/>
+    <terminalSettingsProvider implementation="com.intellij.java.terminal.JavaTerminalSettingsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">

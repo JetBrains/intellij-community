@@ -19,6 +19,16 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/lang-impl",
     "//platform/util:util-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 
@@ -40,6 +50,16 @@ jvm_library(
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.terminal` end
@@ -83,6 +103,12 @@ jvm_library(
     "//plugins/terminal/completion:completion_test_lib",
     "//plugins/terminal",
     "//plugins/terminal:terminal_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ],
   runtime_deps = [":terminal-tests"]
 )
