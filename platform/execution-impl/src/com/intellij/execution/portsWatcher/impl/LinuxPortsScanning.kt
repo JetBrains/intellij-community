@@ -7,14 +7,17 @@ import com.intellij.execution.portsWatcher.ProcessPortsWatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.fs.EelPosixFileInfo
-import com.intellij.platform.eel.fs.listDirectoryWithAttrs
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isLinux
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CancellationException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import kotlin.io.path.listDirectoryEntries
 
 private val LOG = logger<ProcessPortsWatcher>()
 
@@ -67,7 +70,7 @@ internal suspend fun scanLinuxListeningPorts(eelApi: EelApi, pids: Set<Long>): S
   val inodesWithPid = mutableListOf<InodeWithPid>()
   for (pid in pids) {
     val inodes = runCatchingWarn("Failed to get socket inodes for pid $pid") {
-      readLinuxSocketInodesForPid(eelApi, pid)
+      readLinuxSocketInodesForPid(eelApi.descriptor, pid)
     }
     inodesWithPid.addAll(inodes.map { InodeWithPid(pid, it) })
   }
@@ -89,15 +92,29 @@ internal suspend fun scanLinuxListeningPorts(eelApi: EelApi, pids: Set<Long>): S
   return result
 }
 
-private suspend fun readLinuxSocketInodesForPid(eelApi: EelApi, pid: Long): List<Long> {
-  // List /proc/<pid>/fd with symlink targets attached — each entry's EelFileInfo holds the
-  // raw target string (e.g. "socket:[12345]") without following the link.
-  val fdDir = EelPath.parse("/proc/$pid/fd", eelApi.descriptor)
-  val entries = eelApi.fs.listDirectoryWithAttrs(fdDir).justResolve().eelIt().getOrThrow()
+/**
+ * Lists /proc/[pid]/fd and extracts socket inodes from the symlink targets, like "socket:[12345]" -> 12345.
+ */
+private fun readLinuxSocketInodesForPid(eelDescriptor: EelDescriptor, pid: Long): List<Long> {
+  // Have to use the java.nio.file.Path API instead of EEL API for listing directory entries and reading symlinks.
+  // Because LocalEelFileSystemPosixApi doesn't resolve hyperlinks - it always returns the unresolved link in this case,
+  // so it is not possible to get the actual symlink target.
+  val fdDir = EelPath.parse("/proc/$pid/fd", eelDescriptor).asNioPath()
+  val entries = try {
+    fdDir.listDirectoryEntries()
+  }
+  catch (_: NoSuchFileException) {
+    return emptyList()  // Process can be already terminated
+  }
 
   val result = mutableListOf<Long>()
-  for ((_, info) in entries) {
-    val target = (info.type as? EelPosixFileInfo.Type.Symlink.Resolved.Relative)?.result ?: continue
+  for (fdEntry in entries) {
+    val target = try {
+      Files.readSymbolicLink(fdEntry).toString()
+    }
+    catch (_: NoSuchFileException) {
+      continue  // Process can be already terminated
+    }
     val match = socketInodeRegex.matchEntire(target) ?: continue
     val inode = match.groupValues[1].toLongOrNull() ?: continue
     result.add(inode)
