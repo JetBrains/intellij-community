@@ -47,7 +47,14 @@ mkdir -p "$target_dir"
 if [ ! -x "$binary_path" ]; then
     download_url="https://cache-redirector.jetbrains.com/github.com/bazelbuild/bazelisk/releases/download/v$bazelisk_version/bazelisk-${os}-${arch}"
     echo "Downloading $download_url to $binary_path" >&2
-    curl -fsSL -o "$binary_path.tmp.$$" $download_url
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -o "$binary_path.tmp.$$" "$download_url"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -nv -O "$binary_path.tmp.$$" "$download_url"
+    else
+        echo "ERROR: please install curl or wget" >&2
+        exit 1
+    fi
     mv "$binary_path.tmp.$$" "$binary_path"
     chmod +x "$binary_path"
 fi
