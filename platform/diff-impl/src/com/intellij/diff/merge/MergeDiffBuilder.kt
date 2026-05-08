@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.tools.util.base.IgnorePolicy
-import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.MergeConflictResolutionStrategy
 import com.intellij.diff.util.MergeConflictType
@@ -80,7 +79,6 @@ internal class MergeDiffBuilder(
 
     return MergeDiffData(fragmentsWithMetadata = fragmentsWithMetadata,
                          conflictTypes = conflictTypes,
-                         lineOffsets = lineOffsets,
                          psiFiles = psiFiles,
                          ignorePolicy = ignorePolicy,
                          isAutoResolveImportConflicts = isAutoResolveImportConflicts,
@@ -153,7 +151,6 @@ internal class MergeDiffBuilder(
 class MergeDiffData(
   val fragmentsWithMetadata: MergeLineFragmentsWithImportMetadata,
   val conflictTypes: List<MergeConflictType>,
-  val lineOffsets: List<LineOffsets>,
   val psiFiles: List<PsiFile>,
   val ignorePolicy: IgnorePolicy,
   val isAutoResolveImportConflicts: Boolean,

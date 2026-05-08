@@ -1096,7 +1096,6 @@ pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyFoldingModel
 - com.intellij.diff.tools.util.FoldingModelSupport
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.EditorEx[],com.intellij.diff.tools.util.side.ThreesideContentPanel,com.intellij.openapi.Disposable):V
 - createState(java.util.List,com.intellij.diff.tools.util.FoldingModelSupport$Settings):com.intellij.diff.tools.util.FoldingModelSupport$Data
-- createState(java.util.List,java.util.List,com.intellij.diff.tools.util.FoldingModelSupport$Settings):com.intellij.diff.tools.util.FoldingModelSupport$Data
 - paintOnDivider(java.awt.Graphics2D,java.awt.Component,com.intellij.diff.util.Side):V
 - p:repaintSeparators():V
 pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyPrevNextDifferenceIterable

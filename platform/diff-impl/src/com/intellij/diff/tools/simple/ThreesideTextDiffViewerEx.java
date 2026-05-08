@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -16,7 +16,6 @@ import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideContentPanel;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
-import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffDrawUtil;
@@ -432,16 +431,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     public @Nullable Data createState(@Nullable List<? extends MergeLineFragment> fragments,
                                       @NotNull FoldingModelSupport.Settings settings) {
       return createState(fragments, countLines(myEditors), settings);
-    }
-
-    public @Nullable Data createState(@Nullable List<? extends MergeLineFragment> fragments,
-                                      @NotNull List<? extends LineOffsets> lineOffsets,
-                                      @NotNull FoldingModelSupport.Settings settings) {
-      int[] lineCount = new int[myEditors.length];
-      for (int i = 0; i < myEditors.length; i++) {
-        lineCount[i] = lineOffsets.get(i).getLineCount();
-      }
-      return createState(fragments, lineCount, settings);
     }
 
     private @Nullable Data createState(@Nullable List<? extends MergeLineFragment> fragments,
