@@ -60,7 +60,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.compilerPlugins.support",
       "intellij.kotlin.compilerPlugins.support.gradle",
       "intellij.kotlin.compilerPlugins.support.maven",
-      "intellij.kotlin.compilerPlugins.power-assert.gradle",
+      "intellij.kotlin.compilerPlugins.powerAssert.gradle",
       "intellij.kotlin.compilerPlugins.kapt",
       "intellij.kotlin.compilerPlugins.serialization",
       "intellij.kotlin.compilerPlugins.serialization.gradle",
