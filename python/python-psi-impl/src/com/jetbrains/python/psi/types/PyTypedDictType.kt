@@ -25,6 +25,9 @@ class PyTypedDictType(
   private val dictClass: PyClass,
   isDefinition: Boolean,
   private val declaration: PyQualifiedNameOwner,
+  val isClosed: Boolean = false,
+  val extraItemsType: PyType? = null,
+  val extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
 ) : PyClassTypeImpl(dictClass, isDefinition) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
@@ -36,7 +39,7 @@ class PyTypedDictType(
 
   override fun toInstance(): PyTypedDictType {
     return if (isDefinition)
-      PyTypedDictType(name, fields, dictClass, false, declaration)
+      PyTypedDictType(name, fields, dictClass, false, declaration, isClosed, extraItemsType, extraItemsQualifiers)
     else
       this
   }
@@ -45,7 +48,7 @@ class PyTypedDictType(
     return if (isDefinition)
       this
     else
-      PyTypedDictType(name, fields, dictClass, true, declaration)
+      PyTypedDictType(name, fields, dictClass, true, declaration, isClosed, extraItemsType, extraItemsQualifiers)
   }
 
   override val isBuiltin: Boolean = false
@@ -53,19 +56,35 @@ class PyTypedDictType(
   override fun isCallable(): Boolean = isDefinition
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
-    return if (isCallable)
-      if (fields.isEmpty()) emptyList()
-      else {
-        val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
-        val singleStarParameter = PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter())
+  return if (isCallable) {
+    if (fields.isEmpty() && extraItemsType == null) {
+      emptyList()
+    }
+    else {
+      val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
+      val singleStarParameter = PyCallableParameterImpl.psi(
+        elementGenerator.createSingleStarParameter()
+      )
+      
+      val fieldParameters = fields.map { (key, value) ->
         val ellipsis = elementGenerator.createEllipsis()
-        listOf(singleStarParameter) + fields.map {
-          if (it.value.qualifiers.isRequired == true) PyCallableParameterImpl.nonPsi(it.key, it.value.type)
-          else PyCallableParameterImpl.nonPsi(it.key, it.value.type, ellipsis)
-        }
+        if (value.qualifiers.isRequired == true) 
+          PyCallableParameterImpl.nonPsi(key, value.type)
+        else 
+          PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
       }
-    else null
+
+      val extraItemsParam = if (extraItemsType != null && !isClosed) {
+        listOf(PyCallableParameterImpl.keywordNonPsi("kwargs", extraItemsType))
+      } else {
+        emptyList()
+      }
+
+      listOf(singleStarParameter) + fieldParameters + extraItemsParam
+    }
   }
+  else null
+}
 
   override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
     return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
@@ -91,7 +110,11 @@ class PyTypedDictType(
   /**
    * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
    */
-  data class TypedDictFieldQualifiers(val isRequired: Boolean? = true, val isReadOnly: Boolean = false)
+  data class TypedDictFieldQualifiers(
+    val isRequired: Boolean? = true,
+    val isReadOnly: Boolean = false,
+    val hasExplicitRequiredQualifier: Boolean = false
+  )
 
   data class FieldTypeAndTotality(
     val value: PyExpression?,
@@ -105,6 +128,8 @@ class PyTypedDictType(
   companion object {
 
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
+    const val TYPED_DICT_EXTRA_ITEMS_PARAMETER: String = "extra_items"
+    const val TYPED_DICT_CLOSED_PARAMETER : String  = "closed"
 
     /**
      * [expression] matches [expectedType] if:
@@ -127,6 +152,9 @@ class PyTypedDictType(
         return
       }
 
+      val extraItemsType = expectedType.extraItemsType
+      val isClosed = expectedType.isClosed
+
       actualFields.forEach {
         val key = it.key
         val (actualFieldValue, actualFieldType) = it.value
@@ -145,6 +173,11 @@ class PyTypedDictType(
             if (!match(expectedFieldType, promotedType, actualFieldValue, context, result)) {
               result.valueTypeErrors.add(ValueTypeError(actualFieldValue, expectedFieldType, actualFieldType))
             }
+          }
+        }
+        else if (extraItemsType != null && !isClosed) {
+          if (!match(extraItemsType, actualFieldType, actualFieldValue, context, result)) {
+            result.valueTypeErrors.add(ValueTypeError(actualFieldValue, extraItemsType, actualFieldType))
           }
         }
         else {
@@ -209,12 +242,8 @@ class PyTypedDictType(
       actual: PyTypedDictType,
       context: TypeEvalContext,
     ): Boolean? {
-      if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
-        val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
-        val elementTypes = expected.elementTypes
-        return elementTypes.size == 2
-               && builtinCache.strType == elementTypes[0]
-               && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name)
+      if (expected is PyCollectionType) {
+        matchTypedDictWithCollection(expected, actual, context)?.let { return it }
       }
 
       if (expected is PyClassLikeType && expected.isProtocol(context)) {
@@ -302,6 +331,51 @@ class PyTypedDictType(
         }
       }
       return null
+    }
+
+    private fun matchTypedDictWithCollection(expected: PyCollectionType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
+      val expectedClassQName = expected.classQName
+      if (expectedClassQName != PyTypingTypeProvider.MAPPING && expectedClassQName != PyNames.DICT) return null
+
+      val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
+      val elementTypes = expected.elementTypes
+
+      if (elementTypes.size != 2 || builtinCache.strType != elementTypes[0]) {
+        return false
+      }
+
+      val expectedValueType = elementTypes[1]
+      val extraItemsType = actual.extraItemsType
+      val hasExtraItems = extraItemsType != null && extraItemsType != PyNeverType.NEVER
+
+      val allValueTypes = mutableListOf<PyType?>()
+      allValueTypes.addAll(actual.fields.values.mapNotNull { it.type })
+
+      if (extraItemsType != null && !actual.isClosed) {
+        allValueTypes.add(extraItemsType)
+      }
+
+      val unionOfFieldTypes = PyUnionType.union(allValueTypes)
+
+      if (PyTypingTypeProvider.MAPPING == expectedClassQName) {
+        if (hasExtraItems && !actual.isClosed) {
+          return PyTypeChecker.match(expectedValueType, unionOfFieldTypes, context)
+        }
+        else {
+          return elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name
+        }
+      }
+      else {
+        if (hasExtraItems && !actual.isClosed) {
+          return actual.fields.values.all { field ->
+            !field.isReadOnly &&
+            field.qualifiers.isRequired != true &&
+            PyTypeChecker.match(expectedValueType, field.type, context) &&
+            PyTypeChecker.match(field.type, expectedValueType, context)
+          }
+        }
+        return false
+      }
     }
   }
 

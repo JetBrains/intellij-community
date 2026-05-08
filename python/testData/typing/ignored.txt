@@ -35,5 +35,4 @@ qualifiers_annotated.py
 specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
-typeddicts_extra_items.py
 typeforms_typeform.py

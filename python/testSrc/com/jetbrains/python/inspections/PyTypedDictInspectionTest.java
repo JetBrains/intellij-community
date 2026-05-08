@@ -927,6 +927,339 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
       """));
   }
 
+  // PY-85421
+  public void testClosedParameterRequiresBooleanValue() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+      
+      class IllegalTD(TypedDict, closed=<warning descr="Value of 'closed' must be True or False">42 == 42</warning>):
+          name: str
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testClosedParameterInheritanceConstraints() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+  
+      class ClosedBase(TypedDict, closed=True):
+          name: str
+     
+      class IllegalChild1(ClosedBase, <warning descr="Cannot set 'closed=False' when superclass is 'closed=True'">closed=False</warning>):
+          pass
+      
+      class ExtraItemsBase(TypedDict, extra_items=int):
+          name: str
+      
+      class IllegalChild2(ExtraItemsBase, <warning descr="Cannot set 'closed=False' when superclass has 'extra_items'">closed=False</warning>):
+          pass
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testClosedPropertyInheritedFromSuperclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+      
+      # > If ``closed`` is not provided, the behavior is inherited from the superclass.
+      # > If the superclass is TypedDict itself or the superclass does not have ``closed=True``
+      # > or the ``extra_items`` parameter, the previous TypedDict behavior is preserved:
+      # > arbitrary extra items are allowed. If the superclass has ``closed=True``, the
+      # > child class is also closed.
+      
+      class BaseMovie(TypedDict, closed=True):
+          name: str
+      
+      class MovieA(BaseMovie):
+          pass
+      
+      class MovieB(BaseMovie, closed=True):
+          pass
+      
+      class MovieC(MovieA):
+          <warning descr="\\"MovieC\\" is a closed TypedDict; extra key \\"age\\" not allowed">age</warning>: int
+      
+      class MovieD(MovieB):
+          <warning descr="\\"MovieD\\" is a closed TypedDict; extra key \\"age\\" not allowed">age</warning>: int
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testClosedTrueRequiresReadOnlyExtraItems() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing import Never
+      from typing_extensions import TypedDict, ReadOnly
+      
+      class ExtraItemsBase(TypedDict, extra_items=int):
+          name: str
+      
+      class MovieES(TypedDict, extra_items=ReadOnly[str]):
+          pass
+      
+      class MovieClosed(MovieES, closed=True):  # OK
+          pass
+      
+      class MovieNever(MovieES, extra_items=Never):
+          pass
+      
+      class IllegalCloseNonReadOnly(ExtraItemsBase, <warning descr="Cannot set 'closed=True' when superclass has non-readonly 'extra_items'">closed=True</warning>):
+          pass
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsCannotBeRequiredOrNotRequired() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing import NotRequired, Required
+      from typing_extensions import TypedDict
+      
+      class IllegalExtraItemsTD(TypedDict, <warning descr="'extra_items' value cannot be 'Required[...]'">extra_items=Required[int]</warning>):
+          name: str
+      
+      class AnotherIllegalExtraItemsTD(TypedDict, <warning descr="'extra_items' value cannot be 'NotRequired[...]'">extra_items=NotRequired[int]</warning>):
+          name: str
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsImplicitlyNotRequired() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+      
+      class MovieEI(TypedDict, extra_items=int):
+          name: str
+      
+      def del_items(movie: MovieEI) -> None:
+          del movie[<warning descr="Key 'name' of TypedDict 'MovieEI' cannot be deleted">"name"</warning>]
+          del movie["year"]
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsRedeclarationRequiresReadOnlyInSuperclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing import ReadOnly
+      
+      from typing_extensions import TypedDict
+      
+      class ReadOnlyBase(TypedDict, extra_items=ReadOnly[int]):
+          pass
+      
+      class NonReadOnlyBase(TypedDict, extra_items=int):
+          pass
+      
+      class ReadOnlyChild(ReadOnlyBase, extra_items=ReadOnly[bool]):
+          pass
+      
+      class MutableChild(ReadOnlyBase, extra_items=int):
+          pass
+      
+      class IllegalChild(NonReadOnlyBase, <warning descr="Cannot change 'extra_items' type unless it is 'ReadOnly' in the superclass">extra_items=int</warning>):
+          pass
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsEnforcesNotRequiredForNewKeys() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict, ReadOnly
+      from typing import NotRequired
+      
+      class MovieBase2(TypedDict, extra_items=int | None):
+          name: str
+      
+      class MovieRequiredYear(MovieBase2):
+          <warning descr="Required key 'year' is not known to 'MovieBase2'">year</warning>: int | None
+      
+      class MovieNotRequiredYear(MovieBase2):
+          <warning descr="Expected type 'int | None', got 'int' instead">year</warning>: NotRequired[int]
+      
+      class MovieWithYear(MovieBase2):  # OK
+          year: NotRequired[int | None]
+      
+      class BookBase(TypedDict, extra_items=ReadOnly[int | None]):
+          name: str
+      
+      class BookWithPublisher(BookBase):
+          <warning descr="'str' is not assignable to 'int | None'">publisher</warning>: str
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsTypedDictAssignmentWithRequiredKeyMismatch() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+      from typing import NotRequired
+      
+      class MovieBase(TypedDict, extra_items=int | None):
+          name: str
+      
+      class MovieDetails(TypedDict, extra_items=int | None):
+          name: str
+          year: NotRequired[int]
+      
+      class MovieDetails2(TypedDict, extra_items=int | None):
+          name: str
+          year: NotRequired[int | None]
+      
+      details: MovieDetails = {"name": "Kill Bill Vol. 1", "year": 2003}
+      <warning descr="Expected type 'int | None', got 'int' instead">movie</warning>: MovieBase = details
+      
+      details2: MovieDetails2 = {"name": "Kill Bill Vol. 1", "year": 2003}
+      movie2: MovieBase = details2  # OK
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsAssignmentRequiresNotRequiredKeys() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+      
+      # > - If ``extra_items`` is not read-only:
+      # >   - The key is non-required.
+      # >   - The key's value type is :term:`consistent` with ``T``.
+      # >   - The key is not in ``S``.
+      
+      class MovieBase(TypedDict, extra_items=int | None):
+          name: str
+      
+      class MovieWithYear(TypedDict, extra_items=int | None):
+          name: str
+          year: int | None
+      
+      details: MovieWithYear = {"name": "Kill Bill Vol. 1", "year": 2003}
+      <warning descr="'year' is not required in 'MovieBase', but it is required in 'MovieWithYear'">movie3</warning>: MovieBase = details
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testReadOnlyExtraItemsAllowNarrowerTypesInSubclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict, ReadOnly
+  
+      # > When ``extra_items`` is specified to be read-only on a TypedDict type, it is
+      # > possible for an item to have a :term:`narrower <narrow>` type than the
+      # > ``extra_items`` argument.
+  
+      class MovieSI(TypedDict, extra_items=ReadOnly[str | int]):
+          name: str
+  
+      class MovieDetails4(TypedDict, extra_items=int):
+          name: str
+          year: NotRequired[int]
+  
+      class MovieDetails5(TypedDict, extra_items=int):
+          name: str
+          actors: list[str]
+  
+      details4: MovieDetails4 = {"name": "Kill Bill Vol. 2", "year": 2004}
+      details5: MovieDetails5 = {"name": "Kill Bill Vol. 2", "actors": ["Uma Thurman"]}
+      movie4: MovieSI = details4  # OK. 'int' is assignable to 'str | int'.
+      <warning descr="'list[str]' is not assignable to 'str | int'">movie5</warning>: MovieSI = details5
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsTypeCompatibilityCheckedInAssignment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing_extensions import TypedDict
+  
+      # > ``extra_items`` as a pseudo-item follows the same rules that other items have,
+      # > so when both TypedDicts types specify ``extra_items``, this check is naturally
+      # > enforced.
+  
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+  
+      class MovieExtraStr(TypedDict, extra_items=str):
+          name: str
+  
+      extra_int: MovieExtraInt = {"name": "No Country for Old Men", "year": 2007}
+      extra_str: MovieExtraStr = {"name": "No Country for Old Men", "description": ""}
+      <warning descr="'str' is not assignable to extra items type 'int'">extra_int</warning> = extra_str
+      <warning descr="'int' is not assignable to extra items type 'str'">extra_str</warning> = extra_int
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testNonClosedTypedDictHasImplicitReadOnlyObjectExtraItems() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText("""
+    from typing_extensions import TypedDict
+
+    class MovieExtraInt(TypedDict, extra_items=int):
+        name: str
+
+    class MovieNotClosed(TypedDict):
+        name: str
+
+    extra_int2: MovieExtraInt = {"name": "No Country for Old Men", "year": 2007}
+    not_closed: MovieNotClosed = {"name": "No Country for Old Men"}
+    <warning descr="Implicit ReadOnly[object] on 'MovieNotClosed' is not assignable to 'int'">extra_int2</warning> = not_closed
+    not_closed = extra_int2  # OK
+    """));
+  }
+
+  // PY-89006
+  public void testDictModificationMethodsAllowedWhenAssignableToDict() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTestByText(
+      """
+      from typing import NotRequired
+      from typing_extensions import TypedDict
+
+      # > The TypedDict type is assignable to dict[str, VT] if all items satisfy:
+      # > - The value type of the item is consistent with VT.
+      # > - The item is not read-only.
+      # > - The item is not required.
+      # > In this case, methods that are previously unavailable on a TypedDict are allowed,
+      # > with signatures matching dict[str, VT].
+
+      class IntDict(TypedDict, extra_items=int):
+          pass
+
+      class IntDictWithNum(IntDict):
+          num: NotRequired[int]
+
+      m: IntDictWithNum = {"num": 1, "bar": 2}
+      m.clear()
+      m.popitem()
+      m.get("bar")
+      m.get("unknown_key")
+
+      class RegularTypedDict(TypedDict):
+          name: str
+          year: int
+
+      r = RegularTypedDict(name="Alien", year=1979)
+      r.<warning descr="This operation might break TypedDict consistency">clear</warning>()
+      r.<warning descr="This operation might break TypedDict consistency">popitem</warning>()
+      """
+    ));
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

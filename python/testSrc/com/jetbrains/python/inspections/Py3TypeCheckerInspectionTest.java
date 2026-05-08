@@ -4996,4 +4996,146 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        a: str = <warning descr="Expected type 'str', got 'type[str]' instead">field(default_factory=(lambda: str))</warning>
                    """);
   }
+
+  // PY-85421
+  public void testTypedDictExtraItemsInDictLiteral() {
+    doTestByText(
+      """
+      from typing_extensions import TypedDict
+
+      class MovieNoExtra(TypedDict):
+          name: str
+
+      a: MovieNoExtra = {"name": "Blade Runner", <warning descr="Extra key 'novel_adaptation' for TypedDict 'MovieNoExtra'">"novel_adaptation": True</warning>}
+
+      class Movie(TypedDict, extra_items=bool):
+          name: str
+
+      b: Movie = {"name": "Blade Runner", "novel_adaptation": True}
+
+      c: Movie = {"name": "Blade Runner", "novel_adaptation": True, "is_classic": False}
+
+      d: Movie = {"name": "Blade Runner", "year": <warning descr="Expected type 'bool', got 'int' instead">1982</warning>}
+      """
+    );
+  }
+
+  // PY-85421
+  public void testTypedDictExtraItemsTypeMatching() {
+    doTestByText(
+      """
+      from typing_extensions import TypedDict
+
+      class ExtraMovie(TypedDict, extra_items=int):
+          name: str
+
+      ExtraMovie(name="No Country for Old Men")
+
+      ExtraMovie(name="No Country for Old Men", year=2007)
+
+      ExtraMovie(name="No Country for Old Men", <warning descr="Expected type 'int', got 'str' instead">language="English"</warning>)
+
+      ExtraMovie(name="Inception", year=2010, rating=8, <warning descr="Expected type 'int', got 'str' instead">budget="160M"</warning>)
+
+      ExtraMovie(name="Dune", <warning descr="Expected type 'int', got 'None' instead">year=None</warning>)
+      """);
+  }
+
+  // PY-85421
+  public void testExtraItemsInheritedThroughSubclassing() {
+    doTestByText(
+      """
+      from typing_extensions import TypedDict
+      
+      class MovieBase(TypedDict, extra_items=int | None):
+          name: str
+      
+      class InheritedMovie(MovieBase):
+          year: int
+      
+      InheritedMovie(name="Blade Runner", year=1982, <warning descr="Expected type 'int | None', got 'str' instead">budget="100M"</warning>)
+      """
+    );
+  }
+
+  // PY-85421
+  public void testExtraItemsTypedDictAssignableToMappingWhenTypesMatch() {
+    doTestByText(
+      """
+      from typing_extensions import TypedDict
+      from typing import Mapping
+  
+      # > A TypedDict type is :term:`assignable` to a type of the form ``Mapping[str, VT]``
+      # > when all value types of the items in the TypedDict
+      # > are assignable to ``VT``.
+      
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+      
+      class MovieExtraStr(TypedDict, extra_items=str):
+          name: str
+  
+      extra_str3: MovieExtraStr = {"name": "Blade Runner", "summary": ""}
+      str_mapping: Mapping[str, str] = extra_str3  # OK
+  
+      extra_int3: MovieExtraInt = {"name": "Blade Runner", "year": 1982}
+      int_mapping: Mapping[str, int] = <warning descr="Expected type 'Mapping[str, int]', got 'MovieExtraInt' instead">extra_int3</warning>
+      int_str_mapping: Mapping[str, int | str] = extra_int3  # OK
+      """
+    );
+  }
+
+  // PY-85421
+  public void testExtraItemsTypedDictAssignableToDictWhenAllKeysNotRequired() {
+    doTestByText(
+      """
+      from typing import NotRequired, ReadOnly
+      from typing_extensions import TypedDict
+      
+      class IntDict(TypedDict, extra_items=int):
+          pass
+      
+      class IntDictWithNum(IntDict):
+          num: NotRequired[int]
+      
+      def clear_intdict(x: IntDict) -> None:
+          v: dict[str, int] = x  # OK
+          v.clear()  # OK
+      
+      not_required_num_dict: IntDictWithNum = {"num": 1, "bar": 2}
+      regular_dict: dict[str, int] = not_required_num_dict  # OK
+      clear_intdict(not_required_num_dict)  # OK
+      
+      # Cases when it is NOT assignable to dict[str, VT]:
+      
+      # 1. Value type is not consistent with VT
+      class IntDictWithStr(IntDict):
+          description: NotRequired[str]
+      
+      not_consistent_dict: IntDictWithStr = {"description": "test"}
+      inconsistent: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'IntDictWithStr' instead">not_consistent_dict</warning>  # Error: 'str' is not consistent with 'int'
+      
+      # 2. Item is read-only
+      class IntDictReadOnly(IntDict):
+          readonly_num: NotRequired[ReadOnly[int]]
+      
+      readonly_dict: IntDictReadOnly = {"readonly_num": 42}
+      readonly_error: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'IntDictReadOnly' instead">readonly_dict</warning>  # Error: 'readonly_num' is read-only
+      
+      # 3. Item is required
+      class IntDictRequired(IntDict):
+          required_num: int
+      
+      required_dict: IntDictRequired = {"required_num": 10}
+      required_error: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'IntDictRequired' instead">required_dict</warning>  # Error: 'required_num' is required
+      
+      # 4. Combination: required and read-only
+      class IntDictRequiredReadOnly(IntDict):
+          id: ReadOnly[int]
+      
+      required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
+      combined_error: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead">required_readonly_dict</warning>  # Error: 'id' is both required and read-only
+      """
+    );
+  }
 }

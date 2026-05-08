@@ -77,6 +77,18 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         }
         if (operandType instanceof PyTypedDictType typedDictType) {
           List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+          if (typedDictType.getExtraItemsType() != null && !typedDictType.isClosed()) {
+            List<PyType> types = new ArrayList<>();
+            for (String indexValue : indexPossibleValues) {
+              if (typedDictType.getFields().containsKey(indexValue)) {
+                types.add(typedDictType.getElementType(indexValue));
+              }
+              else {
+                types.add(typedDictType.getExtraItemsType());
+              }
+            }
+            return PyUnionType.union(types);
+          }
           return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
         }
         if (operandType instanceof PyClassType) {

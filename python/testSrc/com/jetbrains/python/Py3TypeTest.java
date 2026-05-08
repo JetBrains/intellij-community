@@ -5923,6 +5923,99 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+
+  // PY-85421
+  public void testExtraItemsKnownKeyType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "str",
+      """
+      from typing_extensions import TypedDict
+  
+      class Movie(TypedDict, extra_items=int):
+          name: str
+  
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["name"]
+      """
+    ));
+  }
+
+  public void testExtraItemsArbitraryKeyType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "int",
+      """
+      from typing_extensions import TypedDict
+  
+      class Movie(TypedDict, extra_items=int):
+          name: str
+  
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["novel_adaptation"]
+      """
+    ));
+  }
+
+  public void testExtraItemsMultipleArbitraryKeys() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "int",
+      """
+      from typing_extensions import TypedDict
+  
+      class Movie(TypedDict, extra_items=int):
+          name: str
+  
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["year"]
+      """
+    ));
+  }
+
+  // PY-85421
+  public void testExtraItemsReflectedInItems() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "list[tuple[str, str | int]]",
+      """
+      from typing_extensions import TypedDict
+  
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+  
+      def foo(movie: MovieExtraInt) -> None:
+          expr = list(movie.items())
+      """
+    ));
+  }
+
+  public void testExtraItemsReflectedInValues() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "list[str | int]",
+      """
+      from typing_extensions import TypedDict
+  
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+  
+      def foo(movie: MovieExtraInt) -> None:
+          expr = list(movie.values())
+      """
+    ));
+  }
+
+  public void testExtraItemsReflectedInPopitem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> doTest(
+      "tuple[str, str | int]",
+      """
+      from typing_extensions import TypedDict
+  
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+  
+      def foo(movie: MovieExtraInt) -> None:
+          expr = movie.popitem()
+      """
+    ));
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

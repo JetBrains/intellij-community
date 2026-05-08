@@ -15,6 +15,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSED_PARAMETER
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA_ITEMS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.io.IOException
 
@@ -23,6 +25,8 @@ class PyTypedDictStubImpl private constructor(
   override val name: String,
   override val fields: List<PyTypedDictFieldStub>,
   override val isRequired: Boolean = true,
+  override val isClosed: Boolean = false,
+  override val extraItemsType: String? = null,
 ) : PyTypedDictStub {
 
   override fun getTypeClass(): Class<PyTypedDictStubType> {
@@ -34,6 +38,8 @@ class PyTypedDictStubImpl private constructor(
     stream.writeName(myCalleeName.toString())
     stream.writeName(name)
     stream.writeBoolean(isRequired)
+    stream.writeBoolean(isClosed)
+    stream.writeName(extraItemsType)
     stream.writeVarInt(fields.size)
 
     for ((name, type, isReadOnly) in fields) {
@@ -72,7 +78,9 @@ class PyTypedDictStubImpl private constructor(
       return PyTypedDictStubImpl(calleeName,
                                  typeName,
                                  fields,
-                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
+                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true),
+                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_CLOSED_PARAMETER), false),
+                                 expression.getKeywordArgument(TYPED_DICT_EXTRA_ITEMS_PARAMETER)?.text)
     }
 
     @Throws(IOException::class)
@@ -80,12 +88,14 @@ class PyTypedDictStubImpl private constructor(
       val calleeName = stream.readNameString()
       val name = stream.readNameString()
       val isRequired = stream.readBoolean()
+      val isClosed = stream.readBoolean()
+      val extraItemsType = stream.readNameString()
       val fields = deserializeFields(stream, stream.readVarInt())
 
       return if (calleeName == null || name == null) {
         null
       }
-      else PyTypedDictStubImpl(QualifiedName.fromDottedString(calleeName), name, fields, isRequired)
+      else PyTypedDictStubImpl(QualifiedName.fromDottedString(calleeName), name, fields, isRequired, isClosed, extraItemsType)
     }
 
     private fun getCalleeName(referenceExpression: PyReferenceExpression): QualifiedName? {

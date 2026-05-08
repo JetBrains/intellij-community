@@ -20,6 +20,16 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
    * @return value of 'total' keyword argument if exists, True otherwise
    */
   val isRequired: Boolean
+
+  /**
+   * @return value of 'closed' keyword argument if exists, False otherwise
+   */
+  val isClosed: Boolean
+
+  /**
+   * @return value of 'extra_items' keyword argument if exists, null otherwise
+   */
+  val extraItemsType: String?
 }
 
 
