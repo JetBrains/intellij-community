@@ -1,145 +1,116 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.dom.references;
+package org.jetbrains.idea.maven.dom.references
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider;
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService;
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.ProcessingContext
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
+import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider
 
 /**
  * Adds references to string like "groupId:artifactId:version"
  */
-public class MavenDependencyReferenceProvider extends PsiReferenceProvider implements MavenSoftAwareReferenceProvider {
+open class MavenDependencyReferenceProvider : PsiReferenceProvider(), MavenSoftAwareReferenceProvider {
+  private var mySoft = true
 
-  private boolean mySoft = true;
+  var isCanHasVersion: Boolean = true
 
-  private boolean myCanHasVersion = true;
+  override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+    val range = ElementManipulators.getValueTextRange(element)
 
-  @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    TextRange range = ElementManipulators.getValueTextRange(element);
+    val text = range.substring(element.getText())
 
-    String text = range.substring(element.getText());
-
-    int firstDelim = text.indexOf(':');
+    val firstDelim = text.indexOf(':')
 
     if (firstDelim == -1) {
-      return new PsiReference[]{
-        new GroupReference(element, range, mySoft)
-      };
+      return arrayOf(
+        GroupReference(element, range, mySoft)
+      )
     }
 
-    int secondDelim = myCanHasVersion ? text.indexOf(':', firstDelim + 1) : -1;
+    val secondDelim = if (this.isCanHasVersion) text.indexOf(':', firstDelim + 1) else -1
 
-    int start = range.getStartOffset();
+    val start = range.getStartOffset()
 
     if (secondDelim == -1) {
-      return new PsiReference[]{
-        new GroupReference(element, new TextRange(start, start + firstDelim), mySoft),
-        new ArtifactReference(text.substring(0, firstDelim),
-                              element, new TextRange(start + firstDelim + 1, range.getEndOffset()), mySoft)
-      };
+      return arrayOf<PsiReference>(
+        GroupReference(element, TextRange(start, start + firstDelim), mySoft),
+        ArtifactReference(
+          text.substring(0, firstDelim),
+          element, TextRange(start + firstDelim + 1, range.getEndOffset()), mySoft
+        )
+      )
     }
 
-    int lastDelim = text.indexOf(':',secondDelim + 1);
+    var lastDelim = text.indexOf(':', secondDelim + 1)
     if (lastDelim == -1) {
-      lastDelim = text.length();
+      lastDelim = text.length
     }
 
-    return new PsiReference[]{
-      new GroupReference(element, new TextRange(start, start + firstDelim), mySoft),
+    return arrayOf<PsiReference>(
+      GroupReference(element, TextRange(start, start + firstDelim), mySoft),
 
-      new ArtifactReference(text.substring(0, firstDelim),
-                            element, new TextRange(start + firstDelim + 1, start + secondDelim), mySoft),
+      ArtifactReference(
+        text.substring(0, firstDelim),
+        element, TextRange(start + firstDelim + 1, start + secondDelim), mySoft
+      ),
 
-      new VersionReference(text.substring(0, firstDelim), text.substring(firstDelim + 1, secondDelim),
-                           element, new TextRange(start + secondDelim + 1, start + lastDelim), mySoft)
-    };
+      VersionReference(
+        text.substring(0, firstDelim), text.substring(firstDelim + 1, secondDelim),
+        element, TextRange(start + secondDelim + 1, start + lastDelim), mySoft
+      )
+    )
   }
 
-  @Override
-  public void setSoft(boolean soft) {
-    mySoft = soft;
+  override fun setSoft(soft: Boolean) {
+    mySoft = soft
   }
 
-  public boolean isCanHasVersion() {
-    return myCanHasVersion;
-  }
-
-  public void setCanHasVersion(boolean canHasVersion) {
-    myCanHasVersion = canHasVersion;
-  }
-
-  private static class GroupReference extends PsiReferenceBase<PsiElement> {
-
-    GroupReference(PsiElement element, TextRange range, boolean soft) {
-      super(element, range, soft);
+  private class GroupReference(element: PsiElement, range: TextRange?, soft: Boolean) :
+    PsiReferenceBase<PsiElement?>(element, range, soft) {
+    override fun resolve(): PsiElement? {
+      return null
     }
 
-    @Override
-    public @Nullable PsiElement resolve() {
-      return null;
-    }
-
-    @Override
-    public Object @NotNull [] getVariants() {
-      return MavenDependencySearchService.getInstance(getElement().getProject()).getGroupIdsBlocking("").toArray();
+    override fun getVariants(): Array<Any?> {
+      return getInstance(getElement().getProject()).getGroupIdsBlocking("").toTypedArray()
     }
   }
 
-  public static class ArtifactReference extends PsiReferenceBase<PsiElement> {
-
-    private final String myGroupId;
-
-    public ArtifactReference(@NotNull String groupId, @NotNull PsiElement element, @NotNull TextRange range, boolean soft) {
-      super(element, range, soft);
-      myGroupId = groupId;
+  class ArtifactReference(private val myGroupId: String, element: PsiElement, range: TextRange, soft: Boolean) :
+    PsiReferenceBase<PsiElement?>(element, range, soft) {
+    override fun resolve(): PsiElement? {
+      return null
     }
 
-    @Override
-    public @Nullable PsiElement resolve() {
-      return null;
-    }
+    override fun getVariants(): Array<Any?> {
+      if (myGroupId.isBlank()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY
 
-    @Override
-    public Object @NotNull [] getVariants() {
-      if (StringUtil.isEmptyOrSpaces(myGroupId)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-
-      return MavenDependencySearchService.getInstance(getElement().getProject()).getArtifactIdsBlocking(myGroupId).toArray();
+      return getInstance(element.getProject()).getArtifactIdsBlocking(myGroupId).toTypedArray()
     }
   }
 
-  public static class VersionReference extends PsiReferenceBase<PsiElement> {
-
-    private final String myGroupId;
-    private final String myArtifactId;
-
-    public VersionReference(@NotNull String groupId, @NotNull String artifactId, @NotNull PsiElement element, @NotNull TextRange range, boolean soft) {
-      super(element, range, soft);
-      myGroupId = groupId;
-      myArtifactId = artifactId;
+  class VersionReference(
+    private val myGroupId: String,
+    private val myArtifactId: String,
+    element: PsiElement,
+    range: TextRange,
+    soft: Boolean,
+  ) : PsiReferenceBase<PsiElement?>(element, range, soft) {
+    override fun resolve(): PsiElement? {
+      return null
     }
 
-    @Override
-    public @Nullable PsiElement resolve() {
-      return null;
-    }
-
-    @Override
-    public Object @NotNull [] getVariants() {
-      if (StringUtil.isEmptyOrSpaces(myGroupId) || StringUtil.isEmptyOrSpaces(myArtifactId)) {
-        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    override fun getVariants(): Array<Any?> {
+      if (myGroupId.isBlank() || myArtifactId.isBlank()) {
+        return ArrayUtilRt.EMPTY_OBJECT_ARRAY
       }
-      return MavenDependencySearchService.getInstance(getElement().getProject()).getVersionsBlocking(myGroupId, myArtifactId).toArray();
+      return getInstance(element.getProject()).getVersionsBlocking(myGroupId, myArtifactId).toTypedArray()
     }
   }
 }
