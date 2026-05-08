@@ -82,7 +82,7 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyWithAncestors
 import com.jetbrains.python.psi.PyWithItem
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
@@ -215,7 +215,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(param.toKeywordContainerType(type))
     }
     if (PyNames.NONE == param.defaultValueText) {
-      return Ref(PyUnionType.union(type, getInstance(param).noneType))
+      return Ref(PyUnionType.union(type, PyBuiltinCache.getInstance(param).noneType))
     }
     if (context.typeContext.maySwitchToAST(param)) {
       val defaultValue = param.defaultValue
@@ -547,7 +547,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val isAsync = ASYNC_GENERATOR == qName
         if (!isAsync && GENERATOR != qName) return null
 
-        val noneType: PyType? = getInstance(type.pyClass).noneType
+        val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneType
 
         var yieldType: PyType? = null
         var sendType = noneType
@@ -947,15 +947,15 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun createTypingGenericType(anchor: PsiElement): PyType {
-      return PyCustomType(GENERIC, null, false, true, getInstance(anchor).objectType)
+      return PyCustomType(GENERIC, null, false, true, PyBuiltinCache.getInstance(anchor).objectType)
     }
 
     private fun createTypingProtocolType(anchor: PsiElement): PyType {
-      return PyCustomType(PROTOCOL, null, false, true, getInstance(anchor).objectType)
+      return PyCustomType(PROTOCOL, null, false, true, PyBuiltinCache.getInstance(anchor).objectType)
     }
 
     fun createTypingCallableType(anchor: PsiElement): PyType {
-      return PyCustomType(CALLABLE, null, false, true, getInstance(anchor).objectType)
+      return PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).objectType)
     }
 
     private fun omitFirstParamInTypeComment(func: PyFunction, annotation: PyFunctionTypeAnnotation): Boolean {
@@ -1014,7 +1014,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (PyTypedDictTypeProvider.Helper.isTypedDict(referenceTarget, context)) {
         return PyCustomType(
           TYPED_DICT, null, false, true,
-          getInstance(referenceTarget).dictType
+          PyBuiltinCache.getInstance(referenceTarget).dictType
         )
       }
 
@@ -1220,7 +1220,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return StreamEx.of(resolved)
         .map<PsiElement?> { it: RatedResolveResult? -> it!!.element }
         .nonNull()
-        .noneMatch { it: PsiElement? -> getInstance(it).isBuiltin(it) }
+        .noneMatch { it: PsiElement? -> PyBuiltinCache.getInstance(it).isBuiltin(it) }
     }
 
     @JvmStatic
@@ -1517,7 +1517,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (typeHint is PyNoneLiteralExpression ||
           typeHint is PyReferenceExpression && PyNames.NONE == typeHint.text
       ) {
-        return Ref(getInstance(resolved).noneType)
+        return Ref(PyBuiltinCache.getInstance(resolved).noneType)
       }
       return null
     }
@@ -1607,7 +1607,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           val indexExpr = resolved.indexExpression
           if (indexExpr != null) {
             if (indexExpr.resolvesToQualifiedNames(context.typeContext, ANY)) {
-              return Ref(getInstance(resolved).typeType)
+              return Ref(PyBuiltinCache.getInstance(resolved).typeType)
             }
             return indexExpr.getAsClassObjectType(context)
           }
@@ -1616,7 +1616,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
       }
       else if (TYPE == resolved.getQualifiedName()) {
-        return Ref(getInstance(resolved).typeType)
+        return Ref(PyBuiltinCache.getInstance(resolved).typeType)
       }
       return null
     }
@@ -1633,7 +1633,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         when (this.name) {
           "Callable" -> createTypingCallableType(this)
           "Literal" -> PyPsiFacade.getInstance(project).createClassByQName(SPECIAL_FORM, this)?.let { PyClassTypeImpl(it, false) }
-          "TypedDict" -> PyCustomType(TYPED_DICT, null, false, true, getInstance(this).dictType)
+          "TypedDict" -> PyCustomType(TYPED_DICT, null, false, true, PyBuiltinCache.getInstance(this).dictType)
           "Protocol" -> createTypingProtocolType(this)
           "Generic" -> createTypingGenericType(this)
           else -> null
@@ -1718,7 +1718,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (argExpr != null) {
             val typeRef: Ref<PyType?>? = getType(argExpr, context)
             if (typeRef != null) {
-              return Ref(PyUnionType.union(typeRef.get(), getInstance(element).noneType))
+              return Ref(PyUnionType.union(typeRef.get(), PyBuiltinCache.getInstance(element).noneType))
             }
           }
           return Ref(PyAnyType.unknown)
@@ -2842,7 +2842,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     @JvmStatic
     fun removeNarrowedTypeIfNeeded(type: PyType?): PyType? {
       if (type is PyNarrowedType && type.isBound()) {
-        return getInstance(type.original).boolType
+        return PyBuiltinCache.getInstance(type.original).boolType
       }
       else {
         return type

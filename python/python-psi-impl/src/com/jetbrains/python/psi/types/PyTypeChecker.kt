@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.ParamHelper
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyTypeProvider
@@ -39,7 +39,6 @@ import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallablePara
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
-import com.jetbrains.python.psi.types.PyTypeChecker.match
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
@@ -312,7 +311,7 @@ object PyTypeChecker {
    */
   private fun matchObject(expected: PyClassType, actual: PyType?): Optional<Boolean> {
     if (ArrayUtil.contains(expected.name, PyNames.OBJECT, PyNames.TYPE)) {
-      val builtinCache = getInstance(expected.pyClass)
+      val builtinCache = PyBuiltinCache.getInstance(expected.pyClass)
       if (expected == builtinCache.objectType) {
         return Optional.of(true)
       }
@@ -1056,7 +1055,7 @@ object PyTypeChecker {
     matchContext: MatchContext,
   ): Optional<Boolean> {
     if (actual is PyFunctionType && expected is PyClassType && PyNames.FUNCTION == expected.name
-        && expected == getInstance(actual.callable).getObjectType(PyNames.FUNCTION)
+        && expected == PyBuiltinCache.getInstance(actual.callable).getObjectType(PyNames.FUNCTION)
     ) {
       return Optional.of(true)
     }
@@ -2017,7 +2016,7 @@ object PyTypeChecker {
         return true
       }
       val method = resolveTypeMember(type, PyNames.GETATTRIBUTE, context)
-      if (method != null && !getInstance(cls).isBuiltin(method)) {
+      if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
         return true
       }
     }

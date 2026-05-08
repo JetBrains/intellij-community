@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.PyKeyValuePattern
 import com.jetbrains.python.psi.PyMappingPattern
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPsiFacade
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
@@ -64,7 +63,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
     if (sequenceMember is PyDoubleStarPattern) {
       val mappingType = context.getType(this).convertToType("typing.Mapping", pattern, context)
       if (mappingType is PyCollectionType) {
-        val dict = getInstance(pattern).getClass("dict") ?: return null
+        val dict = PyBuiltinCache.getInstance(pattern).getClass("dict") ?: return null
         return PyCollectionTypeImpl(dict, false, mappingType.getElementTypes())
       }
       return null
