@@ -149,6 +149,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/lombok/maven",
     "//plugins/kotlin/compiler-plugins/noarg/maven",
     "//plugins/kotlin/compiler-plugins/parcelize/common",
+    "//plugins/kotlin/compiler-plugins/power-assert/gradle",
     "//plugins/kotlin/compiler-plugins/sam-with-receiver/maven",
     "//plugins/kotlin/compiler-plugins/scripting",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
@@ -165,7 +166,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/lombok/gradle",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle",
     "//plugins/kotlin/compiler-plugins/noarg/gradle",
-    "//plugins/kotlin/compiler-plugins/power-assert/gradle",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end

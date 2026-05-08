@@ -142,6 +142,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.powerAssert.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" scope="RUNTIME" />
@@ -158,6 +159,5 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.gradle" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.power-assert.gradle" scope="RUNTIME" />
   </component>
 </module>
