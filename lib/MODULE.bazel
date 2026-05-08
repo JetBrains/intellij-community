@@ -10318,17 +10318,17 @@ http_file(
 )
 
 http_file(
-  name = "org_codehaus_plexus-plexus-utils-3_5_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.5.1/plexus-utils-3.5.1.jar",
-  sha256 = "86e0255d4c879c61b4833ed7f13124e8bb679df47debb127326e7db7dd49a07b",
-  downloaded_file_path = "plexus-utils-3.5.1.jar"
+  name = "org_codehaus_plexus-plexus-utils-3_6_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.6.1/plexus-utils-3.6.1.jar",
+  sha256 = "05a63effd67e2d6b9d610cc82e2bd7473289d34802e57a529b28110f28af5679",
+  downloaded_file_path = "plexus-utils-3.6.1.jar"
 )
 
 http_file(
-  name = "org_codehaus_plexus-plexus-utils-3_5_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.5.1/plexus-utils-3.5.1-sources.jar",
-  sha256 = "11b9ff95f1ade7cff0a45cf483c7cd84a8f8a542275a3d612779fffacdf43f00",
-  downloaded_file_path = "plexus-utils-3.5.1-sources.jar"
+  name = "org_codehaus_plexus-plexus-utils-3_6_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.6.1/plexus-utils-3.6.1-sources.jar",
+  sha256 = "f9b0daa4d3728acf62a90f07136b56790b677dd42644d169855b9f9ec410a27d",
+  downloaded_file_path = "plexus-utils-3.6.1-sources.jar"
 )
 
 http_file(
