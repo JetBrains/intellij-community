@@ -74,7 +74,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
         return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
       }
       Project project = actionContext.project();
-      List<JavaIntroduceFieldService.ExpressionToFieldContext.Success> contexts =
+      List<JavaIntroduceFieldService.ToFieldContext.ExpressionContext> contexts =
         PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
           PsiFile copyFile = (PsiFile)actionContext.file().copy();
           Document copyDocument = copyFile.getFileDocument();
@@ -87,11 +87,11 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
           PsiElement context = CustomTemplateCallback.getContext(copyFile, PostfixLiveTemplate.positiveOffset(startOffset));
           PostfixTemplateExpressionSelector selector = selectorAllExpressionsWithCurrentOffset(IS_NON_VOID);
           List<PsiElement> selectedExpressions = selector.getExpressions(context, copyFile.getFileDocument(), startOffset);
-          List<JavaIntroduceFieldService.ExpressionToFieldContext.Success> list =
+          List<JavaIntroduceFieldService.ToFieldContext.ExpressionContext> list =
             selectedExpressions.stream().filter(element -> element instanceof PsiExpression)
-              .map(expression -> introduceFieldService.getContext((PsiExpression)expression))
-              .filter(c -> c instanceof JavaIntroduceFieldService.ExpressionToFieldContext.Success)
-              .map(c -> (JavaIntroduceFieldService.ExpressionToFieldContext.Success)c).toList();
+              .map(expression -> introduceFieldService.getContext(expression.getContainingFile(), expression.getTextRange(), false))
+              .filter(c -> c instanceof JavaIntroduceFieldService.ToFieldContext.ExpressionContext)
+              .map(c -> (JavaIntroduceFieldService.ToFieldContext.ExpressionContext)c).toList();
           return list;
         });
       if (contexts.isEmpty()) {

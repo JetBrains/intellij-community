@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,24 +13,41 @@ import java.util.List;
 
 public final class JavaIntroduceFieldServiceImpl extends JavaIntroduceFieldService {
   private static final FieldExtractor myFieldExtractor = new FieldExtractor(new IntroduceFieldHandler());
+  private static final FieldExtractor myConstantExtractor = new FieldExtractor(new IntroduceConstantHandler());
 
   @Override
   public @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull PsiExpression expression) {
-    ExpressionToFieldContext ctx = getContext(expression);
-    if (!(ctx instanceof ExpressionToFieldContext.Success success)) {
+    ToFieldContext ctx = myFieldExtractor.getContext(expression);
+    if (!(ctx instanceof ToFieldContext.ExpressionContext success)) {
       return new AvailableSettings(List.of());
     }
     return myFieldExtractor.getAvailableSettings(success);
   }
 
   @Override
-  public @NotNull JavaIntroduceFieldService.ExpressionToFieldContext getContext(@NotNull PsiExpression expression) {
-    return myFieldExtractor.getContext(expression);
+  public @NotNull JavaIntroduceFieldService.ToFieldContext getContext(@NotNull PsiFile psiFile,
+                                                                      @NotNull TextRange range,
+                                                                      boolean isConstant) {
+    if (isConstant) {
+      return myConstantExtractor.getContext(psiFile, range);
+    }
+    return myFieldExtractor.getContext(psiFile, range);
   }
 
   @Override
   public @Nullable PsiField introduceField(@NotNull PsiExpression expression,
                                            @NotNull JavaIntroduceFieldService.InitializationPlace place) {
-    return myFieldExtractor.extractField(expression, place);
+    return myFieldExtractor.extractField((PsiJavaFile)expression.getContainingFile(), expression.getTextRange(), place);
+  }
+
+  @Override
+  public @Nullable PsiField introduceField(@NotNull PsiJavaFile psiJavaFile,
+                                           @NotNull TextRange range,
+                                           boolean isConstant,
+                                           @NotNull JavaIntroduceFieldService.InitializationPlace place) {
+    if (isConstant) {
+      return myConstantExtractor.extractField(psiJavaFile, range, place);
+    }
+    return myFieldExtractor.extractField(psiJavaFile, range, place);
   }
 }

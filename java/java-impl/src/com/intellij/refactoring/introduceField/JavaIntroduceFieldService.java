@@ -4,11 +4,14 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -19,6 +22,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class JavaIntroduceFieldService {
+
   public static @Nullable JavaIntroduceFieldService getInstance() {
     return ApplicationManager.getApplication().getService(JavaIntroduceFieldService.class);
   }
@@ -31,12 +35,16 @@ public abstract class JavaIntroduceFieldService {
   }
 
   /**
-   * Retrieves the context for introducing a field based on the provided expression.
+   * Retrieves the context for converting a specific code expression into a field within a Java class.
    *
-   * @param expression the PSI expression for which the field introduction context is required; must not be null
-   * @return the context that contains information about the field introduction process; never null
+   * @param psiFile the psi file containing the code expression to be converted, must not be null
+   * @param range the text range specifying the location of the expression within the file, must not be null
+   * @param isConstant represents if it is a constant or not
+   * @return a non-null context object that provides details required for the field introduction process
    */
-  public abstract @NotNull JavaIntroduceFieldService.ExpressionToFieldContext getContext(@NotNull PsiExpression expression);
+  public abstract @NotNull JavaIntroduceFieldService.ToFieldContext getContext(@NotNull PsiFile psiFile,
+                                                                               @NotNull TextRange range,
+                                                                               boolean isConstant);
 
   /**
    * Introduce field for expression at the given initialization place.
@@ -44,6 +52,11 @@ public abstract class JavaIntroduceFieldService {
    * @return created field, or {@code null} if the refactoring cannot be performed
    */
   public abstract @Nullable PsiField introduceField(@NotNull PsiExpression expression,
+                                           @NotNull JavaIntroduceFieldService.InitializationPlace place);
+
+  public abstract @Nullable PsiField introduceField(@NotNull PsiJavaFile psiJavaFile,
+                                           @NotNull TextRange range,
+                                           boolean isConstant,
                                            @NotNull JavaIntroduceFieldService.InitializationPlace place);
 
   public enum InitializationPlace {
@@ -65,18 +78,24 @@ public abstract class JavaIntroduceFieldService {
     }
   }
 
-  sealed public interface ExpressionToFieldContext {
-    record Error(@NlsContexts.DialogMessage @NotNull String message) implements ExpressionToFieldContext {
+  sealed public interface ToFieldContext {
+    record Error(@NlsContexts.DialogMessage @NotNull String message) implements ToFieldContext {
     }
 
-    record Success(@NotNull PsiExpression selectedExpr,
+    record ExpressionContext(@NotNull PsiExpression selectedExpr,
                    @NotNull PsiElement element,
                    @NotNull PsiFile psiFile,
                    @NotNull PsiType tempType,
                    @NotNull PsiClass parentClass,
-                   @NotNull List<@NotNull PsiClass> proposedClasses) implements ExpressionToFieldContext {
+                   @NotNull List<@NotNull PsiClass> proposedClasses) implements ToFieldContext {
+    }
+
+    record VariableContext(@NotNull PsiLocalVariable localVariable,
+                           @NotNull VariableToFieldCandidatesContext variableToFieldCandidatesContext) implements ToFieldContext {
     }
   }
+
+  public record VariableToFieldCandidatesContext(boolean tempIsStatic, List<PsiClass> classes) { }
 
   public record AvailableSettings(@NotNull List<@NotNull InitializationPlace> places) {
   }

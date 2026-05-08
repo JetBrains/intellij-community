@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaDirectoryService;
@@ -88,7 +89,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ExpressionToFieldContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ToFieldContext;
 import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
@@ -103,18 +104,18 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   @Override
   protected boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
-    ExpressionToFieldContext context = FieldExtractor.getContext(this, selectedExpr);
-    if (context instanceof ExpressionToFieldContext.Error(@NlsContexts.DialogMessage String message)) {
+    ToFieldContext context = FieldExtractor.getContext(this, selectedExpr);
+    if (context instanceof ToFieldContext.Error(@NlsContexts.DialogMessage String message)) {
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
-    if (!(context instanceof ExpressionToFieldContext.Success successContext)) {
+    if (!(context instanceof ToFieldContext.ExpressionContext expressionContext)) {
       return false;
     }
-    PsiFile file = successContext.psiFile();
+    PsiFile file = expressionContext.psiFile();
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return true;
-    PsiType tempType = successContext.tempType();
-    final List<PsiClass> classes = successContext.proposedClasses();
+    PsiType tempType = expressionContext.tempType();
+    final List<PsiClass> classes = expressionContext.proposedClasses();
     myParentClass = classes.getFirst();
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
@@ -191,6 +192,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(runnable::run);
     }
     return false;
+  }
+
+  @NlsSafe
+  @Nullable String checkLocalVariables(@NotNull PsiLocalVariable variable){
+    return null;
   }
 
   public static void setModifiers(PsiField field, Settings settings) {

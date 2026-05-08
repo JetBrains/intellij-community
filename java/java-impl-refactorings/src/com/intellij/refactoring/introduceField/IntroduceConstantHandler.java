@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -36,6 +37,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,10 +79,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
 
   @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
+    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(this, localVariable);
+    if (context instanceof JavaIntroduceFieldService.ToFieldContext.Error(String errorMessage)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
+      return false;
+    }
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
     final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true){
@@ -95,6 +100,19 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     return localToFieldHandler.convertLocalToField(localVariable, editor);
   }
 
+  @Override
+  @Nullable String checkLocalVariables(@NotNull PsiLocalVariable variable) {
+    PsiExpression[] occurrences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(variable), variable);
+    for (PsiExpression occurrence : occurrences) {
+      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
+        String message =
+          RefactoringBundle.getCannotRefactorMessage(
+            JavaRefactoringBundle.message("variable.is.accessed.for.writing", occurrence.getText()));
+        return message;
+      }
+    }
+    return null;
+  }
 
   @Override
   protected Settings showRefactoringDialog(Project project,
@@ -123,16 +141,6 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       enteredName = activeIntroducer.getInputName();
       replaceAllOccurrences = activeIntroducer.isReplaceAllOccurrences();
       type = ((InplaceIntroduceConstantPopup)activeIntroducer).getType();
-    }
-
-    for (PsiExpression occurrence : occurrences) {
-      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
-        String message =
-          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", occurrence.getText()));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
-        highlightError(project, editor, occurrence);
-        return null;
-      }
     }
 
     if (localVariable == null) {
@@ -233,7 +241,11 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     }
     final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
     final PsiExpression initializer = localVariable.getInitializer();
-    return initializer != null && isStaticFinalInitializer(initializer) == null;
+    boolean isValidInitializer = initializer != null && isStaticFinalInitializer(initializer) == null;
+    if (!isValidInitializer) {
+      return false;
+    }
+    return isValidInitializer;
   }
 
   @Override

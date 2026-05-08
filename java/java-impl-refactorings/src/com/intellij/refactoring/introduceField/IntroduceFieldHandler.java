@@ -74,7 +74,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     return true;
   }
 
-  private static @Nullable @NlsContexts.DialogMessage String checkCanIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type) {
+  static @Nullable @NlsContexts.DialogMessage String checkCanIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type) {
     if (parentClass.isInterface()) {
       return JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
     }
@@ -136,7 +136,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
     }
 
     FieldExtractor.SettingParameters parameters =
-      FieldExtractor.getParameters(parentClass, expr, occurrences, anchorElement, anchorElementIfAll);
+      FieldExtractor.getParameters(parentClass, expr, occurrences, anchorElement, anchorElementIfAll, false);
 
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() &&
         (expr == null || expr.isPhysical()) && activeIntroducer == null) {
@@ -199,11 +199,16 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
 
   @Override
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
-    final PsiElement parent = localVariable.getParent();
-    if (!(parent instanceof PsiDeclarationStatement)) {
-      showErrorMessage(project, editor, JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(this, localVariable);
+    if (context instanceof JavaIntroduceFieldService.ToFieldContext.Error(String errorMessage)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
       return false;
     }
+    final PsiElement parent = localVariable.getParent();
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      return false;
+    }
+
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false) {
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,
@@ -221,7 +226,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
         return IntroduceFieldHandler.this.getChosenClassIndex(classes);
       }
     };
-    return localToFieldHandler.convertLocalToField(localVariable, editor);
+    return localToFieldHandler.convertLocalToField(localVariable, LocalToFieldHandler.getCandidatesContext(localVariable, false), editor);
   }
 
   protected int getChosenClassIndex(List<PsiClass> classes) {

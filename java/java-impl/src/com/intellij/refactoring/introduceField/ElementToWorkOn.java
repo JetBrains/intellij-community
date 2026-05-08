@@ -32,6 +32,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -50,6 +51,23 @@ public final class ElementToWorkOn {
   private ElementToWorkOn(PsiLocalVariable localVariable, PsiExpression expr) {
     myLocalVariable = localVariable;
     myExpression = expr;
+  }
+
+  public static @Nullable ElementToWorkOn tryToCreate(@Nullable PsiElement element) {
+    if (element == null) return null;
+    if (element instanceof PsiExpression psiExpression) {
+      return new ElementToWorkOn(null, psiExpression);
+    }
+    if (element instanceof PsiIdentifier psiIdentifier && psiIdentifier.getParent() instanceof PsiLocalVariable localVariable) {
+      return new ElementToWorkOn(localVariable, null);
+    }
+    if (element instanceof PsiLocalVariable localVariable) {
+      return new ElementToWorkOn(localVariable, null);
+    }
+    if (element.getParent() != null && element.getParent().getTextRange().equals(element.getTextRange())) {
+      return tryToCreate(element.getParent());
+    }
+    return null;
   }
 
   public static ElementToWorkOn adjustElements(PsiExpression expr, PsiElement anchorElement) {
@@ -222,8 +240,8 @@ public final class ElementToWorkOn {
 
   /**
    * @param <E> type of the element
-   * @param element either a physical element, or a non-physical copy returned from 
-   * {@link IntroduceVariableUtil#getSelectedExpression(Project, PsiFile, int, int)} or a similar method 
+   * @param element either a physical element, or a non-physical copy returned from
+   * {@link IntroduceVariableUtil#getSelectedExpression(Project, PsiFile, int, int)} or a similar method
    *                (with ElementToWorkOn metadata set).
    * @param updater an updater for current {@link com.intellij.modcommand.ModCommand} session
    * @return a copy of the original element suitable for subsequent processing within the ModCommand.
