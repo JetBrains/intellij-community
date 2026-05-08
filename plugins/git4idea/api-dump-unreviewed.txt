@@ -2008,7 +2008,6 @@ e:git4idea.config.GitVersionSpecialty
 - sf:KNOWS_SET_UPSTREAM_TO:git4idea.config.GitVersionSpecialty
 - sf:LF_SEPARATORS_IN_STDIN:git4idea.config.GitVersionSpecialty
 - sf:LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR:git4idea.config.GitVersionSpecialty
-- sf:MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:NO_VERIFY_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:NO_WALK_UNSORTED:git4idea.config.GitVersionSpecialty
 - sf:OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN:git4idea.config.GitVersionSpecialty

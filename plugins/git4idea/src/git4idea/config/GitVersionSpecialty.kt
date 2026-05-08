@@ -142,9 +142,9 @@ enum class GitVersionSpecialty(val version: GitVersion) {
   INIT_SUPPORTS_REFTABLE_FORMAT(GitVersion(2, 45, 0, 0)),
 
   /**
-   *  Option "--merge-base=" for git merge-tree command
+   *  When "--merge-base=" is specified for the "git merge-tree" command, branch1 and branch2 do not need to specify commits; trees are enough.
    */
-  MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED(GitVersion(2, 40, 0, 0));
+  MERGE_TREE_PASS_THREE_TREES_SUPPORTED((GitVersion(2, 45, 0, 0)));
 
   open fun existsIn(gitVersion: GitVersion): Boolean = gitVersion.isLaterOrEqual(version)
 

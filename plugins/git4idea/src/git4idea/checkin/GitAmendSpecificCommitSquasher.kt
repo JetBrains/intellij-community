@@ -56,9 +56,14 @@ internal object GitAmendSpecificCommitSquasher {
 
       when (result) {
         is GitCommitEditingOperationResult.Complete -> return@runBlockingCancellable
-        is GitCommitEditingOperationResult.Conflict -> {
+        is GitCommitEditingOperationResult.Incomplete.Conflict -> {
           undoAmendCommit(repository, amendCommit.id, amendCommitParent)
           throw AmendSpecificCommitConflictException(repository, amendCommit.id, amendCommitParent)
+        }
+        is GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion -> {
+          undoAmendCommit(repository, amendCommit.id, amendCommitParent)
+          throw VcsException(GitBundle.message("git.commit.amend.specific.git.version.not.supported.error.message",
+                                               result.requiredVersion.presentation))
         }
         is GitCommitEditingOperationResult.Incomplete -> {
           undoAmendCommit(repository, amendCommit.id, amendCommitParent)
