@@ -55,9 +55,6 @@
 - name: lib/modules/intellij.debugger.logpoints.java.jar
   contentModules:
   - name: intellij.debugger.logpoints.java
-- name: lib/modules/intellij.debugger.logpoints.shared.jar
-  contentModules:
-  - name: intellij.debugger.logpoints.shared
 - name: lib/modules/intellij.java.analysis.impl.jar
   contentModules:
   - name: intellij.java.analysis.impl
