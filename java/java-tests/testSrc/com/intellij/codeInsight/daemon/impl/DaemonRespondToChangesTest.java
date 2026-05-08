@@ -1099,6 +1099,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
 
+    AtomicBoolean checked = new AtomicBoolean();
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
       VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
@@ -1114,7 +1115,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       Editor alienEditor = Objects.requireNonNull(FileEditorManager.getInstance(alienProject).openTextEditor(alienDescriptor, false));
       ((EditorImpl)alienEditor).setCaretActive();
       myTestDaemonCodeAnalyzer.waitForTermination();
-      AtomicBoolean checked = new AtomicBoolean();
       Runnable callbackWhileWaiting = () -> {
         if (!checked.getAndSet(true)) {
           typeInAlienEditor(alienEditor, 'x');
@@ -1126,6 +1126,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       assertTrue(checked.get());
     }
     catch (ProcessCanceledException ignored) {
+      assertTrue(checked.get());
       return;
     }
     fail("must throw PCE");
