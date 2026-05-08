@@ -3,10 +3,10 @@ package com.intellij.ide.plugins.testPluginSrc.bar
 
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 
-class BarService: PluginTestHandle {
+class BarService: PluginTestHandle<Unit, Unit> {
   fun getData(): BarData = data
 
-  override fun test() {
+  override fun test(arg: Unit) {
     getData().x
   }
 

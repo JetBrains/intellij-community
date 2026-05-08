@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -502,8 +503,8 @@ class DynamicPluginsTest {
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
-        val barService = application.getService(barDescriptor.loadClassInsideSelf<BarService>()) as PluginTestHandle
-        barService.test()
+        val barService = application.getTestHandleService<BarService, _, _>(barDescriptor)!!
+        barService.test(Unit)
         val fooBarClass = fooDescriptor.loadClassInsideSelf<FooBarService>() // loaded because packed into the same jar with the main descriptor
         assertThat(application.getService(fooBarClass)).isNull()
         assertThat(fooDescriptor.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
@@ -574,8 +575,8 @@ class DynamicPluginsTest {
     try {
       assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
       assertThat(application.extensionArea.getExtensionPoint<Any>(FooExtension.EP_FQN).extensions.size).isEqualTo(1)
-      val epService = application.getService(fooEmb.loadClassInsideSelf<FooExtensionService>()) as PluginTestHandle
-      epService.test()
+      val epService = application.getTestHandleService<FooExtensionService, _, _>(fooEmb)!!
+      epService.test(Unit)
     }
     finally {
       assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
@@ -1074,8 +1075,8 @@ class DynamicPluginsTest {
     val fooCore = foo.contentModules.first { it.moduleId.name == "foo.core" }
     try {
       assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
-      val coreClass = application.getService(fooCore.loadClassInsideSelf<FooCore>()) as PluginTestHandle
-      coreClass.test()
+      val coreClass = application.getTestHandleService<FooCore, _, _>(fooCore)!!
+      coreClass.test(Unit)
     }
     finally {
       assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
@@ -1482,4 +1483,10 @@ private fun assertDisabledDependencyLoadingError(pluginId: PluginId, dependencyI
   assertThat(error).isNotNull().isInstanceOfAny(PluginDependencyIsDisabled::class.java, PluginDependencyCannotBeLoaded::class.java)
   val disabledDependency = (error as? PluginDependencyIsDisabled)?.dependencyId ?: (error as? PluginDependencyCannotBeLoaded)!!.dependency.pluginId
   assertThat(disabledDependency).isNotNull().isEqualTo(dependencyId)
+}
+
+/** note: can't cast the output to [T], [T] can only be loaded by the isolated classloader of [descriptor] */
+private inline fun <reified T: PluginTestHandle<I, O>, I, O> ComponentManager.getTestHandleService(descriptor: IdeaPluginDescriptorImpl): PluginTestHandle<I, O>? {
+  @Suppress("UNCHECKED_CAST")
+  return getService(descriptor.loadClassInsideSelf<T>()) as PluginTestHandle<I, O>?
 }

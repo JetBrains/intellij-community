@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 
 @Service
-class FooExtensionService : PluginTestHandle {
-  override fun test() {
+class FooExtensionService : PluginTestHandle<Unit, Unit> {
+  override fun test(arg: Unit) {
     ExtensionPointName.create<FooExtension>(FooExtension.EP_FQN).extensionList.forEach {
       it.foo()
     }

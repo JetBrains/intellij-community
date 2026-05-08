@@ -13,9 +13,9 @@ import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.minutes
 
 @Service
-internal class FooCore : PluginTestHandle {
+internal class FooCore : PluginTestHandle<Unit, Unit> {
   val invoked = CompletableDeferred<Unit>()
-  override fun test() {
+  override fun test(arg: Unit) {
     runBlocking {
       withTimeout(1.minutes) {
         invoked.join()

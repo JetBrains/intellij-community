@@ -6,10 +6,10 @@ import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
 import com.intellij.util.application
 
-class FooBarService : PluginTestHandle {
+class FooBarService : PluginTestHandle<Unit, Unit> {
   fun getBarData(): BarData = application.getService(BarService::class.java).getData()
 
-  override fun test() {
+  override fun test(arg: Unit) {
     check(getBarData().x == 42)
   }
 }
