@@ -1991,7 +1991,6 @@ e:git4idea.config.GitVersionSpecialty
 - sf:KNOWS_SET_UPSTREAM_TO:git4idea.config.GitVersionSpecialty
 - sf:LF_SEPARATORS_IN_STDIN:git4idea.config.GitVersionSpecialty
 - sf:LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR:git4idea.config.GitVersionSpecialty
-- sf:MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:NO_VERIFY_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:NO_WALK_UNSORTED:git4idea.config.GitVersionSpecialty
 - sf:OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN:git4idea.config.GitVersionSpecialty
@@ -2007,11 +2006,6 @@ e:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FETCH_PRUNE:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FOLLOW_TAGS:git4idea.config.GitVersionSpecialty
 - sf:SUPPORTS_FORCE_PUSH_WITH_LEASE:git4idea.config.GitVersionSpecialty
-- existsIn(com.intellij.openapi.project.Project):Z
-- existsIn(com.intellij.openapi.project.Project,git4idea.config.GitExecutable):Z
-- existsIn(com.intellij.openapi.vcs.AbstractVcs):Z
-- a:existsIn(git4idea.config.GitVersion):Z
-- existsIn(git4idea.repo.GitRepository):Z
 - s:valueOf(java.lang.String):git4idea.config.GitVersionSpecialty
 - s:values():git4idea.config.GitVersionSpecialty[]
 f:git4idea.config.HasGitRootsPredicate

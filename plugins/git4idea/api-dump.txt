@@ -14,7 +14,15 @@ f:git4idea.checkin.GitCommitOptions
 - bs:copy$default(git4idea.checkin.GitCommitOptions,com.intellij.vcs.commit.CommitToAmend,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,java.lang.Object):git4idea.checkin.GitCommitOptions
 - f:getCommitToAmend():com.intellij.vcs.commit.CommitToAmend
 e:git4idea.config.GitVersionSpecialty
+- sf:MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:PATHSPEC_FROM_FILE_SUPPORTED:git4idea.config.GitVersionSpecialty
+- f:existsIn(com.intellij.openapi.project.Project):Z
+- f:existsIn(com.intellij.openapi.project.Project,git4idea.config.GitExecutable):Z
+- f:existsIn(com.intellij.openapi.vcs.AbstractVcs):Z
+- existsIn(git4idea.config.GitVersion):Z
+- f:existsIn(git4idea.repo.GitRepository):Z
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getVersion():git4idea.config.GitVersion
 f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String
