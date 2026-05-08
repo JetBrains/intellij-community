@@ -84,6 +84,12 @@ public final class ParamHelper {
       else if (psi instanceof PySingleStarParameter) {
         walker.visitSingleStarParameter((PySingleStarParameter)psi, first, last);
       }
+      else if (parameter.isPositionOnlySeparator()) {
+        walker.visitSlashParameter(null, first, last);
+      }
+      else if (parameter.isKeywordOnlySeparator()) {
+        walker.visitSingleStarParameter(null, first, last);
+      }
       else {
         walker.visitNonPsiParameter(parameter, first, last);
       }
@@ -123,13 +129,13 @@ public final class ParamHelper {
         }
 
         @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+        public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) {
           result.append(PyAstSlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+        public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) {
           result.append(PyAstSingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
@@ -338,9 +344,21 @@ public final class ParamHelper {
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
-    void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last);
+    /**
+     * Is called when a positional-only separator ({@code /}) is encountered.
+     *
+     * @param param the underlying PSI element, or {@code null} if the separator is synthetic
+     *              (e.g. created via {@link PyCallableParameterImpl#positionalOnlySeparatorNonPsi()})
+     */
+    void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last);
 
-    void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last);
+    /**
+     * Is called when a keyword-only separator ({@code *}) is encountered.
+     *
+     * @param param the underlying PSI element, or {@code null} if the separator is synthetic
+     *              (e.g. created via {@link PyCallableParameterImpl#keywordOnlySeparatorNonPsi()})
+     */
+    void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last);
 
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
@@ -357,10 +375,10 @@ public final class ParamHelper {
     public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) { }
 
     @Override
-    public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) { }
+    public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) { }
 
     @Override
-    public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }
+    public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) { }
 
     @Override
     public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) { }

@@ -115,7 +115,7 @@ public final class PyParameterInfoUtils {
         }
 
         @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+        public void visitSlashParameter(@Nullable PySlashParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
           ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
@@ -123,7 +123,7 @@ public final class PyParameterInfoUtils {
         }
 
         @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+        public void visitSingleStarParameter(@Nullable PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
           ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
@@ -132,21 +132,6 @@ public final class PyParameterInfoUtils {
 
         @Override
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
-          if (parameter.isKeywordOnlySeparator()) {
-            hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
-            currentParameterIndex[0]++;
-            ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
-            parameterDescriptions.add(parameterDescription);
-            return;
-          }
-          if (parameter.isPositionOnlySeparator()) {
-            hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
-            currentParameterIndex[0]++;
-            ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
-            parameterDescriptions.add(parameterDescription);
-            return;
-          }
-
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
           ParameterDescription parameterDescription = new ParameterDescription(parameter.getName(), "", last);
