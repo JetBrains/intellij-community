@@ -15,9 +15,6 @@ internal data class ModuleKindEvidence(
   val hasOwnExplicitBackendDependency: Boolean = false,
   val hasOwnExplicitMonolithDependency: Boolean = false,
 ) {
-  val hasOwnSplitModeEvidence: Boolean
-    get() = hasOwnFrontendEvidence || hasOwnBackendEvidence
-
   val hasOwnExplicitPlatformDependency: Boolean
     get() = hasOwnExplicitFrontendDependency || hasOwnExplicitBackendDependency || hasOwnExplicitMonolithDependency
 }

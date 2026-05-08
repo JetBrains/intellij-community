@@ -164,6 +164,10 @@ internal object SplitModeDescriptorDependencyAnalyzer {
       .sortedBy { it.name }
   }
 
+  internal fun collectDirectDependencyNames(ideaPlugin: IdeaPlugin): Sequence<String> {
+    return collectDirectDependencies(ideaPlugin).map { it.name }
+  }
+
   private fun collectEffectivelyLoadedContentModules(ideaPlugin: IdeaPlugin): Sequence<ContentModuleDependency> {
     return sequence {
       for (contentDescriptor in ideaPlugin.content) {

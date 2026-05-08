@@ -49,6 +49,7 @@ internal object SplitModeModuleKindResolver {
 
     val descriptorAnalysisStates = mutableMapOf<XmlFile, DescriptorDependencyFactsState>()
     val ownDependencyFacts = SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(parsedXmlDescriptor, descriptorAnalysisStates)
+    val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(parsedXmlDescriptor).toSet()
     val containingPlugins =
       if (contentModuleXmlDescriptor != null && SplitModeAnalysisFlags.isContainingPluginsAnalysisEnabled()) {
         analyzeContainingPlugins(collectContainingPlugins(contentModuleXmlDescriptor), descriptorAnalysisStates)
@@ -57,15 +58,32 @@ internal object SplitModeModuleKindResolver {
         emptyList()
       }
 
-    return computeModuleAnalysis(module.name, ownDependencyFacts, containingPlugins)
+    return computeModuleAnalysis(
+      moduleName = module.name,
+      ownDependencyFacts = ownDependencyFacts,
+      containingPlugins = containingPlugins,
+      hasOwnExplicitFrontendDependency = directDependencyNames.any(::isExplicitFrontendDependency),
+      hasOwnExplicitBackendDependency = directDependencyNames.any(::isExplicitBackendDependency),
+      hasOwnExplicitMonolithDependency = directDependencyNames.any(::isExplicitMonolithDependency),
+    )
   }
 
   private fun computeModuleAnalysis(
     moduleName: String,
     ownDependencyFacts: DependencyFacts,
     containingPlugins: List<ContainingPlugin>,
+    hasOwnExplicitFrontendDependency: Boolean,
+    hasOwnExplicitBackendDependency: Boolean,
+    hasOwnExplicitMonolithDependency: Boolean,
   ): ModuleAnalysis {
-    val dependencyAnalysis = DependencyAnalysis(moduleName, ownDependencyFacts, containingPlugins)
+    val dependencyAnalysis = DependencyAnalysis(
+      moduleName = moduleName,
+      ownFacts = ownDependencyFacts,
+      containingPlugins = containingPlugins,
+      hasOwnExplicitFrontendDependency = hasOwnExplicitFrontendDependency,
+      hasOwnExplicitBackendDependency = hasOwnExplicitBackendDependency,
+      hasOwnExplicitMonolithDependency = hasOwnExplicitMonolithDependency,
+    )
     return ModuleAnalysis(
       resolvedModuleKind = computeResolvedModuleKind(dependencyAnalysis),
       evidence = dependencyAnalysis.toEvidence(),
@@ -139,13 +157,21 @@ internal object SplitModeModuleKindResolver {
         val containingModule = ModuleUtilCore.findModuleForPsiElement(pluginXml) ?: continue
         val ownDependencyFacts =
           SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(ideaPlugin, descriptorAnalysisStates)
+        val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(ideaPlugin).toSet()
         val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
         val resolvedModuleKind =
           if (predefinedModuleKind != null) {
             ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning)
           }
           else {
-            computeModuleAnalysis(containingModule.name, ownDependencyFacts, emptyList()).resolvedModuleKind
+            computeModuleAnalysis(
+              moduleName = containingModule.name,
+              ownDependencyFacts = ownDependencyFacts,
+              containingPlugins = emptyList(),
+              hasOwnExplicitFrontendDependency = directDependencyNames.any(::isExplicitFrontendDependency),
+              hasOwnExplicitBackendDependency = directDependencyNames.any(::isExplicitBackendDependency),
+              hasOwnExplicitMonolithDependency = directDependencyNames.any(::isExplicitMonolithDependency),
+            ).resolvedModuleKind
           }
 
         yield(
@@ -183,22 +209,15 @@ private class DependencyAnalysis(
   private val moduleName: String,
   private val ownFacts: DependencyFacts,
   private val containingPlugins: List<ContainingPlugin>,
+  val hasOwnExplicitFrontendDependency: Boolean,
+  val hasOwnExplicitBackendDependency: Boolean,
+  val hasOwnExplicitMonolithDependency: Boolean,
 ) {
   private val containingFacts: DependencyFacts = collectContainingPluginFacts(containingPlugins)
-  private val ownFrontendEvidence = ownFacts.frontendEvidence
-  private val ownBackendEvidence = ownFacts.backendEvidence
 
   val hasContainingPlugins: Boolean = containingPlugins.isNotEmpty()
 
   val containingPluginKind: SplitModeApiRestrictionsService.ModuleKind = computeContainingPluginsKind(containingPlugins)
-
-  val hasOwnExplicitFrontendDependency: Boolean =
-    ownFrontendEvidence != null && isExplicitFrontendDependency(ownFrontendEvidence.name)
-
-  val hasOwnExplicitBackendDependency: Boolean =
-    ownBackendEvidence != null && isExplicitBackendDependency(ownBackendEvidence.name)
-
-  val hasOwnExplicitMonolithDependency: Boolean = ownFacts.monolithEvidence != null
 
   val hasOwnFrontendEvidence: Boolean = ownFacts.frontendEvidence != null
 

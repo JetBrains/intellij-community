@@ -176,7 +176,7 @@ internal object SplitModeInspectionUtil {
   }
 
   /**
-   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its own dependencies
+   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its dependencies
    * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
    * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
    */
@@ -192,9 +192,6 @@ internal object SplitModeInspectionUtil {
     }
 
     if (moduleAnalysis.resolvedModuleKind.kind !in NON_NATIVE_PLUGIN_XML_KINDS) {
-      return false
-    }
-    if (!moduleAnalysis.evidence.hasOwnSplitModeEvidence) {
       return false
     }
     if (moduleAnalysis.evidence.hasOwnExplicitPlatformDependency) {
