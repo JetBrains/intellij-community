@@ -146,7 +146,7 @@ class FreezeAnalyzerTest {
     val threadDump = getResourceContent("freezes/readWriteLock/NewLock.txt")
     withClue("") {
       assertSoftly {
-        FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.jsp.javaee.web.utils.JspWebUtil.lambda\$detectCharsetAsPerJspSpec\$0")
+        FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.jsp.web.utils.JspWebUtil.lambda\$detectCharsetAsPerJspSpec\$0")
         FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("\"DefaultDispatcher-worker-22\" prio=0 tid=0x0 nid=0x0 waiting on condition")
       }
     }

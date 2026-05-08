@@ -394,7 +394,7 @@
     <depends optional="true">-org-jetbrains-idea-maven-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javaee.jsp.base.impl/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.javaee.jsp/META-INF/plugin.xml">
     <id>-com-intellij-jsp-</id>
     <name>Java Server Pages (JSP)</name>
     <depends>com.intellij.modules.xml</depends>

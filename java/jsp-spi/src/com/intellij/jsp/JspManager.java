@@ -26,6 +26,7 @@ public abstract class JspManager implements IBaseJspManager {
   }
 
   public abstract @NotNull Set<String> getNamespacesByTagName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
+
   public abstract @NotNull Set<String> getNamespacesByFunctionName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
 
   /**
