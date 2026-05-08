@@ -17,7 +17,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
-import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Root
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -313,7 +312,6 @@ object UniversalFileChooser {
         override fun actionPerformed(e: AnActionEvent) {
           val fileView = getActiveFileView() ?: return
           val selected = fileView.fileTree.getSelectedFile() ?: return
-          val parent = selected.parent ?: return
           if (Messages.showYesNoDialog(
               IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name),
               IdeBundle.message("universal.file.chooser.action.delete.text"),
@@ -727,10 +725,10 @@ object UniversalFileChooser {
             changed.clear()
             withContext(Dispatchers.IO) {
               for (root in roots) {
-                val oldStatus = mountStatusCache.get(root)
+                val oldStatus = mountStatusCache[root]
                 val newStatus = contributor.getMountStatus(Path.of(root))
                 if (oldStatus != newStatus) {
-                  mountStatusCache.put(root, newStatus)
+                  mountStatusCache[root] = newStatus
                   if (oldStatus != null) {
                     changed.add(root)
                   }
