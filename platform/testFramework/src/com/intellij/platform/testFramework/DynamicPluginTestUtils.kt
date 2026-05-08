@@ -104,7 +104,7 @@ fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescripto
   }
 }
 
-fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boolean {
+fun unloadAndUninstallPlugin(descriptor: PluginMainDescriptor): Boolean {
   return DynamicPlugins.unloadPlugin(
     descriptor,
     DynamicPlugins.UnloadPluginOptions(disable = false),
