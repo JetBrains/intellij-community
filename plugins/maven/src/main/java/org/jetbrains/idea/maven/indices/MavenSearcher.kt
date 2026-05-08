@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.indices;
+package org.jetbrains.idea.maven.indices
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.Project
 
-import java.util.List;
-
-public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResult> {
-
-  public List<RESULT_TYPE> search(Project project, String pattern, int maxResult) {
-    return searchImpl(project, pattern, maxResult);
+abstract class MavenSearcher<RESULT_TYPE : MavenArtifactSearchResult> {
+  fun search(project: Project, pattern: String, maxResult: Int): List<RESULT_TYPE> {
+    return searchImpl(project, pattern, maxResult)
   }
 
-  protected abstract List<RESULT_TYPE> searchImpl(Project project, String pattern, int maxResult);
+  protected abstract fun searchImpl(project: Project, pattern: String, maxResult: Int): List<RESULT_TYPE>
 }
