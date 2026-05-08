@@ -17,6 +17,31 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 abstract class ProjectOpenProcessor {
+  /**
+   * Describes the user's original intent when opening a project.
+   *
+   * Plugins must not implement this interface.
+   *
+   * Plugins should convert instances of this interface to `com.intellij.ide.impl.OpenProjectTask` with extension function
+   * `ProjectOpenOptions.toOpenProjectTask()` (`com.intellij.ide.impl.ProjectUtilKt.toOpenProjectTask`) and use `OpenProjectTask` with
+   * `com.intellij.openapi.project.ex.ProjectManagerEx.openProjectAsync` to open projects.
+   *
+   * `ProjectOpenOptions` is not modifiable - the platform captures user's intent, and this intent can only be analyzed, not changed.
+   * On the other hand, plugins can modify the `OpenProjectTask` derived from `ProjectOpenOptions` if needed.
+   */
+  @ApiStatus.NonExtendable
+  interface ProjectOpenOptions {
+    /**
+     * Whether to open the project in a new frame.
+     */
+    val forceOpenInNewFrame: Boolean
+
+    /**
+     * A project to close before opening the new one, if any.
+     */
+    val projectToClose: Project?
+  }
+
   companion object {
     @JvmField
     val EXTENSION_POINT_NAME: ExtensionPointName<ProjectOpenProcessor> = ExtensionPointName("com.intellij.projectOpenProcessor")
@@ -71,7 +96,7 @@ abstract class ProjectOpenProcessor {
 
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use openProjectAsync instead", replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectToClose, forceOpenInNewFrame)"), level = DeprecationLevel.ERROR)
+  @Deprecated("Use openProjectAsync(VirtualFile, ProjectOpenOptions) instead", replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"), level = DeprecationLevel.ERROR)
   open fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     error("Use `openProjectAsync` instead")
   }
@@ -87,6 +112,14 @@ abstract class ProjectOpenProcessor {
    *
    * @return The created project, or null if it was not possible to create a project for some reason.
    */
+  open suspend fun openProjectAsync(
+    virtualFile: VirtualFile,
+    projectOpenOptions: ProjectOpenOptions,
+  ): Project? {
+    return openProjectAsync(virtualFile, projectOpenOptions.projectToClose, projectOpenOptions.forceOpenInNewFrame)
+  }
+
+  @Deprecated("Use openProjectAsync(VirtualFile, ProjectOpenOptions) instead", replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
   open suspend fun openProjectAsync(
     virtualFile: VirtualFile,
     projectToClose: Project?,

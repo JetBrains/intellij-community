@@ -5466,10 +5466,14 @@ a:com.intellij.projectImport.ProjectOpenProcessor
 - isStrongProjectInfoHolder():Z
 - lookForProjectsInDirectory():Z
 - openProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
+- openProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.projectImport.ProjectOpenProcessor$ProjectOpenOptions,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.projectImport.ProjectOpenProcessor$Companion
 - f:getImportProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.projectImport.ProjectOpenProcessor
 - f:getImportProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.projectImport.ProjectOpenProcessor
 - f:getUnimplementedOpenAsync():java.lang.UnsupportedOperationException
+com.intellij.projectImport.ProjectOpenProcessor$ProjectOpenOptions
+- a:getForceOpenInNewFrame():Z
+- a:getProjectToClose():com.intellij.openapi.project.Project
 a:com.intellij.projectImport.ProjectSetProcessor
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PROJECT:java.lang.String

@@ -8,6 +8,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -374,6 +375,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun lookForProjectsInDirectory(): Boolean = false
 
+  override suspend fun openProjectAsync(
+    virtualFile: VirtualFile,
+    projectOpenOptions: ProjectOpenOptions,
+  ): Project? {
+    return openProjectAsync(virtualFile.toNioPath(), projectOpenOptions.toOpenProjectTask())
+  }
+
+  @Deprecated("Use openProjectAsync(VirtualFile, ProjectOpenOptions) instead",
+              replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
     val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)

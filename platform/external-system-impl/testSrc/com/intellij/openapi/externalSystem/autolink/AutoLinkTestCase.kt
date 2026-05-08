@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
+import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -96,9 +97,8 @@ abstract class AutoLinkTestCase {
 
 
       override suspend fun openProjectAsync(virtualFile: VirtualFile,
-                                            projectToClose: Project?,
-                                            forceOpenInNewFrame: Boolean): Project? {
-        val project = openProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame)
+                                            projectOpenOptions: ProjectOpenOptions,): Project? {
+        val project = openProvider.openProject(virtualFile, projectOpenOptions.toOpenProjectTask())
         if (project != null && !isExternalSystem) {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null)

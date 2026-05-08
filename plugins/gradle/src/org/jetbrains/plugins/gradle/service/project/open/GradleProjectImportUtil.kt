@@ -2,6 +2,7 @@
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -29,8 +30,9 @@ import java.nio.file.Path
 
 fun canOpenGradleProject(file: VirtualFile): Boolean = GradleOpenProjectProvider().canOpenProject(file)
 
-suspend fun openGradleProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-  return GradleOpenProjectProvider().openProject(projectFile, projectToClose, forceOpenInNewFrame)
+suspend fun openGradleProject(projectFile: VirtualFile,
+                              projectOpenOptions: OpenProjectTask,): Project? {
+  return GradleOpenProjectProvider().openProject(projectFile, projectOpenOptions)
 }
 
 @ApiStatus.Experimental
