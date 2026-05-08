@@ -188,7 +188,7 @@ fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPL
 fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val parent = declaration.parent) {
     is KtParameterList -> parent.parent as KtElement
     is KtClassBody -> {
-        val classOrObject = parent.parent as KtClassOrObject
+        val classOrObject = parent.parent as? KtClassOrObject
         if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) {
             classOrObject.containingClassOrObject
         } else {
