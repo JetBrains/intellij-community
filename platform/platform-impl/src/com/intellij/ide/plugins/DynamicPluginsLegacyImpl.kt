@@ -232,7 +232,7 @@ internal object DynamicPluginsLegacyImpl {
     var allPlugins = pluginSet.allPlugins
     for (descriptor in descriptors) {
       if (!allPlugins.contains(descriptor)) {
-        allPlugins = allPlugins + descriptor
+        allPlugins = (allPlugins.filter { it.pluginId != descriptor.pluginId } + descriptor).toSet()
       }
     }
 
