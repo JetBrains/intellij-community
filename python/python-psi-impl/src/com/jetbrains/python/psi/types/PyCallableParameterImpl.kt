@@ -154,16 +154,23 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     if (other == null || javaClass != other.javaClass) return false
 
     other as PyCallableParameterImpl
-    return myIsPositional == other.myIsPositional && myIsKeyword == other.myIsKeyword &&
+    val isNonPhysical = parameter == null && other.parameter == null
+    return myIsPositional == other.myIsPositional &&
+           myIsKeyword == other.myIsKeyword &&
            myName == other.myName &&
            myType?.get() == other.myType?.get() &&
-           myDefaultValue == other.myDefaultValue &&
-           parameter == other.parameter
+           parameter == other.parameter &&
+           if (isNonPhysical) {
+             myDefaultValue?.text == other.myDefaultValue?.text
+           }
+           else {
+             myDefaultValue == other.myDefaultValue
+           }
   }
 
   override fun hashCode(): Int {
     return Objects.hash(
-      myName, myType?.get(), myDefaultValue,
+      myName, myType?.get(), myDefaultValue?.text,
       parameter, myIsPositional, myIsKeyword
     )
   }

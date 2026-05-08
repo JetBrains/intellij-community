@@ -37,58 +37,54 @@ class PyTypedDictType(
     return if (isDefinition) toInstance() else null
   }
 
-
-
-  private val cachedInstanceType: PyTypedDictType by lazy {
-    if (isDefinition) PyTypedDictType(name, fields, dictClass, false, declaration)
-    else this
+  override fun toInstance(): PyTypedDictType {
+    return if (isDefinition)
+      PyTypedDictType(name, fields, dictClass, false, declaration, isClosed, extraItemsType, extraItemsQualifiers)
+    else
+      this
   }
 
-  override fun toInstance(): PyTypedDictType = cachedInstanceType
-
-  private val cachedClassType: PyTypedDictType by lazy {
-    if (isDefinition) this
-    else PyTypedDictType(name, fields, dictClass, true, declaration)
+  override fun toClass(): PyTypedDictType {
+    return if (isDefinition)
+      this
+    else
+      PyTypedDictType(name, fields, dictClass, true, declaration, isClosed, extraItemsType, extraItemsQualifiers)
   }
-
-  override fun toClass(): PyTypedDictType = cachedClassType
 
   override val isBuiltin: Boolean = false
 
   override fun isCallable(): Boolean = isDefinition
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
-  return if (isCallable) {
-    if (fields.isEmpty() && extraItemsType == null) {
-      emptyList()
-    }
-    else {
-      val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
-      val singleStarParameter = PyCallableParameterImpl.psi(
-        elementGenerator.createSingleStarParameter()
-      )
-
-      val fieldParameters = fields.map { (key, value) ->
-        val ellipsis = elementGenerator.createEllipsis()
-        if (value.qualifiers.isRequired == true)
-          PyCallableParameterImpl.nonPsi(key, value.type)
-        else
-          PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
-      }
-
-      val extraItemsParam = if (extraItemsType != null && !isClosed) {
-        listOf(PyCallableParameterImpl.keywordNonPsi("kwargs", extraItemsType))
-      } else {
+    return if (isCallable) {
+      if (fields.isEmpty() && extraItemsType == null) {
         emptyList()
       }
+      else {
+        val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
+        val singleStarParameter = PyCallableParameterImpl.psi(
+          elementGenerator.createSingleStarParameter()
+        )
 
-      listOf(singleStarParameter) + fieldParameters + extraItemsParam
+        val fieldParameters = fields.map { (key, value) ->
+          val ellipsis = elementGenerator.createEllipsis()
+          if (value.qualifiers.isRequired == true)
+            PyCallableParameterImpl.nonPsi(key, value.type)
+          else
+            PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
+        }
+
+        val extraItemsParam = if (extraItemsType != null && !isClosed) {
+          listOf(PyCallableParameterImpl.keywordNonPsi("kwargs", extraItemsType))
+        } else {
+          emptyList()
+        }
+
+        listOf(singleStarParameter) + fieldParameters + extraItemsParam
+      }
     }
+    else null
   }
-  else null
-}
-
-  override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? = cachedParameters
 
   override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
     return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
