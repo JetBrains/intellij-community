@@ -4,7 +4,6 @@
     <plugin id="org.intellij.groovy"/>
     <module name="intellij.maven"/>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.repository.search.common"/>
     <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.java.psi"/>
   </dependencies>

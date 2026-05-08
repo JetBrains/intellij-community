@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.GROUP_LABEL
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.NAME_LABEL
 import org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor.Companion.VERSION_LABEL
@@ -23,7 +23,7 @@ abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {
     val parent = psiElement.parent as? GrArgumentList ?: return
 
     val factory = GroovyPsiElementFactory.getInstance(parent.project)
-    val artifactInfo = item.`object` as? MavenRepositoryArtifactInfo ?: return
+    val artifactInfo = item.`object` as? MavenRepoArtifactInfo ?: return
 
     doInsert(psiElement, parent, factory, artifactInfo, context)
   }
@@ -31,7 +31,7 @@ abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {
   abstract fun doInsert(psiElement: GrNamedArgument,
                         parent: GrArgumentList,
                         factory: GroovyPsiElementFactory,
-                        artifactInfo: MavenRepositoryArtifactInfo,
+                        artifactInfo: MavenRepoArtifactInfo,
                         context: InsertionContext)
 }
 
@@ -39,7 +39,7 @@ class GradleMapStyleInsertGroupHandler : GradleMapStyleInsertHandler() {
   override fun doInsert(psiElement: GrNamedArgument,
                         parent: GrArgumentList,
                         factory: GroovyPsiElementFactory,
-                        artifactInfo: MavenRepositoryArtifactInfo,
+                        artifactInfo: MavenRepoArtifactInfo,
                         context: InsertionContext) {
     setValue(GROUP_LABEL, artifactInfo.groupId, parent, factory)
     val artifactPsi = setValue(NAME_LABEL, "", parent, factory)
@@ -56,7 +56,7 @@ class GradleMapStyleInsertArtifactIdHandler : GradleMapStyleInsertHandler() {
   override fun doInsert(psiElement: GrNamedArgument,
                         parent: GrArgumentList,
                         factory: GroovyPsiElementFactory,
-                        artifactInfo: MavenRepositoryArtifactInfo,
+                        artifactInfo: MavenRepoArtifactInfo,
                         context: InsertionContext) {
     setValue(NAME_LABEL, artifactInfo.artifactId, parent, factory)
 

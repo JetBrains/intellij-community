@@ -37,6 +37,7 @@ typealias ResultConsumer = (RepositoryArtifactData) -> Unit
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
+@Deprecated("use DependencyCompletionService")
 class DependencySearchService(private val project: Project, private val cs: CoroutineScope) : Disposable {
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("DependencySearch", 2)
   private val cache = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, CompletableFuture<Collection<RepositoryArtifactData>>>()
