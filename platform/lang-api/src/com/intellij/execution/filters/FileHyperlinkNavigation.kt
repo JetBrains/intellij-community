@@ -75,7 +75,7 @@ fun navigateFileHyperlinkLegacy(
   val file = descriptor.file.takeIf { it.isValid } ?: return false
   if (file.isDirectory) {
     val resolvedDirectory = runReadActionBlocking {
-      resolveDirectoryNavigation(project, file)
+      resolveDirectory(project, file)
     }
     if (resolvedDirectory.directory != null && resolvedDirectory.isInProject) {
       resolvedDirectory.directory.navigate(requestFocus)
@@ -94,15 +94,29 @@ fun navigateFileHyperlinkLegacy(
 }
 
 private fun resolveDirectoryNavigation(project: Project, file: VirtualFile): ResolvedDirectoryNavigation {
+  val resolvedDirectory = resolveDirectory(project, file)
+  val directory = resolvedDirectory.directory
+  return ResolvedDirectoryNavigation(
+    directory = directory,
+    request = if (directory != null && resolvedDirectory.isInProject) NavigationRequest.directoryNavigationRequest(directory) else null,
+    isInProject = resolvedDirectory.isInProject,
+  )
+}
+
+private fun resolveDirectory(project: Project, file: VirtualFile): ResolvedDirectory {
   val psiManager = PsiManager.getInstance(project)
   val directory = psiManager.findDirectory(file)
   val isInProject = directory != null && psiManager.isInProject(directory)
-  return ResolvedDirectoryNavigation(
+  return ResolvedDirectory(
     directory = directory,
-    request = if (isInProject) NavigationRequest.directoryNavigationRequest(directory) else null,
     isInProject = isInProject,
   )
 }
+
+private data class ResolvedDirectory(
+  val directory: PsiDirectory?,
+  val isInProject: Boolean,
+)
 
 private data class ResolvedDirectoryNavigation(
   val directory: PsiDirectory?,

@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.hyperlinks
 
+import com.intellij.execution.filters.FileHyperlinkInfoBase
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.navigate
+import com.intellij.execution.filters.navigateFileHyperlink
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.SlowOperations
@@ -24,12 +27,16 @@ object TerminalHyperlinkNavigator {
     if (crossProjectNavigator.navigate(project, hyperlinkInfo, mouseEvent)) {
       return
     }
-    if (hyperlinkInfo is TerminalAsyncHyperlinkInfo) {
-      hyperlinkInfo.navigate(project, mouseEvent)
+    when (hyperlinkInfo) {
+      is TerminalAsyncHyperlinkInfo -> hyperlinkInfo.navigate(project, mouseEvent)
+      is FileHyperlinkInfoBase -> navigateFileHyperlink(project, hyperlinkInfo)
+      else -> navigateDefault(project, hyperlinkInfo, mouseEvent)
     }
-    else {
-      navigateDefault(project, hyperlinkInfo, mouseEvent)
-    }
+  }
+
+  private suspend fun navigateFileHyperlink(project: Project, hyperlinkInfo: FileHyperlinkInfoBase) {
+    val descriptor = readAction { hyperlinkInfo.descriptor } ?: return
+    navigateFileHyperlink(project, descriptor, hyperlinkInfo.isUseBrowserForNavigation)
   }
 
   suspend fun navigateDefault(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?) {
