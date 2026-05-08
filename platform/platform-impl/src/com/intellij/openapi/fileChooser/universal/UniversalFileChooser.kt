@@ -147,7 +147,7 @@ object UniversalFileChooser {
     }
 
     override fun createCenterPanel(): JComponent {
-      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction)
+      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled)
       return mainPanel
     }
   }
@@ -163,6 +163,7 @@ object UniversalFileChooser {
     descriptor: FileChooserDescriptor,
     private val project: Project,
     okAction: Runnable,
+    private val okEnabledUpdater: (Boolean) -> Unit = {},
   ) : JPanel() {
 
     companion object {
@@ -186,12 +187,14 @@ object UniversalFileChooser {
       preferredSize = Dimension(screenSize.width / 2, screenSize.height / 2)
       tabbedPane = JBTabbedPane()
       for (contributor in UniversalFileChooserContributor.EP_NAME.extensionList) {
-        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar)
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, ::updateOkEnabled)
         fileViews.add(fileView)
         tabbedPane.addTab(contributor.tabTitle, fileView.topComponent)
       }
+      tabbedPane.addChangeListener { updateOkEnabled() }
 
       preselectProjectTab(project)
+      updateOkEnabled()
 
       if (leftPanel) {
         val splitter = OnePixelSplitter(false, LOCATIONS_PROPORTION_KEY, LOCATIONS_DEFAULT_PROPORTION)
@@ -478,6 +481,11 @@ object UniversalFileChooser {
       return component.getUserData(FILE_VIEW_KEY)
     }
 
+    private fun updateOkEnabled() {
+      val activeView = getActiveFileView()
+      okEnabledUpdater(activeView?.isOkEnabled() ?: false)
+    }
+
     private data class LocationData(
       val icon: Icon,
       val text: @Nls String,
@@ -566,6 +574,7 @@ object UniversalFileChooser {
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
+      private val okEnabledUpdater: () -> Unit = {},
     ) {
       val topComponent: JComponent
       val fileTree: NioFileSystemTree
@@ -617,6 +626,7 @@ object UniversalFileChooser {
         fileTree.addListener(object : NioFileSystemTree.Listener {
           override fun selectionChanged(selection: List<Path?>) {
             updateBreadcrumbs(selection)
+            okEnabledUpdater()
           }
         }, disposable)
         val scrollPane = ScrollPaneFactory.createScrollPane(fileTree.getTree())
@@ -711,6 +721,7 @@ object UniversalFileChooser {
                 } else it
                 fileTree.select(selection, null)
               }
+              okEnabledUpdater()
               startCacheUpdates()
             }
           }
@@ -763,6 +774,14 @@ object UniversalFileChooser {
       fun getSelectedFiles(): List<Path> {
         return fileTree.getSelectedFiles().filterNotNull().filter { file ->
           !isUnmountedRoot(file)
+        }
+      }
+
+      fun isOkEnabled(): Boolean {
+        val selected = getSelectedFiles()
+        if (selected.isEmpty()) return false
+        return selected.all { file ->
+          file.parent != null
         }
       }
 
