@@ -61,6 +61,22 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     doTest("new Inner()");
   }
 
+  public void testPrivateTypeParameterBound() {
+    doTest("value", "/PrivateTypeParameter.java");
+  }
+
+  public void testPrivateGenericTypeParameterBound() {
+    doTest("value", "/PrivateGenericTypeParameter.java");
+  }
+
+  public void testPrivateWildcardTypeParameterBound() {
+    doTest("value", "/PrivateWildcardTypeParameter.java");
+  }
+
+  public void testDefaultPackageTypeParameterBound() {
+    doTest("value", "/DefaultPackageTypeParameter.java");
+  }
+
   public void testLanguageLevelImplicitClasses() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       String testName = getTestName(false);

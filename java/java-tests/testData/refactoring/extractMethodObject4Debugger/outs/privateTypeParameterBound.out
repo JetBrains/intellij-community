@@ -1,0 +1,13 @@
+call text: Object result = new Test<T>(value).invoke();
+class: 
+public class GeneratedEvaluationClass<T> {
+    private Object value;
+
+    public GeneratedEvaluationClass(Object value) {
+        this.value = value;
+    }
+
+    public Object invoke() {
+        return value;
+    }
+}

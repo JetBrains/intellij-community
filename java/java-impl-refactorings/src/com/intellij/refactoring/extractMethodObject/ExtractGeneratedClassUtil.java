@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -26,6 +27,8 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.extractMethodObject.reflect.PsiReflectionAccessUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +57,7 @@ final class ExtractGeneratedClassUtil {
     String packageName = dotIndex == -1 ? "" : explicitGeneratedEvaluationClassFullName.substring(0, dotIndex);
 
     PsiClass extractedClass = elementFactory.createClass(generatedEvaluationClass);
-    copyTypeParameters(generatedInnerClass, extractedClass);
+    copyTypeParameters(generatedInnerClass, extractedClass, elementFactory);
 
     for (PsiField field : generatedInnerClass.getAllFields()) {
       extractedClass.add(elementFactory.createFieldFromText(field.getText(), anchor)); // TODO: check if null is OK
@@ -80,25 +83,19 @@ final class ExtractGeneratedClassUtil {
     return extractedClass;
   }
 
-  private static void copyTypeParameters(@NotNull PsiClass generatedInnerClass, @NotNull PsiClass extractedClass) {
+  private static void copyTypeParameters(@NotNull PsiClass generatedInnerClass,
+                                         @NotNull PsiClass extractedClass,
+                                         @NotNull PsiElementFactory elementFactory) {
     PsiTypeParameterList targetTypeParameters = extractedClass.getTypeParameterList();
     if (targetTypeParameters == null) return;
 
     Set<String> visibleTypeParameters = new HashSet<>();
-    for (PsiClass containingClass = generatedInnerClass; containingClass != null; containingClass = containingClass.getContainingClass()) {
-      collectVisibleTypeParameters(containingClass.getTypeParameterList(), targetTypeParameters, visibleTypeParameters);
-    }
-  }
-
-  private static void collectVisibleTypeParameters(@Nullable PsiTypeParameterList sourceTypeParameters,
-                                                   @NotNull PsiTypeParameterList targetTypeParameters,
-                                                   @NotNull Set<String> visibleTypeParameters) {
-    if (sourceTypeParameters == null) return;
-
-    for (PsiTypeParameter typeParameter : sourceTypeParameters.getTypeParameters()) {
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(generatedInnerClass)) {
       String name = typeParameter.getName();
       if (name != null && visibleTypeParameters.add(name)) {
-        targetTypeParameters.add(typeParameter);
+        PsiClassType[] accessibleBounds = ContainerUtil.filter(typeParameter.getExtendsListTypes(), PsiReflectionAccessUtil::isAccessibleTypeParameterBound)
+          .toArray(PsiClassType.EMPTY_ARRAY);
+        targetTypeParameters.add(elementFactory.createTypeParameter(name, accessibleBounds));
       }
     }
   }
