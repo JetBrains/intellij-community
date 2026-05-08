@@ -12,9 +12,8 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAndEdtWriteAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -23,9 +22,12 @@ import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.xml.XmlFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
@@ -34,8 +36,6 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.getExplicitPlatf
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependencyKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 internal object SplitModeDependencyQuickFixes {
   fun createMismatchFixes(
@@ -161,13 +161,24 @@ internal object SplitModeDependencyQuickFixes {
       return message("inspection.remote.dev.make.only.kind.dependencies.fix.name", desiredModuleKind.id)
     }
 
+    override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
       if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
-      applyResolvedDependenciesFix(project, ideaPlugin, module, desiredModuleKind)
+      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        return
+      }
+
+      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+
+      runWithModalProgressBlocking(project, commandName) {
+        applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)
+      }
     }
   }
 
@@ -185,28 +196,23 @@ internal object SplitModeDependencyQuickFixes {
       return message("inspection.remote.dev.missing.runtime.dependency.fix.add", explicitDependencyName)
     }
 
+    override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
       if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
-      if (desiredModuleKind == SplitModeApiRestrictionsService.ModuleKind.FRONTEND
-          || desiredModuleKind == SplitModeApiRestrictionsService.ModuleKind.BACKEND) {
-        applyResolvedDependenciesFix(project, ideaPlugin, module, desiredModuleKind)
+      if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        return
       }
-      else {
-        removeInappropriateDependencies(ideaPlugin, module, desiredModuleKind)
-        if (!hasDirectDependency(ideaPlugin, explicitDependencyName)) {
-          val newModuleEntry = ideaPlugin.dependencies.addModuleEntry()
-          newModuleEntry.name.stringValue = explicitDependencyName
-        }
 
-        addModuleDependency(module, explicitDependencyName)
-        if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
-          PsiDocumentManager.getInstance(project).commitAllDocuments()
-          runJpsToBazelConverter(project)
-        }
+      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+
+      runWithModalProgressBlocking(project, commandName) {
+        applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)
       }
     }
   }
@@ -220,6 +226,12 @@ private data class DependenciesForFixAvailability(
 private data class DependenciesRemovalPlan(
   val runtimeDependenciesToRemove: Set<String>,
   val compileDependenciesToRemove: Set<String>,
+)
+
+private data class DependencyFixChanges(
+  val runtimeDependenciesToRemove: Set<String>,
+  val compileDependenciesToRemove: Set<String>,
+  val explicitDependencyName: String,
 )
 
 private fun getRuntimeDependencies(module: Module, currentDescriptor: IdeaPlugin?): DependenciesForFixAvailability {
@@ -266,81 +278,46 @@ private fun getCompileDependencies(module: Module): Set<String> {
     .toSet()
 }
 
-private fun removeInappropriateDependencies(
+private fun applyDependencyFixInPreview(
   ideaPlugin: IdeaPlugin,
   module: Module?,
   desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
 ) {
-  for (dependency in ideaPlugin.depends.toList()) {
-    val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
-    if (shouldRemoveDependency(dependencyName, desiredModuleKind)) {
-      dependency.xmlElement?.delete()
-    }
-  }
-
-  val dependencies = ideaPlugin.dependencies
-  if (!dependencies.isValid) {
-    removeInappropriateModuleDependencies(module, desiredModuleKind)
-    return
-  }
-
-  for (moduleEntry in dependencies.moduleEntry.toList()) {
-    val dependencyName = moduleEntry.name.stringValue ?: continue
-    if (shouldRemoveDependency(dependencyName, desiredModuleKind)) {
-      moduleEntry.xmlElement?.delete()
-    }
-  }
-  for (pluginEntry in dependencies.plugin.toList()) {
-    val dependencyName = pluginEntry.id.stringValue ?: continue
-    if (shouldRemoveDependency(dependencyName, desiredModuleKind)) {
-      pluginEntry.xmlElement?.delete()
-    }
-  }
-
-  removeInappropriateModuleDependencies(module, desiredModuleKind)
+  val changes = buildDependencyFixChanges(ideaPlugin, module, desiredModuleKind, includeCompileDependencies = false)
+  applyXmlDependencyChanges(ideaPlugin, changes)
 }
 
-private fun applyResolvedDependenciesFix(
+private suspend fun applyDependencyFix(
   project: Project,
   ideaPlugin: IdeaPlugin,
   module: Module?,
   desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  commandName: @NlsContexts.Command String,
 ) {
-  val commandName = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
-  if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-    val removalPlan = buildDependenciesRemovalPlan(ideaPlugin, module, desiredModuleKind)
-    applyDependenciesRemovalPlan(ideaPlugin, module, removalPlan)
-    ensureExplicitDependency(ideaPlugin, module, desiredModuleKind)
-    return
+  val changes = readAction {
+    buildDependencyFixChanges(ideaPlugin, module, desiredModuleKind, includeCompileDependencies = true)
   }
 
-  SplitModeQuickFixCoroutineService.getInstance(project).scope.launch {
-    withModalProgress(project, message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)) {
-      readAndEdtWriteAction {
-        val removalPlan = buildDependenciesRemovalPlan(ideaPlugin, module, desiredModuleKind)
-        writeAction {
-          WriteCommandAction.writeCommandAction(project)
-            .withName(commandName)
-            .compute<Unit, Throwable> {
-              applyDependenciesRemovalPlan(ideaPlugin, module, removalPlan)
-              ensureExplicitDependency(ideaPlugin, module, desiredModuleKind)
-              PsiDocumentManager.getInstance(project).commitAllDocuments()
-            }
-        }
+  withContext(Dispatchers.EDT) {
+    WriteCommandAction.writeCommandAction(project)
+      .withName(commandName)
+      .compute<Unit, Throwable> {
+        applyXmlDependencyChanges(ideaPlugin, changes)
+        applyCompileDependencyChanges(module, changes)
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
-    }
+
     runJpsToBazelConverter(project)
   }
 }
 
-private fun applyDependenciesRemovalPlan(
+private fun applyXmlDependencyChanges(
   ideaPlugin: IdeaPlugin,
-  module: Module?,
-  removalPlan: DependenciesRemovalPlan,
+  changes: DependencyFixChanges,
 ) {
   for (dependency in ideaPlugin.depends.toList()) {
     val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
-    if (dependencyName in removalPlan.runtimeDependenciesToRemove) {
+    if (dependencyName in changes.runtimeDependenciesToRemove) {
       dependency.xmlElement?.delete()
     }
   }
@@ -349,47 +326,86 @@ private fun applyDependenciesRemovalPlan(
   if (dependencies.isValid) {
     for (moduleEntry in dependencies.moduleEntry.toList()) {
       val dependencyName = moduleEntry.name.stringValue ?: continue
-      if (dependencyName in removalPlan.runtimeDependenciesToRemove) {
+      if (dependencyName in changes.runtimeDependenciesToRemove) {
         moduleEntry.xmlElement?.delete()
       }
     }
     for (pluginEntry in dependencies.plugin.toList()) {
       val dependencyName = pluginEntry.id.stringValue ?: continue
-      if (dependencyName in removalPlan.runtimeDependenciesToRemove) {
+      if (dependencyName in changes.runtimeDependenciesToRemove) {
         pluginEntry.xmlElement?.delete()
       }
     }
   }
 
-  removeModuleDependencies(module, removalPlan.compileDependenciesToRemove)
+  ensureExplicitDependencyInXml(ideaPlugin, changes.explicitDependencyName)
 }
 
-private fun ensureExplicitDependency(
-  ideaPlugin: IdeaPlugin,
+private fun applyCompileDependencyChanges(
   module: Module?,
-  desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  changes: DependencyFixChanges,
 ) {
-  val explicitDependencyName = getExplicitPlatformDependencyName(desiredModuleKind)
+  removeModuleDependencies(module, changes.compileDependenciesToRemove)
+  addModuleDependency(module, changes.explicitDependencyName)
+}
+
+private fun ensureExplicitDependencyInXml(
+  ideaPlugin: IdeaPlugin,
+  explicitDependencyName: String,
+) {
   if (!hasDirectDependency(ideaPlugin, explicitDependencyName)) {
     val newModuleEntry = ideaPlugin.dependencies.addModuleEntry()
     newModuleEntry.name.stringValue = explicitDependencyName
   }
-  addModuleDependency(module, explicitDependencyName)
+}
+
+private fun buildDependencyFixChanges(
+  ideaPlugin: IdeaPlugin,
+  module: Module?,
+  desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  includeCompileDependencies: Boolean,
+): DependencyFixChanges {
+  val removalPlan = buildDependenciesRemovalPlan(ideaPlugin, module, desiredModuleKind, includeCompileDependencies)
+  return DependencyFixChanges(
+    runtimeDependenciesToRemove = removalPlan.runtimeDependenciesToRemove,
+    compileDependenciesToRemove = removalPlan.compileDependenciesToRemove,
+    explicitDependencyName = getExplicitPlatformDependencyName(desiredModuleKind),
+  )
 }
 
 private fun buildDependenciesRemovalPlan(
   ideaPlugin: IdeaPlugin,
   module: Module?,
   desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  includeCompileDependencies: Boolean,
 ): DependenciesRemovalPlan {
-  val runtimeDependenciesToRemove = mutableSetOf<String>()
+  if (desiredModuleKind == SplitModeApiRestrictionsService.ModuleKind.MONOLITH) {
+    return buildMonolithDependenciesRemovalPlan(ideaPlugin, module, includeCompileDependencies)
+  }
+
+  return buildResolvableRuntimeDependenciesRemovalPlan(ideaPlugin, module, desiredModuleKind, includeCompileDependencies)
+}
+
+private fun buildResolvableRuntimeDependenciesRemovalPlan(
+  ideaPlugin: IdeaPlugin,
+  module: Module?,
+  desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  includeCompileDependencies: Boolean,
+): DependenciesRemovalPlan {
   val dependencyModuleManager = if (module == null) null else ModuleManager.getInstance(module.project)
+  var runtimeDependenciesToRemove = emptySet<String>()
 
   for (dependency in ideaPlugin.depends) {
     ProgressManager.checkCanceled()
     val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
     val dependencyModule = dependencyModuleManager?.findModuleByName(dependencyName)
-    addRuntimeDependencyToRemovalPlan(runtimeDependenciesToRemove, dependencyName, dependency.value, dependencyModule, desiredModuleKind)
+    runtimeDependenciesToRemove = addRuntimeDependencyToRemovalPlan(
+      runtimeDependenciesToRemove,
+      dependencyName,
+      dependency.value,
+      dependencyModule,
+      desiredModuleKind,
+    )
   }
 
   val dependencies = ideaPlugin.dependencies
@@ -398,44 +414,78 @@ private fun buildDependenciesRemovalPlan(
       ProgressManager.checkCanceled()
       val dependencyName = moduleEntry.name.stringValue ?: continue
       val dependencyModule = dependencyModuleManager?.findModuleByName(dependencyName)
-      addRuntimeDependencyToRemovalPlan(runtimeDependenciesToRemove, dependencyName, moduleEntry.name.value, dependencyModule, desiredModuleKind)
+      runtimeDependenciesToRemove = addRuntimeDependencyToRemovalPlan(
+        runtimeDependenciesToRemove,
+        dependencyName,
+        moduleEntry.name.value,
+        dependencyModule,
+        desiredModuleKind,
+      )
     }
     for (pluginEntry in dependencies.plugin) {
       ProgressManager.checkCanceled()
       val dependencyName = pluginEntry.id.stringValue ?: continue
       val dependencyModule = dependencyModuleManager?.findModuleByName(dependencyName)
-      addRuntimeDependencyToRemovalPlan(runtimeDependenciesToRemove, dependencyName, pluginEntry.id.value, dependencyModule, desiredModuleKind)
+      runtimeDependenciesToRemove = addRuntimeDependencyToRemovalPlan(
+        runtimeDependenciesToRemove,
+        dependencyName,
+        pluginEntry.id.value,
+        dependencyModule,
+        desiredModuleKind,
+      )
     }
   }
 
-  val compileDependenciesToRemove = mutableSetOf<String>()
-  if (module != null) {
-    val currentDependencyModuleManager = dependencyModuleManager ?: return DependenciesRemovalPlan(runtimeDependenciesToRemove, compileDependenciesToRemove)
-    for (moduleOrderEntry in ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<ModuleOrderEntry>()) {
-      ProgressManager.checkCanceled()
-      val dependencyName = moduleOrderEntry.moduleName
-      val dependencyModule = currentDependencyModuleManager.findModuleByName(dependencyName)
-      val dependencyKind = resolveCompileDependencyKind(dependencyName, dependencyModule)
-      if (shouldRemoveResolvedDependency(dependencyKind, desiredModuleKind)) {
-        compileDependenciesToRemove.add(dependencyName)
+  val compileDependenciesToRemove = if (!includeCompileDependencies || module == null) {
+    emptySet()
+  }
+  else {
+    val currentDependencyModuleManager = dependencyModuleManager ?: return DependenciesRemovalPlan(runtimeDependenciesToRemove, emptySet())
+    ModuleRootManager.getInstance(module).orderEntries
+      .filterIsInstance<ModuleOrderEntry>()
+      .mapNotNull { moduleOrderEntry ->
+        ProgressManager.checkCanceled()
+        val dependencyName = moduleOrderEntry.moduleName
+        val dependencyModule = currentDependencyModuleManager.findModuleByName(dependencyName)
+        val dependencyKind = resolveCompileDependencyKind(dependencyName, dependencyModule)
+        dependencyName.takeIf { shouldRemoveResolvedDependency(dependencyKind, desiredModuleKind) }
       }
-    }
+      .toSet()
+  }
+
+  return DependenciesRemovalPlan(runtimeDependenciesToRemove, compileDependenciesToRemove)
+}
+
+private fun buildMonolithDependenciesRemovalPlan(
+  ideaPlugin: IdeaPlugin,
+  module: Module?,
+  includeCompileDependencies: Boolean,
+): DependenciesRemovalPlan {
+  val runtimeDependenciesToRemove = getRuntimeDependencies(ideaPlugin)
+    .filter { shouldRemoveDependency(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+    .toSet()
+
+  val compileDependenciesToRemove = if (!includeCompileDependencies || module == null) {
+    emptySet()
+  }
+  else {
+    getCompileDependencies(module)
+      .filter { shouldRemoveDependency(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+      .toSet()
   }
 
   return DependenciesRemovalPlan(runtimeDependenciesToRemove, compileDependenciesToRemove)
 }
 
 private fun addRuntimeDependencyToRemovalPlan(
-  runtimeDependenciesToRemove: MutableSet<String>,
+  runtimeDependenciesToRemove: Set<String>,
   dependencyName: String,
   dependencyDescriptor: IdeaPlugin?,
   dependencyModule: Module?,
   desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
-) {
+): Set<String> {
   val dependencyKind = resolveRuntimeDependencyKind(dependencyName, dependencyDescriptor, dependencyModule)
-  if (shouldRemoveResolvedDependency(dependencyKind, desiredModuleKind)) {
-    runtimeDependenciesToRemove.add(dependencyName)
-  }
+  return if (shouldRemoveResolvedDependency(dependencyKind, desiredModuleKind)) runtimeDependenciesToRemove + dependencyName else runtimeDependenciesToRemove
 }
 
 private fun findQuickFixTargetDescriptor(descriptor: ProblemDescriptor): IdeaPlugin? {
@@ -460,26 +510,8 @@ private fun findTargetModule(descriptor: ProblemDescriptor): Module? {
   return ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement)
 }
 
-private fun removeInappropriateModuleDependencies(
-  module: Module?,
-  desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
-) {
-  if (module == null || IntentionPreviewUtils.isIntentionPreviewActive()) {
-    return
-  }
-
-  ModuleRootModificationUtil.updateModel(module) { model ->
-    for (orderEntry in model.orderEntries) {
-      val moduleOrderEntry = orderEntry as? ModuleOrderEntry ?: continue
-      if (shouldRemoveDependency(moduleOrderEntry.moduleName, desiredModuleKind)) {
-        model.removeOrderEntry(moduleOrderEntry)
-      }
-    }
-  }
-}
-
 private fun removeModuleDependencies(module: Module?, dependenciesToRemove: Set<String>) {
-  if (module == null || IntentionPreviewUtils.isIntentionPreviewActive() || dependenciesToRemove.isEmpty()) {
+  if (module == null || dependenciesToRemove.isEmpty()) {
     return
   }
 
@@ -494,7 +526,7 @@ private fun removeModuleDependencies(module: Module?, dependenciesToRemove: Set<
 }
 
 private fun addModuleDependency(module: Module?, dependencyName: String) {
-  if (module == null || IntentionPreviewUtils.isIntentionPreviewActive()) {
+  if (module == null) {
     return
   }
 
@@ -514,7 +546,7 @@ private fun addModuleDependency(module: Module?, dependencyName: String) {
 }
 
 private fun runJpsToBazelConverter(project: Project) {
-  if (IntentionPreviewUtils.isIntentionPreviewActive() || ApplicationManager.getApplication().isUnitTestMode) {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
     return
   }
 
@@ -636,13 +668,4 @@ private fun hasDirectDependency(ideaPlugin: IdeaPlugin, dependencyName: String):
   return dependencies.isValid
          && (dependencies.moduleEntry.any { it.name.stringValue == dependencyName }
            || dependencies.plugin.any { it.id.stringValue == dependencyName })
-}
-
-@Service(Service.Level.PROJECT)
-private class SplitModeQuickFixCoroutineService(val scope: CoroutineScope) {
-  companion object {
-    fun getInstance(project: Project): SplitModeQuickFixCoroutineService {
-      return project.service()
-    }
-  }
 }
