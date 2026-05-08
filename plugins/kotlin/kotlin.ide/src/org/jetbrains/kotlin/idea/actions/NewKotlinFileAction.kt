@@ -155,7 +155,7 @@ object NewKotlinFileNameValidator : InputValidatorEx {
             return KotlinBundle.message("action.new.file.error.empty.name.part")
         }
 
-        if (parts.any { it.trim() == "_" }) {
+        if (parts.any { part -> part.trim().all { it == '_' } }) {
             return KotlinBundle.message("action.new.file.error.underscore")
         }
 

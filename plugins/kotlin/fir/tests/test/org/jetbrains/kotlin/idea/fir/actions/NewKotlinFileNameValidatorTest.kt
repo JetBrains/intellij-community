@@ -15,7 +15,7 @@ class NewKotlinFileNameValidatorTest : LightJavaCodeInsightFixtureTestCase(), Ex
     companion object {
         private const val EMPTY_PARTS_ERROR = "Name can't have empty parts"
         private const val EMPTY_ERROR = "Name can't be empty"
-        private const val UNDERSCORE_ERROR = "Name can't be a single underscore"
+        private const val UNDERSCORE_ERROR = "Name can't consist only of underscores"
     }
 
     override fun setUp() {
@@ -62,10 +62,21 @@ class NewKotlinFileNameValidatorTest : LightJavaCodeInsightFixtureTestCase(), Ex
 
     fun testUnderscore() {
         validateName("_", UNDERSCORE_ERROR)
+        validateName("__", UNDERSCORE_ERROR)
+        validateName("___", UNDERSCORE_ERROR)
     }
 
     fun testUnderscoreInQualified() {
         validateName("a._.b", UNDERSCORE_ERROR)
+        validateName("a.__.b", UNDERSCORE_ERROR)
+        validateName("a.___.b", UNDERSCORE_ERROR)
+    }
+
+    fun testValidNamesWithUnderscores() {
+        validateName("_a", null)
+        validateName("a_", null)
+        validateName("a_b", null)
+        validateName("a._b.c", null)
     }
 
     private fun validateName(name: String, errorMessage: String?) {
