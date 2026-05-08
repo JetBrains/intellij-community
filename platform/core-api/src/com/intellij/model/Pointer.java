@@ -8,7 +8,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,23 +123,4 @@ public interface Pointer<T> {
     return new FileRangePointer<>(base, restoration);
   }
 
-  /**
-   * Creates a pointer which uses {@code underlyingPointer} value to restore its value with {@code restoration} function.
-   * <p/>
-   * Equality of {@code restoration} function is unreliable, because it might be a lambda.
-   * The {@code key} must be passed to check for equality instead,
-   * where two equal keys mean the same restoration logic will be applied.
-   *
-   * @deprecated use {@link #delegatingPointer(Pointer, Function)}.
-   * This method is deprecated because the pointer equality was intended to be used without the read action,
-   * while often being impossible to implement without it, which makes it infeasible to use on the EDT.
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  @Contract(value = "_, _, _ -> new", pure = true)
-  static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,
-                                                      @NotNull Object key,
-                                                      @NotNull Function<? super U, ? extends T> restoration) {
-    return new DelegatingPointerEq.ByValue<>(underlyingPointer, key, restoration);
-  }
 }
