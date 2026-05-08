@@ -61,7 +61,7 @@ public final class AsyncEventSupport {
     var app = ApplicationManager.getApplication();
     Disposer.register(app, AsyncEventSupport::ensureAllEventsProcessed);
 
-    app.getMessageBus().simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    app.getMessageBus().simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (asyncProcessedEvents.contains(events)) {
