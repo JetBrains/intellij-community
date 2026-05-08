@@ -46,13 +46,12 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 metalava = { module = "com.android.tools.metalava:metalava", version.ref = "metalava" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }

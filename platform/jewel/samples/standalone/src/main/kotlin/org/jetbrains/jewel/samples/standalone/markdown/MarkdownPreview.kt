@@ -18,7 +18,6 @@ import java.awt.Desktop.getDesktop
 import java.net.URI.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.standalone.dark
@@ -29,6 +28,8 @@ import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.a
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.tables.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
@@ -111,8 +112,12 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
 
     // Using the values from the GitHub rendering to ensure contrast
     val background = remember(instanceUuid) { if (isDark) Color(0xff0d1117) else Color.White }
+    val codeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        }
 
-    ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
+    ProvideMarkdownStyling(markdownStyling, blockRenderer, codeHighlighter) {
         val lazyListState = rememberLazyListState()
         VerticallyScrollableContainer(lazyListState as ScrollableState, modifier.background(background)) {
             LazyMarkdown(

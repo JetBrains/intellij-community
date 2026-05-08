@@ -1,1 +1,2 @@
 androidx/compose/**
+kotlin/jvm/internal/DefaultConstructorMarker
