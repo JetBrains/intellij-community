@@ -397,10 +397,8 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
                                       boolean useRename,
                                       String word) {
     if (!useRename && IS_LOGGED.compareAndSet(false, true)) {
-      LOGGER.warn("""
-          Consider migrating programming language `${element.language}` to text level spellchecking.
-          See `SpellcheckingStrategy#useTextLevelSpellchecking()` documentation.
-        """);
+      LOGGER.warn("Consider migrating programming language '" + element.getLanguage().getDisplayName() + "' to text-level spellchecking. " +
+                  "See SpellcheckingStrategy#useTextLevelSpellchecking() documentation.");
     }
     if (holder.isOnTheFly()) {
       addRegularDescriptor(element, range, holder, useRename, word);
