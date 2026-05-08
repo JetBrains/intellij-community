@@ -420,31 +420,29 @@ public abstract class TodoTreeBuilder implements Disposable {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First we need to update "dirty" file set.
     for (VirtualFile file : myDirtyFileSet) {
-      PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
-      if (psiFile == null || !treeStructure.accept(psiFile)) {
-        if (myFileTree.contains(file)) {
-          myFileTree.removeFile(file);
-          myFile2Highlighter.remove(file);
-        }
-        clearRemoteTodosCache(file);
-      }
-      else { // file is valid and contains T.O.D.O items
-        if (shouldUseSplitTodo()) {
-          List<TodoResult> todoItems = getCachedRemoteTodos(file);
-          if (todoItems.isEmpty()) {
-            if (myFileTree.contains(file)) {
-              myFileTree.removeFile(file);
-              myFile2Highlighter.remove(file);
-            }
-            clearRemoteTodosCache(file);
-          }
-          else {
-            cacheRemoteTodos(file, todoItems);
+      if (shouldUseSplitTodo()) {
+        List<TodoResult> todoItems = getCachedRemoteTodos(file);
+        if (todoItems.isEmpty()) {
+          if (myFileTree.contains(file)) {
             myFileTree.removeFile(file);
-            myFileTree.add(file);
+            myFile2Highlighter.remove(file);
           }
         }
         else {
+          myFileTree.removeFile(file);
+          myFileTree.add(file);
+        }
+      }
+      else {
+        PsiFile psiFile = file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
+        if (psiFile == null || !treeStructure.accept(psiFile)) {
+          if (myFileTree.contains(file)) {
+            myFileTree.removeFile(file);
+            myFile2Highlighter.remove(file);
+          }
+          clearRemoteTodosCache(file);
+        }
+        else { // file is valid and contains T.O.D.O items
           myFileTree.removeFile(file);
           myFileTree.add(file); // file can be moved. remove/add calls move it to another place
           EditorHighlighter highlighter = myFile2Highlighter.get(file);
