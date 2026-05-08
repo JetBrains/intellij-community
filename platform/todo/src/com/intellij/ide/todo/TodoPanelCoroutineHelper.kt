@@ -3,6 +3,7 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.todo.nodes.TodoItemNode
 import com.intellij.ide.todo.nodes.TodoRemoteItemNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -51,10 +52,10 @@ internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposab
         }
       } else {
         readAction {
-          val pointer = panel.treeBuilder.getFirstPointerForElement(lastUserObject)
+          val leaf = panel.treeBuilder.getFirstLeafForElement(lastUserObject)
 
-          if (pointer != null) {
-            val value = pointer.value!!
+          if (leaf is TodoItemNode) {
+            val value = leaf.getValue()!!
             val psiFile = PsiDocumentManager.getInstance(panel.myProject).getPsiFile(value.document)
 
             if (psiFile != null) {

@@ -158,7 +158,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
   private static void checkOccurrences(final AllTodosTreeBuilder all, final String[] strings) {
     AbstractTreeStructure allTreeStructure = all.getTodoTreeStructure();
-    TodoItemNode current = all.getFirstPointerForElement(allTreeStructure.getRootElement());
+    TodoItemNode current = (TodoItemNode)all.getFirstLeafForElement(allTreeStructure.getRootElement());
     for (String string : strings) {
       assertNotNull(current);
       assertEquals(string, current.getTestPresentation());
@@ -167,7 +167,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
     assertNull(current);
 
-    current = all.getLastPointerForElement(allTreeStructure.getRootElement());
+    current = (TodoItemNode)all.getLastLeafForElement(allTreeStructure.getRootElement());
     for (int i = strings.length - 1; i >= 0; i--) {
       String string = strings[i];
       assertNotNull(current);

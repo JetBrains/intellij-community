@@ -503,11 +503,6 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  @Deprecated
-  public @Nullable TodoItemNode getFirstPointerForElement(@Nullable Object element) {
-    return ObjectUtils.tryCast(getFirstLeafForElement(element), TodoItemNode.class);
-  }
-
   /**
    * @return last {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
@@ -532,11 +527,6 @@ public abstract class TodoTreeBuilder implements Disposable {
         return getLastLeafForElement(firstChild);
       }
     }
-  }
-
-  @Deprecated
-  public @Nullable TodoItemNode getLastPointerForElement(Object element) {
-    return ObjectUtils.tryCast(getLastLeafForElement(element), TodoItemNode.class);
   }
 
   public final @NotNull Promise<?> updateTree() {
