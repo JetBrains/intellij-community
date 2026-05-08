@@ -9,6 +9,7 @@ import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
@@ -45,6 +46,10 @@ internal open class MarkdownWrappingFormattingBlock(
 
         MarkdownTokenTypes.TEXT -> {
           processTextElement(result, child, childWrap, !isAfterOpeningParenthesis)
+        }
+
+        in MarkdownTokenTypeSets.WHITE_SPACES -> {
+          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, Wrap.createWrap(WrapType.NONE, false)))
         }
 
         else -> {
@@ -86,6 +91,7 @@ internal open class MarkdownWrappingFormattingBlock(
       result.add(block)
     }
   }
+
 }
 
 private fun splitTextForWrapping(text: String): Sequence<TextRange> {

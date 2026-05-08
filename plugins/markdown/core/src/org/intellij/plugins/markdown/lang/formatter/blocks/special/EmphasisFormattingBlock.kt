@@ -27,9 +27,9 @@ internal class EmphasisFormattingBlock(
       for (node in filtered) {
         when {
           node.hasType(MarkdownTokenTypes.TEXT) -> processTextElement(this, node, contentWrap, !node.isFirstContentElement())
-          node.hasType(MarkdownTokenTypes.EMPH) -> when {
-            node.isLast() -> add(MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, noneWrap))
-            else -> add(MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, wrap ?: contentWrap))
+          node.isEmphasisMarker() -> {
+            val markerWrap = if (node.isFirst()) wrap ?: contentWrap else noneWrap
+            add(MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, markerWrap))
           }
           else -> add(MarkdownBlocks.create(node, settings, spacing) { alignment })
         }
@@ -38,10 +38,14 @@ internal class EmphasisFormattingBlock(
   }
 }
 
-private fun ASTNode.isLast(): Boolean {
-  return treeNext == null
+private fun ASTNode.isFirst(): Boolean {
+  return treePrev == null
 }
 
 private fun ASTNode.isFirstContentElement(): Boolean {
-  return treePrev?.hasType(MarkdownTokenTypes.EMPH) == true
+  return treePrev?.isEmphasisMarker() == true
+}
+
+private fun ASTNode.isEmphasisMarker(): Boolean {
+  return hasType(MarkdownTokenTypes.EMPH) || hasType(MarkdownTokenTypes.TILDE)
 }
