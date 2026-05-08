@@ -99,6 +99,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
 *:com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback
 - com.intellij.codeInsight.intention.IntentionAction
+- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - a:getFallbackModCommandAction():com.intellij.modcommand.ModCommandAction
 - s:getFallbackModCommandActionFor(com.intellij.codeInsight.intention.IntentionAction):com.intellij.modcommand.ModCommandAction
 com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
