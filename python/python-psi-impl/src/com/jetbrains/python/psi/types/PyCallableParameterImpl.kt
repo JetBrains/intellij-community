@@ -33,12 +33,13 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   @field:NlsSafe private val myName: @NlsSafe String? = null,
   private val myType: Ref<PyType?>? = null,
   private val myDefaultValue: PyExpression? = null,
+  private val myDefaultValueText: String? = null,
   override val parameter: PyParameter? = null,
   private val myIsPositional: Boolean = false,
   private val myIsKeyword: Boolean = false,
   private val myIsSelf: Boolean = false,
-  private val myDeclarationElement: PsiElement? = null,
   private val myIsKeywordOnlySeparator: Boolean = false,
+  private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
   @get:Nls
   override val name: @Nls String?
@@ -57,14 +58,16 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = if (parameter == null) myDefaultValue else parameter.defaultValue
 
   override fun hasDefaultValue(): Boolean {
-    return parameter?.hasDefaultValue() ?: (myDefaultValue != null)
+    return parameter?.hasDefaultValue() ?: (myDefaultValue != null || myDefaultValueText != null)
   }
 
   override val defaultValueText: String?
-    get() = if (parameter != null)
-      parameter.defaultValueText
-    else
-      myDefaultValue?.text
+    get() = when {
+      parameter != null -> parameter.defaultValueText
+      myDefaultValue != null -> myDefaultValue.text
+      myDefaultValueText != null -> myDefaultValueText
+      else -> null
+    }
 
   override val isPositionalContainer: Boolean
     get() = myIsPositional || (parameter as? PyNamedParameter)?.isPositionalContainer == true
@@ -155,25 +158,28 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     if (other == null || javaClass != other.javaClass) return false
 
     other as PyCallableParameterImpl
-    val isNonPhysical = parameter == null && other.parameter == null
-    return myIsPositional == other.myIsPositional &&
-           myIsKeyword == other.myIsKeyword &&
-           myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
+    return parameter == other.parameter &&
            myName == other.myName &&
            myType?.get() == other.myType?.get() &&
-           parameter == other.parameter &&
-           if (isNonPhysical) {
-             myDefaultValue?.text == other.myDefaultValue?.text
-           }
-           else {
-             myDefaultValue == other.myDefaultValue
-           }
+           myIsSelf == other.myIsSelf &&
+           myIsPositional == other.myIsPositional &&
+           myIsKeyword == other.myIsKeyword &&
+           myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
+           myDefaultValue == other.myDefaultValue &&
+           myDefaultValueText == other.myDefaultValueText
   }
 
   override fun hashCode(): Int {
     return Objects.hash(
-      myName, myType?.get(), myDefaultValue?.text, myIsKeywordOnlySeparator,
-      parameter, myIsPositional, myIsKeyword
+      parameter,
+      myName,
+      myType?.get(),
+      myIsSelf,
+      myIsPositional,
+      myIsKeyword,
+      myIsKeywordOnlySeparator,
+      myDefaultValue,
+      myDefaultValueText,
     )
   }
 

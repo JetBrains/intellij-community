@@ -237,19 +237,16 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
  * determine what settings dataclass has.
  */
 private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<QualifiedName, Type, List<PyCallableParameter>>> {
-  val generator = PyElementGenerator.getInstance(project)
-  val ellipsis = generator.createEllipsis()
-
   return PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getDecoratorAndTypeAndParameters(project) } +
          DECORATOR_AND_TYPE_AND_PARAMETERS.map {
            if (it.second == PyDataclassParameters.PredefinedType.STD) {
              val parameters = mutableListOf(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
-             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
+             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
 
              Triple(it.first.qualifiedName, it.second, parameters)
            }
            else {
-             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
+             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
            }
          }
 }

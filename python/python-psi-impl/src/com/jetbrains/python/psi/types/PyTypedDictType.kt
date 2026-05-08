@@ -9,7 +9,6 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDictLiteralExpression
-import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
@@ -18,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
+import kotlin.collections.emptyList
 
 class PyTypedDictType(
   override val name: String,
@@ -61,15 +61,13 @@ class PyTypedDictType(
         emptyList()
       }
       else {
-        val elementGenerator = PyElementGenerator.getInstance(dictClass.project)
         val singleStarParameter = PyCallableParameterImpl.keywordOnlySeparatorNonPsi()
 
         val fieldParameters = fields.map { (key, value) ->
-          val ellipsis = elementGenerator.createEllipsis()
           if (value.qualifiers.isRequired == true)
             PyCallableParameterImpl.nonPsi(key, value.type)
           else
-            PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
+            PyCallableParameterImpl.nonPsi(key, value.type, PyNames.ELLIPSIS)
         }
 
         val extraItemsParam = if (extraItemsType != null && !isClosed) {

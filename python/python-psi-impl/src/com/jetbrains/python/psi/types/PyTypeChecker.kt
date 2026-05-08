@@ -1727,12 +1727,13 @@ object PyTypeChecker {
                     param.name,
                     Ref.create(paramSubType),
                     param.defaultValue,
+                    param.defaultValueText,
                     param.parameter,
                     param.isPositionalContainer,
                     param.isKeywordContainer,
                     param.isSelf,
-                    param.declarationElement,
                     param.isKeywordOnlySeparator,
+                    param.declarationElement
                   )
                 }
               }

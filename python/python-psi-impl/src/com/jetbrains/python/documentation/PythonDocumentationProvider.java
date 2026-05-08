@@ -35,6 +35,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -43,6 +44,7 @@ import com.jetbrains.python.psi.PyDecoratable;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -282,6 +284,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     boolean first = true;
     boolean firstIsSelf = false;
     final List<PyCallableParameter> parameters = function.getParameters(context);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(function.getProject());
     for (PyCallableParameter parameter : parameters) {
       boolean isSelf = parameter.isSelf();
       if (!first) {
@@ -346,7 +349,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         final String[] parts = signature.split(delimiter);
         if (parts.length == 2) {
           result.append(styledSpan(delimiter, PyHighlighter.PY_OPERATION_SIGN));
-          result.append(highlightExpressionText(parts[1], parameter.getDefaultValue()));
+          PyExpression defaultValue = parameter.getDefaultValue() != null ?
+                                      parameter.getDefaultValue() :
+                                      elementGenerator.createExpressionFromText(LanguageLevel.forElement(function),
+                                                                                parameter.getDefaultValueText());
+          result.append(highlightExpressionText(parts[1], defaultValue));
         }
       }
       first = false;
