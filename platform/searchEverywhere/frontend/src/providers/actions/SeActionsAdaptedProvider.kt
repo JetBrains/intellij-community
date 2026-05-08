@@ -3,10 +3,10 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeClosePopupRequester
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItem
@@ -30,6 +31,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -138,8 +140,17 @@ class SeActionsAdaptedProvider(
       is SearchEverywhereSpellCheckResult.Correction -> actionItem.effectiveSearchText
       SearchEverywhereSpellCheckResult.NoCorrection -> searchText
     }
+    val closeRequester = currentCoroutineContext()[SeClosePopupRequester]
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem(actionItem.matchedValue, modifiers, selectionText)
+      val shouldClose = contributorWrapper.contributor.processSelectedItem(actionItem.matchedValue, modifiers, selectionText)
+      if (shouldClose) {
+        // Close the popup in the same EDT event as processSelectedItem — before the
+        // invokeLater queued by GotoActionAction.openOptionOrPerformAction can fire.
+        // Mirrors the synchronous closePopup() call in old-SE SearchEverywhereUI.elementsSelected;
+        // required on Wayland where setCancelOnWindowDeactivation is disabled (IJPL-243358).
+        closeRequester?.close?.invoke()
+      }
+      shouldClose
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeClosePopupRequester
 import com.intellij.platform.searchEverywhere.SeCommandInfo
 import com.intellij.platform.searchEverywhere.SeCommandsProviderInterface
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
@@ -19,6 +20,7 @@ import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrappe
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -58,8 +60,16 @@ open class SeTopHitItemsProvider(
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTopHitItem)?.rawObject ?: return false
+    val closeRequester = currentCoroutineContext()[SeClosePopupRequester]
     return withContext(Dispatchers.EDT) {
-      contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      val shouldClose = contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      if (shouldClose) {
+        // Close the popup in the same EDT event as processSelectedItem — top-hit
+        // OptionDescription items reach GotoActionAction.openOptionOrPerformAction
+        // which defers via invokeLater. See SeActionsAdaptedProvider for details (IJPL-243358).
+        closeRequester?.close?.invoke()
+      }
+      shouldClose
     }
   }
 

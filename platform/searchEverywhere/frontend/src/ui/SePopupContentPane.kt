@@ -47,6 +47,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.SeClosePopupRequester
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultAddedEvent
@@ -636,7 +637,10 @@ class SePopupContentPane(
       }
     }
 
-    val selectedItems = vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)
+    val closeRequester = SeClosePopupRequester { issueClosePopup() }
+    val selectedItems = withContext(closeRequester) {
+      vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)
+    }
     if (selectedItems?.any { it is SeSelectionResultClose } == true) {
       withContext(NonCancellable) { issueClosePopup() }
     }
