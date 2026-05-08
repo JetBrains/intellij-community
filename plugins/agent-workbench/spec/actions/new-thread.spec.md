@@ -6,6 +6,7 @@ targets:
   - ../../sessions-toolwindow/src/tree/SessionTree.kt
   - ../../sessions-toolwindow/src/actions/AgentSessionsTreePopupActions.kt
   - ../../sessions-actions/src/actions/AgentSessionsEditorTabNewThreadActions.kt
+  - ../../sessions-actions/src/actions/AgentSessionsMainToolbarNewThreadActions.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
   - ../../sessions/src/service/AgentSessionProjectCatalog.kt
   - ../../sessions/src/service/AgentSessionProjectPresentation.kt
@@ -23,6 +24,7 @@ targets:
   - ../../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
   - ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
   - ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  - ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
   - ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
   - ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   - ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
@@ -46,6 +48,7 @@ Define project/worktree `New Thread` behavior across tree and editor-tab actions
 - explicit source-project selection in dedicated-frame multi-project editor tabs,
 - provider popup with Standard and YOLO entries,
 - creation-flow deduplication and Codex pending-to-concrete identity rebinding (strict auto-match + manual bind fallback).
+- main-toolbar split-button entry for `New Thread` (icon click quick-launches with the last-used provider+mode; chevron opens the provider × launch-mode picker).
 
 Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 
@@ -117,6 +120,18 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Normal project-frame editor tabs must resolve the launch path from the selected Agent chat tab source path when available, otherwise from
   the current project base path.
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Main-toolbar new-thread control must be contributed as a single `<action>` `AgentWorkbenchSessions.MainToolbar.NewThread` on `MainToolbarRight`, anchored `after` `NewUiRunWidget`.
+- Main-toolbar new-thread control must be built on `com.intellij.openapi.actionSystem.SplitButtonAction` so the in-button separator paints only on hover/press; at rest the entry is icon + chevron with no vertical line.
+- Main-toolbar icon must be the badge of the last-used provider+mode when a quick-start item exists, otherwise `AllIcons.General.Add`.
+- Main-toolbar icon click must quick-launch with the last-used provider+mode when target is `Direct` and a quick-start item is eligible; otherwise (no last-used, or `Candidates` target) the click must fall through to the same picker the chevron opens.
+- Main-toolbar chevron must open the provider × launch-mode picker — flat menu for `Direct`, per-candidate sub-groups for `Candidates`, identical content shape to the editor-tab Add popup.
+- Main-toolbar tooltip must be parameterized as `Start a new {0} thread in {1}` where `{0}` is the resolved provider+mode label (reusing `quickStartItem.labelKey`) and `{1}` is the trailing path segment of the resolved target path; `Candidates` targets must substitute the `target.choose` placeholder for `{1}`, and the empty-state (no providers ready / no last-used) must use the `empty.description` fallback.
+- Main-toolbar entry must be hidden when context is unresolved or when `buildNewThreadMenuModel(allBridges())` has no entries.
+- Main-toolbar normal project-frame target resolution must prefer chat-context path, then `selectedChatSourceProjectPath(project)`, then `project.basePath`.
+- Main-toolbar dedicated Agent frame target resolution must reuse the lazy candidates pathway (`resolveDedicatedFrameNewThreadTarget`) so source-project candidates are computed only on click/popup, not during toolbar update.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Dedicated-frame multi-project source-project labels in editor-tab new-thread popups must reuse the sessions tree naming policy:
@@ -221,6 +236,8 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   project selector.
 - Source-project labels in dedicated-frame editor-tab new-thread popups match the sessions tree, and collisions fall back to full path
   labels.
+- Main-toolbar new-thread control reads as a single icon + chevron at rest; the standard separator appears only on hover/press, matching platform split-button affordances.
+- Main-toolbar tooltip names both the provider+mode and the target project so users with multiple repos open can predict where the click will run before clicking.
 
 ## Data & Backend
 
@@ -240,6 +257,7 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsTreePopupActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsMainToolbarNewThreadActionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionProjectCatalogTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest'`

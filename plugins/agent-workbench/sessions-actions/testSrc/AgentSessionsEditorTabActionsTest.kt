@@ -26,12 +26,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -39,8 +36,6 @@ import com.intellij.ui.BadgeIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.event.MouseEvent
-import java.lang.reflect.InvocationHandler
-import java.lang.reflect.Proxy
 import javax.swing.JPanel
 
 @TestApplication
@@ -1038,54 +1033,4 @@ private fun editorContext(
     threadCoordinates = threadCoordinates,
     sessionActionTarget = sessionActionTarget,
   )
-}
-
-private fun newThreadContext(
-  path: String = "/tmp/project",
-  project: Project = ProjectManager.getInstance().defaultProject,
-  projectPathCandidates: List<AgentPromptProjectPathCandidate> = emptyList(),
-): AgentSessionsEditorTabNewThreadContext {
-  val target = if (projectPathCandidates.isEmpty()) {
-    AgentSessionsEditorTabNewThreadTarget.Direct(normalizeAgentWorkbenchPath(path))
-  }
-  else {
-    AgentSessionsEditorTabNewThreadTarget.Candidates(projectPathCandidates)
-  }
-  return AgentSessionsEditorTabNewThreadContext(project = project) { target }
-}
-
-private fun eventWithProject(project: Project): AnActionEvent {
-  return AnActionEvent(
-    { dataId -> if (dataId == CommonDataKeys.PROJECT.name) project else null },
-    Presentation(),
-    "",
-    ActionUiKind.NONE,
-    null,
-    0,
-    ActionManager.getInstance(),
-  )
-}
-
-private fun sourceProjectProxy(): Project {
-  val handler = InvocationHandler { proxy, method, args ->
-    when (method.name) {
-      "getName" -> "Source Project"
-      "getBasePath" -> "/work/repo-a"
-      "isOpen" -> true
-      "isDisposed" -> false
-      "toString" -> "MockProject(Source Project)"
-      "hashCode" -> System.identityHashCode(proxy)
-      "equals" -> proxy === args?.firstOrNull()
-      else -> null
-    }
-  }
-  return Proxy.newProxyInstance(
-    ProjectManager::class.java.classLoader,
-    arrayOf(Project::class.java),
-    handler,
-  ) as Project
-}
-
-private fun projectCandidate(path: String, displayName: String): AgentPromptProjectPathCandidate {
-  return AgentPromptProjectPathCandidate(path = normalizeAgentWorkbenchPath(path), displayName = displayName)
 }

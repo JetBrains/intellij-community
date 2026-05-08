@@ -35,6 +35,12 @@
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </action>
     <action
+      id="AgentWorkbenchSessions.MainToolbar.NewThread"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction">
+      <add-to-group group-id="MainToolbarRight" anchor="after" relative-to-action="NewUiRunWidget"/>
+    </action>
+    <action
       id="AgentWorkbenchSessions.EditorTab.NewThreadQuick"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction">
       <add-to-group group-id="EditorTabsToolbarActions" anchor="first"/>

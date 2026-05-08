@@ -7,6 +7,10 @@ object AgentWorkbenchActionIds {
     const val TOOL_WINDOW_GEAR_ACTIONS: String = "AgentWorkbenchSessions.ToolWindow.GearActions"
     const val BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
 
+    object MainToolbar {
+      const val NEW_THREAD: String = "AgentWorkbenchSessions.MainToolbar.NewThread"
+    }
+
     object TreePopup {
       const val GROUP: String = "AgentWorkbenchSessions.TreePopup"
       const val NEW_THREAD: String = "AgentWorkbenchSessions.TreePopup.NewThread"

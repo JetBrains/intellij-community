@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsActivateWithProjectShortcutAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction
@@ -10,6 +11,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewTh
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsPreventSleepWhileWorkingToggleAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction
@@ -17,11 +19,8 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadIn
 import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.project.DumbService
@@ -163,9 +162,29 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.GoToSourceProjectFromToolbar"))
       .isNotNull
       .isInstanceOf(AgentSessionsGoToSourceProjectFromToolbarAction::class.java)
-    assertThat(actionsDescriptor())
-      .contains("id=\"AgentWorkbenchSessions.GoToSourceProjectFromToolbar\"")
-      .contains("<add-to-group group-id=\"MainToolbarRight\" anchor=\"before\" relative-to-action=\"NewUiRunWidget\"/>")
+
+    val entries = actionManager.childActionIds("MainToolbarRight")
+    val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromToolbar")
+    val runWidgetIndex = entries.requiredIndex("NewUiRunWidget")
+    assertThat(goToSourceIndex).isLessThan(runWidgetIndex)
+  }
+
+  @Test
+  fun mainToolbarNewThreadActionIsRegisteredAfterRunWidget() {
+    val actionManager = ActionManager.getInstance()
+    val newThreadActionId = AgentWorkbenchActionIds.Sessions.MainToolbar.NEW_THREAD
+
+    assertThat(actionManager.getAction(newThreadActionId))
+      .isNotNull
+      .isInstanceOf(AgentSessionsMainToolbarNewThreadAction::class.java)
+    assertThat(actionManager.getAction(newThreadActionId)?.actionUpdateThread)
+      .isEqualTo(ActionUpdateThread.BGT)
+
+    val entries = actionManager.childActionIds("MainToolbarRight")
+    val runWidgetIndex = entries.requiredIndex("NewUiRunWidget")
+    val newThreadIndex = entries.requiredIndex(newThreadActionId)
+    assertThat(newThreadIndex).isGreaterThan(runWidgetIndex)
+    assertThat(entries.count { it == newThreadActionId }).isEqualTo(1)
   }
 
   @Test
@@ -204,9 +223,9 @@ class AgentSessionsGearActionsTest {
     assertThat(renameIndex).isLessThan(copyThreadIdIndex)
     assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
     assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)
-    assertThat(entries[closeEditorsGroupIndex - 1]).isEqualTo(SEPARATOR_MARKER)
-    assertThat(entries[closeEditorsGroupIndex + 1]).isEqualTo(SEPARATOR_MARKER)
-    assertThat(entries.subList(renameIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
+    assertThat(entries[closeEditorsGroupIndex - 1]).isEqualTo(ACTION_SEPARATOR_MARKER)
+    assertThat(entries[closeEditorsGroupIndex + 1]).isEqualTo(ACTION_SEPARATOR_MARKER)
+    assertThat(entries.subList(renameIndex + 1, copyPathsIndex)).doesNotContain(ACTION_SEPARATOR_MARKER)
   }
 
   @Test
@@ -227,8 +246,8 @@ class AgentSessionsGearActionsTest {
   @Test
   fun editorTabNewThreadActionIsRegisteredInActionSystem() {
     val actionManager = ActionManager.getInstance()
-    val quickActionId = "AgentWorkbenchSessions.EditorTab.NewThreadQuick"
-    val popupActionId = "AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+    val quickActionId = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+    val popupActionId = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
 
     assertThat(actionManager.getAction(quickActionId))
       .isNotNull
@@ -257,7 +276,7 @@ class AgentSessionsGearActionsTest {
     listOf(
       "AgentWorkbenchSessions.ToolWindow.GearActions",
       "AgentWorkbenchSessions.TreePopup",
-      "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions",
+      EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID,
     ).forEach { groupId ->
       val group = actionManager.getAction(groupId)
 
@@ -285,42 +304,6 @@ class AgentSessionsGearActionsTest {
       .isEqualTo(1)
   }
 
-  private fun ActionManager.childActionIds(groupId: String): List<String> {
-    val group = getAction(groupId) as? ActionGroup
-    assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
-    return checkNotNull(group).getChildren(TestActionEvent.createTestEvent()).mapNotNull { getId(it) }
-  }
-
-  private fun ActionManager.editorTabPopupEntries(): List<String> {
-    val group = getAction("EditorTabPopupMenu") as? ActionGroup
-    assertThat(group).withFailMessage("Action group '%s' is not registered", "EditorTabPopupMenu").isNotNull
-    return flattenEditorTabPopupEntries(checkNotNull(group).getChildren(TestActionEvent.createTestEvent()))
-  }
-
-  private fun ActionManager.flattenEditorTabPopupEntries(actions: Array<AnAction>): List<String> {
-    return actions.flatMap { action ->
-      when (action) {
-        is Separator -> listOf(SEPARATOR_MARKER)
-        is ActionGroup -> {
-          if (getId(action) == INLINE_EDITOR_TAB_SEPARATOR_GROUP_ID) {
-            flattenEditorTabPopupEntries(action.getChildren(TestActionEvent.createTestEvent()))
-          }
-          else {
-            getId(action)?.let(::listOf).orEmpty()
-          }
-        }
-
-        else -> getId(action)?.let(::listOf).orEmpty()
-      }
-    }
-  }
-
-  private fun List<String>.requiredIndex(entry: String): Int {
-    val index = indexOf(entry)
-    assertThat(index).withFailMessage("Entry '%s' was not found in: %s", entry, this).isNotEqualTo(-1)
-    return index
-  }
-
   private fun actionsDescriptor(): String {
     return descriptorText("intellij.agent.workbench.sessions.actions.xml")
   }
@@ -336,8 +319,6 @@ class AgentSessionsGearActionsTest {
   }
 
   companion object {
-    private const val SEPARATOR_MARKER = "<separator>"
-    private const val INLINE_EDITOR_TAB_SEPARATOR_GROUP_ID = "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"
     private const val OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID = "agent.workbench.chat.open.in.dedicated.frame"
   }
 }

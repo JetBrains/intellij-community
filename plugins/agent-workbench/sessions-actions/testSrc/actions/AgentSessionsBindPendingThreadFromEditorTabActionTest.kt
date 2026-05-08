@@ -5,8 +5,14 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.EDITOR_TAB_POPUP_MENU_ID
+import com.intellij.agent.workbench.sessions.EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID
+import com.intellij.agent.workbench.sessions.childActionIds
+import com.intellij.agent.workbench.sessions.requiredIndex
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -153,11 +159,21 @@ class AgentSessionsBindPendingThreadFromEditorTabActionTest {
 
   @Test
   fun actionIsRegisteredInEditorTabPopupMenu() {
-    assertThat(actionsDescriptor())
-      .contains("id=\"AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab\"")
-      .contains(
-        "<add-to-group group-id=\"EditorTabPopupMenu\" anchor=\"after\" relative-to-action=\"AgentWorkbenchSessions.GoToSourceProjectFromEditorTab\"/>",
-      )
+    val actionManager = ActionManager.getInstance()
+    val actionId = AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB
+
+    assertThat(actionManager.getAction(actionId))
+      .isNotNull
+      .isInstanceOf(AgentSessionsBindPendingThreadFromEditorTabAction::class.java)
+
+    val entries = actionManager.childActionIds(EDITOR_TAB_POPUP_MENU_ID)
+
+    val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
+    val bindIndex = entries.requiredIndex(actionId)
+    val separatorBeforeCloseActionsIndex = entries.requiredIndex(EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID)
+
+    assertThat(bindIndex).isGreaterThan(goToSourceIndex)
+    assertThat(bindIndex).isLessThan(separatorBeforeCloseActionsIndex)
   }
 }
 
@@ -188,10 +204,4 @@ private fun editorContext(
     threadCoordinates = threadCoordinates,
     sessionActionTarget = null,
   )
-}
-
-private fun actionsDescriptor(): String {
-  return checkNotNull(AgentSessionsBindPendingThreadFromEditorTabActionTest::class.java.classLoader.getResource("intellij.agent.workbench.sessions.actions.xml")) {
-    "Module descriptor intellij.agent.workbench.sessions.actions.xml is missing"
-  }.readText()
 }

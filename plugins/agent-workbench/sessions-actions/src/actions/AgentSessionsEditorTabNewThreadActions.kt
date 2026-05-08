@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.providerIconWithMode
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
+import com.intellij.agent.workbench.sessions.service.selectedChatSourceProjectPath
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -172,6 +173,26 @@ internal fun resolveAgentSessionsEditorTabNewThreadContext(
   }
 }
 
+internal fun resolveAgentSessionsMainToolbarNewThreadContext(
+  event: AnActionEvent,
+  isDedicatedProject: (Project) -> Boolean = AgentWorkbenchDedicatedFrameProjectManager::isDedicatedProject,
+  openProjectPaths: () -> List<String> = ::collectOpenAgentSessionProjectPaths,
+  resolveChatContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
+  selectedSourcePath: (Project) -> String? = ::selectedChatSourceProjectPath,
+): AgentSessionsEditorTabNewThreadContext? {
+  val project = event.project ?: return null
+  val chatContext = resolveChatContext(event)
+  return if (isDedicatedProject(project)) {
+    AgentSessionsEditorTabNewThreadContext(project) {
+      resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths)
+    }
+  }
+  else {
+    val target = resolveMainToolbarProjectFrameNewThreadTarget(project, chatContext, selectedSourcePath) ?: return null
+    AgentSessionsEditorTabNewThreadContext(project) { target }
+  }
+}
+
 private fun resolveDedicatedFrameNewThreadTarget(
   chatContext: AgentChatEditorTabActionContext?,
   openProjectPaths: () -> List<String>,
@@ -194,6 +215,18 @@ private fun resolveProjectFrameNewThreadTarget(
   return AgentSessionsEditorTabNewThreadTarget.Direct(path)
 }
 
+private fun resolveMainToolbarProjectFrameNewThreadTarget(
+  project: Project,
+  chatContext: AgentChatEditorTabActionContext?,
+  selectedSourcePath: (Project) -> String?,
+): AgentSessionsEditorTabNewThreadTarget? {
+  val path = chatContext?.path
+             ?: normalizeOpenableSourceProjectPath(selectedSourcePath(project))
+             ?: normalizeOpenableSourceProjectPath(project.basePath)
+             ?: return null
+  return AgentSessionsEditorTabNewThreadTarget.Direct(path)
+}
+
 internal fun buildProjectCandidatePopupGroup(
   candidate: AgentPromptProjectPathCandidate,
   project: Project,
@@ -212,7 +245,7 @@ internal fun buildProjectCandidatePopupGroup(
   return group
 }
 
-private fun showQuickStartProjectPopup(
+internal fun showQuickStartProjectPopup(
   candidates: List<AgentPromptProjectPathCandidate>,
   e: AnActionEvent,
   onResolved: (AgentPromptProjectPathCandidate) -> Unit,
