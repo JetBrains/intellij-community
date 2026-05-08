@@ -573,7 +573,7 @@ object UniversalFileChooser {
       val contributor: UniversalFileChooserContributor,
       descriptor: FileChooserDescriptor,
       disposable: Disposable,
-      project: Project,
+      private val project: Project,
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
@@ -700,7 +700,13 @@ object UniversalFileChooser {
         cardLayout.show(contentPanel, LOADING_CARD)
         scope.launch {
           withContext(Dispatchers.IO) {
-            val allRoots = contributor.getRoots()
+            val allRoots = if (!project.isDefault) {
+              val basePath = project.basePath?.let { Path.of(it) }
+              if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+            }
+            else {
+              contributor.getRoots()
+            }
             val realRoots = allRoots.filter { it.path != null }
             val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
             for (root in realRoots) {

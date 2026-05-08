@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -38,6 +37,8 @@ interface UniversalFileChooserContributor {
   val tabTitle: String
 
   suspend fun getRoots(): List<Root>
+
+  suspend fun getFilteredRoots(path: Path): List<Root> = getRoots()
 
   fun ownsPath(path: Path): Boolean
 

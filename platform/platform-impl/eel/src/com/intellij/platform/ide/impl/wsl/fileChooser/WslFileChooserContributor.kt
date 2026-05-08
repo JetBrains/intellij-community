@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributo
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Companion.getFilteredSystemRoots
 import com.intellij.platform.eel.impl.fileChooser.EelFileWatcherAdapter
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import java.nio.file.Path
 
@@ -14,6 +15,13 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
   override val tabTitle: String = "WSL"
 
   override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = getFilteredSystemRoots { path -> ownsPath(path) }
+
+  override suspend fun getFilteredRoots(path: Path): List<UniversalFileChooserContributor.Root> {
+    if (path.getEelDescriptor() is WslEelDescriptor) {
+      return listOf(UniversalFileChooserContributor.asDefaultRoot(path.root))
+    }
+    return emptyList()
+  }
 
   override fun ownsPath(path: Path): Boolean = path.asEelPath().descriptor is WslEelDescriptor
 
