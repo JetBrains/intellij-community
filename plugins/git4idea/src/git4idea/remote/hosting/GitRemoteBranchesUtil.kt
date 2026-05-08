@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -113,15 +113,17 @@ object GitRemoteBranchesUtil {
   }
 
   private suspend fun fetchBranch(repository: GitRepository, branch: GitRemoteBranch): Boolean {
-    val fetchResult = indeterminateStep {
-      withRawProgressReporter {
-        withContext(Dispatchers.Default) {
-          coroutineToIndicator {
-            val refspec = when (branch) {
-              is GitSpecialRefRemoteBranch -> "${branch.nameForRemoteOperations}:${branch.nameForLocalOperations}"
-              else -> branch.nameForRemoteOperations
+    val fetchResult = reportSequentialProgress { reporter ->
+      reporter.indeterminateStep {
+        reportRawProgress {
+          withContext(Dispatchers.Default) {
+            coroutineToIndicator {
+              val refspec = when (branch) {
+                is GitSpecialRefRemoteBranch -> "${branch.nameForRemoteOperations}:${branch.nameForLocalOperations}"
+                else -> branch.nameForRemoteOperations
+              }
+              GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, refspec)
             }
-            GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, refspec)
           }
         }
       }
@@ -256,17 +258,18 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  suspend fun findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
-    return indeterminateStep {
-      withRawProgressReporter {
-        withContext(Dispatchers.Default) {
-          coroutineToIndicator {
-            Git.getInstance().findOrCreateRemote(repository, remote)
+  suspend fun findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+    reportSequentialProgress { reporter ->
+      reporter.indeterminateStep {
+        reportRawProgress {
+          withContext(Dispatchers.Default) {
+            coroutineToIndicator {
+              Git.getInstance().findOrCreateRemote(repository, remote)
+            }
           }
         }
       }
     }
-  }
 
   @RequiresBackgroundThread
   private fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
