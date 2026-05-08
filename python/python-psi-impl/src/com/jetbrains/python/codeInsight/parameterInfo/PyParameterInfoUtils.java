@@ -139,6 +139,13 @@ public final class PyParameterInfoUtils {
             parameterDescriptions.add(parameterDescription);
             return;
           }
+          if (parameter.isPositionOnlySeparator()) {
+            hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+            currentParameterIndex[0]++;
+            ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
+            parameterDescriptions.add(parameterDescription);
+            return;
+          }
 
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();

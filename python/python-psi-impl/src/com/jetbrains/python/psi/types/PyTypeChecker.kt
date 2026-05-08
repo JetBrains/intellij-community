@@ -1733,6 +1733,7 @@ object PyTypeChecker {
                     param.isKeywordContainer,
                     param.isSelf,
                     param.isKeywordOnlySeparator,
+                    param.isPositionOnlySeparator,
                     param.declarationElement
                   )
                 }

@@ -252,6 +252,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
           parameter.isKeywordContainer(),
           parameter.isSelf(),
           parameter.isKeywordOnlySeparator(),
+          parameter.isPositionOnlySeparator(),
           parameter.getDeclarationElement()
         ))
     );

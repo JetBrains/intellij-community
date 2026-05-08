@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -244,7 +243,6 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
   if (isTypedDict(referenceExpression, context)) {
     val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
     val languageLevel = LanguageLevel.forElement(referenceExpression)
-    val generator = PyElementGenerator.getInstance(referenceExpression.project)
 
     val dictType = builtinCache.dictType
     val strToTypeDictType = if (dictType != null) {
@@ -258,7 +256,7 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
       PyCallableParameterImpl.nonPsi("typename", builtinCache.getStringType(languageLevel)),
       PyCallableParameterImpl.nonPsi("fields", strToTypeDictType),
       PyCallableParameterImpl.keywordOnlySeparatorNonPsi(),
-      PyCallableParameterImpl.psi(generator.createSlashParameter()),
+      PyCallableParameterImpl.positionalOnlySeparatorNonPsi(),
       PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER, builtinCache.boolType, PyNames.TRUE),
       PyCallableParameterImpl.nonPsi(TYPED_DICT_CLOSED_PARAMETER, builtinCache.boolType, PyNames.FALSE),
       PyCallableParameterImpl.nonPsi(

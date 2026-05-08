@@ -39,6 +39,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   private val myIsKeyword: Boolean = false,
   private val myIsSelf: Boolean = false,
   private val myIsKeywordOnlySeparator: Boolean = false,
+  private val myIsPositionalOnlySeparator: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
   @get:Nls
@@ -79,7 +80,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     get() = myIsSelf || parameter?.isSelf == true
 
   override val isPositionOnlySeparator: Boolean
-    get() = parameter is PySlashParameter
+    get() = parameter is PySlashParameter || myIsPositionalOnlySeparator
 
   override val isKeywordOnlySeparator: Boolean
     get() = parameter is PySingleStarParameter || myIsKeywordOnlySeparator
@@ -165,6 +166,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
            myIsPositional == other.myIsPositional &&
            myIsKeyword == other.myIsKeyword &&
            myIsKeywordOnlySeparator == other.myIsKeywordOnlySeparator &&
+           myIsPositionalOnlySeparator == other.myIsPositionalOnlySeparator &&
            myDefaultValue == other.myDefaultValue &&
            myDefaultValueText == other.myDefaultValueText
   }
@@ -178,6 +180,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
       myIsPositional,
       myIsKeyword,
       myIsKeywordOnlySeparator,
+      myIsPositionalOnlySeparator,
       myDefaultValue,
       myDefaultValueText,
     )
@@ -185,12 +188,16 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
 
   companion object {
     @JvmStatic
-    fun nonPsi(type: PyType?): PyCallableParameter = nonPsi(null, type)
+    fun nonPsi(type: PyType?): PyCallableParameter = nonPsi(null, type, defaultValue = null)
 
     @JvmStatic
     @JvmOverloads
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression? = null): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue)
+
+    @JvmStatic
+    fun nonPsi(name: String?, type: PyType?, defaultValueText: String?): PyCallableParameter =
+      PyCallableParameterImpl(name, Ref(type), myDefaultValueText = defaultValueText)
 
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression?, declarationElement: PsiElement): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
@@ -206,6 +213,10 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     @JvmStatic
     fun keywordOnlySeparatorNonPsi(): PyCallableParameter =
       PyCallableParameterImpl(myIsKeywordOnlySeparator = true)
+
+    @JvmStatic
+    fun positionalOnlySeparatorNonPsi(): PyCallableParameter =
+      PyCallableParameterImpl(myIsPositionalOnlySeparator = true)
 
     @JvmStatic
     fun psi(parameter: PyParameter): PyCallableParameter =

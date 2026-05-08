@@ -51,7 +51,6 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
@@ -322,7 +321,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
           paramType = typeParams.size() == 2 ? typeParams.get(1) : null;
         }
       }
-      else if (parameter.getParameter() instanceof PySlashParameter) {
+      else if (parameter.isPositionOnlySeparator()) {
         paramName = PyAstSlashParameter.TEXT;
         showType = false;
       }

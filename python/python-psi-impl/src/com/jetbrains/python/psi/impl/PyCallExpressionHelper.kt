@@ -1105,7 +1105,7 @@ object PyCallExpressionHelper {
     parameters: List<PyCallableParameter>,
   context: TypeEvalContext,
 ): ArgumentMappingResults {
-    val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
+    val hasSlashParameter = parameters.any { it.isPositionOnlySeparator }
     val firstExplicitParam = parameters.dropWhile { it.isSelf }.firstOrNull()
     val oldStylePositionalOnly = firstExplicitParam != null && isLegacyPositionalOnly(firstExplicitParam)
     var positionalOnlyMode = hasSlashParameter || oldStylePositionalOnly
@@ -1132,7 +1132,13 @@ object PyCallExpressionHelper {
     for (parameter in parameters) {
       val psi = parameter.parameter
 
-      if (psi is PyNamedParameter || (psi == null && !parameter.isKeywordOnlySeparator)) {
+      if (parameter.isPositionOnlySeparator) {
+        positionalOnlyMode = false
+      }
+      else if (parameter.isKeywordOnlySeparator) {
+        keywordOnlyMode = true
+      }
+      else if (psi is PyNamedParameter || psi == null) {
         val parameterName = parameter.name
         if (!parameter.isSelf && !hasSlashParameter && !isLegacyPositionalOnly(parameter)) {
           positionalOnlyMode = false
@@ -1244,12 +1250,6 @@ object PyCallExpressionHelper {
         else {
           mappedVariadicArgumentsToParameters = true
         }
-      }
-      else if (psi is PySlashParameter) {
-        positionalOnlyMode = false
-      }
-      else if (parameter.isKeywordOnlySeparator) {
-        keywordOnlyMode = true
       }
       else if (!parameter.hasDefaultValue()) {
         unmappedParameters.add(parameter)

@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyListCompExpression
-import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.PyStarArgument
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -115,7 +114,7 @@ private fun collectVariablesToComplete(parameters: List<PyCallableParameter>, ar
   var keywordsOnlyFlag = false
 
   for (parameter in parameters) {
-    if (parameter.parameter is PySlashParameter) continue
+    if (parameter.isPositionOnlySeparator) continue
     if (parameter.isKeywordOnlySeparator) {
       keywordsOnlyFlag = true
       continue
