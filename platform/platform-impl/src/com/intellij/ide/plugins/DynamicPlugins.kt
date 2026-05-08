@@ -38,17 +38,6 @@ object DynamicPlugins {
     return DynamicPluginsLegacyImpl.unloadPlugins(plugins, project, parentComponent, options)
   }
 
-  @Deprecated("use overload with PluginMainDescriptor parameter")
-  @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
-                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    if (pluginDescriptor !is PluginMainDescriptor) {
-      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
-      return false
-    }
-    return unloadPlugin(pluginDescriptor, options)
-  }
-
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: PluginMainDescriptor,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
