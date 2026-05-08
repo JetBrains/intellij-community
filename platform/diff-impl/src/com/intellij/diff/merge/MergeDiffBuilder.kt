@@ -52,16 +52,9 @@ internal class MergeDiffBuilder(
 
     val importRange: MergeRange? = readAction {
       sequences.addAll(mergeRequest.contents.map { it.document.immutableCharSequence })
-      if (conflictResolver.isAvailable() || isAutoResolveImportConflicts) {
-        psiFiles = initPsiFiles(project, mergeRequest)
-      }
-      if (isAutoResolveImportConflicts) {
-        resolveImportsPossible = canImportsBeProcessedAutomatically(project, psiFiles)
-        if (resolveImportsPossible) {
-          return@readAction MergeImportUtil.getImportMergeRange(project, psiFiles)
-        }
-      }
-      null
+      psiFiles = if (conflictResolver.isAvailable() || isAutoResolveImportConflicts) initPsiFiles(project, mergeRequest) else emptyList()
+      resolveImportsPossible = isAutoResolveImportConflicts && canImportsBeProcessedAutomatically(project, psiFiles)
+      if (resolveImportsPossible) MergeImportUtil.getImportMergeRange(project, psiFiles) else null
     }
 
     val fragmentsWithMetadata = getLineFragments(sequences, importRange, ignorePolicy)
