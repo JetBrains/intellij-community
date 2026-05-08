@@ -27,6 +27,9 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun testNewItemTwoSpacesInMarkerAndDocumentEnd() = doTest()
 
+  @Test
+  fun testEnterBeforeItem() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     configureByFile("$testName.md")

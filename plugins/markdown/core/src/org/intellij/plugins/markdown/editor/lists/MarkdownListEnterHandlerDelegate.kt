@@ -106,6 +106,9 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
 
     val itemLine = document.getLineNumber(item.startOffset)
     val markerElement = item.markerElement!!
+    if (caretOffset.get() <= markerElement.startOffset) {
+      return EnterHandlerDelegate.Result.Continue
+    }
     val indentWithMakerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
 
     if (indentWithMakerRange.contains(caretOffset.get())) {
