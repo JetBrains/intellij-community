@@ -672,9 +672,7 @@ public final class TestDaemonCodeAnalyzerImpl {
       }
       LogLevel oldLevel = logger.getLevel();
       Pair<JulLogger, LogLevel> pair = Pair.create(logger, oldLevel);
-      if (!isStressTest) {
-        logger.setLevel(LogLevel.TRACE);
-      }
+      logger.setLevel(isStressTest ? LogLevel.DEBUG : LogLevel.TRACE);
       return pair;
     });
   }
