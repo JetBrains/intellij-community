@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
+import com.intellij.agent.workbench.sessions.toolwindow.ui.sessionTreeExpansionTargetsAfterModelSwap
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -69,6 +70,56 @@ class AgentSessionsSwingTreeStatePersistenceTest {
     )
 
     assertThat(model.autoOpenProjects.contains(SessionTreeId.Project("/work/project-a"))).isTrue()
+  }
+
+  @Test
+  fun rootMoreProjectsDoesNotAutoExpandPreviouslyVisibleProjectSubtrees() {
+    val projectA = AgentProjectSessions(
+      path = "/work/project-a",
+      name = "Project A",
+      isOpen = true,
+      hasLoaded = true,
+    )
+    val projectB = AgentProjectSessions(
+      path = "/work/project-b",
+      name = "Project B",
+      isOpen = false,
+      hasLoaded = true,
+      errorMessage = "Failed",
+    )
+    val previousModel = buildSessionTreeModel(
+      projects = listOf(projectA, projectB),
+      visibleClosedProjectCount = 0,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val nextModel = buildSessionTreeModel(
+      projects = listOf(projectA, projectB),
+      visibleClosedProjectCount = 1,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val projectAId = SessionTreeId.Project("/work/project-a")
+    val projectBId = SessionTreeId.Project("/work/project-b")
+    assertThat(
+      sessionTreeExpansionTargetsAfterModelSwap(
+        model = nextModel,
+        previousModel = previousModel,
+        rootChanged = true,
+        previouslyExpandedProjects = emptySet(),
+        selectedTreeId = null,
+      )
+    ).containsExactly(projectBId)
+    assertThat(
+      sessionTreeExpansionTargetsAfterModelSwap(
+        model = nextModel,
+        previousModel = previousModel,
+        rootChanged = true,
+        previouslyExpandedProjects = setOf(projectAId),
+        selectedTreeId = null,
+      )
+    ).containsExactly(projectAId, projectBId)
   }
 
   @Test

@@ -121,6 +121,7 @@ internal class AgentSessionsTreeStateController(
       }
       if (treeUpdateSequence != updateSequence) return@launch
 
+      val expandedProjectsBeforeModelSwap = expandedProjectIds()
       onBeforeModelSwap()
       setSessionTreeModel(nextModel)
       updateEmptyText()
@@ -128,7 +129,13 @@ internal class AgentSessionsTreeStateController(
       invalidateTreeModel(treeModelDiff).thenRun {
         SwingUtilities.invokeLater {
           if (treeUpdateSequence != updateSequence) return@invokeLater
-          applyDefaultExpansion(nextModel, selectedTreeId)
+          applyDefaultExpansion(
+            model = nextModel,
+            previousModel = oldModel,
+            rootChanged = treeModelDiff.rootChanged,
+            previouslyExpandedProjects = expandedProjectsBeforeModelSwap,
+            selectedTreeId = selectedTreeId,
+          )
           applySelection(nextModel, selectedTreeId)
         }
       }
@@ -144,24 +151,28 @@ internal class AgentSessionsTreeStateController(
     tree.emptyText.text = message
   }
 
-  private fun applyDefaultExpansion(model: SessionTreeModel, selectedTreeId: SessionTreeId?) {
-    val expandedProjects = TreeUtil.collectExpandedObjects(tree) { path ->
+  private fun applyDefaultExpansion(
+    model: SessionTreeModel,
+    previousModel: SessionTreeModel,
+    rootChanged: Boolean,
+    previouslyExpandedProjects: Set<SessionTreeId.Project>,
+    selectedTreeId: SessionTreeId?,
+  ) {
+    sessionTreeExpansionTargetsAfterModelSwap(
+      model = model,
+      previousModel = previousModel,
+      rootChanged = rootChanged,
+      previouslyExpandedProjects = previouslyExpandedProjects,
+      selectedTreeId = selectedTreeId,
+    ).forEach { treeId ->
+      expandNode(treeId)
+    }
+  }
+
+  private fun expandedProjectIds(): Set<SessionTreeId.Project> {
+    return TreeUtil.collectExpandedObjects(tree) { path ->
       path.lastPathComponent?.let(::extractSessionTreeId) as? SessionTreeId.Project
-    }.toSet()
-
-    model.autoOpenProjects.forEach { projectId ->
-      if (projectId !in expandedProjects) {
-        expandNode(projectId)
-      }
-    }
-
-    selectedTreeId?.let { treeId ->
-      parentNodesForSelection(treeId).forEach { parentId ->
-        if (parentId in model.entriesById) {
-          expandNode(parentId)
-        }
-      }
-    }
+    }.filterNotNull().toSet()
   }
 
   private fun applySelection(model: SessionTreeModel, selectedTreeId: SessionTreeId?) {
@@ -171,4 +182,36 @@ internal class AgentSessionsTreeStateController(
     }
     selectNode(selectedTreeId)
   }
+}
+
+internal fun sessionTreeExpansionTargetsAfterModelSwap(
+  model: SessionTreeModel,
+  previousModel: SessionTreeModel,
+  rootChanged: Boolean,
+  previouslyExpandedProjects: Set<SessionTreeId.Project>,
+  selectedTreeId: SessionTreeId?,
+): List<SessionTreeId> {
+  val result = LinkedHashSet<SessionTreeId>()
+  previouslyExpandedProjects.forEach { projectId ->
+    if (projectId in model.entriesById) {
+      result += projectId
+    }
+  }
+
+  val previousRootProjects = previousModel.rootIds.filterIsInstance<SessionTreeId.Project>().toSet()
+  model.autoOpenProjects.forEach { projectId ->
+    if ((!rootChanged || projectId !in previousRootProjects) && projectId in model.entriesById) {
+      result += projectId
+    }
+  }
+
+  selectedTreeId?.let { treeId ->
+    parentNodesForSelection(treeId).forEach { parentId ->
+      if (parentId in model.entriesById) {
+        result += parentId
+      }
+    }
+  }
+
+  return result.toList()
 }
