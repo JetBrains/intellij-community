@@ -954,21 +954,27 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnresolvedPluginsAsExtensions() = runBlocking {
+    val groupId = "junit"
+    val artifactId = "yyy"
+    val version = "1"
+    val coordinates = "$groupId:$artifactId:$version"
+    val jarCoordinates = "$groupId:$artifactId:jar:$version"
+
     importProjectAsync("""
-                              <groupId>test</groupId>
-                              <artifactId>project</artifactId>
-                              <version>1</version>
-                              <build>
-                               <plugins>
-                                 <plugin>
-                                   <groupId>xxx</groupId>
-                                   <artifactId>yyy</artifactId>
-                                   <version>1</version>
-                                   <extensions>true</extensions>
-                                  </plugin>
-                                </plugins>
-                              </build>
-                              """.trimIndent())
+                            <groupId>test</groupId>
+                            <artifactId>project</artifactId>
+                            <version>1</version>
+                            <build>
+                             <plugins>
+                               <plugin>
+                                 <groupId>$groupId</groupId>
+                                 <artifactId>$artifactId</artifactId>
+                                 <version>$version</version>
+                                 <extensions>true</extensions>
+                                </plugin>
+                              </plugins>
+                            </build>
+                            """.trimIndent())
 
     assertModules("project")
 
@@ -979,17 +985,20 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       UsefulTestCase.assertSize(1, problems)
 
       val description = if (mavenVersionIsOrMoreThan("3.9.8"))
-        "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
+        "Unresolveable build extension: Plugin $coordinates or one of its dependencies could not be resolved"
       else
-        "Could not find artifact xxx:yyy:jar:1"
+        "Could not find artifact $jarCoordinates"
+
       assertTrue(problems[0].description, problems[0].description!!.contains(description))
     }
 
     forMaven4 {
       UsefulTestCase.assertSize(1, problems)
+
       assertTrue(
-        problems[0].description!!.contains("Could not find artifact xxx:yyy:jar:1") ||
-        problems[0].description!!.contains("xxx:yyy:jar:1 was not found")
+        "Expected unresolved dependency error for $jarCoordinates, but got: ${problems[0].description}",
+        problems[0].description!!.contains("Could not find artifact $jarCoordinates") ||
+        problems[0].description!!.contains("$jarCoordinates was not found")
       )
     }
   }
