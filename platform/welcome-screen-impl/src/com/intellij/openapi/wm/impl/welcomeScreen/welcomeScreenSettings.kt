@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 fun isStationWelcomeScreenPromoEnabled(): Boolean {
-  return Registry.`is`("station.enable.welcome.screen.promo") && !Registry.`is`("jetbrainsd.new.connection.flow.enabled")
+  return Registry.`is`("station.enable.welcome.screen.promo") && !Registry.`is`("jetbrainsd.new.connection.flow.enabled", false)
 }
 
 /**
