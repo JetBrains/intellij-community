@@ -56,14 +56,6 @@ internal fun isBackendDependency(dependencyName: String): Boolean {
   return resolveDependencyKind(dependencyName) == SplitModeApiRestrictionsService.ModuleKind.BACKEND
 }
 
-internal fun isFrontendModuleName(moduleName: String): Boolean {
-  return endsWithAnySuffix(moduleName, frontendModuleNameSuffixes)
-}
-
-internal fun isBackendModuleName(moduleName: String): Boolean {
-  return endsWithAnySuffix(moduleName, backendModuleNameSuffixes)
-}
-
 private fun guessDependencyKindByName(dependencyName: String): SplitModeApiRestrictionsService.ModuleKind? {
   return when {
     endsWithAnyDotSuffix(dependencyName, frontendModuleNameSuffixes) -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
@@ -79,10 +71,6 @@ private fun moduleNameVariants(baseName: String): List<String> {
     "$baseName.main",
     "$baseName.split.main",
   )
-}
-
-private fun endsWithAnySuffix(name: String, suffixes: List<String>): Boolean {
-  return suffixes.any { name.endsWith(it) }
 }
 
 private fun endsWithAnyDotSuffix(name: String, suffixes: List<String>): Boolean {

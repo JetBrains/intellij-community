@@ -57,20 +57,24 @@ internal object SplitModeModuleKindResolver {
         emptyList()
       }
 
-    return ModuleAnalysis(computeResolvedModuleKind(module.name, ownDependencyFacts, containingPlugins))
+    return computeModuleAnalysis(module.name, ownDependencyFacts, containingPlugins)
   }
 
-  private fun computeResolvedModuleKind(
+  private fun computeModuleAnalysis(
     moduleName: String,
     ownDependencyFacts: DependencyFacts,
     containingPlugins: List<ContainingPlugin>,
-  ): ResolvedModuleKind {
-    return computeResolvedModuleKind(DependencyAnalysis(moduleName, ownDependencyFacts, containingPlugins))
+  ): ModuleAnalysis {
+    val dependencyAnalysis = DependencyAnalysis(moduleName, ownDependencyFacts, containingPlugins)
+    return ModuleAnalysis(
+      resolvedModuleKind = computeResolvedModuleKind(dependencyAnalysis),
+      evidence = dependencyAnalysis.toEvidence(),
+    )
   }
 
   private fun computeResolvedModuleKind(dependencyAnalysis: DependencyAnalysis): ResolvedModuleKind {
     return when {
-      dependencyAnalysis.declaresExplicitMonolithDependency -> ResolvedModuleKind(
+      dependencyAnalysis.hasOwnExplicitMonolithDependency -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.MONOLITH,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.MONOLITH, true),
       )
@@ -94,19 +98,19 @@ internal object SplitModeModuleKindResolver {
         SplitModeApiRestrictionsService.ModuleKind.MIXED,
         dependencyAnalysis.buildMixedReasoning(),
       )
-      dependencyAnalysis.declaresExplicitFrontendDependencies -> ResolvedModuleKind(
+      dependencyAnalysis.hasOwnExplicitFrontendDependency -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, true),
       )
-      dependencyAnalysis.declaresExplicitBackendDependencies -> ResolvedModuleKind(
+      dependencyAnalysis.hasOwnExplicitBackendDependency -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.BACKEND, true),
       )
-      dependencyAnalysis.declaresFrontendDependencies -> ResolvedModuleKind(
+      dependencyAnalysis.hasOwnFrontendEvidence -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, false),
       )
-      dependencyAnalysis.declaresBackendDependencies -> ResolvedModuleKind(
+      dependencyAnalysis.hasOwnBackendEvidence -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.BACKEND, false),
       )
@@ -141,7 +145,7 @@ internal object SplitModeModuleKindResolver {
             ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning)
           }
           else {
-            computeResolvedModuleKind(containingModule.name, ownDependencyFacts, emptyList())
+            computeModuleAnalysis(containingModule.name, ownDependencyFacts, emptyList()).resolvedModuleKind
           }
 
         yield(
@@ -181,8 +185,6 @@ private class DependencyAnalysis(
   private val containingPlugins: List<ContainingPlugin>,
 ) {
   private val containingFacts: DependencyFacts = collectContainingPluginFacts(containingPlugins)
-  private val isFrontendModuleByConvention = isFrontendModuleName(moduleName)
-  private val isBackendModuleByConvention = isBackendModuleName(moduleName)
   private val ownFrontendEvidence = ownFacts.frontendEvidence
   private val ownBackendEvidence = ownFacts.backendEvidence
 
@@ -190,33 +192,43 @@ private class DependencyAnalysis(
 
   val containingPluginKind: SplitModeApiRestrictionsService.ModuleKind = computeContainingPluginsKind(containingPlugins)
 
-  val declaresExplicitFrontendDependencies: Boolean =
-    isFrontendModuleByConvention || ownFrontendEvidence != null && isExplicitFrontendDependency(ownFrontendEvidence.name)
+  val hasOwnExplicitFrontendDependency: Boolean =
+    ownFrontendEvidence != null && isExplicitFrontendDependency(ownFrontendEvidence.name)
 
-  val declaresExplicitBackendDependencies: Boolean =
-    isBackendModuleByConvention || ownBackendEvidence != null && isExplicitBackendDependency(ownBackendEvidence.name)
+  val hasOwnExplicitBackendDependency: Boolean =
+    ownBackendEvidence != null && isExplicitBackendDependency(ownBackendEvidence.name)
 
-  val declaresExplicitMonolithDependency: Boolean = ownFacts.monolithEvidence != null
+  val hasOwnExplicitMonolithDependency: Boolean = ownFacts.monolithEvidence != null
 
-  val declaresFrontendDependencies: Boolean = ownFacts.frontendEvidence != null
+  val hasOwnFrontendEvidence: Boolean = ownFacts.frontendEvidence != null
 
-  val declaresBackendDependencies: Boolean = ownFacts.backendEvidence != null
+  val hasOwnBackendEvidence: Boolean = ownFacts.backendEvidence != null
 
   val hasFrontendDependencies: Boolean =
-    isFrontendModuleByConvention || ownFacts.frontendEvidence != null || containingFacts.frontendEvidence != null
+    hasOwnFrontendEvidence || containingFacts.frontendEvidence != null
 
   val hasBackendDependencies: Boolean =
-    isBackendModuleByConvention || ownFacts.backendEvidence != null || containingFacts.backendEvidence != null
+    hasOwnBackendEvidence || containingFacts.backendEvidence != null
 
-  val lacksOwnDependencies: Boolean = !declaresExplicitFrontendDependencies
-                                      && !declaresExplicitBackendDependencies
-                                      && !declaresExplicitMonolithDependency
-                                      && !declaresFrontendDependencies
-                                      && !declaresBackendDependencies
+  val lacksOwnDependencies: Boolean = !hasOwnExplicitFrontendDependency
+                                      && !hasOwnExplicitBackendDependency
+                                      && !hasOwnExplicitMonolithDependency
+                                      && !hasOwnFrontendEvidence
+                                      && !hasOwnBackendEvidence
 
-  val hasMixedDependencies: Boolean = !declaresExplicitMonolithDependency
-                                      && (isFrontendModuleByConvention || hasFrontendDependencies)
-                                      && (isBackendModuleByConvention || hasBackendDependencies)
+  val hasMixedDependencies: Boolean = !hasOwnExplicitMonolithDependency
+                                      && hasFrontendDependencies
+                                      && hasBackendDependencies
+
+  fun toEvidence(): ModuleKindEvidence {
+    return ModuleKindEvidence(
+      hasOwnFrontendEvidence = hasOwnFrontendEvidence,
+      hasOwnBackendEvidence = hasOwnBackendEvidence,
+      hasOwnExplicitFrontendDependency = hasOwnExplicitFrontendDependency,
+      hasOwnExplicitBackendDependency = hasOwnExplicitBackendDependency,
+      hasOwnExplicitMonolithDependency = hasOwnExplicitMonolithDependency,
+    )
+  }
 
   fun buildOwnReasoning(kind: SplitModeApiRestrictionsService.ModuleKind, explicitOnly: Boolean): String {
     return collectOwnReasoningLines(kind, explicitOnly).joinToString("\n")
@@ -269,9 +281,6 @@ private class DependencyAnalysis(
   ): List<String> {
     val lines = mutableListOf<String>()
     val kindName = getReasoningKindName(kind)
-    if (followsModuleKindNamingConvention(kind)) {
-      lines.add("$kindName indicator: module name '$moduleName'")
-    }
     val dependencyInfo = ownFacts.evidence(kind)
     if (dependencyInfo != null && (!explicitOnly || isExplicitDependency(kind, dependencyInfo.name))) {
       lines.add("$kindName dependency '${dependencyInfo.name}' from ${dependencyInfo.originDescription}")
@@ -282,22 +291,11 @@ private class DependencyAnalysis(
   private fun collectDependencyLines(kind: SplitModeApiRestrictionsService.ModuleKind): List<String> {
     val lines = mutableListOf<String>()
     val kindName = getReasoningKindName(kind)
-    if (followsModuleKindNamingConvention(kind)) {
-      lines.add("$kindName indicator: module name '$moduleName'")
-    }
     val dependencyInfo = ownFacts.evidence(kind) ?: containingFacts.evidence(kind)
     if (dependencyInfo != null) {
       lines.add("$kindName dependency '${dependencyInfo.name}' from ${dependencyInfo.originDescription}")
     }
     return lines
-  }
-
-  private fun followsModuleKindNamingConvention(kind: SplitModeApiRestrictionsService.ModuleKind): Boolean {
-    return when (kind) {
-      SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> isFrontendModuleByConvention
-      SplitModeApiRestrictionsService.ModuleKind.BACKEND -> isBackendModuleByConvention
-      else -> false
-    }
   }
 
   private fun isExplicitDependency(kind: SplitModeApiRestrictionsService.ModuleKind, dependencyName: String): Boolean {

@@ -7,6 +7,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildNonNativePluginMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildMixedModuleDependenciesMessage
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
@@ -24,6 +25,15 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    if (SplitModeInspectionUtil.shouldReportSinglePluginLevelError(currentXmlFile, moduleAnalysis)) {
+      holder.createProblem(
+        element,
+        ProblemHighlightType.GENERIC_ERROR,
+        buildNonNativePluginMessage(moduleAnalysis.resolvedModuleKind),
+        null,
+      )
+      return
+    }
     if (moduleAnalysis.resolvedModuleKind.kind != SplitModeApiRestrictionsService.ModuleKind.MIXED) return
 
     val mixedDependenciesMessage = buildMixedModuleDependenciesMessage(moduleAnalysis.resolvedModuleKind.reasoning)

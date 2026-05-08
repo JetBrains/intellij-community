@@ -142,6 +142,8 @@
                  description="Enables containing plugin descriptor analysis for DevKit split-mode inspections."/>
     <registryKey key="devkit.remote.dev.split.mode.inspections.skip.predefined" defaultValue="true"
                  description="Skips DevKit Split Mode inspections in modules and XML descriptors with predefined module kinds."/>
+    <registryKey key="devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
+                 description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
     <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file" defaultValue=""
                  description="Optional filesystem path to an extra predefined split-mode module kinds JSON file loaded in addition to the bundled DevKit data."
                  restartRequired="true"/>

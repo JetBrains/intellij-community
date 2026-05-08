@@ -17,6 +17,10 @@ internal object SplitModeAnalysisFlags {
     return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.inspections.skip.predefined")
   }
 
+  fun isXmlInspectionsForNonNativePluginEnabled(): Boolean {
+    return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+  }
+
   fun getAdditionalPredefinedModuleKindsFilePath(): String? {
     val value = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file").asString()
     if (value.isBlank()) {

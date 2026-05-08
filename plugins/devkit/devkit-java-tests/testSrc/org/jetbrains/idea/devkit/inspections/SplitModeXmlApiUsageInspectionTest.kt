@@ -24,6 +24,8 @@ internal class SplitModeXmlApiUsageInspectionTest : JavaCodeInsightFixtureTestCa
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
+    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+      .setValue(true, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance()
     service.scheduleLoadRestrictions()
@@ -84,6 +86,45 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  fun testPluginXmlWithIndirectBackendOnlyDependenciesShowsSingleRootError() {
+    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+      .setValue(false, testRootDisposable)
+
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.50.backend.support",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.50.backend.support.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.50",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      """
+        <<error descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode.
+
+Computed module kind reasoning:
+
+Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.50'
+via dependency 'unique.module.name.50.backend.support' -> descriptor 'unique.module.name.50.backend.support.xml' in module 'unique.module.name.50.backend.support'.">idea-plugin</error>>
+          <extensions defaultExtensionNs="com.intellij">
+            <typedHandler/>
+          </extensions>
+          <dependencies>
+            <module name="unique.module.name.50.backend.support"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+  }
+
   fun testApiRestrictionsJsonHasNoDuplicateApiTargets() {
     SplitModeApiRestrictionsService.getInstance().assertApiRestrictionsCanBeReadForTest()
   }
@@ -130,8 +171,8 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 
   fun testPredefinedModuleSkipsAllSplitModeInspections() {
     val pluginXml = addModuleWithXmlDescriptor(
-      moduleName = "intellij.platform.navbar.frontend",
-      descriptorRelativePathToResourcesDirectory = "intellij.platform.navbar.frontend.xml",
+      moduleName = "intellij.platform.resources",
+      descriptorRelativePathToResourcesDirectory = "META-INF/PlatformLangPlugin.xml",
       pluginXmlContent = """
         <idea-plugin>
           <dependencies>
@@ -144,6 +185,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
           </extensions>
         </idea-plugin>
       """.trimIndent(),
+      resourceRootDirectoryName = "src",
     )
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
@@ -838,8 +880,8 @@ Module 'unique.module.name.37'  -> backend">typedHandler</warning>/>
 
   fun testPredefinedSharedContainingPluginOverridesFrontendNamingConvention() {
     addModuleWithXmlDescriptor(
-      moduleName = "intellij.platform.navbar.frontend",
-      descriptorRelativePathToResourcesDirectory = "intellij.platform.navbar.frontend.xml",
+      moduleName = "intellij.platform.resources",
+      descriptorRelativePathToResourcesDirectory = "META-INF/PlatformLangPlugin.xml",
       pluginXmlContent = """
         <idea-plugin>
           <content>
@@ -847,6 +889,7 @@ Module 'unique.module.name.37'  -> backend">typedHandler</warning>/>
           </content>
         </idea-plugin>
       """.trimIndent(),
+      resourceRootDirectoryName = "src",
     )
     val contentModuleDescriptor = addModuleWithXmlDescriptor(
       moduleName = "unique.module.name.39",
@@ -860,7 +903,7 @@ Module 'unique.module.name.37'  -> backend">typedHandler</warning>/>
 Computed module kind reasoning:
 
 Module declares no own FE/BE dependencies, but the containing plugin.xml files do:
-Module 'intellij.platform.navbar.frontend'  -> shared">localInspection</warning>/>
+Module 'intellij.platform.resources'  -> shared">localInspection</warning>/>
           </extensions>
         </idea-plugin>
       """.trimIndent(),

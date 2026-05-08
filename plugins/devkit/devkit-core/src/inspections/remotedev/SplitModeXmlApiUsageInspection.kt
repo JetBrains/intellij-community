@@ -29,6 +29,7 @@ internal class SplitModeXmlApiUsageInspection : DevKitPluginXmlInspectionBase() 
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    if (SplitModeInspectionUtil.shouldReportSinglePluginLevelError(currentXmlFile, moduleAnalysis)) return
     val actualModuleKind = moduleAnalysis.resolvedModuleKind
 
     if (doesApiKindMatchExpectedModuleKind(actualModuleKind, expectedModuleKind)) return

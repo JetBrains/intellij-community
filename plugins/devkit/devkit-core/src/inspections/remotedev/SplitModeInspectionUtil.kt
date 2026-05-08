@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ResolvedModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
@@ -36,6 +37,20 @@ internal object SplitModeInspectionUtil {
   fun buildMixedModuleDependenciesMessage(reasoning: @NlsSafe String): String {
     val shortMessage = DevKitBundle.message("inspection.remote.dev.mixed.dependencies.message")
     return buildDetailedPlainTextMessage(shortMessage, null, reasoning)
+  }
+
+  @Nls
+  fun buildNonNativePluginMessage(actualModuleKind: ResolvedModuleKind): String {
+    val shortMessage = when (actualModuleKind.kind) {
+      SplitModeApiRestrictionsService.ModuleKind.FRONTEND ->
+        DevKitBundle.message("inspection.remote.dev.plugin.indirect.frontend.dependencies.message")
+      SplitModeApiRestrictionsService.ModuleKind.BACKEND ->
+        DevKitBundle.message("inspection.remote.dev.plugin.indirect.backend.dependencies.message")
+      SplitModeApiRestrictionsService.ModuleKind.MIXED ->
+        DevKitBundle.message("inspection.remote.dev.plugin.mixed.dependencies.message")
+      else -> error("Unsupported plugin kind for non-native plugin message: ${actualModuleKind.kind}")
+    }
+    return buildDetailedPlainTextMessage(shortMessage, null, actualModuleKind.reasoning)
   }
 
   @Nls
@@ -160,6 +175,34 @@ internal object SplitModeInspectionUtil {
     return true
   }
 
+  /**
+   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its own dependencies
+   * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
+   * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
+   */
+  fun shouldReportSinglePluginLevelError(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
+    if (SplitModeAnalysisFlags.isXmlInspectionsForNonNativePluginEnabled()) {
+      return false
+    }
+
+    val currentXmlFile = file as? XmlFile ?: return false
+    val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return false
+    if (!isMainPluginXml(currentXmlFile, module)) {
+      return false
+    }
+
+    if (moduleAnalysis.resolvedModuleKind.kind !in NON_NATIVE_PLUGIN_XML_KINDS) {
+      return false
+    }
+    if (!moduleAnalysis.evidence.hasOwnSplitModeEvidence) {
+      return false
+    }
+    if (moduleAnalysis.evidence.hasOwnExplicitPlatformDependency) {
+      return false
+    }
+    return true
+  }
+
   fun shouldSuppressForPredefinedModuleKind(file: PsiFile, restrictionsService: SplitModeApiRestrictionsService): Boolean {
     if (!SplitModeAnalysisFlags.isSkippingInspectionsForPredefinedModuleKindsEnabled()) {
       return false
@@ -219,4 +262,20 @@ internal object SplitModeInspectionUtil {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml) ?: return false
     return ideaPlugin.content.isEmpty() || ideaPlugin.content.all { it.moduleEntry.isEmpty() }
   }
+
+  private fun isMainPluginXml(currentXmlFile: XmlFile, module: Module): Boolean {
+    val pluginXml = PluginModuleType.getPluginXml(module) ?: return false
+    if (pluginXml.virtualFile != currentXmlFile.virtualFile) {
+      return false
+    }
+
+    val contentModuleDescriptor = PluginModuleType.getContentModuleDescriptorXml(module)
+    return contentModuleDescriptor?.virtualFile != currentXmlFile.virtualFile
+  }
+
+  private val NON_NATIVE_PLUGIN_XML_KINDS = setOf(
+    SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+    SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+    SplitModeApiRestrictionsService.ModuleKind.MIXED,
+  )
 }

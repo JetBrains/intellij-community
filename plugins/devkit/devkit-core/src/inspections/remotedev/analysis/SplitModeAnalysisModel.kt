@@ -5,7 +5,22 @@ import com.intellij.openapi.util.NlsSafe
 
 internal data class ModuleAnalysis(
   val resolvedModuleKind: ResolvedModuleKind,
+  val evidence: ModuleKindEvidence = ModuleKindEvidence(),
 )
+
+internal data class ModuleKindEvidence(
+  val hasOwnFrontendEvidence: Boolean = false,
+  val hasOwnBackendEvidence: Boolean = false,
+  val hasOwnExplicitFrontendDependency: Boolean = false,
+  val hasOwnExplicitBackendDependency: Boolean = false,
+  val hasOwnExplicitMonolithDependency: Boolean = false,
+) {
+  val hasOwnSplitModeEvidence: Boolean
+    get() = hasOwnFrontendEvidence || hasOwnBackendEvidence
+
+  val hasOwnExplicitPlatformDependency: Boolean
+    get() = hasOwnExplicitFrontendDependency || hasOwnExplicitBackendDependency || hasOwnExplicitMonolithDependency
+}
 
 internal data class ResolvedModuleKind(
   val kind: SplitModeApiRestrictionsService.ModuleKind,
