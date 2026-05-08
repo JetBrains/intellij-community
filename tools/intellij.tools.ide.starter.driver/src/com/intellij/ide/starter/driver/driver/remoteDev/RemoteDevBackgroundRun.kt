@@ -22,7 +22,7 @@ class RemoteDevBackgroundRun(
 ) : BackgroundRun(startResult = frontendStartResult,
                   driverWithoutAwaitedConnection = frontendDriver,
                   process = frontendProcess) {
-  override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
+  override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, takeScreenshot: Boolean, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
     try {
       waitAndPrepareForTest()
 
@@ -30,7 +30,7 @@ class RemoteDevBackgroundRun(
     }
     finally {
       catchAll { shutdownHook(driver) }
-      closeIdeAndWait(closeIdeTimeout)
+      closeIdeAndWait(closeIdeTimeout, takeScreenshot)
     }
     @Suppress("SSBasedInspection")
     return runBlocking {

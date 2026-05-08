@@ -284,8 +284,8 @@ fun <T : CommandChain> T.project(project: File): T = apply {
   addCommand("%%project ${project.absolutePath}")
 }
 
-fun <T : CommandChain> T.exitApp(forceExit: Boolean = true): T = apply {
-  takeScreenshot("exitApp")
+fun <T : CommandChain> T.exitApp(forceExit: Boolean = true, takeScreenshot: Boolean = true): T = apply {
+  if (takeScreenshot) takeScreenshot("exitApp")
   addCommand("${CMD_PREFIX}exitApp", forceExit.toString())
 }
 
