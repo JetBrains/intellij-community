@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -84,6 +85,7 @@ internal class AgentChatFileEditor(
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
   private var patchFoldController: AgentChatDisposableController? = null
   private var semanticRegionController: AgentChatSemanticRegionController? = null
+  private var crossProjectDockTargetRegistration = AgentChatCrossProjectDockTargetRegistrar().register(project, file)
 
   private val providerDescriptor
     get() = file.provider?.let(AgentSessionProviders::find)
@@ -116,6 +118,8 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
+    crossProjectDockTargetRegistration?.let(Disposer::dispose)
+    crossProjectDockTargetRegistration = null
     initialMessageDispatcher.dispose()
     pendingThreadRefreshController.dispose()
     concreteThreadRebindController.dispose()

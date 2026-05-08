@@ -88,6 +88,14 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
+- Agent chat editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
+  - the matching source project frame accepts the drop,
+  - other project frames reject the drop,
+  - closed source projects are not opened during drag-and-drop,
+  - the running terminal-backed agent session is preserved and must not restart.
+  [@test] ../chat/testSrc/AgentChatCrossProjectDockTargetRegistrarTest.kt
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - In dedicated frame, main toolbar must expose `AgentWorkbenchSessions.GoToSourceProjectFromToolbar`:
   - visible only in dedicated projects,
   - shows active chat tab source project name and opens/focuses source project in one click,

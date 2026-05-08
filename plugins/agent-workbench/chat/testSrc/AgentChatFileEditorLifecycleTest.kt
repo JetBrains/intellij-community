@@ -241,6 +241,81 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun fileClosedKeepsInitializedTerminalTabWhenFileIsOpenInAnotherProject() {
+    val sourceProject = testProject()
+    val targetProject = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = claudeLifecycleTestFile()
+    val liveTerminalStore = AgentChatLiveTerminalStore { candidate, excludedProject ->
+      if (candidate.tabKey == file.tabKey && excludedProject === sourceProject) targetProject else null
+    }
+
+    liveTerminalStore.acquireOrCreate(project = sourceProject, file = file, terminalTabs = terminalTabs)
+    val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
+
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.KEPT_OPEN)
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.closeCalls).isEqualTo(0)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
+
+    liveTerminalStore.dispose(targetProject)
+  }
+
+  @Test
+  fun crossProjectRecreatedEditorReusesInitializedTerminalTab() {
+    val dedicatedProject = testProject()
+    val sourceProject = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = claudeLifecycleTestFile()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+
+    val dedicatedTab = liveTerminalStore.acquireOrCreate(project = dedicatedProject, file = file, terminalTabs = terminalTabs)
+    val sourceTab = liveTerminalStore.acquireOrCreate(project = sourceProject, file = file, terminalTabs = terminalTabs)
+
+    assertThat(sourceTab).isSameAs(dedicatedTab)
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.closeCalls).isEqualTo(0)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
+
+    liveTerminalStore.disposeProject(dedicatedProject)
+    assertThat(terminalTabs.closeCalls).isEqualTo(0)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
+
+    val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.CLOSED)
+    assertThat(terminalTabs.closeCalls).isEqualTo(1)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isFalse()
+
+    liveTerminalStore.dispose(sourceProject)
+  }
+
+  @Test
+  fun projectDisposalReassignsInitializedTerminalTabWhenFileIsOpenInAnotherProject() {
+    val dedicatedProject = testProject()
+    val sourceProject = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = claudeLifecycleTestFile()
+    val liveTerminalStore = AgentChatLiveTerminalStore { candidate, excludedProject ->
+      if (candidate.tabKey == file.tabKey && excludedProject === dedicatedProject) sourceProject else null
+    }
+
+    liveTerminalStore.acquireOrCreate(project = dedicatedProject, file = file, terminalTabs = terminalTabs)
+    liveTerminalStore.disposeProject(dedicatedProject)
+
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.closeCalls).isEqualTo(0)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
+
+    val closeResult = liveTerminalStore.handleFileClosed(sourceProject, testFileEditorManager(isFileOpen = false), file)
+
+    assertThat(closeResult).isEqualTo(AgentChatLiveTerminalCloseResult.CLOSED)
+    assertThat(terminalTabs.closeCalls).isEqualTo(1)
+    assertThat(liveTerminalStore.isTracked(file.tabKey)).isFalse()
+
+    liveTerminalStore.dispose(sourceProject)
+  }
+
+  @Test
   fun fileClosedDefersInitializedTerminalTabCloseWhileClosingToReopen() {
     val project = testProject()
     val terminalTabs = FakeAgentChatTerminalTabs()

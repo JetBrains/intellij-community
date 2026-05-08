@@ -6,12 +6,14 @@ package com.intellij.agent.workbench.chat
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -47,7 +49,7 @@ internal class AgentChatLiveTerminalRegistryService(
   private val project: Project,
   private val serviceScope: CoroutineScope,
 ) : AgentChatLiveTerminalRegistry, Disposable {
-  private val store = AgentChatLiveTerminalStore()
+  private val store = AgentChatLiveTerminalApplicationStore.store
   private val pendingCloseJobs = ConcurrentHashMap<String, Job>()
 
   init {
@@ -90,7 +92,7 @@ internal class AgentChatLiveTerminalRegistryService(
   override fun dispose() {
     pendingCloseJobs.values.forEach(Job::cancel)
     pendingCloseJobs.clear()
-    store.dispose(project)
+    store.disposeProject(project)
   }
 
   private fun schedulePendingCloseConfirmation(source: FileEditorManager, file: AgentChatVirtualFile) {
@@ -99,12 +101,7 @@ internal class AgentChatLiveTerminalRegistryService(
       repeat(PENDING_CLOSE_CONFIRMATION_RECHECK_COUNT) {
         delay(PENDING_CLOSE_CONFIRMATION_RECHECK_INTERVAL_MS.milliseconds)
         val reopened = withContext(Dispatchers.EDT) {
-          if (project.isDisposed) {
-            false
-          }
-          else {
-            source.isFileOpen(file)
-          }
+          !project.isDisposed && source.isFileOpen(file)
         }
         if (reopened) {
           withContext(Dispatchers.EDT) {
@@ -136,6 +133,23 @@ internal class AgentChatLiveTerminalRegistryService(
   }
 }
 
+private object AgentChatLiveTerminalApplicationStore {
+  val store: AgentChatLiveTerminalStore = AgentChatLiveTerminalStore(::findOpenProjectForFile)
+
+  private fun findOpenProjectForFile(file: AgentChatVirtualFile, excludedProject: Project?): Project? {
+    for (project in ProjectManager.getInstance().openProjects) {
+      if (project.isDisposed || project == excludedProject) {
+        continue
+      }
+      val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
+      if (manager.isFileOpen(file)) {
+        return project
+      }
+    }
+    return null
+  }
+}
+
 internal enum class AgentChatLiveTerminalCloseResult {
   KEPT_OPEN,
   DEFERRED,
@@ -145,8 +159,12 @@ internal enum class AgentChatLiveTerminalCloseResult {
 /**
  * Synchronized in-memory store used by the project service and lightweight lifecycle tests.
  */
-internal class AgentChatLiveTerminalStore {
+internal class AgentChatLiveTerminalStore(
+  private val findOpenProjectForFile: (AgentChatVirtualFile, Project?) -> Project? = { _, _ -> null },
+) {
   private data class LiveTerminalEntry(
+    var project: Project,
+    var file: AgentChatVirtualFile,
     val tab: AgentChatTerminalTab,
     val terminalTabs: AgentChatTerminalTabs,
   )
@@ -162,11 +180,13 @@ internal class AgentChatLiveTerminalStore {
     pendingCloseTabKeys.remove(file.tabKey)
     val existing = entries.get(file.tabKey)
     if (existing != null) {
+      existing.project = project
+      existing.file = file
       return existing.tab
     }
 
     val createdTab = terminalTabs.createTab(project, file)
-    entries.put(file.tabKey, LiveTerminalEntry(tab = createdTab, terminalTabs = terminalTabs))
+    entries.put(file.tabKey, LiveTerminalEntry(project = project, file = file, tab = createdTab, terminalTabs = terminalTabs))
     return createdTab
   }
 
@@ -180,7 +200,12 @@ internal class AgentChatLiveTerminalStore {
     file: AgentChatVirtualFile,
   ): AgentChatLiveTerminalCloseResult {
     if (source.isFileOpen(file)) {
-      pendingCloseTabKeys.remove(file.tabKey)
+      retainOpenEntry(tabKey = file.tabKey, project = project)
+      return AgentChatLiveTerminalCloseResult.KEPT_OPEN
+    }
+    val openProject = findOpenProjectForFile(file, project)
+    if (openProject != null) {
+      retainOpenEntry(tabKey = file.tabKey, project = openProject)
       return AgentChatLiveTerminalCloseResult.KEPT_OPEN
     }
 
@@ -190,7 +215,7 @@ internal class AgentChatLiveTerminalStore {
     }
 
     pendingCloseTabKeys.remove(file.tabKey)
-    return closeAndRemove(project = project, tabKey = file.tabKey)
+    return closeAndRemove(tabKey = file.tabKey)
   }
 
   @Synchronized
@@ -208,21 +233,51 @@ internal class AgentChatLiveTerminalStore {
       return AgentChatLiveTerminalCloseResult.KEPT_OPEN
     }
     if (source.isFileOpen(file)) {
+      retainOpenEntry(tabKey = file.tabKey, project = project)
       return AgentChatLiveTerminalCloseResult.KEPT_OPEN
     }
-    return closeAndRemove(project = project, tabKey = file.tabKey)
+    val openProject = findOpenProjectForFile(file, project)
+    if (openProject != null) {
+      retainOpenEntry(tabKey = file.tabKey, project = openProject)
+      return AgentChatLiveTerminalCloseResult.KEPT_OPEN
+    }
+    return closeAndRemove(tabKey = file.tabKey)
   }
 
   /**
    * Releases every retained terminal during project shutdown.
    */
+  @Suppress("UNUSED_PARAMETER")
   @Synchronized
   fun dispose(project: Project) {
     val entriesToClose = entries.values.toList()
     entries.clear()
     pendingCloseTabKeys.clear()
     for (entry in entriesToClose) {
-      entry.terminalTabs.closeTab(project, entry.tab)
+      entry.terminalTabs.closeTab(entry.project, entry.tab)
+    }
+  }
+
+  @Synchronized
+  fun disposeProject(project: Project) {
+    val entriesToProcess = entries.entries
+      .filter { entry -> entry.value.project == project }
+      .map { entry -> entry.key to entry.value }
+    val entriesToClose = mutableListOf<LiveTerminalEntry>()
+    for ((tabKey, entry) in entriesToProcess) {
+      val openProject = findOpenProjectForFile(entry.file, project)
+      if (openProject != null) {
+        entry.project = openProject
+        pendingCloseTabKeys.remove(tabKey)
+      }
+      else {
+        entries.remove(tabKey)
+        pendingCloseTabKeys.remove(tabKey)
+        entriesToClose.add(entry)
+      }
+    }
+    for (entry in entriesToClose) {
+      entry.terminalTabs.closeTab(entry.project, entry.tab)
     }
   }
 
@@ -238,10 +293,15 @@ internal class AgentChatLiveTerminalStore {
     return pendingCloseTabKeys.contains(tabKey)
   }
 
-  private fun closeAndRemove(project: Project, tabKey: String): AgentChatLiveTerminalCloseResult {
+  private fun closeAndRemove(tabKey: String): AgentChatLiveTerminalCloseResult {
     val entry = entries.remove(tabKey) ?: return AgentChatLiveTerminalCloseResult.KEPT_OPEN
-    entry.terminalTabs.closeTab(project, entry.tab)
+    entry.terminalTabs.closeTab(entry.project, entry.tab)
     return AgentChatLiveTerminalCloseResult.CLOSED
+  }
+
+  private fun retainOpenEntry(tabKey: String, project: Project) {
+    pendingCloseTabKeys.remove(tabKey)
+    entries.get(tabKey)?.project = project
   }
 }
 
