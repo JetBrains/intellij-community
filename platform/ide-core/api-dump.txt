@@ -476,8 +476,6 @@ f:com.intellij.openapi.application.ApplicationStarterEP
 - implementation:java.lang.String
 - isInternal:Z
 - key:java.lang.String
-f:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributorKt
-- sf:getFilteredSystemRoots(kotlin.jvm.functions.Function1):java.util.List
 com.intellij.openapi.fileTypes.FileTypeConsumer
 - sf:EXTENSION_DELIMITER:java.lang.String
 - a:consume(com.intellij.openapi.fileTypes.FileType):V

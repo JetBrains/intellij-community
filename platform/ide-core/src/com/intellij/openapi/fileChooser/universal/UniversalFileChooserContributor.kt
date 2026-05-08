@@ -20,6 +20,18 @@ interface UniversalFileChooserContributor {
     val EP_NAME: ExtensionPointName<UniversalFileChooserContributor> = ExtensionPointName("com.intellij.universalFileChooserContributor")
 
     fun findOwner(path: Path): UniversalFileChooserContributor? = EP_NAME.findFirstSafe { ext -> ext.ownsPath(path) }
+
+    fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<Root> {
+      return FileSystems.getDefault().getRootDirectories().filter(predicate).map { asDefaultRoot(it) }
+    }
+
+    fun asDefaultRoot(path: Path): Root {
+      val name = path.fileName?.toString() ?: path.toString()
+      return Root(
+        name,
+        Presentation(name, ),
+        path)
+    }
   }
 
   @get:Nls(capitalization = Nls.Capitalization.Title)
@@ -53,14 +65,4 @@ interface UniversalFileChooserContributor {
   fun getFileName(path: Path): String? = path.fileName?.toString()
 }
 
-fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<UniversalFileChooserContributor.Root> {
-  return FileSystems.getDefault().getRootDirectories().filter(predicate).map { asDefaultRoot(it) }
-}
 
-fun asDefaultRoot(path: Path): UniversalFileChooserContributor.Root {
-  val name = path.fileName?.toString() ?: path.toString()
-  return UniversalFileChooserContributor.Root(
-    name,
-    UniversalFileChooserContributor.Presentation(name, ),
-    path)
-}

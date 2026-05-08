@@ -3,7 +3,7 @@ package com.intellij.platform.ide.impl.wsl.fileChooser
 
 import com.intellij.openapi.fileChooser.universal.FileWatcherAdapter
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
-import com.intellij.openapi.fileChooser.universal.getFilteredSystemRoots
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Companion.getFilteredSystemRoots
 import com.intellij.platform.eel.impl.fileChooser.EelFileWatcherAdapter
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
