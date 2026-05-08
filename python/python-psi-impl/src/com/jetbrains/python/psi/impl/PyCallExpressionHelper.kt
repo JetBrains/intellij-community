@@ -45,8 +45,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
@@ -1192,7 +1190,7 @@ object PyCallExpressionHelper {
           // expansion. For those, consume from arguments reserved at the `*args` branch above;
           // otherwise (no preceding `*args`) consume from the regular positional pool.
           val source = if (keywordOnlyMode) reservedForPostArgs else allPositionalArguments
-          val positionalArgument = source.next()
+          val positionalArgument = source.removeFirstOrNull()
           if (positionalArgument != null) {
             mappedParameters[positionalArgument] = parameter
           }
@@ -1227,7 +1225,7 @@ object PyCallExpressionHelper {
           variadicKeywordArguments.clear()
         }
         else if (!allPositionalArguments.isEmpty()) {
-          val positionalArgument = allPositionalArguments.next()
+          val positionalArgument = allPositionalArguments.removeFirstOrNull()
           require(positionalArgument != null)
           mappedParameters[positionalArgument] = parameter
           if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
@@ -1254,7 +1252,7 @@ object PyCallExpressionHelper {
         }
       }
       else if (psi is PyTupleParameter) {
-        val positionalArgument = allPositionalArguments.next()
+        val positionalArgument = allPositionalArguments.removeFirstOrNull()
         if (positionalArgument != null) {
           tupleMappedParameters[positionalArgument] = parameter
           val tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, psi)
@@ -1512,10 +1510,6 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun isVariadicPositionalArgument(expression: PyExpression): Boolean {
     return expression is PyStarArgument && !expression.isKeyword
-  }
-
-  private fun <T> MutableList<T?>.next(): T? {
-    return if (isEmpty()) null else removeAt(0)
   }
 
   private fun filterExplicitParameters(
