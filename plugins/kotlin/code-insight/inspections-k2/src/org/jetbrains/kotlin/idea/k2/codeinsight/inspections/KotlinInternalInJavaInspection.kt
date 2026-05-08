@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
@@ -12,14 +12,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.javadoc.PsiInlineDocTag
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
-@K1Deprecation
 class KotlinInternalInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {

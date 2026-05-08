@@ -59,6 +59,44 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJava")
+    public static class KotlinInternalInJava extends AbstractK2MultiFileInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinInternalInJava.test")
+        public void testKotlinInternalInJava() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJava/kotlinInternalInJava.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaTest")
+    public static class KotlinInternalInJavaTest extends AbstractK2MultiFileInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinInternalInJavaTest.test")
+        public void testKotlinInternalInJavaTest() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/kotlinInternalInJavaTest/kotlinInternalInJavaTest.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiFileInspections/kotlinJvmAnnotationInJava")
     public static class KotlinJvmAnnotationInJava extends AbstractK2MultiFileInspectionTest {
         @java.lang.Override
