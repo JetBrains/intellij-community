@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -91,14 +90,12 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
-import org.assertj.core.api.Assertions
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
-import kotlin.test.assertTrue
 
 @Suppress("UnresolvedPluginConfigReference")
 @RunsInEdt
@@ -1472,27 +1469,6 @@ private fun loadPluginInTest(pluginPath: Path, actionWithPluginLoaded: () -> Uni
   }
   finally {
     unloadAndUninstallPlugin(descriptor)
-  }
-}
-
-private fun loadPluginInTest(
-  plugin: PluginMainDescriptor,
-): Disposable {
-  Assertions.assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(plugin)).isNull()
-  try {
-    assertTrue(DynamicPlugins.loadPlugin(pluginDescriptor = plugin), "expected $plugin to load dynamically")
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
-  }
-  catch (e: Exception) {
-    unloadAndUninstallPlugin(plugin) // FIXME it does not seem to uninstall the plugin and it we should not do it anyway
-    throw e
-  }
-  return Disposable {
-    val reason = DynamicPlugins.checkCanUnloadWithoutRestart(plugin)
-    invokeAndWaitIfNeeded {
-      unloadAndUninstallPlugin(plugin)
-    }
-    Assertions.assertThat(reason).isNull()
   }
 }
 
