@@ -361,7 +361,8 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     } catch (_: ProcessCanceledException) {
       // ignored
     } catch (e: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isUnitTestMode()) {
         ExceptionUtil.rethrow(e)
       }
       if (!Logger.shouldRethrow(e)) {
