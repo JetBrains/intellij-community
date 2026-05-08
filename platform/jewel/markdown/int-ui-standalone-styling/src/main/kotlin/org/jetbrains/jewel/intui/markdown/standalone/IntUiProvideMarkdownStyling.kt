@@ -9,10 +9,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
-import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
+import org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
@@ -26,8 +27,10 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 /**
  * Provide Markdown styling based on the current theme.
  *
- * By default, no code syntax highlighting will be available. If you do have a [codeHighlighter] instance to use
- * instead, you should provide it.
+ * By default, code syntax highlighting is handled by a [SimpleCodeHighlighter] with a theme-aware
+ * [SyntaxHighlightColors] palette (dark or light, matching [isDark]). Pass your own [codeHighlighter] to override it,
+ * or pass [org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter] to disable syntax highlighting
+ * entirely.
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -53,7 +56,10 @@ public fun ProvideMarkdownStyling(
                 MarkdownBlockRenderer.light(markdownStyling)
             }
         },
-    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    codeHighlighter: CodeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalMarkdownImageSourceResolver provides imageSourceResolver) {
@@ -72,8 +78,10 @@ public fun ProvideMarkdownStyling(
 /**
  * Provide Markdown styling based on the current theme.
  *
- * By default, no code syntax highlighting will be available. If you do have a [codeHighlighter] instance to use
- * instead, you should provide it.
+ * By default, code syntax highlighting is handled by a [SimpleCodeHighlighter] with a theme-aware
+ * [SyntaxHighlightColors] palette (dark or light, matching [isDark]). Pass your own [codeHighlighter] to override it,
+ * or pass [org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter] to disable syntax highlighting
+ * entirely.
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -98,7 +106,10 @@ public fun ProvideMarkdownStyling(
                 MarkdownBlockRenderer.light(markdownStyling)
             }
         },
-    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
+    codeHighlighter: CodeHighlighter =
+        remember(isDark) {
+            SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+        },
     content: @Composable () -> Unit,
 ) {
     ProvideMarkdownStyling(
@@ -119,7 +130,12 @@ public fun ProvideMarkdownStyling(
     imageSourceResolver: ImageSourceResolver,
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
-    codeHighlighter: CodeHighlighter,
+    codeHighlighter: CodeHighlighter =
+        JewelTheme.isDark.let { isDark ->
+            remember(isDark) {
+                SimpleCodeHighlighter(if (isDark) SyntaxHighlightColors.dark() else SyntaxHighlightColors.light())
+            }
+        },
     markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
     content: @Composable () -> Unit,

@@ -9,6 +9,68 @@
 - f:getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - f:getMessage(java.lang.String,java.lang.Object[]):java.lang.String
 *f:org.jetbrains.jewel.intui.standalone.bundle.DynamicBundle$Companion
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar$Companion
+- <init>(java.util.List,java.util.List):V
+- f:getNames():java.util.List
+- f:getRules():java.util.List
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.LanguageGrammar$Companion
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.SimpleCodeHighlighter
+- org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors):V
+- <init>(org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors,java.util.List):V
+- f:getAdditionalGrammars():java.util.List
+- f:getColors():org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
+- highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+- b:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors$Companion
+- equals(java.lang.Object):Z
+- f:getBuiltin-0d7_KjU():J
+- f:getComment-0d7_KjU():J
+- f:getConstant-0d7_KjU():J
+- f:getFunctionCall-0d7_KjU():J
+- f:getKeyword-0d7_KjU():J
+- f:getNumber-0d7_KjU():J
+- f:getString-0d7_KjU():J
+- f:getType-0d7_KjU():J
+- hashCode():I
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors$Companion
+- f:dark():org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
+- f:light():org.jetbrains.jewel.intui.standalone.code.highlighting.SyntaxHighlightColors
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule$Companion
+- <init>(java.lang.String,java.util.Map):V
+- f:getCaptures():java.util.Map
+- f:getPattern():java.lang.String
+*f:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule$Companion
+- f:builtin(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:comment(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:constant(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:functionCall(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:functionDeclaration(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:keyword(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:number(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:string(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:type(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+- f:typeDeclaration(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenRule
+*e:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- java.lang.Enum
+- sf:BUILTIN:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:COMMENT:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:CONSTANT:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:FUNCTION_CALL:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:KEYWORD:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:NUMBER:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:STRING:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- sf:TYPE:org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType
+- s:values():org.jetbrains.jewel.intui.standalone.code.highlighting.TokenType[]
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStylingKt
 - *sf:darkTransparentBackground(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 - *bs:darkTransparentBackground$default(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
