@@ -168,13 +168,14 @@ internal suspend fun performInMemoryRebase(
   origin: InMemoryRebaseOrigin,
   notifySuccess: Boolean = true,
 ): GitCommitEditingOperationResult {
-  if (!isInMemoryRebaseSupported(objectRepo.repository)) {
-    return GitCommitEditingOperationResult.Incomplete
+  val unsupportedGitVersionResult = checkInMemoryRebaseSupport(objectRepo.repository)
+  if (unsupportedGitVersionResult != null) {
+    return unsupportedGitVersionResult
   }
   val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
 
   val rebaseData = createRebaseData(model, entries, objectRepo.repository, showFailureNotification)
-                   ?: return GitCommitEditingOperationResult.Incomplete
+                   ?: return GitCommitEditingOperationResult.Incomplete.Unspecified
   val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(objectRepo.repository.project, origin)
   val operationResult = executeRebase(objectRepo, rebaseData, showFailureNotification, rebaseActivity)
 
@@ -191,7 +192,7 @@ internal suspend fun performInMemoryRebase(
         )
       }
     }
-    is GitCommitEditingOperationResult.Conflict ->
+    is GitCommitEditingOperationResult.Incomplete.Conflict ->
       GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CONFLICT)
     is GitCommitEditingOperationResult.Incomplete ->
       GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
@@ -199,8 +200,9 @@ internal suspend fun performInMemoryRebase(
   return operationResult
 }
 
-private fun isInMemoryRebaseSupported(repository: GitRepository): Boolean {
-  return GitVersionSpecialty.MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED.existsIn(repository)
+private fun checkInMemoryRebaseSupport(repository: GitRepository): GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion? {
+  if (GitVersionSpecialty.MERGE_TREE_PASS_THREE_TREES_SUPPORTED.existsIn(repository)) return null
+  return GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion(GitVersionSpecialty.MERGE_TREE_PASS_THREE_TREES_SUPPORTED.version)
 }
 
 private fun createRebaseData(
@@ -239,7 +241,7 @@ private suspend fun executeRebase(
     if (showFailureNotification) {
       notifyMergeConflict(objectRepo.repository, e)
     }
-    GitCommitEditingOperationResult.Conflict(e.description)
+    GitCommitEditingOperationResult.Incomplete.Conflict(e.description)
   }
   catch (e: CancellationException) {
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CANCELED)

@@ -57,14 +57,14 @@ internal class GitDropSelectedChangesOperation(
       destinationName
     ) {
       if (canDropViaAmend()) dropViaAmend() else dropViaRebase()
-    } ?: GitCommitEditingOperationResult.Incomplete
+    } ?: GitCommitEditingOperationResult.Incomplete.Unspecified
   }
 
   private fun canDropViaAmend() = commit.id.asString() == initialHeadPosition
 
   private fun dropViaAmend(): GitCommitEditingOperationResult {
     if (!restoreChanges()) {
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
     val handler = GitLineHandler(project, repository.root, GitCommand.COMMIT).apply {
       addParameters("--amend", "--no-verify", "--no-edit")
@@ -80,20 +80,20 @@ internal class GitDropSelectedChangesOperation(
     }
     else {
       notifyGitCommandFailed(result)
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
   }
 
   private fun dropViaRebase(): GitCommitEditingOperationResult {
     if (!createFixupCommit()) {
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
     val fixupCommit = try {
       GitLogUtil.collectMetadataForCommit(project, repository.root, GitUtil.HEAD) ?: error("No HEAD commit")
     }
     catch (e: VcsException) {
       notifyOperationFailed(e)
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
     val commitsToSquash = listOf(fixupCommit, commit)
     val result = GitSquashOperation(repository).execute(commitsToSquash, commit.fullMessage, initialHeadPosition)

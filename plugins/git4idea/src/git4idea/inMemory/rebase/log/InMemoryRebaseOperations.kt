@@ -61,7 +61,7 @@ internal object InMemoryRebaseOperations {
                                repository.project.service<GitInteractiveRebaseEntriesProvider>()
                                  .tryGetEntriesForCommitEditing(repository, commits.last(), entriesSource.logData)
                              }
-                           } ?: return GitCommitEditingOperationResult.Incomplete
+                           } ?: return GitCommitEditingOperationResult.Incomplete.Unspecified
 
     val model = convertToModel(generatedEntries)
     val commitHashes = commits.map { commit -> commit.id.asString() }.toSet()
@@ -71,7 +71,7 @@ internal object InMemoryRebaseOperations {
 
     if (targetIndices.size != commits.size) {
       LOG.warn("Couldn't find all commits in the model")
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
 
     modelModifier(model, targetIndices)

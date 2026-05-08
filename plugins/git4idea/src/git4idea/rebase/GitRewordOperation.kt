@@ -63,7 +63,7 @@ internal class GitRewordOperation(
     }
     catch (e: IOException) {
       LOG.warn("Couldn't create message file", e)
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
     handler.addParameters("--amend")
     handler.addParameters("-F")
@@ -80,7 +80,7 @@ internal class GitRewordOperation(
     }
     else {
       LOG.warn("Couldn't reword via amend: " + result.errorOutputAsJoinedString)
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
   }
 

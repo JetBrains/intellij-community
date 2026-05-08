@@ -70,7 +70,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
     catch (e: VcsException) {
       if (showFailureNotification) notifyOperationFailed(e)
       LOG.warn("Failed to execute in-memory rebase operation", e)
-      return GitCommitEditingOperationResult.Incomplete
+      return GitCommitEditingOperationResult.Incomplete.Unspecified
     }
   }
 
