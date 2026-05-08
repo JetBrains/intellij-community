@@ -1,0 +1,17 @@
+// FILE: before.kt
+enum class Foo {
+  BAR
+}
+
+fun usage() {
+  Foo.BAR<caret>
+}
+
+// FILE: after.kt
+enum class <caret>Foo {
+  BAR
+}
+
+fun usage() {
+  Foo.BAR
+}

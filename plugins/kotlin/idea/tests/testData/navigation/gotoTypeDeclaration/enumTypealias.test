@@ -1,0 +1,21 @@
+// FILE: before.kt
+enum class Foo {
+  BAR
+}
+
+typealias FooAlias = Foo
+
+fun usage(value: FooAlias) {
+  value<caret>
+}
+
+// FILE: after.kt
+enum class Foo {
+  BAR
+}
+
+typealias <caret>FooAlias = Foo
+
+fun usage(value: FooAlias) {
+  value
+}

@@ -40,6 +40,31 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/classInstance.test");
     }
 
+    @TestMetadata("enum.test")
+    public void testEnum() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/enum.test");
+    }
+
+    @TestMetadata("enum2.test")
+    public void testEnum2() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/enum2.test");
+    }
+
+    @TestMetadata("enum3.test")
+    public void testEnum3() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/enum3.test");
+    }
+
+    @TestMetadata("enum4.test")
+    public void testEnum4() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/enum4.test");
+    }
+
+    @TestMetadata("enumTypealias.test")
+    public void testEnumTypealias() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/enumTypealias.test");
+    }
+
     @TestMetadata("explicitParameterInLambda.test")
     public void testExplicitParameterInLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");

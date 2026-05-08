@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -64,6 +65,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
                 }
                 else PsiElement.EMPTY_ARRAY
             }
+            is KtEnumEntry -> getEnumEntryTypeDeclaration(symbol)
             is KtCallableDeclaration -> {
                 symbol.getTypeDeclarationFromCallable(callSiteReferenceProvider = {
                     if (editor != null && offset != null) {
@@ -84,6 +86,12 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
             (callableSymbol as? KaFunctionSymbol)?.valueParameters?.firstOrNull()?.returnType ?: callableSymbol.receiverType
         }
     }
+
+    private fun getEnumEntryTypeDeclaration(symbol: KtEnumEntry): Array<PsiElement> =
+        analyze(symbol) {
+            symbol.symbol.returnType.symbol?.psi?.let { return arrayOf(it) }
+        } ?: PsiElement.EMPTY_ARRAY
+
 
     private fun getClassTypeDeclaration(symbol: KtClassOrObject): Array<PsiElement> {
         analyze(symbol) {
