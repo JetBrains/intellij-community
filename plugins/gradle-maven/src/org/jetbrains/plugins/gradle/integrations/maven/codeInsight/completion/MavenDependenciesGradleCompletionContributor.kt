@@ -13,14 +13,13 @@ import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMM
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.java.groovy.codeInsight.AbstractGradleGroovyCompletionContributor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenVersionNegatingWeigher
@@ -61,31 +60,26 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
         result.restartCompletionOnAnyPrefixChange()
         if (GROUP_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
-          val searchPromise = dependencySearch.fulltextSearchBlocking(groupId, searchParameters.useCache(), searchParameters.isLocalOnly) {
-            it?.let { cld.add(it) }
+          runBlockingCancellable {
+            dependencySearch.fulltextSearch(groupId, searchParameters.useCache(), searchParameters.isLocalOnly) { cld.add(it) }
           }
-          waitAndAdd(searchPromise, cld) {
-            result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertGroupHandler.INSTANCE))
-          }
+          cld.forEach { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertGroupHandler.INSTANCE)) }
         }
         else if (NAME_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
           val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
-          val searchPromise = searchArtifactId(groupId, artifactId, dependencySearch,
-                                               searchParameters) { it?.let { cld.add(it) } }
-          waitAndAdd(searchPromise, cld) {
-            result.addElement(
-              MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE))
+          runBlockingCancellable { searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) } }
+          cld.forEach {
+            result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleMapStyleInsertArtifactIdHandler.INSTANCE))
           }
         }
         else if (VERSION_LABEL == parent.labelName) {
           val groupId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL))
           val artifactId = trimDummy(findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, NAME_LABEL))
-          val searchPromise = searchArtifactId(groupId, artifactId, dependencySearch,
-                                               searchParameters) { it?.let { cld.add(it) } }
+          runBlockingCancellable { searchArtifactId(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) } }
           val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
             MavenVersionNegatingWeigher()))
-          waitAndAdd(searchPromise, cld) { repo ->
+          cld.forEach { repo ->
             repo.items.forEach {
               val version = it.version ?: return@forEach
               newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, version))
@@ -124,19 +118,15 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
         val artifactId = splitted.getOrNull(1)
         val version = splitted.getOrNull(2)
         val dependencySearch = MavenDependencySearchService.getInstance(element.project)
-        val searchPromise = searchStringDependency(groupId, artifactId, dependencySearch, createSearchParameters(params)) {
-          it?.let {
-            cld.add(it)
-          }
-        }
         result.restartCompletionOnAnyPrefixChange()
+        runBlockingCancellable { searchStringDependency(groupId, artifactId, dependencySearch, createSearchParameters(params)) { cld.add(it) } }
         val additionalData = CompletionData(completionPrefix, suffix, quote)
         if (version != null) {
           val newResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(MavenVersionNegatingWeigher()))
-          waitAndAdd(searchPromise, cld, completeVersions(newResult, additionalData))
+          cld.forEach(completeVersions(newResult, additionalData))
         }
         else {
-          waitAndAdd(searchPromise, cld, completeGroupAndArtifact(result, additionalData))
+          cld.forEach(completeGroupAndArtifact(result, additionalData))
         }
       }
     })
@@ -157,47 +147,34 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyComplet
                         .also { it.putUserData(COMPLETION_DATA_KEY, data) })
   }
 
-  private fun searchStringDependency(
+  private suspend fun searchStringDependency(
     groupId: String,
     artifactId: String?,
     service: MavenDependencySearchService,
     searchParameters: SearchParameters,
     consumer: (MavenRepoArtifactInfo) -> Unit,
-  ): Promise<Int> {
+  ) {
     if (artifactId == null) {
-      return service.fulltextSearchBlocking(groupId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
+      service.fulltextSearch(groupId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
     }
     else {
-      return service.suggestPrefixBlocking(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
+      service.suggestPrefix(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
     }
 
   }
 
-  private fun searchArtifactId(
+  private suspend fun searchArtifactId(
     groupId: String,
     artifactId: String,
     service: MavenDependencySearchService,
     searchParameters: SearchParameters,
     consumer: (MavenRepoArtifactInfo) -> Unit,
-  ): Promise<Int> {
-    if (groupId.isBlank()) {
-      return service.fulltextSearchBlocking(artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
-    }
-    return service.suggestPrefixBlocking(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
-  }
-
-  private fun waitAndAdd(
-    searchPromise: Promise<Int>,
-    cld: ConcurrentLinkedDeque<MavenRepoArtifactInfo>,
-    handler: (MavenRepoArtifactInfo) -> Unit,
   ) {
-    while (searchPromise.state == Promise.State.PENDING || !cld.isEmpty()) {
-      ProgressManager.checkCanceled()
-      val item = cld.poll()
-      if (item != null) {
-        handler.invoke(item)
-      }
+    if (groupId.isBlank()) {
+      service.fulltextSearch(artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
+      return
     }
+    service.suggestPrefix(groupId, artifactId, searchParameters.useCache(), searchParameters.isLocalOnly, consumer)
   }
 
   companion object {

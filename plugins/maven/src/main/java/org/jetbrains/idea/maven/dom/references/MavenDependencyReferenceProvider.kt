@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references
 
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
@@ -9,7 +10,7 @@ import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider
 
 /**
@@ -78,7 +79,7 @@ open class MavenDependencyReferenceProvider : PsiReferenceProvider(), MavenSoftA
     }
 
     override fun getVariants(): Array<Any?> {
-      return getInstance(getElement().getProject()).getGroupIdsBlocking("").toTypedArray()
+      return runBlockingCancellable { MavenDependencySearchService.getInstance(element.getProject()).getGroupIds("") }.toTypedArray()
     }
   }
 
@@ -91,7 +92,7 @@ open class MavenDependencyReferenceProvider : PsiReferenceProvider(), MavenSoftA
     override fun getVariants(): Array<Any?> {
       if (myGroupId.isBlank()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY
 
-      return getInstance(element.getProject()).getArtifactIdsBlocking(myGroupId).toTypedArray()
+      return runBlockingCancellable { MavenDependencySearchService.getInstance(element.getProject()).getArtifactIds(myGroupId) }.toTypedArray()
     }
   }
 
@@ -110,7 +111,7 @@ open class MavenDependencyReferenceProvider : PsiReferenceProvider(), MavenSoftA
       if (myGroupId.isBlank() || myArtifactId.isBlank()) {
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY
       }
-      return getInstance(element.getProject()).getVersionsBlocking(myGroupId, myArtifactId).toTypedArray()
+      return runBlockingCancellable { MavenDependencySearchService.getInstance(element.getProject()).getVersions(myGroupId, myArtifactId) }.toTypedArray()
     }
   }
 }

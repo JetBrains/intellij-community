@@ -2,10 +2,9 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.WaitFor
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import java.util.function.Consumer
@@ -18,14 +17,10 @@ class MavenArtifactSearcher : MavenSearcher<MavenArtifactSearchResult>() {
     val searchResults = ArrayList<MavenRepoArtifactInfo>()
     val searchService = getInstance(project)
     val useLocalProvidersOnly = ApplicationManager.getApplication().isUnitTestMode()
-    val asyncPromise =
-      searchService.fulltextSearchBlocking(pattern, false, useLocalProvidersOnly, Consumer {
+    runBlockingCancellable {
+      searchService.fulltextSearch(pattern, false, useLocalProvidersOnly, Consumer {
         searchResults.add(it)
       })
-    object : WaitFor(1000) {
-      override fun condition(): Boolean {
-        return asyncPromise.getState() != Promise.State.PENDING
-      }
     }
     return processResults(searchResults)
   }

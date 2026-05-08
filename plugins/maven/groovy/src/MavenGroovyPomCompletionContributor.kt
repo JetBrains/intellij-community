@@ -16,6 +16,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.icons.AllIcons
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
@@ -29,7 +30,7 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.impl.GenericDomValueReference
-import org.jetbrains.idea.maven.completion.MavenDependencySearchService.Companion.getInstance
+import org.jetbrains.idea.maven.completion.MavenDependencySearchService
 import org.jetbrains.idea.maven.dom.MavenDomUtil.POM_COMPLETION_ORIGINAL_FILE
 import org.jetbrains.idea.maven.dom.MavenVersionComparable
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil.invokeCompletion
@@ -109,13 +110,15 @@ class MavenGroovyPomCompletionContributor : CompletionContributor() {
     }
 
     if (completeDependency.get()) {
-      val searchService = getInstance(project)
+      val searchService = MavenDependencySearchService.getInstance(project)
 
-      for (groupId in searchService.getGroupIdsBlocking("")) {
-        for (artifactId in searchService.getArtifactIdsBlocking(groupId)) {
-          val builder: LookupElement = LookupElementBuilder.create("$groupId:$artifactId")
-            .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE)
-          result.addElement(builder)
+      runBlockingCancellable {
+        for (groupId in searchService.getGroupIds("")) {
+          for (artifactId in searchService.getArtifactIds(groupId)) {
+            val builder: LookupElement = LookupElementBuilder.create("$groupId:$artifactId")
+              .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE)
+            result.addElement(builder)
+          }
         }
       }
     }
@@ -216,7 +219,7 @@ private fun completeVersions(
     versions = mutableSetOf()
   }
   else {
-    versions = getInstance(project).getVersionsBlocking(groupId, artifactId)
+    versions = runBlockingCancellable { MavenDependencySearchService.getInstance(project).getVersions(groupId, artifactId) }
   }
 
   for (version in versions) {

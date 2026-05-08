@@ -5,11 +5,10 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor.Companion.trimDummy
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenTopLevelDependencyInsertionHandler
@@ -35,30 +34,26 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
     result.restartCompletionWhenNothingMatches()
 
     val cld = ConcurrentLinkedDeque<MavenRepoArtifactInfo>()
-    val promise = find(xmlText.project, trimDummy(xmlText.value), parameters, cld)
-    while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
-      ProgressManager.checkCanceled()
-      val item = cld.poll()
-      if (item != null) {
-        result
-          .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE))
-      }
+    runBlockingCancellable { find(xmlText.project, trimDummy(xmlText.value), parameters, cld) }
+    for (item in cld) {
+      result.addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenTopLevelDependencyInsertionHandler.INSTANCE))
     }
 
   }
 
-  protected fun find(project: Project,
-                     text: String,
-                     parameters: CompletionParameters,
-                     cld: ConcurrentLinkedDeque<MavenRepoArtifactInfo>): Promise<Int> {
+  protected suspend fun find(project: Project,
+                             text: String,
+                             parameters: CompletionParameters,
+                             cld: ConcurrentLinkedDeque<MavenRepoArtifactInfo>) {
     val searchString: String = trimDummy(text)
     val service = MavenDependencySearchService.getInstance(project)
     val splitted = searchString.split(':')
     val useCache = parameters.invocationCount < 2
     val useLocalOnly = MavenUtil.isMavenUnitTestModeEnabled()
     if (splitted.size < 2) {
-      return service.fulltextSearchBlocking(searchString, useCache, useLocalOnly) { (it as? MavenRepoArtifactInfo)?.let { cld.add(it) } }
+      service.fulltextSearch(searchString, useCache, useLocalOnly) { cld.add(it) }
+    } else {
+      service.suggestPrefix(splitted[0], splitted[1], useCache, useLocalOnly) { cld.add(it) }
     }
-    return service.suggestPrefixBlocking(splitted[0], splitted[1], useCache, useLocalOnly) { (it as? MavenRepoArtifactInfo)?.let { cld.add(it) } }
   }
 }
