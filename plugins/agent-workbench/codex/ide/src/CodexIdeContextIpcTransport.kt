@@ -228,11 +228,7 @@ internal class UnixCodexIdeContextIpcTransport(
 
   override fun close() {
     closed = true
-    val activeSelector = selector
-    activeSelector?.wakeup()
-    closeIgnoringErrors(activeSelector)
-    closeIgnoringErrors(serverChannel)
-    closeActiveClients()
+    selector?.wakeup()
   }
 
   private suspend fun CoroutineScope.runSelectorLoop(selector: Selector, server: ServerSocketChannel, protocol: CodexIdeContextIpcProtocol) {
@@ -272,6 +268,9 @@ internal class UnixCodexIdeContextIpcTransport(
         return
       }
       while (selectedKeys.hasNext()) {
+        if (closed) {
+          return
+        }
         val key = selectedKeys.next()
         selectedKeys.remove()
         if (!key.isValid) {

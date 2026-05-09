@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
+import java.net.ConnectException
 import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
@@ -272,20 +273,28 @@ class CodexIdeContextUnixIpcTransportTest {
     }
   }
 
-  private suspend fun openClient(socketPath: Path): SocketChannel {
-    val channel = SocketChannel.open(StandardProtocolFamily.UNIX)
-    try {
-      channel.configureBlocking(false)
-      channel.connect(UnixDomainSocketAddress.of(socketPath))
-      while (!channel.finishConnect()) {
+  private suspend fun openClient(socketPath: Path): SocketChannel = withTimeout(5.seconds) {
+    var connectedChannel: SocketChannel? = null
+    while (connectedChannel == null) {
+      val channel = SocketChannel.open(StandardProtocolFamily.UNIX)
+      try {
+        channel.configureBlocking(false)
+        channel.connect(UnixDomainSocketAddress.of(socketPath))
+        while (!channel.finishConnect()) {
+          delay(10.milliseconds)
+        }
+        connectedChannel = channel
+      }
+      catch (_: ConnectException) {
+        closeIgnoringErrors(channel)
         delay(10.milliseconds)
       }
-      return channel
+      catch (e: Throwable) {
+        closeIgnoringErrors(channel)
+        throw e
+      }
     }
-    catch (e: Throwable) {
-      closeIgnoringErrors(channel)
-      throw e
-    }
+    connectedChannel
   }
 
   private suspend fun writeFrame(channel: SocketChannel, payload: ByteArray) {
