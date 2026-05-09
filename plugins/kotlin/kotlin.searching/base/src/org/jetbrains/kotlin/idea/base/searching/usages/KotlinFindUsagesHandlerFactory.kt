@@ -25,6 +25,10 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
+/**
+ * Important: This factory does not handle [KtTypeAlias][org.jetbrains.kotlin.psi.KtTypeAlias]es explicitly. Instead,
+ * it relies on [DefaultFindUsagesHandlerFactory][com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory] to be present.
+ */
 class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactory() {
     val javaHandlerFactory = JavaFindUsagesHandlerFactory(project)
 
