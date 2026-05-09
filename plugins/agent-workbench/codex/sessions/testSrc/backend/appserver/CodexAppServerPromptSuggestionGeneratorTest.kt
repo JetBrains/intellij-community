@@ -44,9 +44,9 @@ class CodexAppServerPromptSuggestionBackendTest {
               promptText = "Explain why ParserTest is failing and point out the relevant code path.",
             ),
             CodexCandidate(
-              id = "tests.stabilize",
-              label = "AI: Stabilize the ParserTest coverage",
-              promptText = "Stabilize the ParserTest scenario and call out any missing assertions or cleanup.",
+              id = "tests.bisect",
+              label = "AI: Bisect the ParserTest regression",
+              promptText = "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.",
             ),
           )
         )
@@ -62,14 +62,14 @@ class CodexAppServerPromptSuggestionBackendTest {
 
     assertThat(update).isNotNull
     assertThat(update!!.candidates.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
     assertThat(update.candidates.map(AgentPromptSuggestionCandidate::provenance))
       .containsOnly(AgentPromptSuggestionProvenance.AI_POLISHED)
     assertThat(update.candidates.map(AgentPromptSuggestionCandidate::label))
       .containsExactly(
         "AI: Fix the ParserTest failure",
         "AI: Explain the ParserTest failure",
-        "AI: Stabilize the ParserTest coverage",
+        "AI: Bisect the ParserTest regression",
       )
 
     val sentRequest = receivedRequest
@@ -85,7 +85,7 @@ class CodexAppServerPromptSuggestionBackendTest {
     assertThat(sentRequest.contextItems.single().parentItemId).isEqualTo("suite-1")
     assertThat(sentRequest.contextItems.single().truncation.reason).isEqualTo("source_limit")
     assertThat(sentRequest.seedCandidates.map(CodexCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
   }
 
   @Test
@@ -149,9 +149,9 @@ class CodexAppServerPromptSuggestionBackendTest {
               promptText = "Explain why ParserTest is failing and point out the relevant code path.",
             ),
             CodexCandidate(
-              id = "tests.stabilize",
-              label = "AI: Stabilize the ParserTest coverage",
-              promptText = "Stabilize the ParserTest scenario and call out any missing assertions or cleanup.",
+              id = "tests.bisect",
+              label = "AI: Bisect the ParserTest regression",
+              promptText = "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.",
             ),
           )
         )

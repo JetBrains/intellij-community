@@ -11,7 +11,7 @@ object AgentPromptSuggestionSeeds {
         listOf(
           suggestion("tests.fix"),
           suggestion("tests.explain"),
-          suggestion("tests.stabilize"),
+          suggestion("tests.bisect"),
         )
       }
       else {
@@ -27,7 +27,7 @@ object AgentPromptSuggestionSeeds {
       return listOf(
         suggestion("vcs.review"),
         suggestion("vcs.summary"),
-        suggestion("vcs.trace"),
+        suggestion("vcs.followup"),
       )
     }
 
@@ -41,9 +41,9 @@ object AgentPromptSuggestionSeeds {
 
     if (contextItems.any { it.rendererId == AgentPromptContextRendererIds.PATHS }) {
       return listOf(
-        suggestion("paths.plan"),
         suggestion("paths.summary"),
         suggestion("paths.impact"),
+        suggestion("paths.duplication"),
       )
     }
 

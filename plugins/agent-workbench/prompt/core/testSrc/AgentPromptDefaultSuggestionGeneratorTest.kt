@@ -24,7 +24,7 @@ class AgentPromptSuggestionSeedsTest {
     )
 
     assertThat(suggestions.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
   }
 
   @Test
@@ -54,7 +54,7 @@ class AgentPromptSuggestionSeedsTest {
     )
 
     assertThat(suggestions.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("vcs.review", "vcs.summary", "vcs.trace")
+      .containsExactly("vcs.review", "vcs.summary", "vcs.followup")
   }
 
   @Test
@@ -74,7 +74,7 @@ class AgentPromptSuggestionSeedsTest {
     )
 
     assertThat(suggestions.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("paths.plan", "paths.summary", "paths.impact")
+      .containsExactly("paths.summary", "paths.impact", "paths.duplication")
   }
 
   @Test
@@ -92,7 +92,7 @@ class AgentPromptSuggestionSeedsTest {
     )
 
     assertThat(suggestions.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
   }
 
   private fun contextItem(

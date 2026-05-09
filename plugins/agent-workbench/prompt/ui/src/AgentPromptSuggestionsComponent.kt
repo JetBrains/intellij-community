@@ -87,7 +87,7 @@ internal class AgentPromptSuggestionsComponent(
       id.startsWith("editor.") -> when {
         id.contains("explain") -> AllIcons.Actions.IntentionBulb
         id.contains("refactor") -> AllIcons.Actions.RefactoringBulb
-        id.contains("review") -> AllIcons.General.InspectionsEye
+        id == "editor.review" -> AllIcons.General.InspectionsEye
         else -> null
       }
       else -> null

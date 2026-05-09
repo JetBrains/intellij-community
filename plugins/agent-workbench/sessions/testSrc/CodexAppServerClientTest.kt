@@ -1580,7 +1580,7 @@ class CodexAppServerClientTest {
       assertThat(payloadLog).contains("Fallback seed candidates (3):")
       assertThat(payloadLog).contains("id: tests.fix")
       assertThat(payloadLog).contains("id: tests.explain")
-      assertThat(payloadLog).contains("id: tests.stabilize")
+      assertThat(payloadLog).contains("id: tests.bisect")
       assertThat(payloadLog).doesNotContain("\"method\":\"prompt/suggest\"")
     }
     finally {
@@ -1645,9 +1645,9 @@ class CodexAppServerClientTest {
               promptText = "Explain why ParserTest is failing and point out the relevant code path.",
             ),
             CodexPromptSuggestionCandidate(
-              id = "tests.stabilize",
-              label = "AI: Stabilize the ParserTest coverage",
-              promptText = "Stabilize the ParserTest scenario and call out any missing assertions or cleanup.",
+              id = "tests.bisect",
+              label = "AI: Bisect the ParserTest regression",
+              promptText = "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.",
             ),
           )
         )
@@ -2068,9 +2068,9 @@ class CodexAppServerClientTest {
           promptText = "Explain why the selected tests are failing.",
         ),
         CodexPromptSuggestionCandidate(
-          id = "tests.stabilize",
-          label = "Stabilize test coverage",
-          promptText = "Stabilize the selected tests and call out any missing cleanup.",
+          id = "tests.bisect",
+          label = "Bisect failures",
+          promptText = "Find the commit that introduced these failures by reading recent diffs.",
         ),
       ),
     )

@@ -73,15 +73,15 @@ Global prompt entry, target routing, submit validation, and manual context selec
   [@test] ../../prompt/testSrc/suggestions/AgentPromptDefaultSuggestionGeneratorTest.kt
 
 - Test-runner seed contract:
-  - any positive failed test count produces `tests.fix`, `tests.explain`, `tests.stabilize`,
+  - any positive failed test count produces `tests.fix`, `tests.explain`, `tests.bisect`,
   - otherwise selected tests produce `tests.coverage`, `tests.review`, `tests.extend`,
   - test context outranks VCS context when both are present.
   [@test] ../../prompt/testSrc/suggestions/AgentPromptDefaultSuggestionGeneratorTest.kt
 
 - VCS, editor, and paths seed contracts:
-  - VCS context produces `vcs.review`, `vcs.summary`, `vcs.trace`,
+  - VCS context produces `vcs.review`, `vcs.summary`, `vcs.followup`,
   - editor context produces `editor.explain`, `editor.refactor`, `editor.review`,
-  - paths context produces `paths.plan`, `paths.summary`, `paths.impact`.
+  - paths context produces `paths.summary`, `paths.impact`, `paths.duplication`.
   [@test] ../../prompt/testSrc/suggestions/AgentPromptDefaultSuggestionGeneratorTest.kt
 
 - Prompt suggestion generation architecture:

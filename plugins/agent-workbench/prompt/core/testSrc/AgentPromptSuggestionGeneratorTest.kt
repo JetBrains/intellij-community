@@ -35,11 +35,11 @@ class AgentPromptSuggestionGeneratorTest {
 
     assertThat(updates).hasSize(2)
     assertThat(updates.first().candidates.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
     assertThat(updates.first().candidates.map(AgentPromptSuggestionCandidate::provenance))
       .containsOnly(AgentPromptSuggestionProvenance.TEMPLATE)
     assertThat(updates.last().candidates.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
     assertThat(updates.last().candidates.map(AgentPromptSuggestionCandidate::provenance))
       .containsOnly(AgentPromptSuggestionProvenance.AI_POLISHED)
   }
@@ -85,7 +85,7 @@ class AgentPromptSuggestionGeneratorTest {
 
     assertThat(updates).hasSize(1)
     assertThat(updates.single().candidates.map(AgentPromptSuggestionCandidate::id))
-      .containsExactly("tests.fix", "tests.explain", "tests.stabilize")
+      .containsExactly("tests.fix", "tests.explain", "tests.bisect")
     assertThat(updates.single().candidates.map(AgentPromptSuggestionCandidate::provenance))
       .containsOnly(AgentPromptSuggestionProvenance.TEMPLATE)
   }
