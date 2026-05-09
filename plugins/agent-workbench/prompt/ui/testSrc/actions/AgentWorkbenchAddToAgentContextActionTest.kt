@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui.actions
 
+import com.intellij.codeInsight.intention.AdvertisementAction
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -120,15 +123,25 @@ class AgentWorkbenchAddToAgentContextActionTest {
   }
 
   @Test
-  fun editorIntentionShowsForLocalPsiFileWithContent() {
+  fun editorIntentionShowsForLocalPsiFileWithPlainCaret() {
     val file = createPhysicalFile()
     val psiFile = checkNotNull(runReadActionBlocking { PsiManager.getInstance(project).findFile(file) })
 
     runInEdtAndWait {
       withEditor("fun selected() {}") { editor ->
+        assertThat(editor.caretModel.currentCaret.hasSelection()).isFalse()
+
         assertThat(intention.isAvailable(project, editor, psiFile)).isTrue()
       }
     }
+  }
+
+  @Test
+  fun editorIntentionIsAdvertisedAndDoesNotForceLightBulb() {
+    assertThat(intention).isInstanceOf(AdvertisementAction::class.java)
+    assertThat(intention).isInstanceOf(CustomizableIntentionAction::class.java)
+    assertThat((intention as CustomizableIntentionAction).isShowLightBulb).isFalse()
+    assertThat(IntentionManagerSettings.getInstance().isShowLightBulb(intention)).isFalse()
   }
 
   private fun editorDataContext(editor: Editor, file: VirtualFile): DataContext {
