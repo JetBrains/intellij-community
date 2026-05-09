@@ -359,7 +359,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     /**
      * If a project file in IDEA format (`.idea` directory or `.ipr` file) exists, opens it and runs configurators if no modules.
      * Otherwise, creates a new project using the default project template and runs configurators (something that creates a module)
-     * (at the moment of creation project file in IDEA format will be removed if any).
+     * (at the moment of creation a project file in IDEA format will be removed if any).
      * <p>
      * This method must be not used in tests.
      *
@@ -396,7 +396,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun lookForProjectsInDirectory(): Boolean = false
 
-  @Internal
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
     val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)
