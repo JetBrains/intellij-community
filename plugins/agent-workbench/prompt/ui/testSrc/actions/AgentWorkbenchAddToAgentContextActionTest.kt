@@ -7,11 +7,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.TempDirectoryExtension
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 @TestApplication
 class AgentWorkbenchAddToAgentContextActionTest {
   private val action = AgentWorkbenchAddToAgentContextAction()
+  private val intention = AgentWorkbenchAddToAgentContextIntention()
 
   @JvmField
   @RegisterExtension
@@ -99,6 +104,31 @@ class AgentWorkbenchAddToAgentContextActionTest {
       .build()
 
     assertThat(isVisible(dataContext, "Vcs.Log.ContextMenu")).isTrue()
+  }
+
+  @Test
+  fun editorIntentionHidesForNonLocalPsiFile() {
+    runInEdtAndWait {
+      withEditor("fun main() {}") { editor ->
+        val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName("Scratch.txt")
+        val psiFile = PsiFileFactory.getInstance(project)
+          .createFileFromText("Scratch.txt", fileType, editor.document.text)
+
+        assertThat(intention.isAvailable(project, editor, psiFile)).isFalse()
+      }
+    }
+  }
+
+  @Test
+  fun editorIntentionShowsForLocalPsiFileWithContent() {
+    val file = createPhysicalFile()
+    val psiFile = checkNotNull(runReadActionBlocking { PsiManager.getInstance(project).findFile(file) })
+
+    runInEdtAndWait {
+      withEditor("fun selected() {}") { editor ->
+        assertThat(intention.isAvailable(project, editor, psiFile)).isTrue()
+      }
+    }
   }
 
   private fun editorDataContext(editor: Editor, file: VirtualFile): DataContext {

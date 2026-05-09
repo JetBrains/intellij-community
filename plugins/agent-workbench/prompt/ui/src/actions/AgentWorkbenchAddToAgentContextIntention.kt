@@ -21,7 +21,9 @@ internal class AgentWorkbenchAddToAgentContextIntention : IntentionAction {
   override fun getFamilyName(): String = AgentPromptBundle.message("intention.add.context.family.name")
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return editor != null && file != null && !project.isDisposed
+    if (editor == null || file == null || project.isDisposed) return false
+    if (editor.document.textLength == 0) return false
+    return file.isPhysical
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
