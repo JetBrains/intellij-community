@@ -21,6 +21,7 @@ targets:
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
   - ../../prompt/src/ui/AgentPromptUiSessionStateService.kt
   - ../../chat/src/AgentChatOpenTabsSnapshot.kt
+  - ../../chat/src/AgentChatPendingContextPanel.kt
   - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
@@ -114,21 +115,23 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
   - in `ActionPlaces.PROJECT_VIEW_POPUP`, the action is visible only when the selection contains at least one local-filesystem file (`.` is not considered a local context file),
   - in `ActionPlaces.EDITOR_TAB_POPUP`, the action is visible only when the tab is backed by a local-filesystem virtual file,
   - in all other registered places (console, test tree, VCS popups), visibility falls back to the project-presence check and the contributor empty-fallback path emits `popup.status.context.empty` when no context is available.
+
   [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchAddToAgentContextActionTest.kt
   [@test] ../../plugin/testSrc/AgentWorkbenchAddToAgentContextActionRegistrationTest.kt
 
 - When `AgentWorkbenchPrompt.AddToAgentContext` is invoked while the global prompt popup is already visible for the same project, it must append de-duplicated context to the visible popup, request composer focus, and preserve the popup's current tab, provider selection, and existing-task selection.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
 
-- When `AgentWorkbenchPrompt.AddToAgentContext` opens a fresh popup, existing-task auto-routing must use only open top-level concrete agent chat tabs for the same normalized project path. Pending chat tabs, sub-agent tabs, and non-open session catalog threads must not be target candidates.
+- When `AgentWorkbenchPrompt.AddToAgentContext` is invoked without a visible prompt popup, existing-chat auto-routing must use only open top-level concrete agent chat tabs for the same normalized project path. Pending chat tabs, sub-agent tabs, and non-open session catalog threads must not be target candidates.
 
 - Fresh `AddToAgentContext` routing must be deterministic:
   - no open chat target candidate opens the popup on `PromptTargetMode.NEW_TASK`,
-  - one open chat target candidate opens the popup on `PromptTargetMode.EXISTING_TASK` with that thread selected,
-  - multiple open chat target candidates show the `popup.add.context.target.chooser.title` chooser and open `EXISTING_TASK` only after the user chooses a target,
+  - one open chat target candidate adds context to that Agent Chat tab's pending context buffer,
+  - a selected open chat target candidate adds context to that Agent Chat tab's pending context buffer,
+  - multiple open chat target candidates without a selected candidate show the `popup.add.context.target.chooser.title` chooser and add context to the chosen Agent Chat tab,
   - chooser cancellation must not open a popup.
 
-- Add-context target candidates marked as selected must be ordered before other candidates. A selected candidate represents the currently selected top-level concrete chat tab for the same normalized project path, but it must not bypass the chooser when multiple candidates exist.
+- Add-context target candidates marked as selected must be ordered before other candidates. A selected candidate represents the currently selected top-level concrete chat tab for the same normalized project path.
 
 - Prompt target mode must support exactly:
   - `PromptTargetMode.NEW_TASK`,
@@ -263,11 +266,15 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - The composer-integrated context cluster exposes `Add Context` as the single entry point for adding source-specific context.
 - `Files and Folders…` is the default manual context source for any resolved project and may be accompanied by source-specific additions such as VCS commits.
 - Manual context chips share the same composer-integrated context cluster and submit path as auto context chips.
+- `Add to Agent Context` first applies to a visible prompt composer. If no prompt composer is visible and a single open Agent Chat target, or one selected open Agent Chat target, is available for the workspace, it adds de-duplicated context to that chat's pending context buffer without mutating terminal input.
+- If no open Agent Chat target is available, `Add to Agent Context` opens the prompt composer with removable context chips instead of opening a chat thread.
+- If multiple open Agent Chat targets are available and no target is selected, `Add to Agent Context` asks for the target, then uses the same pending-context path with prompt-composer fallback.
 
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.
 - Existing-task list must be scoped to resolved working project path.
 - `AgentPromptLauncherBridge.listAddContextTargetCandidates(projectPath)` is the shared signal for fresh add-context routing and existing-task row preselection. It must describe open chat targets only, not the full session catalog.
+- `AgentPromptLauncherBridge.addContextToOpenChatTarget(...)` is the open-chat pending-context hook. `ADDED_TO_CHAT` means the context was accepted into an existing chat's pending context buffer; `UNAVAILABLE` must fall back to opening the prompt composer with the same context.
 - On successful launch, popup closes and draft is cleared; otherwise popup remains and shows error feedback.
 - `AgentPromptContextResolverService.collectDefaultContext(...)` remains the auto-context source of truth; manual context is merged later in popup state.
 - Manual context sources are discovered via `com.intellij.agent.workbench.promptManualContextSource` and invoked from popup-owned UI state.
@@ -293,6 +300,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatOpenTopLevelDispatchTest'`
 
 ## References
 - `global-prompt-suggestions.spec.md`

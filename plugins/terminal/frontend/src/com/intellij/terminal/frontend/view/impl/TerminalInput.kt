@@ -9,8 +9,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -39,7 +37,6 @@ import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import kotlin.time.TimeMark
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class TerminalInput(
   private val terminalSessionDeferred: Deferred<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
@@ -181,7 +178,7 @@ internal class TerminalInput(
     val event = TerminalResizeEvent(newSize)
     sendEvent(InputEventSubmission(event))
   }
-  
+
   fun sendLinkClicked(isInAlternateBuffer: Boolean, hyperlinkId: TerminalHyperlinkId, event: EditorMouseEvent) {
     sendEvent(InputEventSubmission(TerminalHyperlinkClickedEvent(isInAlternateBuffer, hyperlinkId, event)))
   }

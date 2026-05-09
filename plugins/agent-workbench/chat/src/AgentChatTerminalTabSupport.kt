@@ -4,11 +4,13 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -63,6 +65,26 @@ internal interface AgentChatTerminalTab {
   suspend fun readRecentOutputTail(): String
 
   fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean = true)
+
+  fun sendPendingContextAndExecute(text: String, useBracketedPasteMode: Boolean = true): Boolean {
+    if (text.isEmpty() || sessionState.value == TerminalViewSessionState.Terminated) {
+      return false
+    }
+
+    val sendTextBuilder = terminalView?.createSendTextBuilder() ?: return false
+    if (useBracketedPasteMode) {
+      sendTextBuilder.useBracketedPasteMode()
+    }
+    sendTextBuilder.shouldExecute()
+    sendTextBuilder.send(text)
+    return true
+  }
+
+  fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor): Boolean {
+    val view = terminalView ?: return false
+    view.addInputInterceptor(parentDisposable, interceptor)
+    return true
+  }
 }
 
 internal data class AgentChatTerminalOutputCheckpoint(
@@ -229,6 +251,10 @@ private class ToolWindowAgentChatTerminalTab(
     if (normalizedText.isEmpty()) {
       return
     }
+    sendNormalizedText(normalizedText, shouldExecute, useBracketedPasteMode)
+  }
+
+  private fun sendNormalizedText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     val sendTextBuilder = delegate.view.createSendTextBuilder()
     if (useBracketedPasteMode) {
       sendTextBuilder.useBracketedPasteMode()
@@ -236,7 +262,7 @@ private class ToolWindowAgentChatTerminalTab(
     if (shouldExecute) {
       sendTextBuilder.shouldExecute()
     }
-    sendTextBuilder.send(normalizedText)
+    sendTextBuilder.send(text)
   }
 }
 
@@ -280,7 +306,6 @@ internal class AgentChatTerminalCommandTracker {
   }
 }
 
-@OptIn(FlowPreview::class)
 internal suspend fun awaitTerminalInitialMessageReadiness(
   sessionState: StateFlow<TerminalViewSessionState>,
   regularOutputModel: TerminalOutputModel,

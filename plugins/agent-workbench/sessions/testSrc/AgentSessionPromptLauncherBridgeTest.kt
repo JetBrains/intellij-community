@@ -8,6 +8,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -1791,6 +1794,46 @@ class AgentSessionPromptLauncherBridgeTest {
 
     assertThat(stored).isEqualTo(prefs)
     assertThat(bridge.loadProviderPreferences()).isEqualTo(prefs)
+  }
+
+  @Test
+  fun addContextToOpenChatTargetDelegatesToInjectedHandler() {
+    val capturedRequest = AtomicReference<AgentPromptAddContextToTargetRequest>()
+    val bridge = AgentSessionPromptLauncherBridge(
+      launchPromptRequest = { error("not used") },
+      stateFlowProvider = { error("not used") },
+      pathStateResolver = ::resolveAgentSessionPathState,
+      refreshCatalogAndLoadNewlyOpened = {},
+      refreshProviderForPath = { _, _ -> },
+      preferredProviderProvider = { null },
+      addContextToOpenChatTarget = { request ->
+        capturedRequest.set(request)
+        AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
+      },
+    )
+    val request = AgentPromptAddContextToTargetRequest(
+      target = AgentPromptAddContextTargetCandidate(
+        projectPath = PROJECT_PATH,
+        provider = AgentSessionProvider.CODEX,
+        threadId = "thread-existing",
+        displayText = "Existing thread",
+      ),
+      contextItems = listOf(
+        AgentPromptContextItem(
+          rendererId = "test",
+          title = "Selected code",
+          body = "fun selected() {}",
+          source = "test",
+        )
+      ),
+    )
+
+    val result = runBlocking(Dispatchers.Default) {
+      bridge.addContextToOpenChatTarget(request)
+    }
+
+    assertThat(result).isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
+    assertThat(capturedRequest.get()).isEqualTo(request)
   }
 }
 

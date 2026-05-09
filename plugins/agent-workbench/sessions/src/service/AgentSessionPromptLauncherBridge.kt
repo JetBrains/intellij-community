@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.chat.addContextToOpenTopLevelAgentChat
 import com.intellij.agent.workbench.chat.collectOpenAgentChatAddContextTargetCandidates
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContainerLauncher
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -37,6 +40,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
   private val sourceProjectResolver: (String) -> Project?
   private val providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences
   private val providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit
+  private val addContextToOpenChatTargetHandler: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult
 
   @Suppress("unused")
   constructor() : this(
@@ -52,6 +56,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     providerPreferencesLoader = { service<AgentSessionUiPreferencesStateService>().getProviderPreferences() },
     providerPreferencesSaver = { prefs -> service<AgentSessionUiPreferencesStateService>().setProviderPreferences(prefs) },
     sourceProjectResolver = ::findOpenSourceProjectByPath,
+    addContextToOpenChatTarget = ::addContextItemsToOpenChatTarget,
   )
 
   internal constructor(
@@ -68,6 +73,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     sourceProjectResolver = ::findOpenSourceProjectByPath,
     providerPreferencesLoader = { AgentPromptLauncherBridge.ProviderPreferences() },
     providerPreferencesSaver = {},
+    addContextToOpenChatTarget = ::addContextItemsToOpenChatTarget,
   )
 
   internal constructor(
@@ -80,6 +86,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     sourceProjectResolver: (String) -> Project? = ::findOpenSourceProjectByPath,
     providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
     providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
+    addContextToOpenChatTarget: suspend (AgentPromptAddContextToTargetRequest) -> AgentPromptAddContextToTargetResult = ::addContextItemsToOpenChatTarget,
   ) {
     this.launchPromptRequest = launchPromptRequest
     this.stateFlowProvider = stateFlowProvider
@@ -90,6 +97,7 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
     this.sourceProjectResolver = sourceProjectResolver
     this.providerPreferencesLoader = providerPreferencesLoader
     this.providerPreferencesSaver = providerPreferencesSaver
+    this.addContextToOpenChatTargetHandler = addContextToOpenChatTarget
   }
 
   override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
@@ -138,6 +146,10 @@ internal class AgentSessionPromptLauncherBridge : AgentPromptLauncherBridge {
 
   override suspend fun listAddContextTargetCandidates(projectPath: String): List<AgentPromptAddContextTargetCandidate> {
     return collectOpenAgentChatAddContextTargetCandidates(projectPath)
+  }
+
+  override suspend fun addContextToOpenChatTarget(request: AgentPromptAddContextToTargetRequest): AgentPromptAddContextToTargetResult {
+    return addContextToOpenChatTargetHandler.invoke(request)
   }
 
   override fun observeExistingThreads(
@@ -213,6 +225,24 @@ private fun buildWorkingProjectPathCandidates(invocationData: AgentPromptInvocat
     }
 
   return candidatesByPath.values.toList()
+}
+
+private suspend fun addContextItemsToOpenChatTarget(
+  request: AgentPromptAddContextToTargetRequest,
+): AgentPromptAddContextToTargetResult {
+  val target = request.target
+  val added = addContextToOpenTopLevelAgentChat(
+    projectPath = target.projectPath,
+    provider = target.provider,
+    threadId = target.threadId,
+    contextItems = request.contextItems,
+  )
+  return if (added) {
+    AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
+  }
+  else {
+    AgentPromptAddContextToTargetResult.UNAVAILABLE
+  }
 }
 
 private fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {

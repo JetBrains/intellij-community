@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -60,14 +62,17 @@ internal class AgentPromptAddToAgentContextActionService(
         return@launch
       }
       val candidates = loadTargetCandidates(launcher = launcher, projectPath = projectPath)
-      when (candidates.size) {
-        0 -> popupService.showAddContextFromUiDispatcher(
+      val preferredTarget = resolvePreferredTarget(candidates)
+      when {
+        preferredTarget != null -> addContextToTargetOrFallback(
+          invocationData = invocationData,
+          contextItems = contextItems,
+          target = preferredTarget,
+          popupService = popupService,
+        )
+        candidates.isEmpty() -> popupService.showAddContextFromUiDispatcher(
           invocationData,
           AgentPromptAddContextRequest(contextItems = contextItems, target = null),
-        )
-        1 -> popupService.showAddContextFromUiDispatcher(
-          invocationData,
-          AgentPromptAddContextRequest(contextItems = contextItems, target = candidates.single()),
         )
         else -> showTargetChooser(
           invocationData = invocationData,
@@ -77,6 +82,35 @@ internal class AgentPromptAddToAgentContextActionService(
         )
       }
     }
+  }
+
+  private fun resolvePreferredTarget(candidates: List<AgentPromptAddContextTargetCandidate>): AgentPromptAddContextTargetCandidate? {
+    if (candidates.size == 1) {
+      return candidates.single()
+    }
+    return candidates.singleOrNull { candidate -> candidate.selected }
+  }
+
+  private suspend fun addContextToTargetOrFallback(
+    invocationData: AgentPromptInvocationData,
+    contextItems: List<AgentPromptContextItem>,
+    target: AgentPromptAddContextTargetCandidate,
+    popupService: AgentPromptPalettePopupService,
+  ) {
+    val result = AgentPromptLaunchers.find()?.addContextToOpenChatTarget(
+      AgentPromptAddContextToTargetRequest(
+        target = target,
+        contextItems = contextItems,
+      )
+    ) ?: AgentPromptAddContextToTargetResult.UNAVAILABLE
+    if (result == AgentPromptAddContextToTargetResult.ADDED_TO_CHAT) {
+      showStatus(AgentPromptBundle.message("popup.status.context.added"))
+      return
+    }
+    popupService.showAddContextFromUiDispatcher(
+      invocationData,
+      AgentPromptAddContextRequest(contextItems = contextItems, target = target),
+    )
   }
 
   private suspend fun loadTargetCandidates(
@@ -124,7 +158,14 @@ internal class AgentPromptAddToAgentContextActionService(
         }
       })
       .setItemChosenCallback { target ->
-        popupService.showAddContext(invocationData, AgentPromptAddContextRequest(contextItems = contextItems, target = target))
+        coroutineScope.launch(Dispatchers.UI) {
+          addContextToTargetOrFallback(
+            invocationData = invocationData,
+            contextItems = contextItems,
+            target = target,
+            popupService = popupService,
+          )
+        }
       }
       .createPopup()
 

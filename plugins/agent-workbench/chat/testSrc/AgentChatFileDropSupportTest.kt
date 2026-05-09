@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.ide.dnd.DnDAction
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
@@ -49,27 +51,30 @@ class AgentChatFileDropSupportTest {
   lateinit var disposable: Disposable
 
   @Test
-  fun installsDndTargetOnEditorRootWithoutTransferHandlers() {
-    val editorComponent = JPanel()
+  fun installsDndTargetsOnTerminalAndContextPanelWithoutTransferHandlers() {
     val terminalTab = TestAgentChatTerminalTab()
+    val contextComponent = JPanel()
+    val dndManager = RecordingDnDManager()
+    ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
 
-    val target = installAndGetRegisteredTarget(editorComponent, terminalTab)
+    installAgentChatTerminalFileDropSupport(terminalTab.component, terminalTab, disposable)
+    installAgentChatContextFileDropSupport(contextComponent, addContextItems = { true }, parentDisposable = disposable)
 
-    assertThat(target).isNotNull
-    assertThat(editorComponent.transferHandler).isNull()
+    assertThat(dndManager.targetFor(terminalTab.component)).isNotNull
+    assertThat(dndManager.targetFor(contextComponent)).isNotNull
+    assertThat(contextComponent.transferHandler).isNull()
     assertThat(terminalTab.component.transferHandler).isNull()
     assertThat(terminalTab.preferredFocusableComponent.transferHandler).isNull()
   }
 
   @Test
   fun internalIdeFileDropPastesIntoTerminal() {
-    val editorComponent = JPanel()
     val terminalTab = TestAgentChatTerminalTab()
     val droppedPaths = listOf(
       Path.of("thread-notes.md"),
       Path.of("File With Spaces.txt"),
     )
-    val target = installAndGetRegisteredTarget(editorComponent, terminalTab)
+    val target = installAndGetTerminalTarget(terminalTab)
     val event = FakeDnDEvent(
       attachedObject = transferableWrapper(droppedPaths),
       transferDataFlavors = arrayOf(DataFlavor.javaFileListFlavor),
@@ -91,13 +96,12 @@ class AgentChatFileDropSupportTest {
 
   @Test
   fun nativeFileDropPastesIntoTerminal() {
-    val editorComponent = JPanel()
     val terminalTab = TestAgentChatTerminalTab()
     val droppedPaths = listOf(
       Path.of("plan.txt"),
       Path.of("another file.md"),
     )
-    val target = installAndGetRegisteredTarget(editorComponent, terminalTab)
+    val target = installAndGetTerminalTarget(terminalTab)
     val event = FakeDnDEvent(
       attachedObject = DnDNativeTarget.EventInfo(arrayOf(DataFlavor.javaFileListFlavor), fileListTransferable(droppedPaths)),
       transferDataFlavors = arrayOf(DataFlavor.javaFileListFlavor),
@@ -118,28 +122,115 @@ class AgentChatFileDropSupportTest {
   }
 
   @Test
-  fun nonFileDropIsIgnored() {
-    val editorComponent = JPanel()
-    val target = installAndGetRegisteredTarget(editorComponent, TestAgentChatTerminalTab())
+  fun internalIdeFileDropOnContextPanelAddsPendingFilesContext() {
+    val contextComponent = JPanel()
+    val droppedPaths = listOf(
+      Path.of("/repo/thread-notes.md"),
+      Path.of("/repo/File With Spaces.txt"),
+    )
+    val addedItems = mutableListOf<List<AgentPromptContextItem>>()
+    val target = installAndGetContextTarget(contextComponent) { items ->
+      addedItems += items
+      true
+    }
+    val event = FakeDnDEvent(
+      attachedObject = transferableWrapper(droppedPaths),
+      transferDataFlavors = arrayOf(DataFlavor.javaFileListFlavor),
+    )
+
+    assertThat(target.update(event)).isFalse()
+    assertThat(event.isDropPossible).isTrue()
+
+    val handled = (target as DnDDropHandler.WithResult).tryDrop(event)
+
+    assertThat(handled).isTrue()
+    assertDroppedFilesContextItems(addedItems, droppedPaths)
+  }
+
+  @Test
+  fun nativeFileDropOnContextPanelAddsPendingFilesContext() {
+    val contextComponent = JPanel()
+    val droppedPaths = listOf(
+      Path.of("/repo/plan.txt"),
+      Path.of("/repo/another file.md"),
+    )
+    val addedItems = mutableListOf<List<AgentPromptContextItem>>()
+    val target = installAndGetContextTarget(contextComponent) { items ->
+      addedItems += items
+      true
+    }
+    val event = FakeDnDEvent(
+      attachedObject = DnDNativeTarget.EventInfo(arrayOf(DataFlavor.javaFileListFlavor), fileListTransferable(droppedPaths)),
+      transferDataFlavors = arrayOf(DataFlavor.javaFileListFlavor),
+    )
+
+    assertThat(target.update(event)).isFalse()
+    assertThat(event.isDropPossible).isTrue()
+
+    val handled = (target as DnDDropHandler.WithResult).tryDrop(event)
+
+    assertThat(handled).isTrue()
+    assertDroppedFilesContextItems(addedItems, droppedPaths)
+  }
+
+  @Test
+  fun nonFileDropIsIgnoredByTerminalAndContextPanel() {
+    val terminalTab = TestAgentChatTerminalTab()
+    val contextComponent = JPanel()
+    val addedItems = mutableListOf<List<AgentPromptContextItem>>()
+    val dndManager = RecordingDnDManager()
+    ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
+    installAgentChatTerminalFileDropSupport(terminalTab.component, terminalTab, disposable)
+    installAgentChatContextFileDropSupport(contextComponent, addContextItems = { items ->
+      addedItems += items
+      true
+    }, parentDisposable = disposable)
+    val terminalTarget = checkNotNull(dndManager.targetFor(terminalTab.component))
+    val contextTarget = checkNotNull(dndManager.targetFor(contextComponent))
     val event = FakeDnDEvent(
       attachedObject = "plain text",
       transferDataFlavors = arrayOf(DataFlavor.stringFlavor),
     )
 
-    assertThat(target.update(event)).isTrue()
+    assertThat(terminalTarget.update(event)).isTrue()
+    assertThat(contextTarget.update(event)).isTrue()
     assertThat(event.isDropPossible).isFalse()
 
-    val handled = (target as DnDDropHandler.WithResult).tryDrop(event)
+    val terminalHandled = (terminalTarget as DnDDropHandler.WithResult).tryDrop(event)
+    val contextHandled = (contextTarget as DnDDropHandler.WithResult).tryDrop(event)
 
-    assertThat(handled).isFalse()
+    assertThat(terminalHandled).isFalse()
+    assertThat(contextHandled).isFalse()
+    assertThat(terminalTab.sentTexts).isEmpty()
+    assertThat(addedItems).isEmpty()
   }
 
-  private fun installAndGetRegisteredTarget(editorComponent: JComponent, terminalTab: AgentChatTerminalTab): DnDTarget {
+  private fun installAndGetTerminalTarget(terminalTab: AgentChatTerminalTab): DnDTarget {
     val dndManager = RecordingDnDManager()
     ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
-    installAgentChatFileDropSupport(editorComponent, terminalTab, disposable)
-    assertThat(dndManager.registeredComponent).isSameAs(editorComponent)
-    return checkNotNull(dndManager.registeredTarget)
+    installAgentChatTerminalFileDropSupport(terminalTab.component, terminalTab, disposable)
+    return checkNotNull(dndManager.targetFor(terminalTab.component))
+  }
+
+  private fun installAndGetContextTarget(
+    contextComponent: JComponent,
+    addContextItems: (List<AgentPromptContextItem>) -> Boolean,
+  ): DnDTarget {
+    val dndManager = RecordingDnDManager()
+    ApplicationManager.getApplication().replaceService(DnDManager::class.java, dndManager, disposable)
+    installAgentChatContextFileDropSupport(contextComponent, addContextItems, disposable)
+    return checkNotNull(dndManager.targetFor(contextComponent))
+  }
+
+  private fun assertDroppedFilesContextItems(addedItems: List<List<AgentPromptContextItem>>, droppedPaths: List<Path>) {
+    assertThat(addedItems).hasSize(1)
+    val item = addedItems.single().single()
+    assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+    assertThat(item.itemId).isEqualTo("manual.project.paths")
+    assertThat(item.source).isEqualTo("manualPaths")
+    assertThat(item.body.lineSequence().toList()).containsExactlyElementsOf(
+      droppedPaths.map { path -> "file: $path" },
+    )
   }
 }
 
@@ -188,20 +279,25 @@ private data class DroppedSentTerminalText(
 )
 
 private class RecordingDnDManager : DnDManager() {
-  var registeredTarget: DnDTarget? = null
-  var registeredComponent: JComponent? = null
+  private val registeredTargets = LinkedHashMap<JComponent, DnDTarget>()
+
+  fun targetFor(component: JComponent): DnDTarget? = registeredTargets[component]
 
   override fun registerTarget(target: DnDTarget?, component: JComponent?) {
-    registeredTarget = target
-    registeredComponent = component
+    if (target != null && component != null) {
+      registeredTargets[component] = target
+    }
   }
 
   override fun registerTarget(target: DnDTarget, component: JComponent, parentDisposable: Disposable) {
-    registeredTarget = target
-    registeredComponent = component
+    registeredTargets[component] = target
   }
 
-  override fun unregisterTarget(target: DnDTarget?, component: JComponent?) = Unit
+  override fun unregisterTarget(target: DnDTarget?, component: JComponent?) {
+    if (component != null) {
+      registeredTargets.remove(component)
+    }
+  }
 
   override fun registerSource(source: DnDSource, component: JComponent) = Unit
 

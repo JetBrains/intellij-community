@@ -3,7 +3,11 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.CommonBundle
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.ide.OccurenceNavigator
@@ -18,10 +22,14 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CancellationException
 import javax.swing.BorderFactory
@@ -41,6 +49,7 @@ internal class AgentChatFileEditor(
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
 ) : UserDataHolderBase(), FileEditor {
   private val providerBehavior = resolveAgentChatProviderBehavior(file.provider)
+  private val pendingContextPanel = AgentChatPendingContextPanel(file.projectPath)
   private val component = AgentChatFileEditorComponent {
     semanticRegionController?.occurrenceNavigator() ?: OccurenceNavigator.EMPTY
   }
@@ -158,9 +167,12 @@ internal class AgentChatFileEditor(
       scopedTerminalRefreshController = createAgentChatScopedTerminalRefreshController(file, createdTab, providerDescriptor)
       patchFoldController = providerBehavior.createPatchFoldController(createdTab)
       semanticRegionController = providerBehavior.createSemanticRegionController(createdTab)
+      installPendingContextInterceptor(createdTab)
       component.removeAll()
       component.add(createdTab.component, BorderLayout.CENTER)
-      installAgentChatFileDropSupport(component, createdTab, this)
+      component.add(pendingContextPanel.component, BorderLayout.SOUTH)
+      installAgentChatTerminalFileDropSupport(createdTab.component, createdTab, this)
+      installAgentChatContextFileDropSupport(pendingContextPanel.component, ::addPendingContextItems, this)
       component.revalidate()
       component.repaint()
     }
@@ -189,6 +201,16 @@ internal class AgentChatFileEditor(
     initialMessageDispatcher.schedule(initializedTab)
   }
 
+  internal fun addPendingContextItems(items: List<AgentPromptContextItem>): Boolean {
+    ensureInitialized()
+    val initializedTab = tab ?: return false
+    pendingContextPanel.addItems(items)
+    initializedTab.preferredFocusableComponent.requestFocusInWindow()
+    return true
+  }
+
+  internal fun pendingContextItemsForTests(): List<AgentPromptContextItem> = pendingContextPanel.pendingItemsForTests()
+
   internal fun canNavigateProposedPlan(direction: AgentChatSemanticNavigationDirection): Boolean {
     return semanticRegionController?.canNavigate(direction) == true
   }
@@ -202,6 +224,85 @@ internal class AgentChatFileEditor(
     component.add(createDeferredStartComponent(state), BorderLayout.CENTER)
     component.revalidate()
     component.repaint()
+  }
+
+  private fun installPendingContextInterceptor(tab: AgentChatTerminalTab) {
+    tab.addInputInterceptor(this, TerminalInputInterceptor { event -> handlePendingContextInput(tab, event) })
+  }
+
+  private fun handlePendingContextInput(tab: AgentChatTerminalTab, event: KeyEvent): Boolean {
+    if (!pendingContextPanel.hasItems() || !isPlainEnter(event)) {
+      return false
+    }
+
+    val promptSuffix = resolvePendingContextPromptSuffix() ?: return true
+    if (tab.sendPendingContextAndExecute(promptSuffix)) {
+      pendingContextPanel.clear()
+    }
+    else {
+      StatusBar.Info.set(AgentChatBundle.message("chat.pending.context.terminal.unavailable"), project)
+    }
+    return true
+  }
+
+  private fun resolvePendingContextPromptSuffix(): String? {
+    val items = pendingContextPanel.pendingItemsSnapshot()
+    if (items.isEmpty()) {
+      return null
+    }
+
+    val softCapChars = AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS
+    val serializedChars = pendingContextPanel.measureContextBlockChars(items)
+    if (serializedChars <= softCapChars) {
+      return pendingContextPanel.buildPromptSuffix(
+        items = items,
+        summary = AgentPromptContextEnvelopeSummary(
+          softCapChars = softCapChars,
+          softCapExceeded = false,
+          autoTrimApplied = false,
+        ),
+      )
+    }
+
+    val choice = Messages.showDialog(
+      project,
+      AgentChatBundle.message("chat.pending.context.softcap.message", serializedChars, softCapChars),
+      AgentChatBundle.message("chat.pending.context.softcap.title"),
+      arrayOf(
+        AgentChatBundle.message("chat.pending.context.softcap.action.send.full"),
+        AgentChatBundle.message("chat.pending.context.softcap.action.auto.trim"),
+        CommonBundle.getCancelButtonText(),
+      ),
+      0,
+      Messages.getWarningIcon(),
+    )
+
+    return when (choice) {
+      0 -> pendingContextPanel.buildPromptSuffix(
+        items = items,
+        summary = AgentPromptContextEnvelopeSummary(
+          softCapChars = softCapChars,
+          softCapExceeded = true,
+          autoTrimApplied = false,
+        ),
+      )
+      1 -> {
+        val trimResult = AgentPromptContextEnvelopeFormatter.applySoftCap(
+          items = items,
+          softCapChars = softCapChars,
+          projectPath = file.projectPath,
+        )
+        pendingContextPanel.buildPromptSuffix(
+          items = trimResult.items,
+          summary = AgentPromptContextEnvelopeSummary(
+            softCapChars = softCapChars,
+            softCapExceeded = true,
+            autoTrimApplied = true,
+          ),
+        )
+      }
+      else -> null
+    }
   }
 
   private fun createDeferredStartComponent(state: AgentChatDeferredStartState): JComponent {
@@ -231,6 +332,10 @@ internal class AgentChatFileEditor(
       font = if (bold) font.deriveFont(font.style or java.awt.Font.BOLD) else font
     }
   }
+}
+
+private fun isPlainEnter(event: KeyEvent): Boolean {
+  return event.id == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ENTER && event.modifiersEx == 0
 }
 
 private fun shouldBlockTerminalInitialization(state: AgentChatDeferredStartState?): Boolean {

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
@@ -30,6 +31,7 @@ internal open class TerminalKeyEventsHandlerImpl(
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
   private val typeAhead: TerminalTypeAhead?,
+  private val inputInterceptors: () -> List<TerminalInputInterceptor> = { emptyList() },
 ) : TerminalKeyEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
 
@@ -41,6 +43,12 @@ internal open class TerminalKeyEventsHandlerImpl(
     if (ignoreNextKeyTypedEvent) {
       e.original.consume()
       LOG.trace { "Key event ignored: ${e.original}" }
+      return
+    }
+    if (interceptTerminalInput(e.original)) {
+      e.original.consume()
+      LOG.trace { "Key event intercepted: ${e.original}" }
+      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyTypedCursorOffset)))
       return
     }
     if (!Character.isISOControl(charTyped)) { // keys filtered out here will be processed in processTerminalKeyPressed
@@ -64,6 +72,13 @@ internal open class TerminalKeyEventsHandlerImpl(
     val beforeKeyPressedCursorOffset = outputModel.cursorOffset
 
     ignoreNextKeyTypedEvent = false
+    if (interceptTerminalInput(e.original)) {
+      e.original.consume()
+      ignoreNextKeyTypedEvent = true
+      LOG.trace { "Key event intercepted: ${e.original}" }
+      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyPressedCursorOffset)))
+      return
+    }
     if (processTerminalKeyPressed(e)) {
       e.original.consume()
       ignoreNextKeyTypedEvent = true
@@ -101,6 +116,7 @@ internal open class TerminalKeyEventsHandlerImpl(
         return true
       }
 
+      @Suppress("DEPRECATION")
       val code = encodingManager.getCode(keyCode, e.original.modifiers)
       if (code != null) {
         terminalInput.sendBytes(code)
@@ -130,6 +146,20 @@ internal open class TerminalKeyEventsHandlerImpl(
     }
     finally {
       syncEditorCaretWithModel(editor, outputModel)
+    }
+    return false
+  }
+
+  private fun interceptTerminalInput(event: KeyEvent): Boolean {
+    for (interceptor in inputInterceptors()) {
+      try {
+        if (interceptor.beforeTerminalInput(event)) {
+          return true
+        }
+      }
+      catch (t: Throwable) {
+        LOG.error("Terminal input interceptor failed", t)
+      }
     }
     return false
   }

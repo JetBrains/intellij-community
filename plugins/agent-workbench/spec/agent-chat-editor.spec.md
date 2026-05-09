@@ -88,10 +88,15 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Agent Chat live terminal lifetime belongs to the logical open chat tab (`tabKey`), not to a transient `FileEditor` instance recreated by tab drag-and-drop reorder, move between splitters, or detach/reattach.
 - Agent Chat files are unsplittable: simultaneous duplicate editor copies of the same chat are not supported because one live terminal view backs the logical tab.
 - Reordering an open chat tab by drag-and-drop must preserve the running session and visible transcript state; the move must not interrupt, restart, or replace the live terminal.
-- Dropping one or more files onto an open Agent Chat tab must paste the dropped file paths into the terminal input instead of opening the dropped files in editor tabs.
-- File-drop paste must work for both IDE-internal drags (for example Project View) and OS/native file drops.
-- File-drop paste must preserve drop order, must not auto-execute, and must keep working while terminal content swaps between regular and alternate-buffer editors.
+- Dropping one or more files onto the terminal area of an open Agent Chat tab must paste the dropped file paths into the terminal input instead of opening the dropped files in editor tabs.
+- Dropping one or more files onto the visible pending context panel must add the dropped file paths as one pending `Files` context chip instead of mutating terminal input.
+- File-drop handling must work for both IDE-internal drags (for example Project View) and OS/native file drops.
+- Terminal file-drop paste must preserve drop order, must not auto-execute, and must keep working while terminal content swaps between regular and alternate-buffer editors.
+- Pending context panel file drops must preserve drop order in the context item.
   [@test] ../chat/testSrc/AgentChatFileDropSupportTest.kt
+- Add-to-agent-context into an open top-level concrete Agent Chat tab must target the matching workspace/provider/thread, add de-duplicated context to an editor-local pending context chip buffer, and not mutate terminal input immediately.
+- Pressing plain Enter with pending context must submit the user's terminal prompt together with one `### IDE Context` envelope, then clear the pending context buffer only after the terminal accepts the send. If that pending context exceeds the 12,000-character soft cap, the user must choose send-full, auto-trim, or cancel before submission; cancel keeps the pending context buffer and does not submit.
+  [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 - Disposing an initialized chat editor instance must only release editor-local controller state; it must not interrupt or restart the live terminal while the same chat file remains open in the project.
 - Editor-local controller state includes scoped terminal refresh, patch folding, semantic-region tracking, and initial-message dispatch controllers; all must be disposed with the editor instance.
 - Closing the chat file after transient editor recreation has settled must always release terminal tab resources:

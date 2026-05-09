@@ -2,10 +2,13 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
@@ -16,14 +19,17 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.ui.InplaceButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +44,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.awt.Container
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -58,6 +66,7 @@ class AgentChatOpenTopLevelDispatchTest {
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
 
   private val projectPath = "/work/project-a"
+
   @BeforeEach
   fun setUp(): Unit = timeoutRunBlocking {
     runInUi {
@@ -135,6 +144,232 @@ class AgentChatOpenTopLevelDispatchTest {
   }
 
   @Test
+  fun addContextToOpenTopLevelAgentChatAddsPendingContextWithoutSendingImmediately(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+
+    openChatInModal(
+      threadIdentity = codexThreadIdentity("thread-context-paste"),
+      shellCommand = codexResumeCommand("thread-context-paste"),
+      threadId = "thread-context-paste",
+      threadTitle = "Context paste thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file)
+        .filterIsInstance<AgentChatFileEditor>()
+        .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
+    }
+    runInUi {
+      editor.selectNotify()
+    }
+
+    val firstAdded = addContextToOpenTopLevelAgentChat(
+      projectPath = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-context-paste",
+      contextItems = listOf(contextItem("Main.kt", "file: Main.kt")),
+    )
+    val secondAdded = addContextToOpenTopLevelAgentChat(
+      projectPath = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-context-paste",
+      contextItems = listOf(contextItem("Util.kt", "file: Util.kt"), contextItem("Main.kt", "file: Main.kt")),
+    )
+
+    assertThat(firstAdded).isTrue()
+    assertThat(secondAdded).isTrue()
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+    assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Main.kt", "Util.kt")
+  }
+
+  @Test
+  fun pendingContextChipCloseButtonRemovesItem(): Unit = timeoutRunBlocking {
+    runInUi {
+      val panel = AgentChatPendingContextPanel(projectPath)
+      assertThat(panel.addItems(listOf(contextItem("Main.kt", "file: Main.kt")))).isTrue()
+
+      val closeButton = findChildComponent(panel.component, InplaceButton::class.java)
+                        ?: error("Pending context chip close button was not found")
+      closeButton.doClick()
+
+      assertThat(panel.pendingItemsForTests()).isEmpty()
+    }
+  }
+
+  @Test
+  fun pendingContextIsSubmittedOnPlainEnterAndCleared(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+
+    openChatInModal(
+      threadIdentity = codexThreadIdentity("thread-context-submit"),
+      shellCommand = codexResumeCommand("thread-context-submit"),
+      threadId = "thread-context-submit",
+      threadTitle = "Context submit thread",
+      subAgentId = null,
+    )
+    val file = openedChatFiles().single()
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file)
+        .filterIsInstance<AgentChatFileEditor>()
+        .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
+    }
+    runInUi {
+      editor.selectNotify()
+    }
+
+    assertThat(addContextToOpenTopLevelAgentChat(projectPath,
+                                                 AgentSessionProvider.CODEX,
+                                                 "thread-context-submit",
+                                                 listOf(contextItem("Main.kt", "file: Main.kt"))))
+      .isTrue()
+
+    assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
+
+    assertThat(terminalTabs.tab.sentTexts).hasSize(1)
+    val sentText = terminalTabs.tab.sentTexts.single()
+    assertThat(sentText.shouldExecute).isTrue()
+    assertThat(sentText.pendingContextSubmission).isTrue()
+    assertThat(sentText.text).startsWith("\n\n")
+    assertThat(sentText.text).contains("### IDE Context")
+    assertThat(sentText.text).contains("file: Main.kt")
+    assertThat(editor.pendingContextItemsForTests()).isEmpty()
+  }
+
+  @Test
+  fun pendingContextSoftCapSendFullSubmitsOriginalContextAndClears(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val editor = openInitializedChatEditor(
+      threadId = "thread-context-send-full",
+      threadTitle = "Context send full thread",
+    )
+    val largeBody = largeContextBody()
+
+    assertThat(addContextToOpenTopLevelAgentChat(projectPath,
+                                                 AgentSessionProvider.CODEX,
+                                                 "thread-context-send-full",
+                                                 listOf(contextItem("Large.kt", largeBody))))
+      .isTrue()
+
+    withTestDialogChoice(0) {
+      assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
+    }
+
+    val sentText = terminalTabs.tab.sentTexts.single().text
+    assertThat(sentText).contains("soft-cap: limit=${AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS} auto-trim=no")
+    assertThat(sentText).contains(largeBody)
+    assertThat(editor.pendingContextItemsForTests()).isEmpty()
+  }
+
+  @Test
+  fun pendingContextSoftCapAutoTrimSubmitsTrimmedContextAndClears(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val editor = openInitializedChatEditor(
+      threadId = "thread-context-auto-trim",
+      threadTitle = "Context auto-trim thread",
+    )
+    val largeBody = largeContextBody()
+
+    assertThat(addContextToOpenTopLevelAgentChat(projectPath,
+                                                 AgentSessionProvider.CODEX,
+                                                 "thread-context-auto-trim",
+                                                 listOf(contextItem("Large.kt", largeBody))))
+      .isTrue()
+
+    withTestDialogChoice(1) {
+      assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
+    }
+
+    val sentText = terminalTabs.tab.sentTexts.single().text
+    assertThat(sentText).contains("soft-cap: limit=${AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS} auto-trim=yes")
+    assertThat(sentText.length).isLessThan(largeBody.length)
+    assertThat(editor.pendingContextItemsForTests()).isEmpty()
+  }
+
+  @Test
+  fun pendingContextSoftCapCancelKeepsContextAndDoesNotSubmit(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val editor = openInitializedChatEditor(
+      threadId = "thread-context-cancel",
+      threadTitle = "Context cancel thread",
+    )
+
+    assertThat(addContextToOpenTopLevelAgentChat(projectPath,
+                                                 AgentSessionProvider.CODEX,
+                                                 "thread-context-cancel",
+                                                 listOf(contextItem("Large.kt", largeContextBody()))))
+      .isTrue()
+
+    withTestDialogChoice(2) {
+      assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
+    }
+
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+    assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Large.kt")
+  }
+
+  @Test
   fun dispatchOpenTopLevelThreadIfPresentSkipsSubAgentTab(): Unit = timeoutRunBlocking {
     val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
     customFileEditorFactory = { editorProject, file ->
@@ -205,6 +440,29 @@ class AgentChatOpenTopLevelDispatchTest {
     }
   }
 
+  private suspend fun openInitializedChatEditor(
+    threadId: String,
+    threadTitle: String,
+  ): AgentChatFileEditor {
+    openChatInModal(
+      threadIdentity = codexThreadIdentity(threadId),
+      shellCommand = codexResumeCommand(threadId),
+      threadId = threadId,
+      threadTitle = threadTitle,
+      subAgentId = null,
+    )
+    val file = openedChatFiles().single()
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file)
+        .filterIsInstance<AgentChatFileEditor>()
+        .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
+    }
+    runInUi {
+      editor.selectNotify()
+    }
+    return editor
+  }
+
   private class OpenTabDispatchChatFileEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile): Boolean {
       return file is AgentChatVirtualFile
@@ -247,6 +505,7 @@ private class OpenTabDispatchFakeAgentChatTerminalTab : AgentChatTerminalTab {
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
 
   val sentTexts: MutableList<OpenTabDispatchSentTerminalText> = mutableListOf()
+  private val inputInterceptors: MutableList<TerminalInputInterceptor> = mutableListOf()
 
   fun setSessionState(state: TerminalViewSessionState) {
     mutableSessionState.value = state
@@ -276,6 +535,26 @@ private class OpenTabDispatchFakeAgentChatTerminalTab : AgentChatTerminalTab {
     sentTexts += OpenTabDispatchSentTerminalText(text, shouldExecute, useBracketedPasteMode)
   }
 
+  override fun sendPendingContextAndExecute(text: String, useBracketedPasteMode: Boolean): Boolean {
+    sentTexts += OpenTabDispatchSentTerminalText(
+      text = text,
+      shouldExecute = true,
+      useBracketedPasteMode = useBracketedPasteMode,
+      pendingContextSubmission = true,
+    )
+    return true
+  }
+
+  override fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor): Boolean {
+    inputInterceptors += interceptor
+    return true
+  }
+
+  fun pressPlainEnter(): Boolean {
+    val event = KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ENTER, KeyEvent.CHAR_UNDEFINED)
+    return inputInterceptors.any { interceptor -> interceptor.beforeTerminalInput(event) }
+  }
+
   override suspend fun awaitInitialMessageReadiness(
     timeoutMs: Long,
     idleMs: Long,
@@ -296,7 +575,44 @@ private data class OpenTabDispatchSentTerminalText(
   @JvmField val text: String,
   @JvmField val shouldExecute: Boolean,
   @JvmField val useBracketedPasteMode: Boolean = true,
+  @JvmField val pendingContextSubmission: Boolean = false,
 )
+
+private fun largeContextBody(): String = "x".repeat(AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS * 2)
+
+private suspend fun <T> withTestDialogChoice(choice: Int, action: suspend () -> T): T {
+  val previous = TestDialogManager.setTestDialog { choice }
+  try {
+    return action()
+  }
+  finally {
+    TestDialogManager.setTestDialog(previous)
+  }
+}
+
+private fun contextItem(title: String, body: String): AgentPromptContextItem {
+  return AgentPromptContextItem(
+    rendererId = "test",
+    title = title,
+    body = body,
+    source = "test",
+  )
+}
+
+private fun <T : JComponent> findChildComponent(container: Container, componentClass: Class<T>): T? {
+  for (component in container.components) {
+    if (componentClass.isInstance(component)) {
+      return componentClass.cast(component)
+    }
+    if (component is Container) {
+      val child = findChildComponent(component, componentClass)
+      if (child != null) {
+        return child
+      }
+    }
+  }
+  return null
+}
 
 private fun codexThreadIdentity(threadId: String): String {
   return buildAgentThreadIdentity(providerId = AgentSessionProvider.CODEX.value, threadId = threadId)

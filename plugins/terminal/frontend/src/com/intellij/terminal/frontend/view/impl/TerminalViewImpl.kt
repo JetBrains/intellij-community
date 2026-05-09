@@ -27,6 +27,7 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.TerminalView
@@ -45,6 +46,7 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -150,6 +152,7 @@ class TerminalViewImpl(
   private var isAlternateScreenBuffer = false
 
   private val terminalPanel: TerminalPanel
+
   @VisibleForTesting
   val outputEditorKeyEventsHandler: TerminalKeyEventsHandler
 
@@ -178,9 +181,12 @@ class TerminalViewImpl(
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
   override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
+  private val inputInterceptors = ContainerUtil.createLockFreeCopyOnWriteList<TerminalInputInterceptor>()
 
-  override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> = CompletableDeferred(coroutineScope.coroutineContext.job)
-  override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> = CompletableDeferred(coroutineScope.coroutineContext.job)
+  override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> =
+    CompletableDeferred(coroutineScope.coroutineContext.job)
+  override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> =
+    CompletableDeferred(coroutineScope.coroutineContext.job)
 
   init {
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
@@ -220,6 +226,7 @@ class TerminalViewImpl(
       scrollingModel = null,
       alternateBufferModel,
       typeAhead = null,
+      inputInterceptors = { inputInterceptors },
     )
     val alternateBufferMouseEventsHandler = TerminalMouseEventsHandlerImpl(
       alternateBufferEditor,
@@ -276,7 +283,8 @@ class TerminalViewImpl(
       settings,
       scrollingModel,
       outputModel,
-      typeAhead = outputModelController
+      typeAhead = outputModelController,
+      inputInterceptors = { inputInterceptors },
     )
     val outputEditorMouseEventsHandler = TerminalMouseEventsHandlerImpl(
       outputEditor,
@@ -427,6 +435,13 @@ class TerminalViewImpl(
     return TerminalSendTextBuilderImpl(this::doSendText)
   }
 
+  override fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor) {
+    inputInterceptors.add(interceptor)
+    Disposer.register(parentDisposable) {
+      inputInterceptors.remove(interceptor)
+    }
+  }
+
   private fun doSendText(options: TerminalSendTextOptions) {
     terminalInput.sendText(options)
   }
@@ -569,7 +584,8 @@ class TerminalViewImpl(
         repaintEditorScreen(editor)
 
         // Update the PSI file content
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
+        val psiFile =
+          PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
         psiFile?.charsSequence = model.document.immutableCharSequence  // must be the snapshot
       }
     })
