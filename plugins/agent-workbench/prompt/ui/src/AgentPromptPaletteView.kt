@@ -43,10 +43,10 @@ import javax.swing.text.DefaultCaret
 
 private val POPUP_PREFERRED_SIZE = JBUI.size(680, 380)
 private val POPUP_MINIMUM_SIZE = JBUI.size(680, 260)
-private val EXISTING_TASK_PANEL_PREFERRED_SIZE = JBUI.size(0, 140)
-private val EXISTING_TASK_PANEL_MINIMUM_SIZE = JBUI.size(0, 90)
-private const val EXISTING_TASK_VISIBLE_ROWS = 4
-private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 72)
+private val EXISTING_TASK_PANEL_PREFERRED_SIZE = JBUI.size(0, 90)
+private val EXISTING_TASK_PANEL_MINIMUM_SIZE = JBUI.size(0, 60)
+private const val EXISTING_TASK_VISIBLE_ROWS = 3
+private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
 private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
 

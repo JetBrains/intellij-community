@@ -111,7 +111,7 @@ class AgentPromptPaletteViewLayoutTest {
       val promptArea = EditorTextField()
       val view = createPaletteView(promptArea)
 
-      assertThat(view.existingTaskList.visibleRowCount).isEqualTo(4)
+      assertThat(view.existingTaskList.visibleRowCount).isEqualTo(3)
       assertThat(view.existingTaskScrollPane.preferredSize.height).isGreaterThan(0)
       assertThat(view.existingTaskScrollPane.minimumSize.height).isGreaterThan(0)
       assertThat(view.existingTaskScrollPane.preferredSize.height)

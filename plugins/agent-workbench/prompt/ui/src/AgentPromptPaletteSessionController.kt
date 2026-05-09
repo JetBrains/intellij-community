@@ -333,6 +333,8 @@ internal class AgentPromptPaletteSessionController(
         val isExtensionTab = contextState.activeExtensionTab != null
         val mode = currentTargetMode()
         view.existingTaskScrollPane.isVisible = !isExtensionTab && mode == PromptTargetMode.EXISTING_TASK
+        view.rootPanel.revalidate()
+        movePopupToFitScreen()
         if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK && !existingTaskController.hasLoadedEntries()) {
             reloadExistingTasks()
         }
