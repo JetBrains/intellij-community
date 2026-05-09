@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 import javax.swing.event.ChangeListener
@@ -45,6 +47,7 @@ internal class AgentPromptPaletteSessionController(
     private val closePopup: () -> Unit,
     private val isPopupActive: () -> Boolean,
     private val movePopupToFitScreen: () -> Unit,
+    private val popupScope: CoroutineScope,
 ) {
     private val contextState = AgentPromptPaletteContextState()
     private val draftState = AgentPromptPaletteDraftState()
@@ -335,12 +338,32 @@ internal class AgentPromptPaletteSessionController(
         view.existingTaskScrollPane.isVisible = !isExtensionTab && mode == PromptTargetMode.EXISTING_TASK
         view.rootPanel.revalidate()
         movePopupToFitScreen()
-        if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK && !existingTaskController.hasLoadedEntries()) {
-            reloadExistingTasks()
+        if (!isExtensionTab && mode == PromptTargetMode.EXISTING_TASK) {
+            if (!existingTaskController.hasLoadedEntries()) {
+                reloadExistingTasks()
+            }
+            refreshPreselection()
         }
         updateProviderOptionsVisibility()
         refreshSuggestions()
         refreshFooterHintForCurrentState()
+    }
+
+    private fun refreshPreselection() {
+        popupScope.launch {
+            val preferredId = resolvePreferredThreadId() ?: return@launch
+            existingTaskController.setPreselection(preferredId)
+        }
+    }
+
+    private suspend fun resolvePreferredThreadId(): String? {
+        val launcher = launcherProvider() ?: return null
+        val projectPath = submitController.resolveWorkingProjectPath() ?: return null
+        val provider = providerSelector.selectedProvider?.bridge?.provider ?: return null
+        return runCatching { launcher.listAddContextTargetCandidates(projectPath) }
+            .getOrDefault(emptyList())
+            .firstOrNull { candidate -> candidate.selected && candidate.provider == provider }
+            ?.threadId
     }
 
     private fun updateSendAvailability() {

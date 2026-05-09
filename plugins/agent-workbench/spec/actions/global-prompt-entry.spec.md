@@ -7,15 +7,20 @@ targets:
   - ../../prompt/src/actions/AgentWorkbenchPromptShortcutActionPromoter.kt
   - ../../prompt/src/ui/AgentPromptDraftPersistenceDecisions.kt
   - ../../prompt/ui/src/AgentPromptClaudeSlashCompletionProvider.kt
+  - ../../prompt/ui/src/AgentPromptAddContextModels.kt
+  - ../../prompt/ui/src/AgentPromptAddToAgentContextActionService.kt
   - ../../prompt/ui/src/AgentPromptEnterHandlers.kt
   - ../../prompt/ui/src/AgentPromptPalettePopup.kt
   - ../../prompt/ui/src/AgentPromptPaletteSessionController.kt
   - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
   - ../../prompt/ui/src/AgentPromptTextField.kt
+  - ../../prompt/ui/src/actions/AgentWorkbenchAddToAgentContextAction.kt
+  - ../../prompt/ui/src/actions/AgentWorkbenchAddToAgentContextIntention.kt
   - ../../prompt/src/ui/AgentPromptPalettePopup.kt
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
   - ../../prompt/src/ui/AgentPromptUiSessionStateService.kt
+  - ../../chat/src/AgentChatOpenTabsSnapshot.kt
   - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
@@ -27,8 +32,10 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptExistingTaskControllerTest.kt
   - ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
   - ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
   - ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
   - ../../prompt/testSrc/ui/AgentPromptDraftPersistenceDecisionsTest.kt
@@ -36,6 +43,7 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
   - ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
   - ../../prompt/testSrc/actions/AgentWorkbenchPromptActionPromoterTest.kt
+  - ../../prompt/ui/testSrc/actions/AgentWorkbenchAddToAgentContextActionTest.kt
   - ../../prompt-vcs/testSrc/context/AgentPromptVcsCommitManualContextSourceTest.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
@@ -68,7 +76,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - When `AgentWorkbenchPrompt.OpenGlobalPalette` is invoked while the global prompt popup is already visible for the same project, the existing popup must be focused instead of creating a second popup instance.
 
 - Re-focusing an already visible popup must preserve its live state, including prompt text, selected tab, provider selection, and context chips.
-  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
 
 - When the IDE loses application focus because the user switches to another app, the main global prompt popup must remain open and preserve its live state until it is explicitly dismissed.
 
@@ -87,7 +95,22 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - Global action id `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` must be available only when a project is open. It opens the same popup but with EP-driven extension tab auto-selection (see below).
 
 - When `AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect` is invoked while the global prompt popup is already visible for the same project, it must behave the same as the standard action and only focus the existing popup.
-  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
+
+- `AgentWorkbenchPrompt.AddToAgentContext` and the corresponding editor intention must collect default prompt context from the invocation place and route it into the global prompt popup. If no context is available, they must show the `popup.status.context.empty` status and must not open a popup.
+
+- When `AgentWorkbenchPrompt.AddToAgentContext` is invoked while the global prompt popup is already visible for the same project, it must append de-duplicated context to the visible popup, request composer focus, and preserve the popup's current tab, provider selection, and existing-task selection.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
+
+- When `AgentWorkbenchPrompt.AddToAgentContext` opens a fresh popup, existing-task auto-routing must use only open top-level concrete agent chat tabs for the same normalized project path. Pending chat tabs, sub-agent tabs, and non-open session catalog threads must not be target candidates.
+
+- Fresh `AddToAgentContext` routing must be deterministic:
+  - no open chat target candidate opens the popup on `PromptTargetMode.NEW_TASK`,
+  - one open chat target candidate opens the popup on `PromptTargetMode.EXISTING_TASK` with that thread selected,
+  - multiple open chat target candidates show the `popup.add.context.target.chooser.title` chooser and open `EXISTING_TASK` only after the user chooses a target,
+  - chooser cancellation must not open a popup.
+
+- Add-context target candidates marked as selected must be ordered before other candidates. A selected candidate represents the currently selected top-level concrete chat tab for the same normalized project path, but it must not bypass the chooser when multiple candidates exist.
 
 - Prompt target mode must support exactly:
   - `PromptTargetMode.NEW_TASK`,
@@ -106,6 +129,9 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 
 - Existing-task pane must stay bounded and must not starve prompt editor layout.
   [@test] ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
+
+- Opening the standard global prompt must default to `PromptTargetMode.NEW_TASK`. Switching to `PromptTargetMode.EXISTING_TASK` may preselect the focused open chat-tab thread for the selected provider, or the lone loaded thread when exactly one existing task is loaded, but it must not switch the tab automatically.
+  [@test] ../../prompt/ui/testSrc/AgentPromptExistingTaskControllerTest.kt
 
 - Submit validation must block launch when any required precondition is missing:
   - empty prompt,
@@ -223,6 +249,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.
 - Existing-task list must be scoped to resolved working project path.
+- `AgentPromptLauncherBridge.listAddContextTargetCandidates(projectPath)` is the shared signal for fresh add-context routing and existing-task row preselection. It must describe open chat targets only, not the full session catalog.
 - On successful launch, popup closes and draft is cleared; otherwise popup remains and shows error feedback.
 - `AgentPromptContextResolverService.collectDefaultContext(...)` remains the auto-context source of truth; manual context is merged later in popup state.
 - Manual context sources are discovered via `com.intellij.agent.workbench.promptManualContextSource` and invoked from popup-owned UI state.
@@ -230,6 +257,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 ## Error Handling
 - Validation errors are shown inline in footer using message keys.
 - Existing-task loading failures degrade to empty/error list state without crashing popup.
+- Add-context target-candidate loading failures degrade to `NEW_TASK` routing without crashing popup.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptSubmitValidationDecisionsTest'`
@@ -240,6 +268,9 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopupServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptExistingTaskControllerTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextActionTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`

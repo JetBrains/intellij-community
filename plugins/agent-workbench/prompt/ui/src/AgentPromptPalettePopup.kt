@@ -212,6 +212,7 @@ internal class AgentPromptPalettePopup(
       closePopup = ::cancelPopupExplicitly,
       isPopupActive = { popupActive },
       movePopupToFitScreen = { popup?.moveToFitScreen() },
+      popupScope = popupScope,
     )
     controllerRef = sessionController
     return view.rootPanel

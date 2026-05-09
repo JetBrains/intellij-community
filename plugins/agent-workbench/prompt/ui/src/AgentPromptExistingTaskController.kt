@@ -149,6 +149,9 @@ internal class AgentPromptExistingTaskController(
     if (selectedExistingTaskId != null && loaded.none { entry -> entry.id == selectedExistingTaskId }) {
       selectedExistingTaskId = null
     }
+    if (selectedExistingTaskId == null && loaded.size == 1) {
+      selectedExistingTaskId = loaded.single().id
+    }
     existingTaskListModel.clear()
     loaded.forEach { entry -> existingTaskListModel.addElement(entry) }
     if (loaded.isEmpty()) {
@@ -163,6 +166,18 @@ internal class AgentPromptExistingTaskController(
       if (selectedIdx >= 0) {
         existingTaskList.selectedIndex = selectedIdx
       }
+    }
+    onStateChanged()
+  }
+
+  fun setPreselection(preferredId: String?) {
+    if (selectedExistingTaskId != null) return
+    if (preferredId == null) return
+    val idx = allExistingTaskEntries.indexOfFirst { entry -> entry.id == preferredId }
+    if (idx < 0) return
+    selectedExistingTaskId = preferredId
+    if (existingTaskListModel.size() > idx) {
+      existingTaskList.selectedIndex = idx
     }
     onStateChanged()
   }
