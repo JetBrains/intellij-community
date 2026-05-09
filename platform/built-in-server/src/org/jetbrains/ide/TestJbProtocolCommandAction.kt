@@ -59,7 +59,7 @@ private class TestJbProtocolCommandDialog(project: Project?) : DialogWrapper(pro
     }
     row("Examples:") {
       val examples = """
-        jetbrains://idea/installPlugin?id=IdeaVIM
+        jetbrains://idea/plugin/install?id=IdeaVIM
         jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo
       """.trimIndent()
       val area = JBTextArea(examples, 2, 60).apply {

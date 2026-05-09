@@ -15,15 +15,18 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Handles `jetbrains://<product>/installPlugin?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
+ * Handles `jetbrains://<product>/plugin/install?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
  *
  * The marketplace confirmation dialog shown by [installAndEnable] is the user-consent gate;
  * we do not enforce a host allowlist here because OS-level protocol handlers do not provide
  * a verifiable origin.
  */
 @Internal
-class InstallPluginJbProtocolCommand : JBProtocolCommand("installPlugin") {
+class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
   override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? {
+    if (target != "install") {
+      return IdeBundle.message("jb.protocol.unknown.target", target)
+    }
     val ids = collectPluginIds(parameters)
     if (ids.isEmpty()) {
       return IdeBundle.message("jb.protocol.parameter.missing", "id")
