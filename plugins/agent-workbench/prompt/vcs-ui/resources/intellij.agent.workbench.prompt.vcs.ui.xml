@@ -1,0 +1,17 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.prompt.ui"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions>
+    <reference ref="AgentWorkbenchPrompt.AddToAgentContext">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="CopyReferencePopupGroup"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
+      <add-to-group group-id="Vcs.Log.ChangesBrowser.Popup" anchor="last"/>
+    </reference>
+  </actions>
+</idea-plugin>

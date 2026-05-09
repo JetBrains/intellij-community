@@ -9,136 +9,135 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
 
 internal fun computeContextFingerprint(items: List<AgentPromptContextItem>): HashValue128? {
-  if (items.isEmpty()) {
-    return null
-  }
+    if (items.isEmpty()) {
+        return null
+    }
 
-  val hash = Hashing.xxh3_128().hashStream()
-  // version
-  hash.putInt(0)
+    val hash = Hashing.xxh3_128().hashStream()
+    // version
+    hash.putInt(0)
 
-  for (item in items) {
-    appendExactContextFingerprintItem(hash, item)
-  }
-  hash.putInt(items.size)
-  return hash.get()
+    for (item in items) {
+        appendExactContextFingerprintItem(hash, item)
+    }
+    hash.putInt(items.size)
+    return hash.get()
 }
 
 internal fun appendExactContextFingerprintItem(sink: HashSink, item: AgentPromptContextItem) {
-  sink.putString(item.rendererId)
-  appendField(sink, "title", item.title)
-  sink.putString(item.body)
-  appendField(sink, "itemId", item.itemId)
-  appendField(sink, "parentItemId", item.parentItemId)
-  sink.putString(item.source)
-  sink.putInt(item.phase?.ordinal ?: -1)
-  sink.putInt(item.truncation.originalChars)
-  sink.putInt(item.truncation.includedChars)
-  sink.putInt(item.truncation.reason.ordinal)
-  appendPayloadCanonical(sink, item.payload)
+    sink.putString(item.rendererId)
+    appendField(sink, "title", item.title)
+    sink.putString(item.body)
+    appendField(sink, "itemId", item.itemId)
+    appendField(sink, "parentItemId", item.parentItemId)
+    sink.putString(item.source)
+    sink.putInt(item.phase?.ordinal ?: -1)
+    sink.putInt(item.truncation.originalChars)
+    sink.putInt(item.truncation.includedChars)
+    sink.putInt(item.truncation.reason.ordinal)
+    appendContextPayloadCanonical(sink, item.payload)
 }
 
 internal fun applyDraftContextRemovals(
-  entries: List<ContextEntry>,
-  currentFingerprint: HashValue128?,
-  draftFingerprint: HashValue128?,
-  removedLogicalItemIds: Collection<String>,
+    entries: List<ContextEntry>,
+    currentFingerprint: HashValue128?,
+    draftFingerprint: HashValue128?,
+    removedLogicalItemIds: Collection<String>,
 ): List<ContextEntry> {
-  if (entries.isEmpty() || currentFingerprint == null || draftFingerprint == null || currentFingerprint != draftFingerprint) {
-    return entries
-  }
-  val normalizedRemovedIds = normalizeRemovedContextItemIds(removedLogicalItemIds)
-  if (normalizedRemovedIds.isEmpty()) {
-    return entries
-  }
+    if (entries.isEmpty() || currentFingerprint == null || draftFingerprint == null || currentFingerprint != draftFingerprint) {
+        return entries
+    }
+    val normalizedRemovedIds = normalizeRemovedContextItemIds(removedLogicalItemIds)
+    if (normalizedRemovedIds.isEmpty()) {
+        return entries
+    }
 
-  var remaining = entries
-  normalizedRemovedIds.forEach { removedLogicalItemId ->
-    val entryId = remaining.firstOrNull { entry -> entry.logicalItemId == removedLogicalItemId }?.id ?: return@forEach
-    remaining = resolveContextEntriesAfterRemoval(remaining, removedEntryId = entryId)
-  }
-  return remaining
+    var remaining = entries
+    normalizedRemovedIds.forEach { removedLogicalItemId ->
+        val entryId = remaining.firstOrNull { entry -> entry.logicalItemId == removedLogicalItemId }?.id ?: return@forEach
+        remaining = resolveContextEntriesAfterRemoval(remaining, removedEntryId = entryId)
+    }
+    return remaining
 }
 
 internal fun collectRemovedLogicalItemIds(
-  beforeEntries: List<ContextEntry>,
-  afterEntries: List<ContextEntry>,
+    beforeEntries: List<ContextEntry>,
+    afterEntries: List<ContextEntry>,
 ): Set<String> {
-  if (beforeEntries.isEmpty()) {
-    return emptySet()
-  }
-  val remainingLogicalIds = afterEntries
-    .asSequence()
-    .mapNotNull(ContextEntry::logicalItemId)
-    .map(String::trim)
-    .filter(String::isNotEmpty)
-    .toHashSet()
-  val removedLogicalIds = LinkedHashSet<String>()
-  for (entry in beforeEntries) {
-    val logicalItemId = entry.logicalItemId?.trim()?.takeIf { it.isNotEmpty() } ?: continue
-    if (logicalItemId !in remainingLogicalIds) {
-      removedLogicalIds.add(logicalItemId)
+    if (beforeEntries.isEmpty()) {
+        return emptySet()
     }
-  }
-  return removedLogicalIds
+    val remainingLogicalIds = afterEntries
+        .asSequence()
+        .mapNotNull(ContextEntry::logicalItemId)
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .toHashSet()
+    val removedLogicalIds = LinkedHashSet<String>()
+    for (entry in beforeEntries) {
+        val logicalItemId = entry.logicalItemId?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+        if (logicalItemId !in remainingLogicalIds) {
+            removedLogicalIds.add(logicalItemId)
+        }
+    }
+    return removedLogicalIds
 }
 
 internal fun normalizeRemovedContextItemIds(ids: Collection<String>): List<String> {
-  if (ids.isEmpty()) {
-    return emptyList()
-  }
-  val normalized = LinkedHashSet<String>()
-  for (rawId in ids) {
-    val id = rawId.trim()
-    if (id.isNotEmpty()) {
-      normalized.add(id)
+    if (ids.isEmpty()) {
+        return emptyList()
     }
-  }
-  return normalized.toList()
+    val normalized = LinkedHashSet<String>()
+    for (rawId in ids) {
+        val id = rawId.trim()
+        if (id.isNotEmpty()) {
+            normalized.add(id)
+        }
+    }
+    return normalized.toList()
 }
 
 private fun appendField(sink: HashSink, name: String, value: String?) {
-  sink.putString(name)
-  if (value == null) {
-    sink.putInt(-1)
-  }
-  else {
-    sink.putString(value)
-  }
+    sink.putString(name)
+    if (value == null) {
+        sink.putInt(-1)
+    } else {
+        sink.putString(value)
+    }
 }
 
-private fun appendPayloadCanonical(sink: HashSink, payload: AgentPromptPayloadValue) {
-  when (payload) {
-    is AgentPromptPayloadValue.Obj -> {
-      sink.putByte(0)
-      sink.putUnorderedIterable(payload.fields.keys, { key, sink ->
-        sink.putString(key)
-        appendPayloadCanonical(sink, payload.fields.getValue(key))
-      }, Hashing.xxh3_64())
-    }
+internal fun appendContextPayloadCanonical(sink: HashSink, payload: AgentPromptPayloadValue) {
+    when (payload) {
+        is AgentPromptPayloadValue.Obj -> {
+            sink.putByte(0)
+            sink.putUnorderedIterable(payload.fields.keys, { key, sink ->
+                sink.putString(key)
+                appendContextPayloadCanonical(sink, payload.fields.getValue(key))
+            }, Hashing.xxh3_64())
+        }
 
-    is AgentPromptPayloadValue.Arr -> {
-      sink.putByte(1)
-      sink.putOrderedIterable(payload.items) { key, sink ->
-        appendPayloadCanonical(sink, key)
-      }
-    }
+        is AgentPromptPayloadValue.Arr -> {
+            sink.putByte(1)
+            sink.putOrderedIterable(payload.items) { key, sink ->
+                appendContextPayloadCanonical(sink, key)
+            }
+        }
 
-    is AgentPromptPayloadValue.Str -> {
-      sink.putByte(2)
-      sink.putString(payload.value)
-    }
+        is AgentPromptPayloadValue.Str -> {
+            sink.putByte(2)
+            sink.putString(payload.value)
+        }
 
-    is AgentPromptPayloadValue.Num -> {
-      sink.putByte(3)
-      sink.putString(payload.value)
-    }
+        is AgentPromptPayloadValue.Num -> {
+            sink.putByte(3)
+            sink.putString(payload.value)
+        }
 
-    is AgentPromptPayloadValue.Bool -> {
-      sink.putByte(4)
-      sink.putBoolean(payload.value)
-    }
+        is AgentPromptPayloadValue.Bool -> {
+            sink.putByte(4)
+            sink.putBoolean(payload.value)
+        }
 
-    AgentPromptPayloadValue.Null -> sink.putByte(5)
-  }
+        AgentPromptPayloadValue.Null -> sink.putByte(5)
+    }
 }

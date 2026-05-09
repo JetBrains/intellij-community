@@ -2,7 +2,9 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,6 +39,11 @@ suspend fun collectOpenAgentChatRefreshSnapshot(): AgentChatOpenTabsRefreshSnaps
   collectOpenAgentChatTabsSnapshot().toRefreshSnapshot()
 }
 
+suspend fun collectOpenAgentChatAddContextTargetCandidates(projectPath: String): List<AgentPromptAddContextTargetCandidate> =
+  withContext(Dispatchers.UI) {
+    collectOpenAgentChatTabsSnapshot().addContextTargetCandidates(normalizeAgentWorkbenchPath(projectPath))
+  }
+
 internal fun collectOpenAgentChatTabsSnapshot(
   projects: Array<Project> = ProjectManager.getInstance().openProjects,
 ): AgentChatOpenTabsSnapshot {
@@ -52,18 +59,26 @@ internal fun collectOpenAgentChatTabsSnapshot(
   val openProjectPaths = LinkedHashSet<String>()
   val pendingProjectPaths = LinkedHashSet<String>()
   var selectedChatThreadIdentity: Pair<AgentSessionProvider, String>? = null
+  var selectedTopLevelConcreteChatTab: AgentChatSelectedTopLevelConcreteTab? = null
 
   for (project in projects) {
     if (project.isDisposed) {
       continue
     }
 
-    if (selectedChatThreadIdentity == null) {
+    if (selectedTopLevelConcreteChatTab == null) {
       val selection = project.serviceIfCreated<AgentChatTabSelectionService>()?.selectedChatTab?.value
       val identity = selection?.let { splitAgentThreadIdentity(it.threadIdentity) }
       val provider = identity?.let { AgentSessionProvider.fromOrNull(it.first.lowercase(Locale.ROOT)) }
-      if (provider != null) {
-        selectedChatThreadIdentity = provider to identity.second
+      if (selection != null && provider != null && selection.subAgentId == null &&
+          selection.threadId.isNotBlank() && !isPendingThreadIdentityForProvider(selection.threadIdentity, provider)
+      ) {
+        selectedChatThreadIdentity = provider to selection.threadId
+        selectedTopLevelConcreteChatTab = AgentChatSelectedTopLevelConcreteTab(
+          normalizedProjectPath = normalizeAgentWorkbenchPath(selection.projectPath),
+          provider = provider,
+          threadId = selection.threadId,
+        )
       }
     }
 
@@ -74,7 +89,8 @@ internal fun collectOpenAgentChatTabsSnapshot(
       val normalizedProjectPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
       val hasPendingThreadIdentity = chatFile.isPendingThread
       val participatesInPendingThreadLifecycle = chatFile.participatesInPendingThreadLifecycle()
-      val pendingProvider = if (participatesInPendingThreadLifecycle) pendingProviderForThreadIdentity(chatFile.threadIdentity) else null
+      val pendingProvider =
+        if (participatesInPendingThreadLifecycle) pendingProviderForThreadIdentity(chatFile.threadIdentity) else null
       entries.add(
         AgentChatOpenFileEntry(
           manager = manager,
@@ -130,6 +146,7 @@ internal fun collectOpenAgentChatTabsSnapshot(
     openProjectPaths = openProjectPaths,
     pendingProjectPaths = pendingProjectPaths,
     selectedChatThreadIdentity = selectedChatThreadIdentity,
+    selectedTopLevelConcreteChatTab = selectedTopLevelConcreteChatTab,
   )
 }
 
@@ -139,6 +156,12 @@ internal data class AgentChatOpenFileEntry(
   val file: AgentChatVirtualFile,
 )
 
+internal data class AgentChatSelectedTopLevelConcreteTab(
+  @JvmField val normalizedProjectPath: String,
+  val provider: AgentSessionProvider,
+  @JvmField val threadId: String,
+)
+
 internal class AgentChatOpenTabsSnapshot(
   private val entries: List<AgentChatOpenFileEntry>,
   private val filesByTabKey: LinkedHashMap<String, AgentChatVirtualFile>,
@@ -146,12 +169,13 @@ internal class AgentChatOpenTabsSnapshot(
   private val concreteThreadIdentitiesByPath: LinkedHashMap<String, LinkedHashSet<String>>,
   private val concreteThreadIdentitiesByPathAndManager: LinkedHashMap<String, LinkedHashMap<FileEditorManagerEx, LinkedHashSet<String>>>,
   private val pendingFilesByProviderAndPathAndTabKey:
-    LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
+  LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
   private val concreteFilesByProviderAndPathAndTabKey:
-    LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
+  LinkedHashMap<AgentSessionProvider, LinkedHashMap<String, LinkedHashMap<String, AgentChatVirtualFile>>>,
   private val openProjectPaths: LinkedHashSet<String>,
   private val pendingProjectPaths: LinkedHashSet<String>,
   val selectedChatThreadIdentity: Pair<AgentSessionProvider, String>?,
+  private val selectedTopLevelConcreteChatTab: AgentChatSelectedTopLevelConcreteTab?,
 ) {
   fun findFileByTabKey(tabKey: String): AgentChatVirtualFile? {
     return filesByTabKey[tabKey]
@@ -240,6 +264,45 @@ internal class AgentChatOpenTabsSnapshot(
       entry.file.provider == provider &&
       entry.file.threadId == threadId
     }
+  }
+
+  fun addContextTargetCandidates(normalizedPath: String): List<AgentPromptAddContextTargetCandidate> {
+    val candidatesByIdentity = LinkedHashMap<Pair<AgentSessionProvider, String>, AgentPromptAddContextTargetCandidate>()
+    for (entry in entries) {
+      if (entry.normalizedProjectPath != normalizedPath) {
+        continue
+      }
+
+      val chatFile = entry.file
+      val provider = chatFile.provider ?: continue
+      val threadId = chatFile.threadId.takeIf { id -> id.isNotBlank() } ?: continue
+      if (chatFile.isPendingThread || chatFile.subAgentId != null) {
+        continue
+      }
+
+      candidatesByIdentity.putIfAbsent(
+        provider to threadId,
+        AgentPromptAddContextTargetCandidate(
+          projectPath = normalizedPath,
+          provider = provider,
+          launchMode = AgentSessionLaunchMode.STANDARD,
+          threadId = threadId,
+          displayText = chatFile.threadTitle.takeIf { title -> title.isNotBlank() } ?: threadId,
+          secondaryText = "  ${provider.value}",
+          selected = selectedTopLevelConcreteChatTab == AgentChatSelectedTopLevelConcreteTab(
+            normalizedProjectPath = normalizedPath,
+            provider = provider,
+            threadId = threadId,
+          ),
+        )
+      )
+    }
+
+    if (candidatesByIdentity.isEmpty()) {
+      return emptyList()
+    }
+    val (selectedCandidates, otherCandidates) = candidatesByIdentity.values.partition { candidate -> candidate.selected }
+    return selectedCandidates + otherCandidates
   }
 
   fun managersFor(file: AgentChatVirtualFile): Set<FileEditorManagerEx> {

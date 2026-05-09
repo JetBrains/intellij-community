@@ -18,9 +18,22 @@
     <customPasteProvider implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptImagePasteProvider"/>
     <actionPromoter implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptShortcutActionPromoter" order="last"/>
     <projectSettings service="com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService"/>
+    <intentionAction>
+      <className>com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextIntention</className>
+      <bundleName>messages.AgentPromptBundle</bundleName>
+      <categoryKey>intention.category.agent.workbench</categoryKey>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
   </extensions>
 
   <actions resource-bundle="messages.AgentPromptBundle">
+    <action
+      id="AgentWorkbenchPrompt.AddToAgentContext"
+      class="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewEditSource"/>
+    </action>
+
     <action
       id="AgentWorkbenchPrompt.OpenGlobalPalette"
       class="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptAction">

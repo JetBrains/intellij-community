@@ -62,12 +62,12 @@
 - name: lib/modules/intellij.agent.workbench.junie.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.junie.sessions
-- name: lib/modules/intellij.agent.workbench.prompt.core.jar
-  contentModules:
-  - name: intellij.agent.workbench.prompt.core
 - name: lib/modules/intellij.agent.workbench.prompt.context.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.context
+- name: lib/modules/intellij.agent.workbench.prompt.core.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.core
 - name: lib/modules/intellij.agent.workbench.prompt.testrunner.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.testrunner
@@ -77,6 +77,9 @@
 - name: lib/modules/intellij.agent.workbench.prompt.vcs.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.vcs
+- name: lib/modules/intellij.agent.workbench.prompt.vcs.ui.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.vcs.ui
 - name: lib/modules/intellij.agent.workbench.sessions.actions.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.actions

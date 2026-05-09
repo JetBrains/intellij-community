@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.context" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.vcs.merge" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.testrunner" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="RUNTIME" />

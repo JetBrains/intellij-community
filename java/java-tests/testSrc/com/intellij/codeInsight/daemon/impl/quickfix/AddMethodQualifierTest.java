@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -46,7 +45,7 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testFixArguments() {
-    doTestFix();
+    doTestFix("Add qualifier ");
   }
 
   public void testNotAvailableIfQualifierExists() {
@@ -55,8 +54,12 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void doTestFix() {
+    doTestFix("Add method qualifier");
+  }
+
+  private void doTestFix(String intentionHint) {
     myFixture.configureByFile(getTestName(false) + ".java");
-    IntentionAction action = myFixture.findSingleIntention("Add ");
+    IntentionAction action = myFixture.findSingleIntention(intentionHint);
     myFixture.checkPreviewAndLaunchAction(action);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
@@ -67,17 +70,14 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @Nullable
-  private AddMethodQualifierFix getQuickFix() {
+  private IntentionAction getQuickFix() {
     final List<IntentionAction> availableIntentions = myFixture.getAvailableIntentions();
-    AddMethodQualifierFix addMethodQualifierFix = null;
     for (IntentionAction action : availableIntentions) {
-      action = IntentionActionDelegate.unwrap(action);
-      if (action instanceof AddMethodQualifierFix) {
-        addMethodQualifierFix = (AddMethodQualifierFix)action;
-        break;
+      if (action.asModCommandAction() instanceof AddMethodQualifierFix) {
+        return action;
       }
     }
-    return addMethodQualifierFix;
+    return null;
   }
 
 }

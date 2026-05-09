@@ -32,6 +32,7 @@
     <module name="intellij.agent.workbench.prompt.context"/>
     <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.agent.workbench.prompt.vcs"/>
+    <module name="intellij.agent.workbench.prompt.vcs.ui"/>
     <module name="intellij.agent.workbench.prompt.testrunner"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.actions"/>

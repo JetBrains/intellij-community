@@ -113,6 +113,16 @@ data class AgentPromptProjectPathCandidate(
     @JvmField val displayName: @NlsSafe String,
 )
 
+data class AgentPromptAddContextTargetCandidate(
+    @JvmField val projectPath: @NlsSafe String,
+    val provider: AgentSessionProvider,
+    @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+    @JvmField val threadId: @NlsSafe String,
+    @JvmField val displayText: @NlsSafe String,
+    @JvmField val secondaryText: @NlsSafe String = "",
+    @JvmField val selected: Boolean = false,
+)
+
 enum class AgentPromptLaunchError {
     PROVIDER_UNAVAILABLE,
     UNSUPPORTED_LAUNCH_MODE,

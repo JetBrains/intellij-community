@@ -1,0 +1,134 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.prompt.ui.actions
+
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.nio.file.Files
+
+@TestApplication
+class AgentWorkbenchAddToAgentContextActionTest {
+  private val action = AgentWorkbenchAddToAgentContextAction()
+
+  @Test
+  fun editorPopupHidesWithoutProject() {
+    val dataContext = SimpleDataContext.builder().build()
+
+    assertThat(isVisible(dataContext, ActionPlaces.EDITOR_POPUP)).isFalse()
+  }
+
+  @Test
+  fun editorPopupHidesForEditorWithoutFileContext() {
+    runInEdtAndWait {
+      withEditor("fun main() {}") { editor ->
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.PROJECT, project)
+          .add(CommonDataKeys.EDITOR, editor)
+          .build()
+
+        assertThat(isVisible(dataContext, ActionPlaces.EDITOR_POPUP)).isFalse()
+      }
+    }
+  }
+
+  @Test
+  fun editorPopupHidesForEmptyDocument() {
+    runInEdtAndWait {
+      withEditor("") { editor ->
+        val dataContext = editorDataContext(editor, LightVirtualFile("Empty.kt", ""))
+
+        assertThat(isVisible(dataContext, ActionPlaces.EDITOR_POPUP)).isFalse()
+      }
+    }
+  }
+
+  @Test
+  fun editorPopupShowsForFileBackedEditorWithContent() {
+    runInEdtAndWait {
+      withEditor("fun main() {}") { editor ->
+        val dataContext = editorDataContext(editor, LightVirtualFile("Main.kt", editor.document.text))
+
+        assertThat(isVisible(dataContext, ActionPlaces.EDITOR_POPUP)).isTrue()
+      }
+    }
+  }
+
+  @Test
+  fun projectViewPopupHidesWithoutSelectedLocalFiles() {
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, LightVirtualFile("Scratch.kt", "println(1)"))
+      .build()
+
+    assertThat(isVisible(dataContext, ActionPlaces.PROJECT_VIEW_POPUP)).isFalse()
+  }
+
+  @Test
+  fun projectViewPopupShowsWithSelectedLocalFile() {
+    val file = createPhysicalFile()
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .build()
+
+    assertThat(isVisible(dataContext, ActionPlaces.PROJECT_VIEW_POPUP)).isTrue()
+  }
+
+  @Test
+  fun otherPopupPlacesKeepProjectBasedVisibility() {
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .build()
+
+    assertThat(isVisible(dataContext, "Vcs.Log.ContextMenu")).isTrue()
+  }
+
+  private fun editorDataContext(editor: Editor, file: VirtualFile): DataContext {
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.EDITOR, editor)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .build()
+  }
+
+  private fun isVisible(dataContext: DataContext, place: String): Boolean {
+    val event = AnActionEvent.createEvent(action, dataContext, null, place, ActionUiKind.POPUP, null)
+    action.update(event)
+    return event.presentation.isEnabledAndVisible
+  }
+
+  private fun withEditor(text: String, block: (Editor) -> Unit) {
+    val editorFactory = EditorFactory.getInstance()
+    val editor = editorFactory.createEditor(editorFactory.createDocument(text))
+    try {
+      block(editor)
+    }
+    finally {
+      editorFactory.releaseEditor(editor)
+    }
+  }
+
+  private fun createPhysicalFile(): VirtualFile {
+    val root = Files.createTempDirectory("aw-add-context-action")
+    val nioPath = root.resolve("Selected.kt")
+    Files.writeString(nioPath, "fun selected() {}")
+    return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioPath))
+  }
+
+  private val project: Project
+    get() = ProjectManager.getInstance().defaultProject
+}

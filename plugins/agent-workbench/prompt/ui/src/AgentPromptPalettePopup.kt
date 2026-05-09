@@ -39,6 +39,7 @@ private const val ACTIVATION_CLICK_GRACE_MS = 500L
 
 internal class AgentPromptPalettePopup(
   private val invocationData: AgentPromptInvocationData,
+  private val initialAddContextRequest: AgentPromptAddContextRequest? = null,
   private val providersProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val launcherProvider: () -> AgentPromptLauncherBridge? = AgentPromptLaunchers::find,
   private val onClosed: (() -> Unit)? = null,
@@ -62,13 +63,15 @@ internal class AgentPromptPalettePopup(
   private var popup: JBPopup? = null
   private var popupActive: Boolean = false
   private var isExplicitCloseInProgress: Boolean = false
-  @Volatile private var lastSourceFrameActivationMs: Long = 0L
+
+  @Volatile
+  private var lastSourceFrameActivationMs: Long = 0L
   private lateinit var providerSelector: AgentPromptProviderSelector
   private lateinit var sessionController: AgentPromptPaletteSessionController
 
   override fun show() {
     val content = createContentPanel()
-    sessionController.initialize()
+    sessionController.initialize(initialAddContextRequest)
 
     val createdPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, promptArea)
@@ -122,8 +125,25 @@ internal class AgentPromptPalettePopup(
     IdeFocusManager.getInstance(project).requestFocusInProject(focusComponent, project)
   }
 
+  override fun requestComposerFocus() {
+    val currentPopup = popup ?: return
+    if (!currentPopup.isVisible) {
+      return
+    }
+
+    currentPopup.setRequestFocus(true)
+    IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
+  }
+
   override fun isVisible(): Boolean {
     return popup?.isVisible == true
+  }
+
+  override fun applyAddContext(request: AgentPromptAddContextRequest): AgentPromptAddContextApplyResult {
+    if (!::sessionController.isInitialized) {
+      return AgentPromptAddContextApplyResult.ALREADY_ADDED
+    }
+    return sessionController.applyAddContextRequest(request)
   }
 
   private fun installFrameActivationRefocusListener(createdPopup: JBPopup) {
@@ -136,7 +156,8 @@ internal class AgentPromptPalettePopup(
             popupProject = project,
             activatedProject = ideFrame.project,
             isPopupVisible = isVisible(),
-          )) {
+          )
+        ) {
           requestFocus()
         }
       }

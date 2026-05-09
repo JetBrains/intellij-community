@@ -18,6 +18,7 @@
   - name: intellij.agent.workbench.prompt.context
   - name: intellij.agent.workbench.prompt.ui
   - name: intellij.agent.workbench.prompt.vcs
+  - name: intellij.agent.workbench.prompt.vcs.ui
   - name: intellij.agent.workbench.prompt.testrunner
   - name: intellij.agent.workbench.sessions
   - name: intellij.agent.workbench.sessions.actions
