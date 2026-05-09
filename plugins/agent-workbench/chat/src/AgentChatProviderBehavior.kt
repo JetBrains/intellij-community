@@ -231,12 +231,23 @@ private fun isCodexPlanModeUnsafeTerminalTail(text: String): Boolean {
   if (latestLine.contains(CODEX_PLAN_MODE_BUSY_MESSAGE, ignoreCase = true)) {
     return true
   }
+  if (isCodexHookRunningInTerminalTail(tailLines)) {
+    return true
+  }
   return tailLines.any { line ->
     line.contains(CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE, ignoreCase = true) ||
     line.contains(CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE, ignoreCase = true) ||
     line.contains(CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE, ignoreCase = true) ||
     line.contains(CODEX_PLAN_MODE_WORKING_STATUS_MARKER, ignoreCase = true)
   }
+}
+
+private fun isCodexHookRunningInTerminalTail(tailLines: List<String>): Boolean {
+  val latestHookStatusLine = tailLines.lastOrNull { line ->
+    CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX.containsMatchIn(line) ||
+    CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX.containsMatchIn(line)
+  }
+  return latestHookStatusLine?.let(CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX::containsMatchIn) == true
 }
 
 private fun codexTerminalTailLines(text: String): List<String> {
@@ -279,6 +290,11 @@ private const val CODEX_PLAN_MODE_MCP_STARTUP_SINGLE_MESSAGE: String = "Booting 
 private const val CODEX_PLAN_MODE_MCP_STARTUP_MULTI_MESSAGE: String = "Starting MCP servers"
 private const val CODEX_PLAN_MODE_QUEUE_HINT_MESSAGE: String = "tab to queue"
 private const val CODEX_PLAN_MODE_WORKING_STATUS_MARKER: String = "Working ("
+private val CODEX_PLAN_MODE_HOOK_RUNNING_STATUS_REGEX: Regex = Regex("(?:^| )Running .+ hook(?::|$)", RegexOption.IGNORE_CASE)
+private val CODEX_PLAN_MODE_HOOK_TERMINAL_STATUS_REGEX: Regex = Regex(
+  "(?:^| ).+ hook \\((?:completed|failed|blocked|stopped)\\)",
+  RegexOption.IGNORE_CASE,
+)
 private val JUNIE_PROMPT_INPUT_MARKERS: List<String> = listOf(
   "Type your prompt",
 )

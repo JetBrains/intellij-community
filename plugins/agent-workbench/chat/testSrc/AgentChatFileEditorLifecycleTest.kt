@@ -841,6 +841,45 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun codexPlanModeWaitsForRunningHookTailToClearBeforeFirstPlanSend() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after SessionStart hook"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-plan-session-start-hook",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput(codexRunningHookTerminalSnapshot())
+    Thread.sleep(350)
+
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+
+    terminalTabs.tab.emitMeaningfulOutput(codexCompletedHookTerminalSnapshot())
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("Retry after SessionStart hook", shouldExecute = true),
+      )
+  }
+
+  @Test
   fun codexPlanModeOldBusyOutputDoesNotBlockOnceLatestTailIsIdle() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
@@ -1529,6 +1568,29 @@ private fun codexQueueHintTerminalSnapshot(): String {
     "› Ask Codex to do anything",
     "",
     "  tab to queue message · Plan mode",
+  ).joinToString(separator = "\n")
+}
+
+private fun codexRunningHookTerminalSnapshot(): String {
+  return listOf(
+    "• Running SessionStart hook: warming the shell",
+    "",
+    "",
+    "› Ask Codex to do anything",
+    "",
+    "  ? for shortcuts · 100% context left",
+  ).joinToString(separator = "\n")
+}
+
+private fun codexCompletedHookTerminalSnapshot(): String {
+  return listOf(
+    "• Running SessionStart hook: warming the shell",
+    "",
+    "SessionStart hook (completed)",
+    "",
+    "› Ask Codex to do anything",
+    "",
+    "  ? for shortcuts · 100% context left",
   ).joinToString(separator = "\n")
 }
 
