@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.prompt.ui.context
+package com.intellij.agent.workbench.prompt.context
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextContributorPhase
@@ -10,7 +10,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReas
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
-import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -18,6 +17,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.JTable
@@ -32,7 +32,8 @@ private data class UiSelectionSnapshot(
   @JvmField val entries: List<String>,
 )
 
-internal class AgentPromptListSelectionContextContributor : AgentPromptContextContributorBridge {
+@VisibleForTesting
+class AgentPromptListSelectionContextContributor : AgentPromptContextContributorBridge {
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
@@ -54,8 +55,8 @@ internal class AgentPromptListSelectionContextContributor : AgentPromptContextCo
     selection.kind?.let { payloadFields["selectionKind"] = AgentPromptPayload.str(it) }
 
     val title = selection.kind
-                  ?.let { AgentPromptBundle.message("context.list.selection.title", it) }
-                ?: AgentPromptBundle.message("context.list.selection.default.title")
+                  ?.let { AgentPromptContextBundle.message("context.list.selection.title", it) }
+                ?: AgentPromptContextBundle.message("context.list.selection.default.title")
 
     return listOf(
       AgentPromptContextItem(
@@ -172,8 +173,7 @@ private fun extractSelectionFromSelectedItems(dataContext: DataContext, componen
 private fun renderListEntry(list: JList<*>, index: Int): String? {
   val value = list.model.getElementAt(index)
   val rendererComponent = listCellRendererComponent(list, value, index)
-  return extractComponentText(rendererComponent)
-         ?: normalizeValueText(value)
+  return extractComponentText(rendererComponent) ?: normalizeValueText(value)
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -195,8 +195,7 @@ private fun renderTableRow(table: JTable, row: Int): String? {
 private fun renderTableCell(table: JTable, row: Int, column: Int): String? {
   val value = table.getValueAt(row, column)
   val rendererComponent = tableCellRendererComponent(table, row, column, value)
-  return extractComponentText(rendererComponent)
-         ?: normalizeValueText(value)
+  return extractComponentText(rendererComponent) ?: normalizeValueText(value)
 }
 
 private fun tableCellRendererComponent(table: JTable, row: Int, column: Int, value: Any?): Component? {

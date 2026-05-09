@@ -1,0 +1,17 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.prompt.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.AgentPromptContextBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptEditorContext" implementation="com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptProjectViewContext" implementation="com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributor" order="after agentWorkbenchPromptVcsContext, before agentWorkbenchPromptTreeSelectionContext"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptSelectedEditorFallbackContext" implementation="com.intellij.agent.workbench.prompt.context.AgentPromptSelectedEditorFallbackContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptTreeSelectionContext" implementation="com.intellij.agent.workbench.prompt.context.AgentPromptTreeSelectionContextContributor" order="after agentWorkbenchPromptProjectViewContext"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptListSelectionContext" implementation="com.intellij.agent.workbench.prompt.context.AgentPromptListSelectionContextContributor" order="after agentWorkbenchPromptTreeSelectionContext"/>
+  </extensions>
+</idea-plugin>

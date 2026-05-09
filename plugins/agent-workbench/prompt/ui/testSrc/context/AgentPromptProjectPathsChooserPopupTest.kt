@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui.context
 
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionEntry
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionState
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
@@ -256,7 +258,11 @@ class AgentPromptProjectPathsChooserPopupTest {
       node(
         TestProjectViewNode(root) { file -> VfsUtilCore.isAncestor(root, file, false) || root == file },
         node(
-          TestProjectViewNode(scratchDirectory) { file -> VfsUtilCore.isAncestor(scratchDirectory, file, false) || scratchDirectory == file },
+          TestProjectViewNode(scratchDirectory) { file ->
+            VfsUtilCore.isAncestor(scratchDirectory,
+                                   file,
+                                   false) || scratchDirectory == file
+          },
           node(TestProjectViewNode(selectedFile) { file -> selectedFile == file }),
         ),
       ),

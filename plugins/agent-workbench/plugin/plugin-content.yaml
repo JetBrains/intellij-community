@@ -22,6 +22,9 @@
 - name: lib/modules/intellij.agent.workbench.codex.common.jar
   contentModules:
   - name: intellij.agent.workbench.codex.common
+- name: lib/modules/intellij.agent.workbench.codex.ide.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.ide
 - name: lib/modules/intellij.agent.workbench.codex.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.sessions
@@ -62,6 +65,9 @@
 - name: lib/modules/intellij.agent.workbench.prompt.core.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.core
+- name: lib/modules/intellij.agent.workbench.prompt.context.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.context
 - name: lib/modules/intellij.agent.workbench.prompt.testrunner.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.testrunner

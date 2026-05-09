@@ -10,6 +10,12 @@ import com.intellij.agent.workbench.prompt.core.bool
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
+import com.intellij.agent.workbench.prompt.context.AgentEditorContextSnapshot
+import com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributor
+import com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextSupport
+import com.intellij.agent.workbench.prompt.context.AgentPromptSnippet
+import com.intellij.agent.workbench.prompt.context.AgentPromptTextPosition
+import com.intellij.agent.workbench.prompt.context.AgentPromptTextRange
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -23,187 +29,190 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentPromptEditorContextContributorTest {
-  private val contributor = AgentPromptEditorContextContributor()
+    private val contributor = AgentPromptEditorContextContributor()
 
-  @Test
-  fun returnsEmptyWhenInvocationHasNoEditor() {
-    val project = ProjectManager.getInstance().defaultProject
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .build()
+    @Test
+    fun returnsEmptyWhenInvocationHasNoEditor() {
+        val project = ProjectManager.getInstance().defaultProject
+        val dataContext = SimpleDataContext.builder()
+            .add(CommonDataKeys.PROJECT, project)
+            .build()
 
-    val result = contributor.collect(invocationData(project = project, dataContext = dataContext))
+        val result = contributor.collect(invocationData(project = project, dataContext = dataContext))
 
-    assertThat(result).isEmpty()
-  }
+        assertThat(result).isEmpty()
+    }
 
-  @Test
-  fun buildsSnippetAndFileItemsFromEditorInvocation() {
-    val project = ProjectManager.getInstance().defaultProject
-    runInEdtAndWait {
-      val editorFactory = EditorFactory.getInstance()
-      val document = editorFactory.createDocument(
-        """
+    @Test
+    fun buildsSnippetAndFileItemsFromEditorInvocation() {
+        val project = ProjectManager.getInstance().defaultProject
+        runInEdtAndWait {
+            val editorFactory = EditorFactory.getInstance()
+            val document = editorFactory.createDocument(
+                """
         fun answer(): Int {
           return 42
         }
         """.trimIndent()
-      )
-      val editor = editorFactory.createEditor(document)
-      try {
-        editor.caretModel.moveToOffset(document.text.indexOf("return"))
-        val file = LightVirtualFile("Sample.kt", document.text)
-        val dataContext = SimpleDataContext.builder()
-          .add(CommonDataKeys.EDITOR, editor)
-          .add(CommonDataKeys.VIRTUAL_FILE, file)
-          .build()
+            )
+            val editor = editorFactory.createEditor(document)
+            try {
+                editor.caretModel.moveToOffset(document.text.indexOf("return"))
+                val file = LightVirtualFile("Sample.kt", document.text)
+                val dataContext = SimpleDataContext.builder()
+                    .add(CommonDataKeys.EDITOR, editor)
+                    .add(CommonDataKeys.VIRTUAL_FILE, file)
+                    .build()
 
-        val result = contributor.collect(invocationData(project = project, dataContext = dataContext))
+                val result = contributor.collect(invocationData(project = project, dataContext = dataContext))
 
-        assertThat(result.map { it.rendererId }).containsExactly(
-          AgentPromptContextRendererIds.FILE,
-          AgentPromptContextRendererIds.SNIPPET,
+                assertThat(result.map { it.rendererId }).containsExactly(
+                    AgentPromptContextRendererIds.FILE,
+                    AgentPromptContextRendererIds.SNIPPET,
+                )
+                val snippetItem = result.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+                val snippetPayload = snippetItem.payload.objOrNull()!!
+                assertThat(snippetPayload.number("startLine")).isNotBlank()
+                assertThat(snippetPayload.number("endLine")).isNotBlank()
+                assertThat(snippetPayload.bool("selection")).isNotNull
+                assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+                assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
+                assertThat(snippetItem.source).isEqualTo("editor")
+                assertThat(snippetItem.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
+                assertThat(snippetItem.truncation.originalChars).isEqualTo(snippetItem.body.length)
+                assertThat(snippetItem.truncation.includedChars).isEqualTo(snippetItem.body.length)
+                val fileItem = result.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+                assertThat(fileItem.body).contains("Sample.kt")
+                assertThat(fileItem.itemId).isEqualTo("editor.file")
+                assertThat(fileItem.parentItemId).isNull()
+                assertThat(fileItem.source).isEqualTo("editor")
+            } finally {
+                editorFactory.releaseEditor(editor)
+            }
+        }
+    }
+
+    @Test
+    fun snippetMetadataCarriesLanguageAndFileMetadataDoesNot() {
+        val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = null))
+
+        val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+        assertThat(snippetItem.payload.objOrNull()!!.string("language")).isEqualTo("kotlin")
+
+        val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+        assertThat(fileItem.payload.objOrNull()!!.string("language")).isNull()
+    }
+
+    @Test
+    fun buildContextItemsOrdersFileSymbolThenSnippet() {
+        val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main"))
+        val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+        val symbolItem = items.first { it.rendererId == AgentPromptContextRendererIds.SYMBOL }
+        val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+
+        assertThat(items.map { it.rendererId }).containsExactly(
+            AgentPromptContextRendererIds.FILE,
+            AgentPromptContextRendererIds.SYMBOL,
+            AgentPromptContextRendererIds.SNIPPET,
         )
-        val snippetItem = result.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
-        val snippetPayload = snippetItem.payload.objOrNull()!!
-        assertThat(snippetPayload.number("startLine")).isNotBlank()
-        assertThat(snippetPayload.number("endLine")).isNotBlank()
-        assertThat(snippetPayload.bool("selection")).isNotNull
-        assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
-        assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
-        assertThat(snippetItem.source).isEqualTo("editor")
-        assertThat(snippetItem.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
-        assertThat(snippetItem.truncation.originalChars).isEqualTo(snippetItem.body.length)
-        assertThat(snippetItem.truncation.includedChars).isEqualTo(snippetItem.body.length)
-        val fileItem = result.first { it.rendererId == AgentPromptContextRendererIds.FILE }
-        assertThat(fileItem.body).contains("Sample.kt")
         assertThat(fileItem.itemId).isEqualTo("editor.file")
         assertThat(fileItem.parentItemId).isNull()
-        assertThat(fileItem.source).isEqualTo("editor")
-      }
-      finally {
-        editorFactory.releaseEditor(editor)
-      }
+        assertThat(symbolItem.itemId).isEqualTo("editor.symbol")
+        assertThat(symbolItem.parentItemId).isEqualTo("editor.file")
+        assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+        assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
     }
-  }
 
-  @Test
-  fun snippetMetadataCarriesLanguageAndFileMetadataDoesNot() {
-    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = null))
+    @Test
+    fun buildContextItemsSkipsAnonymousPlaceholderSymbol() {
+        val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>"))
+        val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
 
-    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
-    assertThat(snippetItem.payload.objOrNull()!!.string("language")).isEqualTo("kotlin")
+        assertThat(items.map { it.rendererId }).containsExactly(
+            AgentPromptContextRendererIds.FILE,
+            AgentPromptContextRendererIds.SNIPPET,
+        )
+        assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+        assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
+    }
 
-    val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
-    assertThat(fileItem.payload.objOrNull()!!.string("language")).isNull()
-  }
+    @Test
+    fun buildContextItemsSkipsAngleBracketPlaceholderSymbol() {
+        val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<lambda>"))
+        val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
 
-  @Test
-  fun buildContextItemsOrdersFileSymbolThenSnippet() {
-    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main"))
-    val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
-    val symbolItem = items.first { it.rendererId == AgentPromptContextRendererIds.SYMBOL }
-    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+        assertThat(items.map { it.rendererId }).containsExactly(
+            AgentPromptContextRendererIds.FILE,
+            AgentPromptContextRendererIds.SNIPPET,
+        )
+        assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
+        assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
+    }
 
-    assertThat(items.map { it.rendererId }).containsExactly(
-      AgentPromptContextRendererIds.FILE,
-      AgentPromptContextRendererIds.SYMBOL,
-      AgentPromptContextRendererIds.SNIPPET,
-    )
-    assertThat(fileItem.itemId).isEqualTo("editor.file")
-    assertThat(fileItem.parentItemId).isNull()
-    assertThat(symbolItem.itemId).isEqualTo("editor.symbol")
-    assertThat(symbolItem.parentItemId).isEqualTo("editor.file")
-    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
-    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
-  }
+    @Test
+    fun composeInitialMessageRendersFileSymbolThenSnippet() {
+        val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
+            AgentPromptInitialMessageRequest(
+                prompt = "Review context",
+                contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main")),
+            )
+        )
 
-  @Test
-  fun buildContextItemsSkipsAnonymousPlaceholderSymbol() {
-    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>"))
-    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+        val fileIndex = message.indexOf("file: /tmp/Sample.kt")
+        val symbolIndex = message.indexOf("symbol: main")
+        val snippetIndex = message.indexOf("snippet:")
 
-    assertThat(items.map { it.rendererId }).containsExactly(
-      AgentPromptContextRendererIds.FILE,
-      AgentPromptContextRendererIds.SNIPPET,
-    )
-    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
-    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
-  }
+        assertThat(fileIndex).isGreaterThanOrEqualTo(0)
+        assertThat(symbolIndex).isGreaterThan(fileIndex)
+        assertThat(snippetIndex).isGreaterThan(symbolIndex)
+    }
 
-  @Test
-  fun buildContextItemsSkipsAngleBracketPlaceholderSymbol() {
-    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<lambda>"))
-    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+    @Test
+    fun composeInitialMessageOmitsPlaceholderSymbolLine() {
+        val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
+            AgentPromptInitialMessageRequest(
+                prompt = "Review context",
+                contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>")),
+            )
+        )
 
-    assertThat(items.map { it.rendererId }).containsExactly(
-      AgentPromptContextRendererIds.FILE,
-      AgentPromptContextRendererIds.SNIPPET,
-    )
-    assertThat(snippetItem.itemId).isEqualTo("editor.snippet")
-    assertThat(snippetItem.parentItemId).isEqualTo("editor.file")
-  }
+        assertThat(message).contains("file: /tmp/Sample.kt")
+        assertThat(message).contains("snippet:")
+        assertThat(message).doesNotContain("symbol:")
+    }
 
-  @Test
-  fun composeInitialMessageRendersFileSymbolThenSnippet() {
-    val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
-      AgentPromptInitialMessageRequest(
-        prompt = "Review context",
-        contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main")),
-      )
-    )
+    private fun snapshot(symbolName: String?): AgentEditorContextSnapshot {
+        return AgentEditorContextSnapshot(
+            filePath = "/tmp/Sample.kt",
+            virtualFile = null,
+            language = "kotlin",
+            snippet = AgentPromptSnippet(
+                text = "val answer = 42",
+                startLine = 1,
+                endLine = 1,
+                fromSelection = false,
+                originalChars = 15,
+                includedChars = 15,
+                truncated = false,
+                truncationReason = AgentPromptContextTruncationReason.NONE,
+            ),
+            symbolName = symbolName,
+            selection = AgentPromptTextRange(AgentPromptTextPosition(0, 0), AgentPromptTextPosition(0, 0)),
+            selections = emptyList(),
+            activeSelectionContent = "",
+        )
+    }
 
-    val fileIndex = message.indexOf("file: /tmp/Sample.kt")
-    val symbolIndex = message.indexOf("symbol: main")
-    val snippetIndex = message.indexOf("snippet:")
-
-    assertThat(fileIndex).isGreaterThanOrEqualTo(0)
-    assertThat(symbolIndex).isGreaterThan(fileIndex)
-    assertThat(snippetIndex).isGreaterThan(symbolIndex)
-  }
-
-  @Test
-  fun composeInitialMessageOmitsPlaceholderSymbolLine() {
-    val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
-      AgentPromptInitialMessageRequest(
-        prompt = "Review context",
-        contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>")),
-      )
-    )
-
-    assertThat(message).contains("file: /tmp/Sample.kt")
-    assertThat(message).contains("snippet:")
-    assertThat(message).doesNotContain("symbol:")
-  }
-
-  private fun snapshot(symbolName: String?): AgentEditorContextSnapshot {
-    return AgentEditorContextSnapshot(
-      filePath = "/tmp/Sample.kt",
-      language = "kotlin",
-      snippet = AgentPromptSnippet(
-        text = "val answer = 42",
-        startLine = 1,
-        endLine = 1,
-        fromSelection = false,
-        originalChars = 15,
-        includedChars = 15,
-        truncated = false,
-        truncationReason = AgentPromptContextTruncationReason.NONE,
-      ),
-      symbolName = symbolName,
-    )
-  }
-
-  private fun invocationData(project: com.intellij.openapi.project.Project, dataContext: DataContext): AgentPromptInvocationData {
-    return AgentPromptInvocationData(
-      project = project,
-      actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
-      actionText = "Ask Agent",
-      actionPlace = "EditorPopup",
-      invokedAtMs = 0L,
-      attributes = mapOf(
-        AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext,
-      ),
-    )
-  }
+    private fun invocationData(project: com.intellij.openapi.project.Project, dataContext: DataContext): AgentPromptInvocationData {
+        return AgentPromptInvocationData(
+            project = project,
+            actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
+            actionText = "Ask Agent",
+            actionPlace = "EditorPopup",
+            invokedAtMs = 0L,
+            attributes = mapOf(
+                AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext,
+            ),
+        )
+    }
 }

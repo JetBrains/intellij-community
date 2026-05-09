@@ -7,7 +7,17 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
-import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionEntry
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionState
+import com.intellij.agent.workbench.prompt.context.buildManualPathsContextItem
+import com.intellij.agent.workbench.prompt.context.extractCurrentManualPathSelection
+import com.intellij.agent.workbench.prompt.context.extractCurrentPaths
+import com.intellij.agent.workbench.prompt.context.filterManualPathSelectionToScopedRoots
+import com.intellij.agent.workbench.prompt.context.normalizeManualPathSelection
+import com.intellij.agent.workbench.prompt.context.removeManualPathSelection
+import com.intellij.agent.workbench.prompt.context.resolveInitialManualPathSelection
+import com.intellij.agent.workbench.prompt.context.resolveInitialTreePreselection
+import com.intellij.agent.workbench.prompt.context.resolvePickerBrowseRootPaths
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -247,7 +257,7 @@ class AgentPromptProjectPathsManualContextSourceTest {
 
     val item = buildManualPathsContextItem(selection)
 
-    assertThat(item.title).isEqualTo(AgentPromptBundle.message("manual.context.paths.title"))
+    assertThat(item.title).isEqualTo("Files")
     assertThat(item.itemId).isEqualTo("manual.project.paths")
     assertThat(item.source).isEqualTo("manualPaths")
     assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)

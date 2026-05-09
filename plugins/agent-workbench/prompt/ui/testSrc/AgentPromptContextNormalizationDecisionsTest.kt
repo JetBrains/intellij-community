@@ -8,9 +8,9 @@ import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
-import com.intellij.agent.workbench.prompt.ui.context.MANUAL_PROJECT_PATHS_SOURCE_ID
-import com.intellij.agent.workbench.prompt.ui.context.ManualPathSelectionEntry
-import com.intellij.agent.workbench.prompt.ui.context.buildManualPathsContextItem
+import com.intellij.agent.workbench.prompt.context.MANUAL_PROJECT_PATHS_SOURCE_ID
+import com.intellij.agent.workbench.prompt.context.ManualPathSelectionEntry
+import com.intellij.agent.workbench.prompt.context.buildManualPathsContextItem
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
