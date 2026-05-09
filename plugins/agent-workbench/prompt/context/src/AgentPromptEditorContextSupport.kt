@@ -20,8 +20,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.util.PsiUtilCore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -191,7 +193,7 @@ object AgentPromptEditorContextSupport {
         val file = psiFile ?: return null
         val maxOffset = max(0, file.textLength - 1)
         val offset = min(max(0, rawOffset), maxOffset)
-        var element = file.findElementAt(offset)
+        var element: PsiElement? = PsiUtilCore.getElementAtOffset(file, offset)
         while (element != null) {
             val namedElement = element as? PsiNamedElement
             val name = normalizeSymbolName(namedElement?.name)
