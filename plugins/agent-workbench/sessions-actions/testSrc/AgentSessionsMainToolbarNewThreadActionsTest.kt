@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadTarget
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.PickerActionGroup
@@ -13,12 +14,22 @@ import com.intellij.agent.workbench.sessions.actions.QuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.BadgeIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -81,6 +92,70 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun updateDoesNotProbeProviderCliAvailability() {
+    val context = newThreadContext()
+    var cliChecks = 0
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+      onCliAvailable = { cliChecks++ },
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _, _ -> },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(cliChecks).isZero()
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+    ))
+  }
+
+  @Test
+  fun updateSessionUsesStableQuickStartAction() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _, _ -> },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+    )
+    val firstMainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
+    val rootGroup = DefaultActionGroup(action)
+
+    val visibleActions = timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        Utils.expandActionGroupSuspend(
+          rootGroup,
+          PresentationFactory(),
+          DataContext.EMPTY_CONTEXT,
+          ActionPlaces.MAIN_TOOLBAR,
+          ActionUiKind.TOOLBAR,
+          false,
+        )
+      }
+    }
+
+    assertThat(visibleActions).contains(action)
+    assertThat(action.getMainAction(TestActionEvent.createTestEvent(action))).isSameAs(firstMainAction)
+  }
+
+  @Test
   fun getMainActionReturnsQuickStartForDirectTargetWithLastUsedProvider() {
     val path = "/tmp/toolbar-project"
     val context = newThreadContext(path = path)
@@ -114,10 +189,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
     val quickAction = mainAction as QuickStartAction
-    assertThat(quickAction.templatePresentation.text).isEqualTo(AgentSessionsBundle.message(
-      "action.AgentWorkbenchSessions.NewThreadQuick.text",
-      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
-    ))
+    assertThat(action.getMainAction(event)).isSameAs(quickAction)
     quickAction.actionPerformed(TestActionEvent.createTestEvent(quickAction))
 
     assertThat(launchedPath).isEqualTo(normalizeAgentWorkbenchPath(path))
@@ -147,13 +219,15 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun getMainActionReturnsNullForCandidatesTargetSoClickFallsThroughToPicker() {
+  fun getMainActionReturnsQuickStartForCandidatesTargetAndClickShowsPicker() {
     val context = newThreadContext(
       projectPathCandidates = listOf(
         projectCandidate(path = "/work/repo-a", displayName = "Project A"),
         projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
       ),
     )
+    var launched = false
+    var pickerShown = 0
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -162,12 +236,47 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
+      createNewSession = { _, _, _, _, _ -> launched = true },
       lastUsedProvider = { AgentSessionProvider.CODEX },
       lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      showPicker = { _, _ -> pickerShown++ },
     )
+    val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
 
-    assertThat(action.getMainAction(TestActionEvent.createTestEvent(action))).isNull()
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
+    assertThat(launched).isFalse()
+    assertThat(pickerShown).isEqualTo(1)
+  }
+
+  @Test
+  fun primaryClickChecksProviderCliBeforeQuickLaunchAndFallsBackToPicker() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    var cliChecks = 0
+    var launched = false
+    var pickerShown = 0
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = false,
+      onCliAvailable = { cliChecks++ },
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _, _ -> launched = true },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      showPicker = { _, _ -> pickerShown++ },
+    )
+    val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
+
+    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
+
+    assertThat(cliChecks).isPositive()
+    assertThat(launched).isFalse()
+    assertThat(pickerShown).isEqualTo(1)
   }
 
   @Test
@@ -333,6 +442,41 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     action.update(event)
 
+    assertThat(event.presentation.description).contains(
+      AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.target.choose"),
+    )
+  }
+
+  @Test
+  fun updateUsesDeferredTargetPlaceholderWithoutResolvingCandidates() {
+    var candidatesResolved = false
+    val context = AgentSessionsEditorTabNewThreadContext(
+      project = ProjectManager.getInstance().defaultProject,
+      resolveTarget = {
+        candidatesResolved = true
+        AgentSessionsEditorTabNewThreadTarget.Candidates(
+          listOf(projectCandidate(path = "/work/repo-a", displayName = "Project A")),
+        )
+      },
+      resolveTargetForUpdate = { null },
+    )
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _, _ -> },
+      lastUsedProvider = { AgentSessionProvider.CODEX },
+      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(candidatesResolved).isFalse()
     assertThat(event.presentation.description).contains(
       AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.target.choose"),
     )

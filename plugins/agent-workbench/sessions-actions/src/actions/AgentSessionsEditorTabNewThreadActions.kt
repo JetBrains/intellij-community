@@ -144,9 +144,18 @@ internal class AgentSessionsEditorTabNewThreadPopupGroup @JvmOverloads construct
 internal class AgentSessionsEditorTabNewThreadContext(
   val project: Project,
   private val resolveTarget: () -> AgentSessionsEditorTabNewThreadTarget?,
+  private val resolveTargetForUpdate: () -> AgentSessionsEditorTabNewThreadTarget? = resolveTarget,
 ) {
+  constructor(
+    project: Project,
+    resolveTarget: () -> AgentSessionsEditorTabNewThreadTarget?,
+  ) : this(project = project, resolveTarget = resolveTarget, resolveTargetForUpdate = resolveTarget)
+
   val target: AgentSessionsEditorTabNewThreadTarget?
     get() = resolveTarget()
+
+  val targetForUpdate: AgentSessionsEditorTabNewThreadTarget?
+    get() = resolveTargetForUpdate()
 }
 
 internal sealed class AgentSessionsEditorTabNewThreadTarget {
@@ -185,9 +194,11 @@ internal fun resolveAgentSessionsMainToolbarNewThreadContext(
   val project = event.project ?: return null
   val chatContext = resolveChatContext(event)
   return if (isDedicatedProject(project)) {
-    AgentSessionsEditorTabNewThreadContext(project) {
-      resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths)
-    }
+    AgentSessionsEditorTabNewThreadContext(
+      project = project,
+      resolveTarget = { resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths) },
+      resolveTargetForUpdate = { null },
+    )
   }
   else {
     val target = resolveMainToolbarProjectFrameNewThreadTarget(project, chatContext, selectedSourcePath) ?: return null

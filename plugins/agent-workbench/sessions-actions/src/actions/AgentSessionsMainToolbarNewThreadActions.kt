@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
@@ -22,6 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -39,8 +41,19 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val lastUsedProvider: () -> AgentSessionProvider?,
   private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
-  innerGroup: PickerActionGroup,
-) : SplitButtonAction(innerGroup), DumbAware {
+  private val pickerGroup: PickerActionGroup,
+  private val showPicker: (ActionGroup, AnActionEvent) -> Unit,
+) : SplitButtonAction(pickerGroup), DumbAware {
+
+  private val quickStartAction = QuickStartAction(
+    resolveContext = resolveContext,
+    allBridges = allBridges,
+    createNewSession = createNewSession,
+    lastUsedProvider = lastUsedProvider,
+    lastUsedLaunchMode = lastUsedLaunchMode,
+    pickerGroup = pickerGroup,
+    showPicker = showPicker,
+  )
 
   @JvmOverloads
   constructor(
@@ -51,27 +64,23 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
     lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
     lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
+    showPicker: (ActionGroup, AnActionEvent) -> Unit = ::showToolbarPicker,
   ) : this(
     resolveContext = resolveContext,
     allBridges = allBridges,
     createNewSession = createNewSession,
     lastUsedProvider = lastUsedProvider,
     lastUsedLaunchMode = lastUsedLaunchMode,
-    innerGroup = PickerActionGroup(resolveContext, allBridges, createNewSession),
+    pickerGroup = PickerActionGroup(resolveContext, allBridges, createNewSession),
+    showPicker = showPicker,
   )
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   public override fun getMainAction(e: AnActionEvent): AnAction? {
-    val context = resolveContext(e) ?: return null
-    val target = context.target as? AgentSessionsEditorTabNewThreadTarget.Direct ?: return null
-    val quickStartItem = resolveQuickStartItem(allBridges()) ?: return null
-    return QuickStartAction(
-      project = context.project,
-      path = target.path,
-      quickStartItem = quickStartItem,
-      createNewSession = createNewSession,
-    )
+    resolveContext(e) ?: return null
+    resolveToolbarQuickStartItem(allBridges()) ?: return null
+    return quickStartAction
   }
 
   override fun update(e: AnActionEvent) {
@@ -81,7 +90,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
       return
     }
     val bridges = allBridges()
-    val menuModel = buildNewThreadMenuModel(bridges)
+    val menuModel = buildToolbarNewThreadMenuModel(bridges)
     if (!menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -89,20 +98,24 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     if (e.updateSession !== UpdateSession.EMPTY) {
       super.update(e)
     }
-    val quickStartItem = resolveQuickStartItem(bridges)
+    val quickStartItem = resolveToolbarQuickStartItem(menuModel)
     e.presentation.icon = quickStartItem
                             ?.let(::providerItemIconWithMode)
                           ?: AllIcons.General.Add
     e.presentation.text = quickStartItem
                             ?.let(::quickStartActionText)
                           ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
-    e.presentation.description = describeTooltip(quickStartItem, context.target)
+    e.presentation.description = describeTooltip(quickStartItem, context.targetForUpdate)
     e.presentation.isEnabledAndVisible = true
   }
 
-  private fun resolveQuickStartItem(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuItem? {
+  private fun resolveToolbarQuickStartItem(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuItem? {
+    return resolveToolbarQuickStartItem(buildToolbarNewThreadMenuModel(bridges))
+  }
+
+  private fun resolveToolbarQuickStartItem(menuModel: AgentSessionProviderMenuModel): AgentSessionProviderMenuItem? {
     val provider = lastUsedProvider() ?: return null
-    return buildNewThreadActionModel(bridges, provider, lastUsedLaunchMode()).quickStartItem
+    return resolveToolbarQuickStartItem(menuModel, provider, lastUsedLaunchMode())
   }
 
   private fun describeTooltip(
@@ -170,26 +183,128 @@ internal class PickerActionGroup(
 }
 
 internal class QuickStartAction(
-  private val project: Project,
-  private val path: String,
-  private val quickStartItem: AgentSessionProviderMenuItem,
+  private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
+  private val allBridges: () -> List<AgentSessionProviderDescriptor>,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-) : DumbAwareAction(
-  quickStartActionText(quickStartItem),
-  quickStartActionDescription(quickStartItem),
-  providerItemIconWithMode(quickStartItem),
-) {
-  override fun actionPerformed(e: AnActionEvent) {
-    launchQuickStartThread(
-      path = path,
-      project = project,
-      quickStartItem = quickStartItem,
-      entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-      createNewSession = createNewSession,
+  private val lastUsedProvider: () -> AgentSessionProvider?,
+  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val pickerGroup: ActionGroup,
+  private val showPicker: (ActionGroup, AnActionEvent) -> Unit,
+) : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    if (resolveContext(e) == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val provider = lastUsedProvider()
+    if (provider == null) {
+      hide(e)
+      return
+    }
+    val quickStartItem = resolveToolbarQuickStartItem(
+      menuModel = buildToolbarNewThreadMenuModel(allBridges()),
+      lastUsedProvider = provider,
+      lastUsedLaunchMode = lastUsedLaunchMode(),
     )
+    if (quickStartItem == null) {
+      hide(e)
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.text = quickStartActionText(quickStartItem)
+    e.presentation.description = quickStartActionDescription(quickStartItem)
+    e.presentation.icon = providerItemIconWithMode(quickStartItem)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun actionPerformed(e: AnActionEvent) {
+    val context = resolveContext(e) ?: return
+    when (val target = context.target) {
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> {
+        val quickStartItem = resolveReadyQuickStartItem(allBridges())
+        if (quickStartItem == null) {
+          showPicker(pickerGroup, e)
+          return
+        }
+        launchQuickStartThread(
+          path = target.path,
+          project = context.project,
+          quickStartItem = quickStartItem,
+          entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
+          createNewSession = createNewSession,
+        )
+      }
+      is AgentSessionsEditorTabNewThreadTarget.Candidates, null -> showPicker(pickerGroup, e)
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private fun resolveReadyQuickStartItem(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuItem? {
+    val provider = lastUsedProvider() ?: return null
+    return buildNewThreadActionModel(bridges, provider, lastUsedLaunchMode()).quickStartItem
+  }
+
+  private fun hide(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = false
+  }
+}
+
+private fun buildToolbarNewThreadMenuModel(bridges: List<AgentSessionProviderDescriptor>): AgentSessionProviderMenuModel {
+  val standardItems = ArrayList<AgentSessionProviderMenuItem>(bridges.size)
+  val yoloItems = ArrayList<AgentSessionProviderMenuItem>()
+  for (bridge in bridges) {
+    if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
+      standardItems += AgentSessionProviderMenuItem(
+        bridge = bridge,
+        mode = AgentSessionLaunchMode.STANDARD,
+        labelKey = bridge.newSessionLabelKey,
+        isEnabled = true,
+      )
+    }
+    val yoloLabelKey = bridge.yoloSessionLabelKey
+    if (yoloLabelKey != null && AgentSessionLaunchMode.YOLO in bridge.supportedLaunchModes) {
+      yoloItems += AgentSessionProviderMenuItem(
+        bridge = bridge,
+        mode = AgentSessionLaunchMode.YOLO,
+        labelKey = yoloLabelKey,
+        isEnabled = true,
+      )
+    }
+  }
+  return AgentSessionProviderMenuModel(standardItems = standardItems, yoloItems = yoloItems)
+}
+
+private fun resolveToolbarQuickStartItem(
+  menuModel: AgentSessionProviderMenuModel,
+  lastUsedProvider: AgentSessionProvider,
+  lastUsedLaunchMode: AgentSessionLaunchMode?,
+): AgentSessionProviderMenuItem? {
+  if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
+    val preferredYoloItem = menuModel.yoloItems.firstOrNull { item -> item.bridge.provider == lastUsedProvider }
+    if (preferredYoloItem != null) return preferredYoloItem
+  }
+  val preferredStandardItem = menuModel.standardItems.firstOrNull { item -> item.bridge.provider == lastUsedProvider }
+  return preferredStandardItem ?: menuModel.standardItems.firstOrNull()
+}
+
+private fun showToolbarPicker(group: ActionGroup, e: AnActionEvent) {
+  val popup = JBPopupFactory.getInstance()
+    .createActionGroupPopup(
+      null,
+      group,
+      e.dataContext,
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      true,
+      null,
+      Int.MAX_VALUE,
+    )
+  val anchor = resolveQuickStartProjectPopupAnchor(e)
+  if (anchor != null) {
+    popup.showUnderneathOf(anchor)
+  }
+  else {
+    popup.showInBestPositionFor(e.dataContext)
+  }
 }
 
 private fun providerItemIconWithMode(item: AgentSessionProviderMenuItem): Icon {

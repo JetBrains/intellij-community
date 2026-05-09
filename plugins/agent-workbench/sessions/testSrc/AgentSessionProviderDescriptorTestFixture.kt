@@ -29,6 +29,7 @@ class TestAgentSessionProviderDescriptor(
   private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
+  private val onCliAvailable: () -> Unit = {},
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
@@ -57,7 +58,10 @@ class TestAgentSessionProviderDescriptor(
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.cli"
 
-  override fun isCliAvailable(): Boolean = cliAvailable
+  override fun isCliAvailable(): Boolean {
+    onCliAvailable()
+    return cliAvailable
+  }
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(
