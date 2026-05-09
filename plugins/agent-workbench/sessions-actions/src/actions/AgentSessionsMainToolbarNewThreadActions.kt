@@ -44,7 +44,9 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 
   @JvmOverloads
   constructor(
-    resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext? = { event -> resolveAgentSessionsMainToolbarNewThreadContext(event) },
+    resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext? = { event ->
+      resolveAgentSessionsMainToolbarNewThreadContext(event)
+    },
     allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
     createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
     lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
@@ -89,8 +91,11 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     }
     val quickStartItem = resolveQuickStartItem(bridges)
     e.presentation.icon = quickStartItem
-      ?.let(::providerItemIconWithMode)
-      ?: AllIcons.General.Add
+                            ?.let(::providerItemIconWithMode)
+                          ?: AllIcons.General.Add
+    e.presentation.text = quickStartItem
+                            ?.let(::quickStartActionText)
+                          ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
     e.presentation.description = describeTooltip(quickStartItem, context.target)
     e.presentation.isEnabledAndVisible = true
   }
@@ -170,11 +175,8 @@ internal class QuickStartAction(
   private val quickStartItem: AgentSessionProviderMenuItem,
   private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
 ) : DumbAwareAction(
-  AgentSessionsBundle.message(
-    "action.AgentWorkbenchSessions.MainToolbar.NewThread.last.used",
-    AgentSessionsBundle.message(quickStartItem.labelKey),
-  ),
-  null,
+  quickStartActionText(quickStartItem),
+  quickStartActionDescription(quickStartItem),
   providerItemIconWithMode(quickStartItem),
 ) {
   override fun actionPerformed(e: AnActionEvent) {

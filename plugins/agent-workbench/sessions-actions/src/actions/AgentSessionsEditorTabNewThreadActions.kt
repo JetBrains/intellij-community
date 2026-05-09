@@ -56,6 +56,8 @@ internal class AgentSessionsEditorTabNewThreadQuickAction @JvmOverloads construc
 
     e.presentation.isEnabledAndVisible = true
     e.presentation.icon = providerIconWithMode(quickStartItem.bridge.provider, quickStartItem.mode)
+    e.presentation.text = quickStartActionText(quickStartItem)
+    e.presentation.description = quickStartActionDescription(quickStartItem)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

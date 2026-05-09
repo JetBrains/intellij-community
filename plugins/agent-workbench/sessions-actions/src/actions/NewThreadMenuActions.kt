@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.buildAgentSessionProviderMenuActions
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -16,6 +17,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 
 fun createNewThreadViaService(
   path: String,
@@ -32,11 +34,23 @@ fun buildNewThreadMenuModel(bridges: List<AgentSessionProviderDescriptor>): Agen
 }
 
 fun buildNewThreadActionModel(
-    bridges: List<AgentSessionProviderDescriptor>,
-    lastUsedProvider: AgentSessionProvider?,
-    lastUsedLaunchMode: AgentSessionLaunchMode? = null,
+  bridges: List<AgentSessionProviderDescriptor>,
+  lastUsedProvider: AgentSessionProvider?,
+  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
 ): AgentSessionProviderActionModel {
   return buildAgentSessionProviderActionModel(bridges, lastUsedProvider, lastUsedLaunchMode)
+}
+
+internal fun quickStartActionText(item: AgentSessionProviderMenuItem): @Nls String {
+  return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadQuick.text", quickStartLabel(item))
+}
+
+internal fun quickStartActionDescription(item: AgentSessionProviderMenuItem): @Nls String {
+  return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadQuick.description", quickStartLabel(item))
+}
+
+private fun quickStartLabel(item: AgentSessionProviderMenuItem): @Nls String {
+  return AgentSessionsBundle.message(item.labelKey)
 }
 
 fun launchQuickStartThread(

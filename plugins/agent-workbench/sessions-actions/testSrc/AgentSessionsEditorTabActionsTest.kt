@@ -78,6 +78,14 @@ class AgentSessionsEditorTabActionsTest {
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
     assertThat(event.presentation.icon).isEqualTo(providerIcon(AgentSessionProvider.CLAUDE))
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
+    ))
+    assertThat(event.presentation.description).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.description",
+      AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
+    ))
 
     action.actionPerformed(event)
 
@@ -127,6 +135,14 @@ class AgentSessionsEditorTabActionsTest {
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
     assertThat(event.presentation.icon).isInstanceOf(BadgeIcon::class.java)
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    ))
+    assertThat(event.presentation.description).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.description",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    ))
 
     action.actionPerformed(event)
 

@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 class AgentSessionsMainToolbarNewThreadActionsTest {
   @Test
-  fun updateUsesLastUsedProviderBadgeIconAndParameterizedDescription() {
+  fun updateUsesQuickStartProviderTitleBadgeIconAndParameterizedDescription() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -46,6 +46,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
     assertThat(event.presentation.icon).isInstanceOf(BadgeIcon::class.java)
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    ))
     assertThat(event.presentation.description)
       .contains(AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"))
       .contains("toolbar-project")
@@ -110,6 +114,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
     val quickAction = mainAction as QuickStartAction
+    assertThat(quickAction.templatePresentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    ))
     quickAction.actionPerformed(TestActionEvent.createTestEvent(quickAction))
 
     assertThat(launchedPath).isEqualTo(normalizeAgentWorkbenchPath(path))
