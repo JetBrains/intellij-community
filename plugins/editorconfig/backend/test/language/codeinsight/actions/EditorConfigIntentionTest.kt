@@ -11,28 +11,42 @@ class EditorConfigIntentionTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/intention/"
 
-  fun testInvertBooleanValue() = doTest("intention.invert-option-value")
-  fun testInvertSpaceValue() = doTest("intention.invert-option-value")
+  fun testInvertBooleanValue() = doTest()
+  fun testInvertSpaceValue() = doTest()
   fun testInvertUsualValue() {
     val testName = getTestName(true)
     myFixture.configureByFile("$testName/.editorconfig")
-    assertNoIntentions()
+    assertIntentionUnavailable()
   }
 
-  private fun doTest(@PropertyKey(resourceBundle = EditorConfigBundle.BUNDLE) intentionKey: String) {
+  private fun doTest() {
     val testName = getTestName(true)
     myFixture.configureByFile("$testName/.editorconfig")
-    val quickFix = findIntention(intentionKey)
+    val quickFix = findInvertOptionValueIntention()
     myFixture.launchAction(quickFix)
     myFixture.checkResultByFile("$testName/result.txt")
   }
 
-  private fun findIntention(@PropertyKey(resourceBundle = EditorConfigBundle.BUNDLE) intentionKey: String): IntentionAction {
+  private fun findInvertOptionValueIntention(): IntentionAction {
     val availableIntentions = myFixture.availableIntentions
-    val intentionName = EditorConfigBundle[intentionKey]
+    val intentionName = invertOptionValueIntentionName()
     val result = availableIntentions.firstOrNull { it.text == intentionName }
     return result ?: throw AssertionError("Intention '$intentionName' not found among ${availableIntentions.map(IntentionAction::getText)}")
   }
 
-  private fun assertNoIntentions() = assertEquals(0, myFixture.availableIntentions.size)
+  private fun assertIntentionUnavailable() {
+    val availableIntentions = myFixture.availableIntentions
+    val intentionName = invertOptionValueIntentionName()
+    assertTrue(
+      "Intention '$intentionName' should not be available among ${availableIntentions.map(IntentionAction::getText)}",
+      availableIntentions.none { it.text == intentionName },
+    )
+  }
+
+  private fun invertOptionValueIntentionName() = EditorConfigBundle[INVERT_OPTION_VALUE_KEY]
+
+  private companion object {
+    @PropertyKey(resourceBundle = EditorConfigBundle.BUNDLE)
+    private const val INVERT_OPTION_VALUE_KEY = "intention.invert-option-value"
+  }
 }
