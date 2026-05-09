@@ -1,10 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.CLAUDE_COMMAND
-import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.findExecutable
-import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.findExecutableViaTerminalResolver
-import com.intellij.agent.workbench.claude.sessions.ClaudeCliSupport.resolveExecutableOrDefault
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -37,17 +33,6 @@ object ClaudeCliSupport {
   }
 
   /**
-   * Returns the absolute path to the `claude` binary if it can be located, or [CLAUDE_COMMAND] as a fallback.
-   *
-   * Passing the absolute path to the terminal avoids `PATH`-resolution surprises (e.g. agent-workbench
-   * shim directories prepended to `PATH`, GUI-inherited environments missing the user's npm prefix, etc.)
-   * — those manifest as the opaque pty4j message `Exec_tty error: Unknown reason` when the binary is
-   * not on `PATH`. When resolution fails, callers still get the literal `claude` so the existing
-   * `cliMissingMessageKey` UI guard remains in charge of explaining the missing CLI.
-   */
-  fun resolveExecutableOrDefault(): String = findExecutable() ?: CLAUDE_COMMAND
-
-  /**
    * Suspend variant of [findExecutable] that delegates to the shared terminal-agent resolver
    * (`TerminalAgentResolver`). This consults the same PATH + known-location pipeline that powers
    * the terminal's "Run AI agent" gutter, ensuring agent-workbench launches and terminal launches
@@ -65,9 +50,12 @@ object ClaudeCliSupport {
   }
 
   /**
-   * Suspend variant of [resolveExecutableOrDefault]. See [findExecutableViaTerminalResolver] for the
-   * rationale; falls back to [CLAUDE_COMMAND] when no binary can be located so the existing
-   * `cliMissingMessageKey` UI guard remains in charge of explaining the missing CLI.
+   * Returns the absolute path resolved via [findExecutableViaTerminalResolver], or [CLAUDE_COMMAND]
+   * as a fallback when no binary can be located so the existing `cliMissingMessageKey` UI guard
+   * remains in charge of explaining the missing CLI. Passing the absolute path to the terminal
+   * avoids `PATH`-resolution surprises (e.g. agent-workbench shim directories prepended to `PATH`,
+   * GUI-inherited environments missing the user's npm prefix, etc.) — those manifest as the opaque
+   * pty4j message `Exec_tty error: Unknown reason` when the binary is not on `PATH`.
    */
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
     findExecutableViaTerminalResolver() ?: CLAUDE_COMMAND

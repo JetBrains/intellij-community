@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.junie.common.BRAVE_FLAG
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
-import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -58,6 +57,9 @@ internal class JunieAgentSessionProviderDescriptor(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
+  override val pendingSessionLaunchYoloMarker: String
+    get() = BRAVE_FLAG
+
   override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
     override val supportedContexts: Set<AgentThreadRenameContext>
       get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
@@ -87,23 +89,6 @@ internal class JunieAgentSessionProviderDescriptor(
     return AgentInitialMessagePlan.composeDefault(request)
   }
 
-  override fun resolvePendingSessionMetadata(
-    identity: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPendingSessionMetadata? {
-    val separator = identity.indexOf(':')
-    if (separator <= 0 || separator == identity.lastIndex) {
-      return null
-    }
-    if (!identity.substring(separator + 1).startsWith("new-")) {
-      return null
-    }
-    if (AgentSessionProvider.fromOrNull(identity.substring(0, separator)) != AgentSessionProvider.JUNIE) {
-      return null
-    }
-    return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = resolveLaunchMode(launchSpec))
-  }
-
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
     return threadMutationBackend.archiveThread(path, threadId)
   }
@@ -111,9 +96,4 @@ internal class JunieAgentSessionProviderDescriptor(
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
     return threadMutationBackend.unarchiveThread(path, threadId)
   }
-}
-
-private fun resolveLaunchMode(launchSpec: AgentSessionTerminalLaunchSpec): String {
-  return if (BRAVE_FLAG in launchSpec.command) AgentSessionLaunchMode.YOLO.name.lowercase()
-  else AgentSessionLaunchMode.STANDARD.name.lowercase()
 }

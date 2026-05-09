@@ -39,8 +39,12 @@ interface AwbMcpConfigProviderContributor {
    * Returns the per-provider MCP config for [provider] when this contributor handles
    * it, or null otherwise. The non-null result tells [AwbMcpConfigBuilder] both that
    * it can build a merged config for this launch and how to wire the agent CLI to it.
+   *
+   * Default returns `null` for contributors that exist solely to register names in
+   * [filteredServerNames] (so the user's `.mcp.json` entries with those names are
+   * dropped during merge) without otherwise taking over the launch.
    */
-  fun contribute(provider: AgentSessionProvider): AwbMcpConfig?
+  fun contribute(provider: AgentSessionProvider): AwbMcpConfig? = null
 
   companion object {
     val EP: ExtensionPointName<AwbMcpConfigProviderContributor> =

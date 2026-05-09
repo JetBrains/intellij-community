@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -90,6 +89,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val supportsUnarchiveThread: Boolean
     get() = true
 
+  override val pendingSessionLaunchYoloMarker: String
+    get() = "--dangerously-skip-permissions"
+
   override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
     override val supportedContexts: Set<AgentThreadRenameContext>
       get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
@@ -135,23 +137,6 @@ internal class ClaudeAgentSessionProviderDescriptor(
     )
   }
 
-  override fun resolvePendingSessionMetadata(
-    identity: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-  ): AgentPendingSessionMetadata? {
-    val separator = identity.indexOf(':')
-    if (separator <= 0 || separator == identity.lastIndex) {
-      return null
-    }
-    if (!identity.substring(separator + 1).startsWith("new-")) {
-      return null
-    }
-    if (AgentSessionProvider.from(identity.substring(0, separator)) != AgentSessionProvider.CLAUDE) {
-      return null
-    }
-    return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = resolveLaunchMode(launchSpec))
-  }
-
   override fun onConversationOpened() {
     service<ClaudeQuotaHintStateService>().markEligible()
   }
@@ -167,10 +152,6 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
     return renameEngine.unarchiveThread(path, threadId)
   }
-}
-
-private fun resolveLaunchMode(launchSpec: AgentSessionTerminalLaunchSpec): String {
-  return if ("--dangerously-skip-permissions" in launchSpec.command) "yolo" else "standard"
 }
 
 internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
