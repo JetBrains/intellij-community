@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Alignment;
@@ -604,6 +604,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                         child,
                                         WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                         mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION,
+                                        false,
                                         JavaTokenType.COMMA);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
@@ -614,7 +615,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         child = processParenthesisBlock(result, child,
                                         WrappingStrategy.createDoNotWrapCommaAndCommentStrategy(wrap),
                                         mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,
-                                        JavaTokenType.COMMA, JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.C_STYLE_COMMENT);
+                                        isFirstArgumentComment(child),
+                                        JavaTokenType.COMMA);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
         ASTNode parent = myNode.getTreeParent();
@@ -1000,20 +1002,65 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                    @NotNull WrappingStrategy wrappingStrategy,
                                                    final boolean doAlign,
                                                    IElementType @NotNull ... ignoreAlignmentTypes) {
+    return processParenthesisBlock(result, child, wrappingStrategy, doAlign, false, ignoreAlignmentTypes);
+  }
+
+  private @NotNull ASTNode processParenthesisBlock(@NotNull List<Block> result,
+                                                   @NotNull ASTNode child,
+                                                   @NotNull WrappingStrategy wrappingStrategy,
+                                                   final boolean doAlign,
+                                                   final boolean ignoreFirstArgumentAlignment,
+                                                   IElementType @NotNull ... ignoreAlignmentTypes) {
     myUseChildAttributes = true;
 
     final IElementType from = JavaTokenType.LPARENTH;
     final IElementType to = JavaTokenType.RPARENTH;
 
-    return processParenthesisBlock(from, to, result, child, wrappingStrategy, doAlign, ignoreAlignmentTypes);
+    return processParenthesisBlock(from, to, result, child, wrappingStrategy, doAlign, ignoreFirstArgumentAlignment, ignoreAlignmentTypes);
   }
 
+  /**
+   * Builds formatting blocks for the contents of a parenthesized structure (between {@code from} and {@code to})
+   * such as a method-call argument list, parameter list, array/record initializer, resource list, etc.
+   * Iterates through the children, assigning indents and a shared {@link Alignment}.
+   * <p>
+   * @param ignoreFirstArgumentAlignment when {@code true}, the first non-whitespace child inside the
+   *                                     parentheses is excluded from the shared column alignment
+   *                                     (it receives a {@code null} alignment), while all later
+   *                                     children are still aligned together. It allows calculating the allignment
+   *                                     based on the next child. For example:
+   *                                     <p/> before formatting:
+   *                                     <pre>{@code
+   *                                          void foo(// comment
+   *                                              1,
+   *                                                        2,
+   *                                                            3)
+   *                                       }</pre>
+   *                                     <p/> after formatting:
+   *                                     <pre>{@code
+   *                                           void foo(// comment
+   *                                               1,
+   *                                               2,
+   *                                               3)
+   *                                       }</pre>
+   *                                     <p/> with a disabled option the result of the formatting would be the following:
+   *                                         <pre>{@code
+   *                                               void foo(// comment
+   *                                                        1,
+   *                                                        2,
+   *                                                        3)
+   *                                           }</pre>
+   *
+   * @param ignoreAlignmentTypes element types that must NOT participate in the shared alignment.
+   * @see SkipFirstChildAlignmentStrategy
+   */
   private @NotNull ASTNode processParenthesisBlock(@NotNull IElementType from,
                                                    final @Nullable IElementType to,
                                                    final @NotNull List<Block> result,
                                                    @NotNull ASTNode child,
                                                    final @NotNull WrappingStrategy wrappingStrategy,
                                                    final boolean doAlign,
+                                                   final boolean ignoreFirstArgumentAlignment,
                                                    IElementType @NotNull ... ignoreAlignmentTypes)
   {
     Indent externalIndent = Indent.getNoneIndent();
@@ -1023,7 +1070,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
     }
 
-    AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), ignoreAlignmentTypes);
+    AlignmentStrategy baseAlignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), ignoreAlignmentTypes);
+    AlignmentStrategy alignmentStrategy = ignoreFirstArgumentAlignment
+                                          ? new SkipFirstChildAlignmentStrategy(baseAlignmentStrategy)
+                                          : baseAlignmentStrategy;
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
     boolean methodParametersBlock = true;
@@ -1145,6 +1195,41 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     ASTNode lastChild = node.getLastChildNode();
     return lastChild != null && lastChild.getElementType() == JavaElementType.ANONYMOUS_CLASS;
+  }
+
+
+  private static boolean isFirstArgumentComment(@NotNull ASTNode lParen) {
+    for (ASTNode node = lParen.getTreeNext(); node != null; node = node.getTreeNext()) {
+      if (FormatterUtil.containsWhiteSpacesOnly(node) || node.getTextLength() == 0) {
+        continue;
+      }
+      IElementType type = node.getElementType();
+      return type == JavaTokenType.END_OF_LINE_COMMENT || type == JavaTokenType.C_STYLE_COMMENT;
+    }
+    return false;
+  }
+
+  /**
+   * {@link AlignmentStrategy} that returns {@code null} for the first request with a non-null child type
+   * and delegates all subsequent requests (and any request with a {@code null} child type) to the wrapped strategy.
+   * <p>
+   */
+  private static final class SkipFirstChildAlignmentStrategy extends AlignmentStrategy {
+    private final AlignmentStrategy myDelegate;
+    private boolean myFirstChildSkipped;
+
+    SkipFirstChildAlignmentStrategy(@NotNull AlignmentStrategy delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+      if (childType != null && !myFirstChildSkipped) {
+        myFirstChildSkipped = true;
+        return null;
+      }
+      return myDelegate.getAlignment(parentType, childType);
+    }
   }
 
   private @Nullable ASTNode processEnumBlock(@NotNull List<? super Block> result,
