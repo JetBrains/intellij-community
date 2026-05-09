@@ -1,0 +1,10 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+ij_continuation_indent_size = 2
+tab_width = 2
+
+[{*.kt,*.kts}]
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL

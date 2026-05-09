@@ -160,9 +160,13 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
 
     boolean doNotKeepLineBreaks = confirmSecondReformat(psiFile);
+    // Resolve file settings outside the WriteCommandAction. CodeStyleCachedValueProvider
+    // computes settings asynchronously when first requested from EDT/under a write
+    // action, so a cold lookup inside the FutureTask body would return stale defaults
+    // and skip .editorconfig modifiers.
+    final var fileSettings = CodeStyle.getSettings(fileToProcess);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      final var fileSettings = CodeStyle.getSettings(fileToProcess);
       if (LOG.isDebugEnabled()) {
         //noinspection ObjectToString
         LOG.debug("reformat " + fileToProcess.getName() + " uses " + fileSettings);
