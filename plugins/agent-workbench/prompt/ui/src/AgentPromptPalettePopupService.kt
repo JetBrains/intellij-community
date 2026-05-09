@@ -40,7 +40,6 @@ internal class AgentPromptPalettePopupService {
     controller.showAddContext(invocationData, request)
   }
 
-  @RequiresEdt
   suspend fun showAddContextFromUiDispatcher(invocationData: AgentPromptInvocationData, request: AgentPromptAddContextRequest) {
     controller.showAddContextFromUiDispatcher(invocationData, request)
   }
@@ -79,7 +78,6 @@ internal class AgentPromptPalettePopupController(
     showPopup(invocationData = invocationData, initialAddContextRequest = request)
   }
 
-  @RequiresEdt
   suspend fun showAddContextFromUiDispatcher(invocationData: AgentPromptInvocationData, request: AgentPromptAddContextRequest) {
     if (applyAddContextToVisible(request) != null) {
       return
