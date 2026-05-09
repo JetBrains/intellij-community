@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import javax.swing.DefaultListModel
 
 @TestApplication
@@ -244,7 +245,9 @@ class AgentPromptExistingTaskControllerTest {
           hasError = false,
         )
       )
-      fixture.controller.onUserSelected(fixture.controller.entries.first { it.id == "thread-1" })
+      val thread1Entry = fixture.controller.entries.firstOrNull { it.id == "thread-1" }
+      assertNotNull(thread1Entry, "Expected thread-1 entry to be loaded before selecting it")
+      fixture.controller.onUserSelected(thread1Entry)
 
       fixture.controller.setPreselection("thread-2")
 
