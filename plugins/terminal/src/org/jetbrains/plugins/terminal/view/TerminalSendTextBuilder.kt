@@ -23,6 +23,17 @@ interface TerminalSendTextBuilder {
   fun useBracketedPasteMode(): TerminalSendTextBuilder
 
   /**
+   * Requires active bracketed paste mode before sending text.
+   * If the terminal has not reported bracketed paste support yet, [trySend] returns false and sends nothing.
+   */
+  fun requireBracketedPasteMode(): TerminalSendTextBuilder = useBracketedPasteMode()
+
+  /**
+   * Sends the terminal End key before writing the provided text.
+   */
+  fun sendEndKeyBeforeText(): TerminalSendTextBuilder = this
+
+  /**
    * Schedules writing the specified [text] with the specified options to the input stream of the shell process.
    * Actual writing is performed asynchronously.
    * It is guaranteed that if this method is called multiple times, the text will be written in the same order.
@@ -30,4 +41,12 @@ interface TerminalSendTextBuilder {
    * If the shell process is not yet available, the text will be buffered and sent later.
    */
   fun send(text: String)
+
+  /**
+   * Attempts to schedule writing [text]. Returns false when requested send preconditions are not satisfied.
+   */
+  fun trySend(text: String): Boolean {
+    send(text)
+    return true
+  }
 }

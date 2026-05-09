@@ -442,8 +442,8 @@ class TerminalViewImpl(
     }
   }
 
-  private fun doSendText(options: TerminalSendTextOptions) {
-    terminalInput.sendText(options)
+  private fun doSendText(options: TerminalSendTextOptions): Boolean {
+    return terminalInput.sendText(options)
   }
 
   override fun setTopComponent(component: JComponent, disposable: Disposable) {

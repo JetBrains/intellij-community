@@ -204,9 +204,9 @@ internal class AgentChatFileEditor(
   internal fun addPendingContextItems(items: List<AgentPromptContextItem>): Boolean {
     ensureInitialized()
     val initializedTab = tab ?: return false
-    pendingContextPanel.addItems(items)
+    val added = pendingContextPanel.addItems(items)
     initializedTab.preferredFocusableComponent.requestFocusInWindow()
-    return true
+    return added
   }
 
   internal fun pendingContextItemsForTests(): List<AgentPromptContextItem> = pendingContextPanel.pendingItemsForTests()
@@ -236,11 +236,11 @@ internal class AgentChatFileEditor(
     }
 
     val promptSuffix = resolvePendingContextPromptSuffix() ?: return true
-    if (tab.sendPendingContextAndExecute(promptSuffix)) {
-      pendingContextPanel.clear()
-    }
-    else {
-      StatusBar.Info.set(AgentChatBundle.message("chat.pending.context.terminal.unavailable"), project)
+    when (tab.sendPendingContextAndExecute(promptSuffix)) {
+      AgentChatPendingContextSubmissionResult.SUBMITTED -> pendingContextPanel.clear()
+      AgentChatPendingContextSubmissionResult.UNAVAILABLE -> {
+        StatusBar.Info.set(AgentChatBundle.message("chat.pending.context.terminal.unavailable"), project)
+      }
     }
     return true
   }

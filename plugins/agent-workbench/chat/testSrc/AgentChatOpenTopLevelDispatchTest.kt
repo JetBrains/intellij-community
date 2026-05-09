@@ -2,6 +2,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
@@ -190,10 +191,50 @@ class AgentChatOpenTopLevelDispatchTest {
       contextItems = listOf(contextItem("Util.kt", "file: Util.kt"), contextItem("Main.kt", "file: Main.kt")),
     )
 
-    assertThat(firstAdded).isTrue()
-    assertThat(secondAdded).isTrue()
+    assertThat(firstAdded).isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
+    assertThat(secondAdded).isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
     assertThat(terminalTabs.tab.sentTexts).isEmpty()
     assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Main.kt", "Util.kt")
+  }
+
+  @Test
+  fun addContextToOpenTopLevelAgentChatReportsAlreadyAddedWhenAllItemsAreDuplicates(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val editor = openInitializedChatEditor(
+      threadId = "thread-context-duplicate",
+      threadTitle = "Context duplicate thread",
+    )
+    val item = contextItem("Main.kt", "file: Main.kt")
+
+    val firstAdded = addContextToOpenTopLevelAgentChat(
+      projectPath = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-context-duplicate",
+      contextItems = listOf(item),
+    )
+    val duplicateAdded = addContextToOpenTopLevelAgentChat(
+      projectPath = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-context-duplicate",
+      contextItems = listOf(item),
+    )
+
+    assertThat(firstAdded).isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
+    assertThat(duplicateAdded).isEqualTo(AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT)
+    assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Main.kt")
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
   }
 
   @Test
@@ -247,7 +288,7 @@ class AgentChatOpenTopLevelDispatchTest {
                                                  AgentSessionProvider.CODEX,
                                                  "thread-context-submit",
                                                  listOf(contextItem("Main.kt", "file: Main.kt"))))
-      .isTrue()
+      .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
 
     assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
 
@@ -255,10 +296,45 @@ class AgentChatOpenTopLevelDispatchTest {
     val sentText = terminalTabs.tab.sentTexts.single()
     assertThat(sentText.shouldExecute).isTrue()
     assertThat(sentText.pendingContextSubmission).isTrue()
+    assertThat(sentText.sendEndKeyBeforeText).isTrue()
+    assertThat(sentText.requireBracketedPasteMode).isTrue()
     assertThat(sentText.text).startsWith("\n\n")
     assertThat(sentText.text).contains("### IDE Context")
     assertThat(sentText.text).contains("file: Main.kt")
     assertThat(editor.pendingContextItemsForTests()).isEmpty()
+  }
+
+  @Test
+  fun pendingContextSubmitUnavailableKeepsContextAndSendsNothing(): Unit = timeoutRunBlocking {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    terminalTabs.tab.pendingContextSubmissionResult = AgentChatPendingContextSubmissionResult.UNAVAILABLE
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val editor = openInitializedChatEditor(
+      threadId = "thread-context-unavailable",
+      threadTitle = "Context unavailable thread",
+    )
+
+    assertThat(addContextToOpenTopLevelAgentChat(projectPath,
+                                                 AgentSessionProvider.CODEX,
+                                                 "thread-context-unavailable",
+                                                 listOf(contextItem("Main.kt", "file: Main.kt"))))
+      .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
+
+    assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
+
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
+    assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Main.kt")
   }
 
   @Test
@@ -286,7 +362,7 @@ class AgentChatOpenTopLevelDispatchTest {
                                                  AgentSessionProvider.CODEX,
                                                  "thread-context-send-full",
                                                  listOf(contextItem("Large.kt", largeBody))))
-      .isTrue()
+      .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
 
     withTestDialogChoice(0) {
       assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
@@ -323,7 +399,7 @@ class AgentChatOpenTopLevelDispatchTest {
                                                  AgentSessionProvider.CODEX,
                                                  "thread-context-auto-trim",
                                                  listOf(contextItem("Large.kt", largeBody))))
-      .isTrue()
+      .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
 
     withTestDialogChoice(1) {
       assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
@@ -359,7 +435,7 @@ class AgentChatOpenTopLevelDispatchTest {
                                                  AgentSessionProvider.CODEX,
                                                  "thread-context-cancel",
                                                  listOf(contextItem("Large.kt", largeContextBody()))))
-      .isTrue()
+      .isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
 
     withTestDialogChoice(2) {
       assertThat(terminalTabs.tab.pressPlainEnter()).isTrue()
@@ -505,6 +581,7 @@ private class OpenTabDispatchFakeAgentChatTerminalTab : AgentChatTerminalTab {
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
 
   val sentTexts: MutableList<OpenTabDispatchSentTerminalText> = mutableListOf()
+  var pendingContextSubmissionResult: AgentChatPendingContextSubmissionResult = AgentChatPendingContextSubmissionResult.SUBMITTED
   private val inputInterceptors: MutableList<TerminalInputInterceptor> = mutableListOf()
 
   fun setSessionState(state: TerminalViewSessionState) {
@@ -535,14 +612,19 @@ private class OpenTabDispatchFakeAgentChatTerminalTab : AgentChatTerminalTab {
     sentTexts += OpenTabDispatchSentTerminalText(text, shouldExecute, useBracketedPasteMode)
   }
 
-  override fun sendPendingContextAndExecute(text: String, useBracketedPasteMode: Boolean): Boolean {
+  override fun sendPendingContextAndExecute(text: String): AgentChatPendingContextSubmissionResult {
+    if (pendingContextSubmissionResult != AgentChatPendingContextSubmissionResult.SUBMITTED) {
+      return pendingContextSubmissionResult
+    }
     sentTexts += OpenTabDispatchSentTerminalText(
       text = text,
       shouldExecute = true,
-      useBracketedPasteMode = useBracketedPasteMode,
+      useBracketedPasteMode = true,
       pendingContextSubmission = true,
+      requireBracketedPasteMode = true,
+      sendEndKeyBeforeText = true,
     )
-    return true
+    return AgentChatPendingContextSubmissionResult.SUBMITTED
   }
 
   override fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor): Boolean {
@@ -576,6 +658,8 @@ private data class OpenTabDispatchSentTerminalText(
   @JvmField val shouldExecute: Boolean,
   @JvmField val useBracketedPasteMode: Boolean = true,
   @JvmField val pendingContextSubmission: Boolean = false,
+  @JvmField val requireBracketedPasteMode: Boolean = false,
+  @JvmField val sendEndKeyBeforeText: Boolean = false,
 )
 
 private fun largeContextBody(): String = "x".repeat(AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS * 2)

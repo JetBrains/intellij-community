@@ -231,18 +231,12 @@ private suspend fun addContextItemsToOpenChatTarget(
   request: AgentPromptAddContextToTargetRequest,
 ): AgentPromptAddContextToTargetResult {
   val target = request.target
-  val added = addContextToOpenTopLevelAgentChat(
+  return addContextToOpenTopLevelAgentChat(
     projectPath = target.projectPath,
     provider = target.provider,
     threadId = target.threadId,
     contextItems = request.contextItems,
   )
-  return if (added) {
-    AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
-  }
-  else {
-    AgentPromptAddContextToTargetResult.UNAVAILABLE
-  }
 }
 
 private fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {

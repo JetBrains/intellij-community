@@ -8,6 +8,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
@@ -404,13 +405,16 @@ suspend fun addContextToOpenTopLevelAgentChat(
   provider: AgentSessionProvider,
   threadId: String,
   contextItems: List<AgentPromptContextItem>,
-): Boolean = withContext(Dispatchers.UiWithModelAccess) {
+): AgentPromptAddContextToTargetResult = withContext(Dispatchers.UiWithModelAccess) {
   val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
+  if (contextItems.isEmpty()) {
+    return@withContext AgentPromptAddContextToTargetResult.UNAVAILABLE
+  }
   val openEntry = collectOpenAgentChatTabsSnapshot().findOpenTopLevelConcreteEntry(
     normalizedPath = normalizedProjectPath,
     provider = provider,
     threadId = threadId,
-  ) ?: return@withContext false
+  ) ?: return@withContext AgentPromptAddContextToTargetResult.UNAVAILABLE
   val manager = openEntry.manager
   if (manager is FileEditorManagerEx) {
     manager.openFile(file = openEntry.file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
@@ -419,8 +423,13 @@ suspend fun addContextToOpenTopLevelAgentChat(
     manager.openFile(openEntry.file, true)
   }
   val editor = manager.getAllEditors(openEntry.file).filterIsInstance<AgentChatFileEditor>().firstOrNull()
-               ?: return@withContext false
-  editor.addPendingContextItems(contextItems)
+               ?: return@withContext AgentPromptAddContextToTargetResult.UNAVAILABLE
+  if (editor.addPendingContextItems(contextItems)) {
+    AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
+  }
+  else {
+    AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT
+  }
 }
 
 private suspend fun collectOpenAgentChatProjectPaths(includePendingOnly: Boolean): Set<String> {

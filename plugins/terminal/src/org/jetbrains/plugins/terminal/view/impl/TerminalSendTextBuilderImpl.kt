@@ -5,10 +5,12 @@ import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 
 @ApiStatus.Internal
 class TerminalSendTextBuilderImpl(
-  val doSend: (TerminalSendTextOptions) -> Unit,
+  val doSend: (TerminalSendTextOptions) -> Boolean,
 ) : TerminalSendTextBuilder {
   var shouldExecute: Boolean = false
   var useBracketedPasteMode: Boolean = false
+  var requireBracketedPasteMode: Boolean = false
+  var sendEndKeyBeforeText: Boolean = false
 
   override fun shouldExecute(): TerminalSendTextBuilder {
     shouldExecute = true
@@ -20,8 +22,31 @@ class TerminalSendTextBuilderImpl(
     return this
   }
 
+  override fun requireBracketedPasteMode(): TerminalSendTextBuilder {
+    requireBracketedPasteMode = true
+    useBracketedPasteMode = true
+    return this
+  }
+
+  override fun sendEndKeyBeforeText(): TerminalSendTextBuilder {
+    sendEndKeyBeforeText = true
+    return this
+  }
+
   override fun send(text: String) {
-    doSend(TerminalSendTextOptions(text, shouldExecute, useBracketedPasteMode))
+    trySend(text)
+  }
+
+  override fun trySend(text: String): Boolean {
+    return doSend(
+      TerminalSendTextOptions(
+        text = text,
+        shouldExecute = shouldExecute,
+        useBracketedPasteMode = useBracketedPasteMode,
+        requireBracketedPasteMode = requireBracketedPasteMode,
+        sendEndKeyBeforeText = sendEndKeyBeforeText,
+      )
+    )
   }
 }
 
@@ -30,4 +55,6 @@ data class TerminalSendTextOptions(
   val text: String,
   val shouldExecute: Boolean,
   val useBracketedPasteMode: Boolean,
+  val requireBracketedPasteMode: Boolean = false,
+  val sendEndKeyBeforeText: Boolean = false,
 )

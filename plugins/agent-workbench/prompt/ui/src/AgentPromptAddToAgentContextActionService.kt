@@ -103,9 +103,16 @@ internal class AgentPromptAddToAgentContextActionService(
         contextItems = contextItems,
       )
     ) ?: AgentPromptAddContextToTargetResult.UNAVAILABLE
-    if (result == AgentPromptAddContextToTargetResult.ADDED_TO_CHAT) {
-      showStatus(AgentPromptBundle.message("popup.status.context.added"))
-      return
+    when (result) {
+      AgentPromptAddContextToTargetResult.ADDED_TO_CHAT -> {
+        showStatus(AgentPromptBundle.message("popup.status.context.added"))
+        return
+      }
+      AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT -> {
+        showStatus(AgentPromptBundle.message("popup.status.context.already.added"))
+        return
+      }
+      AgentPromptAddContextToTargetResult.UNAVAILABLE -> Unit
     }
     popupService.showAddContextFromUiDispatcher(
       invocationData,

@@ -66,18 +66,18 @@ internal interface AgentChatTerminalTab {
 
   fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean = true)
 
-  fun sendPendingContextAndExecute(text: String, useBracketedPasteMode: Boolean = true): Boolean {
-    if (text.isEmpty() || sessionState.value == TerminalViewSessionState.Terminated) {
-      return false
+  fun sendPendingContextAndExecute(text: String): AgentChatPendingContextSubmissionResult {
+    if (text.isEmpty() || sessionState.value != TerminalViewSessionState.Running) {
+      return AgentChatPendingContextSubmissionResult.UNAVAILABLE
     }
 
-    val sendTextBuilder = terminalView?.createSendTextBuilder() ?: return false
-    if (useBracketedPasteMode) {
-      sendTextBuilder.useBracketedPasteMode()
-    }
-    sendTextBuilder.shouldExecute()
-    sendTextBuilder.send(text)
-    return true
+    val sendTextBuilder = terminalView?.createSendTextBuilder() ?: return AgentChatPendingContextSubmissionResult.UNAVAILABLE
+    val submitted = sendTextBuilder
+      .sendEndKeyBeforeText()
+      .requireBracketedPasteMode()
+      .shouldExecute()
+      .trySend(text)
+    return if (submitted) AgentChatPendingContextSubmissionResult.SUBMITTED else AgentChatPendingContextSubmissionResult.UNAVAILABLE
   }
 
   fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor): Boolean {
@@ -101,6 +101,11 @@ internal enum class AgentChatTerminalInputReadiness {
   READY,
   TIMEOUT,
   TERMINATED,
+}
+
+internal enum class AgentChatPendingContextSubmissionResult {
+  SUBMITTED,
+  UNAVAILABLE,
 }
 
 internal interface AgentChatTerminalTabs {

@@ -130,6 +130,7 @@ data class AgentPromptAddContextToTargetRequest(
 
 enum class AgentPromptAddContextToTargetResult {
     ADDED_TO_CHAT,
+    ALREADY_ADDED_TO_CHAT,
     UNAVAILABLE,
 }
 

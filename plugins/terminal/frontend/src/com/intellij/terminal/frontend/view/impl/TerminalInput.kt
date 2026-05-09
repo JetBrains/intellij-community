@@ -110,14 +110,23 @@ internal class TerminalInput(
     }
   }
 
-  fun sendText(options: TerminalSendTextOptions) {
+  fun sendText(options: TerminalSendTextOptions): Boolean {
     var text = options.text
     if (text.isEmpty()) {
-      return
+      return false
     }
+    val terminalState = sessionModel.terminalState.value
+    if (options.requireBracketedPasteMode && !terminalState.isBracketedPasteMode) {
+      return false
+    }
+    val endBytes = if (options.sendEndKeyBeforeText) encodingManager.getCode(KeyEvent.VK_END, 0) ?: return false else null
+    if (endBytes != null) {
+      sendBytes(endBytes)
+    }
+
     text = sanitizeLineSeparators(text)
 
-    if (options.useBracketedPasteMode && sessionModel.terminalState.value.isBracketedPasteMode) {
+    if (options.useBracketedPasteMode && terminalState.isBracketedPasteMode) {
       text = "\u001b[200~$text\u001b[201~"
     }
 
@@ -126,6 +135,7 @@ internal class TerminalInput(
     }
 
     sendString(text)
+    return true
   }
 
   fun sendString(data: String) {

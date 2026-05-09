@@ -1811,22 +1811,7 @@ class AgentSessionPromptLauncherBridgeTest {
         AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
       },
     )
-    val request = AgentPromptAddContextToTargetRequest(
-      target = AgentPromptAddContextTargetCandidate(
-        projectPath = PROJECT_PATH,
-        provider = AgentSessionProvider.CODEX,
-        threadId = "thread-existing",
-        displayText = "Existing thread",
-      ),
-      contextItems = listOf(
-        AgentPromptContextItem(
-          rendererId = "test",
-          title = "Selected code",
-          body = "fun selected() {}",
-          source = "test",
-        )
-      ),
-    )
+    val request = addContextToTargetRequest()
 
     val result = runBlocking(Dispatchers.Default) {
       bridge.addContextToOpenChatTarget(request)
@@ -1835,6 +1820,46 @@ class AgentSessionPromptLauncherBridgeTest {
     assertThat(result).isEqualTo(AgentPromptAddContextToTargetResult.ADDED_TO_CHAT)
     assertThat(capturedRequest.get()).isEqualTo(request)
   }
+
+  @Test
+  fun addContextToOpenChatTargetPropagatesAlreadyAddedResult() {
+    val bridge = AgentSessionPromptLauncherBridge(
+      launchPromptRequest = { error("not used") },
+      stateFlowProvider = { error("not used") },
+      pathStateResolver = ::resolveAgentSessionPathState,
+      refreshCatalogAndLoadNewlyOpened = {},
+      refreshProviderForPath = { _, _ -> },
+      preferredProviderProvider = { null },
+      addContextToOpenChatTarget = {
+        AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT
+      },
+    )
+
+    val result = runBlocking(Dispatchers.Default) {
+      bridge.addContextToOpenChatTarget(addContextToTargetRequest())
+    }
+
+    assertThat(result).isEqualTo(AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT)
+  }
+}
+
+private fun addContextToTargetRequest(): AgentPromptAddContextToTargetRequest {
+  return AgentPromptAddContextToTargetRequest(
+    target = AgentPromptAddContextTargetCandidate(
+      projectPath = PROJECT_PATH,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-existing",
+      displayText = "Existing thread",
+    ),
+    contextItems = listOf(
+      AgentPromptContextItem(
+        rendererId = "test",
+        title = "Selected code",
+        body = "fun selected() {}",
+        source = "test",
+      )
+    ),
+  )
 }
 
 private fun <T> withOpenInNonDedicatedFrameSettingForTest(action: () -> T): T {
