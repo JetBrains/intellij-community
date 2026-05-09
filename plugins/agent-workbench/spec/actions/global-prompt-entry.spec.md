@@ -44,6 +44,7 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptUiSessionStateServiceTest.kt
   - ../../prompt/testSrc/actions/AgentWorkbenchPromptActionPromoterTest.kt
   - ../../prompt/ui/testSrc/actions/AgentWorkbenchAddToAgentContextActionTest.kt
+  - ../../plugin/testSrc/AgentWorkbenchAddToAgentContextActionRegistrationTest.kt
   - ../../prompt-vcs/testSrc/context/AgentPromptVcsCommitManualContextSourceTest.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
@@ -98,6 +99,23 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
 
 - `AgentWorkbenchPrompt.AddToAgentContext` and the corresponding editor intention must collect default prompt context from the invocation place and route it into the global prompt popup. If no context is available, they must show the `popup.status.context.empty` status and must not open a popup.
+
+- `AgentWorkbenchPrompt.AddToAgentContext` must be registered into the following invocation popups so the action surfaces wherever a `prompt.context` contributor can produce context:
+  - `EditorPopupMenu` (anchored inside the cut/copy/paste cluster, after `Copy.Paste.Special`),
+  - `ProjectViewPopupMenu` (anchored inside the cut/copy/paste/edit cluster, after `ProjectViewEditSource`),
+  - `EditorTabPopupMenu` (anchored inside the copy cluster, after `CopyPaths`),
+  - `ConsoleEditorPopupMenu` (anchored inside the second cluster, after `$SearchWeb`),
+  - `TestTreePopupMenu` (anchored last),
+  - `ChangesViewPopupMenu`, `Vcs.Log.ContextMenu`, `Vcs.Log.ChangesBrowser.Popup` (provided by the `prompt.vcs.ui` sub-module).
+  [@test] ../../plugin/testSrc/AgentWorkbenchAddToAgentContextActionRegistrationTest.kt
+
+- Visibility gating (`update()`) for `AgentWorkbenchPrompt.AddToAgentContext` must be place-specific without introducing module dependencies:
+  - in `ActionPlaces.EDITOR_POPUP`, the action is visible only when the editor has a non-empty document and a backing virtual or PSI file,
+  - in `ActionPlaces.PROJECT_VIEW_POPUP`, the action is visible only when the selection contains at least one local-filesystem file (`.` is not considered a local context file),
+  - in `ActionPlaces.EDITOR_TAB_POPUP`, the action is visible only when the tab is backed by a local-filesystem virtual file,
+  - in all other registered places (console, test tree, VCS popups), visibility falls back to the project-presence check and the contributor empty-fallback path emits `popup.status.context.empty` when no context is available.
+  [@test] ../../prompt/ui/testSrc/actions/AgentWorkbenchAddToAgentContextActionTest.kt
+  [@test] ../../plugin/testSrc/AgentWorkbenchAddToAgentContextActionRegistrationTest.kt
 
 - When `AgentWorkbenchPrompt.AddToAgentContext` is invoked while the global prompt popup is already visible for the same project, it must append de-duplicated context to the visible popup, request composer focus, and preserve the popup's current tab, provider selection, and existing-task selection.
   [@test] ../../prompt/ui/testSrc/AgentPromptPalettePopupServiceTest.kt
@@ -271,6 +289,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopupServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptExistingTaskControllerTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextActionTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.plugin.AgentWorkbenchAddToAgentContextActionRegistrationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`

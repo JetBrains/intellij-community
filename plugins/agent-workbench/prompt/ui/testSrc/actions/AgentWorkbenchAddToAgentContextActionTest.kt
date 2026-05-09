@@ -11,18 +11,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.nio.file.Files
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
 class AgentWorkbenchAddToAgentContextActionTest {
   private val action = AgentWorkbenchAddToAgentContextAction()
+
+  @JvmField
+  @RegisterExtension
+  val tempDirectory: TempDirectoryExtension = TempDirectoryExtension()
 
   @Test
   fun editorPopupHidesWithoutProject() {
@@ -123,10 +127,7 @@ class AgentWorkbenchAddToAgentContextActionTest {
   }
 
   private fun createPhysicalFile(): VirtualFile {
-    val root = Files.createTempDirectory("aw-add-context-action")
-    val nioPath = root.resolve("Selected.kt")
-    Files.writeString(nioPath, "fun selected() {}")
-    return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioPath))
+    return tempDirectory.newVirtualFile("Selected.kt", "fun selected() {}".toByteArray())
   }
 
   private val project: Project

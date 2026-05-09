@@ -44,6 +44,7 @@ internal class AgentWorkbenchAddToAgentContextAction : AnAction(), DumbAware {
     return when (e.place) {
       ActionPlaces.EDITOR_POPUP -> hasEditorContext(e)
       ActionPlaces.PROJECT_VIEW_POPUP -> hasProjectViewSelection(e)
+      ActionPlaces.EDITOR_TAB_POPUP -> hasTabFile(e)
       else -> true
     }
   }
@@ -70,6 +71,11 @@ internal class AgentWorkbenchAddToAgentContextAction : AnAction(), DumbAware {
                           ?.takeIf { it.isNotEmpty() }
                         ?: return false
     return selectedFiles.any(::isLocalContextFile)
+  }
+
+  private fun hasTabFile(e: AnActionEvent): Boolean {
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
+    return isLocalContextFile(file)
   }
 
   private fun isLocalContextFile(file: VirtualFile): Boolean {

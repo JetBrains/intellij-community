@@ -32,6 +32,9 @@
       class="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewEditSource"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
+      <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </action>
 
     <action
