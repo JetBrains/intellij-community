@@ -2,6 +2,7 @@ package com.intellij.grazie.jlanguage
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.grazie.GraziePlugin
+import com.intellij.grazie.utils.FirstInvocationCancellationGuard
 import com.intellij.openapi.util.ClassLoaderUtil.runWithClassLoader
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -23,12 +24,17 @@ internal class LazyCachingConcurrentDisambiguator(private val jLanguage: Languag
   @Volatile
   private var disambiguator: Disambiguator? = null
   private val lock = Any()
+  private val cancellationGuard = FirstInvocationCancellationGuard()
 
   override fun disambiguate(input: AnalyzedSentence): AnalyzedSentence = disambiguate(input, null)
 
   override fun disambiguate(input: AnalyzedSentence, checkCanceled: JLanguageTool.CheckCancelledCallback?): AnalyzedSentence {
     ensureInitialized()
-    return cache.get(copy(input.tokens)) { disambiguator!!.disambiguate(input, checkCanceled) }
+    return cancellationGuard.withCheckCancelled {
+      cache.get(copy(input.tokens)) {
+        disambiguator!!.disambiguate(input, checkCanceled)
+      }
+    }
   }
 
   private fun ensureInitialized() {
