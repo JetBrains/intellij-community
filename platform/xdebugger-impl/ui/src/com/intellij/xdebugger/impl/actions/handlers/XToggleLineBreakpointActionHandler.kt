@@ -83,7 +83,7 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
       if (processedLines.add(position.getLine())) {
         val future = XBreakpointUIUtil.toggleLineBreakpointProxy(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection, placement
+          !isFromGutterClick, canRemove, isLoggingBreakpoint, logExpression, verticalPlacement
         ).thenAccept { breakpoint ->
           // isMouseClick is always `true`, but its usage here enables smart cast for nullable `inputEvent`
           @Suppress("KotlinConstantConditions")
