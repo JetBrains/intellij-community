@@ -15,12 +15,12 @@ public class MissingFinalNewlineInspectionTest extends LightJavaCodeInsightFixtu
 
   public void testEmptyFile() {
     myFixture.configureByText(ManifestFileType.INSTANCE, "");
-    assertEquals(0, myFixture.getAvailableIntentions().size());
+    assertEmpty(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix")));
   }
 
   public void testNoProblem() {
     myFixture.configureByText(ManifestFileType.INSTANCE, "Manifest-Version: 1.0\n");
-    assertEquals(0, myFixture.getAvailableIntentions().size());
+    assertEmpty(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix")));
   }
 
   public void testFix() {

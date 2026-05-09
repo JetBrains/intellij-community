@@ -54,11 +54,10 @@ public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureT
       InspectionProfileImpl.INIT_INSPECTIONS = true;
       myFixture.enableInspections(MisspelledHeaderInspection.class);
       myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
-      List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
-      assertEquals(1, intentions.size());
+      IntentionAction intention = myFixture.findSingleIntention(ManifestBundle.message("inspection.header.remember.fix", "Custom-Header"));
       InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
       assertEquals(List.of(), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
-      myFixture.launchAction(intentions.get(0));
+      myFixture.launchAction(intention);
       assertEquals(List.of("Custom-Header"), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
     }
     finally {
