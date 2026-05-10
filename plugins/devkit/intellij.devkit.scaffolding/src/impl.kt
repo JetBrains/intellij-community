@@ -52,12 +52,13 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.awt.BorderLayout
 import java.awt.event.InputEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -127,8 +128,25 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
   private var editableSegment = ""
   private var selectedKind = IjModuleKind.ROOT_PLUGIN_MODULE
 
+  private val descriptionPurposeLabel = JBLabel().apply {
+    isOpaque = false
+    font = JBUI.Fonts.smallFont()
+    foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
+    alignmentY = CENTER_ALIGNMENT
+  }
+
+  private val descriptionPanel = JPanel().apply {
+    isOpaque = false
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    border = JBUI.Borders.empty(6, 12)
+    add(Box.createVerticalGlue())
+    add(descriptionPurposeLabel)
+  }
+
   init {
-    refreshRenderer()
+    myTemplatesList.cellRenderer = NewIjModuleKindRenderer()
+    add(descriptionPanel, BorderLayout.SOUTH)
+    updateDescription(selectedKind)
     restoreNameField(selectedKind)
 
     setTemplateSelectorMatcher { moduleName, template ->
@@ -146,7 +164,7 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
     myTemplatesList.addListSelectionListener {
       if (!it.valueIsAdjusting) {
         applySuggestionForSelectionChange()
-        refreshRenderer()
+        updateDescription(currentKind())
       }
     }
   }
@@ -193,73 +211,13 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
     nameField.caretPosition = caretOffset.coerceIn(0, nameField.text.length)
   }
 
-  private fun refreshRenderer() {
-    myTemplatesList.cellRenderer = NewIjModuleKindRenderer(popupContext)
-    myTemplatesList.revalidate()
-    myTemplatesList.repaint()
+  private fun updateDescription(kind: IjModuleKind?) {
+    descriptionPurposeLabel.text = kind?.purpose() ?: ""
   }
 }
 
-private class NewIjModuleKindRenderer(
-  private val popupContext: NewIjModuleCreationContext,
-) : GroupedItemsListRenderer<CreateWithTemplatesDialogPanel.TemplatePresentation>(NewIjModuleKindDescriptor()) {
-
-  private lateinit var detailsPanel: JPanel
-  private lateinit var purposeLabel: JBLabel
-  private lateinit var targetPluginLabel: JBLabel
-
-  override fun createItemComponent(): JComponent {
-    createLabel()
-    myTextLabel.border = JBUI.Borders.empty()
-    purposeLabel = createDetailsLabel(JBUI.Borders.emptyTop(4))
-    targetPluginLabel = createDetailsLabel(JBUI.Borders.emptyTop(2))
-    detailsPanel = JPanel().apply {
-      isOpaque = false
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      add(purposeLabel)
-      add(targetPluginLabel)
-    }
-
-    val itemPanel = JPanel().apply {
-      isOpaque = false
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      border = JBUI.Borders.empty(3, 6, 3, 1)
-      add(myTextLabel)
-      add(detailsPanel)
-    }
-    return layoutComponent(itemPanel)
-  }
-
-  override fun customizeComponent(
-    list: javax.swing.JList<out CreateWithTemplatesDialogPanel.TemplatePresentation>,
-    value: CreateWithTemplatesDialogPanel.TemplatePresentation,
-    index: Int,
-    isSelected: Boolean,
-    cellHasFocus: Boolean,
-  ) {
-    super.customizeComponent(list, value, index, isSelected, cellHasFocus)
-
-    val moduleKind = IjModuleKind.fromTemplateName(value.templateName())
-    val showDetails = index == list.selectedIndex
-    val targetPluginLine = moduleKind.targetPluginLine(popupContext)
-    detailsPanel.isVisible = showDetails
-    purposeLabel.text = moduleKind.purpose()
-    targetPluginLabel.text = targetPluginLine ?: " "
-    targetPluginLabel.isVisible = showDetails
-
-    purposeLabel.foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
-    targetPluginLabel.foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
-  }
-
-  private fun createDetailsLabel(border: javax.swing.border.Border): JBLabel {
-    return JBLabel().apply {
-      isOpaque = false
-      this.border = border
-      font = JBUI.Fonts.smallFont()
-      foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
-    }
-  }
-}
+private class NewIjModuleKindRenderer
+  : GroupedItemsListRenderer<CreateWithTemplatesDialogPanel.TemplatePresentation>(NewIjModuleKindDescriptor())
 
 private class NewIjModuleKindDescriptor : ListItemDescriptorAdapter<CreateWithTemplatesDialogPanel.TemplatePresentation>() {
   override fun getTextFor(value: CreateWithTemplatesDialogPanel.TemplatePresentation): String {
