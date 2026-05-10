@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.searchEverywhereMl.typos.TyposBundle
 import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
@@ -47,7 +48,9 @@ internal class CorpusBuilder(private val coroutineScope: CoroutineScope) {
       withBackgroundProgress(
         project,
         TyposBundle.getMessage("progress.title.computing.actions.language.model"),
-        cancellable = false
+        TaskCancellation.nonCancellable(),
+        suspender = null,
+        visibleInStatusBar = false
       ) {
         computeCorpus()
       }
