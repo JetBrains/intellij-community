@@ -21,6 +21,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.isRegularFile
 
+private const val COMMAND: String = "openProject"
+private const val GIT_URL_PARAM: String = "gitUrl"
 /**
  * Handles `jetbrains://<product>/openProject?gitUrl=<url>` URLs.
  *
@@ -40,11 +42,6 @@ class OpenProjectByGitUrlJbProtocolCommand : JBProtocolCommand(COMMAND) {
 
     val encoded = URLEncoder.encode(gitUrl, StandardCharsets.UTF_8)
     return execute("idea/checkout/git?checkout.repo=$encoded").message
-  }
-
-  companion object {
-    const val COMMAND: String = "openProject"
-    const val GIT_URL_PARAM: String = "gitUrl"
   }
 }
 
