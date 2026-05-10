@@ -4,7 +4,6 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
 import com.intellij.driver.sdk.PsiFile
 import com.intellij.driver.sdk.PsiManager
-import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.invokeActionWithRetries
 import com.intellij.driver.sdk.plugins.notebooks.NotebookEditorInfoService
 import com.intellij.driver.sdk.plugins.notebooks.setCurrentCellText
@@ -26,8 +25,6 @@ import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
-import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
@@ -320,50 +317,7 @@ private fun JLabelUiComponent.hasExecutionIcon(icon: String): Boolean {
   }.present()
 }
 
-enum class NotebookType(val typeName: String, val newNotebookActionId: String) {
-  KOTLIN("Kotlin", "NewKotlinNotebookAction"),
-  JUPYTER("Jupyter", "NewJupyterNotebookAction");
-}
 
-/**
- * Creates a new Kotlin or Jupyter notebook in the IDE.
- *
- * @param name The name for the new notebook. Defaults to "New Notebook".
- * @param type The type of notebook to create.
- */
-fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) {
-  ideFrame {
-    leftToolWindowToolbar.projectButton.open() // making sure the project view is open and in focus for correct scrolling
-    projectView {
-      projectViewTree.run {
-        waitFor("wait for project tree to load", 30.seconds) {
-          getAllTexts().isNotEmpty()
-        }
-        invokeActionWithRetries("ScrollPane-scrollHome") // making sure the first line is within the visible bounds
-        getAllTexts().first().strictClick()
-      }
-    }
-
-    invokeAction(type.newNotebookActionId, false)
-
-    popup().apply {
-      textField { byAccessibleName("Name") }.apply {
-        strictClick()
-        text = name
-      }
-
-      keyboard { enter() } // submit the popup
-
-      waitFor("new notebook popup should close", 15.seconds) {
-        notPresent()
-      }
-    }
-
-    waitFor("the editor is present") {
-      notebookEditor().present()
-    }
-  }
-}
 
 /**
  * Executes a test block within the context of the notebook editor UI component.

@@ -4,31 +4,14 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.notebooks.FirstCell
 import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookType
-import com.intellij.driver.sdk.ui.components.notebooks.createNewNotebook
-import com.intellij.driver.sdk.ui.components.notebooks.notebookEditor
 import com.intellij.driver.sdk.ui.components.notebooks.withNotebookEditor
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.waitFor
-import com.intellij.driver.sdk.waitForOne
 import com.intellij.jupyter.ui.test.util.kernel.runAllCellsAndWaitExecuted
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // Shared smoke test utilities used across Kotlin and Python notebooks to avoid duplication
-
-fun NotebookEditorUiComponent.checkCreateNewNotebook(name: String = "test") {
-  step("Create a new notebook") {
-    driver.createNewNotebook(name, type)
-  }
-  step("Check the notebook editor is opened") {
-    waitForOne(
-      "Waiting for the notebook editor to appear",
-      timeout = 10.seconds,
-      getter = { notebookCellEditors }
-    )
-  }
-}
 
 //issue = "PY-75616"
 fun NotebookEditorUiComponent.checkMarkdownCellRendering() {
