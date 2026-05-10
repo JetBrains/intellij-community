@@ -69,8 +69,8 @@ local_path_override(
     path = "build/jvm-rules",
 )
 
-bazel_dep(name = "windows_support", version = "0.1.1")
-bazel_dep(name = "llvm", version = "0.7.9")
+bazel_dep(name = "windows_support", version = "0.1.7")
+bazel_dep(name = "llvm", version = "0.8.1")
 single_version_override(
     module_name = "llvm",
     patch_strip = 1,

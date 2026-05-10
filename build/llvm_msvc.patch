@@ -1,4 +1,5 @@
-Subject: [PATCH] Add MSVC support
+Subject: [PATCH] Prevent the need to rely on https://github.com/bazelbuild/rules_cc/pull/561
+Add MSVC support
 ---
 Index: 3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel
 IDEA additional info:
@@ -6,8 +7,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel
---- a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -264,10 +264,8 @@
      srcs = [
          "lib/builtins/x86_64/floatdidf.c",
@@ -32,34 +33,34 @@ diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3r
      }),
  )
 
-@@ -450,7 +454,7 @@
-         "@platforms//os:macos": [],
-         "@platforms//os:linux": [
-             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
--            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
-+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-             "@kernel_headers",
+@@ -462,13 +466,23 @@
+         "@llvm//platforms/config:gnu": [
+             "@glibc//:gnu_libc_headers",
          ],
-         "@platforms//os:windows": [],
-@@ -465,9 +469,16 @@
++        "@platforms//os:windows": [],
          "@platforms//os:macos": [
              # on macOS we implicitly use SDK provided headers
          ],
 -        "@platforms//os:windows": [
-+        "@llvm//platforms/config:abi_gnu": [
+-            "@mingw//:mingw_headers",
+-        ],
+         "@platforms//os:none": [],
++    }) + select({
++        "@llvm//constraints/windows/abi:gnu": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//platforms/config:abi_gnullvm": [
-             "@mingw//:mingw_headers",
-         ],
-+        "@llvm//platforms/config:abi_msvc": [
-+            # TODO: should we declare something here?
-+            # "@mingw//:mingw_headers",
++        "@llvm//constraints/windows/abi:gnullvm": [
++            "@mingw//:mingw_headers",
 +        ],
-         "@platforms//os:none": [],
++        "@llvm//constraints/windows/abi:msvc": [
++            "@msvc_runtime//:msvc_include",
++            "@windows_sdk//:winsdk_ucrt_include",
++        ],
++        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = ["lib/builtins"],
-@@ -556,9 +567,13 @@
+     linkstatic = True,
+@@ -556,9 +570,13 @@
 
  CRT_CFLAGS = [
      "-std=c11",
@@ -75,74 +76,104 @@ diff --git a/3rd_party/llvm-project/x.x/compiler-rt/compiler-rt.BUILD.bazel b/3r
 
  CRT_DEFINES = [
      "CRT_HAS_INITFINI_ARRAY",
+@@ -2658,10 +2676,20 @@
+             "@glibc//:gnu_libc_headers",
+         ],
+         "@platforms//os:macos": [],
+-        "@platforms//os:windows": [
++        "@platforms//os:windows": [],
++        "@platforms//os:none": [],
++    }) + select({
++        "@llvm//constraints/windows/abi:gnu": [
++            "@mingw//:mingw_headers",
++        ],
++        "@llvm//constraints/windows/abi:gnullvm": [
+             "@mingw//:mingw_headers",
+         ],
+-        "@platforms//os:none": [],
++        "@llvm//constraints/windows/abi:msvc": [
++            "@msvc_runtime//:msvc_include",
++            "@windows_sdk//:winsdk_ucrt_include",
++        ],
++        "@llvm//constraints/windows/abi:unconstrained": [],
+     }),
+     includes = [
+         "include",
 Index: 3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel
---- a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -139,9 +139,13 @@
+--- a/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/3rd_party/llvm-project/x.x/libcxxabi/libcxxabi.BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -139,10 +139,20 @@
          "@llvm//platforms/config:gnu": [
              "@glibc//:gnu_libc_headers",
          ],
 -        "@platforms//os:windows": [
++        "@platforms//os:windows": [],
++        "@platforms//os:macos": [],
++    }) + select({
 +        "@llvm//constraints/windows/abi:gnu": [
              "@mingw//:mingw_headers",
          ],
+-        "@platforms//os:macos": [],
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [],
-         "@platforms//os:macos": [],
++        "@llvm//constraints/windows/abi:msvc": [
++            "@msvc_runtime//:msvc_include",
++            "@windows_sdk//:winsdk_ucrt_include",
++        ],
++        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
+         "include",
 Index: 3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel
---- a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -85,7 +85,7 @@
-         "@platforms//os:windows": [],
-         "@platforms//os:linux": [
-             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
--            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
-+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-             "@kernel_headers",
-         ],
-     }) + select({
-@@ -95,9 +95,13 @@
+--- a/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/3rd_party/llvm-project/x.x/libunwind/libunwind.BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -95,10 +95,20 @@
          "@llvm//platforms/config:gnu": [
              "@glibc//:gnu_libc_headers",
          ],
 -        "@platforms//os:windows": [
++        "@platforms//os:windows": [],
++        "@platforms//os:macos": [],
++    }) + select({
 +        "@llvm//constraints/windows/abi:gnu": [
              "@mingw//:mingw_headers",
          ],
+-        "@platforms//os:macos": [],
 +        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@mingw//:mingw_headers",
 +        ],
-+        "@llvm//constraints/windows/abi:msvc": [],
-         "@platforms//os:macos": [],
++        "@llvm//constraints/windows/abi:msvc": [
++            "@msvc_runtime//:msvc_include",
++            "@windows_sdk//:winsdk_ucrt_include",
++        ],
++        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
      includes = [
+         "include",
 Index: MODULE.bazel
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/MODULE.bazel b/MODULE.bazel
---- a/MODULE.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/MODULE.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/MODULE.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/MODULE.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -13,6 +13,7 @@
  bazel_dep(name = "rules_python", version = "1.7.0")
  bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
  bazel_dep(name = "tar.bzl", version = "0.10.4")
-+bazel_dep(name = "windows_support", version = "0.1.1")
++bazel_dep(name = "windows_support", version = "0.1.7")
 
  http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -172,14 +203,149 @@ diff --git a/MODULE.bazel b/MODULE.bazel
  osx = use_extension("//extensions:osx.bzl", "osx")
  osx.from_archive(
      sha256 = "edc7ce9b8f09e0c7a39aaa714f941b4c2597f333ec1ffe59a14d67eb36cdb7e7",
+Index: MODULE.bazel.lock
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MODULE.bazel.lock b/MODULE.bazel.lock
+--- a/MODULE.bazel.lock	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/MODULE.bazel.lock	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -24,6 +24,7 @@
+     "https://bcr.bazel.build/modules/aspect_bazel_lib/2.21.2/MODULE.bazel": "276347663a25b0d5bd6cad869252bea3e160c4d980e764b15f3bae7f80b30624",
+     "https://bcr.bazel.build/modules/aspect_bazel_lib/2.21.2/source.json": "f42051fa42629f0e59b7ac2adf0a55749144b11f1efcd8c697f0ee247181e526",
+     "https://bcr.bazel.build/modules/aspect_bazel_lib/2.8.1/MODULE.bazel": "812d2dd42f65dca362152101fbec418029cc8fd34cbad1a2fde905383d705838",
++    "https://bcr.bazel.build/modules/bazel_features/1.0.0/MODULE.bazel": "d7f022dc887efb96e1ee51cec7b2e48d41e36ff59a6e4f216c40e4029e1585bf",
+     "https://bcr.bazel.build/modules/bazel_features/1.1.0/MODULE.bazel": "cfd42ff3b815a5f39554d97182657f8c4b9719568eb7fded2b9135f084bf760b",
+     "https://bcr.bazel.build/modules/bazel_features/1.1.1/MODULE.bazel": "27b8c79ef57efe08efccbd9dd6ef70d61b4798320b8d3c134fd571f78963dbcd",
+     "https://bcr.bazel.build/modules/bazel_features/1.11.0/MODULE.bazel": "f9382337dd5a474c3b7d334c2f83e50b6eaedc284253334cf823044a26de03e8",
+@@ -68,6 +69,8 @@
+     "https://bcr.bazel.build/modules/bazel_skylib/1.9.0/source.json": "7ad77c1e8c1b84222d9b3f3cae016a76639435744c19330b0b37c0a3c9da7dc0",
+     "https://bcr.bazel.build/modules/bazel_skylib_gazelle_plugin/1.9.0/MODULE.bazel": "6bf4bab470d2383d4eda4f7d0ccff5b8160dc0a2429e3037f9a2c573f9b7a2c0",
+     "https://bcr.bazel.build/modules/bazel_skylib_gazelle_plugin/1.9.0/source.json": "02385c6bf129986a5675bd04658b2c2bb6249db51106bb20db7723a56eb03302",
++    "https://bcr.bazel.build/modules/bazelrc-preset.bzl/1.9.2/MODULE.bazel": "9354bc3d91ee66e804642419af601b853e3228f6493f9263d51c5cd7b25c2a55",
++    "https://bcr.bazel.build/modules/bazelrc-preset.bzl/1.9.2/source.json": "d78791185eae5a8af3a5793f312f0ba21185bd8a115b9419fb99527d03ab112b",
+     "https://bcr.bazel.build/modules/buildifier_prebuilt/8.5.1.2/MODULE.bazel": "9a6e0a2e87d1e3da679e157da5192ea351d5739ca1ff51831c2b736d5b6034de",
+     "https://bcr.bazel.build/modules/buildifier_prebuilt/8.5.1.2/source.json": "33e11b3bf11e39cb762480a7e6ea1d24d044636135cdd8b8e74b07ebcd3b8d8b",
+     "https://bcr.bazel.build/modules/buildozer/8.5.1/MODULE.bazel": "a35d9561b3fc5b18797c330793e99e3b834a473d5fbd3d7d7634aafc9bdb6f8f",
+@@ -109,7 +112,8 @@
+     "https://bcr.bazel.build/modules/nlohmann_json/3.12.0.bcr.1/source.json": "93f82a5ae985eb935c539bfee95e04767187818189241ac956f3ccadbdb8fb02",
+     "https://bcr.bazel.build/modules/package_metadata/0.0.2/MODULE.bazel": "fb8d25550742674d63d7b250063d4580ca530499f045d70748b1b142081ebb92",
+     "https://bcr.bazel.build/modules/package_metadata/0.0.5/MODULE.bazel": "ef4f9439e3270fdd6b9fd4dbc3d2f29d13888e44c529a1b243f7a31dfbc2e8e4",
+-    "https://bcr.bazel.build/modules/package_metadata/0.0.5/source.json": "2326db2f6592578177751c3e1f74786b79382cd6008834c9d01ec865b9126a85",
++    "https://bcr.bazel.build/modules/package_metadata/0.0.7/MODULE.bazel": "7adb03933fc8401f495800cf4eafcff0edc6da0ff55c7db223ef69d19f689486",
++    "https://bcr.bazel.build/modules/package_metadata/0.0.7/source.json": "50639625e937b56115012674c797cca7a05a96b4878c87d803c13dc2b31de8a0",
+     "https://bcr.bazel.build/modules/platforms/0.0.10/MODULE.bazel": "8cb8efaf200bdeb2150d93e162c40f388529a25852b332cec879373771e48ed5",
+     "https://bcr.bazel.build/modules/platforms/0.0.11/MODULE.bazel": "0daefc49732e227caa8bfa834d65dc52e8cc18a2faf80df25e8caea151a9413f",
+     "https://bcr.bazel.build/modules/platforms/0.0.4/MODULE.bazel": "9b328e31ee156f53f3c416a64f8491f7eb731742655a47c9eec4703a71644aee",
+@@ -258,6 +262,8 @@
+     "https://bcr.bazel.build/modules/tar.bzl/0.2.1/MODULE.bazel": "52d1c00a80a8cc67acbd01649e83d8dd6a9dc426a6c0b754a04fe8c219c76468",
+     "https://bcr.bazel.build/modules/tar.bzl/0.5.1/MODULE.bazel": "7c2eb3dcfc53b0f3d6f9acdfd911ca803eaf92aadf54f8ca6e4c1f3aee288351",
+     "https://bcr.bazel.build/modules/upb/0.0.0-20220923-a547704/MODULE.bazel": "7298990c00040a0e2f121f6c32544bab27d4452f80d9ce51349b1a28f3005c43",
++    "https://bcr.bazel.build/modules/windows_support/0.1.2/MODULE.bazel": "a20734c0fba3d8155440cc027904dc249c7294c83944ea6947a7a4a2e64999a9",
++    "https://bcr.bazel.build/modules/windows_support/0.1.2/source.json": "642d6a51afb77fc3a0695df4357d70e2e803335098d54e1d6cd6d89bc00a51b1",
+     "https://bcr.bazel.build/modules/with_cfg.bzl/0.12.0/MODULE.bazel": "b573395fe63aef4299ba095173e2f62ccfee5ad9bbf7acaa95dba73af9fc2b38",
+     "https://bcr.bazel.build/modules/with_cfg.bzl/0.12.0/source.json": "3f3fbaeafecaf629877ad152a2c9def21f8d330d91aa94c5dc75bbb98c10b8b8",
+     "https://bcr.bazel.build/modules/xz/5.4.5.bcr.7/MODULE.bazel": "6ad4a612745322cb1b64b971f9de54d1e604810043da14ca5578f963075b5dac",
+@@ -703,6 +709,72 @@
+           }
+         }
+       }
++    },
++    "@@windows_support+//windows:extensions.bzl%msvc_runtime": {
++      "general": {
++        "bzlTransitiveDigest": "sWbs4z9NB4HLkN70R/qHufw5oHeceuBUoQLWvHc2Ths=",
++        "usagesDigest": "qONmrwcIYYAkMiEfCdwpc/Im6t1/55wa9jzpqRaKLZU=",
++        "recordedInputs": [
++          "REPO_MAPPING:windows_support+,bazel_tools bazel_tools"
++        ],
++        "generatedRepoSpecs": {
++          "msvc_runtime": {
++            "repoRuleId": "@@windows_support+//windows/private/extensions:msvc_runtime.bzl%_msvc_runtime_repository",
++            "attributes": {
++              "msvc_version": "14.50.35717",
++              "architectures": [
++                "x64",
++                "arm64"
++              ],
++              "installer_manifest_url": "https://download.visualstudio.microsoft.com/download/pr/fdc37f6e-59f6-4054-838a-b476eeaa6ec3/1d82370739911457e0a2f6be15d8b5f569531b352b2eabb961429eea1e99e356/VisualStudio.vsman",
++              "installer_manifest_integrity": "sha256-qOhU+p8/uurCfXME4pfxZg1xN0ATid61fPeYPzPBb+8="
++            }
++          }
++        },
++        "moduleExtensionMetadata": {
++          "explicitRootModuleDirectDeps": [
++            "msvc_runtime"
++          ],
++          "explicitRootModuleDirectDevDeps": [],
++          "useAllRepos": "NO",
++          "reproducible": false
++        }
++      }
++    },
++    "@@windows_support+//windows:extensions.bzl%windows_sdk": {
++      "general": {
++        "bzlTransitiveDigest": "sWbs4z9NB4HLkN70R/qHufw5oHeceuBUoQLWvHc2Ths=",
++        "usagesDigest": "N/eI8OI4b+nb5wxDr/26t/XFlGhOBRdbihyrJmvQgdU=",
++        "recordedInputs": [
++          "REPO_MAPPING:windows_support+,bazel_tools bazel_tools"
++        ],
++        "generatedRepoSpecs": {
++          "windows_sdk": {
++            "repoRuleId": "@@windows_support+//windows/private/extensions:windows_sdk.bzl%_windows_sdk_repository",
++            "attributes": {
++              "windows_sdk_version": "10.0.26100.7705",
++              "windows_sdk_integrity": {
++                "Microsoft.Windows.SDK.CPP": "sha256-/0VWYL7gcadEcVqWZWZvopwHaBV509gVlZqe7FpVZCQ=",
++                "Microsoft.Windows.SDK.CPP.x64": "sha256-rWzpD/lAEGmdKVSLPCseUsieuBFD4hmRVdmlw4ABtSs=",
++                "Microsoft.Windows.SDK.CPP.arm64": "sha256-A7wMA9Q5zvhQdLvNQl+dXTptO0Z5Z6zSHaO6bf7q+mc="
++              },
++              "transformations": {},
++              "architectures": [
++                "x64",
++                "arm64"
++              ]
++            }
++          }
++        },
++        "moduleExtensionMetadata": {
++          "explicitRootModuleDirectDeps": [
++            "windows_sdk"
++          ],
++          "explicitRootModuleDirectDevDeps": [],
++          "useAllRepos": "NO",
++          "reproducible": false
++        }
++      }
+     }
+   },
+   "facts": {
+@@ -869,6 +941,17 @@
+           "27bab004c72b3d7bd05a69b6ec0fc54a309b4b78cc569dd963d8b3ec28bfdb8c"
+         ]
+       }
++    },
++    "@@windows_support+//windows:extensions.bzl%msvc_runtime": {
++      "visual_studio_installer_manifest_v1": {
++        "integrity": "sha256-qOhU+p8/uurCfXME4pfxZg1xN0ATid61fPeYPzPBb+8=",
++        "request": {
++          "visual_studio_channel_url": "https://aka.ms/vs/stable/channel",
++          "visual_studio_installer_manifest_integrity": "sha256-qOhU+p8/uurCfXME4pfxZg1xN0ATid61fPeYPzPBb+8=",
++          "visual_studio_installer_manifest_url": "https://download.visualstudio.microsoft.com/download/pr/fdc37f6e-59f6-4054-838a-b476eeaa6ec3/1d82370739911457e0a2f6be15d8b5f569531b352b2eabb961429eea1e99e356/VisualStudio.vsman"
++        },
++        "url": "https://download.visualstudio.microsoft.com/download/pr/fdc37f6e-59f6-4054-838a-b476eeaa6ec3/1d82370739911457e0a2f6be15d8b5f569531b352b2eabb961429eea1e99e356/VisualStudio.vsman"
++      }
+     }
+   }
+ }
 Index: constraints/windows/abi/BUILD.bazel
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/constraints/windows/abi/BUILD.bazel b/constraints/windows/abi/BUILD.bazel
---- a/constraints/windows/abi/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/constraints/windows/abi/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/constraints/windows/abi/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/constraints/windows/abi/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -1,20 +1,5 @@
 +load(":declare_abis_constraints.bzl", "declare_abis_constraints")
 +
@@ -211,16 +377,17 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/constraints/windows/abi/abis.bzl b/constraints/windows/abi/abis.bzl
 new file mode 100644
---- /dev/null	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-+++ b/constraints/windows/abi/abis.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -0,0 +1,7 @@
-+ABIS = [
+--- /dev/null	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
++++ b/constraints/windows/abi/abis.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -0,0 +1,8 @@
++WINDOWS_ABIS = [
 +    "gnu",
 +    "gnullvm",
 +    "msvc",
 +]
 +
-+DEFAULT_ABI = "gnullvm"
++WINDOWS_DEFAULT_ABI = "gnullvm"
++UNCONSTRAINED_WINDOWS_ABI = "unconstrained"
 Index: constraints/windows/abi/declare_abis_constraints.bzl
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
@@ -228,22 +395,18 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 ===================================================================
 diff --git a/constraints/windows/abi/declare_abis_constraints.bzl b/constraints/windows/abi/declare_abis_constraints.bzl
 new file mode 100644
---- /dev/null	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-+++ b/constraints/windows/abi/declare_abis_constraints.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -0,0 +1,17 @@
-+load(":abis.bzl", "ABIS")
+--- /dev/null	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
++++ b/constraints/windows/abi/declare_abis_constraints.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -0,0 +1,13 @@
++load(":abis.bzl", "UNCONSTRAINED_WINDOWS_ABI", "WINDOWS_ABIS")
 +
 +def declare_abis_constraints():
 +    native.constraint_setting(
 +        name = "abi",
-+        default_constraint_value = "unconstrained",  # For windows, this maps to a default gnu
-+    )
-+    native.constraint_value(
-+        name = "unconstrained",
-+        constraint_setting = ":abi",
++        default_constraint_value = UNCONSTRAINED_WINDOWS_ABI,
 +    )
 +
-+    for abi in ABIS:
++    for abi in WINDOWS_ABIS + [UNCONSTRAINED_WINDOWS_ABI]:
 +        native.constraint_value(
 +            name = abi,
 +            constraint_setting = ":abi",
@@ -254,14 +417,14 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platforms/common.bzl b/platforms/common.bzl
---- a/platforms/common.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/platforms/common.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/platforms/common.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/platforms/common.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -33,3 +33,8 @@
      ("linux", "riscv64"),
      ("linux", "s390x"),
  ]
 +
-+ABI_SUPPORTED_TARGETS = [
++WINDOWS_ABI_SUPPORTED_TARGETS = [
 +    ("windows", "x86_64"),
 +    ("windows", "aarch64"),
 +]
@@ -271,14 +434,14 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platforms/config/declare_config_settings.bzl b/platforms/config/declare_config_settings.bzl
---- a/platforms/config/declare_config_settings.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/platforms/config/declare_config_settings.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/platforms/config/declare_config_settings.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/platforms/config/declare_config_settings.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -1,6 +1,7 @@
  load("@bazel_skylib//lib:selects.bzl", "selects")
  load("//constraints/libc:libc_versions.bzl", "GLIBCS", "LIBCS")
 -load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
-+load("//constraints/windows/abi:abis.bzl", "ABIS")
-+load("//platforms:common.bzl", "ABI_SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
++load("//constraints/windows/abi:abis.bzl", "WINDOWS_ABIS")
++load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS", "WINDOWS_ABI_SUPPORTED_TARGETS")
 
  def declare_config_settings():
      for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -286,18 +449,18 @@ diff --git a/platforms/config/declare_config_settings.bzl b/platforms/config/dec
          )
 
      declare_config_settings_libc_aware()
-+    declare_config_settings_abi_aware()
++    declare_config_settings_windows_abi_aware()
 
  def declare_config_settings_libc_aware():
      for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
-@@ -69,3 +71,24 @@
+@@ -69,3 +71,16 @@
          ],
          visibility = ["//visibility:public"],
      )
 +
-+def declare_config_settings_abi_aware():
-+    for abi in ABIS + ["unconstrained"]:
-+        for (target_os, target_cpu) in ABI_SUPPORTED_TARGETS:
++def declare_config_settings_windows_abi_aware():
++    for abi in WINDOWS_ABIS:
++        for (target_os, target_cpu) in WINDOWS_ABI_SUPPORTED_TARGETS:
 +            native.config_setting(
 +                name = "{}_{}_{}".format(target_os, target_cpu, abi),
 +                constraint_values = [
@@ -307,27 +470,19 @@ diff --git a/platforms/config/declare_config_settings.bzl b/platforms/config/dec
 +                ],
 +                visibility = ["//visibility:public"],
 +            )
-+
-+        native.config_setting(
-+            name = "abi_{}".format(abi),
-+            constraint_values = [
-+                "//constraints/windows/abi:{}".format(abi),
-+            ],
-+            visibility = ["//visibility:public"],
-+        )
 Index: platforms/declare_platforms.bzl
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platforms/declare_platforms.bzl b/platforms/declare_platforms.bzl
---- a/platforms/declare_platforms.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/platforms/declare_platforms.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/platforms/declare_platforms.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/platforms/declare_platforms.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -1,5 +1,6 @@
  load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
 -load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
-+load("//constraints/windows/abi:abis.bzl", "ABIS", "DEFAULT_ABI")
-+load("//platforms:common.bzl", "ABI_SUPPORTED_TARGETS", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
++load("//constraints/windows/abi:abis.bzl", "UNCONSTRAINED_WINDOWS_ABI", "WINDOWS_ABIS", "WINDOWS_DEFAULT_ABI")
++load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS", "WINDOWS_ABI_SUPPORTED_TARGETS")
 
  def declare_platforms():
      for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -344,7 +499,7 @@ diff --git a/platforms/declare_platforms.bzl b/platforms/declare_platforms.bzl
 +            #
 +            # Users can still create their own platforms without an abi
 +            # constraint if they want to.
-+            constraints.append("//constraints/windows/abi:{}".format(DEFAULT_ABI))
++            constraints.append("//constraints/windows/abi:{}".format(WINDOWS_DEFAULT_ABI))
 +
          native.platform(
              name = "{}_{}".format(target_os, target_cpu),
@@ -353,7 +508,7 @@ diff --git a/platforms/declare_platforms.bzl b/platforms/declare_platforms.bzl
              )
 
      declare_platforms_libc_aware()
-+    declare_platforms_abi_aware()
++    declare_platforms_windows_abi_aware()
 
  def declare_platforms_libc_aware():
      for target_os, target_cpu in LIBC_SUPPORTED_TARGETS:
@@ -362,9 +517,9 @@ diff --git a/platforms/declare_platforms.bzl b/platforms/declare_platforms.bzl
                      visibility = ["//visibility:public"],
                  )
 +
-+def declare_platforms_abi_aware():
-+    for target_os, target_cpu in ABI_SUPPORTED_TARGETS:
-+        for abi in ABIS:
++def declare_platforms_windows_abi_aware():
++    for target_os, target_cpu in WINDOWS_ABI_SUPPORTED_TARGETS:
++        for abi in WINDOWS_ABIS:
 +            native.platform(
 +                name = "{}_{}_{}".format(target_os, target_cpu, abi),
 +                constraint_values = [
@@ -391,77 +546,56 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/runtimes/BUILD.bazel b/runtimes/BUILD.bazel
---- a/runtimes/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/runtimes/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -49,11 +49,17 @@
+--- a/runtimes/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/runtimes/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -66,11 +66,17 @@
              "@llvm-project//libcxxabi:libcxxabi.static",
              "@llvm-project//libunwind:libunwind.static",
          ],
 -        "@platforms//os:windows": [
-+        "@llvm//platforms/config:abi_gnu": [
++        "@llvm//constraints/windows/abi:gnu": [
              "@llvm-project//libcxx:libcxx.static",
              "@llvm-project//libcxxabi:libcxxabi.static",
              "@llvm-project//libunwind:libunwind.static",
          ],
-+        "@llvm//platforms/config:abi_gnullvm": [
++        "@llvm//constraints/windows/abi:gnullvm": [
 +            "@llvm-project//libcxx:libcxx.static",
 +            "@llvm-project//libcxxabi:libcxxabi.static",
 +            "@llvm-project//libunwind:libunwind.static",
 +        ],
-+        "@llvm//platforms/config:abi_msvc": [],  # TODO: why?
++        "@llvm//constraints/windows/abi:msvc": [],  # TODO: why?
          "//conditions:default": [],
      }),
      visibility = ["//visibility:public"],
-@@ -72,6 +78,14 @@
-     }),
-     visibility = ["//visibility:public"],
- )
-+
-+filegroup(
-+    name = "windows_msvc_runtime_lib",
-+    srcs = [
-+        "@compiler-rt//:clang_rt.builtins.static",
-+    ],
-+    visibility = ["//visibility:public"],
-+)
-
- cc_library(
-     name = "empty",
 Index: toolchain/BUILD.bazel
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
---- a/toolchain/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -116,10 +116,16 @@
+--- a/toolchain/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -116,10 +116,17 @@
          "@platforms//os:linux": [
              "//toolchain/args:crt_search_directory",
          ],
 -        "@platforms//os:windows": [
+-            "//toolchain/args:crt_search_directory",
+-        ],
 +        "@platforms//os:windows": [],
-+        "@platforms//os:none": [],
+         "@platforms//os:none": [],
 +    }) + select({
-+        "//platforms/config:windows_x86_64_gnu": [
++        "@llvm//constraints/windows/abi:gnu": [
 +            "//toolchain/args:crt_search_directory",
 +        ],
-+        "//platforms/config:windows_aarch64_gnu": [
-             "//toolchain/args:crt_search_directory",
-         ],
--        "@platforms//os:none": [],
-+        "//conditions:default": [],
++        "@llvm//constraints/windows/abi:gnullvm": [
++            "//toolchain/args:crt_search_directory",
++        ],
++        "@llvm//constraints/windows/abi:msvc": [],
++        "@llvm//constraints/windows/abi:unconstrained": [],
      }),
  )
 
-@@ -189,6 +195,7 @@
-         "@platforms//os:macos": [
-             "//toolchain/args/macos:macos_sdk_sysroot",
-         ],
-+        "@platforms//os:windows": [],
-         "//conditions:default": [
-             "//toolchain/args:empty_sysroot_flags",
-         ],
 @@ -273,10 +280,20 @@
  # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
  cc_args_list(
@@ -487,47 +621,43 @@ diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
  )
 
  cc_args_list(
-@@ -321,14 +338,44 @@
-         "//toolchain/args:fuzzer_flags",
+@@ -299,7 +316,6 @@
+         "//toolchain/args:no_absolute_paths_for_builtins",
+         "//toolchain/args:deterministic_compile_flags",
+         "//toolchain/args:module_map",
+-        ":sysroot_flags",
+         ":hermetic_compile_flags",
+
+         # TODO(cerisier): Explode this into specific args instead
+@@ -322,20 +338,26 @@
+         "//toolchain/args:profile_flags",
 
          # Common default link flags.
 -        "//toolchain/args:fuse_ld",
--        "//toolchain/args:lto_plugin_target_flags",
+         "//toolchain/args:lto_plugin_target_flags",
 -        ":libcxx_library_search_paths",
 -        ":libunwind_library_search_paths",
 -        ":rtlib",
 -        ":stdlib",
 -        ":unwindlib",
 -        ":resource_dir",
+-        "//toolchain/args:validate_static_library_args",
+-        ":default_link_flags",
+-        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+-        ":default_startfiles",
+-        ":default_libs",
+-    ],
++        "//toolchain/args:validate_static_library_args",
++        ":default_link_flags",
++        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
++        ":default_startfiles",
++        ":default_libs",
 +    ] + select({
-+        "//platforms/config:windows_x86_64_gnu": ["//toolchain/args:llvm_target_for_platform_link"],
-+        "//platforms/config:windows_aarch64_gnu": ["//toolchain/args:llvm_target_for_platform_link"],
-+        "@platforms//os:windows": [],
-+        "//conditions:default": ["//toolchain/args:llvm_target_for_platform_link"],
-+    }) + select({
-+        "//platforms/config:windows_x86_64_gnu": ["//toolchain/args:fuse_ld"],
-+        "//platforms/config:windows_aarch64_gnu": ["//toolchain/args:fuse_ld"],
-+        "@platforms//os:windows": [],
-+        "//conditions:default": ["//toolchain/args:fuse_ld"],
-+    }) + select({
-+        "//platforms/config:windows_x86_64_gnu": [
-+            ":libcxx_library_search_paths",
-+            ":libunwind_library_search_paths",
-+            ":rtlib",
-+            ":stdlib",
-+            ":unwindlib",
-+            ":resource_dir",
-+        ],
-+        "//platforms/config:windows_aarch64_gnu": [
-+            ":libcxx_library_search_paths",
-+            ":libunwind_library_search_paths",
-+            ":rtlib",
-+            ":stdlib",
-+            ":unwindlib",
-+            ":resource_dir",
-+        ],
-+        "@platforms//os:windows": [],
++        "@llvm//constraints/windows/abi:msvc": [],
 +        "//conditions:default": [
++            ":sysroot_flags",
++            "//toolchain/args:llvm_target_for_platform_link",
++            "//toolchain/args:fuse_ld",
 +            ":libcxx_library_search_paths",
 +            ":libunwind_library_search_paths",
 +            ":rtlib",
@@ -535,12 +665,11 @@ diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
 +            ":unwindlib",
 +            ":resource_dir",
 +        ],
-+    }) + [
-+        "//toolchain/args:lto_plugin_target_flags",
-         "//toolchain/args:validate_static_library_args",
-         ":default_link_flags",
-         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
-@@ -345,6 +392,22 @@
++    }),
+     visibility = ["//visibility:public"],
+ )
+
+@@ -346,6 +368,22 @@
      prefix = "",
      visibility = ["//visibility:public"],
  )
@@ -569,16 +698,23 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
---- a/toolchain/args/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/args/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -36,6 +36,15 @@
+--- a/toolchain/args/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/args/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -1,7 +1,7 @@
+ load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+ load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+-load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
++load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_FLAG", "LLVM_TARGET_TRIPLE")
+
+ package(default_visibility = ["//visibility:public"])
+
+@@ -36,11 +36,16 @@
      name = "target_flags",
      actions = [
          "@rules_cc//cc/toolchains/actions:compile_actions",
 +    ],
-+    args = [
-+        "-target",
-+    ] + LLVM_TARGET_TRIPLE,
++    args = LLVM_TARGET_FLAG,
 +)
 +
 +cc_args(
@@ -586,8 +722,24 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
 +    actions = [
          "@rules_cc//cc/toolchains/actions:link_actions",
      ],
-     args = [
-@@ -761,11 +770,16 @@
+-    args = [
+-        "-target",
+-    ] + LLVM_TARGET_TRIPLE + select({
++    args = LLVM_TARGET_FLAG + select({
+         # We hardcode these for now given the complexity of RISC-V extensions.
+         # TODO(cerisier): Support ISA configuration.
+         "@platforms//cpu:riscv64": [
+@@ -85,8 +90,7 @@
+         # is safe to disable them globally until the toolchain shipped by
+         # Bazel sets this flag on `use_module_maps`.
+         # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
+-        "-Xclang",
+-        "-fno-cxx-modules",
++        "-Xclang=-fno-cxx-modules",
+         "-Wno-module-import-in-extern-c",
+         # This warning would mean we had an error configuring the toolchain or modulemap
+         "-Werror=incomplete-umbrella",
+@@ -814,11 +818,16 @@
          "@rules_cc//cc/toolchains/actions:objc_compile",
          "@rules_cc//cc/toolchains/actions:objcpp_compile",
      ],
@@ -609,24 +761,68 @@ diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
  )
 
  config_setting(
+@@ -837,6 +846,7 @@
+         "@rules_cc//cc/toolchains/actions:link_actions",
+     ],
+     args = select({
++        "@llvm//constraints/windows/abi:msvc": [],  # no --sysroot equivalent in clang-cl, unsure how we should set `/winsysroot`
+         ":empty_sysroot": [
+             "--sysroot=/dev/null",
+         ],
 Index: toolchain/args/llvm_target_triple.bzl
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/args/llvm_target_triple.bzl b/toolchain/args/llvm_target_triple.bzl
---- a/toolchain/args/llvm_target_triple.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/args/llvm_target_triple.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -12,6 +12,10 @@
-     "@llvm//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
-     "@llvm//platforms/config:windows_x86_64": ["x86_64-w64-windows-gnu"],
-     "@llvm//platforms/config:windows_aarch64": ["aarch64-w64-windows-gnu"],
-+    "@llvm//platforms/config:windows_x86_64_gnu": ["x86_64-w64-windows-gnu"],
-+    "@llvm//platforms/config:windows_aarch64_gnu": ["aarch64-w64-windows-gnu"],
-+    "@llvm//platforms/config:windows_x86_64_msvc": ["x86_64-pc-windows-msvc"],
-+    "@llvm//platforms/config:windows_aarch64_msvc": ["aarch64-pc-windows-msvc"],
-     "@llvm//platforms/config:none_wasm32": ["wasm32-unknown-unknown"],
-     "@llvm//platforms/config:none_wasm64": ["wasm64-unknown-unknown"],
+--- a/toolchain/args/llvm_target_triple.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/args/llvm_target_triple.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -1,17 +1,31 @@
+-LLVM_TARGET_TRIPLE = select({
++_LLVM_TARGET_TRIPLES = {
+     #TODO: Generate this automatically
+-    "@llvm//platforms/config:linux_x86_64_gnu": ["x86_64-linux-gnu"],
+-    "@llvm//platforms/config:linux_aarch64_gnu": ["aarch64-linux-gnu"],
+-    "@llvm//platforms/config:linux_riscv64_gnu": ["riscv64-linux-gnu"],
+-    "@llvm//platforms/config:linux_s390x_gnu": ["s390x-linux-gnu"],
+-    "@llvm//platforms/config:linux_x86_64_musl": ["x86_64-linux-musl"],
+-    "@llvm//platforms/config:linux_aarch64_musl": ["aarch64-linux-musl"],
+-    "@llvm//platforms/config:linux_riscv64_musl": ["riscv64-linux-musl"],
+-    "@llvm//platforms/config:linux_s390x_musl": ["s390x-linux-musl"],
+-    "@llvm//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
+-    "@llvm//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
+-    "@llvm//platforms/config:windows_x86_64": ["x86_64-w64-windows-gnu"],
+-    "@llvm//platforms/config:windows_aarch64": ["aarch64-w64-windows-gnu"],
+-    "@llvm//platforms/config:none_wasm32": ["wasm32-unknown-unknown"],
+-    "@llvm//platforms/config:none_wasm64": ["wasm64-unknown-unknown"],
++    "@llvm//platforms/config:linux_x86_64_gnu": "x86_64-linux-gnu",
++    "@llvm//platforms/config:linux_aarch64_gnu": "aarch64-linux-gnu",
++    "@llvm//platforms/config:linux_riscv64_gnu": "riscv64-linux-gnu",
++    "@llvm//platforms/config:linux_s390x_gnu": "s390x-linux-gnu",
++    "@llvm//platforms/config:linux_x86_64_musl": "x86_64-linux-musl",
++    "@llvm//platforms/config:linux_aarch64_musl": "aarch64-linux-musl",
++    "@llvm//platforms/config:linux_riscv64_musl": "riscv64-linux-musl",
++    "@llvm//platforms/config:linux_s390x_musl": "s390x-linux-musl",
++    "@llvm//platforms/config:macos_x86_64": "x86_64-apple-darwin",
++    "@llvm//platforms/config:macos_aarch64": "aarch64-apple-darwin",
++    "@llvm//platforms/config:windows_x86_64": "x86_64-w64-windows-gnu",
++    "@llvm//platforms/config:windows_aarch64": "aarch64-w64-windows-gnu",
++    "@llvm//platforms/config:windows_x86_64_gnu": "x86_64-w64-windows-gnu",
++    "@llvm//platforms/config:windows_aarch64_gnu": "aarch64-w64-windows-gnu",
++    "@llvm//platforms/config:windows_x86_64_msvc": "x86_64-pc-windows-msvc",
++    "@llvm//platforms/config:windows_aarch64_msvc": "aarch64-pc-windows-msvc",
++    "@llvm//platforms/config:none_wasm32": "wasm32-unknown-unknown",
++    "@llvm//platforms/config:none_wasm64": "wasm64-unknown-unknown",
++}
++
++LLVM_TARGET_TRIPLE = select({
++    platform: [triple]
++    for platform, triple in _LLVM_TARGET_TRIPLES.items()
++}, no_match_error = "Unsupported platform")
++
++LLVM_TARGET_FLAG = select({
++    platform: ["--target=%s" % triple]
++    for platform, triple in _LLVM_TARGET_TRIPLES.items()
  }, no_match_error = "Unsupported platform")
 Index: toolchain/args/windows/BUILD.bazel
 IDEA additional info:
@@ -634,8 +830,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/args/windows/BUILD.bazel b/toolchain/args/windows/BUILD.bazel
---- a/toolchain/args/windows/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/args/windows/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/toolchain/args/windows/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/args/windows/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -38,7 +38,7 @@
  )
 
@@ -645,7 +841,7 @@ diff --git a/toolchain/args/windows/BUILD.bazel b/toolchain/args/windows/BUILD.b
      actions = [
          "@rules_cc//cc/toolchains/actions:link_actions",
      ],
-@@ -67,3 +67,79 @@
+@@ -67,3 +67,76 @@
          "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
      },
  )
@@ -669,16 +865,11 @@ diff --git a/toolchain/args/windows/BUILD.bazel b/toolchain/args/windows/BUILD.b
 +        # >>> referenced by libzstd-143054927.lib(zstd_lazy.o):(ZSTD_RowFindBestMatch_noDict_4_4)
 +        # >>> referenced by libzstd-143054927.lib(zstd_lazy.o):(ZSTD_RowFindBestMatch_noDict_4_4)
 +        # >>> referenced 285 more times
-+        "/imsvc",
-+        "{msvc_include}",
-+        "/imsvc",
-+        "{winsdk_ucrt_include}",
-+        "/imsvc",
-+        "{winsdk_shared_include}",
-+        "/imsvc",
-+        "{winsdk_um_include}",
-+        "/imsvc",
-+        "{winsdk_winrt_include}",
++        "/imsvc{msvc_include}",
++        "/imsvc{winsdk_ucrt_include}",
++        "/imsvc{winsdk_shared_include}",
++        "/imsvc{winsdk_um_include}",
++        "/imsvc{winsdk_winrt_include}",
 +    ],
 +    data = [
 +        "@msvc_runtime//:msvc_include",
@@ -721,8 +912,10 @@ diff --git a/toolchain/args/windows/BUILD.bazel b/toolchain/args/windows/BUILD.b
 +alias(
 +    name = "default_libs",
 +    actual = select({
-+        "//platforms/config:abi_gnu": ":default_libs_gnu",
-+        "//conditions:default": ":default_libs_msvc",
++        "@llvm//constraints/windows/abi:gnu": ":default_libs_gnu",
++        "@llvm//constraints/windows/abi:gnullvm": ":default_libs_gnu",
++        "@llvm//constraints/windows/abi:msvc": ":default_libs_msvc",
++        "@llvm//constraints/windows/abi:unconstrained": ":default_libs_gnu",
 +    }),
 +)
 Index: toolchain/cc_toolchain.bzl
@@ -731,9 +924,9 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
---- a/toolchain/cc_toolchain.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/cc_toolchain.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -8,15 +8,26 @@
+--- a/toolchain/cc_toolchain.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/cc_toolchain.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -8,15 +8,36 @@
              "@rules_cc//cc/toolchains/args/layering_check:layering_check",
              "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
              "@llvm//toolchain/features:static_link_cpp_runtimes",
@@ -742,13 +935,23 @@ diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
 -            "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
              "@llvm//toolchain/features:parse_headers",
          ] + select({
++            "@llvm//constraints/windows/abi:gnu": [
++                "@llvm//toolchain/features/runtime_library_search_directories:feature",
++            ],
++            "@llvm//constraints/windows/abi:gnullvm": [
++                "@llvm//toolchain/features/runtime_library_search_directories:feature",
++            ],
 +            "@llvm//constraints/windows/abi:msvc": [
 +                "@llvm//toolchain/features:targets_windows",
 +                "@llvm//toolchain/features:supports_interface_shared_libraries",
 +                "@llvm//toolchain/features:has_configured_linker_path",
 +                "@llvm//toolchain/features:msvc_implib_flags",
++                "@llvm//toolchain/features:compiler_param_file",
++                "@llvm//toolchain/features:copy_dynamic_libraries_to_binary",
++                "@llvm//toolchain/features:parse_showincludes",
++                "@llvm//toolchain/features:windows_quoting_for_param_files",
 +            ],
-+            "//conditions:default": [
++            "@llvm//constraints/windows/abi:unconstrained": [
 +                "@llvm//toolchain/features/runtime_library_search_directories:feature",
 +            ],
 +        }) + select({
@@ -763,7 +966,7 @@ diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
          }) + [
              # Those features are enabled internally by --compilation_mode flags family.
              # We add them to the list of known_features but not in the list of enabled_features.
-@@ -29,12 +40,16 @@
+@@ -29,12 +50,16 @@
 
      cc_feature_set(
          name = name + "_runtimes_only_known_features",
@@ -782,40 +985,40 @@ diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
              # Always last (contains user_compile_flags and user_link_flags who should apply last).
              "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
          ],
-@@ -50,11 +65,17 @@
+@@ -50,11 +75,9 @@
              "@platforms//os:macos": [],
              "@platforms//os:windows": [
                  "@llvm//toolchain/features:static_link_cpp_runtimes",
-+            ],
-+            "@platforms//os:none": [],
-+        }) + select({
-+            "//platforms/config:abi_gnu": [
-                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
+-                "@llvm//toolchain/features/runtime_library_search_directories:feature",
              ],
--            "@platforms//os:none": [],
-+            "//platforms/config:abi_gnullvm": [
-+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
-+            ],
-+            "//conditions:default": [],
+             "@platforms//os:none": [],
          }) + [
 -            "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
              "@rules_cc//cc/toolchains/args/layering_check:module_maps",
              # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
              # This lets us properly order them before user_compile_flags and user_link_flags below.
-@@ -65,13 +86,31 @@
+@@ -65,13 +88,39 @@
              "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
              # Always last (contains user_compile_flags and user_link_flags who should apply last).
              "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
 -        ],
 +        ] + select({
++            "@llvm//constraints/windows/abi:gnu": [
++                "@llvm//toolchain/features/runtime_library_search_directories:feature",
++            ],
++            "@llvm//constraints/windows/abi:gnullvm": [
++                "@llvm//toolchain/features/runtime_library_search_directories:feature",
++            ],
 +            "@llvm//constraints/windows/abi:msvc": [
 +                "@llvm//toolchain/features:targets_windows",
 +                "@llvm//toolchain/features:supports_interface_shared_libraries",
 +                "@llvm//toolchain/features:has_configured_linker_path",
 +                "@llvm//toolchain/features:msvc_implib_flags",
-+                "@rules_cc//cc/toolchains/args/windows:parse_showincludes_feature",
++                "@llvm//toolchain/features:compiler_param_file",
++                "@llvm//toolchain/features:parse_showincludes",
++                "@llvm//toolchain/features:windows_quoting_for_param_files",
 +            ],
-+            "//conditions:default": [],
++            "@llvm//constraints/windows/abi:unconstrained": [],
 +        }) + select({
 +            "@platforms//os:windows": [],
 +            "//conditions:default": [
@@ -837,7 +1040,7 @@ diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
              "@llvm//toolchain/features:archive_param_file",
              # Always last (contains user_compile_flags and user_link_flags who should apply last).
              "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
-@@ -96,6 +135,8 @@
+@@ -96,6 +145,8 @@
              ],
              "@platforms//os:windows": [
                  "@llvm//toolchain:windows_executable_pattern",
@@ -846,14 +1049,16 @@ diff --git a/toolchain/cc_toolchain.bzl b/toolchain/cc_toolchain.bzl
              ],
              "//conditions:default": [],
          }),
-@@ -121,5 +162,8 @@
+@@ -121,5 +172,10 @@
              "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
              "//conditions:default": "@llvm//runtimes:dynamic_runtime_lib",
          }),
 -        compiler = "clang",
 +        compiler = select({
++            "@llvm//constraints/windows/abi:gnu": "clang",
++            "@llvm//constraints/windows/abi:gnullvm": "clang",
 +            "@llvm//constraints/windows/abi:msvc": "clang-cl",
-+            "//conditions:default": "clang",
++            "@llvm//constraints/windows/abi:unconstrained": "clang",
 +        }),
      )
 Index: toolchain/features/BUILD.bazel
@@ -862,8 +1067,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/features/BUILD.bazel b/toolchain/features/BUILD.bazel
---- a/toolchain/features/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/features/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/toolchain/features/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/features/BUILD.bazel	(revision 35b2ad3076398f939155528d8cc699d5a6597cf8)
 @@ -53,6 +53,11 @@
          "@platforms//cpu:wasm64": [],
          "@platforms//os:windows": [],
@@ -876,13 +1081,29 @@ diff --git a/toolchain/features/BUILD.bazel b/toolchain/features/BUILD.bazel
      }),
  )
 
-@@ -142,6 +147,37 @@
+@@ -142,6 +147,75 @@
      feature_name = "archive_param_file",
  )
 
 +cc_feature(
++    name = "compiler_param_file",
++    feature_name = "compiler_param_file",
++)
++
++cc_feature(
++    name = "windows_quoting_for_param_files",
++    feature_name = "windows_quoting_for_param_files",
++)
++
++cc_feature(
++    name = "copy_dynamic_libraries_to_binary",
++    feature_name = "copy_dynamic_libraries_to_binary",
++)
++
++cc_feature(
 +    name = "targets_windows",
 +    feature_name = "targets_windows",
++    implies = [":copy_dynamic_libraries_to_binary"],
 +)
 +
 +cc_feature(
@@ -911,6 +1132,28 @@ diff --git a/toolchain/features/BUILD.bazel b/toolchain/features/BUILD.bazel
 +    feature_name = "msvc_implib_flags",
 +)
 +
++cc_args(
++    name = "parse_showincludes_flags",
++    actions = [
++        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
++        "@rules_cc//cc/toolchains/actions:c_compile",
++        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
++        "@rules_cc//cc/toolchains/actions:cpp_compile",
++        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
++        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
++        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
++        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
++    ],
++    args = ["/showIncludes"],
++    env = {"VSLANG": "1033"},
++)
++
++cc_feature(
++    name = "parse_showincludes",
++    args = [":parse_showincludes_flags"],
++    feature_name = "parse_showincludes",
++)
++
  cc_feature(
      name = "parse_headers_wrapper",
      args = [
@@ -920,8 +1163,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/BUILD.bazel
---- a/toolchain/features/legacy/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/features/legacy/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/toolchain/features/legacy/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/features/legacy/BUILD.bazel	(revision 35b2ad3076398f939155528d8cc699d5a6597cf8)
 @@ -1,15 +1,21 @@
  load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
  load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
@@ -974,7 +1217,7 @@ diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/B
  )
 
  cc_feature(
-@@ -45,6 +56,69 @@
+@@ -45,6 +56,371 @@
      overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
  )
 
@@ -1033,7 +1276,7 @@ diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/B
 +)
 +
 +cc_feature(
-+    name = "archiver_flags",
++    name = "archiver_flags_msvc",
 +    args = [
 +        ":archiver_create_static_archive_llvm_ar_msvc",
 +        ":archiver_libraries_to_link_llvm_ar_msvc",
@@ -1041,10 +1284,312 @@ diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/B
 +    overrides = "@rules_cc//cc/toolchains/features/legacy:archiver_flags",
 +)
 +
++cc_nested_args(
++    name = "libraries_to_link_expansion_msvc",
++    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
++    nested = [
++        ":msvc_optional_object_file_group",
++        ":msvc_optional_object_file",
++        ":msvc_optional_interface_library",
++        ":msvc_optional_static_library",
++        ":msvc_optional_dynamic_library",
++    ],
++)
++
++cc_args(
++    name = "libraries_to_link_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    nested = [":libraries_to_link_expansion_msvc"],
++    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
++)
++
++cc_nested_args(
++    name = "msvc_optional_object_file_group",
++    args = ["{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
++    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
++    requires_equal_value = "object_file_group",
++)
++
++cc_nested_args(
++    name = "msvc_optional_object_file",
++    args = ["{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
++    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
++    requires_equal_value = "object_file",
++)
++
++cc_nested_args(
++    name = "msvc_optional_interface_library",
++    args = ["{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
++    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
++    requires_equal_value = "interface_library",
++)
++
++cc_nested_args(
++    name = "msvc_optional_static_library",
++    nested = [
++        ":msvc_static_library_whole_archive",
++        ":msvc_static_library_no_whole_archive",
++    ],
++    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
++    requires_equal_value = "static_library",
++)
++
++cc_nested_args(
++    name = "msvc_static_library_no_whole_archive",
++    args = ["{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
++    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
++)
++
++cc_nested_args(
++    name = "msvc_static_library_whole_archive",
++    args = ["/WHOLEARCHIVE:{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
++    requires_true = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
++)
++
++cc_nested_args(
++    name = "msvc_optional_dynamic_library",
++    args = ["{library}"],
++    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
++    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
++    requires_equal_value = "dynamic_library",
++)
++
++cc_feature(
++    name = "libraries_to_link_msvc",
++    args = [":libraries_to_link_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:libraries_to_link",
++)
++
++cc_args(
++    name = "preprocessor_defines_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
++    args = ["/D{preprocessor_defines}"],
++    format = {"preprocessor_defines": "@rules_cc//cc/toolchains/variables:preprocessor_defines"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:preprocessor_defines",
++)
++
++cc_feature(
++    name = "preprocessor_defines_msvc",
++    args = [":preprocessor_defines_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:preprocessor_defines",
++)
++
++cc_args(
++    name = "include_quote_paths_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
++    args = ["/I{quote_include_paths}"],
++    format = {"quote_include_paths": "@rules_cc//cc/toolchains/variables:quote_include_paths"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:quote_include_paths",
++)
++
++cc_args(
++    name = "include_paths_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
++    args = ["/I{include_paths}"],
++    format = {"include_paths": "@rules_cc//cc/toolchains/variables:include_paths"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:include_paths",
++)
++
++cc_args(
++    name = "system_include_paths_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
++    args = ["/I{system_include_paths}"],
++    format = {"system_include_paths": "@rules_cc//cc/toolchains/variables:system_include_paths"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:system_include_paths",
++)
++
++cc_feature(
++    name = "include_paths_msvc",
++    args = [
++        ":include_quote_paths_args_msvc",
++        ":include_paths_args_msvc",
++        ":system_include_paths_args_msvc",
++    ],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:include_paths",
++)
++
++cc_args(
++    name = "includes_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
++    args = ["/FI{includes}"],
++    format = {"includes": "@rules_cc//cc/toolchains/variables:includes"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:includes",
++    requires_not_none = "@rules_cc//cc/toolchains/variables:includes",
++)
++
++cc_feature(
++    name = "includes_msvc",
++    args = [":includes_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:includes",
++)
++
++cc_feature_set(
++    name = "include_flags_msvc",
++    all_of = [
++        ":includes_msvc",
++        ":include_paths_msvc",
++    ],
++)
++
++cc_args(
++    name = "compiler_input_flags_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
++    args = [
++        "/c",
++        "{source_file}",
++    ],
++    format = {"source_file": "@rules_cc//cc/toolchains/variables:source_file"},
++    requires_not_none = "@rules_cc//cc/toolchains/variables:source_file",
++)
++
++cc_feature(
++    name = "compiler_input_flags_msvc",
++    args = [":compiler_input_flags_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_input_flags",
++)
++
++cc_args(
++    name = "output_assembly_flags_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
++    args = ["/Fa{output_file}"],
++    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_assembly_file"},
++    requires_not_none = "@rules_cc//cc/toolchains/variables:output_assembly_file",
++)
++
++cc_args(
++    name = "output_preprocess_flags_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
++    args = [
++        "/P",
++        "/Fi{output_file}",
++    ],
++    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_preprocess_file"},
++    requires_not_none = "@rules_cc//cc/toolchains/variables:output_preprocess_file",
++)
++
++cc_args(
++    name = "output_object_flags_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
++    args = ["/Fo{output_file}"],
++    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
++    requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
++)
++
++cc_feature(
++    name = "compiler_output_flags_msvc",
++    args = [
++        ":output_assembly_flags_msvc",
++        ":output_preprocess_flags_msvc",
++        ":output_object_flags_msvc",
++    ],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_output_flags",
++)
++
++cc_feature(
++    name = "dependency_file_msvc",
++    overrides = "@rules_cc//cc/toolchains/features/legacy:dependency_file",
++)
++
++cc_args(
++    name = "output_link_flags_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    args = ["/OUT:{output_execpath}"],
++    format = {"output_execpath": "@rules_cc//cc/toolchains/variables:output_execpath"},
++    requires_not_none = "@rules_cc//cc/toolchains/variables:output_execpath",
++)
++
++cc_feature(
++    name = "output_execpath_flags_msvc",
++    args = [":output_link_flags_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:output_execpath_flags",
++)
++
++cc_args(
++    name = "legacy_link_flags_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    args = ["{legacy_link_flags}"],
++    format = {"legacy_link_flags": "@rules_cc//cc/toolchains/variables:legacy_link_flags"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
++    requires_not_none = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
++)
++
++cc_feature(
++    name = "legacy_link_flags_msvc",
++    args = [":legacy_link_flags_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:legacy_link_flags",
++)
++
++cc_args(
++    name = "user_link_flags_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    args = ["{user_link_flags}"],
++    format = {"user_link_flags": "@rules_cc//cc/toolchains/variables:user_link_flags"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:user_link_flags",
++    requires_not_none = "@rules_cc//cc/toolchains/variables:user_link_flags",
++)
++
++cc_feature(
++    name = "user_link_flags_msvc",
++    args = [":user_link_flags_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:user_link_flags",
++)
++
++cc_feature_set(
++    name = "link_flags_msvc",
++    all_of = [
++        ":legacy_link_flags_msvc",
++        ":user_link_flags_msvc",
++        ":output_execpath_flags_msvc",
++    ],
++)
++
++cc_args(
++    name = "library_search_directories_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    args = ["/LIBPATH:{library_search_directories}"],
++    format = {"library_search_directories": "@rules_cc//cc/toolchains/variables:library_search_directories"},
++    iterate_over = "@rules_cc//cc/toolchains/variables:library_search_directories",
++    requires_not_none = "@rules_cc//cc/toolchains/variables:library_search_directories",
++)
++
++cc_feature(
++    name = "library_search_directories_msvc",
++    args = [":library_search_directories_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:library_search_directories",
++)
++
++cc_args(
++    name = "shared_flag_args_msvc",
++    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
++    args = ["/DLL"],
++)
++
++cc_feature(
++    name = "shared_flag_msvc",
++    args = [":shared_flag_args_msvc"],
++    overrides = "@rules_cc//cc/toolchains/features/legacy:shared_flag",
++)
++
++cc_feature(
++    name = "random_seed_msvc",
++    overrides = "@rules_cc//cc/toolchains/features/legacy:random_seed",
++)
++
++cc_feature(
++    name = "strip_debug_symbols_msvc",
++    overrides = "@rules_cc//cc/toolchains/features/legacy:strip_debug_symbols",
++)
++
  cc_feature(
      name = "supports_start_end_lib",
      feature_name = "supports_start_end_lib",
-@@ -62,6 +136,7 @@
+@@ -62,6 +438,7 @@
      name = "all_legacy_builtin_features",
      all_of = [
          ":default_compile_flags",
@@ -1052,28 +1597,102 @@ diff --git a/toolchain/features/legacy/BUILD.bazel b/toolchain/features/legacy/B
      ] + select({
          "@platforms//os:windows": [],
          "//conditions:default": [
-@@ -77,13 +152,10 @@
+@@ -77,15 +454,29 @@
      name = "experimental_replace_legacy_action_config_features",
      all_of = [
          ":no_legacy_features",
 -        "@rules_cc//cc/toolchains/args/archiver_flags:feature",
 -        "@rules_cc//cc/toolchains/args/pic_flags:feature",
-         "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
+-        "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
++    ] + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":libraries_to_link_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
++        ],
++    }) + [
          "@rules_cc//cc/toolchains/args/linker_param_file:feature",
-         "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
-         "@rules_cc//cc/toolchains/args/random_seed:feature",
+-        "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
+-        "@rules_cc//cc/toolchains/args/random_seed:feature",
 -        "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
-         "@rules_cc//cc/toolchains/args/shared_flag:feature",
-         "@rules_cc//cc/toolchains/args/strip_debug_symbols:feature",
+-        "@rules_cc//cc/toolchains/args/shared_flag:feature",
+-        "@rules_cc//cc/toolchains/args/strip_debug_symbols:feature",
++    ] + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":preprocessor_defines_msvc",
++            ":random_seed_msvc",
++            ":shared_flag_msvc",
++            ":strip_debug_symbols_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
++            "@rules_cc//cc/toolchains/args/random_seed:feature",
++            "@rules_cc//cc/toolchains/args/shared_flag:feature",
++            "@rules_cc//cc/toolchains/args/strip_debug_symbols:feature",
++        ],
++    }) + [
          "@rules_cc//cc/toolchains/args/strip_flags:feature",
-@@ -107,7 +179,24 @@
-         # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
-         "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
-         "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
+         "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
+         # Inlined below as it isn't visible and also has an issue upstream.
+@@ -93,21 +484,66 @@
+         # Intentionally omitted since we link runtime libraries ourselves and
+         # including this flag just raises a warning.
+         # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
+-        "@rules_cc//cc/toolchains/args/include_flags:feature",
++    ] + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":include_flags_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/include_flags:feature",
++        ],
++    }) + [
+         "@rules_cc//cc/toolchains/args/fission_flags:feature",
+-        "@rules_cc//cc/toolchains/args/link_flags:feature",
++    ] + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":link_flags_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/link_flags:feature",
++        ],
++    }) + [
+         "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+-        "@rules_cc//cc/toolchains/args/library_search_directories:feature",
+-        "@rules_cc//cc/toolchains/args/dependency_file:feature",
++    ] + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":library_search_directories_msvc",
++            ":dependency_file_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/library_search_directories:feature",
++            "@rules_cc//cc/toolchains/args/dependency_file:feature",
++        ],
++    }) + [
+
+         # aka user_compile_flags_feature.
+         # NOTE: This should come last as it must be able to override other features but before compiler inputs.
+         "@rules_cc//cc/toolchains/args/compile_flags:feature",
+-
+-        # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
+-        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
+-        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
 -    ],
 +    ] + select({
 +        "@llvm//constraints/windows/abi:msvc": [
-+            ":archiver_flags",
++            # ml.exe requires output flags before input flags; clang-cl accepts this too.
++            ":compiler_output_flags_msvc",
++            ":compiler_input_flags_msvc",
++        ],
++        "//conditions:default": [
++            "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
++            "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
++        ],
++    }) + select({
++        "@llvm//constraints/windows/abi:msvc": [
++            ":archiver_flags_msvc",
 +        ],
 +        "//conditions:default": [
 +            "@rules_cc//cc/toolchains/args/archiver_flags:feature",
@@ -1098,12 +1717,26 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
---- a/toolchain/llvm/llvm.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/llvm/llvm.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
-@@ -146,6 +146,19 @@
+--- a/toolchain/llvm/llvm.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/llvm/llvm.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
+@@ -65,10 +65,8 @@
+             # Use -isystem instead of -resource-dir to avoid conflicts with the
+             # linking specific -resource-dir and rules_foreign_cc which does
+             # 'CC CFLAGS LDFLAGS'. This has to be last in the search paths
+-            "-Xclang",
+-            "-internal-isystem",
+-            "-Xclang",
+-            "{resource_dir}/include",
++            "-Xclang=-internal-isystem",
++            "-Xclang={resource_dir}/include",
+         ],
+         data = [
+             ":builtin_resource_dir",
+@@ -145,6 +143,19 @@
+         },
          visibility = ["//visibility:public"],
      )
-
++
 +    cc_tool_map(
 +        name = "tools_for_msvc",
 +        tools = COMMON_TOOLS | {
@@ -1116,14 +1749,14 @@ diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
 +        },
 +        visibility = ["//visibility:public"],
 +    )
-+
+
      cc_tool(
          name = "clang",
-         src = "bin/clang" + suffix,
-@@ -166,6 +179,16 @@
+@@ -165,6 +176,16 @@
+         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
          allowlist_include_directories = [":builtin_resource_dir"],
      )
-
++
 +    cc_tool(
 +        name = "clang-cl",
 +        src = "bin/clang-cl" + suffix,
@@ -1133,11 +1766,10 @@ diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
 +        capabilities = [],  # no pic support when targetting MSVC
 +        allowlist_include_directories = [":builtin_resource_dir"],
 +    )
-+
+
      cc_tool(
          name = "lld",
-         src = "bin/clang++" + suffix,
-@@ -174,8 +197,14 @@
+@@ -174,8 +195,14 @@
              "bin/ld64.lld" + suffix,
              "bin/lld" + suffix,
              "bin/wasm-ld" + suffix,
@@ -1152,7 +1784,7 @@ diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
 
      cc_tool(
          name = "llvm-ar",
-@@ -245,11 +274,28 @@
+@@ -245,11 +272,28 @@
              ":builtin_resource_dir",
              "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
              "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
@@ -1162,26 +1794,26 @@ diff --git a/toolchain/llvm/llvm.bzl b/toolchain/llvm/llvm.bzl
 -            "@mingw//:mingw_w64_winpthreads_include_directory",
 -        ],
 +        ] + select({
-+            "@llvm//platforms/config:abi_gnu": [
++            "@llvm//constraints/windows/abi:gnu": [
 +                "@mingw//:mingw_generated_headers_crt_directory",
 +                "@mingw//:mingw_w64_headers_include_directory",
 +                "@mingw//:mingw_w64_headers_crt_directory",
 +                "@mingw//:mingw_w64_winpthreads_include_directory",
 +            ],
-+            "@llvm//platforms/config:abi_gnullvm": [
++            "@llvm//constraints/windows/abi:gnullvm": [
 +                "@mingw//:mingw_generated_headers_crt_directory",
 +                "@mingw//:mingw_w64_headers_include_directory",
 +                "@mingw//:mingw_w64_headers_crt_directory",
 +                "@mingw//:mingw_w64_winpthreads_include_directory",
 +            ],
-+            "@llvm//platforms/config:abi_msvc": [
++            "@llvm//constraints/windows/abi:msvc": [
 +                "@msvc_runtime//:msvc_include",
 +                "@windows_sdk//:winsdk_ucrt_include",
 +                "@windows_sdk//:winsdk_shared_include",
 +                "@windows_sdk//:winsdk_um_include",
 +                "@windows_sdk//:winsdk_winrt_include",
 +            ],
-+            "//conditions:default": [],  # TODO: why is that needed?
++            "@llvm//constraints/windows/abi:unconstrained": [],
 +        }),
      )
 
@@ -1192,8 +1824,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/runtimes/BUILD.bazel b/toolchain/runtimes/BUILD.bazel
---- a/toolchain/runtimes/BUILD.bazel	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/runtimes/BUILD.bazel	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/toolchain/runtimes/BUILD.bazel	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/runtimes/BUILD.bazel	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -30,7 +30,9 @@
              "//toolchain:macos_toolchain_args",
          ],
@@ -1205,8 +1837,8 @@ diff --git a/toolchain/runtimes/BUILD.bazel b/toolchain/runtimes/BUILD.bazel
          "@platforms//os:none": [],
      }),
      visibility = ["//toolchain:__subpackages__"],
-@@ -106,6 +108,7 @@
-         "//toolchain/runtimes/args:lsan_flags",
+@@ -107,6 +109,7 @@
+         "//toolchain/runtimes/args:profile_flags",
 
          # Common default link flags.
 +        "//toolchain/args:llvm_target_for_platform_link",
@@ -1219,8 +1851,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/toolchain/selects.bzl b/toolchain/selects.bzl
---- a/toolchain/selects.bzl	(revision 0f197f93ccf46a41fe543b4597122e143204f82e)
-+++ b/toolchain/selects.bzl	(revision 3d90c22c61f3afa68a6ac7072e629308f798f1c2)
+--- a/toolchain/selects.bzl	(revision 53fdd86d49a8c08953abc2c6939c6fc2cad7f1d8)
++++ b/toolchain/selects.bzl	(revision a7649fc7de70f14e35ba5b5d4ccbcf9a17a528d9)
 @@ -63,5 +63,7 @@
      # See https://github.com/bazelbuild/bazel/issues/27623#issuecomment-3529439585 for more details.
      return select({
