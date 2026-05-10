@@ -123,7 +123,8 @@ public final class LowMemoryNotifier implements Disposable {
     var message =
       oomError ? IdeBundle.message("low.memory.notification.error", kind.label()) : IdeBundle.message("low.memory.notification.warning");
     var type = oomError ? NotificationType.ERROR : NotificationType.WARNING;
-    var notification = new Notification("Low Memory", IdeBundle.message("low.memory.notification.title"), message, type);
+    var notification = new Notification("Low Memory", IdeBundle.message("low.memory.notification.title"), message, type)
+      .setSuggestionType(true);
 
     if (!fromCrashReport) {
       notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.analyze.action"), () ->
@@ -148,7 +149,7 @@ public final class LowMemoryNotifier implements Disposable {
    * 'Filter' here is used in 'signal processing' sense, not usual software-engineering sense.
    * The class extracts the signals that are 'regular', i.e. more-or-less evenly spaced.
    * More specifically, the class:
-   * 1. Throttles out too close subsequent signals: all the signals that come in {@link #throttlingPeriodMs} are counted as 1
+   * 1. Throttles out the too close following signals: all the signals that come in {@link #throttlingPeriodMs} are counted as 1
    * 2. Sums up all the (throttled) signals inside {@link #windowSizeMs}.
    * This way short bursts of signals are dampened, but signals that are more evenly spaced are not.
    */

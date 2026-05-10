@@ -103,7 +103,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
       val hprofPath = Path.of(it)
       if (hprofPath.exists()) {
         val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
-        AnalysisRunnable(hprofPath, heapProperties, true).run()
+        AnalysisRunnable(hprofPath, heapProperties, false).run()
       }
     }
   }

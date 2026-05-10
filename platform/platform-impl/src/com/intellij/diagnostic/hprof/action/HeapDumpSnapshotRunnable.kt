@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.application
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
@@ -93,7 +94,7 @@ internal class HeapDumpSnapshotRunnable(
         return
       }
 
-      // capture heap dumps that are larger then a threshold.
+      // capture heap dumps that are larger than a threshold
       val usedMemoryMB = usedMemory(false) / 1_000_000
 
       // Capture only large memory heaps, unless explicitly requested by the user
@@ -148,9 +149,7 @@ internal class HeapDumpSnapshotRunnable(
                             private val reason: MemoryReportReason,
                             private val analysisOption: AnalysisOption,
                             private val restart: Boolean)
-    : Task.Modal(null,
-                 DiagnosticBundle.message("heap.dump.snapshot.task.title"),
-                 false) {
+    : Task.Modal(null, DiagnosticBundle.message("heap.dump.snapshot.task.title"), false) {
 
     override fun onSuccess() {
       if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START && restart) {
@@ -194,7 +193,7 @@ internal class HeapDumpSnapshotRunnable(
       captureSnapshot()
 
       var liveStats = ""
-      ApplicationManager.getApplication().invokeAndWait {
+      application.invokeAndWait {
         liveStats = try {
           LiveInstanceStats().createReport()
         }
@@ -204,24 +203,27 @@ internal class HeapDumpSnapshotRunnable(
       }
       val reportProperties = HeapReportProperties(reason, liveStats)
 
+      LOG.info("Memory snapshot saved for analysis: '$hprofPath'")
+
       when (analysisOption) {
         AnalysisOption.SCHEDULE_ON_NEXT_START -> {
           HeapDumpAnalysisSupport.getInstance().saveSnapshotForAnalysis(hprofPath, reportProperties)
-          ApplicationManager.getApplication().invokeLater {
+
+          application.invokeLater {
             val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
               DiagnosticBundle.message("heap.dump.analysis.notification.title"),
               DiagnosticBundle.message("heap.dump.snapshot.created", hprofPath.toString(), productName),
               NotificationType.INFORMATION)
-            if (ApplicationManager.getApplication().isInternal) {
+            if (application.isInternal) {
               notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
-                RevealFileAction.openFile(hprofPath.toFile())
+                RevealFileAction.openFile(hprofPath)
               })
             }
             notification.notify(null)
           }
         }
         AnalysisOption.IMMEDIATE -> {
-          ApplicationManager.getApplication().invokeLater(AnalysisRunnable(hprofPath, reportProperties,true))
+          application.invokeLater(AnalysisRunnable(hprofPath, reportProperties, true))
         }
         AnalysisOption.NO_ANALYSIS -> {
           val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
