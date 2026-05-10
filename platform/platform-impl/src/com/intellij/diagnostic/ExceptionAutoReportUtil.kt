@@ -70,7 +70,7 @@ object ExceptionAutoReportUtil {
             || AppMode.isRunningFromDevBuild()
             || PluginManagerCore.isRunningFromSources()
 
-  private fun isAutoReportAllowedByUser(): Boolean {
+  fun isAutoReportAllowedByUser(): Boolean {
     if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
 
     if (isAutoReportForced) return true // set by provisioning
