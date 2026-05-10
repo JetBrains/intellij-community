@@ -548,6 +548,7 @@ private fun resolveThreadTitle(payload: ThreadPayload, threadId: String): String
 private data class ParsedTurnsActivity(
   @JvmField val latestUserItemIndex: Long,
   @JvmField val latestAssistantItemIndex: Long,
+  @JvmField val latestPlanItemIndex: Long,
   @JvmField val isReviewing: Boolean,
   @JvmField val hasInProgressTurn: Boolean,
 )
@@ -555,6 +556,7 @@ private data class ParsedTurnsActivity(
 private data class ParsedTurnItemsActivity(
   @JvmField val latestUserItemIndex: Long,
   @JvmField val latestAssistantItemIndex: Long,
+  @JvmField val latestPlanItemIndex: Long,
   @JvmField val isReviewing: Boolean,
   @JvmField val nextItemIndex: Long,
 )
@@ -574,6 +576,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
   var activeFlags: List<CodexThreadActiveFlag> = emptyList()
   var latestUserItemIndex = Long.MIN_VALUE
   var latestAssistantItemIndex = Long.MIN_VALUE
+  var latestPlanItemIndex = Long.MIN_VALUE
   var isReviewing = false
   var hasInProgressTurn = false
 
@@ -593,6 +596,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
         val parsedTurns = parseTurnsActivity(parser)
         latestUserItemIndex = parsedTurns.latestUserItemIndex
         latestAssistantItemIndex = parsedTurns.latestAssistantItemIndex
+        latestPlanItemIndex = parsedTurns.latestPlanItemIndex
         isReviewing = parsedTurns.isReviewing
         hasInProgressTurn = parsedTurns.hasInProgressTurn
       }
@@ -609,12 +613,14 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
     createdAtAlt = createdAtAlt,
   )
   val hasUnreadAssistantMessage = latestAssistantItemIndex > latestUserItemIndex
+  val hasPendingPlan = latestPlanItemIndex > latestUserItemIndex
   return CodexThreadActivitySnapshot(
     threadId = threadId,
     updatedAt = resolvedUpdatedAt,
     statusKind = statusKind,
     activeFlags = activeFlags,
     hasUnreadAssistantMessage = hasUnreadAssistantMessage,
+    hasPendingPlan = hasPendingPlan,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
   )
@@ -626,6 +632,7 @@ private fun parseTurnsActivity(parser: JsonParser): ParsedTurnsActivity {
     return ParsedTurnsActivity(
       latestUserItemIndex = Long.MIN_VALUE,
       latestAssistantItemIndex = Long.MIN_VALUE,
+      latestPlanItemIndex = Long.MIN_VALUE,
       isReviewing = false,
       hasInProgressTurn = false,
     )
@@ -633,6 +640,7 @@ private fun parseTurnsActivity(parser: JsonParser): ParsedTurnsActivity {
 
   var latestUserItemIndex = Long.MIN_VALUE
   var latestAssistantItemIndex = Long.MIN_VALUE
+  var latestPlanItemIndex = Long.MIN_VALUE
   var isReviewing = false
   var hasInProgressTurn = false
   var nextItemIndex = 0L
@@ -662,6 +670,7 @@ private fun parseTurnsActivity(parser: JsonParser): ParsedTurnsActivity {
           )
           latestUserItemIndex = maxOf(latestUserItemIndex, parsedItems.latestUserItemIndex)
           latestAssistantItemIndex = maxOf(latestAssistantItemIndex, parsedItems.latestAssistantItemIndex)
+          latestPlanItemIndex = maxOf(latestPlanItemIndex, parsedItems.latestPlanItemIndex)
           isReviewing = parsedItems.isReviewing
           nextItemIndex = parsedItems.nextItemIndex
         }
@@ -674,6 +683,7 @@ private fun parseTurnsActivity(parser: JsonParser): ParsedTurnsActivity {
   return ParsedTurnsActivity(
     latestUserItemIndex = latestUserItemIndex,
     latestAssistantItemIndex = latestAssistantItemIndex,
+    latestPlanItemIndex = latestPlanItemIndex,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
   )
@@ -689,6 +699,7 @@ private fun parseTurnItemsActivity(
     return ParsedTurnItemsActivity(
       latestUserItemIndex = Long.MIN_VALUE,
       latestAssistantItemIndex = Long.MIN_VALUE,
+      latestPlanItemIndex = Long.MIN_VALUE,
       isReviewing = initialReviewing,
       nextItemIndex = startItemIndex,
     )
@@ -696,6 +707,7 @@ private fun parseTurnItemsActivity(
 
   var latestUserItemIndex = Long.MIN_VALUE
   var latestAssistantItemIndex = Long.MIN_VALUE
+  var latestPlanItemIndex = Long.MIN_VALUE
   var isReviewing = initialReviewing
   var nextItemIndex = startItemIndex
 
@@ -722,6 +734,7 @@ private fun parseTurnItemsActivity(
     when (normalizeToken(itemType)) {
       "usermessage" -> latestUserItemIndex = maxOf(latestUserItemIndex, nextItemIndex)
       "agentmessage" -> latestAssistantItemIndex = maxOf(latestAssistantItemIndex, nextItemIndex)
+      "plan" -> latestPlanItemIndex = maxOf(latestPlanItemIndex, nextItemIndex)
       "enteredreviewmode" -> isReviewing = true
       "exitedreviewmode" -> isReviewing = false
     }
@@ -730,6 +743,7 @@ private fun parseTurnItemsActivity(
   return ParsedTurnItemsActivity(
     latestUserItemIndex = latestUserItemIndex,
     latestAssistantItemIndex = latestAssistantItemIndex,
+    latestPlanItemIndex = latestPlanItemIndex,
     isReviewing = isReviewing,
     nextItemIndex = nextItemIndex,
   )

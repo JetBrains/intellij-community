@@ -119,6 +119,24 @@ class CodexRolloutSessionBackendTest {
           expectedRequiresResponse = true,
         ),
         ActivityCase(
+          id = "session-pending-plan",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:30.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:31.000Z"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-cleared-plan",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:40.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:41.000Z"),
+            """{"timestamp":"2026-02-13T11:02:42.000Z","type":"event_msg","payload":{"type":"user_message","message":"Proceed"}}""",
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
           id = "session-cleared-input-function-call-output",
           eventLines = listOf(
             responseItemFunctionCall(
@@ -850,6 +868,10 @@ private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
 
 private fun responseItemFunctionCall(timestamp: String, callId: String): String {
   return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"request_user_input","arguments":"{}","call_id":"$callId"}}"""
+}
+
+private fun itemCompletedPlan(timestamp: String): String {
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"item_completed","item":{"type":"Plan","id":"turn-plan","text":"Plan text"}}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {

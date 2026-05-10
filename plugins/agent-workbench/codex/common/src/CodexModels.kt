@@ -75,6 +75,7 @@ data class CodexThreadActivitySnapshot(
   @JvmField val statusKind: CodexThreadStatusKind,
   @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
   @JvmField val hasUnreadAssistantMessage: Boolean = false,
+  @JvmField val hasPendingPlan: Boolean = false,
   @JvmField val isReviewing: Boolean = false,
   @JvmField val hasInProgressTurn: Boolean = false,
 )

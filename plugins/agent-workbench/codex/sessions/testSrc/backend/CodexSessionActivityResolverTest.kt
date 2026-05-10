@@ -52,6 +52,12 @@ class CodexSessionActivityResolverTest {
     assertThat(
       snapshot(
         statusKind = CodexThreadStatusKind.IDLE,
+        hasPendingPlan = true,
+      ).toCodexSessionActivity()
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+    assertThat(
+      snapshot(
+        statusKind = CodexThreadStatusKind.IDLE,
         isReviewing = true,
       ).toCodexSessionActivity()
     ).isEqualTo(CodexSessionActivity.REVIEWING)
@@ -91,6 +97,14 @@ class CodexSessionActivityResolverTest {
         hasInProgressTurn = true,
       ).toCodexSessionActivity()
     ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+    assertThat(
+      snapshot(
+        statusKind = CodexThreadStatusKind.ACTIVE,
+        hasPendingPlan = true,
+        isReviewing = true,
+        hasInProgressTurn = true,
+      ).toCodexSessionActivity()
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   @Test
@@ -126,6 +140,7 @@ private fun snapshot(
   statusKind: CodexThreadStatusKind,
   activeFlags: List<CodexThreadActiveFlag> = emptyList(),
   hasUnreadAssistantMessage: Boolean = false,
+  hasPendingPlan: Boolean = false,
   isReviewing: Boolean = false,
   hasInProgressTurn: Boolean = false,
 ): CodexThreadActivitySnapshot {
@@ -135,6 +150,7 @@ private fun snapshot(
     statusKind = statusKind,
     activeFlags = activeFlags,
     hasUnreadAssistantMessage = hasUnreadAssistantMessage,
+    hasPendingPlan = hasPendingPlan,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
   )

@@ -375,6 +375,68 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun readThreadActivitySnapshotParsesPendingPlanFromStructuredPlanItems(): Unit = runBlocking(Dispatchers.Default) {
+    val project = tempDir.resolve("project-thread-read-plan-activity")
+    Files.createDirectories(project)
+    val normalizedCwd = project.toString().replace('\\', '/').trimEnd('/')
+    val configPath = tempDir.resolve("codex-thread-read-plan-activity.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-plan-pending",
+          title = "Thread pending plan",
+          cwd = normalizedCwd,
+          sourceKind = "appServer",
+          statusType = "idle",
+          updatedAt = 1_700_000_031_000L,
+          archived = false,
+          readTurns = listOf(
+            ThreadTurnSpec(
+              itemTypes = listOf("userMessage", "agentMessage", "Plan"),
+            ),
+          ),
+        ),
+        ThreadSpec(
+          id = "thread-plan-cleared",
+          title = "Thread cleared plan",
+          cwd = normalizedCwd,
+          sourceKind = "appServer",
+          statusType = "idle",
+          updatedAt = 1_700_000_032_000L,
+          archived = false,
+          readTurns = listOf(
+            ThreadTurnSpec(
+              itemTypes = listOf("userMessage", "plan", "userMessage"),
+            ),
+          ),
+        ),
+      )
+    )
+    val backendDir = tempDir.resolve("backend-thread-read-plan-activity")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val pendingPlan = client.readThreadActivitySnapshot("thread-plan-pending")
+      assertThat(pendingPlan).isNotNull
+      assertThat(pendingPlan!!.hasPendingPlan).isTrue()
+      assertThat(pendingPlan.hasUnreadAssistantMessage).isTrue()
+
+      val clearedPlan = client.readThreadActivitySnapshot("thread-plan-cleared")
+      assertThat(clearedPlan).isNotNull
+      assertThat(clearedPlan!!.hasPendingPlan).isFalse()
+      assertThat(clearedPlan.hasUnreadAssistantMessage).isFalse()
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun readThreadActivitySnapshotReturnsNullForUnknownThread() = runBlocking(Dispatchers.Default) {
     val project = tempDir.resolve("project-thread-read-missing")
     Files.createDirectories(project)

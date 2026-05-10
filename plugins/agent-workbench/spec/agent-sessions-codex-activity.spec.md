@@ -30,9 +30,13 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
 - `REVIEWING` is a derived Workbench activity from app-server snapshot or rollout review-mode signals, never a raw Codex status kind.
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
 
-- Activity precedence is needs input, reviewing, processing, passive unread assistant output, then ready. `SYSTEM_ERROR`, `NOT_LOADED`, and `UNKNOWN` normalize to ready unless a higher-priority signal is present.
+- Activity precedence is needs input, reviewing, processing, passive unread assistant output, then ready. Structured Codex plan items are needs-input attention, not passive unread output. `SYSTEM_ERROR`, `NOT_LOADED`, and `UNKNOWN` normalize to ready unless a higher-priority signal is present.
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
+- App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity.
+  [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Snapshot-only promotions such as unread assistant output and review mode require `thread/read` or rollout fallback.
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt

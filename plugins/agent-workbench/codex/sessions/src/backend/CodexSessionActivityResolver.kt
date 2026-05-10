@@ -26,6 +26,7 @@ internal fun CodexThreadActivitySnapshot.toCodexSessionActivity(): CodexSessionA
     statusKind = statusKind,
     activeFlags = activeFlags,
     hasUnreadAssistantMessage = hasUnreadAssistantMessage,
+    hasPendingPlan = hasPendingPlan,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
   )
@@ -35,11 +36,12 @@ internal fun resolveCodexSessionActivity(
   statusKind: CodexThreadStatusKind,
   activeFlags: Collection<CodexThreadActiveFlag>,
   hasUnreadAssistantMessage: Boolean = false,
+  hasPendingPlan: Boolean = false,
   isReviewing: Boolean = false,
   hasInProgressTurn: Boolean = false,
 ): CodexSessionActivity {
   return when {
-    activeFlags.isResponseRequired() -> CodexSessionActivity.NEEDS_INPUT
+    activeFlags.isResponseRequired() || hasPendingPlan -> CodexSessionActivity.NEEDS_INPUT
     isReviewing -> CodexSessionActivity.REVIEWING
     hasInProgressTurn || statusKind == CodexThreadStatusKind.ACTIVE -> CodexSessionActivity.PROCESSING
     hasUnreadAssistantMessage -> CodexSessionActivity.UNREAD

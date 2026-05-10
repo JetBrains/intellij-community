@@ -528,7 +528,7 @@ private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boo
   return CodexRefreshActivityHint(
     activity = toCodexSessionActivity().toAgentThreadActivity(),
     updatedAt = updatedAt,
-    responseRequired = activeFlags.isResponseRequired(),
+    responseRequired = activeFlags.isResponseRequired() || hasPendingPlan,
     verifiedFresh = verifiedFresh,
   )
 }

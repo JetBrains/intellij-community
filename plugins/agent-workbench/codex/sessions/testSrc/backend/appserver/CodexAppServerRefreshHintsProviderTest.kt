@@ -47,6 +47,11 @@ class CodexAppServerRefreshHintsProviderTest {
                 statusKind = CodexThreadStatusKind.ACTIVE,
                 hasUnreadAssistantMessage = true,
             ),
+            "thread-pending-plan" to snapshot(
+                threadId = "thread-pending-plan",
+                statusKind = CodexThreadStatusKind.IDLE,
+                hasPendingPlan = true,
+            ),
             "thread-review-flag" to snapshot(
                 threadId = "thread-review-flag",
                 statusKind = CodexThreadStatusKind.ACTIVE,
@@ -87,6 +92,7 @@ class CodexAppServerRefreshHintsProviderTest {
                 "thread-ready" to AgentThreadActivity.READY,
                 "thread-unread-flag" to AgentThreadActivity.NEEDS_INPUT,
                 "thread-unread-message" to AgentThreadActivity.PROCESSING,
+                "thread-pending-plan" to AgentThreadActivity.NEEDS_INPUT,
                 "thread-review-flag" to AgentThreadActivity.NEEDS_INPUT,
                 "thread-review-mode" to AgentThreadActivity.REVIEWING,
                 "thread-processing-status" to AgentThreadActivity.PROCESSING,
@@ -94,6 +100,7 @@ class CodexAppServerRefreshHintsProviderTest {
             )
         )
         assertThat(hints.activityHintsByThreadId.getValue("thread-unread-flag").responseRequired).isTrue()
+        assertThat(hints.activityHintsByThreadId.getValue("thread-pending-plan").responseRequired).isTrue()
         assertThat(hints.activityHintsByThreadId.getValue("thread-review-flag").responseRequired).isTrue()
         assertThat(hints.activityHintsByThreadId.getValue("thread-unread-message").responseRequired).isFalse()
     }
@@ -728,6 +735,7 @@ private fun snapshot(
     statusKind: CodexThreadStatusKind,
     activeFlags: List<CodexThreadActiveFlag> = emptyList(),
     hasUnreadAssistantMessage: Boolean = false,
+    hasPendingPlan: Boolean = false,
     isReviewing: Boolean = false,
     hasInProgressTurn: Boolean = false,
     updatedAt: Long = 100L,
@@ -738,6 +746,7 @@ private fun snapshot(
         statusKind = statusKind,
         activeFlags = activeFlags,
         hasUnreadAssistantMessage = hasUnreadAssistantMessage,
+        hasPendingPlan = hasPendingPlan,
         isReviewing = isReviewing,
         hasInProgressTurn = hasInProgressTurn,
     )
