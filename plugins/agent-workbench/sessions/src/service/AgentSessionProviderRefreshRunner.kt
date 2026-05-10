@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -27,6 +29,8 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<AgentSessionProviderRefreshRunner>()
 
@@ -358,12 +362,19 @@ private fun resolveTargetPaths(
   provider: AgentSessionProvider,
   updateEvent: AgentSessionSourceUpdateEvent,
 ): Set<String> {
+  val fullTargetPaths = collectFullRefreshTargetPaths(state, openChatSnapshot)
   if (updateEvent.isUnscoped()) {
-    return collectFullRefreshTargetPaths(state, openChatSnapshot)
+    return fullTargetPaths
   }
 
   val targetPaths = LinkedHashSet<String>()
-  updateEvent.scopedPaths?.let(targetPaths::addAll)
+  updateEvent.scopedPaths?.let { scopedPaths ->
+    val resolvedScopedPaths = resolveScopedPaths(scopedPaths = scopedPaths, knownTargetPaths = fullTargetPaths)
+    if (resolvedScopedPaths == null) {
+      return fullTargetPaths
+    }
+    targetPaths.addAll(resolvedScopedPaths)
+  }
   targetPaths.addAll(resolvePathsForThreadIds(state, openChatSnapshot, provider, updateEvent.threadIds))
   if (targetPaths.isNotEmpty()) {
     return targetPaths
@@ -373,7 +384,68 @@ private fun resolveTargetPaths(
     return emptySet()
   }
 
-  return collectFullRefreshTargetPaths(state, openChatSnapshot)
+  return fullTargetPaths
+}
+
+private fun resolveScopedPaths(scopedPaths: Set<String>, knownTargetPaths: Set<String>): Set<String>? {
+  if (scopedPaths.isEmpty()) {
+    return emptySet()
+  }
+
+  val knownPathsByVariant = buildKnownPathsByVariant(knownTargetPaths)
+  val resolvedPaths = LinkedHashSet<String>()
+  for (scopedPath in scopedPaths) {
+    val matches = collectPathVariants(scopedPath)
+      .asSequence()
+      .flatMap { variant -> knownPathsByVariant[variant].orEmpty().asSequence() }
+      .toCollection(LinkedHashSet())
+    if (matches.isEmpty()) {
+      return null
+    }
+    resolvedPaths.addAll(matches)
+  }
+  return resolvedPaths
+}
+
+private fun buildKnownPathsByVariant(paths: Set<String>): Map<String, Set<String>> {
+  val result = LinkedHashMap<String, LinkedHashSet<String>>()
+  for (path in paths) {
+    for (variant in collectPathVariants(path)) {
+      result.getOrPut(variant) { LinkedHashSet() }.add(path)
+    }
+  }
+  return result
+}
+
+private fun collectPathVariants(path: String): Set<String> {
+  val variants = LinkedHashSet<String>()
+  fun addPathVariant(value: String?) {
+    val normalized = value?.let(::normalizeAgentWorkbenchPath)?.takeIf { it.isNotBlank() } ?: return
+    variants.add(normalized)
+  }
+  fun addPathVariant(value: Path?) {
+    val normalizedPath = value?.normalize() ?: return
+    addPathVariant(normalizedPath.invariantSeparatorsPathString)
+    runCatching { normalizedPath.toRealPath().invariantSeparatorsPathString }.getOrNull()?.let(::addPathVariant)
+  }
+
+  addPathVariant(path)
+  val parsedPath = parseAgentWorkbenchPathOrNull(normalizeAgentWorkbenchPath(path)) ?: return variants
+  addPathVariant(parsedPath)
+  addPathVariant(projectDirectoryVariant(parsedPath))
+  return variants
+}
+
+private fun projectDirectoryVariant(path: Path): Path? {
+  val fileName = path.fileName?.toString() ?: return null
+  val parentName = path.parent?.fileName?.toString()
+  return when {
+    fileName == ".idea" -> path.parent
+    parentName == ".idea" -> path.parent?.parent
+    fileName.endsWith(".ipr", ignoreCase = true) -> path.parent
+    fileName.endsWith(".iws", ignoreCase = true) -> path.parent
+    else -> null
+  }
 }
 
 private fun resolvePathsForThreadIds(

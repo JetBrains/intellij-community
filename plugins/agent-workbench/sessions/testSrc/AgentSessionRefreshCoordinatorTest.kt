@@ -40,7 +40,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
@@ -358,6 +362,123 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt).isEqualTo(100L)
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
       assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun scopedUpdateRemapsCanonicalPathToLoadedSymlinkPath(@TempDir tempDir: Path) = runBlocking(Dispatchers.Default) {
+    val realProjectPath = tempDir.resolve("real-project")
+    Files.createDirectories(realProjectPath)
+    val linkedProjectPath = tempDir.resolve("linked-project")
+    createSymbolicLinkOrSkip(link = linkedProjectPath, target = realProjectPath)
+    val loadedPath = linkedProjectPath.toString()
+    val canonicalPath = realProjectPath.toRealPath().toString()
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+        if (path == loadedPath) {
+          listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+        }
+        else {
+          emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = loadedPath,
+            name = "Linked Project",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(scopedPaths = setOf(canonicalPath), threadIds = setOf("codex-a")))
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == loadedPath }
+          ?.threads
+          ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
+          ?.updatedAt == 300L
+      }
+
+      assertThat(closedRefreshInvocations[loadedPath]?.get() ?: 0).isEqualTo(1)
+      assertThat(closedRefreshInvocations[canonicalPath]?.get() ?: 0).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun unmappedScopedUpdateFallsBackToFullLoadedRefresh() = runBlocking(Dispatchers.Default) {
+    val projectB = "/work/project-b"
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+        when (path) {
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          else -> emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+          AgentProjectSessions(
+            path = projectB,
+            name = "Project B",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(scopedPaths = setOf("/missing/project")))
+
+      waitForCondition {
+        val projects = stateStore.snapshot().projects.associateBy { it.path }
+        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L &&
+        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 400L
+      }
+
+      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
+      assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(1)
+      assertThat(closedRefreshInvocations["/missing/project"]?.get() ?: 0).isEqualTo(0)
     }
   }
 
@@ -3300,6 +3421,15 @@ private fun failingPendingCodexRebindReport(
     updatedPresentations = 0,
     outcomesByPath = outcomesByPath,
   )
+}
+
+private fun createSymbolicLinkOrSkip(link: Path, target: Path) {
+  try {
+    Files.createSymbolicLink(link, target)
+  }
+  catch (t: Throwable) {
+    assumeTrue(false, "Symbolic links are unavailable: ${t.message}")
+  }
 }
 
 private fun successfulConcreteCodexRebindReport(

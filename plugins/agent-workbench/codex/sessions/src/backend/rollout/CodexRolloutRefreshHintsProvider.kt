@@ -8,23 +8,15 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 internal class CodexRolloutRefreshHintsProvider(
   private val rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
 ) : CodexRefreshHintsProvider {
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
-    get() = rolloutBackend.sessionUpdates.map { update ->
-      AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
-        scopedPaths = update.scopedPaths,
-        threadIds = update.threadIds,
-      )
-    }
+    get() = rolloutBackend.sessionUpdates
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,

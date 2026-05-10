@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -531,7 +533,7 @@ class ClaudeStoreSessionBackendTest {
         claudeHomeProvider = { tempDir.resolve(".claude") },
         changeSource = { sourceUpdates },
       )
-      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
       val updatesJob = launch {
         backend.sessionUpdates.collect { update ->
           updates.trySend(update)
@@ -542,6 +544,7 @@ class ClaudeStoreSessionBackendTest {
         sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
 
         val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).containsExactly(projectPath)
         assertThat(update.threadIds).containsExactly("session-scoped-updates")
       }
@@ -568,7 +571,7 @@ class ClaudeStoreSessionBackendTest {
         claudeHomeProvider = { tempDir.resolve(".claude") },
         changeSource = { sourceUpdates },
       )
-      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
       val updatesJob = launch {
         backend.sessionUpdates.collect { update ->
           updates.trySend(update)
@@ -579,6 +582,7 @@ class ClaudeStoreSessionBackendTest {
         sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
 
         val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).isNull()
         assertThat(update.threadIds).isNull()
       }
@@ -719,7 +723,7 @@ class ClaudeStoreSessionBackendTest {
         claudeHomeProvider = { tempDir.resolve(".claude") },
         changeSource = { sourceUpdates },
       )
-      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
       val updatesJob = launch {
         backend.sessionUpdates.collect { update ->
           updates.trySend(update)
@@ -730,6 +734,7 @@ class ClaudeStoreSessionBackendTest {
         sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(indexFile)))
 
         val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).isNull()
         assertThat(update.threadIds).isNull()
       }

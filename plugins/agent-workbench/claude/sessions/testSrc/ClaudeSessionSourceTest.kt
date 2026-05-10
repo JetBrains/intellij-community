@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
@@ -203,14 +204,20 @@ class ClaudeSessionSourceTest {
 
   @Test
   fun updateEventsPreserveBackendScope() {
-    val backendUpdates = MutableSharedFlow<ClaudeSessionUpdate>(replay = 1)
+    val backendUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1)
     val backend = object : ClaudeSessionBackend {
       override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = emptyList()
       override val sessionUpdates get() = backendUpdates
     }
     val source = ClaudeSessionSource(backend = backend)
 
-    backendUpdates.tryEmit(ClaudeSessionUpdate(scopedPaths = setOf("/work/project"), threadIds = setOf("session-1")))
+    backendUpdates.tryEmit(
+      AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+        scopedPaths = setOf("/work/project"),
+        threadIds = setOf("session-1"),
+      )
+    )
 
     runBlocking(Dispatchers.Default) {
       val result = withTimeoutOrNull(2.seconds) { source.updateEvents.first() }

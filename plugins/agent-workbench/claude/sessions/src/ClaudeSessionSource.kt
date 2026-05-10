@@ -10,13 +10,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshH
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
 class ClaudeSessionSource(
@@ -26,13 +24,7 @@ class ClaudeSessionSource(
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
-      backend.sessionUpdates.map { update ->
-        AgentSessionSourceUpdateEvent(
-          type = AgentSessionSourceUpdate.THREADS_CHANGED,
-          scopedPaths = update.scopedPaths,
-          threadIds = update.threadIds,
-        )
-      },
+      backend.sessionUpdates,
       readStateUpdateEvents,
     )
 

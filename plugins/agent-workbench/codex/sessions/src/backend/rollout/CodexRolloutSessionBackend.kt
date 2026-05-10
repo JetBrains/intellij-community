@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -38,15 +40,15 @@ internal class CodexRolloutSessionBackend(
 ) : CodexSessionBackend {
   private val parser = CodexRolloutParser()
   private val threadIndex = CodexRolloutThreadIndex(codexHomeProvider = codexHomeProvider, parser = parser)
-  private val rolloutUpdates: Flow<CodexRolloutSessionUpdate> = createUpdatesFlow(
+  private val rolloutUpdates: Flow<AgentSessionSourceUpdateEvent> = createUpdatesFlow(
     rolloutChangeSource?.invoke() ?: createWatcherUpdates()
   ).conflate()
 
-  internal val sessionUpdates: Flow<CodexRolloutSessionUpdate> = rolloutUpdates
+  internal val sessionUpdates: Flow<AgentSessionSourceUpdateEvent> = rolloutUpdates
 
-  override val updates: Flow<Unit> = rolloutUpdates.map(::toUnitUpdate)
+  override val updates: Flow<Unit> = rolloutUpdates.map {}
 
-  private fun createUpdatesFlow(sourceUpdates: Flow<FileBackedSessionChangeSet>): Flow<CodexRolloutSessionUpdate> {
+  private fun createUpdatesFlow(sourceUpdates: Flow<FileBackedSessionChangeSet>): Flow<AgentSessionSourceUpdateEvent> {
     return channelFlow {
       var trailingRefreshJob: Job? = null
       sourceUpdates.collect { changeSet ->
@@ -62,13 +64,13 @@ internal class CodexRolloutSessionBackend(
     }
   }
 
-  private suspend fun resolveSessionUpdate(changeSet: FileBackedSessionChangeSet): CodexRolloutSessionUpdate {
+  private suspend fun resolveSessionUpdate(changeSet: FileBackedSessionChangeSet): AgentSessionSourceUpdateEvent {
     return withContext(Dispatchers.IO) {
       buildSessionUpdate(changeSet)
     }
   }
 
-  private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): CodexRolloutSessionUpdate {
+  private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): AgentSessionSourceUpdateEvent {
     if (changeSet.requiresFullRescan || changeSet.changedPaths.isEmpty()) {
       LOG.debug {
         "Codex rollout update is unscoped (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedPaths.size})"
@@ -107,7 +109,8 @@ internal class CodexRolloutSessionBackend(
     LOG.debug {
       "Codex rollout update scoped (changedRolloutPaths=${rolloutPaths.size}, scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size})"
     }
-    return CodexRolloutSessionUpdate(
+    return AgentSessionSourceUpdateEvent(
+      type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
     )
@@ -150,11 +153,6 @@ internal class CodexRolloutSessionBackend(
   }
 }
 
-internal data class CodexRolloutSessionUpdate(
-  @JvmField val scopedPaths: Set<String>? = null,
-  @JvmField val threadIds: Set<String>? = null,
-)
-
 private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> {
   return paths.mapNotNull { path ->
     resolveProjectDirectoryFromPath(path)?.let { directory ->
@@ -163,9 +161,7 @@ private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> 
   }
 }
 
-private val UNSCOPED_ROLLOUT_SESSION_UPDATE = CodexRolloutSessionUpdate()
-
-private fun toUnitUpdate(@Suppress("UNUSED_PARAMETER") update: CodexRolloutSessionUpdate) {}
+private val UNSCOPED_ROLLOUT_SESSION_UPDATE = AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
 
 private fun isRolloutPath(path: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false

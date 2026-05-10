@@ -5,9 +5,10 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
-import com.intellij.agent.workbench.claude.sessions.ClaudeSessionUpdate
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -27,7 +28,7 @@ internal class ClaudeStoreSessionBackend(
   private val store = ClaudeSessionsStore(claudeHomeProvider)
   private val threadIndex = ClaudeThreadIndex(store = store)
 
-  private val sessionUpdateFlow: Flow<ClaudeSessionUpdate> = (changeSource?.invoke() ?: createWatcherUpdates())
+  private val sessionUpdateFlow: Flow<AgentSessionSourceUpdateEvent> = (changeSource?.invoke() ?: createWatcherUpdates())
     .map { changeSet ->
       threadIndex.markDirty(changeSet)
       withContext(Dispatchers.IO) {
@@ -36,11 +37,11 @@ internal class ClaudeStoreSessionBackend(
     }
     .conflate()
 
-  override val sessionUpdates: Flow<ClaudeSessionUpdate> = sessionUpdateFlow
+  override val sessionUpdates: Flow<AgentSessionSourceUpdateEvent> = sessionUpdateFlow
 
-  override val updates: Flow<Unit> = sessionUpdateFlow.map(::toUnitUpdate)
+  override val updates: Flow<Unit> = sessionUpdateFlow.map {}
 
-  private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): ClaudeSessionUpdate {
+  private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): AgentSessionSourceUpdateEvent {
     if (changeSet.requiresFullRescan || changeSet.changedPaths.isEmpty()) {
       LOG.debug {
         "Claude sessions update is unscoped (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedPaths.size})"
@@ -84,7 +85,8 @@ internal class ClaudeStoreSessionBackend(
     LOG.debug {
       "Claude sessions update scoped (changedJsonlPaths=${jsonlPaths.size}, scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size})"
     }
-    return ClaudeSessionUpdate(
+    return AgentSessionSourceUpdateEvent(
+      type = AgentSessionSourceUpdate.THREADS_CHANGED,
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
     )
@@ -128,9 +130,7 @@ internal class ClaudeStoreSessionBackend(
   }
 }
 
-private val UNSCOPED_CLAUDE_SESSION_UPDATE = ClaudeSessionUpdate()
-
-private fun toUnitUpdate(@Suppress("UNUSED_PARAMETER") update: ClaudeSessionUpdate) {}
+private val UNSCOPED_CLAUDE_SESSION_UPDATE = AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED)
 
 private fun isClaudeJsonlPath(path: Path): Boolean {
   val fileName = path.fileName?.toString() ?: return false
