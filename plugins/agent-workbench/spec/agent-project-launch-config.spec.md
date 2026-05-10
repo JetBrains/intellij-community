@@ -119,9 +119,9 @@ Shared provider command mapping remains owned by `spec/agent-core-contracts.spec
 - Missing or invalid shim targets must not prevent valid `pathPrepend` augmentation from applying.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionChatOpenPayloadTest'`
+- `./tests.cmd --module intellij.agent.workbench.sessions.launch.config.backend.tests --test com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionChatOpenPayloadTest`
 
 ## Open Questions / Risks
 - Current implementation caches parsed project launch config for the service lifetime and does not specify live reload semantics for `.agent-workbench.yaml` edits during the same IDE session.

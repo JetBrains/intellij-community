@@ -30,14 +30,14 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 ## Requirements
 - Advanced setting key `agent.workbench.chat.open.in.dedicated.frame` must exist, default to `true`, and be exposed in Advanced Settings.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions gear menu must expose `AgentWorkbenchSessions.ToggleDedicatedFrame` and update the same advanced setting.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must expose `AgentWorkbenchSessions.OpenDedicatedFrame` so users can explicitly reopen/focus dedicated frame.
-  [@test] ../sessions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In dedicated mode (`true`):
   - thread/sub-agent open requests must route to dedicated frame project,
@@ -49,10 +49,10 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
   [@test] ../sessions/testSrc/AgentWorkbenchToolWindowLayoutProfileProviderTest.kt
 
 - Plugin descriptor must register `AgentWorkbenchSessions.ActivateWithProjectShortcut` with `use-shortcut-of="ActivateProjectToolWindow"`.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Cmd+1 shortcut routing via `AgentWorkbenchSessions.ActivateWithProjectShortcut` must be dedicated-project-only; platform action id `ActivateProjectToolWindow` must not be redefined.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In current-project mode (`false`), chat opens must use source project frame; closed source projects must open first.
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
@@ -64,8 +64,8 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 - Dedicated-frame project switching and header navigation affordances must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
   [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 - Dedicated-frame terminal hyperlink routing to source projects must follow `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
   [@test] ../chat/testSrc/AgentChatTerminalTabBuilderConfigurationTest.kt
@@ -100,9 +100,9 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Dedicated-mode Project View API access may fail in unsupported contexts; this is accepted behavior.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwingNewSessionActionsTest'`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwingNewSessionActionsTest`
 
 ## Open Questions / Risks
 - Dedicated-frame storage-path policy may later align with broader welcome-project storage conventions.

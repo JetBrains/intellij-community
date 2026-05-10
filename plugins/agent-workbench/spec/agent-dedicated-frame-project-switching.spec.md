@@ -79,14 +79,14 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
   - `ExecutionTargetsToolbarGroup`
   - `NewUiRunWidget`
   - `AIAssistantHubPopupAction`
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must not register `AgentSessionsToolbarActionConfigurationCustomizer`.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In dedicated frame, editor-tab popup must expose `AgentWorkbenchSessions.GoToSourceProjectFromEditorTab`, and the action must stay hidden outside dedicated projects.
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Agent chat editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
   - the matching source project frame accepts the drop,
@@ -100,14 +100,14 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
   - visible only in dedicated projects,
   - shows active chat tab source project name and opens/focuses source project in one click,
   - shows disabled `No source project` placeholder when no valid active source project path is available.
-  [@test] ../sessions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must register `AgentWorkbenchSessions.OpenDedicatedFrame` and expose it from both:
   - sessions toolwindow header title actions,
   - `OpenProjectWindows` group (Window menu project windows section).
-  [@test] ../sessions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 ## User Experience
 - `Cmd+\`` in normal project frames includes dedicated frame windows.
@@ -126,11 +126,11 @@ Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedi
 - Dedicated frame open/focus behavior uses `AgentSessionLaunchService.openOrFocusDedicatedFrame(currentProject)`.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProviderTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.openapi.wm.impl.ProjectWindowActionGroupTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromToolbarActionTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProviderTest`
+- `./tests.cmd --module intellij.platform.lang.tests --test com.intellij.openapi.wm.impl.ProjectWindowActionGroupTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsEditorTabActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGoToSourceProjectFromToolbarActionTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
 
 ## Open Questions / Risks
 - If source-aware `Cmd+\`` behavior becomes required later, this spec should evolve to define platform-level semantics explicitly.

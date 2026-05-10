@@ -107,8 +107,8 @@ Define test-runner prompt context behavior for selected tests, including status/
 - Invalid payload entries are ignored during renderer extraction.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.testrunner.context.AgentPromptTestSelectionContextContributorTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.testrunner.render.AgentPromptTestFailuresContextRendererBridgeTest'`
+- `./tests.cmd --module intellij.agent.workbench.prompt.testrunner.tests --test com.intellij.agent.workbench.prompt.testrunner.context.AgentPromptTestSelectionContextContributorTest`
+- `./tests.cmd --module intellij.agent.workbench.prompt.testrunner.tests --test com.intellij.agent.workbench.prompt.testrunner.render.AgentPromptTestFailuresContextRendererBridgeTest`
 
 ## Open Questions / Risks
 - Replacement preference in duplicate-test normalization is implicit in code and not yet separately tested as a standalone contract.

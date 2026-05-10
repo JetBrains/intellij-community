@@ -33,13 +33,13 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 
 ## Requirements
 - Advanced setting key `agent.workbench.prevent.system.sleep.while.working` must exist, default to `true`, and be exposed in Advanced Settings under the existing Agent Workbench group.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions gear menu must expose `AgentWorkbenchSessions.TogglePreventSleepWhileWorking` and update the same advanced setting.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - The setting and gear action must use localized user-visible text from `AgentSessionsBundle.properties`.
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sleep prevention must be driven by one app-level service that observes Agent Workbench sessions state and owns at most one blocker lease at a time.
   Background projects and worktrees count; behavior must not be limited to the selected tree row, selected tab, or focused project.
@@ -109,9 +109,9 @@ IDE Power Save Mode is a hard override: while it is enabled, sleep prevention mu
 - Multiple active threads must not cause duplicate acquires, and one thread becoming inactive must not release the blocker while other active threads remain.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionSleepPreventionServiceTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSleepInhibitorTest'`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionSleepPreventionServiceTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSleepInhibitorTest`
 
 ## Open Questions / Risks
 - If the IntelliJ Platform later gains a supported cross-platform sleep-inhibition API, the plugin-local inhibitor abstraction may be re-backed by that API without changing the user-visible contract in this spec.
