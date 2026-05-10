@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
+import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -201,6 +202,85 @@ class ClaudeSessionsStoreTest {
     assertThat(thread).isNotNull
     assertThat(thread!!.title).isEqualTo("Agent name title")
     assertThat(thread.hasCustomTitle).isTrue()
+  }
+
+  @Test
+  fun prefersAiTitleOverFirstPromptWithoutMarkingCustomTitle() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-ai-title")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("ai-title-1111-2222-3333-444444444444.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        claudeUserLine("2026-02-08T01:00:00.000Z", "ai-title-1111-2222-3333-444444444444", "/work/project-ai-title", "Original prompt"),
+        claudeAssistantLine("2026-02-08T01:00:01.000Z", "ai-title-1111-2222-3333-444444444444", "/work/project-ai-title", "Done"),
+        claudeAiTitleLine("ai-title-1111-2222-3333-444444444444", "AI generated title"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("AI generated title")
+    assertThat(thread.titleSource).isEqualTo(ClaudeSessionTitleSource.AI_TITLE)
+    assertThat(thread.hasCustomTitle).isFalse()
+    assertThat(thread.activity).isEqualTo(ClaudeSessionActivity.READY)
+    assertThat(thread.updatedAt).isEqualTo(Instant.parse("2026-02-08T01:00:01.000Z").toEpochMilli())
+  }
+
+  @Test
+  fun prefersExplicitTranscriptTitleOverAiTitle() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-explicit-ai-title")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("explicit-ai-title-1111-2222-3333-444444444444.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        claudeUserLine("2026-02-08T01:00:00.000Z",
+                       "explicit-ai-title-1111-2222-3333-444444444444",
+                       "/work/project-explicit-ai-title",
+                       "Original prompt"),
+        claudeAiTitleLine("explicit-ai-title-1111-2222-3333-444444444444", "AI generated title"),
+        claudeCustomTitleLine("2026-02-08T01:00:02.000Z",
+                              "explicit-ai-title-1111-2222-3333-444444444444",
+                              "/work/project-explicit-ai-title",
+                              "Explicit title"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Explicit title")
+    assertThat(thread.titleSource).isEqualTo(ClaudeSessionTitleSource.EXPLICIT)
+    assertThat(thread.hasCustomTitle).isTrue()
+  }
+
+  @Test
+  fun fallsBackToLastPromptWhenNoPromptTitleAvailable() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-last-prompt")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("last-prompt-1111-2222-3333-444444444444.jsonl")
+    Files.write(
+      transcript,
+      listOf(
+        claudeAssistantLine("2026-02-08T01:00:00.000Z", "last-prompt-1111-2222-3333-444444444444", "/work/project-last-prompt", "Done"),
+        claudeLastPromptLine("last-prompt-1111-2222-3333-444444444444", "Fallback prompt title"),
+      ),
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val thread = store.parseJsonlFile(transcript)
+
+    assertThat(thread).isNotNull
+    assertThat(thread!!.title).isEqualTo("Fallback prompt title")
+    assertThat(thread.titleSource).isEqualTo(ClaudeSessionTitleSource.LAST_PROMPT)
+    assertThat(thread.hasCustomTitle).isFalse()
   }
 
   @Test

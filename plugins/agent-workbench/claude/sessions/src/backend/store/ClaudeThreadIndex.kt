@@ -4,6 +4,9 @@
 package com.intellij.agent.workbench.claude.sessions.backend.store
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
+import com.intellij.agent.workbench.claude.common.ClaudeSessionIndexEntry
+import com.intellij.agent.workbench.claude.common.ClaudeSessionThread
+import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
 import com.intellij.agent.workbench.claude.common.isClaudeArchivedThreadTitle
 import com.intellij.agent.workbench.claude.common.resolveClaudeThreadTitleState
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
@@ -29,8 +32,8 @@ internal class ClaudeThreadIndex(
   private val store: ClaudeSessionsStore,
 ) {
   private val threadInvalidationState =
-    FileBackedSessionInvalidationState<com.intellij.agent.workbench.claude.common.ClaudeSessionThread?>(::isClaudeSessionFile)
-  private val indexInvalidationState = FileBackedSessionInvalidationState<Map<String, String>>(::isClaudeSessionIndexFile)
+    FileBackedSessionInvalidationState<ClaudeSessionThread?>(::isClaudeSessionFile)
+  private val indexInvalidationState = FileBackedSessionInvalidationState<Map<String, ClaudeSessionIndexEntry>>(::isClaudeSessionIndexFile)
 
   fun markDirty(changeSet: FileBackedSessionChangeSet) {
     if (!changeSet.requiresFullRescan && changeSet.changedPaths.isEmpty()) {
@@ -142,7 +145,7 @@ internal class ClaudeThreadIndex(
       return
     }
 
-    val parsedUpdates = HashMap<String, FileBackedSessionCachedFile<com.intellij.agent.workbench.claude.common.ClaudeSessionThread?>>(
+    val parsedUpdates = HashMap<String, FileBackedSessionCachedFile<ClaudeSessionThread?>>(
       threadRescanPlan.filesToParse.size,
     )
     for (stat in threadRescanPlan.filesToParse) {
@@ -160,7 +163,8 @@ internal class ClaudeThreadIndex(
       return
     }
 
-    val parsedUpdates = HashMap<String, FileBackedSessionCachedFile<Map<String, String>>>(indexRescanPlan.filesToParse.size)
+    val parsedUpdates =
+      HashMap<String, FileBackedSessionCachedFile<Map<String, ClaudeSessionIndexEntry>>>(indexRescanPlan.filesToParse.size)
     for (stat in indexRescanPlan.filesToParse) {
       parsedUpdates[stat.pathKey] = FileBackedSessionCachedFile(
         lastModifiedNs = stat.lastModifiedNs,
@@ -177,19 +181,19 @@ internal class ClaudeThreadIndex(
     val cachedIndexFilesByPath = indexInvalidationState.snapshotCachedFiles()
     for (pathKey in jsonlFilesByPath.keys) {
       val parsed = cachedThreadsByPath[pathKey]?.parsedValue ?: continue
-      val indexedTitle = resolveIndexedTitle(
+      val indexEntry = resolveIndexEntry(
         sessionFile = jsonlFilesByPath[pathKey]?.path,
         sessionId = parsed.id,
         cachedIndexFilesByPath = cachedIndexFilesByPath,
       )
-      val resolvedTitle = resolveClaudeThreadTitleState(resolveTitleForArchiveState(parsed, indexedTitle), parsed.id)
+      val resolvedTitle = resolveClaudeThreadTitleState(resolveTitleForArchiveState(parsed, indexEntry), parsed.id)
       threads.add(
         ClaudeBackendThread(
           id = parsed.id,
           title = resolvedTitle.title,
           archived = resolvedTitle.archived,
           updatedAt = parsed.updatedAt,
-          gitBranch = parsed.gitBranch,
+          gitBranch = parsed.gitBranch ?: indexEntry?.gitBranch,
           activity = parsed.activity,
         )
       )
@@ -214,20 +218,21 @@ private fun scanIndexFiles(directory: Path, result: MutableMap<String, FileBacke
   result[stat.pathKey] = stat
 }
 
-private fun resolveIndexedTitle(
+private fun resolveIndexEntry(
   sessionFile: Path?,
   sessionId: String,
-  cachedIndexFilesByPath: Map<String, FileBackedSessionCachedFile<Map<String, String>>>,
-): String? {
+  cachedIndexFilesByPath: Map<String, FileBackedSessionCachedFile<Map<String, ClaudeSessionIndexEntry>>>,
+): ClaudeSessionIndexEntry? {
   val sessionDirectory = sessionFile?.parent ?: return null
   val indexPathKey = toFileBackedSessionPathKey(sessionDirectory.resolve(CLAUDE_SESSION_INDEX_FILE))
   return cachedIndexFilesByPath[indexPathKey]?.parsedValue?.get(sessionId)
 }
 
 private fun resolveTitleForArchiveState(
-  parsed: com.intellij.agent.workbench.claude.common.ClaudeSessionThread,
-  indexedTitle: String?,
+  parsed: ClaudeSessionThread,
+  indexEntry: ClaudeSessionIndexEntry?,
 ): String {
+  val indexedTitle = resolveIndexedTitle(parsed, indexEntry)
   if (!parsed.hasCustomTitle) {
     return indexedTitle ?: parsed.title
   }
@@ -235,6 +240,10 @@ private fun resolveTitleForArchiveState(
     return parsed.title
   }
   return indexedTitle ?: parsed.title
+}
+
+private fun resolveIndexedTitle(parsed: ClaudeSessionThread, indexEntry: ClaudeSessionIndexEntry?): String? {
+  return indexEntry?.summary ?: if (parsed.titleSource == ClaudeSessionTitleSource.DEFAULT) indexEntry?.firstPrompt else null
 }
 
 private fun isClaudeSessionFile(path: Path): Boolean {

@@ -168,6 +168,48 @@ class ClaudeStoreSessionBackendTest {
   }
 
   @Test
+  fun usesIndexFirstPromptAndGitBranchOnlyAsFallbackMetadata() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-index-metadata"
+      val encodedPath = "-work-project-index-metadata"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      writeJsonl(
+        projectDir.resolve("session-index-fallback.jsonl"),
+        listOf(
+          claudeAssistantLine("2026-02-10T10:00:00.000Z", "session-index-fallback", projectPath, "Done"),
+        ),
+      )
+      writeJsonl(
+        projectDir.resolve("session-jsonl-branch.jsonl"),
+        listOf(
+          claudeUserLine("2026-02-10T10:01:00.000Z", "session-jsonl-branch", projectPath, "JSONL branch title", gitBranch = "jsonl-branch"),
+          claudeAssistantLine("2026-02-10T10:01:01.000Z", "session-jsonl-branch", projectPath, "Done"),
+        ),
+      )
+      Files.writeString(
+        projectDir.resolve("sessions-index.json"),
+        """
+        {"version":1,"entries":[
+          {"sessionId":"session-index-fallback","summary":"No prompt","firstPrompt":"Index first prompt","gitBranch":"index-branch","isSidechain":false},
+          {"sessionId":"session-jsonl-branch","summary":"Index summary","gitBranch":"index-branch","isSidechain":false}
+        ],"originalPath":"$projectPath"}
+        """.trimIndent(),
+      )
+
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
+      val threadsById = backend.listThreads(path = projectPath, openProject = null).associateBy { it.id }
+
+      assertThat(threadsById).containsOnlyKeys("session-index-fallback", "session-jsonl-branch")
+      assertThat(threadsById["session-index-fallback"]!!.title).isEqualTo("Index first prompt")
+      assertThat(threadsById["session-index-fallback"]!!.gitBranch).isEqualTo("index-branch")
+      assertThat(threadsById["session-jsonl-branch"]!!.title).isEqualTo("Index summary")
+      assertThat(threadsById["session-jsonl-branch"]!!.gitBranch).isEqualTo("jsonl-branch")
+    }
+  }
+
+  @Test
   fun usesTranscriptCustomTitleWhenIndexMissing() {
     runBlocking(Dispatchers.Default) {
       val projectPath = "/work/project-transcript-custom-title"

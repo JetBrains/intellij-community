@@ -56,6 +56,14 @@ internal fun claudeCustomTitleLine(timestamp: String, sessionId: String, cwd: St
   return """{"type":"custom-title","sessionId":"$sessionId","cwd":"$cwd","isSidechain":false,"timestamp":"$timestamp","customTitle":"$customTitle"}"""
 }
 
+internal fun claudeAiTitleLine(sessionId: String, aiTitle: String): String {
+  return """{"type":"ai-title","sessionId":"$sessionId","aiTitle":"$aiTitle"}"""
+}
+
+internal fun claudeLastPromptLine(sessionId: String, lastPrompt: String): String {
+  return """{"type":"last-prompt","sessionId":"$sessionId","leafUuid":"leaf-1","lastPrompt":"$lastPrompt"}"""
+}
+
 internal fun writeJsonl(file: Path, lines: List<String>) {
   Files.createDirectories(file.parent)
   Files.write(file, lines)
