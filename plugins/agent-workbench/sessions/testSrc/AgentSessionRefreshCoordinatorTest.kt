@@ -362,6 +362,64 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun scopedHintUpdateRefreshesOnlyScopedPath() = runBlocking(Dispatchers.Default) {
+    val projectB = "/work/project-b"
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+        when (path) {
+          PROJECT_PATH -> listOf(thread(id = "codex-a", updatedAt = 300L, provider = AgentSessionProvider.CODEX))
+          projectB -> listOf(thread(id = "codex-b", updatedAt = 400L, provider = AgentSessionProvider.CODEX))
+          else -> emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-a", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+          AgentProjectSessions(
+            path = projectB,
+            name = "Project B",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(thread(id = "codex-b", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(hintsChangedEvent(scopedPaths = setOf(PROJECT_PATH), threadIds = setOf("codex-a")))
+
+      waitForCondition {
+        val projects = stateStore.snapshot().projects.associateBy { it.path }
+        projects[PROJECT_PATH]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 300L &&
+        projects[projectB]?.threads?.firstOrNull { it.provider == AgentSessionProvider.CODEX }?.updatedAt == 100L
+      }
+
+      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(1)
+      assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
+    }
+  }
+
+  @Test
   fun threadTargetedUpdateUsesOpenConcreteTabIdentityWhenStateDoesNotContainThread() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)

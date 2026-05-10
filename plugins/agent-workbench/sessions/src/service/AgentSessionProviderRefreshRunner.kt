@@ -72,7 +72,9 @@ internal class AgentSessionProviderRefreshRunner(
       )
 
       if (targetPaths.isEmpty()) {
-        LOG.debug { "Provider refresh id=$refreshId provider=${provider.value} skipped (no target paths)" }
+        LOG.debug {
+          "Provider refresh id=$refreshId provider=${provider.value} skipped (no target paths, ${updateEvent.describeScope()})"
+        }
         return
       }
 

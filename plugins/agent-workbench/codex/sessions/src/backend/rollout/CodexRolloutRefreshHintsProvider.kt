@@ -18,7 +18,13 @@ internal class CodexRolloutRefreshHintsProvider(
   private val rolloutBackend: CodexRolloutSessionBackend = CodexRolloutSessionBackend(),
 ) : CodexRefreshHintsProvider {
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
-    get() = rolloutBackend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) }
+    get() = rolloutBackend.sessionUpdates.map { update ->
+      AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        scopedPaths = update.scopedPaths,
+        threadIds = update.threadIds,
+      )
+    }
 
   override suspend fun prefetchRefreshHints(
     paths: List<String>,
