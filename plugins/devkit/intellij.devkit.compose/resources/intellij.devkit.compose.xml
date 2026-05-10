@@ -74,7 +74,6 @@
 
     <!-- Legacy actions, only available from Search Everywhere -->
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
-    <action id="DisableBugs" class="com.intellij.devkit.compose.showcase.DisableBugsAction"/>
     <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
 
     <action id="JewelCustomPopupRenderer"
