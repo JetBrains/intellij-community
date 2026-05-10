@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
@@ -40,11 +41,11 @@ class AgentChatScopedTerminalRefreshControllerTest {
       outputChanges = null,
       sessionState = MutableStateFlow(TerminalViewSessionState.NotStarted),
       parentScope = this,
-      notifyRefresh = { provider, path, threadId -> signals.add(RefreshSignal(provider, path, threadId)) },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null))
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null, null))
     }
   }
 
@@ -62,7 +63,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       debounceMs = 25L,
       emitInitialRefresh = false,
       threadId = "codex-thread",
-      notifyRefresh = { provider, path, threadId -> signals.add(RefreshSignal(provider, path, threadId)) },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
       delay(50.milliseconds)
       outputChanges.emit(Unit)
@@ -70,7 +71,9 @@ class AgentChatScopedTerminalRefreshControllerTest {
 
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread"))
+      assertThat(signal).isEqualTo(
+        RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", AgentThreadActivity.PROCESSING)
+      )
       assertThat(signals).isEmpty()
     }
   }
@@ -87,13 +90,13 @@ class AgentChatScopedTerminalRefreshControllerTest {
       sessionState = sessionState,
       parentScope = this,
       emitInitialRefresh = false,
-      notifyRefresh = { provider, path, threadId -> signals.add(RefreshSignal(provider, path, threadId)) },
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
     ).use {
       sessionState.value = TerminalViewSessionState.Terminated
 
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null))
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CLAUDE, "/work/project", null, null))
     }
   }
 }
@@ -102,6 +105,7 @@ private data class RefreshSignal(
   val provider: AgentSessionProvider,
   val projectPath: String,
   val threadId: String?,
+  val activityHint: AgentThreadActivity?,
 )
 
 private suspend inline fun AgentChatScopedTerminalRefreshController.use(block: suspend (AgentChatScopedTerminalRefreshController) -> Unit) {

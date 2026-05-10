@@ -44,6 +44,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val type: AgentSessionSourceUpdate,
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
+  @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 )
 
 data class AgentSessionSourceRefreshRequest(

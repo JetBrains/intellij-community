@@ -1472,12 +1472,219 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         val threadsById = stateStore.snapshot().projects
-          .firstOrNull { it.path == PROJECT_PATH }
-          ?.threads
-          ?.associateBy { it.id }
-          ?: return@waitForCondition false
+                            .firstOrNull { it.path == PROJECT_PATH }
+                            ?.threads
+                            ?.associateBy { it.id }
+                          ?: return@waitForCondition false
         threadsById["codex-with-hint"]?.activity == AgentThreadActivity.REVIEWING &&
         threadsById["codex-without-hint"]?.activity == AgentThreadActivity.UNREAD
+      }
+    }
+  }
+
+  @Test
+  fun providerUpdateActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val gateActive = AtomicBoolean(false)
+    val closedRefreshInvocations = AtomicInteger(0)
+    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { gateActive.get() },
+      openChatTabPresentationUpdater = { _, _, _, activityMap ->
+        receivedActivityMaps.add(activityMap)
+        activityMap.size
+      },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.READY)
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("codex-1"),
+          activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.PROCESSING),
+        )
+      )
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.id == "codex-1" }
+          ?.activity == AgentThreadActivity.PROCESSING
+      }
+
+      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      waitForCondition {
+        receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.PROCESSING }
+      }
+
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun providerUpdateActivityHintsOverrideStaleRefreshActivity() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val closedRefreshInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          closedRefreshInvocations.incrementAndGet()
+          listOf(
+            thread(
+              id = "codex-1",
+              updatedAt = 500L,
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.UNREAD,
+            )
+          )
+        }
+      },
+      prefetchRefreshThreadSeedsProvider = { paths, _ ->
+        if (PROJECT_PATH !in paths) {
+          emptyMap()
+        }
+        else {
+          mapOf(
+            PROJECT_PATH to AgentSessionRefreshHints(
+              activityByThreadId = mapOf("codex-1" to AgentThreadActivity.UNREAD)
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.READY)
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("codex-1"),
+          activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.PROCESSING),
+        )
+      )
+
+      waitForCondition {
+        val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+                       ?.threads
+                       ?.firstOrNull { it.id == "codex-1" }
+                     ?: return@waitForCondition false
+        closedRefreshInvocations.get() == 1 &&
+        thread.updatedAt == 500L &&
+        thread.activity == AgentThreadActivity.PROCESSING
+      }
+    }
+  }
+
+  @Test
+  fun providerUpdateWithoutActivityHintsCanClearOptimisticActivity() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(
+              id = "codex-1",
+              updatedAt = 500L,
+              provider = AgentSessionProvider.CODEX,
+              activity = AgentThreadActivity.UNREAD,
+            )
+          )
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX, activity = AgentThreadActivity.PROCESSING)
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("codex-1"),
+        )
+      )
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.id == "codex-1" }
+          ?.activity == AgentThreadActivity.UNREAD
       }
     }
   }
@@ -2464,8 +2671,14 @@ class AgentSessionRefreshCoordinatorTest {
           refreshedPaths.add(path)
         }
         when (path) {
-          pendingPath -> listOf(thread(id = "codex-polled", updatedAt = 700L, title = "Polled thread", provider = AgentSessionProvider.CODEX))
-          PROJECT_PATH -> listOf(thread(id = "codex-loaded", updatedAt = 999L, title = "Loaded thread", provider = AgentSessionProvider.CODEX))
+          pendingPath -> listOf(thread(id = "codex-polled",
+                                       updatedAt = 700L,
+                                       title = "Polled thread",
+                                       provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-loaded",
+                                        updatedAt = 999L,
+                                        title = "Loaded thread",
+                                        provider = AgentSessionProvider.CODEX))
           else -> emptyList()
         }
       },
@@ -2532,8 +2745,14 @@ class AgentSessionRefreshCoordinatorTest {
           refreshedPaths.add(path)
         }
         when (path) {
-          outputPath -> listOf(thread(id = "codex-output", updatedAt = 700L, title = "Output thread", provider = AgentSessionProvider.CODEX))
-          PROJECT_PATH -> listOf(thread(id = "codex-loaded", updatedAt = 999L, title = "Loaded thread", provider = AgentSessionProvider.CODEX))
+          outputPath -> listOf(thread(id = "codex-output",
+                                      updatedAt = 700L,
+                                      title = "Output thread",
+                                      provider = AgentSessionProvider.CODEX))
+          PROJECT_PATH -> listOf(thread(id = "codex-loaded",
+                                        updatedAt = 999L,
+                                        title = "Loaded thread",
+                                        provider = AgentSessionProvider.CODEX))
           else -> emptyList()
         }
       },
@@ -2904,7 +3123,10 @@ class AgentSessionRefreshCoordinatorTest {
           closedRefreshInvocations.incrementAndGet()
           listOf(
             thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX),
-            thread(id = "codex-listed-new", updatedAt = rebindRequestedAtMs + 100L, title = "Listed thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-listed-new",
+                   updatedAt = rebindRequestedAtMs + 100L,
+                   title = "Listed thread",
+                   provider = AgentSessionProvider.CODEX),
           )
         }
       },
@@ -3005,7 +3227,10 @@ class AgentSessionRefreshCoordinatorTest {
           closedRefreshInvocations.incrementAndGet()
           listOf(
             thread(id = "codex-old", updatedAt = 100L, title = "Old thread", provider = AgentSessionProvider.CODEX),
-            thread(id = "codex-listed-new", updatedAt = rebindRequestedAtMs + 100L, title = "Listed new thread", provider = AgentSessionProvider.CODEX),
+            thread(id = "codex-listed-new",
+                   updatedAt = rebindRequestedAtMs + 100L,
+                   title = "Listed new thread",
+                   provider = AgentSessionProvider.CODEX),
           )
         }
       },

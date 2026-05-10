@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.debug
@@ -53,7 +54,7 @@ internal class AgentChatScopedTerminalRefreshController(
   parentScope: CoroutineScope,
   debounceMs: Long = AGENT_CHAT_SCOPED_REFRESH_DEBOUNCE_MS,
   emitInitialRefresh: Boolean = true,
-  private val notifyRefresh: (AgentSessionProvider, String, String?) -> Unit = ::notifyAgentChatTerminalOutputForRefresh,
+  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatTerminalOutputForRefresh,
 ) : AgentChatDisposableController {
   private val initialRefreshJob: Job?
   private val outputRefreshJob: Job?
@@ -73,7 +74,7 @@ internal class AgentChatScopedTerminalRefreshController(
         changes
           .debounce(debounceMs.milliseconds)
           .collect {
-            emitScopedRefresh("terminal output")
+            emitScopedRefresh("terminal output", activityHint = AgentThreadActivity.PROCESSING)
           }
       }
     }
@@ -92,13 +93,13 @@ internal class AgentChatScopedTerminalRefreshController(
     terminationRefreshJob.cancel()
   }
 
-  private fun emitScopedRefresh(reason: String) {
+  private fun emitScopedRefresh(reason: String, activityHint: AgentThreadActivity? = null) {
     if (projectPath.isBlank()) {
       return
     }
     LOG.debug {
       "Emitting ${provider.value} scoped refresh from agent chat terminal ($reason, path=$projectPath, threadId=${threadId != null})"
     }
-    notifyRefresh(provider, projectPath, threadId)
+    notifyRefresh(provider, projectPath, threadId, activityHint)
   }
 }

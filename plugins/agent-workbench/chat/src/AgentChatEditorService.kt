@@ -51,9 +51,20 @@ private data class AgentChatScopedRefreshSignal(
 private object AgentChatScopedRefreshSignalBus {
   private val signalFlow = MutableSharedFlow<AgentChatScopedRefreshSignal>(extraBufferCapacity = 64)
 
-  fun signal(provider: AgentSessionProvider, projectPath: String, threadId: String? = null): Boolean {
+  fun signal(
+    provider: AgentSessionProvider,
+    projectPath: String,
+    threadId: String? = null,
+    activityHint: AgentThreadActivity? = null,
+  ): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
     val normalizedThreadId = threadId?.trim()?.takeIf { it.isNotEmpty() }
+    val activityHintsByThreadId = if (normalizedThreadId != null && activityHint != null) {
+      mapOf(normalizedThreadId to activityHint)
+    }
+    else {
+      emptyMap()
+    }
     return normalizedPath.isNotBlank() && signalFlow.tryEmit(
       AgentChatScopedRefreshSignal(
         provider = provider,
@@ -61,6 +72,7 @@ private object AgentChatScopedRefreshSignalBus {
           type = AgentSessionSourceUpdate.THREADS_CHANGED,
           scopedPaths = setOf(normalizedPath),
           threadIds = normalizedThreadId?.let { setOf(it) },
+          activityHintsByThreadId = activityHintsByThreadId,
         ),
       )
     )
@@ -360,8 +372,13 @@ suspend fun collectOpenPendingAgentChatProjectPaths(): Set<String> {
   return collectOpenAgentChatProjectPaths(includePendingOnly = true)
 }
 
-fun notifyAgentChatTerminalOutputForRefresh(provider: AgentSessionProvider, projectPath: String, threadId: String? = null) {
-  AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId)
+fun notifyAgentChatTerminalOutputForRefresh(
+  provider: AgentSessionProvider,
+  projectPath: String,
+  threadId: String? = null,
+  activityHint: AgentThreadActivity? = AgentThreadActivity.PROCESSING,
+) {
+  AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityHint)
 }
 
 fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<AgentSessionSourceUpdateEvent> {

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -33,6 +34,7 @@ internal class AgentSessionRefreshScheduler(
   private val isRefreshGateActive: suspend () -> Boolean,
   private val executeFullRefresh: suspend (RefreshLoadScope) -> Unit,
   private val executeProviderRefresh: suspend (AgentSessionProvider, Long, AgentSessionSourceUpdateEvent) -> Unit,
+  private val applySourceUpdateActivityHints: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = { _, _ -> },
   private val onFullRefreshFailure: (Throwable) -> Unit,
 ) {
   private val refreshQueueLock = Any()
@@ -272,6 +274,7 @@ internal class AgentSessionRefreshScheduler(
     updateEvent: AgentSessionSourceUpdateEvent,
   ) {
     val normalizedUpdateEvent = normalizeUpdateEvent(updateEvent)
+    applySourceUpdateActivityHints(provider, normalizedUpdateEvent)
 
     var shouldStartProcessor = false
     var queueSize = 0
@@ -321,6 +324,7 @@ internal class AgentSessionRefreshScheduler(
       type = updateEvent.type,
       scopedPaths = normalizePaths(updateEvent.scopedPaths),
       threadIds = normalizeThreadIds(updateEvent.threadIds),
+      activityHintsByThreadId = normalizeActivityHints(updateEvent.activityHintsByThreadId),
     )
   }
 
@@ -342,6 +346,20 @@ internal class AgentSessionRefreshScheduler(
       ?.takeIf { it.isNotEmpty() }
   }
 
+  private fun normalizeActivityHints(activityHintsByThreadId: Map<String, AgentThreadActivity>): Map<String, AgentThreadActivity> {
+    if (activityHintsByThreadId.isEmpty()) {
+      return emptyMap()
+    }
+    val normalized = LinkedHashMap<String, AgentThreadActivity>(activityHintsByThreadId.size)
+    for ((threadId, activity) in activityHintsByThreadId) {
+      val normalizedThreadId = threadId.trim()
+      if (normalizedThreadId.isNotEmpty()) {
+        normalized[normalizedThreadId] = activity
+      }
+    }
+    return normalized
+  }
+
   private fun mergeSourceUpdateEvents(
     existing: AgentSessionSourceUpdateEvent?,
     incoming: AgentSessionSourceUpdateEvent,
@@ -354,15 +372,36 @@ internal class AgentSessionRefreshScheduler(
       existing.type == AgentSessionSourceUpdate.THREADS_CHANGED || incoming.type == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
       else -> AgentSessionSourceUpdate.HINTS_CHANGED
     }
+    val mergedActivityHintsByThreadId = mergeActivityHints(existing.activityHintsByThreadId, incoming.activityHintsByThreadId)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
-      return AgentSessionSourceUpdateEvent(type = mergedType)
+      return AgentSessionSourceUpdateEvent(
+        type = mergedType,
+        activityHintsByThreadId = mergedActivityHintsByThreadId,
+      )
     }
 
     return AgentSessionSourceUpdateEvent(
       type = mergedType,
       scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
       threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
+      activityHintsByThreadId = mergedActivityHintsByThreadId,
     )
+  }
+
+  private fun mergeActivityHints(
+    existing: Map<String, AgentThreadActivity>,
+    incoming: Map<String, AgentThreadActivity>,
+  ): Map<String, AgentThreadActivity> {
+    if (existing.isEmpty()) {
+      return incoming
+    }
+    if (incoming.isEmpty()) {
+      return existing
+    }
+    val merged = LinkedHashMap<String, AgentThreadActivity>(existing.size + incoming.size)
+    merged.putAll(existing)
+    merged.putAll(incoming)
+    return merged
   }
 
   private fun <T> mergeScopeSets(existing: Set<T>?, incoming: Set<T>?): Set<T>? {

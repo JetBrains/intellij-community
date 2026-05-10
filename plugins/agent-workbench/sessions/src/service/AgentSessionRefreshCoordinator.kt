@@ -18,6 +18,7 @@ import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -25,9 +26,11 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
+import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -48,8 +51,8 @@ internal class AgentSessionRefreshCoordinator(
   private val providerDescriptorsByIdProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProvidersById,
   private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<AgentSessionSourceUpdateEvent> = { provider ->
-      agentChatScopedRefreshSignals(provider)
-    },
+    agentChatScopedRefreshSignals(provider)
+  },
   private val openAgentChatTabPresentationUpdater: suspend (
     AgentSessionProvider,
     Set<String>,
@@ -65,8 +68,8 @@ internal class AgentSessionRefreshCoordinator(
     Map<String, List<AgentChatConcreteTabRebindRequest>>,
   ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
   private val clearOpenConcreteNewThreadRebindAnchors: (
-      AgentSessionProvider,
-      Map<String, List<AgentChatConcreteTabSnapshot>>,
+    AgentSessionProvider,
+    Map<String, List<AgentChatConcreteTabSnapshot>>,
   ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
 ) {
   private val refreshMutex = Mutex()
@@ -114,6 +117,7 @@ internal class AgentSessionRefreshCoordinator(
     isRefreshGateActive = isRefreshGateActive,
     executeFullRefresh = ::refreshNow,
     executeProviderRefresh = providerRefreshRunner::refreshLoadedProviderThreads,
+    applySourceUpdateActivityHints = ::applySourceUpdateActivityHints,
     onFullRefreshFailure = {
       stateStore.markLoadFailure(AgentSessionsBundle.message("toolwindow.error"))
     },
@@ -137,6 +141,43 @@ internal class AgentSessionRefreshCoordinator(
           clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
         )
       }
+    }
+  }
+
+  private fun applySourceUpdateActivityHints(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    val activityHintsByThreadId = updateEvent.activityHintsByThreadId
+    if (activityHintsByThreadId.isEmpty()) {
+      return
+    }
+
+    val normalizedScopedPaths = updateEvent.scopedPaths
+      ?.asSequence()
+      ?.map(::normalizeAgentWorkbenchPath)
+      ?.filter(String::isNotBlank)
+      ?.toCollection(LinkedHashSet())
+
+    var activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity> = emptyMap()
+    stateStore.update { state ->
+      val update = applyThreadActivityHints(
+        state = state,
+        provider = provider,
+        normalizedScopedPaths = normalizedScopedPaths,
+        activityHintsByThreadId = activityHintsByThreadId,
+      )
+      activityByPathAndThreadIdentity = update.activityByPathAndThreadIdentity
+      update.state
+    }
+
+    if (activityByPathAndThreadIdentity.isEmpty()) {
+      return
+    }
+    serviceScope.launch {
+      openAgentChatTabPresentationUpdater(
+        provider,
+        emptySet(),
+        emptyMap(),
+        activityByPathAndThreadIdentity,
+      )
     }
   }
 
@@ -309,6 +350,113 @@ internal class AgentSessionRefreshCoordinator(
     }
   }
 
+}
+
+private data class ActivityHintStateUpdate(
+  @JvmField val state: AgentSessionsState,
+  @JvmField val activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
+)
+
+private data class ActivityHintThreadUpdate(
+  @JvmField val threads: List<AgentSessionThread>,
+  @JvmField val activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
+)
+
+private fun applyThreadActivityHints(
+  state: AgentSessionsState,
+  provider: AgentSessionProvider,
+  normalizedScopedPaths: Set<String>?,
+  activityHintsByThreadId: Map<String, AgentThreadActivity>,
+): ActivityHintStateUpdate {
+  val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
+  var changed = false
+  val nextProjects = state.projects.map { project ->
+    val projectUpdate = applyThreadActivityHintsForPath(
+      path = project.path,
+      provider = provider,
+      threads = project.threads,
+      normalizedScopedPaths = normalizedScopedPaths,
+      activityHintsByThreadId = activityHintsByThreadId,
+    )
+    activityByPathAndThreadIdentity.putAll(projectUpdate.activityByPathAndThreadIdentity)
+
+    var worktreesChanged = false
+    val nextWorktrees = project.worktrees.map { worktree ->
+      val worktreeUpdate = applyThreadActivityHintsForPath(
+        path = worktree.path,
+        provider = provider,
+        threads = worktree.threads,
+        normalizedScopedPaths = normalizedScopedPaths,
+        activityHintsByThreadId = activityHintsByThreadId,
+      )
+      activityByPathAndThreadIdentity.putAll(worktreeUpdate.activityByPathAndThreadIdentity)
+      if (worktreeUpdate.threads === worktree.threads) {
+        worktree
+      }
+      else {
+        worktreesChanged = true
+        worktree.copy(threads = worktreeUpdate.threads)
+      }
+    }
+
+    if (projectUpdate.threads === project.threads && !worktreesChanged) {
+      project
+    }
+    else {
+      changed = true
+      project.copy(
+        threads = projectUpdate.threads,
+        worktrees = nextWorktrees,
+      )
+    }
+  }
+
+  if (!changed) {
+    return ActivityHintStateUpdate(state = state, activityByPathAndThreadIdentity = activityByPathAndThreadIdentity)
+  }
+  return ActivityHintStateUpdate(
+    state = state.copy(
+      projects = nextProjects,
+      lastUpdatedAt = System.currentTimeMillis(),
+    ),
+    activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
+  )
+}
+
+private fun applyThreadActivityHintsForPath(
+  path: String,
+  provider: AgentSessionProvider,
+  threads: List<AgentSessionThread>,
+  normalizedScopedPaths: Set<String>?,
+  activityHintsByThreadId: Map<String, AgentThreadActivity>,
+): ActivityHintThreadUpdate {
+  val normalizedPath = normalizeAgentWorkbenchPath(path)
+  if (normalizedScopedPaths != null && normalizedPath !in normalizedScopedPaths) {
+    return ActivityHintThreadUpdate(threads = threads, activityByPathAndThreadIdentity = emptyMap())
+  }
+
+  val activityByPathAndThreadIdentity = LinkedHashMap<Pair<String, String>, AgentThreadActivity>()
+  var changed = false
+  val nextThreads = threads.map { thread ->
+    if (thread.provider != provider) {
+      return@map thread
+    }
+    val hintedActivity = activityHintsByThreadId[thread.id] ?: return@map thread
+    activityByPathAndThreadIdentity[path to buildAgentSessionIdentity(provider, thread.id)] = hintedActivity
+    if (hintedActivity == thread.activity) {
+      return@map thread
+    }
+    changed = true
+    thread.copy(activity = hintedActivity)
+  }
+
+  if (!changed) {
+    return ActivityHintThreadUpdate(threads = threads, activityByPathAndThreadIdentity = activityByPathAndThreadIdentity)
+  }
+  return ActivityHintThreadUpdate(
+    threads = nextThreads,
+    activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
+  )
 }
 
 private fun resolveErrorMessage(provider: AgentSessionProvider, t: Throwable): String {

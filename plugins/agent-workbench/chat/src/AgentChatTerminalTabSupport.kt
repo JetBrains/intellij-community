@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -207,7 +208,12 @@ private class ToolWindowAgentChatTerminalTab(
       checkpoint = checkpoint,
       onMeaningfulOutput = {
         if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
-          notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = projectPath, threadId = threadId)
+          notifyAgentChatTerminalOutputForRefresh(
+            provider = provider,
+            projectPath = projectPath,
+            threadId = threadId,
+            activityHint = AgentThreadActivity.PROCESSING,
+          )
         }
       },
     )
@@ -238,7 +244,12 @@ private class ToolWindowAgentChatTerminalTab(
       idleMs = idleMs,
       onMeaningfulOutput = {
         if (provider != null && AgentSessionProviders.find(provider)?.emitsScopedRefreshSignals == true) {
-          notifyAgentChatTerminalOutputForRefresh(provider = provider, projectPath = projectPath, threadId = threadId)
+          notifyAgentChatTerminalOutputForRefresh(
+            provider = provider,
+            projectPath = projectPath,
+            threadId = threadId,
+            activityHint = AgentThreadActivity.PROCESSING,
+          )
         }
       },
     )

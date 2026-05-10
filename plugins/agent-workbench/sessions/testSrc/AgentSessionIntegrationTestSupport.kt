@@ -241,22 +241,26 @@ class ScriptedSessionSource(
 fun threadsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
+  activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.THREADS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
+    activityHintsByThreadId = activityHintsByThreadId,
   )
 }
 
 fun hintsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
+  activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 ): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
+    activityHintsByThreadId = activityHintsByThreadId,
   )
 }
 
