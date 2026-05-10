@@ -7,7 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
-import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySectionKind
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 class AgentSessionsActivitySummaryTest {
   @Test
-  fun separatesPrimaryAndPassiveActivities() {
+  fun separatesThreadsByBucket() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -47,23 +47,16 @@ class AgentSessionsActivitySummaryTest {
       )
     )
 
-    assertThat(summary.hasPrimaryActivity).isTrue()
     assertThat(summary.attentionRows.map { it.thread.id }).containsExactly("needs-input", "reviewing")
     assertThat(summary.runningRows.map { it.thread.id }).containsExactly("worktree-processing", "processing")
     assertThat(summary.doneRows.map { it.thread.id }).containsExactly("done")
     assertThat(summary.idleRows.map { it.thread.id }).containsExactly("idle")
     assertThat(summary.runningRows.first().path).isEqualTo("/work/project-a-feature")
     assertThat(summary.runningRows.first().locationLabel).isEqualTo("Project A / feature")
-    assertThat(summary.popupSections().map { it.kind }).containsExactly(
-      AgentSessionsActivitySectionKind.NEEDS_ATTENTION,
-      AgentSessionsActivitySectionKind.RUNNING,
-      AgentSessionsActivitySectionKind.DONE,
-      AgentSessionsActivitySectionKind.IDLE,
-    )
   }
 
   @Test
-  fun passiveActivitiesKeepHeaderAvailableWithoutPrimaryActivity() {
+  fun rowsForBucketReturnsMatchingList() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -81,12 +74,10 @@ class AgentSessionsActivitySummaryTest {
       )
     )
 
-    assertThat(summary.hasKnownThreads).isTrue()
-    assertThat(summary.hasPrimaryActivity).isFalse()
-    assertThat(summary.popupSections().map { it.kind }).containsExactly(
-      AgentSessionsActivitySectionKind.DONE,
-      AgentSessionsActivitySectionKind.IDLE,
-    )
+    assertThat(summary.rowsFor(AgentSessionsActivityBucket.ATTENTION)).isEmpty()
+    assertThat(summary.rowsFor(AgentSessionsActivityBucket.RUNNING)).isEmpty()
+    assertThat(summary.rowsFor(AgentSessionsActivityBucket.DONE).map { it.thread.id }).containsExactly("done")
+    assertThat(summary.rowsFor(AgentSessionsActivityBucket.IDLE).map { it.thread.id }).containsExactly("idle")
   }
 
   @Test
@@ -114,7 +105,7 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
-  fun popupRowTextUsesStatusLocationAndRelativeTime() {
+  fun popupRowTextIncludesTitleLocationAndRelativeTime() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -140,7 +131,6 @@ class AgentSessionsActivitySummaryTest {
     val text = agentSessionsActivityPopupRowText(summary.attentionRows.single(), now = 500)
 
     assertThat(text).contains("Confirm tool call")
-    assertThat(text).contains("Needs input")
     assertThat(text).contains("Project A / feature")
     assertThat(text).contains("now")
   }

@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -21,7 +22,13 @@ internal class AgentSessionsToolWindowFactory : ToolWindowFactory, DumbAware {
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.setDisposer(panel)
     toolWindow.contentManager.addContent(content)
-    toolWindow.setTitleActions(listOfNotNull(ActionUtil.getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME)))
+    val titleActions = buildList {
+      addAll(createAgentSessionsTitleActions())
+      ActionUtil.getAction(AgentWorkbenchActionIds.Sessions.OPEN_DEDICATED_FRAME)?.let(::add)
+    }
+    toolWindow.setTitleActions(titleActions)
     toolWindow.setAdditionalGearActions(ActionUtil.getActionGroup(AgentWorkbenchActionIds.Sessions.TOOL_WINDOW_GEAR_ACTIONS))
+    project.service<AgentSessionsActivityService>()
+    project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
   }
 }

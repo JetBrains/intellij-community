@@ -19,6 +19,7 @@
       icon="AllIcons.Toolwindows.ToolWindowMessages"
       canCloseContents="false"
       factoryClass="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityStartupActivity"/>
   </extensions>
 
   <actions resource-bundle="messages.AgentSessionsBundle">

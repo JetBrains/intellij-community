@@ -143,18 +143,6 @@ internal class AgentSessionsToolWindowPanel(
     }
   }
 
-  private val activityHeader = AgentSessionsActivityHeader(
-    nowProvider = { System.currentTimeMillis() },
-    openThread = { row ->
-      service<AgentSessionLaunchService>().openChatThread(
-        path = row.path,
-        thread = row.thread,
-        entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
-        currentProject = project,
-      )
-    },
-  )
-
   private val stateController = AgentSessionsTreeStateController(
     sessionsStateFlow = service<AgentSessionReadService>().stateFlow(),
     chatSelectionService = project.service<AgentChatTabSelectionService>(),
@@ -170,9 +158,6 @@ internal class AgentSessionsToolWindowPanel(
     },
     onBeforeModelSwap = {
       rowActionsOverlay.clearTransientState()
-    },
-    onSessionsStateChanged = { state ->
-      activityHeader.update(state)
     },
     invalidateTreeModel = ::invalidateTreeModel,
     expandNode = { id -> structureTreeModel.expand(id, tree) { } },
@@ -225,7 +210,7 @@ internal class AgentSessionsToolWindowPanel(
     )
 
     configureTree()
-    add(northPanel, BorderLayout.NORTH)
+    northPanel?.let { add(it, BorderLayout.NORTH) }
     add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
     interactionController.install()
@@ -233,13 +218,15 @@ internal class AgentSessionsToolWindowPanel(
     service<AgentSessionRefreshService>().refresh()
   }
 
-  private fun buildNorthPanel(): JPanel {
+  private fun buildNorthPanel(): JPanel? {
     val contributions = AgentSessionProviders.allProvidersById()
       .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
+    if (contributions.isEmpty()) {
+      return null
+    }
     return JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       isOpaque = false
-      add(activityHeader)
       contributions.forEach(::add)
     }
   }

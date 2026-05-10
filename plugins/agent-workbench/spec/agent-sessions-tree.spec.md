@@ -24,8 +24,12 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
-- The tool-window header must summarize known thread activity without adding tree levels: `NEEDS_INPUT` and `REVIEWING` appear under `Needs attention`,
-  `PROCESSING` appears under `Running`, and passive `UNREAD`/`READY` threads keep the header visible through `Done`/`Idle` counters.
+- The tool window surfaces thread activity through chrome rather than a body strip:
+  the title bar carries one counter action per bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
+  `Running` covers `PROCESSING`, `Done` covers `UNREAD`, `Idle` covers `READY`); zero-count buckets render disabled.
+  Clicking a counter opens a popup listing only that bucket's threads.
+  The stripe button icon carries a `Needs attention` badge whenever any thread is in `NEEDS_INPUT` or `REVIEWING`,
+  so the user is alerted even when the tool window is collapsed.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
 
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
