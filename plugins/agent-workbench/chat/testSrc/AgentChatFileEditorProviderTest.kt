@@ -598,20 +598,24 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun usesBadgedProviderIconForAllActivities() {
+  fun usesPlainProviderIconForReadyAndBadgesForActiveStates() {
     val readyIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.READY)
     val processingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.PROCESSING)
     val reviewingIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.REVIEWING)
+    val needsInputIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.NEEDS_INPUT)
     val unreadIcon = providerIcon(threadIdentity = "codex:thread-1", threadActivity = AgentThreadActivity.UNREAD)
 
     assertThat(readyIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.READY))
     assertThat(processingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.PROCESSING))
     assertThat(reviewingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING))
+    assertThat(needsInputIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.NEEDS_INPUT))
     assertThat(unreadIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD))
-    assertThat(readyIcon).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14)
+    assertThat(readyIcon).isSameAs(AgentWorkbenchCommonIcons.Codex_14x14)
     assertThat(processingIcon).isNotSameAs(readyIcon)
     assertThat(reviewingIcon).isNotSameAs(readyIcon)
+    assertThat(needsInputIcon).isNotSameAs(readyIcon)
     assertThat(unreadIcon).isNotSameAs(readyIcon)
+    assertThat(unreadIcon).isNotSameAs(needsInputIcon)
     assertThat(unreadIcon).isNotSameAs(processingIcon)
     assertThat(unreadIcon).isNotSameAs(reviewingIcon)
   }

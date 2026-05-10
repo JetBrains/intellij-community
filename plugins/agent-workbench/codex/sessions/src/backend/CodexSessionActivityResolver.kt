@@ -39,7 +39,7 @@ internal fun resolveCodexSessionActivity(
   hasInProgressTurn: Boolean = false,
 ): CodexSessionActivity {
   return when {
-    activeFlags.isResponseRequired() -> CodexSessionActivity.UNREAD
+    activeFlags.isResponseRequired() -> CodexSessionActivity.NEEDS_INPUT
     isReviewing -> CodexSessionActivity.REVIEWING
     hasInProgressTurn || statusKind == CodexThreadStatusKind.ACTIVE -> CodexSessionActivity.PROCESSING
     hasUnreadAssistantMessage -> CodexSessionActivity.UNREAD

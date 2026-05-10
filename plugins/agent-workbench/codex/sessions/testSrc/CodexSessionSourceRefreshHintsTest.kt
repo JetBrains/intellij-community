@@ -131,13 +131,13 @@ class CodexSessionSourceRefreshHintsTest {
   }
 
   @Test
-  fun mergeKeepsResponseRequiredUnreadWhenRolloutHasNewerWorkingFallback() {
+  fun mergeKeepsResponseRequiredNeedsInputWhenRolloutHasNewerWorkingFallback() {
     val merged = mergeCodexRefreshHints(
       appServerHintsByPath = mapOf(
         "/work/project" to CodexRefreshHints(
           activityHintsByThreadId = mapOf(
             "thread-live" to refreshHint(
-              activity = AgentThreadActivity.UNREAD,
+              activity = AgentThreadActivity.NEEDS_INPUT,
               updatedAt = 300L,
               responseRequired = true,
             )
@@ -157,7 +157,7 @@ class CodexSessionSourceRefreshHintsTest {
     )
 
     val hint = merged.getValue("/work/project").activityHintsByThreadId.getValue("thread-live")
-    assertThat(hint.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(hint.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     assertThat(hint.responseRequired).isTrue()
     assertThat(hint.updatedAt).isEqualTo(300L)
   }
@@ -223,7 +223,67 @@ class CodexSessionSourceRefreshHintsTest {
   }
 
   @Test
-  fun mergeAllowsRolloutResponseRequiredUnreadToOverrideReadyHint() {
+  fun mergeAllowsNewerRolloutUnreadToOverrideStaleWorkingHint() {
+    val merged = mergeCodexRefreshHints(
+      appServerHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-live" to refreshHint(
+              activity = AgentThreadActivity.PROCESSING,
+              updatedAt = 300L,
+            )
+          )
+        )
+      ),
+      rolloutHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-live" to refreshHint(
+              activity = AgentThreadActivity.UNREAD,
+              updatedAt = 320L,
+            )
+          )
+        )
+      ),
+    )
+
+    val hint = merged.getValue("/work/project").activityHintsByThreadId.getValue("thread-live")
+    assertThat(hint.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(hint.updatedAt).isEqualTo(320L)
+  }
+
+  @Test
+  fun mergeKeepsAppServerWorkingHintWhenOlderRolloutUnreadExists() {
+    val merged = mergeCodexRefreshHints(
+      appServerHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-live" to refreshHint(
+              activity = AgentThreadActivity.PROCESSING,
+              updatedAt = 300L,
+            )
+          )
+        )
+      ),
+      rolloutHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-live" to refreshHint(
+              activity = AgentThreadActivity.UNREAD,
+              updatedAt = 290L,
+            )
+          )
+        )
+      ),
+    )
+
+    val hint = merged.getValue("/work/project").activityHintsByThreadId.getValue("thread-live")
+    assertThat(hint.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(hint.updatedAt).isEqualTo(300L)
+  }
+
+  @Test
+  fun mergeAllowsRolloutResponseRequiredNeedsInputToOverrideReadyHint() {
     val merged = mergeCodexRefreshHints(
       appServerHintsByPath = mapOf(
         "/work/project" to CodexRefreshHints(
@@ -239,7 +299,7 @@ class CodexSessionSourceRefreshHintsTest {
         "/work/project" to CodexRefreshHints(
           activityHintsByThreadId = mapOf(
             "thread-live" to refreshHint(
-              activity = AgentThreadActivity.UNREAD,
+              activity = AgentThreadActivity.NEEDS_INPUT,
               updatedAt = 290L,
               responseRequired = true,
             )
@@ -249,7 +309,7 @@ class CodexSessionSourceRefreshHintsTest {
     )
 
     val hint = merged.getValue("/work/project").activityHintsByThreadId.getValue("thread-live")
-    assertThat(hint.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(hint.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     assertThat(hint.responseRequired).isTrue()
     assertThat(hint.updatedAt).isEqualTo(290L)
   }

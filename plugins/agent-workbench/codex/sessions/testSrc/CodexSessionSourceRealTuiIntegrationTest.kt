@@ -96,7 +96,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
   }
 
   @Test
-  fun realTuiRequestUserInputProducesResponseRequiredUnread() {
+  fun realTuiRequestUserInputProducesResponseRequiredNeedsInput() {
     runBlocking(Dispatchers.IO) {
       val codexBinary = requireRealCodexBinary()
       CodexRealTuiHarness(
@@ -120,7 +120,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
 
           val activity = eventually(timeout = 30.seconds) {
             testRefreshHints(source, harness.projectDir, listOf(threadId)).activityByThreadId[threadId]
-              ?.takeIf { it == AgentThreadActivity.UNREAD }
+              ?.takeIf { it == AgentThreadActivity.NEEDS_INPUT }
           }
           val mergedHint = eventually(timeout = 30.seconds) {
             testRefreshCodexHints(
@@ -132,14 +132,14 @@ class CodexSessionSourceRealTuiIntegrationTest {
                   threadId to testRefreshHint(activity = AgentThreadActivity.READY, updatedAt = 100L)
                 )
               ),
-            ).activityHintsByThreadId[threadId]?.takeIf { it.activity == AgentThreadActivity.UNREAD && it.responseRequired }
+            ).activityHintsByThreadId[threadId]?.takeIf { it.activity == AgentThreadActivity.NEEDS_INPUT && it.responseRequired }
           }
 
           assertThat(activity)
-            .withFailMessage("Timed out waiting for UNREAD source hint from real Codex TUI.\n%s", session.diagnostics())
+            .withFailMessage("Timed out waiting for NEEDS_INPUT source hint from real Codex TUI.\n%s", session.diagnostics())
             .isNotNull
           assertThat(mergedHint)
-            .withFailMessage("Timed out waiting for response-required UNREAD Codex hint from real Codex TUI.\n%s", session.diagnostics())
+            .withFailMessage("Timed out waiting for response-required NEEDS_INPUT Codex hint from real Codex TUI.\n%s", session.diagnostics())
             .isNotNull
         }
       }

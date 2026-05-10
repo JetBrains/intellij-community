@@ -345,8 +345,9 @@ private fun shouldApplyRolloutActivityFallback(
   return when {
     currentHint == null -> true
     currentHint.responseRequired -> false
+    rolloutHint.responseRequired -> true
     rolloutHint.activity.isWorking && !currentHint.activity.isWorking -> true
-    rolloutHint.activity == AgentThreadActivity.UNREAD -> true
+    rolloutHint.activity == AgentThreadActivity.UNREAD -> rolloutHint.updatedAt > currentHint.updatedAt
     !rolloutHint.activity.isWorking -> false
     rolloutHint.updatedAt <= currentHint.updatedAt -> false
     else -> true

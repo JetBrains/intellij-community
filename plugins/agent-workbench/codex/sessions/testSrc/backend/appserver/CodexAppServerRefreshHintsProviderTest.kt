@@ -85,9 +85,9 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(activityByThreadId).containsExactlyInAnyOrderEntriesOf(
             mapOf(
                 "thread-ready" to AgentThreadActivity.READY,
-                "thread-unread-flag" to AgentThreadActivity.UNREAD,
+                "thread-unread-flag" to AgentThreadActivity.NEEDS_INPUT,
                 "thread-unread-message" to AgentThreadActivity.PROCESSING,
-                "thread-review-flag" to AgentThreadActivity.UNREAD,
+                "thread-review-flag" to AgentThreadActivity.NEEDS_INPUT,
                 "thread-review-mode" to AgentThreadActivity.REVIEWING,
                 "thread-processing-status" to AgentThreadActivity.PROCESSING,
                 "thread-processing-turn" to AgentThreadActivity.PROCESSING,
@@ -338,7 +338,7 @@ class CodexAppServerRefreshHintsProviderTest {
         val candidate = hints.rebindCandidates.single()
         assertThat(candidate.threadId).isEqualTo("thread-reviewing")
         assertThat(candidate.updatedAt).isEqualTo(700L)
-        assertThat(candidate.activity).isEqualTo(AgentThreadActivity.UNREAD)
+        assertThat(candidate.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
 
     @Test
@@ -396,7 +396,7 @@ class CodexAppServerRefreshHintsProviderTest {
         ).getValue("/work/project")
 
         val hint = hints.activityHintsByThreadId.getValue("thread-live")
-        assertThat(hint.activity).isEqualTo(AgentThreadActivity.UNREAD)
+        assertThat(hint.activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
         assertThat(hint.responseRequired).isTrue()
         assertThat(hint.updatedAt).isEqualTo(UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT)
     }

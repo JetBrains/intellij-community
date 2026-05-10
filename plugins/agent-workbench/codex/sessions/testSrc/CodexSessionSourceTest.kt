@@ -42,12 +42,12 @@ class CodexSessionSourceTest {
   }
 
   @Test
-  fun responseRequiredUnreadRefreshHintsSurviveMarkAsRead() {
+  fun responseRequiredNeedsInputRefreshHintsSurviveMarkAsRead() {
     val source = createSource(
       appServerHints = mapOf(
         PROJECT_PATH to refreshHints(
           "thread-1" to refreshHint(
-            activity = AgentThreadActivity.UNREAD,
+            activity = AgentThreadActivity.NEEDS_INPUT,
             updatedAt = 100L,
             responseRequired = true,
           )
@@ -64,7 +64,7 @@ class CodexSessionSourceTest {
       )
 
       assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
-        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.UNREAD))
+        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.NEEDS_INPUT))
     }
   }
 

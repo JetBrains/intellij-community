@@ -104,7 +104,7 @@ class CodexRolloutSessionBackendTest {
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"request_user_input"}}"""
           ),
-          expected = CodexSessionActivity.UNREAD,
+          expected = CodexSessionActivity.NEEDS_INPUT,
           expectedRequiresResponse = true,
         ),
         ActivityCase(
@@ -115,7 +115,7 @@ class CodexRolloutSessionBackendTest {
               callId = "call-request-user-input",
             )
           ),
-          expected = CodexSessionActivity.UNREAD,
+          expected = CodexSessionActivity.NEEDS_INPUT,
           expectedRequiresResponse = true,
         ),
         ActivityCase(

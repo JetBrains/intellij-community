@@ -15,7 +15,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Codex rollout files are parsed for refresh hints only: pending/concrete tab rebinding, unread/activity uplift, and local integration coverage. They do not create the primary thread list.
+Codex rollout files are parsed for refresh hints only: pending/concrete tab rebinding, needs-input/activity uplift, unread done-output hints, and local integration coverage. They do not create the primary thread list.
 
 ## Requirements
 - Rollout scan scope is limited to `~/.codex/sessions/**/rollout-*.jsonl`; sessions are filtered by normalized `cwd` matching the requested project/worktree path.
@@ -27,7 +27,7 @@ Codex rollout files are parsed for refresh hints only: pending/concrete tab rebi
 - Title extraction uses the first qualifying user message, with explicit thread-name updates overriding derived titles. If no title is found, fallback is `Thread <id-prefix>`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout review-mode and response-required unread must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, and persisted `response_item` tool calls named `request_user_input`.
+- Rollout review-mode and response-required needs-input hints must use current Codex rollout event shapes, including `entered_review_mode`, `exited_review_mode`, `request_user_input`, and persisted `response_item` tool calls named `request_user_input`.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Rollout hints may be consumed for pending-tab rebinding, concrete `/new` rebinding, and Codex activity projection. Rollout-discovered ids must not create persisted thread rows.

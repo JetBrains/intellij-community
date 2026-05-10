@@ -514,7 +514,7 @@ class AgentSessionsSwingTreeCellRendererTest {
       title = "Need input",
       updatedAt = 14L * 24L * 60L * 60L * 1000L,
       archived = false,
-      activity = AgentThreadActivity.UNREAD,
+      activity = AgentThreadActivity.NEEDS_INPUT,
     )
     val threadId = SessionTreeId.Thread(project.path, thread.provider, thread.id)
     val renderer = SessionTreeCellRenderer(
@@ -567,7 +567,7 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
-  fun threadRowsBadgeProviderIconForAllActivities() {
+  fun threadRowsUsePlainProviderIconForReadyAndBadgesForActiveStates() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)
     val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
@@ -593,6 +593,10 @@ class AgentSessionsSwingTreeCellRendererTest {
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing") -> SessionTreeNode.Thread(
             project,
             readyThread.copy(id = "thread-reviewing", activity = AgentThreadActivity.REVIEWING),
+          )
+          SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-needs-input") -> SessionTreeNode.Thread(
+            project,
+            readyThread.copy(id = "thread-needs-input", activity = AgentThreadActivity.NEEDS_INPUT),
           )
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread") -> SessionTreeNode.Thread(
             project,
@@ -635,6 +639,19 @@ class AgentSessionsSwingTreeCellRendererTest {
 
     renderer.getTreeCellRendererComponent(
       tree,
+      descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-needs-input")),
+      false,
+      false,
+      true,
+      0,
+      false,
+    )
+    val needsInputIcon = renderer.icon
+    assertScaledThreadStatusIcon(needsInputIcon, AgentSessionProvider.CODEX, AgentThreadActivity.NEEDS_INPUT)
+    assertThat(needsInputIcon).isNotSameAs(readyIcon)
+
+    renderer.getTreeCellRendererComponent(
+      tree,
       descriptorValue(SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread")),
       false,
       false,
@@ -645,6 +662,7 @@ class AgentSessionsSwingTreeCellRendererTest {
     val unreadIcon = renderer.icon
     assertScaledThreadStatusIcon(unreadIcon, AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD)
     assertThat(unreadIcon).isNotSameAs(readyIcon)
+    assertThat(unreadIcon).isNotSameAs(needsInputIcon)
   }
 
   @Test
@@ -766,7 +784,8 @@ class AgentSessionsSwingTreeCellRendererTest {
       AgentThreadActivity.READY to "toolwindow.thread.status.ready",
       AgentThreadActivity.PROCESSING to "toolwindow.thread.status.in.progress",
       AgentThreadActivity.REVIEWING to "toolwindow.thread.status.needs.review",
-      AgentThreadActivity.UNREAD to "toolwindow.thread.status.needs.input",
+      AgentThreadActivity.NEEDS_INPUT to "toolwindow.thread.status.needs.input",
+      AgentThreadActivity.UNREAD to "toolwindow.thread.status.done",
     )
 
     statusByActivity.forEach { (activity, statusKey) ->

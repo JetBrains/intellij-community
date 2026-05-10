@@ -15,7 +15,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Codex session listing is app-server backed. Rollout files remain an internal refresh-hints source for unread/activity uplift and rebinding fallback; they are not the primary thread-list backend.
+Codex session listing is app-server backed. Rollout files remain an internal refresh-hints source for needs-input/activity uplift, unread done-output hints, and rebinding fallback; they are not the primary thread-list backend.
 
 ## Requirements
 - `CodexSessionSource` must list threads through `CodexAppServerSessionBackend`; legacy backend override inputs, including `rollout` and unknown values, must not switch listing away from app-server.

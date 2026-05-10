@@ -317,9 +317,10 @@ private fun foldSessionActivity(base: CodexSessionActivity, children: Sequence<C
     var current = base
     for (child in children) {
         current = when {
-            child == CodexSessionActivity.UNREAD || current == CodexSessionActivity.UNREAD -> CodexSessionActivity.UNREAD
+            child == CodexSessionActivity.NEEDS_INPUT || current == CodexSessionActivity.NEEDS_INPUT -> CodexSessionActivity.NEEDS_INPUT
             child == CodexSessionActivity.REVIEWING || current == CodexSessionActivity.REVIEWING -> CodexSessionActivity.REVIEWING
             child == CodexSessionActivity.PROCESSING || current == CodexSessionActivity.PROCESSING -> CodexSessionActivity.PROCESSING
+            child == CodexSessionActivity.UNREAD || current == CodexSessionActivity.UNREAD -> CodexSessionActivity.UNREAD
             else -> CodexSessionActivity.READY
         }
     }

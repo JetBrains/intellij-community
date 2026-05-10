@@ -12,9 +12,10 @@ class AgentThreadActivityPresentationTest {
     val expected = linkedMapOf(
       AgentThreadActivity.READY to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.ready",
-        lightFallbackRgb = 0x3FE47E,
-        darkFallbackRgb = 0x57965C,
+        lightFallbackRgb = 0x8C8C8C,
+        darkFallbackRgb = 0x8C8C8C,
         statusMessageKey = "toolwindow.thread.status.ready",
+        showBadge = false,
       ),
       AgentThreadActivity.PROCESSING to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.processing",
@@ -30,6 +31,12 @@ class AgentThreadActivityPresentationTest {
       ),
       AgentThreadActivity.UNREAD to AgentThreadActivityPresentation(
         namedColorKey = "AgentWorkbench.ThreadStatus.unread",
+        lightFallbackRgb = 0x3FE47E,
+        darkFallbackRgb = 0x57965C,
+        statusMessageKey = "toolwindow.thread.status.done",
+      ),
+      AgentThreadActivity.NEEDS_INPUT to AgentThreadActivityPresentation(
+        namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
         lightFallbackRgb = 0x4DA3FF,
         darkFallbackRgb = 0x548AF7,
         statusMessageKey = "toolwindow.thread.status.needs.input",
@@ -42,6 +49,7 @@ class AgentThreadActivityPresentationTest {
         Color(presentation.lightFallbackRgb).rgb,
         Color(presentation.darkFallbackRgb).rgb,
       )
+      assertThat(activity.statusBadgeColor()?.rgb).isEqualTo(if (presentation.showBadge) activity.statusColor().rgb else null)
       assertThat(activity.statusMessageKey()).isEqualTo(presentation.statusMessageKey)
     }
   }
@@ -50,13 +58,14 @@ class AgentThreadActivityPresentationTest {
   fun prefersUiManagerOverrideForNamedColor() {
     val overrideColor = Color(0x112233)
 
-    withTemporaryReadyUiColor(overrideColor) {
-      assertThat(AgentThreadActivity.READY.statusColor().rgb).isEqualTo(overrideColor.rgb)
+    withTemporaryNeedsInputUiColor(overrideColor) {
+      assertThat(AgentThreadActivity.NEEDS_INPUT.statusColor().rgb).isEqualTo(overrideColor.rgb)
+      assertThat(AgentThreadActivity.NEEDS_INPUT.statusBadgeColor()?.rgb).isEqualTo(overrideColor.rgb)
     }
   }
 
-  private fun withTemporaryReadyUiColor(color: Color, action: () -> Unit) {
-    val key = "AgentWorkbench.ThreadStatus.ready"
+  private fun withTemporaryNeedsInputUiColor(color: Color, action: () -> Unit) {
+    val key = "AgentWorkbench.ThreadStatus.needsInput"
     val defaults = UIManager.getDefaults()
     val previous = defaults[key]
     UIManager.put(key, color)

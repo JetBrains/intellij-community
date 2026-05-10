@@ -9,6 +9,7 @@ data class AgentThreadActivityPresentation(
   @JvmField val lightFallbackRgb: Int,
   @JvmField val darkFallbackRgb: Int,
   @JvmField val statusMessageKey: String,
+  @JvmField val showBadge: Boolean = true,
 ) {
   val namedColor: JBColor = JBColor.namedColor(namedColorKey, JBColor(lightFallbackRgb, darkFallbackRgb))
 }
@@ -18,20 +19,23 @@ private fun threadActivityPresentation(
   lightFallbackColor: Int,
   darkFallbackColor: Int,
   statusMessageKey: String,
+  showBadge: Boolean = true,
 ): AgentThreadActivityPresentation {
   return AgentThreadActivityPresentation(
     namedColorKey = namedColorKey,
     lightFallbackRgb = lightFallbackColor,
     darkFallbackRgb = darkFallbackColor,
     statusMessageKey = statusMessageKey,
+    showBadge = showBadge,
   )
 }
 
 private val READY_PRESENTATION = threadActivityPresentation(
   namedColorKey = "AgentWorkbench.ThreadStatus.ready",
-  lightFallbackColor = 0x3FE47E,
-  darkFallbackColor = 0x57965C,
+  lightFallbackColor = 0x8C8C8C,
+  darkFallbackColor = 0x8C8C8C,
   statusMessageKey = "toolwindow.thread.status.ready",
+  showBadge = false,
 )
 
 private val PROCESSING_PRESENTATION = threadActivityPresentation(
@@ -50,6 +54,13 @@ private val REVIEWING_PRESENTATION = threadActivityPresentation(
 
 private val UNREAD_PRESENTATION = threadActivityPresentation(
   namedColorKey = "AgentWorkbench.ThreadStatus.unread",
+  lightFallbackColor = 0x3FE47E,
+  darkFallbackColor = 0x57965C,
+  statusMessageKey = "toolwindow.thread.status.done",
+)
+
+private val NEEDS_INPUT_PRESENTATION = threadActivityPresentation(
+  namedColorKey = "AgentWorkbench.ThreadStatus.needsInput",
   lightFallbackColor = 0x4DA3FF,
   darkFallbackColor = 0x548AF7,
   statusMessageKey = "toolwindow.thread.status.needs.input",
@@ -60,10 +71,16 @@ fun AgentThreadActivity.presentation(): AgentThreadActivityPresentation {
     AgentThreadActivity.READY -> READY_PRESENTATION
     AgentThreadActivity.PROCESSING -> PROCESSING_PRESENTATION
     AgentThreadActivity.REVIEWING -> REVIEWING_PRESENTATION
+    AgentThreadActivity.NEEDS_INPUT -> NEEDS_INPUT_PRESENTATION
     AgentThreadActivity.UNREAD -> UNREAD_PRESENTATION
   }
 }
 
 fun AgentThreadActivity.statusColor(): Color = presentation().namedColor
+
+fun AgentThreadActivity.statusBadgeColor(): Color? {
+  val presentation = presentation()
+  return presentation.namedColor.takeIf { presentation.showBadge }
+}
 
 fun AgentThreadActivity.statusMessageKey(): String = presentation().statusMessageKey

@@ -19,6 +19,7 @@ data class CodexBackendThreadRefreshResult(
 )
 
 enum class CodexSessionActivity {
+  NEEDS_INPUT,
   UNREAD,
   REVIEWING,
   PROCESSING,

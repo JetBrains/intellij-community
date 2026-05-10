@@ -5,6 +5,7 @@ enum class AgentThreadActivity {
   READY,
   PROCESSING,
   REVIEWING,
+  NEEDS_INPUT,
   UNREAD,
 }
 

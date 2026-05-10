@@ -6,10 +6,10 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 
 internal fun CodexSessionActivity.toAgentThreadActivity(): AgentThreadActivity {
   return when (this) {
+    CodexSessionActivity.NEEDS_INPUT -> AgentThreadActivity.NEEDS_INPUT
     CodexSessionActivity.UNREAD -> AgentThreadActivity.UNREAD
     CodexSessionActivity.REVIEWING -> AgentThreadActivity.REVIEWING
     CodexSessionActivity.PROCESSING -> AgentThreadActivity.PROCESSING
     CodexSessionActivity.READY -> AgentThreadActivity.READY
   }
 }
-

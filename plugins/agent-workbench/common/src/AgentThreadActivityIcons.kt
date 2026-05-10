@@ -5,5 +5,6 @@ import com.intellij.ui.IconManager
 import javax.swing.Icon
 
 fun withAgentThreadActivityBadge(baseIcon: Icon, activity: AgentThreadActivity): Icon {
-  return IconManager.getInstance().withIconBadge(baseIcon, activity.statusColor())
+  val badgeColor = activity.statusBadgeColor() ?: return baseIcon
+  return IconManager.getInstance().withIconBadge(baseIcon, badgeColor)
 }

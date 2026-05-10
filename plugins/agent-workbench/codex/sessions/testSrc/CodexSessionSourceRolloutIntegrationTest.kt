@@ -116,14 +116,14 @@ class CodexSessionSourceRolloutIntegrationTest {
         codexHome = tempDir,
         threadIds = listOf(THREAD_ID),
         backendThreadCustomizer = { backendThread ->
-          backendThread.copy(activity = CodexSessionActivity.UNREAD, requiresResponse = true)
+          backendThread.copy(activity = CodexSessionActivity.NEEDS_INPUT, requiresResponse = true)
         },
       )
 
       val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
 
       assertThat(listedThreads).hasSize(1)
-      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.NEEDS_INPUT)
     }
   }
 
@@ -155,7 +155,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun rolloutRequestUserInputProducesUnreadHint() {
+  fun rolloutRequestUserInputProducesNeedsInputHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-user-input")
       writeRollout(
@@ -177,12 +177,12 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.NEEDS_INPUT))
     }
   }
 
   @Test
-  fun appServerResponseRequiredUnreadStillWinsOverNewerRolloutProcessing() {
+  fun appServerResponseRequiredNeedsInputStillWinsOverNewerRolloutProcessing() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-response-required")
       writeRollout(
@@ -199,7 +199,7 @@ class CodexSessionSourceRolloutIntegrationTest {
         appServerHints = mapOf(
           projectDir.toString() to testRefreshHintsOf(
             THREAD_ID to testRefreshHint(
-              activity = AgentThreadActivity.UNREAD,
+              activity = AgentThreadActivity.NEEDS_INPUT,
               updatedAt = 100L,
               responseRequired = true,
             )
@@ -208,7 +208,7 @@ class CodexSessionSourceRolloutIntegrationTest {
       )
 
       assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
-        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.NEEDS_INPUT))
     }
   }
 }

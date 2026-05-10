@@ -22,7 +22,7 @@ class CodexSessionActivityResolverTest {
   }
 
   @Test
-  fun responseRequiredFlagsAreRecognizedAndMapToUnread() {
+  fun responseRequiredFlagsAreRecognizedAndMapToNeedsInput() {
     assertThat(emptyList<CodexThreadActiveFlag>().isResponseRequired()).isFalse()
     assertThat(listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL).isResponseRequired()).isTrue()
     assertThat(listOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT).isResponseRequired()).isTrue()
@@ -32,13 +32,13 @@ class CodexSessionActivityResolverTest {
         statusKind = CodexThreadStatusKind.ACTIVE,
         activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
       ).toCodexSessionActivity()
-    ).isEqualTo(CodexSessionActivity.UNREAD)
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
     assertThat(
       thread(
         statusKind = CodexThreadStatusKind.ACTIVE,
         activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT),
       ).toCodexSessionActivity()
-    ).isEqualTo(CodexSessionActivity.UNREAD)
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   @Test
@@ -90,7 +90,7 @@ class CodexSessionActivityResolverTest {
         isReviewing = true,
         hasInProgressTurn = true,
       ).toCodexSessionActivity()
-    ).isEqualTo(CodexSessionActivity.UNREAD)
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 
   @Test
@@ -104,7 +104,7 @@ class CodexSessionActivityResolverTest {
         statusKind = CodexThreadStatusKind.ACTIVE,
         activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT),
       ).toCodexSessionActivity()
-    ).isEqualTo(CodexSessionActivity.UNREAD)
+    ).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
   }
 }
 
