@@ -9,7 +9,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppIcon
+import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -34,7 +36,10 @@ class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
 
     val toInstall = ids.filterNot { PluginManagerCore.isPluginInstalled(it) }.toSet()
     if (toInstall.isEmpty()) {
-      return null
+      val names = ids.joinToString(", ") {
+        HtmlChunk.text(PluginManagerCore.getPlugin(it)?.name ?: it.idString).bold().toString()
+      }
+      return XmlStringUtil.wrapInHtml(IdeBundle.message("jb.protocol.plugin.install.already.installed", names))
     }
 
     withContext(Dispatchers.EDT) {
