@@ -78,6 +78,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/PrivateMembers.java");
         }
 
+        @TestMetadata("PrivateOuterClass.java")
+        public void testPrivateOuterClass() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/PrivateOuterClass.java");
+        }
+
         @TestMetadata("PropertyAccessors.java")
         public void testPropertyAccessors() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/PropertyAccessors.java");

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -102,11 +103,24 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
     }
 
     /**
+     * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
+     */
+    context(_: KaSession)
+    private fun KaDeclarationSymbol.getEffectiveVisibility(): KaSymbolVisibility {
+        val visibility = visibility
+        val containingSymbol = containingSymbol as? KaDeclarationSymbol
+        if (containingSymbol != null) {
+            return maxOf(visibility, containingSymbol.getEffectiveVisibility())
+        }
+        return visibility
+    }
+
+    /**
      * Checks if the given companion object's declaration symbol is visible at the [positionFile].
      * The checks here are simpler because companion object symbols cannot be abstract for example.
      */
     context(_: KaSession)
-    private fun KaDeclarationSymbol.isVisibleAtPosition(positionFile: PsiFile): Boolean = when (visibility) {
+    private fun KaDeclarationSymbol.isVisibleAtPosition(positionFile: PsiFile): Boolean = when (getEffectiveVisibility()) {
         KaSymbolVisibility.PUBLIC -> true
         KaSymbolVisibility.INTERNAL -> {
             val positionModule = positionFile.getKaModule(positionFile.project, useSiteModule)
