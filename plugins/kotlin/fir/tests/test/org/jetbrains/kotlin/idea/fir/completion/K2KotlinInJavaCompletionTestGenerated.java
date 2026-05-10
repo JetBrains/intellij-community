@@ -48,6 +48,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/ContainingClassMember.java");
         }
 
+        @TestMetadata("HideSuspendFunction.java")
+        public void testHideSuspendFunction() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/HideSuspendFunction.java");
+        }
+
         @TestMetadata("JvmField.java")
         public void testJvmField() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/JvmField.java");

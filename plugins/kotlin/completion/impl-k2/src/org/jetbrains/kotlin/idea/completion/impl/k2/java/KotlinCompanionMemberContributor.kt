@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.useSiteModule
@@ -143,6 +144,8 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
                 // If the declaration is marked as static or JvmField, it will already appear without `.Companion`.
                 if (declaration.isMarkedAsStatic() || declaration.isJvmField()) continue
                 if (!declaration.isVisibleAtPosition(parameters.originalFile)) continue
+                // Hide suspend functions because they cannot easily be called from Java
+                if (declaration is KaNamedFunctionSymbol && declaration.isSuspend) continue
 
                 createCompanionLookupElements(declaration).forEach { lookupElement ->
                     val wrappedElement = KotlinCompanionMemberLookupElement(companionObjectLookupElement, lookupElement)
