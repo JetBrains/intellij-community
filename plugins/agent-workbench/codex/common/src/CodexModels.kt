@@ -78,6 +78,7 @@ data class CodexThreadActivitySnapshot(
   @JvmField val hasPendingPlan: Boolean = false,
   @JvmField val isReviewing: Boolean = false,
   @JvmField val hasInProgressTurn: Boolean = false,
+  @JvmField val hasTurnActivity: Boolean = false,
 )
 
 @Immutable

@@ -84,6 +84,13 @@ class CodexSessionActivityResolverTest {
         hasUnreadAssistantMessage = true,
       ).toCodexSessionActivity()
     ).isEqualTo(CodexSessionActivity.PROCESSING)
+    assertThat(
+      snapshot(
+        statusKind = CodexThreadStatusKind.ACTIVE,
+        hasUnreadAssistantMessage = true,
+        hasTurnActivity = true,
+      ).toCodexSessionActivity()
+    ).isEqualTo(CodexSessionActivity.UNREAD)
   }
 
   @Test
@@ -143,6 +150,7 @@ private fun snapshot(
   hasPendingPlan: Boolean = false,
   isReviewing: Boolean = false,
   hasInProgressTurn: Boolean = false,
+  hasTurnActivity: Boolean = false,
 ): CodexThreadActivitySnapshot {
   return CodexThreadActivitySnapshot(
     threadId = "thread-1",
@@ -153,6 +161,7 @@ private fun snapshot(
     hasPendingPlan = hasPendingPlan,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
+    hasTurnActivity = hasTurnActivity,
   )
 }
 

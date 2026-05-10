@@ -579,6 +579,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
   var latestPlanItemIndex = Long.MIN_VALUE
   var isReviewing = false
   var hasInProgressTurn = false
+  var hasTurnActivity = false
 
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
@@ -593,6 +594,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
         activeFlags = parsedStatus.activeFlags
       }
       "turns" -> {
+        hasTurnActivity = true
         val parsedTurns = parseTurnsActivity(parser)
         latestUserItemIndex = parsedTurns.latestUserItemIndex
         latestAssistantItemIndex = parsedTurns.latestAssistantItemIndex
@@ -623,6 +625,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
     hasPendingPlan = hasPendingPlan,
     isReviewing = isReviewing,
     hasInProgressTurn = hasInProgressTurn,
+    hasTurnActivity = hasTurnActivity,
   )
 }
 

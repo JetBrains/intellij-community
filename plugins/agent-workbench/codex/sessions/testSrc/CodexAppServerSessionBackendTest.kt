@@ -92,6 +92,45 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun refreshThreadsForSubAgentChildReturnsFoldedParentThread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-child-refresh")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val threadsById = mapOf(
+        "parent-1" to parentThread(id = "parent-1", cwd = cwd, updatedAt = 200L),
+        "child-1" to subAgentThread(
+          id = "child-1",
+          cwd = cwd,
+          parentThreadId = "parent-1",
+          updatedAt = 220L,
+          activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT),
+        ),
+      )
+      val readCalls = ArrayList<String>()
+      val archiveCalls = ArrayList<String>()
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = { emptyList() },
+        readThread = { threadId ->
+          readCalls.add(threadId)
+          threadsById[threadId]
+        },
+        archiveThread = { threadId -> archiveCalls.add(threadId) },
+      )
+
+      val result = backend.refreshThreads(path = projectDir.toString(), threadIds = setOf("child-1"), openProject = null)
+
+      assertThat(readCalls).containsExactly("child-1", "parent-1")
+      assertThat(archiveCalls).isEmpty()
+      assertThat(result?.isComplete).isFalse()
+      val parent = result?.threads.orEmpty().single()
+      assertThat(parent.thread.id).isEqualTo("parent-1")
+      assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-1")
+      assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+    }
+  }
+
+  @Test
   fun prefetchArchivesAtMostOneOrphanPerCall() {
     runBlocking(Dispatchers.Default) {
       val projectA = tempDir.resolve("project-a")

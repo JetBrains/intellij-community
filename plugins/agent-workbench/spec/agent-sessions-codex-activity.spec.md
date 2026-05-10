@@ -2,6 +2,8 @@
 name: Codex Session Activity
 description: Requirements for mapping Codex app-server and rollout status signals to Workbench thread activity.
 targets:
+  - ../sessions/src/service/*.kt
+  - ../sessions/testSrc/*.kt
   - ../common/src/*.kt
   - ../common/testSrc/*.kt
   - ../codex/common/src/*.kt
@@ -18,7 +20,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROCESSING`, `READY`) rather than raw Codex status kinds. App-server status is primary; rollout may fill gaps or uplift stale non-response-required activity when allowed by refresh-hint rules.
+Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROCESSING`, `READY`) rather than raw Codex status kinds. App-server status is primary when it is current; rollout, notifications, and scoped refreshes may fill gaps or replace stale activity when allowed by refresh-hint rules.
 
 ## Requirements
 - `CodexThreadStatusKind` is raw provider state only. It must not create extra Agent Threads activity states.
@@ -34,16 +36,27 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
 
+- App-server snapshots that include turn details must derive work-in-progress from the turn list. A stale raw `ACTIVE` thread status must not mask a turn-derived unread or ready state when no turn is still in progress.
+  [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
+  [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
+
 - App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Snapshot-only promotions such as unread assistant output and review mode require `thread/read` or rollout fallback.
+- Rollout task completion is turn-aware when `turn_id` is present: a stale completion from an earlier turn must not clear a newer processing turn, while a later completed turn supersedes earlier incomplete turns.
+  [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Notification hints are timestamped, short-lived, path-normalized, and must not override a newer known thread seed. Snapshot-only promotions such as unread assistant output and review mode require `thread/read` or rollout fallback.
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
 
-- App-server activity remains primary for overlapping thread ids, except rollout may provide missing activity, raise activity to needs input, or override stale non-response-required app-server activity with fresher processing/reviewing/done-output.
+- App-server activity remains primary for overlapping thread ids when it is current, except rollout may provide missing activity, raise stale or missing activity to needs input, or override stale app-server activity with fresher processing/reviewing/done-output. Response-required app-server attention remains primary when it is current.
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRefreshHintsTest.kt
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
+
+- Thread-scoped app-server refresh for a grouped sub-agent child must return the folded parent thread. Partial parent updates merge returned sub-agents by id with existing siblings so one child status update cannot drop other children.
+  [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+  [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
 - Session-tree Codex badge colors are needs input `#4DA3FF`, done/unread `#3FE47E`, reviewing `#2FD1C4`, and processing `#FF9F43`; ready threads show the plain provider icon without a badge.
   [@test] ../common/testSrc/AgentThreadActivityPresentationTest.kt
@@ -53,6 +66,7 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivityResolverTest`
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerRefreshHintsProviderTest`
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionSourceRefreshHintsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionRefreshCoordinatorTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsCodexActivityRenderingIntegrationTest`
 
 ## References

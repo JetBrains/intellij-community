@@ -59,23 +59,35 @@ class CodexAppServerSessionBackend(
         }
         val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return CodexBackendThreadRefreshResult()
         val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
-        val threads = ArrayList<CodexBackendThread>(threadIds.size)
+        val fetchedThreadsById = LinkedHashMap<String, CodexThread>(threadIds.size)
+        val parentThreadIdsToFetch = LinkedHashSet<String>()
         for (threadId in threadIds) {
             val thread = readThread(threadId) ?: continue
             if (thread.cwd != cwdFilter) {
                 continue
             }
             if (thread.shouldBeGroupedAsSubAgentChild()) {
+                thread.parentThreadId?.trim()?.takeIf { it.isNotEmpty() }?.let(parentThreadIdsToFetch::add)
+                fetchedThreadsById[thread.id] = thread
                 continue
             }
-            threads.add(
-                CodexBackendThread(
-                    thread = thread,
-                    activity = thread.toCodexSessionActivity(),
-                    requiresResponse = thread.activeFlags.isResponseRequired(),
-                )
-            )
+            fetchedThreadsById[thread.id] = thread
         }
+        for (parentThreadId in parentThreadIdsToFetch) {
+            if (parentThreadId in fetchedThreadsById) {
+                continue
+            }
+            val parentThread = readThread(parentThreadId) ?: continue
+            if (parentThread.cwd == cwdFilter) {
+                fetchedThreadsById[parentThread.id] = parentThread
+            }
+        }
+        val threads = buildThreadsByCwd(
+            threads = ArrayList(fetchedThreadsById.values),
+            targetCwds = setOf(cwdFilter),
+            archiveThread = {},
+            orphanArchiveAttemptRecorder = { false },
+        )[cwdFilter].orEmpty()
         return CodexBackendThreadRefreshResult(threads = threads, isComplete = false)
     }
 

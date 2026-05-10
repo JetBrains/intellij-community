@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 
 class CodexSessionSourceRolloutIntegrationTest {
   @TempDir
@@ -71,6 +72,62 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
+  fun rolloutTaskCompleteClearsStaleAppServerProcessingListActivityToReady() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-list-complete-ready")
+      writeRollout(
+        projectDir = projectDir,
+        lines = listOf(
+          eventMsg(timestamp = "2026-03-08T10:15:01.000Z", type = "task_started"),
+          eventMsg(timestamp = "2026-03-08T10:15:02.000Z", type = "task_complete"),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        backendThreadCustomizer = { backendThread -> backendThread.copy(activity = CodexSessionActivity.PROCESSING) },
+      )
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+
+      assertThat(listedThreads).hasSize(1)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun rolloutTaskCompleteClearsStaleAppServerProcessingRefreshHintToUnread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-refresh-complete-unread")
+      writeRollout(
+        projectDir = projectDir,
+        lines = listOf(
+          eventMsg(timestamp = "2026-03-08T10:16:00.000Z", type = "user_message", message = "Run it"),
+          eventMsg(timestamp = "2026-03-08T10:16:01.000Z", type = "task_started"),
+          eventMsg(timestamp = "2026-03-08T10:16:02.000Z", type = "agent_message", message = "Done"),
+          eventMsg(timestamp = "2026-03-08T10:16:03.000Z", type = "task_complete"),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        appServerHints = mapOf(
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(activity = AgentThreadActivity.PROCESSING, updatedAt = 100L)
+          )
+        ),
+      )
+
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.UNREAD))
+    }
+  }
+
+  @Test
   fun rolloutHintRefreshUpdatesReadyAppServerThreadWithoutAppServerNotification() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-refresh-processing")
@@ -101,7 +158,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun appServerResponseRequiredListActivityWinsOverRolloutProcessing() {
+  fun newerRolloutProcessingOverridesStaleAppServerResponseRequiredListActivity() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-list-response-required")
       writeRollout(
@@ -117,6 +174,37 @@ class CodexSessionSourceRolloutIntegrationTest {
         threadIds = listOf(THREAD_ID),
         backendThreadCustomizer = { backendThread ->
           backendThread.copy(activity = CodexSessionActivity.NEEDS_INPUT, requiresResponse = true)
+        },
+      )
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+
+      assertThat(listedThreads).hasSize(1)
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    }
+  }
+
+  @Test
+  fun currentAppServerResponseRequiredListActivityWinsOverRolloutProcessing() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-list-current-response-required")
+      writeRollout(
+        projectDir = projectDir,
+        lines = listOf(
+          eventMsg(timestamp = "2026-03-08T10:35:01.000Z", type = "task_started"),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        backendThreadCustomizer = { backendThread ->
+          backendThread.copy(
+            thread = backendThread.thread.copy(updatedAt = Instant.parse("2026-03-08T10:35:01.000Z").toEpochMilli()),
+            activity = CodexSessionActivity.NEEDS_INPUT,
+            requiresResponse = true,
+          )
         },
       )
 
@@ -182,7 +270,7 @@ class CodexSessionSourceRolloutIntegrationTest {
   }
 
   @Test
-  fun appServerResponseRequiredNeedsInputStillWinsOverNewerRolloutProcessing() {
+  fun rolloutProcessingRefreshOverridesStaleAppServerResponseRequiredHint() {
     runBlocking(Dispatchers.Default) {
       val projectDir = createProjectDir("project-response-required")
       writeRollout(
@@ -201,6 +289,37 @@ class CodexSessionSourceRolloutIntegrationTest {
             THREAD_ID to testRefreshHint(
               activity = AgentThreadActivity.NEEDS_INPUT,
               updatedAt = 100L,
+              responseRequired = true,
+            )
+          )
+        ),
+      )
+
+      assertThat(testRefreshActivities(source, projectDir, listOf(THREAD_ID)))
+        .containsExactlyEntriesOf(mapOf(THREAD_ID to AgentThreadActivity.PROCESSING))
+    }
+  }
+
+  @Test
+  fun currentAppServerResponseRequiredHintStillWinsOverRolloutProcessing() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-current-response-required")
+      writeRollout(
+        projectDir = projectDir,
+        lines = listOf(
+          eventMsg(timestamp = "2026-03-08T13:10:01.000Z", type = "task_started"),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        appServerHints = mapOf(
+          projectDir.toString() to testRefreshHintsOf(
+            THREAD_ID to testRefreshHint(
+              activity = AgentThreadActivity.NEEDS_INPUT,
+              updatedAt = Instant.parse("2026-03-08T13:10:01.000Z").toEpochMilli(),
               responseRequired = true,
             )
           )

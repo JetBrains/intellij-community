@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
@@ -677,8 +678,18 @@ private fun mergeThreadUpdatesForProvider(
 }
 
 private fun mergeThreadUpdate(existing: AgentSessionThread, update: AgentSessionThread): AgentSessionThread {
-  if (update.subAgents.isNotEmpty() || existing.subAgents.isEmpty()) {
+  if (update.subAgents.isEmpty()) {
+    if (existing.subAgents.isEmpty()) return update
+    return update.copy(subAgents = existing.subAgents)
+  }
+  if (existing.subAgents.isEmpty()) {
     return update
   }
-  return update.copy(subAgents = existing.subAgents)
+
+  val mergedSubAgents = LinkedHashMap<String, AgentSubAgent>(
+    existing.subAgents.size + update.subAgents.size
+  )
+  existing.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
+  update.subAgents.forEach { subAgent -> mergedSubAgents[subAgent.id] = subAgent }
+  return update.copy(subAgents = ArrayList(mergedSubAgents.values))
 }

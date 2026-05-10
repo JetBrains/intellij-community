@@ -368,6 +368,7 @@ class CodexAppServerClientTest {
       assertThat(snapshot.hasUnreadAssistantMessage).isTrue()
       assertThat(snapshot.isReviewing).isTrue()
       assertThat(snapshot.hasInProgressTurn).isTrue()
+      assertThat(snapshot.hasTurnActivity).isTrue()
     }
     finally {
       client.shutdown()
@@ -425,11 +426,13 @@ class CodexAppServerClientTest {
       assertThat(pendingPlan).isNotNull
       assertThat(pendingPlan!!.hasPendingPlan).isTrue()
       assertThat(pendingPlan.hasUnreadAssistantMessage).isTrue()
+      assertThat(pendingPlan.hasTurnActivity).isTrue()
 
       val clearedPlan = client.readThreadActivitySnapshot("thread-plan-cleared")
       assertThat(clearedPlan).isNotNull
       assertThat(clearedPlan!!.hasPendingPlan).isFalse()
       assertThat(clearedPlan.hasUnreadAssistantMessage).isFalse()
+      assertThat(clearedPlan.hasTurnActivity).isTrue()
     }
     finally {
       client.shutdown()

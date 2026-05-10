@@ -192,6 +192,65 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun laterCompletedTaskClearsEarlierIncompleteProcessingEvent() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-superseded-processing")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
+          .resolve("rollout-superseded-processing.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-02-13T12:30:00.000Z",
+            id = "session-superseded-processing",
+            cwd = projectDir,
+          ),
+          """{"timestamp":"2026-02-13T12:30:05.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run a long task"}}""",
+          """{"timestamp":"2026-02-13T12:30:10.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+          """{"timestamp":"2026-02-13T12:30:20.000Z","type":"event_msg","payload":{"type":"task_complete"}}""",
+          """{"timestamp":"2026-02-13T12:31:10.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+          """{"timestamp":"2026-02-13T12:32:10.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+          """{"timestamp":"2026-02-13T12:32:20.000Z","type":"event_msg","payload":{"type":"task_complete"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().activity).isEqualTo(CodexSessionActivity.READY)
+    }
+  }
+
+  @Test
+  fun staleCompletedTaskForEarlierTurnDoesNotClearNewerProcessingTurn() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-stale-completed-turn")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
+          .resolve("rollout-stale-completed-turn.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-02-13T13:30:00.000Z",
+            id = "session-stale-completed-turn",
+            cwd = projectDir,
+          ),
+          """{"timestamp":"2026-02-13T13:30:10.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"turn-1"}}""",
+          """{"timestamp":"2026-02-13T13:30:20.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"turn-2"}}""",
+          """{"timestamp":"2026-02-13T13:30:30.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-1"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
+    }
+  }
+
+  @Test
   fun prefersSnakeCaseThreadNameUpdatedEventForTitle() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-thread-rename")
@@ -665,9 +724,10 @@ class CodexRolloutSessionBackendTest {
         assertThat(threadsBeforeTrailingUpdate).hasSize(1)
         assertThat(threadsBeforeTrailingUpdate.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
 
-        appendRolloutLine(
-          file = rollout,
-          line = """{"timestamp":"2026-02-16T10:00:02.000Z","type":"event_msg","payload":{"type":"task_complete"}}""",
+        Files.write(
+          rollout,
+          listOf("""{"timestamp":"2026-02-16T10:00:02.000Z","type":"event_msg","payload":{"type":"task_complete"}}"""),
+          StandardOpenOption.APPEND,
         )
 
         val trailingUpdate = awaitWatcherUpdate(updates)
@@ -886,10 +946,6 @@ private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, pa
 private fun writeRollout(file: Path, lines: List<String>) {
   Files.createDirectories(file.parent)
   Files.write(file, lines)
-}
-
-private fun appendRolloutLine(file: Path, line: String) {
-  Files.write(file, listOf(line), StandardOpenOption.APPEND)
 }
 
 private data class ActivityCase(

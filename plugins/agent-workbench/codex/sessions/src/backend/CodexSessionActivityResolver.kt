@@ -22,8 +22,9 @@ internal fun CodexAppServerStartedThread.toCodexSessionActivity(): CodexSessionA
 }
 
 internal fun CodexThreadActivitySnapshot.toCodexSessionActivity(): CodexSessionActivity {
+  val effectiveStatusKind = if (hasTurnActivity && !hasInProgressTurn) CodexThreadStatusKind.IDLE else statusKind
   return resolveCodexSessionActivity(
-    statusKind = statusKind,
+    statusKind = effectiveStatusKind,
     activeFlags = activeFlags,
     hasUnreadAssistantMessage = hasUnreadAssistantMessage,
     hasPendingPlan = hasPendingPlan,

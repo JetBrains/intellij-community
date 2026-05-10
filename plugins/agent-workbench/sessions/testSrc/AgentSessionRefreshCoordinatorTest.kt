@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -1820,6 +1821,82 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(project.threads.first { it.id == "codex-2" }.title).isEqualTo("Stable")
       assertThat(refreshRequests).containsExactly(listOf(PROJECT_PATH) to setOf("codex-1"))
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
+    }
+  }
+
+  @Test
+  fun threadScopedProviderUpdateMergesReturnedSubAgentsWithExistingParentSubAgents() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val refreshRequests = mutableListOf<Pair<List<String>, Set<String>>>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      refreshThreadsProvider = { request ->
+        refreshRequests += request.paths to request.threadIds
+        AgentSessionSourceRefreshResult(
+          partialThreadsByPath = mapOf(
+            PROJECT_PATH to listOf(
+              thread(
+                id = "codex-parent",
+                updatedAt = 900L,
+                title = "Parent updated",
+                provider = AgentSessionProvider.CODEX,
+                subAgents = listOf(
+                  AgentSubAgent(id = "codex-sub-2", name = "Sub-agent 2 updated"),
+                  AgentSubAgent(id = "codex-sub-3", name = "Sub-agent 3"),
+                ),
+              )
+            )
+          )
+        )
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(
+                id = "codex-parent",
+                updatedAt = 100L,
+                title = "Parent old",
+                provider = AgentSessionProvider.CODEX,
+                subAgents = listOf(
+                  AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1"),
+                  AgentSubAgent(id = "codex-sub-2", name = "Sub-agent 2"),
+                ),
+              ),
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(threadIds = setOf("codex-parent")))
+
+      waitForCondition {
+        stateStore.snapshot().projects.first().threads.single().updatedAt == 900L
+      }
+
+      val thread = stateStore.snapshot().projects.first().threads.single()
+      assertThat(thread.title).isEqualTo("Parent updated")
+      assertThat(thread.subAgents).containsExactly(
+        AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1"),
+        AgentSubAgent(id = "codex-sub-2", name = "Sub-agent 2 updated"),
+        AgentSubAgent(id = "codex-sub-3", name = "Sub-agent 3"),
+      )
+      assertThat(refreshRequests).containsExactly(listOf(PROJECT_PATH) to setOf("codex-parent"))
     }
   }
 
