@@ -18,17 +18,16 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
-import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
-import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
+import com.intellij.driver.sdk.ui.components.common.toolwindows.openLeftToolWindow
 import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
-import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
@@ -362,52 +361,6 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
 
     waitFor("the editor is present") {
       notebookEditor().present()
-    }
-  }
-}
-
-//TODO: @Stankevych should be refactored to a single fun that interacts with the right toolbar
-fun Driver.openRightToolWindow(stripeButtonName: String) {
-  ideFrame {
-    val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
-                       ?: return@ideFrame
-    val varsButton = rightToolbar.stripeButton(stripeButtonName)
-    if (varsButton.present()) {
-      varsButton.open()
-    }
-  }
-}
-
-fun Driver.closeRightToolWindow(stripeButtonName: String) {
-  ideFrame {
-    val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
-                       ?: return@ideFrame
-    val varsButton = rightToolbar.stripeButton(stripeButtonName)
-    if (varsButton.present()) {
-      varsButton.close()
-    }
-  }
-}
-
-//TODO: @Stankevych should be refactored to a single fun that interacts with the left toolbar
-fun Driver.openLeftToolWindow(stripeButtonName: String) {
-  ideFrame {
-    val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
-                      ?: return@ideFrame
-    val varsButton = leftToolbar.stripeButton(stripeButtonName)
-    if (varsButton.notPresent()) {
-      varsButton.open()
-    }
-  }
-}
-
-fun Driver.closeLeftToolWindow(stripeButtonName: String) {
-  ideFrame {
-    val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
-                      ?: return@ideFrame
-    val varsButton = leftToolbar.stripeButton(stripeButtonName)
-    if (varsButton.present()) {
-      varsButton.close()
     }
   }
 }
