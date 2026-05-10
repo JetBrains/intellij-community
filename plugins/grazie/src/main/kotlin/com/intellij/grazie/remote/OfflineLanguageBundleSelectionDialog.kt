@@ -27,7 +27,7 @@ internal class OfflineLanguageBundleSelectionDialog private constructor(
   private var files: Files? = null
 
   init {
-    title = msg("grazie.offline.language.bundle.dialog.title.plural")
+    title = msg("grazie.offline.language.bundle.dialog.title")
     init()
   }
 
