@@ -41,6 +41,7 @@ class ClaudeSessionsStoreTest {
     assertThat(thread!!.id).isEqualTo("abcd1234-1111-2222-3333-xyzxyzxyzxyz")
     assertThat(thread.title).contains("Investigate flaky test")
     assertThat(thread.updatedAt).isGreaterThan(0)
+    assertThat(thread.projectPath).isEqualTo("/work/project-b")
   }
 
   @Test

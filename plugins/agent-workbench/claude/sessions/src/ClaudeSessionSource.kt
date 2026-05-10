@@ -26,7 +26,13 @@ class ClaudeSessionSource(
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = merge(
-      backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
+      backend.sessionUpdates.map { update ->
+        AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.THREADS_CHANGED,
+          scopedPaths = update.scopedPaths,
+          threadIds = update.threadIds,
+        )
+      },
       readStateUpdateEvents,
     )
 

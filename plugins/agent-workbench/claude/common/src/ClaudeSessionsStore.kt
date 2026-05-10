@@ -46,6 +46,7 @@ data class ClaudeSessionThread(
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
   @JvmField val hasCustomTitle: Boolean = false,
   @JvmField val titleSource: ClaudeSessionTitleSource = ClaudeSessionTitleSource.DEFAULT,
+  @JvmField val projectPath: String? = null,
 )
 
 class ClaudeSessionsStore(
@@ -80,6 +81,7 @@ class ClaudeSessionsStore(
     val activityState: ActivityTrackingState = if (tailState.hasActivitySignal) tailState else headState
     val activity = deriveActivity(activityState.needsInput, activityState.isProcessing)
     val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
+    val projectPath = headState.projectPath ?: tailState.projectPath
 
     val resolvedTitle = resolveThreadTitle(
       agentName = tailState.agentName,
@@ -105,6 +107,7 @@ class ClaudeSessionsStore(
       activity = activity,
       hasCustomTitle = tailState.agentName != null || tailState.customTitle != null,
       titleSource = resolvedTitle.source,
+      projectPath = projectPath,
     )
   }
 
@@ -165,6 +168,9 @@ class ClaudeSessionsStore(
       if (!lineData.lastPrompt.isNullOrBlank()) {
         state.lastPrompt = lineData.lastPrompt
       }
+      if (state.projectPath == null && !lineData.projectPath.isNullOrBlank()) {
+        state.projectPath = lineData.projectPath
+      }
       updateActivityFields(state, lineData)
       true
     }
@@ -189,6 +195,9 @@ class ClaudeSessionsStore(
       }
       if (scanState.gitBranch == null && !lineData.gitBranch.isNullOrBlank()) {
         scanState.gitBranch = lineData.gitBranch
+      }
+      if (scanState.projectPath == null && !lineData.projectPath.isNullOrBlank()) {
+        scanState.projectPath = lineData.projectPath
       }
       if (lineData.hasConversationSignal) {
         scanState.hasConversationSignal = true
@@ -274,6 +283,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var aiTitle: String? = null
     var lastPrompt: String? = null
     var type: String? = null
+    var projectPath: String? = null
     var gitBranch: String? = null
     var messageRole: String? = null
     var messageContent: String? = null
@@ -290,6 +300,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
         "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
         "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
         "type" -> type = readJsonStringOrNull(parser)
+        "cwd" -> projectPath = normalizePath(readJsonStringOrNull(parser))
         "agentName" -> agentName = readJsonStringOrNull(parser)
         "customTitle" -> customTitle = readJsonStringOrNull(parser)
         "aiTitle" -> aiTitle = readJsonStringOrNull(parser)
@@ -347,6 +358,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       aiTitle = if (type == "ai-title") normalizeClaudeTitleCandidate(aiTitle) else null,
       lastPrompt = if (type == "last-prompt") normalizeClaudeTitleCandidate(lastPrompt) else null,
       hasConversationSignal = hasConversationSignal,
+      projectPath = projectPath,
       gitBranch = normalizeNonBlank(gitBranch),
       activityEvent = activityEvent,
     )
@@ -562,6 +574,7 @@ private data class ParsedJsonlLine(
   @JvmField val aiTitle: String?,
   @JvmField val lastPrompt: String?,
   @JvmField val hasConversationSignal: Boolean,
+  @JvmField val projectPath: String?,
   @JvmField val gitBranch: String?,
   @JvmField val activityEvent: ClaudeActivityEvent,
 )
@@ -653,6 +666,7 @@ private data class JsonlTailScanState(
   @JvmField var customTitle: String? = null,
   @JvmField var aiTitle: String? = null,
   @JvmField var lastPrompt: String? = null,
+  @JvmField var projectPath: String? = null,
   override var hasActivitySignal: Boolean = false,
   override var awaitingAssistantTurn: Boolean = false,
   override var needsInput: Boolean = false,
@@ -664,6 +678,7 @@ private data class JsonlMetadataScanState(
   @JvmField var firstPrompt: String? = null,
   @JvmField var sessionId: String? = null,
   @JvmField var gitBranch: String? = null,
+  @JvmField var projectPath: String? = null,
   @JvmField var isSidechain: Boolean = false,
   override var updatedAt: Long? = null,
   @JvmField var hasConversationSignal: Boolean = false,

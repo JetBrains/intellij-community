@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 
 data class ClaudeBackendThread(
   @JvmField val id: String,
@@ -20,9 +21,17 @@ interface ClaudeSessionBackend {
 
   suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): ClaudeBackendThreadRefreshResult? = null
 
+  val sessionUpdates: Flow<ClaudeSessionUpdate>
+    get() = updates.map { ClaudeSessionUpdate() }
+
   val updates: Flow<Unit>
     get() = emptyFlow()
 }
+
+data class ClaudeSessionUpdate(
+  @JvmField val scopedPaths: Set<String>? = null,
+  @JvmField val threadIds: Set<String>? = null,
+)
 
 data class ClaudeBackendThreadRefreshResult(
   @JvmField val threads: List<ClaudeBackendThread> = emptyList(),

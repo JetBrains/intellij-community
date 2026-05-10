@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -19,6 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class ClaudeStoreSessionBackendTest {
   @TempDir
@@ -511,6 +513,82 @@ class ClaudeStoreSessionBackendTest {
   }
 
   @Test
+  fun emitsScopedSessionUpdateWhenJsonlFileChanges() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-scoped-updates"
+      val encodedPath = "-work-project-scoped-updates"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-scoped-updates.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(claudeUserLine("2026-02-10T10:00:00.000Z", "session-scoped-updates", projectPath, "Initial title")),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-scoped-updates")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUnscopedSessionUpdateWhenJsonlFileCannotBeParsed() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-unscoped-updates")
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-unscoped-updates.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf("""{"type":"file-history-snapshot","timestamp":"2026-02-10T10:00:00.000Z"}"""),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun emitsUpdatesWhenTranscriptCustomTitleChanges() {
     runBlocking(Dispatchers.Default) {
       val projectPath = "/work/project-custom-title-updates"
@@ -615,6 +693,45 @@ class ClaudeStoreSessionBackendTest {
         assertThat(threads).hasSize(1)
         assertThat(threads.single().title).isEqualTo("Updated summary")
         assertThat(threads.single().archived).isTrue()
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUnscopedSessionUpdateWhenIndexFileChanges() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-index-scope-updates"
+      val encodedPath = "-work-project-index-scope-updates"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val indexFile = projectDir.resolve("sessions-index.json")
+      Files.writeString(
+        indexFile,
+        """{"version":1,"entries":[{"sessionId":"session-index-scope-updates","summary":"Initial summary","isSidechain":false}],"originalPath":"$projectPath"}""",
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<ClaudeSessionUpdate>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(indexFile)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.scopedPaths).isNull()
+        assertThat(update.threadIds).isNull()
       }
       finally {
         updatesJob.cancelAndJoin()

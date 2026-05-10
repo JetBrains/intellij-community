@@ -5,8 +5,10 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
+import com.intellij.agent.workbench.claude.sessions.ClaudeSessionUpdate
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
@@ -25,11 +27,68 @@ internal class ClaudeStoreSessionBackend(
   private val store = ClaudeSessionsStore(claudeHomeProvider)
   private val threadIndex = ClaudeThreadIndex(store = store)
 
-  override val updates: Flow<Unit> = (changeSource?.invoke() ?: createWatcherUpdates())
+  private val sessionUpdateFlow: Flow<ClaudeSessionUpdate> = (changeSource?.invoke() ?: createWatcherUpdates())
     .map { changeSet ->
       threadIndex.markDirty(changeSet)
+      withContext(Dispatchers.IO) {
+        buildSessionUpdate(changeSet)
+      }
     }
     .conflate()
+
+  override val sessionUpdates: Flow<ClaudeSessionUpdate> = sessionUpdateFlow
+
+  override val updates: Flow<Unit> = sessionUpdateFlow.map(::toUnitUpdate)
+
+  private fun buildSessionUpdate(changeSet: FileBackedSessionChangeSet): ClaudeSessionUpdate {
+    if (changeSet.requiresFullRescan || changeSet.changedPaths.isEmpty()) {
+      LOG.debug {
+        "Claude sessions update is unscoped (fullRescan=${changeSet.requiresFullRescan}, changedPaths=${changeSet.changedPaths.size})"
+      }
+      return UNSCOPED_CLAUDE_SESSION_UPDATE
+    }
+
+    if (changeSet.changedPaths.any(::isClaudeSessionIndexPath)) {
+      LOG.debug { "Claude sessions update is unscoped (sessions index changed)" }
+      return UNSCOPED_CLAUDE_SESSION_UPDATE
+    }
+
+    val jsonlPaths = changeSet.changedPaths.filter(::isClaudeJsonlPath)
+    if (jsonlPaths.isEmpty()) {
+      LOG.debug { "Claude sessions update is unscoped (no JSONL paths in changedPaths=${changeSet.changedPaths.size})" }
+      return UNSCOPED_CLAUDE_SESSION_UPDATE
+    }
+
+    val scopedPaths = LinkedHashSet<String>()
+    val threadIds = LinkedHashSet<String>()
+    var failedParses = 0
+    for (path in jsonlPaths) {
+      val parsedThread = store.parseJsonlFile(path)
+      val projectPath = parsedThread?.projectPath?.takeIf { it.isNotBlank() }
+      if (parsedThread == null || projectPath == null) {
+        failedParses++
+        continue
+      }
+      scopedPaths += projectPath
+      threadIds += parsedThread.id
+    }
+
+    if (failedParses > 0 || scopedPaths.isEmpty()) {
+      LOG.debug {
+        "Claude sessions update falls back to unscoped refresh " +
+        "(changedJsonlPaths=${jsonlPaths.size}, failedParses=$failedParses, scopedPaths=${scopedPaths.size})"
+      }
+      return UNSCOPED_CLAUDE_SESSION_UPDATE
+    }
+
+    LOG.debug {
+      "Claude sessions update scoped (changedJsonlPaths=${jsonlPaths.size}, scopedPaths=${scopedPaths.size}, threadIds=${threadIds.size})"
+    }
+    return ClaudeSessionUpdate(
+      scopedPaths = scopedPaths,
+      threadIds = threadIds.takeIf { it.isNotEmpty() },
+    )
+  }
 
   private fun createWatcherUpdates(): Flow<FileBackedSessionChangeSet> {
     return createFileBackedSessionChangeFlow(
@@ -67,4 +126,17 @@ internal class ClaudeStoreSessionBackend(
       )
     }
   }
+}
+
+private val UNSCOPED_CLAUDE_SESSION_UPDATE = ClaudeSessionUpdate()
+
+private fun toUnitUpdate(@Suppress("UNUSED_PARAMETER") update: ClaudeSessionUpdate) {}
+
+private fun isClaudeJsonlPath(path: Path): Boolean {
+  val fileName = path.fileName?.toString() ?: return false
+  return fileName.endsWith(".jsonl")
+}
+
+private fun isClaudeSessionIndexPath(path: Path): Boolean {
+  return path.fileName?.toString() == "sessions-index.json"
 }

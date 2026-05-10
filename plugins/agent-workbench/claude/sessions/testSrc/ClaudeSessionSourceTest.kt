@@ -202,6 +202,25 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
+  fun updateEventsPreserveBackendScope() {
+    val backendUpdates = MutableSharedFlow<ClaudeSessionUpdate>(replay = 1)
+    val backend = object : ClaudeSessionBackend {
+      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = emptyList()
+      override val sessionUpdates get() = backendUpdates
+    }
+    val source = ClaudeSessionSource(backend = backend)
+
+    backendUpdates.tryEmit(ClaudeSessionUpdate(scopedPaths = setOf("/work/project"), threadIds = setOf("session-1")))
+
+    runBlocking(Dispatchers.Default) {
+      val result = withTimeoutOrNull(2.seconds) { source.updateEvents.first() }
+      assertThat(result?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+      assertThat(result?.scopedPaths).containsExactly("/work/project")
+      assertThat(result?.threadIds).containsExactly("session-1")
+    }
+  }
+
+  @Test
   fun archivedThreadsAreHiddenFromActiveList() {
     val source = ClaudeSessionSource(
       backend = staticBackend(
