@@ -344,10 +344,16 @@ class PluginDependenciesValidator private constructor(
   }
 
   private fun createPluginSet(): PluginSetTestBuilder {
+    val corePluginClasspath = createPluginDescriptor(corePluginDescription, loadingContext = null).jarFiles.orEmpty()
     val pluginSetBuilder = PluginSetTestBuilder.fromDescriptors { loadingContext ->
       moduleNameToPluginLayout.values.mapNotNull {
         try {
-          createPluginDescriptor(it, loadingContext)
+          if (it == corePluginDescription) {
+            createPluginDescriptor(it, loadingContext, jarFiles = corePluginClasspath)
+          }
+          else {
+            createPluginDescriptor(it, loadingContext)
+          }
         }
         catch (e: Exception) {
           errors.add(PluginModuleConfigurationError(
@@ -363,12 +369,16 @@ class PluginDependenciesValidator private constructor(
     }
       .withProductMode(productMode)
       .withDisabledPlugins(*options.pluginsToIgnore.toTypedArray())
-      .withCustomCoreLoader(UrlClassLoader.build().files(corePluginDescription.jpsModulesInClasspath.map { getModuleOutputDir(it) }).get())
+      .withCustomCoreLoader(UrlClassLoader.build().files(corePluginClasspath).get())
 
     return pluginSetBuilder
   }
 
-  private fun createPluginDescriptor(pluginLayout: PluginLayoutDescription, loadingContext: PluginDescriptorLoadingContext): PluginMainDescriptor {
+  private fun createPluginDescriptor(
+    pluginLayout: PluginLayoutDescription,
+    loadingContext: PluginDescriptorLoadingContext?,
+    jarFiles: List<Path>? = null,
+  ): PluginMainDescriptor {
     val mainModule = project.findModuleByName(pluginLayout.mainJpsModule) ?: error("Cannot find module ${pluginLayout.mainJpsModule}")
     val pluginDir = tempDir.resolve("plugin").resolve(mainModule.name)
     val pluginDescriptorPath = findResourceFile(mainModule, pluginLayout.pluginDescriptorPath)
@@ -386,7 +396,9 @@ class PluginDependenciesValidator private constructor(
     }.toMap()
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
-    loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
+    if (loadingContext != null) {
+      loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
+    }
 
     val nonEmbeddedContentModules = (
       descriptor.content.modules.filter { it.defaultLoadingRule != ModuleLoadingRule.EMBEDDED }.map { it.moduleId.name } +
@@ -403,7 +415,7 @@ class PluginDependenciesValidator private constructor(
 
     //non-embedded content modules with `package` attribute are included in the main plugin JAR, but they are loaded by different classloaders
     val namesOfJpsModulesIncludedInPluginDescriptorModule = pluginLayout.jpsModulesInClasspath - nonEmbeddedContentModules + embeddedContentModules.map { it.name }
-    descriptor.jarFiles = namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
+    descriptor.jarFiles = jarFiles ?: namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
     return descriptor
   }
 
