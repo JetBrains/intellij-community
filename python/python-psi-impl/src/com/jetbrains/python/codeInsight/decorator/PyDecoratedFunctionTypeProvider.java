@@ -257,7 +257,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
         currentType.getParameters(context),
         currentType.getReturnType(context),
         callableReference,
-        currentType.getModifier(),
+        callableReference.getModifier(),
         currentType.getImplicitOffset()
       ));
     }
