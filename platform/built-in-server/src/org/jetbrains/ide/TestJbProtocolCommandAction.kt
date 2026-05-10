@@ -17,7 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 internal class TestJbProtocolCommandAction : DumbAwareAction() {
-  @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+  @Suppress("HardCodedStringLiteral")
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = TestJbProtocolCommandDialog(e.project)
     if (!dialog.showAndGet()) return
@@ -37,10 +37,10 @@ internal class TestJbProtocolCommandAction : DumbAwareAction() {
   }
 }
 
-@Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+@Suppress("HardCodedStringLiteral")
 private class TestJbProtocolCommandDialog(project: Project?) : DialogWrapper(project) {
   private val urlField = JBTextField(
-    "jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo",
+    "jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/phpstorm-xdebug-validation",
     60,
   )
 
@@ -60,7 +60,7 @@ private class TestJbProtocolCommandDialog(project: Project?) : DialogWrapper(pro
     row("Examples:") {
       val examples = """
         jetbrains://idea/plugin/install?id=IdeaVIM
-        jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/jcp-ide-test-repo
+        jetbrains://idea/openProject?gitUrl=https://github.com/JetBrains/phpstorm-xdebug-validation
       """.trimIndent()
       val area = JBTextArea(examples, 2, 60).apply {
         isEditable = false
