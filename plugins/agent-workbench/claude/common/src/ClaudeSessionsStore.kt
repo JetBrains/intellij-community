@@ -18,6 +18,7 @@ private const val CLAUDE_PROJECTS_DIR = "projects"
 // Unread is derived later in ClaudeSessionSource from local read tracking.
 enum class ClaudeSessionActivity {
   PROCESSING,
+  NEEDS_INPUT,
   READY,
 }
 
@@ -60,7 +61,7 @@ class ClaudeSessionsStore(
 
     val tailState = scanJsonlTail(path)
     val activityState: ActivityTrackingState = if (tailState.hasActivitySignal) tailState else headState
-    val activity = deriveActivity(activityState.isProcessing)
+    val activity = deriveActivity(activityState.needsInput, activityState.isProcessing)
     val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
 
     val title = resolveThreadTitle(
@@ -212,8 +213,12 @@ private fun parseIndexEntry(parser: JsonParser): IndexedClaudeSummary? {
   return IndexedClaudeSummary(sessionId = normalizedSessionId, summary = normalizedSummary)
 }
 
-private fun deriveActivity(isProcessing: Boolean): ClaudeSessionActivity {
-  return if (isProcessing) ClaudeSessionActivity.PROCESSING else ClaudeSessionActivity.READY
+private fun deriveActivity(needsInput: Boolean, isProcessing: Boolean): ClaudeSessionActivity {
+  return when {
+    needsInput -> ClaudeSessionActivity.NEEDS_INPUT
+    isProcessing -> ClaudeSessionActivity.PROCESSING
+    else -> ClaudeSessionActivity.READY
+  }
 }
 
 private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
@@ -230,6 +235,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var messageRole: String? = null
     var messageContent: String? = null
     var messageHasToolUse = false
+    var messageNeedsInputToolUse = false
     var messageHasToolResult = false
     var messageStopReason: String? = null
     var messageHasStopReason = false
@@ -250,6 +256,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             messageRole = parsedMessage.role
             messageContent = parsedMessage.contentPreview
             messageHasToolUse = parsedMessage.hasToolUse
+            messageNeedsInputToolUse = parsedMessage.needsInputToolUse
             messageHasToolResult = parsedMessage.hasToolResult
             messageStopReason = parsedMessage.stopReason
             messageHasStopReason = parsedMessage.hasStopReason
@@ -272,8 +279,9 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       }
       "assistant" -> when {
         messageRole != "assistant" -> ClaudeActivityEvent.OTHER
+        messageNeedsInputToolUse -> ClaudeActivityEvent.ASSISTANT_NEEDS_INPUT
         messageHasToolUse -> ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
-        messageHasStopReason -> if (messageStopReason == "end_turn") ClaudeActivityEvent.ASSISTANT_TERMINAL else ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
+        messageHasStopReason -> activityEventForAssistantStopReason(messageStopReason)
         else -> ClaudeActivityEvent.ASSISTANT_TERMINAL
       }
       "progress" -> ClaudeActivityEvent.PROGRESS
@@ -305,6 +313,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var role: String? = null
   var contentPreview: String? = null
   var hasToolUse = false
+  var needsInputToolUse = false
   var hasToolResult = false
   var stopReason: String? = null
   var hasStopReason = false
@@ -315,6 +324,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
         val result = readContentWithToolUseCheck(parser)
         contentPreview = result.contentPreview
         hasToolUse = result.hasToolUse
+        needsInputToolUse = result.needsInputToolUse
         hasToolResult = result.hasToolResult
       }
       "stop_reason" -> {
@@ -329,6 +339,7 @@ private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
     role = role,
     contentPreview = contentPreview,
     hasToolUse = hasToolUse,
+    needsInputToolUse = needsInputToolUse,
     hasToolResult = hasToolResult,
     stopReason = stopReason,
     hasStopReason = hasStopReason,
@@ -349,19 +360,22 @@ private fun readContentWithToolUseCheck(parser: JsonParser): ParsedMessageConten
 private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageContent {
   var firstText: String? = null
   var hasToolUse = false
+  var needsInputToolUse = false
   var hasToolResult = false
   while (true) {
-    val token = parser.nextToken() ?: return ParsedMessageContent(firstText, hasToolUse, hasToolResult)
-    if (token == JsonToken.END_ARRAY) return ParsedMessageContent(firstText, hasToolUse, hasToolResult)
+    val token = parser.nextToken() ?: return ParsedMessageContent(firstText, hasToolUse, needsInputToolUse, hasToolResult)
+    if (token == JsonToken.END_ARRAY) return ParsedMessageContent(firstText, hasToolUse, needsInputToolUse, hasToolResult)
     if (token != JsonToken.START_OBJECT) {
       parser.skipChildren()
       continue
     }
     var itemType: String? = null
     var itemText: String? = null
+    var itemName: String? = null
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "type" -> itemType = readJsonStringOrNull(parser)
+        "name" -> itemName = readJsonStringOrNull(parser)
         "text" -> itemText = readJsonStringOrNull(parser)
         else -> parser.skipChildren()
       }
@@ -369,6 +383,9 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
     }
     if (itemType == "tool_use") {
       hasToolUse = true
+      if (isUserInteractionToolName(itemName)) {
+        needsInputToolUse = true
+      }
     }
     if (itemType == "tool_result") {
       hasToolResult = true
@@ -376,6 +393,20 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
     if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
       firstText = itemText
     }
+  }
+}
+
+private fun activityEventForAssistantStopReason(stopReason: String?): ClaudeActivityEvent {
+  return when (stopReason) {
+    null, "tool_use", "pause_turn" -> ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
+    else -> ClaudeActivityEvent.ASSISTANT_TERMINAL
+  }
+}
+
+private fun isUserInteractionToolName(toolName: String?): Boolean {
+  return when (toolName?.trim()) {
+    "AskUserQuestion", "ExitPlanMode" -> true
+    else -> false
   }
 }
 
@@ -477,6 +508,7 @@ private data class ParsedMessageObject(
   @JvmField val role: String?,
   @JvmField val contentPreview: String?,
   @JvmField val hasToolUse: Boolean = false,
+  @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
   @JvmField val stopReason: String? = null,
   @JvmField val hasStopReason: Boolean = false,
@@ -485,6 +517,7 @@ private data class ParsedMessageObject(
 private data class ParsedMessageContent(
   @JvmField val contentPreview: String? = null,
   @JvmField val hasToolUse: Boolean = false,
+  @JvmField val needsInputToolUse: Boolean = false,
   @JvmField val hasToolResult: Boolean = false,
 )
 
@@ -496,6 +529,7 @@ private data class IndexedClaudeSummary(
 private enum class ClaudeActivityEvent {
   USER_PROMPT,
   ASSISTANT_IN_PROGRESS,
+  ASSISTANT_NEEDS_INPUT,
   ASSISTANT_TERMINAL,
   TOOL_CONTINUATION,
   PROGRESS,
@@ -506,6 +540,7 @@ private enum class ClaudeActivityEvent {
 private interface ActivityTrackingState {
   var hasActivitySignal: Boolean
   var awaitingAssistantTurn: Boolean
+  var needsInput: Boolean
   var isProcessing: Boolean
   var updatedAt: Long?
 }
@@ -517,15 +552,23 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
   when (lineData.activityEvent) {
     ClaudeActivityEvent.USER_PROMPT -> {
       state.awaitingAssistantTurn = true
+      state.needsInput = false
+      state.isProcessing = false
+    }
+    ClaudeActivityEvent.ASSISTANT_NEEDS_INPUT -> {
+      state.awaitingAssistantTurn = false
+      state.needsInput = true
       state.isProcessing = false
     }
     ClaudeActivityEvent.ASSISTANT_IN_PROGRESS,
     ClaudeActivityEvent.TOOL_CONTINUATION -> {
       state.awaitingAssistantTurn = true
+      state.needsInput = false
       state.isProcessing = true
     }
     ClaudeActivityEvent.ASSISTANT_TERMINAL -> {
       state.awaitingAssistantTurn = false
+      state.needsInput = false
       state.isProcessing = false
     }
     ClaudeActivityEvent.PROGRESS,
@@ -546,6 +589,7 @@ private data class JsonlTailScanState(
   @JvmField var customTitle: String? = null,
   override var hasActivitySignal: Boolean = false,
   override var awaitingAssistantTurn: Boolean = false,
+  override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
   override var updatedAt: Long? = null,
 ) : ActivityTrackingState
@@ -559,5 +603,6 @@ private data class JsonlMetadataScanState(
   @JvmField var hasConversationSignal: Boolean = false,
   override var hasActivitySignal: Boolean = false,
   override var awaitingAssistantTurn: Boolean = false,
+  override var needsInput: Boolean = false,
   override var isProcessing: Boolean = false,
 ) : ActivityTrackingState

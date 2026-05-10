@@ -53,15 +53,23 @@ class ClaudeStoreSessionBackendTest {
           claudeUserLine("2026-02-10T10:02:00.000Z", "session-ready", projectPath, "Just sent"),
         ),
       )
+      writeJsonl(
+        projectDir.resolve("session-needs-input.jsonl"),
+        listOf(
+          claudeUserLine("2026-02-10T10:03:00.000Z", "session-needs-input", projectPath, "Ask me"),
+          claudeAssistantUserInteractionToolLine("2026-02-10T10:03:01.000Z", "session-needs-input", projectPath, "AskUserQuestion"),
+        ),
+      )
 
       val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
       val threads = backend.listThreads(path = projectPath, openProject = null)
 
-      assertThat(threads).hasSize(3)
+      assertThat(threads).hasSize(4)
       val activityById = threads.associate { it.id to it.activity }
       assertThat(activityById["session-unread"]).isEqualTo(ClaudeSessionActivity.READY)
       assertThat(activityById["session-processing"]).isEqualTo(ClaudeSessionActivity.PROCESSING)
       assertThat(activityById["session-ready"]).isEqualTo(ClaudeSessionActivity.READY)
+      assertThat(activityById["session-needs-input"]).isEqualTo(ClaudeSessionActivity.NEEDS_INPUT)
     }
   }
 
@@ -222,7 +230,10 @@ class ClaudeStoreSessionBackendTest {
         projectDir.resolve("session-transcript-archived-index-active.jsonl"),
         listOf(
           claudeUserLine("2026-02-10T10:00:00.000Z", "session-transcript-archived-index-active", projectPath, "Initial title"),
-          claudeCustomTitleLine("2026-02-10T10:00:01.000Z", "session-transcript-archived-index-active", projectPath, "[archived] Visible title"),
+          claudeCustomTitleLine("2026-02-10T10:00:01.000Z",
+                                "session-transcript-archived-index-active",
+                                projectPath,
+                                "[archived] Visible title"),
         ),
       )
       Files.writeString(

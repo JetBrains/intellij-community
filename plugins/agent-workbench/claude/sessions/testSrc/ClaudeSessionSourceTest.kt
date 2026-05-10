@@ -116,6 +116,26 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
+  fun needsInputAlwaysWinsOverUnread() {
+    var currentThreads = listOf(
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
+    )
+    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
+
+    runBlocking(Dispatchers.Default) {
+      source.listThreadsFromClosedProject(path = "/any")
+      source.markThreadAsRead("s1", 1000L)
+
+      // Backend says NEEDS_INPUT with increased updatedAt → NEEDS_INPUT wins.
+      currentThreads = listOf(
+        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.NEEDS_INPUT),
+      )
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.NEEDS_INPUT)
+    }
+  }
+
+  @Test
   fun staleMarkAsReadDoesNotDowngradeTracker() {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
@@ -226,7 +246,14 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(
       backend = staticBackend(
         listOf(
-          ClaudeBackendThread(id = "known-processing", title = "Known processing", updatedAt = 3_000L, activity = ClaudeSessionActivity.PROCESSING),
+          ClaudeBackendThread(id = "known-processing",
+                              title = "Known processing",
+                              updatedAt = 3_000L,
+                              activity = ClaudeSessionActivity.PROCESSING),
+          ClaudeBackendThread(id = "known-needs-input",
+                              title = "Known needs input",
+                              updatedAt = 2_500L,
+                              activity = ClaudeSessionActivity.NEEDS_INPUT),
           ClaudeBackendThread(id = "known-ready", title = "Known ready", updatedAt = 2_000L),
           ClaudeBackendThread(id = "new-visible", title = "New visible", updatedAt = 1_000L),
         )
@@ -237,7 +264,7 @@ class ClaudeSessionSourceTest {
       source.prefetchRefreshHints(
         paths = listOf("/any"),
         refreshThreadSeedsByPath = mapOf(
-          "/any" to setOf("known-processing", "known-ready").toAgentSessionRefreshThreadSeeds()
+          "/any" to setOf("known-processing", "known-needs-input", "known-ready").toAgentSessionRefreshThreadSeeds()
         ),
       )
     }
@@ -246,6 +273,7 @@ class ClaudeSessionSourceTest {
     assertThat(pathHints.activityByThreadId).containsExactlyInAnyOrderEntriesOf(
       mapOf(
         "known-processing" to AgentThreadActivity.PROCESSING,
+        "known-needs-input" to AgentThreadActivity.NEEDS_INPUT,
         "known-ready" to AgentThreadActivity.READY,
       )
     )

@@ -147,8 +147,12 @@ private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Lo
 }
 
 private fun ClaudeBackendThread.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
-  if (activity == ClaudeSessionActivity.PROCESSING) return AgentThreadActivity.PROCESSING
-  val lastSeenAt = readTracker[id] ?: return AgentThreadActivity.READY
-  if (updatedAt > lastSeenAt) return AgentThreadActivity.UNREAD
-  return AgentThreadActivity.READY
+  return when (activity) {
+    ClaudeSessionActivity.PROCESSING -> AgentThreadActivity.PROCESSING
+    ClaudeSessionActivity.NEEDS_INPUT -> AgentThreadActivity.NEEDS_INPUT
+    ClaudeSessionActivity.READY -> {
+      val lastSeenAt = readTracker[id] ?: return AgentThreadActivity.READY
+      if (updatedAt > lastSeenAt) AgentThreadActivity.UNREAD else AgentThreadActivity.READY
+    }
+  }
 }
