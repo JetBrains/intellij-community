@@ -60,6 +60,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     assertThat(bridge.refreshPathAfterCreateNewSession).isTrue()
     assertThat(bridge.supportsNewThreadRebind).isFalse()
     assertThat(bridge.supportsArchiveThread).isTrue()
+    assertThat(bridge.closeOpenChatBeforeArchiveThread).isTrue()
     assertThat(bridge.supportsUnarchiveThread).isTrue()
     assertThat(bridge.suppressArchivedThreadsDuringRefresh).isTrue()
     assertThat(bridge.archiveRefreshDelayMs).isEqualTo(1_000L)

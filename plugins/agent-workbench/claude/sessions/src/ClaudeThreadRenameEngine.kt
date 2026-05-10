@@ -130,13 +130,11 @@ internal class ClaudeOpenTabAwareThreadRenameEngine(
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
-    val current = stateObserver.findThread(path, threadId) ?: return false
-    return rename(path, threadId, buildClaudeArchivedThreadTitle(current.title, threadId))
+    return fallbackEngine.archiveThread(path, threadId)
   }
 
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
-    val current = stateObserver.findThread(path, threadId) ?: return false
-    return rename(path, threadId, resolveClaudeThreadTitleState(current.title, threadId).title)
+    return fallbackEngine.unarchiveThread(path, threadId)
   }
 }
 

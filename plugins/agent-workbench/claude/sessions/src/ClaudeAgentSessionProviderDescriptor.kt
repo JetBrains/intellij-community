@@ -86,6 +86,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val supportsArchiveThread: Boolean
     get() = true
 
+  override val closeOpenChatBeforeArchiveThread: Boolean
+    get() = true
+
   override val supportsUnarchiveThread: Boolean
     get() = true
 

@@ -159,20 +159,21 @@ class ClaudeThreadRenameEngineTest {
   }
 
   @Test
-  fun archiveThreadDispatchesThroughOpenTabAndSkipsFallbackRunner() {
+  fun archiveThreadUsesFallbackRunnerEvenWhenOpenTabExists() {
     runBlocking(Dispatchers.Default) {
-      var threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
-      var fallbackRenameTitle: String? = null
+      val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
+      var fallbackArchiveTarget: Pair<String, String>? = null
       var dispatchedCommand: String? = null
       val engine = ClaudeOpenTabAwareThreadRenameEngine(
         backend = testBackend { threads },
-        fallbackEngine = fallbackRenameEngine { _, _, newTitle ->
-          fallbackRenameTitle = newTitle
-          true
-        },
+        fallbackEngine = fallbackRenameEngine(
+          archive = { path, threadId ->
+            fallbackArchiveTarget = path to threadId
+            true
+          },
+        ),
         openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, dispatchPlan ->
           dispatchedCommand = dispatchPlan.postStartDispatchSteps.single().text
-          threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", archived = true, updatedAt = 101L))
           true
         },
         waitTimeoutMs = 1_000L,
@@ -181,8 +182,8 @@ class ClaudeThreadRenameEngineTest {
       )
 
       assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
-      assertThat(dispatchedCommand).isEqualTo("/rename [archived] Thread title")
-      assertThat(fallbackRenameTitle).isNull()
+      assertThat(dispatchedCommand).isNull()
+      assertThat(fallbackArchiveTarget).isEqualTo(PROJECT_PATH to "session-1")
     }
   }
 
@@ -190,13 +191,15 @@ class ClaudeThreadRenameEngineTest {
   fun archiveThreadFallsBackToPtyRunnerWhenNoOpenTabExists() {
     runBlocking(Dispatchers.Default) {
       val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
-      var fallbackRenameTitle: String? = null
+      var fallbackArchiveTarget: Pair<String, String>? = null
       val engine = ClaudeOpenTabAwareThreadRenameEngine(
         backend = testBackend { threads },
-        fallbackEngine = fallbackRenameEngine { _, _, newTitle ->
-          fallbackRenameTitle = newTitle
-          true
-        },
+        fallbackEngine = fallbackRenameEngine(
+          archive = { path, threadId ->
+            fallbackArchiveTarget = path to threadId
+            true
+          },
+        ),
         openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, _ -> false },
         waitTimeoutMs = 1_000L,
         pollIntervalMs = 1L,
@@ -204,36 +207,7 @@ class ClaudeThreadRenameEngineTest {
       )
 
       assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
-      assertThat(fallbackRenameTitle).isEqualTo("[archived] Thread title")
-    }
-  }
-
-  @Test
-  fun archiveThreadReturnsTrueWhenOpenTabDispatchSucceedsEvenIfObservedStateLags() {
-    runBlocking(Dispatchers.Default) {
-      var currentTime = 0L
-      val threads = listOf(ClaudeBackendThread(id = "session-1", title = "Thread title", updatedAt = 100L))
-      var fallbackInvoked = false
-      val engine = ClaudeOpenTabAwareThreadRenameEngine(
-        backend = testBackend { threads },
-        fallbackEngine = fallbackRenameEngine { _, _, _ ->
-          fallbackInvoked = true
-          true
-        },
-        openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, _ -> true },
-        waitTimeoutMs = 3L,
-        pollIntervalMs = 1L,
-        currentTimeMs = { currentTime },
-        delayFn = { duration ->
-          currentTime += duration.inWholeMilliseconds
-        },
-      )
-
-      // Once the open-tab dispatch succeeded, trust the `/rename` delivery and let the
-      // follow-up provider refresh reconcile the tab title asynchronously instead of
-      // surfacing a false failure to the user.
-      assertThat(engine.archiveThread(path = PROJECT_PATH, threadId = "session-1")).isTrue()
-      assertThat(fallbackInvoked).isFalse()
+      assertThat(fallbackArchiveTarget).isEqualTo(PROJECT_PATH to "session-1")
     }
   }
 
@@ -397,18 +371,28 @@ private data class CommandInvocation(
   val environment: Map<String, String>,
 )
 
-private fun fallbackRenameEngine(rename: suspend (path: String, threadId: String, newTitle: String) -> Boolean): ClaudeThreadRenameEngine {
+private fun fallbackRenameEngine(
+  rename: suspend (path: String, threadId: String, newTitle: String) -> Boolean = { _, _, _ ->
+    error("rename should not be invoked in fallback test stub")
+  },
+  archive: suspend (path: String, threadId: String) -> Boolean = { _, _ ->
+    error("archiveThread should not be invoked in fallback test stub")
+  },
+  unarchive: suspend (path: String, threadId: String) -> Boolean = { _, _ ->
+    error("unarchiveThread should not be invoked in fallback test stub")
+  },
+): ClaudeThreadRenameEngine {
   return object : ClaudeThreadRenameEngine {
     override suspend fun rename(path: String, threadId: String, newTitle: String): Boolean {
       return rename(path, threadId, newTitle)
     }
 
     override suspend fun archiveThread(path: String, threadId: String): Boolean {
-      error("archiveThread should not be invoked in fallback test stub")
+      return archive(path, threadId)
     }
 
     override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
-      error("unarchiveThread should not be invoked in fallback test stub")
+      return unarchive(path, threadId)
     }
   }
 }

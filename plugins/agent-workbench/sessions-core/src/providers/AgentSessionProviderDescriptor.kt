@@ -140,6 +140,13 @@ interface AgentSessionProviderDescriptor {
   val supportsArchiveThread: Boolean
     get() = false
 
+  /**
+   * Close any open chat tab before invoking [archiveThread]. Use this for providers whose archive transport resumes
+   * the session non-interactively and cannot safely run while the same session is open in a terminal.
+   */
+  val closeOpenChatBeforeArchiveThread: Boolean
+    get() = false
+
   val threadRenameHandler: AgentThreadRenameHandler?
     get() = null
 

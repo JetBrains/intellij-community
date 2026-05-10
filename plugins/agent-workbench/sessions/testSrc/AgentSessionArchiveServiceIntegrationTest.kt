@@ -749,8 +749,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archiveOpenedClaudeThreadFromEditorTabUsesProviderArchiveAndCleanupTarget() = runBlocking(Dispatchers.Default) {
-    val archiveCalls = mutableListOf<Pair<String, String>>()
-    val cleanupCalls = mutableListOf<Triple<String, String, String?>>()
+    val operations = CopyOnWriteArrayList<List<String?>>()
     val sourceThreads = mutableListOf(
       thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
       thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
@@ -762,7 +761,7 @@ class AgentSessionArchiveServiceIntegrationTest {
     val bridge = testClaudeBridge(
       sessionSource = sessionSource,
       onArchive = { path, threadId ->
-        archiveCalls.add(path to threadId)
+        operations.add(listOf("archive", path, threadId, null))
         sourceThreads.removeIf { it.id == threadId }
         true
       },
@@ -774,7 +773,7 @@ class AgentSessionArchiveServiceIntegrationTest {
           sessionSourcesProvider = { listOf(sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
           archiveChatCleanup = { projectPath, threadIdentity, subAgentId ->
-            cleanupCalls.add(Triple(projectPath, threadIdentity, subAgentId))
+            operations.add(listOf("cleanup", projectPath, threadIdentity, subAgentId))
           },
         ) { service, archiveService ->
           service.refresh()
@@ -790,12 +789,65 @@ class AgentSessionArchiveServiceIntegrationTest {
 
           waitForCondition {
             val threads = service.state.value.projects.firstOrNull()?.threads.orEmpty()
-            archiveCalls == listOf(PROJECT_PATH to "claude-1") &&
-            cleanupCalls == listOf(
-              Triple(PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-1"), null)
+            operations == listOf(
+              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-1"), null),
+              listOf("archive", PROJECT_PATH, "claude-1", null),
+              listOf("cleanup", PROJECT_PATH, buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-1"), null),
             ) &&
             threads.none { it.id == "claude-1" } &&
             threads.any { it.id == "claude-2" }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun archiveOpenedClaudeThreadSkipsProviderArchiveWhenPreArchiveCleanupFails() = runBlocking(Dispatchers.Default) {
+    val archiveCalls = AtomicInteger(0)
+    val cleanupCalls = AtomicInteger(0)
+    val sourceThreads = mutableListOf(
+      thread(id = "claude-1", updatedAt = 200, provider = AgentSessionProvider.CLAUDE),
+      thread(id = "claude-2", updatedAt = 100, provider = AgentSessionProvider.CLAUDE),
+    )
+    val sessionSource = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      listFromOpenProject = { path, _ -> if (path == PROJECT_PATH) sourceThreads.toList() else emptyList() },
+    )
+    val bridge = testClaudeBridge(
+      sessionSource = sessionSource,
+      onArchive = { _, _ ->
+        archiveCalls.incrementAndGet()
+        true
+      },
+    )
+
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+        return false
+      }
+    }) {
+      AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+        runBlocking(Dispatchers.Default) {
+          withServiceAndArchive(
+            sessionSourcesProvider = { listOf(sessionSource) },
+            projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+            archiveChatCleanup = { _, _, _ ->
+              cleanupCalls.incrementAndGet()
+              error("pre-archive cleanup failed")
+            },
+          ) { service, archiveService ->
+            service.refresh()
+            waitForCondition {
+              service.state.value.projects.firstOrNull()?.threads?.any { it.id == "claude-1" } == true
+            }
+
+            archiveService.archiveThreadsForTest(
+              listOf(ArchiveThreadTarget.Thread(PROJECT_PATH, AgentSessionProvider.CLAUDE, "claude-1"))
+            )
+
+            waitForCondition(timeoutMs = 10_000) { cleanupCalls.get() == 1 }
+            assertThat(archiveCalls.get()).isZero()
           }
         }
       }
@@ -1034,6 +1086,9 @@ private fun testClaudeBridge(
       get() = "toolwindow.error.claude.cli"
 
     override val supportsArchiveThread: Boolean
+      get() = true
+
+    override val closeOpenChatBeforeArchiveThread: Boolean
       get() = true
 
     override val supportsUnarchiveThread: Boolean

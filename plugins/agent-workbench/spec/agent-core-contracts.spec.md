@@ -72,7 +72,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
 
-- Claude archive, unarchive, and rename are provider-backed. When a matching top-level Claude chat tab is open, operations reuse that tab; otherwise they use the non-interactive resumed Claude transport.
+- Claude archive, unarchive, and rename are provider-backed. Archive and unarchive use the non-interactive resumed Claude transport; rename reuses a matching top-level Claude chat tab when one is open and otherwise uses the non-interactive resumed Claude transport.
   [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeThreadRenameEngineTest.kt
 

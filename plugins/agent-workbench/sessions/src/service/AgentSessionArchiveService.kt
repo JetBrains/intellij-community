@@ -236,6 +236,9 @@ class AgentSessionArchiveService internal constructor(
           val provider = target.provider
           val descriptor = preparedTarget.descriptor
           val archived = try {
+            if (descriptor.closeOpenChatBeforeArchiveThread) {
+              archiveChatCleanup(target.path, preparedTarget.cleanupTarget.threadIdentity, preparedTarget.cleanupTarget.subAgentId)
+            }
             descriptor.archiveThread(path = target.path, threadId = target.threadId)
           }
           catch (t: Throwable) {
