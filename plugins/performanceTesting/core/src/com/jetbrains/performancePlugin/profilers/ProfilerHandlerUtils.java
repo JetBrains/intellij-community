@@ -3,27 +3,27 @@ package com.jetbrains.performancePlugin.profilers;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class ProfilerHandlerUtils {
   public static final Logger LOG = Logger.getInstance(ProfilerHandlerUtils.class);
-  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("PerformancePlugin");
 
   public static void notify(@Nullable Project project, File snapshot) {
-    var availableSnapshotProcessors =
-      SnapshotOpener.EP_NAME.getExtensionList().stream().filter(it -> it.canOpen(snapshot, project)).toList();
-    Notification notification =
-      GROUP.createNotification(PerformanceTestingBundle.message("profiling.capture.snapshot.success", snapshot.getName()),
-                               NotificationType.INFORMATION);
+    var availableSnapshotProcessors = ContainerUtil.filter(SnapshotOpener.EP_NAME.getExtensionList(), it -> it.canOpen(snapshot, project));
+
+    var notification = new Notification("PerformancePlugin",
+                                        PerformanceTestingBundle.message("profiling.capture.snapshot.success", snapshot.getName()),
+                                        NotificationType.INFORMATION);
 
     for (SnapshotOpener opener : availableSnapshotProcessors) {
       notification.addAction(NotificationAction.createSimpleExpiring(
@@ -38,6 +38,6 @@ public final class ProfilerHandlerUtils {
   public static void notifyCapturingError(@NotNull Throwable t, @Nullable Project project) {
     LOG.warn(t);
     String text = PerformanceTestingBundle.message("profiling.capture.snapshot.error", t.getMessage());
-    GROUP.createNotification(text, NotificationType.ERROR).notify(project);
+    new Notification("PerformancePlugin", text, NotificationType.ERROR).notify(project);
   }
 }

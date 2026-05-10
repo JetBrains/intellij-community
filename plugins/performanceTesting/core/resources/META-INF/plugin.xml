@@ -61,8 +61,12 @@
     <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
 
-    <notificationGroup id="PerformancePlugin" displayType="BALLOON" bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"/>
-    <registryKey key="performance.plugin.playback.runner.useDirectActionCall" description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework" defaultValue="false" restartRequired="false"/>
+    <notificationGroup id="PerformancePlugin" displayType="STICKY_BALLOON"
+                       bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"
+                       notificationIds="promo.notification.automatic.error.report"/>
+    <registryKey key="performance.plugin.playback.runner.useDirectActionCall" defaultValue="false"
+                 description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework"
+                 restartRequired="false"/>
 
     <projectService overrides="true"
                     serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
@@ -72,6 +76,9 @@
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
 
     <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter"/>
+
+    <backgroundPostStartupActivity implementation="com.jetbrains.performancePlugin.promo.ErrorReportPromoterActivity"/>
+    <diagnostic.freezeNotifier implementation="com.jetbrains.performancePlugin.promo.FreezeCounterListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains">
