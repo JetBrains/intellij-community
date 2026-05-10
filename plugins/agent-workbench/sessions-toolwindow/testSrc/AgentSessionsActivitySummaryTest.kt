@@ -8,11 +8,18 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.Color
+import java.awt.event.MouseEvent
 
 @TestApplication
 class AgentSessionsActivitySummaryTest {
@@ -50,7 +57,6 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.attentionRows.map { it.thread.id }).containsExactly("needs-input", "reviewing")
     assertThat(summary.runningRows.map { it.thread.id }).containsExactly("worktree-processing", "processing")
     assertThat(summary.doneRows.map { it.thread.id }).containsExactly("done")
-    assertThat(summary.idleRows.map { it.thread.id }).containsExactly("idle")
     assertThat(summary.runningRows.first().path).isEqualTo("/work/project-a-feature")
     assertThat(summary.runningRows.first().locationLabel).isEqualTo("Project A / feature")
   }
@@ -77,11 +83,10 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.ATTENTION)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.RUNNING)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.DONE).map { it.thread.id }).containsExactly("done")
-    assertThat(summary.rowsFor(AgentSessionsActivityBucket.IDLE).map { it.thread.id }).containsExactly("idle")
   }
 
   @Test
-  fun idlePopupRowsAreLimitedToRecentThreads() {
+  fun readyThreadsAreExcludedFromActivitySummary() {
     val summary = buildAgentSessionsActivitySummary(
       AgentSessionsState(
         projects = listOf(
@@ -91,17 +96,16 @@ class AgentSessionsActivitySummaryTest {
             isOpen = true,
             hasLoaded = true,
             threads = listOf(
-              thread("idle-1", AgentThreadActivity.READY, 100),
-              thread("idle-3", AgentThreadActivity.READY, 300),
-              thread("idle-2", AgentThreadActivity.READY, 200),
+              thread("ready", AgentThreadActivity.READY, 100),
             ),
           )
         ),
-      ),
-      maxIdleRows = 2,
+      )
     )
 
-    assertThat(summary.idleRows.map { it.thread.id }).containsExactly("idle-3", "idle-2")
+    assertThat(summary.attentionRows).isEmpty()
+    assertThat(summary.runningRows).isEmpty()
+    assertThat(summary.doneRows).isEmpty()
   }
 
   @Test
@@ -133,6 +137,34 @@ class AgentSessionsActivitySummaryTest {
     assertThat(text).contains("Confirm tool call")
     assertThat(text).contains("Project A / feature")
     assertThat(text).contains("now")
+  }
+
+  @Test
+  fun counterClickProvidesInputEventComponentForPopupAnchor() {
+    var performedEvent: AnActionEvent? = null
+    val action = object : AnAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        performedEvent = e
+      }
+    }
+    runInEdtAndWait {
+      val counter = AgentSessionsActivityCounterComponent(
+        action = action,
+        accentColor = Color.RED,
+        tone = AgentSessionsActivityCounterTone.DEFAULT,
+      )
+      counter.update(action.templatePresentation.clone().apply {
+        text = "1"
+        isEnabled = true
+      })
+
+      val clickEvent = MouseEvent(counter, MouseEvent.MOUSE_CLICKED, 0, 0, 1, 1, 1, false, MouseEvent.BUTTON1)
+      counter.mouseListeners.single().mouseClicked(clickEvent)
+
+      assertThat(performedEvent).isNotNull
+      assertThat(performedEvent?.inputEvent).isSameAs(clickEvent)
+      assertThat(performedEvent?.inputEvent?.component).isSameAs(counter)
+    }
   }
 
   private fun thread(

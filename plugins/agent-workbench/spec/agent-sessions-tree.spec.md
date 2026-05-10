@@ -25,8 +25,12 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
 - The tool window surfaces thread activity through chrome rather than a body strip:
-  the title bar carries one counter action per bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
-  `Running` covers `PROCESSING`, `Done` covers `UNREAD`, `Idle` covers `READY`); zero-count buckets render disabled.
+  the title bar carries one counter action per active bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
+  `Running` covers `PROCESSING`, `Done` covers `UNREAD`). `READY` threads are not surfaced in title chrome.
+  All three counters are always visible so that bucket positions remain stable for muscle memory.
+  Counters render as quiet inline title-bar signals: a small marker plus count, without chip fill or border.
+  `Needs attention` uses the strongest treatment with a bold count; `Running` and `Done` use normal foreground counts;
+  zero-count buckets render disabled rather than disappearing.
   Clicking a counter opens a popup listing only that bucket's threads.
   The stripe button icon carries a `Needs attention` badge whenever any thread is in `NEEDS_INPUT` or `REVIEWING`,
   so the user is alerted even when the tool window is collapsed.

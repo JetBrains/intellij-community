@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
+import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
@@ -15,15 +15,15 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.AnimatedIcon
-import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
+import javax.swing.JComponent
 
 private const val MAX_POPUP_ROW_TITLE_LENGTH: Int = 60
 
@@ -32,16 +32,12 @@ internal fun createAgentSessionsTitleActions(): List<AgentSessionsActivityCounte
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.ATTENTION),
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.RUNNING),
     AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.DONE),
-    AgentSessionsActivityCounterAction(AgentSessionsActivityBucket.IDLE),
   )
 }
 
 internal class AgentSessionsActivityCounterAction(
   private val bucket: AgentSessionsActivityBucket,
-) : DumbAwareAction() {
-
-  private val staticIcon: Icon = bucket.staticIcon()
-  private val activeIcon: Icon = bucket.activeIcon(staticIcon)
+) : DumbAwareAction(), CustomComponentAction {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -50,9 +46,22 @@ internal class AgentSessionsActivityCounterAction(
     val presentation = e.presentation
     presentation.text = rows.size.toString()
     presentation.description = AgentSessionsBundle.message(bucket.tooltipKey)
-    presentation.icon = if (rows.isNotEmpty()) activeIcon else staticIcon
+    presentation.setEnabledAndVisible(true)
     presentation.isEnabled = rows.isNotEmpty()
-    presentation.isVisible = true
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val counter = AgentSessionsActivityCounterComponent(
+      action = this,
+      accentColor = bucket.accentActivity().statusColor(),
+      tone = bucket.counterTone(),
+    )
+    counter.update(presentation)
+    return counter
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    (component as? AgentSessionsActivityCounterComponent)?.update(presentation)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -125,7 +134,6 @@ private val AgentSessionsActivityBucket.tooltipKey: String
     AgentSessionsActivityBucket.ATTENTION -> "toolwindow.activity.action.attention.tooltip"
     AgentSessionsActivityBucket.RUNNING -> "toolwindow.activity.action.running.tooltip"
     AgentSessionsActivityBucket.DONE -> "toolwindow.activity.action.done.tooltip"
-    AgentSessionsActivityBucket.IDLE -> "toolwindow.activity.action.idle.tooltip"
   }
 
 private val AgentSessionsActivityBucket.popupTitleKey: String
@@ -133,18 +141,20 @@ private val AgentSessionsActivityBucket.popupTitleKey: String
     AgentSessionsActivityBucket.ATTENTION -> "toolwindow.activity.popup.attention.title"
     AgentSessionsActivityBucket.RUNNING -> "toolwindow.activity.popup.running.title"
     AgentSessionsActivityBucket.DONE -> "toolwindow.activity.popup.done.title"
-    AgentSessionsActivityBucket.IDLE -> "toolwindow.activity.popup.idle.title"
   }
 
-private fun AgentSessionsActivityBucket.staticIcon(): Icon {
+private fun AgentSessionsActivityBucket.accentActivity(): AgentThreadActivity {
   return when (this) {
-    AgentSessionsActivityBucket.ATTENTION -> withAgentThreadActivityBadge(EmptyIcon.ICON_16, AgentThreadActivity.NEEDS_INPUT)
-    AgentSessionsActivityBucket.RUNNING -> withAgentThreadActivityBadge(EmptyIcon.ICON_16, AgentThreadActivity.PROCESSING)
-    AgentSessionsActivityBucket.DONE -> withAgentThreadActivityBadge(EmptyIcon.ICON_16, AgentThreadActivity.UNREAD)
-    AgentSessionsActivityBucket.IDLE -> EmptyIcon.ICON_16
+    AgentSessionsActivityBucket.ATTENTION -> AgentThreadActivity.NEEDS_INPUT
+    AgentSessionsActivityBucket.RUNNING -> AgentThreadActivity.PROCESSING
+    AgentSessionsActivityBucket.DONE -> AgentThreadActivity.UNREAD
   }
 }
 
-private fun AgentSessionsActivityBucket.activeIcon(staticIcon: Icon): Icon {
-  return if (this == AgentSessionsActivityBucket.RUNNING) AnimatedIcon.Default() else staticIcon
+private fun AgentSessionsActivityBucket.counterTone(): AgentSessionsActivityCounterTone {
+  return when (this) {
+    AgentSessionsActivityBucket.ATTENTION -> AgentSessionsActivityCounterTone.ATTENTION
+    AgentSessionsActivityBucket.RUNNING,
+    AgentSessionsActivityBucket.DONE -> AgentSessionsActivityCounterTone.DEFAULT
+  }
 }
