@@ -21,6 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object HeapDumpAnalysisNotificationGroup {
-  @JvmField
-  val GROUP: NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Heap Dump Analysis")
+  val GROUP: NotificationGroup
+    get() = NotificationGroupManager.getInstance().getNotificationGroup("Heap Dump Analysis")
 }
