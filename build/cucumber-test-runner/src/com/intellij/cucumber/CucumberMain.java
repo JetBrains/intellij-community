@@ -2,13 +2,9 @@
 package com.intellij.cucumber;
 
 import com.intellij.TestCaseLoader;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.bucketing.HashingBucketingScheme;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.ui.EdtInvocationManager;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
@@ -24,6 +20,7 @@ import java.util.List;
 
 public final class CucumberMain {
   private static final Logger LOG = Logger.getInstance(CucumberMain.class);
+
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
@@ -66,57 +63,47 @@ public final class CucumberMain {
   }
 
   public static int run(String[] argv, ClassLoader classLoader) {
-    final Ref<Throwable> errorRef = new Ref<>();
-    final Ref<Runtime> runtimeRef = new Ref<>();
+    Throwable throwable = null;
+    Runtime runtime = null;
 
     try {
-      UITestUtil.replaceIdeEventQueueSafely();
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
-          try {
-            RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
-            MultiLoader resourceLoader = new MultiLoader(classLoader) {
-              @Override
-              public Iterable<Resource> resources(String path, String suffix) {
-                Iterable<Resource> resources = super.resources(path, suffix);
-                if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
-                  return resources;
-                }
+      RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
+      MultiLoader resourceLoader = new MultiLoader(classLoader) {
+        @Override
+        public Iterable<Resource> resources(String path, String suffix) {
+          Iterable<Resource> resources = super.resources(path, suffix);
+          if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
+            return resources;
+          }
 
-                List<Resource> result = new ArrayList<>();
-                for (Resource resource : resources) {
-                  if (HashingBucketingScheme.matchesCurrentBucketViaHashing(resource.getPath())) {
-                    result.add(resource);
-                  }
-                }
-                return result;
-              }
-            };
-            ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
-            Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
-            runtimeRef.set(runtime);
-            runtime.run();
+          List<Resource> result = new ArrayList<>();
+          for (Resource resource : resources) {
+            if (HashingBucketingScheme.matchesCurrentBucketViaHashing(resource.getPath())) {
+              result.add(resource);
+            }
           }
-          catch (Throwable throwable) {
-            errorRef.set(throwable);
-            Logger.getInstance(CucumberMain.class).error(throwable);
-          }
-          return null;
-        });
-      });
+          return result;
+        }
+      };
+      ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
+      runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
+      runtime.run();
     }
     catch (Throwable t) {
-      errorRef.set(t);
+      throwable = t;
       Logger.getInstance(CucumberMain.class).error(t);
     }
 
-    final Throwable throwable = errorRef.get();
     if (throwable != null) {
       LOG.error(throwable);
     }
-    for (Throwable error : runtimeRef.get().getErrors()) {
-      LOG.error(error);
+
+    if (runtime != null) {
+      for (Throwable error : runtime.getErrors()) {
+        LOG.error(error);
+      }
     }
+
     return throwable != null ? 1 : 0;
   }
 }
