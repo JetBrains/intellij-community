@@ -48,6 +48,7 @@ PKGS = [
 
 ADD_OPENS_FLAGS = ["--add-opens=" + pkg + "=ALL-UNNAMED" for pkg in PKGS]
 
+# Mirrors COMMON_VM_OPTIONS in VmOptionsGenerator.kt
 JAVA_TEST_FLAGS = [
     "-Didea.classpath.index.enabled=false",
     "-Djava.awt.headless=true",
@@ -56,6 +57,7 @@ JAVA_TEST_FLAGS = [
     "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
     "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
+    "-Djava.util.zip.use.nio.for.zip.file.access=true",
 ]
 
 JAVA_TEST_ARGS = [

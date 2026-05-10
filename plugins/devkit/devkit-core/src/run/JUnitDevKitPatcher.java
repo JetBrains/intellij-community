@@ -43,7 +43,11 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
 
     if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
-      
+
+      // Mirrors COMMON_VM_OPTIONS in VmOptionsGenerator.kt
+      if (!vm.hasProperty("java.util.zip.use.nio.for.zip.file.access")) {
+        vm.addProperty("java.util.zip.use.nio.for.zip.file.access", "true");
+      }
       if (!vm.hasProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
         // check that UrlClassLoader is available in the test module classpath
         // if module-path is used, skip custom loader
