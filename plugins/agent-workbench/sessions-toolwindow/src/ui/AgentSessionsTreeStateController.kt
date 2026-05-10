@@ -43,6 +43,7 @@ internal class AgentSessionsTreeStateController(
   private val setSessionTreeModel: (SessionTreeModel) -> Unit,
   private val onLastUsedProviderChanged: (AgentSessionProvider?) -> Unit,
   private val onBeforeModelSwap: () -> Unit,
+  private val onSessionsStateChanged: (AgentSessionsState) -> Unit,
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
   private val selectNode: (SessionTreeId) -> Unit,
@@ -59,6 +60,7 @@ internal class AgentSessionsTreeStateController(
     scope.launch {
       sessionsStateFlow.collect { newState ->
         sessionsState = newState
+        onSessionsStateChanged(newState)
         rebuildTree()
       }
     }

@@ -24,6 +24,10 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
+- The tool-window header must summarize known thread activity without adding tree levels: `NEEDS_INPUT` and `REVIEWING` appear under `Needs attention`,
+  `PROCESSING` appears under `Running`, and passive `UNREAD`/`READY` threads keep the header visible through `Done`/`Idle` counters.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
+
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
