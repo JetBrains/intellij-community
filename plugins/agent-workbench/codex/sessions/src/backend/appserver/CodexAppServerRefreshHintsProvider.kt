@@ -128,9 +128,15 @@ internal class CodexAppServerRefreshHintsProvider(
 
         val snapshotActivityHint = findCachedSnapshotActivityHint(refreshThreadSeed)
                                    ?: snapshotsByThreadId[threadId]
-                                     ?.toRefreshActivityHint()
+                                     ?.toRefreshActivityHint(verifiedFresh = true)
                                      ?.also { hint -> cacheSnapshotActivityHint(threadId = threadId, hint = hint) }
-        val activityHint = snapshotActivityHint ?: findNotificationActivityHint(threadId) ?: continue
+        val notificationActivityHint = if (refreshThreadSeed.forceRefresh) {
+          null
+        }
+        else {
+          findNotificationActivityHint(threadId)
+        }
+        val activityHint = snapshotActivityHint ?: notificationActivityHint ?: continue
         activityHintsByThreadId[threadId] = activityHint
         resolvedActivityThreadCount += 1
       }
@@ -309,7 +315,7 @@ internal class CodexAppServerRefreshHintsProvider(
     synchronized(activityHintCacheLock) {
       snapshotActivityHintCacheByThreadId[threadId] = CachedSnapshotActivityHint(
         snapshotUpdatedAt = hint.updatedAt,
-        refreshHint = hint,
+        refreshHint = hint.copy(verifiedFresh = false),
       )
       trimSnapshotActivityHintCacheLocked()
     }
@@ -518,11 +524,12 @@ private fun buildRebindCandidate(
   )
 }
 
-private fun CodexThreadActivitySnapshot.toRefreshActivityHint(): CodexRefreshActivityHint {
+private fun CodexThreadActivitySnapshot.toRefreshActivityHint(verifiedFresh: Boolean = false): CodexRefreshActivityHint {
   return CodexRefreshActivityHint(
     activity = toCodexSessionActivity().toAgentThreadActivity(),
     updatedAt = updatedAt,
     responseRequired = activeFlags.isResponseRequired(),
+    verifiedFresh = verifiedFresh,
   )
 }
 

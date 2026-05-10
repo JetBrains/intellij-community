@@ -13,6 +13,7 @@ internal data class CodexRefreshActivityHint(
   @JvmField val activity: AgentThreadActivity,
   @JvmField val updatedAt: Long,
   @JvmField val responseRequired: Boolean = false,
+  @JvmField val verifiedFresh: Boolean = false,
 )
 
 internal data class CodexRefreshHints(

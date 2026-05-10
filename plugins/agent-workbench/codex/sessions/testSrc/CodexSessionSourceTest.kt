@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityH
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
+import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -131,7 +132,7 @@ class CodexSessionSourceTest {
   }
 
   @Test
-  fun newerRolloutWorkingHintOverridesReadyOutputHints() {
+  fun rolloutWorkingHintOverridesCachedReadyOutputHints() {
     val source = createSource(
       appServerHints = mapOf(
         PROJECT_PATH to refreshHints(
@@ -161,6 +162,119 @@ class CodexSessionSourceTest {
         .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
     }
   }
+
+  @Test
+  fun rolloutWorkingHintUsesFreshAppServerVerificationWhenPrefetchingHints() {
+    val observedAppServerSeeds = mutableListOf<Set<AgentSessionRefreshThreadSeed>>()
+    val source = createSource(
+      appServerRefreshHintsProvider = recordingHintsProvider(
+        observedRefreshThreadSeeds = observedAppServerSeeds,
+        hintsByPath = mapOf(
+          PROJECT_PATH to refreshHints(
+            "thread-1" to refreshHint(
+              activity = AgentThreadActivity.READY,
+              updatedAt = 300L,
+              verifiedFresh = true,
+            )
+          )
+        ),
+      ),
+      rolloutHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "thread-1" to refreshHint(
+            activity = AgentThreadActivity.PROCESSING,
+            updatedAt = 200L,
+          )
+        )
+      ),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val hints = source.prefetchRefreshHints(
+        paths = listOf(PROJECT_PATH),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
+      )
+
+      assertThat(observedAppServerSeeds.single().single().forceRefresh).isTrue()
+      assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
+        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.READY))
+    }
+  }
+
+  @Test
+  fun rolloutWorkingHintStillAppliesWhenFreshAppServerVerificationUnavailable() {
+    val observedAppServerSeeds = mutableListOf<Set<AgentSessionRefreshThreadSeed>>()
+    val source = createSource(
+      appServerRefreshHintsProvider = recordingHintsProvider(
+        observedRefreshThreadSeeds = observedAppServerSeeds,
+        hintsByPath = emptyMap(),
+      ),
+      rolloutHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "thread-1" to refreshHint(
+            activity = AgentThreadActivity.PROCESSING,
+            updatedAt = 200L,
+          )
+        )
+      ),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val hints = source.prefetchRefreshHints(
+        paths = listOf(PROJECT_PATH),
+        refreshThreadSeedsByPath = mapOf(PROJECT_PATH to setOf("thread-1").toAgentSessionRefreshThreadSeeds()),
+      )
+
+      assertThat(observedAppServerSeeds.single().single().forceRefresh).isTrue()
+      assertThat(hints.getValue(PROJECT_PATH).activityByThreadId)
+        .containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
+    }
+  }
+
+  @Test
+  fun listThreadsAppliesFreshAppServerVerificationBeforeRolloutFallback() {
+    val observedAppServerSeeds = mutableListOf<Set<AgentSessionRefreshThreadSeed>>()
+    val source = createSource(
+      backendThreads = listOf(
+        CodexBackendThread(
+          thread = CodexThread(
+            id = "thread-1",
+            title = "thread-1",
+            updatedAt = 100L,
+            archived = false,
+          ),
+          activity = CodexSessionActivity.PROCESSING,
+        )
+      ),
+      appServerRefreshHintsProvider = recordingHintsProvider(
+        observedRefreshThreadSeeds = observedAppServerSeeds,
+        hintsByPath = mapOf(
+          PROJECT_PATH to refreshHints(
+            "thread-1" to refreshHint(
+              activity = AgentThreadActivity.READY,
+              updatedAt = 300L,
+              verifiedFresh = true,
+            )
+          )
+        ),
+      ),
+      rolloutHints = mapOf(
+        PROJECT_PATH to refreshHints(
+          "thread-1" to refreshHint(
+            activity = AgentThreadActivity.PROCESSING,
+            updatedAt = 200L,
+          )
+        )
+      ),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val threads = source.listThreadsFromClosedProject(PROJECT_PATH)
+
+      assertThat(observedAppServerSeeds.single().single().forceRefresh).isTrue()
+      assertThat(threads.single().activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
 }
 
 private const val PROJECT_PATH = "/work/project"
@@ -169,13 +283,15 @@ private fun createSource(
   backendThreads: List<CodexBackendThread> = emptyList(),
   appServerHints: Map<String, CodexRefreshHints> = emptyMap(),
   rolloutHints: Map<String, CodexRefreshHints> = emptyMap(),
+  appServerRefreshHintsProvider: CodexRefreshHintsProvider = staticHintsProvider(appServerHints),
+  rolloutRefreshHintsProvider: CodexRefreshHintsProvider = staticHintsProvider(rolloutHints),
 ): CodexSessionSource {
   return CodexSessionSource(
     backend = object : CodexSessionBackend {
       override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> = backendThreads
     },
-    appServerRefreshHintsProvider = staticHintsProvider(appServerHints),
-    rolloutRefreshHintsProvider = staticHintsProvider(rolloutHints),
+    appServerRefreshHintsProvider = appServerRefreshHintsProvider,
+    rolloutRefreshHintsProvider = rolloutRefreshHintsProvider,
   )
 }
 
@@ -192,6 +308,23 @@ private fun staticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>): Co
   }
 }
 
+private fun recordingHintsProvider(
+  observedRefreshThreadSeeds: MutableList<Set<AgentSessionRefreshThreadSeed>>,
+  hintsByPath: Map<String, CodexRefreshHints>,
+): CodexRefreshHintsProvider {
+  return object : CodexRefreshHintsProvider {
+    override val updateEvents = emptyFlow<AgentSessionSourceUpdateEvent>()
+
+    override suspend fun prefetchRefreshHints(
+      paths: List<String>,
+      refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+    ): Map<String, CodexRefreshHints> {
+      observedRefreshThreadSeeds += refreshThreadSeedsByPath.getValue(PROJECT_PATH)
+      return hintsByPath.filterKeys(paths::contains)
+    }
+  }
+}
+
 private fun refreshHints(vararg entries: Pair<String, CodexRefreshActivityHint>): CodexRefreshHints {
   return CodexRefreshHints(activityHintsByThreadId = linkedMapOf(*entries))
 }
@@ -200,10 +333,12 @@ private fun refreshHint(
   activity: AgentThreadActivity,
   updatedAt: Long,
   responseRequired: Boolean = false,
+  verifiedFresh: Boolean = false,
 ): CodexRefreshActivityHint {
   return CodexRefreshActivityHint(
     activity = activity,
     updatedAt = updatedAt,
     responseRequired = responseRequired,
+    verifiedFresh = verifiedFresh,
   )
 }

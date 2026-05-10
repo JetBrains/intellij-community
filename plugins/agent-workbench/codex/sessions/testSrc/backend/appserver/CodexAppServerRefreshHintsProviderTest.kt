@@ -523,6 +523,80 @@ class CodexAppServerRefreshHintsProviderTest {
     }
 
     @Test
+    fun forceRefreshBypassesCachedSnapshotWhenUpdatedAtIsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+        val requestedThreadIds = mutableListOf<String>()
+        var statusKind = CodexThreadStatusKind.IDLE
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { threadId ->
+                requestedThreadIds += threadId
+                snapshot(
+                    threadId = threadId,
+                    statusKind = statusKind,
+                    updatedAt = 100L,
+                )
+            },
+            notifications = emptyFlow(),
+        )
+
+        provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 100L)),
+            ),
+        )
+        statusKind = CodexThreadStatusKind.ACTIVE
+        val refreshedHints = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-cached", updatedAt = 100L, forceRefresh = true)),
+            ),
+        )
+
+        assertThat(requestedThreadIds).containsExactly("thread-cached", "thread-cached")
+        val hint = refreshedHints.getValue("/work/project").activityHintsByThreadId.getValue("thread-cached")
+        assertThat(hint.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(hint.verifiedFresh).isTrue()
+    }
+
+    @Test
+    fun forceRefreshDoesNotFallBackToNotificationHintWhenSnapshotUnavailable(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { null },
+            notifications = notifications,
+        )
+
+        notifications.emit(
+            CodexAppServerNotification(
+                method = "thread/status/changed",
+                kind = CodexAppServerNotificationKind.THREAD_STATUS_CHANGED,
+                threadId = "thread-live",
+                statusKind = CodexThreadStatusKind.ACTIVE,
+            )
+        )
+        withTimeout(2.seconds) {
+            provider.updateEvents.first()
+        }
+
+        val notificationHints = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-live")),
+            ),
+        )
+        assertThat(notificationHints.getValue("/work/project").activities())
+            .containsExactlyEntriesOf(mapOf("thread-live" to AgentThreadActivity.PROCESSING))
+
+        val forcedHints = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = mapOf(
+                "/work/project" to setOf(refreshThreadSeed("thread-live", forceRefresh = true)),
+            ),
+        )
+        assertThat(forcedHints).isEmpty()
+    }
+
+    @Test
     fun refetchesSnapshotWhenUpdatedAtChanges(): Unit = runBlocking(Dispatchers.Default) {
         val requestedThreadIds = mutableListOf<String>()
         val snapshotsByUpdatedAt = mapOf(

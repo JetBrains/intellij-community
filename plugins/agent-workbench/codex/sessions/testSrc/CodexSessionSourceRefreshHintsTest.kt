@@ -80,7 +80,7 @@ class CodexSessionSourceRefreshHintsTest {
   }
 
   @Test
-  fun mergeAllowsNewerRolloutWorkingActivityToOverrideNonResponseRequiredAppServerHint() {
+  fun mergeAllowsRolloutWorkingActivityToOverrideCachedNonResponseRequiredAppServerHint() {
     val merged = mergeCodexRefreshHints(
       appServerHintsByPath = mapOf(
         "/work/project" to CodexRefreshHints(
@@ -125,6 +125,60 @@ class CodexSessionSourceRefreshHintsTest {
         mapOf(
           "thread-ready" to AgentThreadActivity.PROCESSING,
           "thread-passive-unread" to AgentThreadActivity.REVIEWING,
+          "thread-working" to AgentThreadActivity.REVIEWING,
+        )
+      )
+  }
+
+  @Test
+  fun mergeKeepsFreshAppServerNonWorkingHintWhenRolloutHasWorkingFallback() {
+    val merged = mergeCodexRefreshHints(
+      appServerHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-ready" to refreshHint(
+              activity = AgentThreadActivity.READY,
+              updatedAt = 200L,
+              verifiedFresh = true,
+            ),
+            "thread-passive-unread" to refreshHint(
+              activity = AgentThreadActivity.UNREAD,
+              updatedAt = 210L,
+              verifiedFresh = true,
+            ),
+            "thread-working" to refreshHint(
+              activity = AgentThreadActivity.PROCESSING,
+              updatedAt = 220L,
+              verifiedFresh = true,
+            ),
+          )
+        )
+      ),
+      rolloutHintsByPath = mapOf(
+        "/work/project" to CodexRefreshHints(
+          activityHintsByThreadId = mapOf(
+            "thread-ready" to refreshHint(
+              activity = AgentThreadActivity.PROCESSING,
+              updatedAt = 230L,
+            ),
+            "thread-passive-unread" to refreshHint(
+              activity = AgentThreadActivity.REVIEWING,
+              updatedAt = 240L,
+            ),
+            "thread-working" to refreshHint(
+              activity = AgentThreadActivity.REVIEWING,
+              updatedAt = 250L,
+            ),
+          )
+        )
+      ),
+    )
+
+    assertThat(merged.getValue("/work/project").activityHintsByThreadId.mapValues { (_, hint) -> hint.activity })
+      .containsExactlyInAnyOrderEntriesOf(
+        mapOf(
+          "thread-ready" to AgentThreadActivity.READY,
+          "thread-passive-unread" to AgentThreadActivity.UNREAD,
           "thread-working" to AgentThreadActivity.REVIEWING,
         )
       )
@@ -382,10 +436,12 @@ private fun refreshHint(
   activity: AgentThreadActivity,
   updatedAt: Long,
   responseRequired: Boolean = false,
+  verifiedFresh: Boolean = false,
 ): CodexRefreshActivityHint {
   return CodexRefreshActivityHint(
     activity = activity,
     updatedAt = updatedAt,
     responseRequired = responseRequired,
+    verifiedFresh = verifiedFresh,
   )
 }

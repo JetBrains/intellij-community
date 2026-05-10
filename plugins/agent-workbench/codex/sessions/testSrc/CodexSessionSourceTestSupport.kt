@@ -122,11 +122,13 @@ internal fun testRefreshHint(
   activity: AgentThreadActivity,
   updatedAt: Long,
   responseRequired: Boolean = false,
+  verifiedFresh: Boolean = false,
 ): CodexRefreshActivityHint {
   return CodexRefreshActivityHint(
     activity = activity,
     updatedAt = updatedAt,
     responseRequired = responseRequired,
+    verifiedFresh = verifiedFresh,
   )
 }
 

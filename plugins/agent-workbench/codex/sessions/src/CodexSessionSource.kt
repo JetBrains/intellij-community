@@ -131,13 +131,14 @@ internal class CodexSessionSource internal constructor(
     paths: List<String>,
     refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
   ): Map<String, AgentSessionRefreshHints> {
-    val appServerHints = appServerRefreshHintsProvider.prefetchRefreshHints(
-      paths = paths,
-      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
-    )
     val rolloutHints = rolloutRefreshHintsProvider.prefetchRefreshHints(
       paths = paths,
       refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+    val appServerHints = prefetchAppServerHintsWithRolloutVerification(
+      paths = paths,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+      rolloutHintsByPath = rolloutHints,
     )
     val mergedHints = mergeCodexRefreshHints(
       appServerHintsByPath = appServerHints,
@@ -186,11 +187,16 @@ internal class CodexSessionSource internal constructor(
       return agentThreadsByPath
     }
 
-    absorbActiveThreadReads(rolloutHintsByPath)
+    val verifiedRolloutHintsByPath = prefetchVerifiedRolloutFallbackHints(
+      rolloutHintsByPath = rolloutHintsByPath,
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+    )
+
+    absorbActiveThreadReads(verifiedRolloutHintsByPath)
 
     val result = LinkedHashMap<String, List<AgentSessionThread>>(agentThreadsByPath.size)
     for ((path, agentThreads) in agentThreadsByPath) {
-      val rolloutHints = rolloutHintsByPath[path]
+      val rolloutHints = verifiedRolloutHintsByPath[path]
       val activityHintsByThreadId = rolloutHints?.activityHintsByThreadId.orEmpty()
       if (activityHintsByThreadId.isEmpty()) {
         result[path] = agentThreads
@@ -200,11 +206,24 @@ internal class CodexSessionSource internal constructor(
       val backendThreadsById = backendThreadsByPath[path]
         .orEmpty()
         .associateBy { backendThread -> backendThread.thread.id }
-      var appliedFallbacks = 0
+      var appliedActivityUpdates = 0
       val threads = agentThreads.map { thread ->
-        val rolloutHint = activityHintsByThreadId[thread.id] ?: return@map thread
-        if (!shouldKeepRefreshHint(threadId = thread.id, hint = rolloutHint)) {
+        val activityHint = activityHintsByThreadId[thread.id] ?: return@map thread
+        if (!shouldKeepRefreshHint(threadId = thread.id, hint = activityHint)) {
           return@map thread
+        }
+        if (activityHint.verifiedFresh) {
+          if (thread.activity == activityHint.activity) {
+            return@map thread
+          }
+
+          appliedActivityUpdates += 1
+          LOG.debug {
+            "Applied Codex app-server activity verification " +
+            "path=$path threadId=${thread.id} appServerActivity=${thread.activity} verifiedActivity=${activityHint.activity} " +
+            "verifiedUpdatedAt=${activityHint.updatedAt} verifiedResponseRequired=${activityHint.responseRequired}"
+          }
+          return@map thread.copy(activity = activityHint.activity)
         }
 
         val backendThread = backendThreadsById[thread.id]
@@ -213,27 +232,127 @@ internal class CodexSessionSource internal constructor(
           updatedAt = backendThread?.thread?.updatedAt ?: thread.updatedAt,
           responseRequired = backendThread?.requiresResponse == true,
         )
-        if (!shouldApplyRolloutActivityFallback(currentHint = currentHint, rolloutHint = rolloutHint)) {
+        if (!shouldApplyRolloutActivityFallback(currentHint = currentHint, rolloutHint = activityHint)) {
           return@map thread
         }
 
-        appliedFallbacks += 1
+        appliedActivityUpdates += 1
         LOG.debug {
           "Applied Codex rollout activity fallback " +
-          "path=$path threadId=${thread.id} appServerActivity=${thread.activity} rolloutActivity=${rolloutHint.activity} " +
-          "appServerUpdatedAt=${currentHint.updatedAt} rolloutUpdatedAt=${rolloutHint.updatedAt} " +
-          "appServerResponseRequired=${currentHint.responseRequired} rolloutResponseRequired=${rolloutHint.responseRequired}"
+          "path=$path threadId=${thread.id} appServerActivity=${thread.activity} rolloutActivity=${activityHint.activity} " +
+          "appServerUpdatedAt=${currentHint.updatedAt} rolloutUpdatedAt=${activityHint.updatedAt} " +
+          "appServerResponseRequired=${currentHint.responseRequired} rolloutResponseRequired=${activityHint.responseRequired}"
         }
-        thread.copy(activity = rolloutHint.activity)
+        thread.copy(activity = activityHint.activity)
       }
-      if (appliedFallbacks > 0) {
+      if (appliedActivityUpdates > 0) {
         LOG.debug {
-          "Applied Codex rollout activity fallbacks path=$path count=$appliedFallbacks hints=${activityHintsByThreadId.size}"
+          "Applied Codex rollout activity updates path=$path count=$appliedActivityUpdates hints=${activityHintsByThreadId.size}"
         }
       }
       result[path] = threads
     }
     return result
+  }
+
+  private suspend fun prefetchAppServerHintsWithRolloutVerification(
+    paths: List<String>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+    rolloutHintsByPath: Map<String, CodexRefreshHints>,
+  ): Map<String, CodexRefreshHints> {
+    val verificationSeedsByPath = buildRolloutVerificationSeedsByPath(
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+      rolloutHintsByPath = rolloutHintsByPath,
+    )
+    val appServerSeedsByPath = mergeForcedRefreshThreadSeeds(
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+      forcedRefreshThreadSeedsByPath = verificationSeedsByPath,
+    )
+    return appServerRefreshHintsProvider.prefetchRefreshHints(
+      paths = paths,
+      refreshThreadSeedsByPath = appServerSeedsByPath,
+    )
+  }
+
+  private suspend fun prefetchVerifiedRolloutFallbackHints(
+    rolloutHintsByPath: Map<String, CodexRefreshHints>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+  ): Map<String, CodexRefreshHints> {
+    val verificationSeedsByPath = buildRolloutVerificationSeedsByPath(
+      refreshThreadSeedsByPath = refreshThreadSeedsByPath,
+      rolloutHintsByPath = rolloutHintsByPath,
+    )
+    if (verificationSeedsByPath.isEmpty()) {
+      return rolloutHintsByPath
+    }
+
+    val appServerHints = try {
+      appServerRefreshHintsProvider.prefetchRefreshHints(
+        paths = verificationSeedsByPath.keys.toList(),
+        refreshThreadSeedsByPath = verificationSeedsByPath,
+      )
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to verify Codex rollout activity fallback with app server", e)
+      return rolloutHintsByPath
+    }
+    return mergeCodexRefreshHints(
+      appServerHintsByPath = appServerHints,
+      rolloutHintsByPath = rolloutHintsByPath,
+    )
+  }
+
+  private fun buildRolloutVerificationSeedsByPath(
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+    rolloutHintsByPath: Map<String, CodexRefreshHints>,
+  ): Map<String, Set<AgentSessionRefreshThreadSeed>> {
+    if (refreshThreadSeedsByPath.isEmpty() || rolloutHintsByPath.isEmpty()) {
+      return emptyMap()
+    }
+
+    val verificationSeedsByPath = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>()
+    for ((path, refreshThreadSeeds) in refreshThreadSeedsByPath) {
+      val activityHintsByThreadId = rolloutHintsByPath[path]?.activityHintsByThreadId.orEmpty()
+      if (activityHintsByThreadId.isEmpty()) {
+        continue
+      }
+
+      val verificationSeeds = refreshThreadSeeds.asSequence()
+        .filter { refreshThreadSeed ->
+          activityHintsByThreadId[refreshThreadSeed.threadId]?.shouldVerifyWithAppServer() == true
+        }
+        .mapTo(LinkedHashSet()) { refreshThreadSeed -> refreshThreadSeed.copy(forceRefresh = true) }
+      if (verificationSeeds.isNotEmpty()) {
+        verificationSeedsByPath[path] = verificationSeeds
+      }
+    }
+    return verificationSeedsByPath
+  }
+
+  private fun mergeForcedRefreshThreadSeeds(
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+    forcedRefreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+  ): Map<String, Set<AgentSessionRefreshThreadSeed>> {
+    if (forcedRefreshThreadSeedsByPath.isEmpty()) {
+      return refreshThreadSeedsByPath
+    }
+
+    val mergedSeedsByPath = LinkedHashMap<String, Set<AgentSessionRefreshThreadSeed>>(refreshThreadSeedsByPath.size)
+    for ((path, refreshThreadSeeds) in refreshThreadSeedsByPath) {
+      val forcedRefreshThreadIds = forcedRefreshThreadSeedsByPath[path]
+        .orEmpty()
+        .mapTo(HashSet()) { refreshThreadSeed -> refreshThreadSeed.threadId }
+      if (forcedRefreshThreadIds.isEmpty()) {
+        mergedSeedsByPath[path] = refreshThreadSeeds
+        continue
+      }
+
+      mergedSeedsByPath[path] = refreshThreadSeeds.mapTo(LinkedHashSet()) { refreshThreadSeed ->
+        if (refreshThreadSeed.threadId in forcedRefreshThreadIds) refreshThreadSeed.copy(forceRefresh = true) else refreshThreadSeed
+      }
+    }
+    return mergedSeedsByPath
   }
 
   private fun trackActiveThreadRead(threads: Iterable<CodexBackendThread>) {
@@ -322,7 +441,7 @@ internal fun mergeCodexRefreshHints(
           currentHint = mergedActivityHintsByThreadId[threadId],
           rolloutHint = hint,
         )) {
-        // Rollout can keep TUI-backed working activity ahead of stale app-server state.
+        // Rollout can keep TUI-backed working activity ahead of cached app-server state.
         mergedActivityHintsByThreadId[threadId] = hint
       }
     }
@@ -346,12 +465,17 @@ private fun shouldApplyRolloutActivityFallback(
     currentHint == null -> true
     currentHint.responseRequired -> false
     rolloutHint.responseRequired -> true
+    currentHint.verifiedFresh && rolloutHint.activity.isWorking && !currentHint.activity.isWorking -> false
     rolloutHint.activity.isWorking && !currentHint.activity.isWorking -> true
     rolloutHint.activity == AgentThreadActivity.UNREAD -> rolloutHint.updatedAt > currentHint.updatedAt
     !rolloutHint.activity.isWorking -> false
     rolloutHint.updatedAt <= currentHint.updatedAt -> false
     else -> true
   }
+}
+
+private fun CodexRefreshActivityHint.shouldVerifyWithAppServer(): Boolean {
+  return responseRequired || activity.isWorking
 }
 
 private fun mergeRebindCandidates(
