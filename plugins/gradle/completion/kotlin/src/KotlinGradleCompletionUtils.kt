@@ -248,7 +248,7 @@ internal fun getConfigurationsForDependencies(psiElement: PsiElement): List<Stri
     val configurations = extensionsData.configurations.values
     return configurations
         .filter { it.canBeUsedInDependenciesBlock() }
-        .filter { isValidNameInKotlin(it.name) }
+        .filter { it.name.matches(kotlinMethodNamePattern) }
         .map { it.name }
 }
 
@@ -259,10 +259,8 @@ internal fun getConfigurationsForDependencies(psiElement: PsiElement): List<Stri
 private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependenciesBlock(): Boolean =
     this.canDeclareDependencies != false
 
-/** @return true if starts from a letter and contains only letters, digits and underscores after it */
-private fun isValidNameInKotlin(string: String): Boolean =
-    string.matches(Regex("^[a-zA-Z_][a-zA-Z0-9_]*$"))
-
+/** Starts with a letter or underscore, then might contain only letters, digits, and underscores */
+private val kotlinMethodNamePattern = Regex("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 private val PsiElement.surroundingArgumentsSize
     get(): Int =
