@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
             model("${idea}/inspectionsLocal/cascadeIf")
+            model("${idea}/inspectionsLocal/nullChecksToSafeCall")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
             model("${idea}/inspectionsLocal/nullableHashCode")
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")

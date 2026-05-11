@@ -2756,6 +2756,60 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall")
+    public static class NullChecksToSafeCall extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("andCase.kt")
+        public void testAndCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/andCase.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/function.kt");
+        }
+
+        @TestMetadata("kotlinType.kt")
+        public void testKotlinType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/kotlinType.kt");
+        }
+
+        @TestMetadata("longRightExpression.kt")
+        public void testLongRightExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/longRightExpression.kt");
+        }
+
+        @TestMetadata("orCase.kt")
+        public void testOrCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/orCase.kt");
+        }
+
+        @TestMetadata("safeCall.kt")
+        public void testSafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/safeCall.kt");
+        }
+
+        @TestMetadata("unstableChain.kt")
+        public void testUnstableChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/unstableChain.kt");
+        }
+
+        @TestMetadata("unstableExtensionInChain.kt")
+        public void testUnstableExtensionInChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullChecksToSafeCall/unstableExtensionInChain.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis")
     public static class NullableBooleanElvis extends AbstractK2LocalInspectionTest {
         @java.lang.Override
