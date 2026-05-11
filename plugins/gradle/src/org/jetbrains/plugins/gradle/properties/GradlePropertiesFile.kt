@@ -3,32 +3,17 @@ package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.models.getBooleanProperty
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
-import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use GradleConstants#USER_HOME_PROPERTY_KEY instead")
-const val USER_HOME: String = USER_HOME_PROPERTY_KEY
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use GradleConstants#GRADLE_CACHE_DIR_NAME instead")
-const val GRADLE_CACHE_DIR_NAME: String = GRADLE_CACHE_DIR_NAME
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use GradleConstants#GRADLE_PROPERTIES_FILE_NAME instead")
-const val GRADLE_PROPERTIES_FILE_NAME: String = GRADLE_PROPERTIES_FILE_NAME
 
 const val GRADLE_JAVA_HOME_PROPERTY: String = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY: String = "org.gradle.logging.level"
