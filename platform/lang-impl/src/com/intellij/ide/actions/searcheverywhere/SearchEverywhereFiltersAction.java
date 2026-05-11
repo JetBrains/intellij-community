@@ -4,11 +4,13 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
   final PersistentSearchEverywhereContributorFilter<T> filter;
   final Runnable rebuildRunnable;
