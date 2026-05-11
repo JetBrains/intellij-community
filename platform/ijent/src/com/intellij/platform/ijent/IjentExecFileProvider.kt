@@ -22,8 +22,9 @@ interface IjentExecFileProvider {
   suspend fun getIjentBinary(targetPlatform: EelPlatform): Path
 }
 
-class IjentMissingBinary(platform: EelPlatform) : Exception("Failed to get an IJent binary for $platform") {
+class IjentMissingBinary(platform: EelPlatform, cause: String? = null) : Exception("Failed to get an IJent binary for $platform" + cause?.let { ": $cause" }) {
   override fun getLocalizedMessage(): String = IjentBundle.message("failed.to.get.ijent.binary")
+  override fun toString(): String = "${javaClass.name}: $message"
 }
 
 internal class DefaultIjentExecFileProvider : IjentExecFileProvider {
