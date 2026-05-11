@@ -392,7 +392,7 @@ private fun installCustomHeader(
   val isDecoratedMenu = isDecoratedMenu(uiSettings)
   val isFloatingMenuBarSupported = isFloatingMenuBarSupported
   val hideNativeLinuxTitle = hideNativeLinuxTitle(uiSettings)
-  val ijpl43505fixEnabled = OS.isGenericUnix() && Registry.`is`("ide.linux.ijpl43505", false)
+  val ijpl43505fixEnabled = OS.isGenericUnix() && Registry.`is`("ide.linux.ijpl43505", true)
 
   return if (!isDecoratedMenu && !isFloatingMenuBarSupported && (!ijpl43505fixEnabled || !hideNativeLinuxTitle)) {
     createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)

@@ -118,7 +118,7 @@
     />
     <registryKey
       key="ide.linux.ijpl43505"
-      defaultValue="false"
+      defaultValue="true"
       description="Enable the fix for IJPL-43505 Window header disappears after opening more than one project"
       restartRequired="true"
     />
