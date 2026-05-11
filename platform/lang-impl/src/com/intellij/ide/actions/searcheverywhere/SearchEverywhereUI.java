@@ -1415,6 +1415,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       SearchEverywhereUsageTriggerCollector.COMMAND_USED.log(myProject);
     }
 
+    List<SearchEverywhereFoundElementInfo> foundElementsInfo = null;
+    if (myMlService != null) {
+      // We collect found elements info for ML service before calling contributor.processSelectedItem,
+      // because the popup may be closed during contributor.processSelectedItem call.
+      // See: IJPL-244597
+      foundElementsInfo = ContainerUtil.copyList(myListModel.getFoundElementsInfo());
+    }
+
     boolean closePopup = false;
     List<Object> selectedItems = new ArrayList<>();
     for (int i : indexes) {
@@ -1447,11 +1455,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    if (myMlService != null) {
+    if (myMlService != null && foundElementsInfo != null) {
       var tabId = myHeader.getSelectedTab().getID();
       var correctIndexes = hasNotificationElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
       myMlService.onItemSelected(
-        tabId, correctIndexes, selectedItems, ContainerUtil.copyList(myListModel.getFoundElementsInfo()), searchText);
+        tabId, correctIndexes, selectedItems, ContainerUtil.copyList(foundElementsInfo), searchText);
     }
 
     for (int i : indexes) {
