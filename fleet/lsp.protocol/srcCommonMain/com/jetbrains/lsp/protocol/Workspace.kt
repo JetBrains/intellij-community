@@ -4,6 +4,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.NothingSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonArray
@@ -300,14 +301,14 @@ object Workspace {
     val WillRenameFiles: RequestType<RenameFilesParams, WorkspaceEdit?, Unit> =
         RequestType("workspace/willRenameFiles", RenameFilesParams.serializer(), WorkspaceEdit.serializer().nullable, Unit.serializer())
 
-    val RefreshCodeLenses: RequestType<Unit, Unit, Unit> =
-        RequestType("workspace/codeLens/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
+    val RefreshCodeLenses: RequestType<Nothing?, Nothing?, Nothing?> =
+        RequestType("workspace/codeLens/refresh", NothingSerializer().nullable, NothingSerializer().nullable, NothingSerializer().nullable)
 
-    val RefreshInlayHints: RequestType<Unit, Unit, Unit> =
-        RequestType("workspace/inlayHint/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
+    val RefreshInlayHints: RequestType<Nothing?, Nothing?, Nothing?> =
+        RequestType("workspace/inlayHint/refresh", NothingSerializer().nullable, NothingSerializer().nullable, NothingSerializer().nullable)
 
-    val RefreshSemanticTokens: RequestType<Unit, Unit, Unit> =
-        RequestType("workspace/semanticTokens/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
+    val RefreshSemanticTokens: RequestType<Nothing?, Nothing?, Nothing?> =
+        RequestType("workspace/semanticTokens/refresh", NothingSerializer().nullable, NothingSerializer().nullable, NothingSerializer().nullable)
 
     val DidChangeWatchedFiles: NotificationType<DidChangeWatchedFilesParams> =
         NotificationType("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.serializer())

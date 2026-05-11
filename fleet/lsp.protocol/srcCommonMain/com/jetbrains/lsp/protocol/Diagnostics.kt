@@ -4,8 +4,8 @@ package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.NothingSerializer
 import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 
 /**
@@ -402,10 +402,10 @@ object Diagnostics {
   /**
    * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh">workspace/diagnostic/refresh (LSP spec)</a>
    */
-  val Refresh: RequestType<Unit, Unit, Unit> = RequestType(
+  val Refresh: RequestType<Nothing?, Nothing?, Nothing?> = RequestType(
     method = "workspace/diagnostic/refresh",
-    paramsSerializer = Unit.serializer(),
-    resultSerializer = Unit.serializer(),
-    errorSerializer = Unit.serializer(),
+    paramsSerializer = NothingSerializer().nullable,
+    resultSerializer = NothingSerializer().nullable,
+    errorSerializer = NothingSerializer().nullable,
   )
 }
