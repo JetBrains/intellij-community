@@ -9,4 +9,8 @@
       implementation="com.intellij.compose.ide.plugin.android.resources.AndroidDrawablePreviewRenderer"
       order="first"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.android.tools.idea.npw.template">
+    <wizardPluginPromotionTemplateProvider implementation="com.intellij.compose.ide.plugin.android.kmpPluginPromotion.KmpPluginPlaceholderProvider"/>
+  </extensions>
 </idea-plugin>

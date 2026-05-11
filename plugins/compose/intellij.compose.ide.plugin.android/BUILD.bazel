@@ -13,6 +13,8 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
     "@lib//:studio-platform-provided",
     "//platform/util",
+    "//android/android-npw:newProjectWizard",
+    "//platform/core-api:core",
   ]
 )
 
@@ -27,6 +29,8 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources_test_lib",
     "@lib//:studio-platform-provided",
     "//platform/util:util_test_lib",
+    "//android/android-npw:newProjectWizard_test_lib",
+    "//platform/core-api:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.android` end
