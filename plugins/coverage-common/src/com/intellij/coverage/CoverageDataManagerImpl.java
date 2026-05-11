@@ -36,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,15 +164,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @SuppressWarnings("unused")
   public void addCoverageSuite(CoverageSuite suite, @Nullable String suiteToMergeWith) {
     CoverageDataSuitesManager.getInstance(myProject).addSuite(suite, suiteToMergeWith);
-  }
-
-  @Override
-  public CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
-                                                long timeStamp,
-                                                @NotNull CoverageRunner coverageRunner,
-                                                @NotNull CoverageFileProvider fileProvider) {
-    return CoverageDataSuitesManager.getInstance(myProject)
-      .addExternalCoverageSuite(selectedFileName, coverageRunner, fileProvider, timeStamp);
   }
 
   @Override

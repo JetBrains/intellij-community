@@ -45,16 +45,6 @@ public abstract class CoverageDataManager {
                                                  @NotNull CoverageRunner coverageRunner,
                                                  boolean coverageByTestEnabled, boolean branchCoverage);
 
-  /**
-   * @deprecated Use {@link CoverageDataManager#addExternalCoverageSuite(Path, CoverageRunner)}
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public abstract CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
-                                                         long timeStamp,
-                                                         @NotNull CoverageRunner coverageRunner,
-                                                         @NotNull CoverageFileProvider fileProvider);
-
   public abstract CoverageSuite addExternalCoverageSuite(@NotNull Path file, @NotNull CoverageRunner coverageRunner);
 
   /**
