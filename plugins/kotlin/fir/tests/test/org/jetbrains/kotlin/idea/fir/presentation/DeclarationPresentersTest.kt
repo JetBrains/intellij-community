@@ -8,8 +8,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.presentation.KotlinDefaultNamedDeclarationPresentation
+import org.jetbrains.kotlin.idea.presentation.KotlinFunctionPresentation
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import java.awt.Component
 import java.awt.Graphics
@@ -53,5 +55,49 @@ class DeclarationPresentersTest : KotlinLightCodeInsightFixtureTestCase() {
 
         iconProvider.icon = null
         assertEquals(defaultIcon, KotlinDefaultNamedDeclarationPresentation(element).getIcon(false))
+    }
+
+    fun testConstructorPresentationWithQualifiedParameterType() {
+        myFixture.configureByText(
+            "Test.kt",
+            """
+            object Wrapper {
+                enum class TestTypes { One, Two }
+            }
+
+            class <caret>Test(
+                id: String,
+                colors: Set<String>,
+                types: Set<Wrapper.TestTypes>,
+            )
+            """.trimIndent()
+        )
+        val classElement = myFixture.elementAtCaret as KtNamedDeclaration
+        val primaryConstructor = (classElement as org.jetbrains.kotlin.psi.KtClass).primaryConstructor!!
+        val presentation = KotlinFunctionPresentation(primaryConstructor)
+
+        // Should not be cropped/mangled when parameter type contains a dot
+        assertEquals(
+            "Test(String, Set<String>, Set<Wrapper.TestTypes>)",
+            presentation.presentableText
+        )
+    }
+
+    fun testFunctionPresentationWithQualifiedParameterType() {
+        myFixture.configureByText(
+            "Test.kt",
+            """
+            object Wrapper {
+                enum class TestTypes { One, Two }
+            }
+
+            fun <caret>foo(types: Set<Wrapper.TestTypes>) {}
+            """.trimIndent()
+        )
+        val function = myFixture.elementAtCaret as KtFunction
+        val presentation = KotlinFunctionPresentation(function)
+
+        // Should not be cropped/mangled when parameter type contains a dot
+        assertEquals("foo(Set<Wrapper.TestTypes>)", presentation.presentableText)
     }
 }
