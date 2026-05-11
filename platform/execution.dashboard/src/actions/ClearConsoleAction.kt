@@ -21,7 +21,6 @@ internal class ClearConsoleAction : DumbAwareAction(), ActionRemoteBehaviorSpeci
 
     val targetNodes = RunDashboardActionUtils.getLeafTargets(e)
     val enabled = targetNodes.filter {
-      if (it.content == null) return@filter false
       val size = (it.descriptor?.executionConsole as? ConsoleView)?.getContentSize() ?: return@filter false
       size > 0
     }.isNotEmpty
