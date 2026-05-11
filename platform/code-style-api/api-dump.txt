@@ -50,7 +50,6 @@ a:com.intellij.codeStyle.CodeStyleFacade
 - a:getIndentSize(com.intellij.openapi.fileTypes.FileType):I
 - s:getInstance():com.intellij.codeStyle.CodeStyleFacade
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeStyle.CodeStyleFacade
-- getLineIndent(com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I,Z):java.lang.String
 - a:useTabCharacter(com.intellij.openapi.fileTypes.FileType):Z
 com.intellij.formatting.ASTBlock
 - com.intellij.formatting.Block
@@ -1485,7 +1484,6 @@ com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 f:com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 - com.intellij.psi.codeStyle.CodeStyleSettings
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings):V
-- <init>(com.intellij.psi.PsiFile,com.intellij.psi.codeStyle.CodeStyleSettings):V
 - addDependencies(java.util.List):V
 - addDependency(com.intellij.openapi.util.ModificationTracker):V
 - getDependencies():java.util.List

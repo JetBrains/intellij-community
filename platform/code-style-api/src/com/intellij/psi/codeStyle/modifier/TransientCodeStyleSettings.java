@@ -33,19 +33,6 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
   private CodeStyleSettingsModifier myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
-  /**
-   * @deprecated Use {@link #TransientCodeStyleSettings(VirtualFile,Project,CodeStyleSettings)}
-   */
-  @Deprecated(forRemoval = true)
-  public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
-    super(true, false);
-    myFileRef = new WeakReference<>(psiFile.getVirtualFile());
-    myProject = psiFile.getProject();
-    copyFrom(settings);
-    myDependencies.add(settings.getModificationTracker());
-  }
-
-
   public TransientCodeStyleSettings(@NotNull VirtualFile file, @NotNull Project project, @NotNull CodeStyleSettings settings) {
     super(true, false);
     myFileRef = new WeakReference<>(file);

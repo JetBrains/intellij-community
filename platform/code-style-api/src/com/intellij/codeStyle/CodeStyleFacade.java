@@ -34,14 +34,6 @@ public abstract class CodeStyleFacade {
   public abstract @Nullable String getLineIndent(@NotNull Document document, int offset);
 
   /**
-   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
-    return getLineIndent(editor.getDocument(), offset);
-  }
-
-  /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(PsiFile)} instead.
    */
   @Deprecated(forRemoval = true)

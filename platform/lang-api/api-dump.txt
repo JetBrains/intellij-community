@@ -919,17 +919,9 @@ com.intellij.psi.codeStyle.CodeStyleConfigurable
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - a:reset(com.intellij.psi.codeStyle.CodeStyleSettings):V
 com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
-- sf:BLANK_LINES:java.lang.String
-- sf:BLANK_LINES_KEEP:java.lang.String
-- sf:BRACE_OPTIONS:java.lang.String[]
 - sf:BRACE_PLACEMENT_VALUES:I[]
 - sf:BRACE_VALUES:I[]
-- sf:SPACES_BEFORE_LEFT_BRACE:java.lang.String
-- sf:SPACES_BEFORE_PARENTHESES:java.lang.String
-- sf:SPACES_OTHER:java.lang.String
-- sf:SPACES_WITHIN:java.lang.String
 - sf:WRAP_ON_TYPING_VALUES:I[]
-- sf:WRAP_OPTIONS:java.lang.String[]
 - sf:WRAP_VALUES:I[]
 - sf:WRAP_VALUES_FOR_SINGLETON:I[]
 - moveStandardOption(java.lang.String,java.lang.String):V
