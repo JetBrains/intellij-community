@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -40,20 +41,25 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
@@ -68,6 +74,8 @@ open class TextEditorImpl @Internal constructor(
 ) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
+  private val isDisposed = AtomicBoolean(false)
+  private val customizerJobs = ConcurrentHashMap.newKeySet<Job>()
 
   // for backward-compatibility only
   constructor(
@@ -107,10 +115,25 @@ open class TextEditorImpl @Internal constructor(
       for (extension in TEXT_EDITOR_CUSTOMIZER_EP.filterableLazySequence()) {
         try {
           val customizer = extension.instance ?: continue
-          val scope = asyncLoader.coroutineScope.childScope(extension.implementationClassName)
-          scope.attachAsChildTo((project as ComponentManagerEx).pluginCoroutineScope(customizer::class.java.classLoader))
-          scope.launch {
-            customizer.execute(textEditor = this@TextEditorImpl)
+          val scope = createCustomizerScope(
+            implementationClassName = extension.implementationClassName,
+            pluginClassLoader = customizer::class.java.classLoader,
+            pluginId = extension.pluginDescriptor.pluginId,
+          )
+          if (!registerCustomizerScope(scope)) {
+            continue
+          }
+          scope.launch(CoroutineName("TextEditorCustomizer.customize")) {
+            try {
+              customizer.customize(textEditor = this@TextEditorImpl, coroutineScope = scope)
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              scope.cancel()
+              throw e
+            }
           }
         }
         catch (e: CancellationException) {
@@ -121,7 +144,49 @@ open class TextEditorImpl @Internal constructor(
         }
       }
 
-      component.listenChanges(parentDisposable = this@TextEditorImpl, asyncLoader = asyncLoader, textEditor = this@TextEditorImpl, project = project)
+      component.listenChanges(parentDisposable = this@TextEditorImpl,
+                              asyncLoader = asyncLoader,
+                              textEditor = this@TextEditorImpl,
+                              project = project)
+    }
+  }
+
+  private fun createCustomizerScope(
+    implementationClassName: String,
+    pluginClassLoader: ClassLoader,
+    pluginId: PluginId,
+  ): CoroutineScope {
+    val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+      logger<TextEditorImpl>().error(PluginException(throwable, pluginId))
+    }
+    return (project as ComponentManagerEx).pluginCoroutineScope(pluginClassLoader).childScope(
+      name = implementationClassName,
+      context = ModalityState.any().asContextElement() + exceptionHandler,
+    )
+  }
+
+  private fun registerCustomizerScope(scope: CoroutineScope): Boolean {
+    val job = scope.coroutineContext.job
+    if (isDisposed.get()) {
+      scope.cancel()
+      return false
+    }
+    customizerJobs.add(job)
+    if (isDisposed.get()) {
+      customizerJobs.remove(job)
+      scope.cancel()
+      return false
+    }
+    job.invokeOnCompletion {
+      customizerJobs.remove(job)
+    }
+    return true
+  }
+
+  private fun cancelCustomizerScopes() {
+    isDisposed.set(true)
+    for (job in customizerJobs) {
+      job.cancel()
     }
   }
 
@@ -140,6 +205,7 @@ open class TextEditorImpl @Internal constructor(
   }
 
   override fun dispose() {
+    cancelCustomizerScopes()
     try {
       asyncLoader.dispose()
     }
@@ -281,9 +347,13 @@ private class AsyncEditorLoaderScopeHolder(@JvmField val coroutineScope: Corouti
 @Internal
 fun createEditorImpl(project: Project, file: VirtualFile, asyncLoader: AsyncEditorLoader): Pair<EditorImpl, AsyncEditorLoader> {
   val document = FileDocumentManager.getInstance().getDocument(file, project)!!
-  return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document = document, project = project, file = file, highlighter = null, afterCreation = {
-    it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
-  }) to asyncLoader
+  return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document = document,
+                                                                             project = project,
+                                                                             file = file,
+                                                                             highlighter = null,
+                                                                             afterCreation = {
+                                                                               it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+                                                                             }) to asyncLoader
 }
 
 @Internal

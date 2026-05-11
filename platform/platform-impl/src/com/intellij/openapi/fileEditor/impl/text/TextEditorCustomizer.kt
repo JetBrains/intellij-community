@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.fileEditor.TextEditor
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
@@ -10,16 +11,8 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 interface TextEditorCustomizer {
   /**
    * Use to customize editor after it was created.
-   * Executed inside a coroutine scope spanning from editor opening to editor closing (or plugin unloading).
+   *
+   * Must return quickly. Use [coroutineScope] for asynchronous work that should live until editor closing or plugin unloading.
    */
-  suspend fun execute(textEditor: TextEditor) {
-    @Suppress("DEPRECATION")
-    customize(textEditor)
-  }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Override execute(textEditor)")
-  fun customize(textEditor: TextEditor) {
-    throw AbstractMethodError("Implement customize(textEditor, coroutineScope)")
-  }
+  fun customize(textEditor: TextEditor, coroutineScope: CoroutineScope)
 }
