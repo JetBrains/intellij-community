@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.putUserData
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -661,6 +662,7 @@ object UniversalFileChooser {
           override fun treeWillCollapse(event: TreeExpansionEvent) {}
         })
         fileTree = NioFileSystemTree(project, descriptorCopy, tree, contributor, scope)
+        Disposer.register(disposable, fileTree)
         fileTree.addOkAction(okAction)
         fileTree.addListener(object : NioFileSystemTree.Listener {
           override fun selectionChanged(selection: List<Path?>) {
