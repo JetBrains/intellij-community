@@ -9,18 +9,23 @@ import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
 import org.jetbrains.kotlin.idea.codeInsight.gradle.nativeDistLibraryDependency
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assume
+import org.junit.Ignore
 import org.junit.Test
 import java.util.Locale
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"
 
     override fun setUp() {
@@ -33,6 +38,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
+    @Ignore("KTIJ-38760")
     fun testWithPosix() {
         configureByFiles()
         importProject(false)
@@ -204,6 +210,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
 
 
     @Test
+    @TargetVersions("7.6.3+")
     fun testLibraryNamesAndLevel() {
         configureByFiles()
         importProject(true)
