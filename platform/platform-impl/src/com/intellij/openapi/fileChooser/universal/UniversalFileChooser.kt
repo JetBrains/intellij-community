@@ -372,12 +372,7 @@ object UniversalFileChooser {
             return
           }
           val status = fileView.mountStatusCache[selected.invariantSeparatorsPathString]
-          if (status == MountStatus.Permanent || status == null) {
-            e.presentation.isVisible = false
-          }
-          else {
-            e.presentation.isVisible = true
-          }
+          e.presentation.isVisible = !(status == MountStatus.Permanent || status == null)
           e.presentation.isEnabled = !fileView.isMountActionInProgress && status != MountStatus.Mounted
         }
 
@@ -433,11 +428,14 @@ object UniversalFileChooser {
       val actionGroup = DefaultActionGroup().apply {
         add(homeAction)
         if (projectAction != null) add(projectAction)
-        add(mountStatusAction)
-        add(showHiddenAction)
+        addSeparator()
         add(createDirectoryAction)
         add(deleteAction)
+        addSeparator()
         add(refreshAction)
+        add(showHiddenAction)
+        addSeparator()
+        add(mountStatusAction)
       }
 
       return ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
@@ -788,8 +786,7 @@ object UniversalFileChooser {
 
       fun isOkEnabled(): Boolean {
         val selected = getSelectedFiles()
-        if (selected.isEmpty()) return false
-        return selected.all { file ->
+        return selected.isNotEmpty() && selected.all { file ->
           file.parent != null
         }
       }
