@@ -32,7 +32,6 @@ jvm_library(
   module_name = "fleet.test.runtime",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k21",
   exports = [
     "@lib//:junit5",
     "@lib//:junit5Params",

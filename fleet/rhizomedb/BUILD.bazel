@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_rhizomedb",
-  jvm_target = "21",
   opt_in = [
     "kotlin.ExperimentalStdlibApi",
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
