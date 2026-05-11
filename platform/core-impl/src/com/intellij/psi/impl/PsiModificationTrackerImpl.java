@@ -155,11 +155,6 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
     return myModificationCount.getModificationCount();
   }
 
-  @Override
-  public @NotNull ModificationTracker getJavaStructureModificationTracker() {
-    return myModificationCount;
-  }
-
   // used by Kotlin
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {

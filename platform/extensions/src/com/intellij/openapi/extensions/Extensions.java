@@ -61,15 +61,6 @@ public final class Extensions {
   }
 
   /**
-   * @deprecated Use {@link AreaInstance#getExtensionArea()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
-    return areaInstance == null ? getRootArea() : areaInstance.getExtensionArea();
-  }
-
-  /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList()}
    */
   @Deprecated

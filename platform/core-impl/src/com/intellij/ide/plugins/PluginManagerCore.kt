@@ -1098,17 +1098,6 @@ object PluginManagerCore {
   @JvmStatic
   fun disablePlugin(id: String): Boolean = disablePlugin(PluginId.getId(id))
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link #enablePlugin(PluginId)}", level = DeprecationLevel.ERROR)
-  @JvmStatic
-  fun enablePlugin(id: String): Boolean = enablePlugin(PluginId.getId(id))
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link DisabledPluginsState#addDisablePluginListener} directly", level = DeprecationLevel.ERROR)
-  @JvmStatic
-  fun addDisablePluginListener(listener: Runnable) {
-    DisabledPluginsState.addDisablePluginListener(listener)
-  }
   //</editor-fold>
 
   private fun processAllNonOptionalDependencies(

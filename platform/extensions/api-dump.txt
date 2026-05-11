@@ -123,7 +123,6 @@ f:com.intellij.openapi.extensions.ExtensionPointUtil
 - s:dropLazyValueOnChange(com.intellij.util.concurrency.SynchronizedClearableLazy,com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.Disposable):java.util.function.Supplier
 f:com.intellij.openapi.extensions.Extensions
 - s:findExtension(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.lang.Object
-- s:getArea(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionsArea
 - s:getExtensions(com.intellij.openapi.extensions.ExtensionPointName):java.lang.Object[]
 - s:getExtensions(com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.extensions.AreaInstance):java.lang.Object[]
 - s:getRootArea():com.intellij.openapi.extensions.ExtensionsArea
