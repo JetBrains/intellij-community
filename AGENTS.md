@@ -46,7 +46,7 @@ Special handling applies to the directories below. If a file you touch lives und
 
 ### After Writing Code
 
-- Use `mcp__ijproxy__lint_files` to check files for warnings.
+- Use `lint_files` to check files for warnings.
   Fix any warnings related to the code changes made. You may ignore unrelated warnings.
 
 ## Repository-wide rules
