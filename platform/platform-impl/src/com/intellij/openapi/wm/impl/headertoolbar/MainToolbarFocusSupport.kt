@@ -61,6 +61,8 @@ internal class MainToolbarFocusSupport(
       installListeners(item)
       if (item.isToolbarFocusableType()) {
         item.isFocusable = true
+        // To prevent mouse clicks from moving focus to the component
+        if (item is JComponent) item.isRequestFocusEnabled = false
         when (item) {
           is ActionButton -> registerEnterAction(item) { item.click() }
           is AbstractButton -> registerEnterAction(item) { item.doClick() }
