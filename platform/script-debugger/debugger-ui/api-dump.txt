@@ -25,13 +25,6 @@ f:org.jetbrains.debugger.ProcessHandlerWrapper
 - startNotify():V
 f:org.jetbrains.debugger.PsiVisitors
 - <init>():V
-a:org.jetbrains.debugger.PsiVisitors$FilteringPsiRecursiveElementWalkingVisitor
-- com.intellij.psi.PsiRecursiveElementWalkingVisitor
-- <init>():V
-- visitComment(com.intellij.psi.PsiComment):V
-- visitElement(com.intellij.psi.PsiElement):V
-- visitOuterLanguageElement(com.intellij.psi.templateLanguages.OuterLanguageElement):V
-- visitWhiteSpace(com.intellij.psi.PsiWhiteSpace):V
 a:org.jetbrains.debugger.RemoteDebugConfiguration
 - com.intellij.execution.configurations.LocatableConfigurationBase
 - com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
