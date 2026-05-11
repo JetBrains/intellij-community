@@ -326,6 +326,15 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
+  @ApiStatus.Internal
+  protected void doEnsureVersioned(long version) {
+    if (isParsedVersioned(-1)) {
+      // we want to prevent uncollapsing of lazy elements. We intend to only modify versions
+      super.doEnsureVersioned(version);
+    }
+  }
+
+  @Override
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
     if (!isParsed()) {
       LOG.error("Mutating collapsed chameleon " + this.getClass());

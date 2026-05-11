@@ -984,6 +984,7 @@ public class CompositeElement extends TreeElement {
   static @NotNull TreeElement rawSetParents(long version, @NotNull TreeElement child, @NotNull CompositeElement parent) {
     child.rawRemoveUpToWithoutNotifications(version, null, false);
     while (true) {
+      parent.ensureVersioned(version, child);
       child.setTreeParent(version, parent);
       TreeElement treeNext = child.getTreeNextVersioned(version);
       if (treeNext == null) {
@@ -1058,5 +1059,13 @@ public class CompositeElement extends TreeElement {
   public TreeElement rawLastChild() {
     long version = getVersionForReading();
     return doGetLastChild(version);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected void doEnsureVersioned(long version) {
+    for (TreeElement element = doGetFirstChild(version); element != null; element = element.getTreeNextVersioned(version)) {
+      ensureVersioned(version, element);
+    }
   }
 }

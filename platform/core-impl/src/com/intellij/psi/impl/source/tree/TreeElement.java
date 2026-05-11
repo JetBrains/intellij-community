@@ -494,21 +494,44 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   /**
+   * In the IntelliJ Platform, it is normal to create a non-versioned PSI element and insert it into versioned tree
+   * When this happens, we detach an element from its non-versioned structure, modify its internal structure so it is versioned,
+   * and then we insert it into the versioned structure.
+   * <p>
+   * This helps us to maintain versioning consistency of syntax trees while retaining old contracts.
+   */
+  @ApiStatus.Internal
+  protected void ensureVersioned(long version, @Nullable TreeElement element) {
+    if (!this.isVersioned() || element == null || element.creationVersion != -1) {
+      return;
+    }
+    element.creationVersion = version;
+    // we do not traverse siblings -- they can remain non-versioned;
+    // but we need to make the entire subtree versioned
+    element.doEnsureVersioned(version);
+  }
+
+  @ApiStatus.Internal
+  protected void doEnsureVersioned(long version) {
+    // here we add traversal of children in overloads
+  }
+
+  /**
    * We permit only interactions between elements that are either simultaneously versioned or simultaneously non-versioned.
    */
   @ApiStatus.Internal
-  protected static void assertElementCompatibility(@NotNull TreeElement first, @Nullable TreeElement second) {
+  protected static void assertElementCompatibility(@NotNull TreeElement primary, @Nullable TreeElement secondary) {
     if (!ThreadingRuntimeFlagsKt.getAssertTreeElementVersioningCompatibility()) {
       return;
     }
-    if (second == null) {
+    if (secondary == null) {
       return;
     }
-    boolean firstIsVersioned = first.isVersioned();
-    boolean secondIsVersioned = second.isVersioned();
+    boolean firstIsVersioned = primary.isVersioned();
+    boolean secondIsVersioned = secondary.isVersioned();
     if (firstIsVersioned != secondIsVersioned) {
       throw new VersionedPsiConsistencyException.TreeElement(
-        "Tree elements " + first + " (versioned: " + firstIsVersioned + ") and " + second + " (versioned: "+ secondIsVersioned + ") are not compatible from versioning point of view.\n" +
+        "Tree elements " + primary + " (versioned: " + firstIsVersioned + ") and " + secondary + " (versioned: "+ secondIsVersioned + ") are not compatible from versioning point of view.\n" +
         "Most likely you created or copied some PSI element and then tried to attach it to a physical PSI tree.\n" +
         "The solution is to create or copy elements in the same environment (i.e., inside / outside of write actions),\n" +
         "or to use `com.intellij.psi.util.PsiVersioningService.inVersionedEnvironment` before creating or copying an element.");
@@ -644,12 +667,15 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   public void rawInsertBeforeMe(@NotNull TreeElement firstNew) {
     TreeElement anchorPrev = getTreePrev();
+    long version = getVersionForWriting();
     if(anchorPrev == null){
       firstNew.rawRemoveUpToLast();
-      CompositeElement p = getTreeParent();
+      ensureVersioned(version, firstNew);
+      CompositeElement p = getTreeParentVersioned(version);
       if(p != null) p.setFirstChildNode(firstNew);
       while(true){
-        TreeElement treeNext = firstNew.getTreeNext();
+        TreeElement treeNext = firstNew.getTreeNextVersioned(version);
+        ensureVersioned(version, treeNext);
         assert treeNext != this : "Attempt to create cycle";
         firstNew.setTreeParent(p);
         if(treeNext == null) break;
@@ -677,13 +703,21 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   final void rawInsertAfterMeWithoutNotifications(long version, @NotNull TreeElement firstNew) {
-    firstNew.rawRemoveUpToWithoutNotifications(version, null, false);
+    if (!this.isVersioned() && firstNew.isVersioned()) {
+      throw new VersionedPsiConsistencyException.TreeElement("Attempt to insert a non-versioned element into a versioned hierarchy. Please ensure that " + firstNew +
+                                                             " is a versioned element by using `PsiVersioningService.inVersionedEnvironment`");
+    }
+    assertElementCompatibility(this, firstNew);
+    long versionForRemoval = firstNew.getVersionForWriting() == -1 ? -1 : version;
+    firstNew.rawRemoveUpToWithoutNotifications(versionForRemoval, null, false);
+    ensureVersioned(version, firstNew);
     CompositeElement p = getTreeParentVersioned(version);
     TreeElement treeNext = getTreeNextVersioned(version);
     firstNew.setTreePrev(version, this);
     setTreeNext(version, firstNew);
     while(true){
       TreeElement n = firstNew.getTreeNextVersioned(version);
+      ensureVersioned(version, n);
       assert n != this : "Attempt to create cycle";
       firstNew.setTreeParent(version, p);
       if(n == null) break;
