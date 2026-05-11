@@ -5,7 +5,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ThreadingRuntimeFlagsKt;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -268,11 +267,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public @Nullable Project getCurrentCommandProject() {
     return ObjectUtils.doIfNotNull(currentCommand, command -> command.getProject());
-  }
-
-  @Override
-  public void addCommandListener(@NotNull CommandListener listener) {
-    eventPublisher.addCommandListener(listener);
   }
 
   @Override

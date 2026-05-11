@@ -974,7 +974,6 @@ c:com.intellij.openapi.command.impl.CoreCommandProcessor
 - <init>():V
 - addAffectedDocuments(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document[]):V
 - addAffectedFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):V
-- addCommandListener(com.intellij.openapi.command.CommandListener):V
 - allowMergeGlobalCommands(java.lang.Runnable):V
 - enterModal():V
 - executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object):V
