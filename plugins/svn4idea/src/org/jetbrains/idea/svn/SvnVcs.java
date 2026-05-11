@@ -546,11 +546,6 @@ public final class SvnVcs extends AbstractVcs {
     return ourIntegerPattern;
   }
 
-  @Override
-  public boolean isVersionedDirectory(final VirtualFile dir) {
-    return SvnUtil.seemsLikeVersionedDir(dir);
-  }
-
   public @NotNull SvnFileUrlMapping getSvnFileUrlMapping() {
     return myProject.getService(SvnFileUrlMapping.class);
   }

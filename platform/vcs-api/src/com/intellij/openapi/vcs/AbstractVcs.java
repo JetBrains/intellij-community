@@ -475,21 +475,6 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Checks if the specified directory is managed by this version control system (regardless of the
-   * project VCS configuration). For example, for CVS this checks the presense of "CVS" admin directories.
-   * This method is used for VCS autodetection during initial project creation and VCS configuration.
-   *
-   * @param dir the directory to check.
-   * @return {@code true} if directory is managed by this VCS
-   * @deprecated Use {@link VcsRootChecker} instead.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public boolean isVersionedDirectory(VirtualFile dir) {
-    return false;
-  }
-
-  /**
    * Returns the configurable to be shown in the VCS directory mapping dialog which should be displayed
    * for configuring VCS-specific settings for the specified root, or null if no such configuration is required.
    * The VCS-specific settings are stored in {@link VcsDirectoryMapping#getRootSettings()}.

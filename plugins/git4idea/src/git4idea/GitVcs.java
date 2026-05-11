@@ -202,11 +202,6 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  public boolean isVersionedDirectory(VirtualFile dir) {
-    return dir.isDirectory() && GitUtil.isUnderGit(dir);
-  }
-
-  @Override
   protected void activate() {
     CoroutineScope activeScope = GitDisposable.getInstance(myProject).childScope("GitVcs");
 

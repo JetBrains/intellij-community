@@ -234,11 +234,6 @@ public final class HgVcs extends AbstractVcs {
     return true;
   }
 
-  @Override
-  public boolean isVersionedDirectory(VirtualFile dir) {
-    return HgUtil.getNearestHgRoot(dir) != null;
-  }
-
   /**
    * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
    */
