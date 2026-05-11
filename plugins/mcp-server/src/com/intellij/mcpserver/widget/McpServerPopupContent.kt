@@ -51,6 +51,7 @@ import org.jetbrains.jewel.ui.component.OutlinedSlimButton
 import org.jetbrains.jewel.ui.component.Popup
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
 private val spacing = IntelliJSpacingConfiguration()
@@ -66,6 +67,7 @@ internal fun McpServerPopupContent(
   Column(
     modifier = modifier
       .widthIn(min = McpServerStatusBarWidget.POPUP_WIDTH.dp)
+      .background(JewelTheme.popupContainerStyle.colors.background)
       .animateContentSize()
       .padding(start = gaps.left.dp, end = gaps.right.dp, top = gaps.top.dp, bottom = gaps.bottom.dp)
   ) {
