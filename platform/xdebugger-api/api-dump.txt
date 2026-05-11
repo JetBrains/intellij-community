@@ -121,6 +121,14 @@ com.intellij.xdebugger.XDebugSession
 - a:stop():V
 - a:updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
 - a:updateExecutionPosition():V
+com.intellij.xdebugger.XDebugSessionBuilder
+- a:contentToReuse(com.intellij.execution.ui.RunContentDescriptor):com.intellij.xdebugger.XDebugSessionBuilder
+- a:environment(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSessionBuilder
+- a:icon(javax.swing.Icon):com.intellij.xdebugger.XDebugSessionBuilder
+- a:sessionName(java.lang.String):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showTab(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showToolWindowOnSuspendOnly(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:startSession():com.intellij.xdebugger.XSessionStartedResult
 com.intellij.xdebugger.XDebugSessionListener
 - java.util.EventListener
 - beforeSessionResume():V
@@ -189,6 +197,9 @@ com.intellij.xdebugger.XExpression
 com.intellij.xdebugger.XNamedTreeNode
 - javax.swing.tree.TreeNode
 - a:getName():java.lang.String
+com.intellij.xdebugger.XSessionStartedResult
+- a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
+- a:getSession():com.intellij.xdebugger.XDebugSession
 com.intellij.xdebugger.XSourcePosition
 - a:createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - a:getFile():com.intellij.openapi.vfs.VirtualFile

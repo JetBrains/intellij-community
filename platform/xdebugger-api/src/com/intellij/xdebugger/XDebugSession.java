@@ -2,6 +2,7 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.AsyncProgramRunner;
@@ -173,7 +174,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * @deprecated Do not use.
    * <ul>
-   *   <li>Use {@link XSessionStartedResult#getRunContentDescriptor()} to return {@link RunContentDescriptor} instance into {@link AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)}.</li>
+   *   <li>Use {@link XSessionStartedResult#getRunContentDescriptor()} to return {@link RunContentDescriptor} instance into {@link AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)} or {@link ExecutionManager#startRunProfile}.</li>
    *   <li>Use {@link XDebugProcess#getProcessHandler()} to access {@link com.intellij.execution.process.ProcessHandler}.</li>
    *   <li>Use {@link XDebugSession#getExecutionEnvironment()} to access execution ID.</li>
    *   <li>Use {@link XDebugSession#getConsoleView()} as disposable instead.</li>
