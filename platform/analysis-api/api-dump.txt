@@ -56,8 +56,6 @@ c:com.intellij.analysis.AnalysisScope
 - toSearchScope():com.intellij.psi.search.SearchScope
 @:com.intellij.analysis.AnalysisScope$Type
 - java.lang.annotation.Annotation
-f:com.intellij.analysis.AnalysisScopeBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
 c:com.intellij.codeHighlighting.HighlightDisplayLevel
 - sf:CONSIDERATION_ATTRIBUTES:com.intellij.codeHighlighting.HighlightDisplayLevel
 - sf:Companion:com.intellij.codeHighlighting.HighlightDisplayLevel$Companion
@@ -181,13 +179,6 @@ com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener
 com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
 - a:getUnresolvedMessagePattern():java.lang.String
 com.intellij.codeInsight.daemon.GroupNames
-- sf:BUGS_GROUP_NAME:java.lang.String
-- sf:COMPILER_ISSUES:java.lang.String
-- sf:IMPORTS_GROUP_NAME:java.lang.String
-- sf:INTERNATIONALIZATION_GROUP_NAME:java.lang.String
-- sf:MODULARIZATION_GROUP_NAME:java.lang.String
-- sf:PROPERTIES_GROUP_NAME:java.lang.String
-- sf:STYLE_GROUP_NAME:java.lang.String
 com.intellij.codeInsight.daemon.ImplicitUsageProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - isClassWithCustomizedInitialization(com.intellij.psi.PsiElement):Z
@@ -670,7 +661,6 @@ com.intellij.lang.annotation.AnnotationHolder
 - a:createInfoAnnotation(com.intellij.lang.ASTNode,java.lang.String):com.intellij.lang.annotation.Annotation
 - a:createInfoAnnotation(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.lang.annotation.Annotation
 - a:createInfoAnnotation(com.intellij.psi.PsiElement,java.lang.String):com.intellij.lang.annotation.Annotation
-- a:createWarningAnnotation(com.intellij.lang.ASTNode,java.lang.String):com.intellij.lang.annotation.Annotation
 - a:createWarningAnnotation(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.lang.annotation.Annotation
 - a:createWarningAnnotation(com.intellij.psi.PsiElement,java.lang.String):com.intellij.lang.annotation.Annotation
 - a:createWeakWarningAnnotation(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.lang.annotation.Annotation

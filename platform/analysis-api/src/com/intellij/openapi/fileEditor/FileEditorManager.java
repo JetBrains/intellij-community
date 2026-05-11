@@ -78,14 +78,6 @@ public abstract class FileEditorManager {
   public abstract @Nullable Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
-   * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    openTextEditor(descriptor, focusEditor);
-  }
-
-  /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
    */

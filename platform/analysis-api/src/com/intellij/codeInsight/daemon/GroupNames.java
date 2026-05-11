@@ -21,27 +21,5 @@ package com.intellij.codeInsight.daemon;
  */
 @Deprecated
 public interface GroupNames {
-  /** @deprecated use groupKey="group.names.probable.bugs" instead */
-  @Deprecated(forRemoval = true)
-  String BUGS_GROUP_NAME = "Probable bugs";
-  /** @deprecated use groupKey="group.names.compiler.issues" instead */
-  @Deprecated(forRemoval = true)
-  String COMPILER_ISSUES = "Compiler issues";
-  
-  /** @deprecated use groupKey="group.names.imports" instead */
-  @Deprecated(forRemoval = true)
-  String IMPORTS_GROUP_NAME = "Imports";
-  /** @deprecated use groupKey="group.names.internationalization.issues" instead */
-  @Deprecated(forRemoval = true)
-  String INTERNATIONALIZATION_GROUP_NAME = "Internationalization";
-  /** @deprecated use groupKey="group.names.code.style.issues" instead */
-  @Deprecated(forRemoval = true)
-  String STYLE_GROUP_NAME = "Code style issues";
 
-  /** @deprecated use groupKey="group.names.modularization.issues" instead */
-  @Deprecated(forRemoval = true)
-  String MODULARIZATION_GROUP_NAME = "Modularization issues";
-  /** @deprecated use groupKey="group.names.properties.files" instead */
-  @Deprecated(forRemoval = true)
-  String PROPERTIES_GROUP_NAME = "Properties files";
 }
