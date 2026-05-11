@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -36,11 +36,55 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 private const val PCE_CLASS_NAME = "com.intellij.openapi.progress.ProcessCanceledException"
+private const val JUC_CE_CLASS_NAME = "java.util.concurrent.CancellationException"
+private const val LOGGER_CLASS_NAME = "com.intellij.openapi.diagnostic.Logger"
 
 internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
+
+      override fun visitCallExpression(node: UCallExpression): Boolean {
+        if (node.receiverType?.isClassType(LOGGER_CLASS_NAME) != true) {
+          return super.visitCallExpression(node)
+        }
+
+        val resolveScope = holder.file.resolveScope
+        val pceClass = findPceClass(resolveScope) ?: return super.visitCallExpression(node)
+        val ceClass = JavaPsiFacade.getInstance(holder.project).findClass(JUC_CE_CLASS_NAME, resolveScope)
+          ?: return super.visitCallExpression(node)
+
+        for (arg in node.valueArguments) {
+          val rawArgType = arg.getExpressionType() ?: continue
+          val argTypes = if (rawArgType is PsiDisjunctionType) rawArgType.disjunctions else listOf(rawArgType)
+          for (argType in argTypes) {
+            when {
+              argType.isInheritorOrSelf(pceClass) -> {
+                if (reportExceptionLogging(node, argType, PCE_CLASS_NAME)) {
+                  return super.visitCallExpression(node)
+                }
+              }
+              argType.isInheritorOrSelf(ceClass) -> {
+                if (reportExceptionLogging(node, argType, JUC_CE_CLASS_NAME)) {
+                  return super.visitCallExpression(node)
+                }
+              }
+            }
+          }
+        }
+        return super.visitCallExpression(node)
+      }
+
+      private fun reportExceptionLogging(node: UCallExpression, argType: PsiType, className: String): Boolean {
+        val loggedClassName = (argType as? PsiClassType)?.resolve()?.qualifiedName ?: return false
+        val isInheritor = loggedClassName != className
+        val msg = if (isInheritor)
+          message("inspections.incorrect.exception.inheritor.logged.name", className)
+        else
+          message("inspections.incorrect.exception.logged.name", loggedClassName)
+        holder.registerUProblem(node as UExpression, msg)
+        return true
+      }
 
       override fun visitCatchClause(node: UCatchClause): Boolean {
         val pceClass = findPceClass(holder.file.resolveScope) ?: return super.visitCatchClause(node)
@@ -94,20 +138,13 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
       }
 
       private fun inspectIncorrectCeHandling(node: UCatchClause, caughtCeInfo: CaughtCeInfo) {
-        val catchBody = node.body
-        if (!ceIsRethrown(catchBody, caughtCeInfo.parameter)) {
-          val message = if (caughtCeInfo.isInheritor)
-            message("inspections.incorrect.cancellation.exception.inheritor.handling.name.not.rethrown", caughtCeInfo.baseCeClassName)
-          else message("inspections.incorrect.cancellation.exception.handling.name.not.rethrown", caughtCeInfo.baseCeClassName)
-          holder.registerUProblem(caughtCeInfo.parameter, message)
-        }
-        val loggingExpression = findCeLoggingExpression(catchBody, caughtCeInfo.parameter)
-        if (loggingExpression != null) {
-          val message = if (caughtCeInfo.isInheritor)
-            message("inspections.incorrect.cancellation.exception.inheritor.handling.name.logged", caughtCeInfo.baseCeClassName)
-          else message("inspections.incorrect.cancellation.exception.handling.name.logged", caughtCeInfo.baseCeClassName)
-          holder.registerUProblem(loggingExpression, message)
-        }
+       val catchBody = node.body
+       if (!ceIsRethrown(catchBody, caughtCeInfo.parameter)) {
+         val message = if (caughtCeInfo.isInheritor)
+           message("inspections.incorrect.cancellation.exception.inheritor.handling.name.not.rethrown", caughtCeInfo.baseCeClassName)
+         else message("inspections.incorrect.cancellation.exception.handling.name.not.rethrown", caughtCeInfo.baseCeClassName)
+         holder.registerUProblem(caughtCeInfo.parameter, message)
+       }
       }
 
       private fun inspectGenericThrowableIfAnyOfTryStatementsThrowsCe(
@@ -137,11 +174,13 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           val langSpecificCaughtCeInfo = findLangSpecificCeThrowingExpressionInfo(tryExpression, caughtGenericThrowableParam)
           if (langSpecificCaughtCeInfo != null) {
             inspectIncorrectImplicitCeHandling(catchClause, langSpecificCaughtCeInfo)
+            inspectImplicitCeLogging(catchClause, langSpecificCaughtCeInfo)
           }
           // UAST check:
           val caughtCeInfo = findCeThrowingExpressionInfo(tryExpression, caughtGenericThrowableParam)
           if (caughtCeInfo != null) {
             inspectIncorrectImplicitCeHandling(catchClause, caughtCeInfo)
+            inspectImplicitCeLogging(catchClause, caughtCeInfo)
           }
         }
         return super.visitCatchClause(catchClause)
@@ -219,6 +258,31 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         }
       }
 
+      private fun inspectImplicitCeLogging(catchClause: UCatchClause, caughtCeInfo: CaughtCeInfo) {
+        val methodName = caughtCeInfo.ceThrowingMethodName ?: return
+        catchClause.body.accept(object : AbstractUastVisitor() {
+          override fun visitCallExpression(node: UCallExpression): Boolean {
+            if (node.receiverType?.isClassType(LOGGER_CLASS_NAME) != true) {
+              return super.visitCallExpression(node)
+            }
+            for (arg in node.valueArguments) {
+              val resolvedParam = (arg as? USimpleNameReferenceExpression)?.resolveToUElement()
+              if (resolvedParam == caughtCeInfo.parameter) {
+                val message = if (caughtCeInfo.isInheritor)
+                  message("inspections.incorrect.implicit.cancellation.exception.inheritor.handling.name.logged",
+                          caughtCeInfo.baseCeClassName, methodName)
+                else
+                  message("inspections.incorrect.implicit.cancellation.exception.handling.name.logged",
+                          caughtCeInfo.baseCeClassName, methodName)
+                holder.registerUProblem(node as UExpression, message)
+                return super.visitCallExpression(node)
+              }
+            }
+            return super.visitCallExpression(node)
+          }
+        })
+      }
+
       private fun inspectIncorrectImplicitCeHandling(catchClause: UCatchClause, caughtCeInfo: CaughtCeInfo) {
         val catchBody = catchClause.body
         if (!ceIsRethrown(catchBody, caughtCeInfo.parameter)) {
@@ -229,16 +293,6 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           else message("inspections.incorrect.implicit.cancellation.exception.handling.name.not.rethrown",
                        caughtCeInfo.baseCeClassName, methodName)
           holder.registerUProblem(caughtCeInfo.parameter, message)
-        }
-        val loggingExpression = findCeLoggingExpression(catchBody, caughtCeInfo.parameter)
-        if (loggingExpression != null) {
-          val methodName = caughtCeInfo.ceThrowingMethodName ?: return
-          val message = if (caughtCeInfo.isInheritor)
-            message("inspections.incorrect.implicit.cancellation.exception.inheritor.handling.name.logged",
-                    caughtCeInfo.baseCeClassName, methodName)
-          else message("inspections.incorrect.implicit.cancellation.exception.handling.name.logged",
-                       caughtCeInfo.baseCeClassName, methodName)
-          holder.registerUProblem(loggingExpression, message)
         }
       }
 
@@ -255,22 +309,6 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           }
         })
         return found
-      }
-
-      private fun findCeLoggingExpression(catchBody: UExpression, caughtParam: UParameter): UExpression? {
-        var loggingExpression: UExpression? = null
-        catchBody.accept(object : AbstractUastVisitor() {
-          override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
-            if (caughtParam == node.resolveToUElement()) {
-              val callExpression = node.getParentOfType<UCallExpression>() ?: return super.visitSimpleNameReferenceExpression(node)
-              if (callExpression.receiverType?.isClassType("com.intellij.openapi.diagnostic.Logger") == true) {
-                loggingExpression = callExpression
-              }
-            }
-            return super.visitSimpleNameReferenceExpression(node)
-          }
-        })
-        return loggingExpression
       }
 
       private fun PsiType.isClassType(qualifiedName: String): Boolean {
@@ -297,7 +335,7 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         }
       }
 
-    }, arrayOf(UCatchClause::class.java))
+    }, arrayOf(UCatchClause::class.java, UCallExpression::class.java))
   }
 
   private class CaughtCeInfo(

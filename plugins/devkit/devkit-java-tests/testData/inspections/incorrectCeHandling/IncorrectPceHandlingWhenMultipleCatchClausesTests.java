@@ -61,7 +61,7 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+      LOG.error("Error occurred: " + e.getMessage());
     } catch (Exception e) {
       LOG.error("Error occurred: " + e.getMessage());
     }

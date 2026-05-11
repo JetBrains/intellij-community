@@ -70,4 +70,25 @@ class IncorrectCeHandlingTests {
     }
   }
 
+  fun testCeLoggedOutsideCatchBlock(e: CancellationException) {
+    LOG.<error descr="'kotlinx.coroutines.CancellationException' must not be logged">error(e)</error>
+  }
+
+  fun testCeLoggedOnWarnLevel(e: CancellationException) {
+    LOG.<error descr="'kotlinx.coroutines.CancellationException' must not be logged">warn(e)</error>
+  }
+
+  fun testCeLoggedOnDebugLevel(e: CancellationException) {
+    LOG.<error descr="'kotlinx.coroutines.CancellationException' must not be logged">debug(e)</error>
+  }
+
+  // CE subclasses should not be reported by the type-based check either
+  fun testCeSubclassLoggedOutsideCatchBlockNotFlagged(e: SubclassOfCancellationException) {
+    LOG.error(e)
+  }
+
+  fun testOnlyExceptionMessageLoggedNotFlagged(e: CancellationException) {
+    LOG.error("message: " + e.message)
+  }
+
 }

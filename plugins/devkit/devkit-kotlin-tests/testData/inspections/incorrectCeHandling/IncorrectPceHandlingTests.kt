@@ -56,7 +56,7 @@ class IncorrectPceHandlingTests {
       // anything
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
-      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</error>
+      LOG.error("Error occurred: " + e.message)
     }
   }
 
@@ -66,6 +66,41 @@ class IncorrectPceHandlingTests {
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>: SubclassOfProcessCanceledException) {
       LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">error(e)</error>
+    }
+  }
+
+  fun testSwallowedAndLoggedOnWarnLevel() {
+    try {
+      // anything
+    }
+    catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">warn(e)</error>
+    }
+  }
+
+  fun testSwallowedAndLoggedOnDebugLevel() {
+    try {
+      // anything
+    }
+    catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">debug(e)</error>
+    }
+  }
+
+  fun testSwallowedAndLoggedWithDebug() {
+    try {
+      // anything
+    }
+    catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">warnWithDebug(e)</error>
+    }
+  }
+
+  fun testRegularExceptionNotFlagged() {
+    try {
+    }
+    catch (e: RuntimeException) {
+      LOG.error(e)
     }
   }
 
