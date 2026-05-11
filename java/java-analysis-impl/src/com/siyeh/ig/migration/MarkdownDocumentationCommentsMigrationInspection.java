@@ -124,7 +124,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         if (child instanceof PsiInlineDocTag inlineDocTag) {
           String name = inlineDocTag.getName();
           if ("code".equals(name) && JavaDocUtil.isInHtmlTag(inlineDocTag, "pre", true)) {
-            handleCode(inlineDocTag, result);
+            handleCode(inlineDocTag, result, true);
           }
           else if (JavaDocUtil.isInHtmlTag(inlineDocTag, "pre", false)) {
             StringBuilder escapedTagBuilder = new StringBuilder();
@@ -138,7 +138,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
             }
 
             if ("code".equals(name)) {
-              handleCode(inlineDocTag, result);
+              handleCode(inlineDocTag, result, false);
             }
             else if ("link".equals(name) || "linkplain".equals(name)) {
               handleLink(inlineDocTag, result);
@@ -240,7 +240,9 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       }
     }
 
-    private static void handleCode(PsiInlineDocTag inlineDocTag, StringBuilder result) {
+    /// @param isFromCodeblock `true` if the code element is guaranteed to be part of a code block.
+    ///                         Allows less sensitive checks during the conversion stage
+    private static void handleCode(PsiInlineDocTag inlineDocTag, StringBuilder result, boolean isFromCodeblock) {
       StringBuilder codeBuilder = new StringBuilder();
 
       for (PsiElement dataElement : inlineDocTag.getDataElements()) {
@@ -252,10 +254,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         }
       }
 
+      String tag = isFromCodeblock ? HtmlToMarkdownVisitor.INTERNAL_CODE_BLOCK_TAG : "code";
       result
-        .append("<code>")
+        .append("<%S>".formatted(tag))
         .append(escapeInline(codeBuilder.toString().trim().replace("\\","\\\\")))
-        .append("</code>");
+        .append("</%s>".formatted(tag));
     }
 
     private static void handleLink(PsiInlineDocTag inlineDocTag, StringBuilder result) {
@@ -334,6 +337,8 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
     static final String INTERNAL_TAG_INLINE_RAW = "jbr-internal-inline";
     /// Used to mark *non*-inline tags, that must start on a new line
     static final String INTERNAL_TAG_JDOC_TAG = "jbr-internal-jdoc";
+    /// Used to denote `@code` elements that guaranteed to be a code block
+    static final String INTERNAL_CODE_BLOCK_TAG = "jbr-internal-code-block";
     
     /// Detect multiple line breaks which are not at the end of the string
     private static final Pattern MULTI_LINE_BREAK = Pattern.compile("\n\\s*(?=\n)");
@@ -454,6 +459,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
           }
         }
 
+        case INTERNAL_CODE_BLOCK_TAG -> {
+          appendCodeBlock(node);
+          return FilterResult.SKIP_ENTIRELY;
+        }
+
         case "ul", "ol" -> {
           if(listContext.isEmpty()) {
             appendBreaks(PARAGRAPH_BREAK);
@@ -552,8 +562,10 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
     /// The `<pre>` tag has a different translation if it can be considered a code block
     /// @return Whether the `<pre>` tag should be considered a code block
     private static boolean isPreTagCodeBlock(Node node) {
+      Node child;
       return (node.childNodeSize() == 1 && node.childNode(0).nodeName().equals("code"))
-             || (node.parentNameIs("blockquote") && isBlockquoteTagCodeBlock(node.parentNode()));
+             || (node.parentNameIs("blockquote") && isBlockquoteTagCodeBlock(node.parentNode()))
+             || ((child = getSingleRelevantChild(node)) != null && child.nameIs(INTERNAL_CODE_BLOCK_TAG));
     }
 
     /// Same as [#isPreTagCodeBlock] but from the `<code>` tag perspective
