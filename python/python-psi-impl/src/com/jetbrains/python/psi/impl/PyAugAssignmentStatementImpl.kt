@@ -15,12 +15,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), PyAugAssignmentStatement {
 
-  override val assignmentTarget: PyTargetExpression = object : PyTargetExpressionImpl(firstChild.node) {
-    override fun findAssignedValue(): PyExpression {
-      return this@PyAugAssignmentStatementImpl
-    }
-  }
-
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyAugAssignmentStatement(this)
   }

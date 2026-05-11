@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyQualifiedElement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
@@ -173,10 +174,10 @@ object PyCallExpressionHelper {
     }
   }
 
-  private fun multiResolveOperator(expression: PyQualifiedExpression, resolveContext: PyResolveContext): List<PyCallableType> {
+  private fun multiResolveOperator(operatorOwner: PyQualifiedElement, resolveContext: PyResolveContext): List<PyCallableType> {
     val context = resolveContext.typeEvalContext
 
-    return PyOperatorReference(expression, resolveContext)
+    return PyOperatorReference(operatorOwner, resolveContext)
       .resolveGroupingByReceiver()
       .asSequence()
       .map {

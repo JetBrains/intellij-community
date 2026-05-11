@@ -94,6 +94,7 @@ import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PySentinelType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.containsAny
 import com.jetbrains.python.psi.types.PyTypeChecker.getTargetTypeFromTupleAssignment
@@ -165,7 +166,56 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     override fun visitPyAugAssignmentStatement(node: PyAugAssignmentStatement) {
       checkCallSite(node)
-      visitPyTargetExpression(node.assignmentTarget)
+      // Most of the following follows the logic of `visitPyTargetExpression` taking into account that
+      // an augmented assignment target is normally a reference.
+      val target = node.target
+      if (target !is PyReferenceExpression) return
+
+      var expected = myTypeEvalContext.getType(target)
+      val resolved: PsiElement? = target.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve()
+      if (resolved !is PyTargetExpression || !hasExplicitType(resolved)) return
+
+      val qualifier = target.qualifier
+      if (qualifier != null) {
+        expected = myTypeEvalContext.getType(qualifier).compositeMap {
+          val substitutions = unifyReceiver(it, myTypeEvalContext)
+          substitute(expected, substitutions, myTypeEvalContext)
+        }
+      }
+
+      var isDescriptor = false
+      val classAttrType = getClassAttributeType(target)
+      if (classAttrType != null) {
+        val dunderSetValueType =
+          getExpectedValueTypeForDunderSet(target, classAttrType.get(), myTypeEvalContext)
+        if (dunderSetValueType != null) {
+          expected = dunderSetValueType.get()
+          isDescriptor = true
+        }
+      }
+      // This gives the result type for calling the corresponding `__iXXX__` "inplace" method or the normal operator method.
+      val actual = node.getType(myTypeEvalContext)
+      if (!matchesExpectedType(expected, actual, null, null)) {
+        val message =
+          if (isDescriptor) {
+            typeMismatchMessage(
+              expected,
+              actual,
+              node,
+              "INSP.type.checker.expected.type.from.dunder.set.got.type.instead"
+            )
+          }
+          else {
+            typeMismatchMessage(
+              expected,
+              actual,
+              node,
+              "INSP.type.checker.expected.type.from.aug.assignment.got.type.instead"
+            )
+          }
+        registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, node, expected, actual, message,
+                             effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+      }
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
@@ -562,25 +612,12 @@ open class PyTypeCheckerInspection : PyInspection() {
         if (naturalType != actual && matchesExpectedType(expected, naturalType, assignedValue, null)) {
           return
         }
-        val isAugAssignment = node.parent is PyAugAssignmentStatement
-        val message =
-          if (isDescriptor)
-            typeMismatchMessage(
-              expected,
-              actual,
-              assignedValue,
-              "INSP.type.checker.expected.type.from.dunder.set.got.type.instead"
-            )
-          else
-            if (isAugAssignment)
-              typeMismatchMessage(
-                expected,
-                actual,
-                assignedValue,
-                "INSP.type.checker.expected.type.from.aug.assignment.got.type.instead"
-              )
-            else
-              typeMismatchMessage(expected, actual, assignedValue)
+        val message = if (isDescriptor) {
+          typeMismatchMessage(expected, actual, assignedValue, "INSP.type.checker.expected.type.from.dunder.set.got.type.instead")
+        }
+        else {
+          typeMismatchMessage(expected, actual, assignedValue)
+        }
         registerTypeMismatch(PyTypeCheckerSuppressionCode.BAD_ASSIGNMENT, assignedValue, expected, actual, message,
                              effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
       }
@@ -660,15 +697,14 @@ open class PyTypeCheckerInspection : PyInspection() {
         val expClassType = expectedSubst.pyClass.getType(myTypeEvalContext)
         val actClassType = actualSubst.pyClass.getType(myTypeEvalContext)
         val isCreational = expExpr is PySequenceExpression
-                           || expExpr is PyCallExpression && expExpr.callee !is PySubscriptionExpression || expExpr is PyParenthesizedExpression && expExpr.containedExpression is PyTupleExpression
+                           || expExpr is PyCallExpression && expExpr.callee !is PySubscriptionExpression
+                           || expExpr is PyParenthesizedExpression && expExpr.containedExpression is PyTupleExpression
         val paramMapping = PyTypeParameterMapping.mapByShape(
           expectedSubst.typeArguments,
           actualSubst.typeArguments,
           PyTypeParameterMapping.Option.USE_DEFAULTS
         )
-        if (isCreational
-            && paramMapping != null && match(expClassType, actClassType, myTypeEvalContext)
-        ) {
+        if (isCreational && paramMapping != null && match(expClassType, actClassType, myTypeEvalContext)) {
           var allElementsMatch = true
           for (i in paramMapping.mappedTypes.indices) {
             val couple = paramMapping.mappedTypes[i]
@@ -1072,9 +1108,11 @@ open class PyTypeCheckerInspection : PyInspection() {
       return count
     }
 
-    private fun checkUnpackBalance(targetCount: Int, starCount: Int, valueCount: Int,
-                                   balanceHighlight: PsiElement, starHighlight: PsiElement,
-                                   valueType: CodifiedParam): Boolean {
+    private fun checkUnpackBalance(
+      targetCount: Int, starCount: Int, valueCount: Int,
+      balanceHighlight: PsiElement, starHighlight: PsiElement,
+      valueType: CodifiedParam,
+    ): Boolean {
       if (starCount > 1) {
         PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_UNPACKING, starHighlight,
                                             PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))

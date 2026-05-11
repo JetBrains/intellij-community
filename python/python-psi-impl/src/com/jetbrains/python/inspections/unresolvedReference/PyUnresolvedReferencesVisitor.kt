@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyKeywordPattern
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyPrefixExpression
+import com.jetbrains.python.psi.PyQualifiedElement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyReferenceOwner
@@ -219,7 +220,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"))
     }
     // If an attribute was resolved on some members of a union, we still need to report those where it doesn't exist
-    else if (PyUnionType.isStrictSemanticsEnabled() && node is PyQualifiedExpression) {
+    else if (PyUnionType.isStrictSemanticsEnabled() && node is PyQualifiedElement) {
       val referencedName = node.referencedName
       val qualifier: PyExpression? = if (node is PyCallSiteExpression && target is PyCallable) {
         node.getReceiver(target)
@@ -256,7 +257,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun PyUnionType.findStrictUnionMissingAttribute(
     reference: PsiReference,
     referencedName: String,
-    qualifiedExpression: PyQualifiedExpression,
+    qualifiedExpression: PyQualifiedElement,
     qualifier: PyExpression,
   ): StrictUnionMissingMember? =
     when (qualifiedExpression) {
@@ -395,7 +396,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     val text = element.text
     val refText = if (rangeInElement.startOffset >= 0 && rangeInElement.endOffset > 0) rangeInElement.substring(text) else text
     // Operator refs (e.g. `not x`) have null `referencedName`; do not fall back to refText, the empty-check below must fire.
-    val refName: String? = if (element is PyQualifiedExpression) element.referencedName else refText
+    val refName: String? = if (element is PyQualifiedElement) element.referencedName else refText
     if (refName.isNullOrEmpty()) return null
 
     val qualifiedNames = getCanonicalNames(reference, myTypeEvalContext)
@@ -831,7 +832,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
     private fun getReferenceQualifierOrImportSource(reference: PsiReference): PyExpression? {
       val element = reference.element
-      if (element is PyQualifiedExpression) {
+      if (element is PyQualifiedElement) {
         element.qualifier?.let { return it }
       }
       if (reference is PyFromImportNameReference) {

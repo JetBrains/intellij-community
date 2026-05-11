@@ -37,7 +37,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
+import com.jetbrains.python.psi.impl.references.PyReferenceBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -91,8 +91,8 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   }
 
   public static boolean isValidReference(final PsiReference reference) {
-    if (!(reference instanceof PyReferenceImpl)) return false;
-    ResolveResult[] results = ((PyReferenceImpl)reference).multiResolve(true);
+    if (!(reference instanceof PyReferenceBase pyReference)) return false;
+    ResolveResult[] results = pyReference.multiResolve(true);
     if (results.length == 0) return false;
     for (ResolveResult result : results) {
       if (!result.isValidResult()) return false;

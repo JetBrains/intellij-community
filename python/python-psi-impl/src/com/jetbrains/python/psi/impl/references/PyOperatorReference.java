@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyPrefixExpression;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyQualifiedElement;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -52,8 +52,8 @@ import java.util.List;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
-public class PyOperatorReference extends PyReferenceImpl {
-  public PyOperatorReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
+public class PyOperatorReference extends PyReferenceBase {
+  public PyOperatorReference(@NotNull PyQualifiedElement element, @NotNull PyResolveContext context) {
     super(element, context);
   }
 
