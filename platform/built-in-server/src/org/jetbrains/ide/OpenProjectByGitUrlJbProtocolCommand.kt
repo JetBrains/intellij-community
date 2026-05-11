@@ -22,10 +22,9 @@ import java.nio.file.Paths
 import kotlin.io.path.isRegularFile
 
 private const val COMMAND: String = "project"
-private const val OPEN_TARGET: String = "open"
 private const val GIT_URL_PARAM: String = "git_url"
 /**
- * Handles `jetbrains://<product>/project/open?git_url=<url>` URLs.
+ * Handles `jetbrains://open/project?git_url=<url>` URLs.
  *
  * Looks for a known (open or recent) project whose git origin URL matches [GIT_URL_PARAM] and brings it forward,
  * opening it from disk if the matching project is in the recent list but not currently open.
@@ -34,9 +33,6 @@ private const val GIT_URL_PARAM: String = "git_url"
 @Internal
 class OpenProjectByGitUrlJbProtocolCommand : JBProtocolCommand(COMMAND) {
   override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? {
-    if (target != OPEN_TARGET) {
-      return IdeBundle.message("jb.protocol.unknown.target", target)
-    }
     val gitUrl = parameters[GIT_URL_PARAM]?.takeIf { it.isNotBlank() }
                  ?: return IdeBundle.message("jb.protocol.parameter.missing", GIT_URL_PARAM)
 
@@ -45,7 +41,7 @@ class OpenProjectByGitUrlJbProtocolCommand : JBProtocolCommand(COMMAND) {
     }
 
     val encoded = URLEncoder.encode(gitUrl, StandardCharsets.UTF_8)
-    return execute("idea/checkout/git?checkout.repo=$encoded").message
+    return execute("open/checkout/git?checkout.repo=$encoded").message
   }
 }
 

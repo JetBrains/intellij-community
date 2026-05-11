@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Handles `jetbrains://<product>/plugin/install?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
+ * Handles `jetbrains://tool/plugin/install?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
  *
  * The marketplace confirmation dialog shown by [installAndEnable] is the user-consent gate;
  * we do not enforce a host allowlist here because OS-level protocol handlers do not provide
