@@ -293,6 +293,16 @@ DOC_RPAREN (')')
 DOC_RBRACKET (']')
 """)
   }
+  
+  fun testTagWithoutName() {
+    doTest("""///{@} hewwo""", """
+      DOC_COMMENT_LEADING_ASTERISKS ('///')
+      DOC_INLINE_TAG_START ('{')
+      DOC_COMMENT_BAD_CHARACTER ('@')
+      DOC_INLINE_TAG_END ('}')
+      DOC_COMMENT_DATA (' hewwo')
+    """.trimIndent())
+  }
 
   abstract override fun createLexer(): Lexer
 
