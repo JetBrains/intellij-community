@@ -83,14 +83,14 @@ object PersistentDirtyFilesQueue {
         }
         if (currentVfsVersion != null && storedVfsVersion != currentVfsVersion) {
           val message = "Discarding dirty files queue $queueFile because vfs version changed: old=$storedVfsVersion, new=$currentVfsVersion"
-          thisLogger().info(message)
+          thisLogger().debug(message)
           return IndexingQueueReadResult(IntArrayList(), null, OrphanDirtyFilesQueueDiscardReason(message))
         }
         while (it.available() > 0) {
           fileIds.add(it.readInt())
         }
-        thisLogger().info("Dirty file ids read. Size: ${fileIds.size}. Index: $index Path: $queueFile." +
-                          if (isUnittestMode && thisLogger().isTraceEnabled) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
+        thisLogger().debug("Dirty file ids read. Size: ${fileIds.size}. Index: $index Path: $queueFile." +
+                           if (isUnittestMode && thisLogger().isTraceEnabled) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
         return IndexingQueueReadResult(fileIds, index, null)
       }
     }
@@ -134,10 +134,10 @@ object PersistentDirtyFilesQueue {
     }
     if (isUnittestMode) {
       val idsToPaths = mapOf(*fileIds.map { it to StaleIndexesChecker.getStaleRecordOrExceptionMessage(it) }.toTypedArray())
-      thisLogger().info("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile. Ids & filenames: ${idsToPaths.toString().take(300)}")
+      thisLogger().debug("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile. Ids & filenames: ${idsToPaths.toString().take(300)}")
     }
     else {
-      thisLogger().info("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile")
+      thisLogger().debug("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile")
     }
   }
 }
