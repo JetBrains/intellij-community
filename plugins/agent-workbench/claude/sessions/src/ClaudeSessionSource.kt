@@ -12,14 +12,19 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRe
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
+import java.util.concurrent.ConcurrentHashMap
 
 class ClaudeSessionSource(
   private val backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CLAUDE) {
+  private val observedUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+  private val completedUnreadUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+
   override val supportsUpdates: Boolean get() = true
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
@@ -31,8 +36,10 @@ class ClaudeSessionSource(
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val threads = backend.listThreads(path = path, openProject = openProject)
     val visibleThreads = threads.filterNot(ClaudeBackendThread::archived)
-    rememberActiveThreadRead(visibleThreads, ClaudeBackendThread::id, ClaudeBackendThread::updatedAt)
-    return visibleThreads.map { it.toAgentSessionThread(readTracker) }
+    rememberActiveNonReadyThreadRead(visibleThreads)
+    val agentThreads = visibleThreads.map { it.toAgentSessionThread(readTracker, completedUnreadUpdatedAtByThreadId) }
+    rememberObservedThreadUpdates(visibleThreads)
+    return agentThreads
   }
 
   override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
@@ -53,7 +60,7 @@ class ClaudeSessionSource(
         }
 
         val visibleThreads = backendResult.threads.filterNot(ClaudeBackendThread::archived)
-        rememberActiveThreadRead(visibleThreads, ClaudeBackendThread::id, ClaudeBackendThread::updatedAt)
+        rememberActiveNonReadyThreadRead(visibleThreads)
         val archivedThreadIds = backendResult.threads
           .asSequence()
           .filter(ClaudeBackendThread::archived)
@@ -63,7 +70,14 @@ class ClaudeSessionSource(
           addAll(backendResult.removedThreadIds)
           addAll(archivedThreadIds)
         }
-        val threads = visibleThreads.map { it.toAgentSessionThread(readTracker) }
+        val threads = visibleThreads.map { thread ->
+          thread.toAgentSessionThread(
+            readTracker = readTracker,
+            completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+            observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+          )
+        }
+        rememberObservedThreadUpdates(visibleThreads)
         if (backendResult.isComplete) {
           completeThreadsByPath[path] = threads
         }
@@ -107,7 +121,11 @@ class ClaudeSessionSource(
       val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
       for (thread in visibleThreads) {
         if (thread.id in knownIds) {
-          activityHintsByThreadId[thread.id] = thread.effectiveActivity(readTracker)
+          activityHintsByThreadId[thread.id] = thread.effectiveActivity(
+            readTracker = readTracker,
+            completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+            observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+          )
         }
       }
       val rebindCandidates = visibleThreads
@@ -117,7 +135,11 @@ class ClaudeSessionSource(
             threadId = thread.id,
             title = thread.title,
             updatedAt = thread.updatedAt,
-            activity = thread.effectiveActivity(readTracker),
+            activity = thread.effectiveActivity(
+              readTracker = readTracker,
+              completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+              observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+            ),
           )
         }
       if (rebindCandidates.isNotEmpty() || activityHintsByThreadId.isNotEmpty()) {
@@ -130,9 +152,28 @@ class ClaudeSessionSource(
 
     return result
   }
+
+  private fun rememberActiveNonReadyThreadRead(threads: Iterable<ClaudeBackendThread>) {
+    rememberActiveThreadRead(
+      threads = threads,
+      id = ClaudeBackendThread::id,
+      updatedAt = ClaudeBackendThread::updatedAt,
+      shouldRemember = { it.activity != ClaudeSessionActivity.READY },
+    )
+  }
+
+  private fun rememberObservedThreadUpdates(threads: Iterable<ClaudeBackendThread>) {
+    for (thread in threads) {
+      observedUpdatedAtByThreadId.merge(thread.id, thread.updatedAt, ::maxOf)
+    }
+  }
 }
 
-private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Long>): AgentSessionThread {
+private fun ClaudeBackendThread.toAgentSessionThread(
+  readTracker: Map<String, Long>,
+  completedUnreadUpdatedAtByThreadId: MutableMap<String, Long>,
+  observedUpdatedAtByThreadId: Map<String, Long> = emptyMap(),
+): AgentSessionThread {
   return AgentSessionThread(
     id = id,
     title = title,
@@ -140,17 +181,40 @@ private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Lo
     archived = archived,
     provider = AgentSessionProvider.CLAUDE,
     originBranch = gitBranch,
-    activity = effectiveActivity(readTracker),
+    activity = effectiveActivity(
+      readTracker = readTracker,
+      completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
+      observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
+    ),
   )
 }
 
-private fun ClaudeBackendThread.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
+private fun ClaudeBackendThread.effectiveActivity(
+  readTracker: Map<String, Long>,
+  completedUnreadUpdatedAtByThreadId: MutableMap<String, Long>,
+  observedUpdatedAtByThreadId: Map<String, Long> = emptyMap(),
+): AgentThreadActivity {
   return when (activity) {
     ClaudeSessionActivity.PROCESSING -> AgentThreadActivity.PROCESSING
     ClaudeSessionActivity.NEEDS_INPUT -> AgentThreadActivity.NEEDS_INPUT
     ClaudeSessionActivity.READY -> {
-      val lastSeenAt = readTracker[id] ?: return AgentThreadActivity.READY
-      if (updatedAt > lastSeenAt) AgentThreadActivity.UNREAD else AgentThreadActivity.READY
+      val lastSeenAt = readTracker[id]
+      if (lastSeenAt != null) {
+        return if (!awaitingAssistantTurn) resolveReadTrackedActivity(readTracker, id, updatedAt) else AgentThreadActivity.READY
+      }
+
+      if (!awaitingAssistantTurn && completedUnreadUpdatedAtByThreadId[id] == updatedAt) {
+        return AgentThreadActivity.UNREAD
+      }
+
+      val observedUpdatedAt = observedUpdatedAtByThreadId[id] ?: return AgentThreadActivity.READY
+      if (!awaitingAssistantTurn && updatedAt > observedUpdatedAt) {
+        completedUnreadUpdatedAtByThreadId[id] = updatedAt
+        AgentThreadActivity.UNREAD
+      }
+      else {
+        AgentThreadActivity.READY
+      }
     }
   }
 }

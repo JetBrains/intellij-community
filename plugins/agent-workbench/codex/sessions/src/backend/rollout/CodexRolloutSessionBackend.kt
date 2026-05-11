@@ -9,9 +9,12 @@ package com.intellij.agent.workbench.codex.sessions.backend.rollout
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
+import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
@@ -86,6 +89,7 @@ internal class CodexRolloutSessionBackend(
 
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
+    val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
     var failedParses = 0
     for (path in rolloutPaths) {
       val parsedThread = parser.parse(path)
@@ -96,6 +100,9 @@ internal class CodexRolloutSessionBackend(
       scopedPaths += parsedThread.normalizedCwd
       threadIds += parsedThread.thread.thread.id
       parsedThread.parentThreadId?.let(threadIds::add)
+      if (parsedThread.parentThreadId == null) {
+        activityHintsByThreadId[parsedThread.thread.thread.id] = parsedThread.thread.activity.toAgentThreadActivity()
+      }
     }
 
     if (failedParses > 0 || scopedPaths.isEmpty()) {
@@ -113,6 +120,8 @@ internal class CodexRolloutSessionBackend(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
+      activityHintsByThreadId = activityHintsByThreadId,
+      activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
     )
   }
 
@@ -134,7 +143,7 @@ internal class CodexRolloutSessionBackend(
   override suspend fun listThreads(path: String, @Suppress("UNUSED_PARAMETER") openProject: Project?): List<CodexBackendThread> {
     return withContext(Dispatchers.IO) {
       val workingDirectory = resolveProjectDirectoryFromPath(path)
-        ?: return@withContext emptyList()
+                             ?: return@withContext emptyList()
       val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
       threadIndex.collectByCwd(setOf(cwdFilter))[cwdFilter].orEmpty()
     }

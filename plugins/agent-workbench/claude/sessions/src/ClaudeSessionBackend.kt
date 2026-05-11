@@ -16,6 +16,7 @@ data class ClaudeBackendThread(
   @JvmField val updatedAt: Long,
   @JvmField val gitBranch: String? = null,
   @JvmField val activity: ClaudeSessionActivity = ClaudeSessionActivity.READY,
+  @JvmField val awaitingAssistantTurn: Boolean = false,
 )
 
 interface ClaudeSessionBackend {

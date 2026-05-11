@@ -53,13 +53,14 @@ internal class CodexRolloutParser(
     val hasUnread = state.latestAgentMessageAt > state.latestUserMessageAt
     val hasPendingUserInput = state.pendingUserInputByCallId.isNotEmpty()
     val hasPendingPlan = state.latestPlanAt > state.latestUserMessageAt
+    val hasPendingFunctionCall = state.pendingFunctionCallByCallId.isNotEmpty()
     val activity = resolveCodexSessionActivity(
       statusKind = CodexThreadStatusKind.IDLE,
       activeFlags = if (hasPendingUserInput) setOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT) else emptySet(),
       hasUnreadAssistantMessage = hasUnread,
       hasPendingPlan = hasPendingPlan,
       isReviewing = state.reviewing,
-      hasInProgressTurn = state.processing,
+      hasInProgressTurn = state.processing || hasPendingFunctionCall,
     )
 
     val fallbackUpdatedAt = runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
@@ -143,6 +144,10 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           parseState.latestAgentMessageAt = maxTimestamp(parseState.latestAgentMessageAt, eventTimestamp)
         }
 
+        "mcp_tool_call_end" -> {
+          event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
+        }
+
         "request_user_input" -> {
           parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
         }
@@ -180,10 +185,14 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
           if (event.payloadName == "request_user_input") {
             parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
           }
+          else {
+            parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
+          }
         }
 
         "function_call_output" -> {
           event.payloadCallId?.let(parseState.pendingUserInputByCallId::remove)
+          event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
       }
     }
@@ -321,7 +330,9 @@ private data class RolloutParseState(
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
+  @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
   @JvmField var nextSyntheticPendingUserInputId: Int = 0,
+  @JvmField var nextSyntheticPendingFunctionCallId: Int = 0,
 )
 
 private fun shouldClearProcessingTurn(parseState: RolloutParseState, completedTurnId: String?): Boolean {
@@ -339,6 +350,12 @@ private fun RolloutParseState.markPendingUserInput(eventTimestamp: Long?, callId
   pendingUserInputByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
 }
 
+private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?) {
+  val resolvedTimestamp = eventTimestamp ?: updatedAt
+  val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
+  pendingFunctionCallByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
+}
+
 private fun parseIsoTimestamp(value: String?): Long? {
   val text = value?.trim().takeIf { !it.isNullOrEmpty() } ?: return null
   try {
@@ -351,10 +368,10 @@ private fun parseIsoTimestamp(value: String?): Long? {
 
 private fun extractTitle(message: String?): String? {
   val candidate = stripUserMessagePrefix(message ?: return null)
-    .lineSequence()
-    .map(String::trim)
-    .firstOrNull { it.isNotEmpty() }
-    ?: return null
+                    .lineSequence()
+                    .map(String::trim)
+                    .firstOrNull { it.isNotEmpty() }
+                  ?: return null
   if (isSessionPrefix(candidate)) return null
   return normalizeThreadTitle(candidate)
 }
@@ -537,10 +554,10 @@ private fun parseThreadSpawnParentId(parser: JsonParser): String? {
 @Suppress("DuplicatedCode")
 private fun parseRolloutSourceKind(value: String?): CodexThreadSourceKind {
   val normalized = value
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-    ?.lowercase()
-    ?: return CodexThreadSourceKind.UNKNOWN
+                     ?.trim()
+                     ?.takeIf { it.isNotEmpty() }
+                     ?.lowercase()
+                   ?: return CodexThreadSourceKind.UNKNOWN
   return when (normalized) {
     "cli" -> CodexThreadSourceKind.CLI
     "vscode" -> CodexThreadSourceKind.VSCODE

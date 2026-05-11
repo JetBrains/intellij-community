@@ -3,7 +3,9 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
@@ -547,6 +549,54 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).containsExactly(projectPath)
         assertThat(update.threadIds).containsExactly("session-scoped-updates")
+        assertThat(update.activityHintsByThreadId).containsEntry("session-scoped-updates", AgentThreadActivity.READY)
+        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun scopedSessionUpdateMarksCompletedTranscriptAsUnreadHint() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-completed-update-hints"
+      val encodedPath = "-work-project-completed-update-hints"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      val jsonl = projectDir.resolve("session-completed-update-hints.jsonl")
+      writeJsonl(
+        jsonl,
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "session-completed-update-hints", projectPath, "Initial title"),
+          claudeAssistantLine("2026-02-10T10:00:01.000Z", "session-completed-update-hints", projectPath, "Done"),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(jsonl)))
+
+        val update = withTimeout(5.seconds) { updates.receive() }
+        assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+        assertThat(update.scopedPaths).containsExactly(projectPath)
+        assertThat(update.threadIds).containsExactly("session-completed-update-hints")
+        assertThat(update.activityHintsByThreadId)
+          .containsEntry("session-completed-update-hints", AgentThreadActivity.UNREAD)
+        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
       }
       finally {
         updatesJob.cancelAndJoin()

@@ -195,6 +195,7 @@ internal class ClaudeThreadIndex(
           updatedAt = parsed.updatedAt,
           gitBranch = parsed.gitBranch ?: indexEntry?.gitBranch,
           activity = parsed.activity,
+          awaitingAssistantTurn = parsed.awaitingAssistantTurn,
         )
       )
     }

@@ -3,7 +3,10 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -98,6 +101,33 @@ class CodexRolloutSessionBackendTest {
             """{"timestamp":"2026-02-13T11:01:05.000Z","type":"event_msg","payload":{"type":"task_started"}}"""
           ),
           expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-function-call-processing",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:10.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run a tool"}}""",
+            """{"timestamp":"2026-02-13T11:01:11.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:12.000Z",
+              callId = "call-processing",
+              name = "exec_command",
+            ),
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
+          id = "session-function-call-output-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:20.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run a completed tool"}}""",
+            """{"timestamp":"2026-02-13T11:01:21.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:22.000Z",
+              callId = "call-output-unread",
+              name = "exec_command",
+            ),
+            """{"timestamp":"2026-02-13T11:01:23.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call-output-unread","output":"{}"}}""",
+          ),
+          expected = CodexSessionActivity.UNREAD,
         ),
         ActivityCase(
           id = "session-pending-input",
@@ -353,7 +383,9 @@ class CodexRolloutSessionBackendTest {
         file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("13")
           .resolve("rollout-branch.jsonl"),
         lines = listOf(
-          """{"timestamp":"2026-02-13T15:00:00.000Z","type":"session_meta","payload":{"id":"session-branch","timestamp":"2026-02-13T15:00:00.000Z","cwd":"${projectDir.toString().replace("\\", "\\\\")}","git":{"branch":"feature/codex-rollout"}}}""",
+          """{"timestamp":"2026-02-13T15:00:00.000Z","type":"session_meta","payload":{"id":"session-branch","timestamp":"2026-02-13T15:00:00.000Z","cwd":"${
+            projectDir.toString().replace("\\", "\\\\")
+          }","git":{"branch":"feature/codex-rollout"}}}""",
         ),
       )
 
@@ -580,7 +612,9 @@ class CodexRolloutSessionBackendTest {
             id = "session-title",
             cwd = projectDir,
           ),
-          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"user_message","message":"<environment_context>\n<cwd>${projectDir.toString().replace("\\", "\\\\")}</cwd>"}}""",
+          """{"timestamp":"2026-02-14T12:00:02.000Z","type":"event_msg","payload":{"type":"user_message","message":"<environment_context>\n<cwd>${
+            projectDir.toString().replace("\\", "\\\\")
+          }</cwd>"}}""",
           """{"timestamp":"2026-02-14T12:00:03.000Z","type":"event_msg","payload":{"type":"user_message","message":"<TURN_ABORTED>\nreason"}}""",
           """{"timestamp":"2026-02-14T12:00:04.000Z","type":"event_msg","payload":{"type":"user_message","message":"<prior context> ## My request for Codex:   Real   title    line   "}}""",
         ),
@@ -623,6 +657,57 @@ class CodexRolloutSessionBackendTest {
       assertThat(thread.thread.title).isEqualTo("Initial title")
       assertThat(thread.thread.updatedAt).isEqualTo(Instant.parse("2026-02-14T13:00:04.000Z").toEpochMilli())
       assertThat(thread.activity).isEqualTo(CodexSessionActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun scopedRolloutUpdateIncludesAuthoritativeActivityHint() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-update-activity-hint")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-update-activity-hint.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T12:00:00.000Z", id = "session-update-activity-hint", cwd = projectDir),
+          """{"timestamp":"2026-02-16T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run a slow tool"}}""",
+          responseItemFunctionCall(
+            timestamp = "2026-02-16T12:00:02.000Z",
+            callId = "call-update-activity-hint",
+            name = "exec_command",
+          ),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(rollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactly("session-update-activity-hint")
+        assertThat(update.activityHintsByThreadId)
+          .containsEntry("session-update-activity-hint", AgentThreadActivity.PROCESSING)
+        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
     }
   }
 
@@ -914,7 +999,7 @@ private suspend fun awaitWatcherUpdate(
   return update != null
 }
 
-private fun drainUpdateChannel(updates: Channel<Unit>) {
+private fun <T> drainUpdateChannel(updates: Channel<T>) {
   while (true) {
     if (!updates.tryReceive().isSuccess) {
       break
@@ -923,11 +1008,13 @@ private fun drainUpdateChannel(updates: Channel<Unit>) {
 }
 
 private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }"}}"""
 }
 
-private fun responseItemFunctionCall(timestamp: String, callId: String): String {
-  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"request_user_input","arguments":"{}","call_id":"$callId"}}"""
+private fun responseItemFunctionCall(timestamp: String, callId: String, name: String = "request_user_input"): String {
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"{}","call_id":"$callId"}}"""
 }
 
 private fun itemCompletedPlan(timestamp: String): String {
@@ -936,11 +1023,15 @@ private fun itemCompletedPlan(timestamp: String): String {
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {
   val timestamp = "2026-02-13T10:00:00.000Z"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }"}}"""
 }
 
 private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, parentThreadId: String): String {
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
 }
 
 private fun writeRollout(file: Path, lines: List<String>) {

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
@@ -38,7 +39,7 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
+    val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
@@ -56,7 +57,7 @@ class ClaudeSessionSourceTest {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
+    val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
@@ -159,11 +160,11 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
-  fun activeThreadAutoAdvancesTrackerOnRefresh() {
+  fun activeThreadCompletionBecomesUnreadAfterProcessing() {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
-    val source = ClaudeSessionSource(backend = dynamicBackend { currentThreads })
+    val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
@@ -172,16 +173,66 @@ class ClaudeSessionSourceTest {
       // User is viewing thread s1 (tab focused).
       source.setActiveThreadId("s1")
 
-      // Agent replies → updatedAt increases. Active thread: tracker auto-advances → READY.
-      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      // Agent starts working while the user is viewing the thread.
+      currentThreads = listOf(
+        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, activity = ClaudeSessionActivity.PROCESSING)
+      )
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.PROCESSING)
+
+      // Completion should still be surfaced as Done/UNREAD even if the thread remains selected.
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 3000L))
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
+
+      // User switches away → clear active. A later update still becomes UNREAD.
+      source.setActiveThreadId(null)
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 4000L))
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun scopedReadyRefreshBecomesUnreadWhenUpdatedAfterInitialLoad() {
+    var currentThreads = listOf(
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
+    )
+    val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
+
+    runBlocking(Dispatchers.Default) {
       assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
         .isEqualTo(AgentThreadActivity.READY)
 
-      // User switches away → clear active. Agent replies → updatedAt increases → UNREAD.
-      source.setActiveThreadId(null)
-      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 3000L))
-      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+      currentThreads = listOf(ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L))
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
         .isEqualTo(AgentThreadActivity.UNREAD)
+
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.UNREAD)
+
+      source.markThreadAsRead("s1", 2000L)
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun scopedAwaitingAssistantReadyRefreshStaysReadyWhenUpdatedAfterInitialLoad() {
+    var currentThreads = listOf(
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
+    )
+    val source = ClaudeSessionSource(backend = dynamicRefreshBackend { currentThreads })
+
+    runBlocking(Dispatchers.Default) {
+      assertThat(source.listThreadsFromClosedProject(path = "/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
+
+      currentThreads = listOf(
+        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L, awaitingAssistantTurn = true)
+      )
+      assertThat(source.refreshThreads(refreshRequest()).partialThreadsByPath.getValue("/any").single().activity)
+        .isEqualTo(AgentThreadActivity.READY)
     }
   }
 
@@ -319,4 +370,33 @@ private fun dynamicBackend(provider: () -> List<ClaudeBackendThread>): ClaudeSes
   return object : ClaudeSessionBackend {
     override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = provider()
   }
+}
+
+private fun dynamicRefreshBackend(provider: () -> List<ClaudeBackendThread>): ClaudeSessionBackend {
+  return object : ClaudeSessionBackend {
+    override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = provider()
+
+    override suspend fun refreshThreads(
+      path: String,
+      threadIds: Set<String>,
+      openProject: Project?,
+    ): ClaudeBackendThreadRefreshResult {
+      return ClaudeBackendThreadRefreshResult(
+        threads = provider().filter { it.id in threadIds },
+        isComplete = false,
+      )
+    }
+  }
+}
+
+private fun refreshRequest(): AgentSessionSourceRefreshRequest {
+  return AgentSessionSourceRefreshRequest(
+    paths = listOf("/any"),
+    threadIds = setOf("s1"),
+    updateEvent = AgentSessionSourceUpdateEvent(
+      type = AgentSessionSourceUpdate.THREADS_CHANGED,
+      scopedPaths = setOf("/any"),
+      threadIds = setOf("s1"),
+    ),
+  )
 }

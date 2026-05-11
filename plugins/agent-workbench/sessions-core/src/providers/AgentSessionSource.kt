@@ -21,7 +21,7 @@ data class AgentSessionRefreshHints(
   @JvmField val activityByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
 )
 
-const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT = -1L
+const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
 
 data class AgentSessionRefreshThreadSeed(
   @JvmField val threadId: String,
@@ -40,11 +40,17 @@ enum class AgentSessionSourceUpdate {
   HINTS_CHANGED,
 }
 
+enum class AgentSessionActivityHintPolicy {
+  OPTIMISTIC,
+  AUTHORITATIVE,
+}
+
 data class AgentSessionSourceUpdateEvent(
   @JvmField val type: AgentSessionSourceUpdate,
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
   @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
 )
 
 data class AgentSessionSourceRefreshRequest(

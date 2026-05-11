@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -1481,6 +1482,64 @@ class AgentSessionRefreshCoordinatorTest {
         threadsById["codex-with-hint"]?.activity == AgentThreadActivity.REVIEWING &&
         threadsById["codex-without-hint"]?.activity == AgentThreadActivity.UNREAD
       }
+    }
+  }
+
+  @Test
+  fun providerUpdateAuthoritativeActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
+    val gateActive = AtomicBoolean(false)
+    val closedRefreshInvocations = AtomicInteger(0)
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CLAUDE,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        if (path == PROJECT_PATH) {
+          closedRefreshInvocations.incrementAndGet()
+        }
+        emptyList()
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { gateActive.get() },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "claude-1", updatedAt = 100L, provider = AgentSessionProvider.CLAUDE, activity = AgentThreadActivity.READY)
+            ),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(
+        threadsChangedEvent(
+          scopedPaths = setOf(PROJECT_PATH),
+          threadIds = setOf("claude-1"),
+          activityHintsByThreadId = mapOf("claude-1" to AgentThreadActivity.UNREAD),
+          activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+        )
+      )
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.firstOrNull { it.id == "claude-1" }
+          ?.activity == AgentThreadActivity.UNREAD
+      }
+
+      assertThat(closedRefreshInvocations.get()).isEqualTo(0)
     }
   }
 

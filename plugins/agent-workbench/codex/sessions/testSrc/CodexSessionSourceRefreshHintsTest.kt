@@ -185,7 +185,7 @@ class CodexSessionSourceRefreshHintsTest {
   }
 
   @Test
-  fun mergeKeepsNewerVerifiedAppServerNonWorkingHintWhenRolloutHasOlderWorkingFallback() {
+  fun mergeAllowsRolloutWorkingActivityToOverrideNewerVerifiedNonWorkingAppServerHint() {
     val merged = mergeCodexRefreshHints(
       appServerHintsByPath = mapOf(
         "/work/project" to CodexRefreshHints(
@@ -231,8 +231,8 @@ class CodexSessionSourceRefreshHintsTest {
     assertThat(merged.getValue("/work/project").activityHintsByThreadId.mapValues { (_, hint) -> hint.activity })
       .containsExactlyInAnyOrderEntriesOf(
         mapOf(
-          "thread-ready" to AgentThreadActivity.READY,
-          "thread-passive-unread" to AgentThreadActivity.UNREAD,
+          "thread-ready" to AgentThreadActivity.PROCESSING,
+          "thread-passive-unread" to AgentThreadActivity.REVIEWING,
           "thread-working" to AgentThreadActivity.PROCESSING,
         )
       )
