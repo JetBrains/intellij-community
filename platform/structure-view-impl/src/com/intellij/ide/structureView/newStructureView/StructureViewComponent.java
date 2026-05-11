@@ -97,6 +97,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -179,6 +180,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private final MyTree myTree;
   private final SmartTreeStructure myTreeStructure;
+
+  private boolean isHovered = false;
 
   private final StructureTreeModel<SmartTreeStructure> myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
@@ -269,6 +272,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       showToolbar();
     }
     setupTree();
+    new MyHoverListener().addTo(this);
   }
 
   public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
@@ -1110,7 +1114,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
-      if (lastHoveredPath != null && lastHoveredPath.equals(path)) {
+      if (isHovered && lastHoveredPath != null && lastHoveredPath.equals(path)) {
         return UIUtil.getTreeSelectionBackground(myTree.getSelectionPath() == path && RenderingUtil.isFocused(myTree));
       }
       return super.getFileColorForPath(path);
@@ -1366,6 +1370,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public Dimension getPreferredSize() {
       return mainComponent.getPreferredSize();
+    }
+  }
+
+  private class MyHoverListener extends HoverStateListener {
+    @Override
+    protected void hoverChanged(@NotNull Component component, boolean hovered) {
+      isHovered = hovered;
+      myTree.repaint();
     }
   }
 }
