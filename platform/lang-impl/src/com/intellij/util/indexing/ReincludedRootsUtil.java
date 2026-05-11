@@ -5,12 +5,10 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
@@ -18,13 +16,13 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.IndexableSetContributorFilesIterator;
+import com.intellij.util.indexing.roots.ModuleFilesIteratorImpl;
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder;
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,7 +132,7 @@ public final class ReincludedRootsUtil {
     }
 
     private void addModuleRoot(Module module, VirtualFileUrl url) {
-      filesFromModulesContent.add(new ModuleRootData(module, ((ModuleBridge)module).getModuleEntityId(), url));
+      filesFromModulesContent.add(new ModuleRootData(module, url));
     }
 
     private void addContentRoot(EntityPointer<?> entityPointer, VirtualFileUrl url) {
@@ -150,7 +148,6 @@ public final class ReincludedRootsUtil {
     }
 
     private record ModuleRootData(@NotNull Module module,
-                                  @NotNull ModuleId moduleId,
                                   @NotNull VirtualFileUrl url) {
     }
 
@@ -171,13 +168,11 @@ public final class ReincludedRootsUtil {
 
       List<IndexableFilesIterator> result = new ArrayList<>();
 
-      Map<ModuleId, ModuleRootUrls> moduleRootUrls = new HashMap<>();
       for (ModuleRootData data : filesFromModulesContent) {
-        getModuleRootUrls(moduleRootUrls, data.moduleId(), data.module()).add(data.url());
-      }
-      for (ModuleRootUrls roots : moduleRootUrls.values()) {
-        result.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(
-          roots.module, IndexingUrlRootHolder.Companion.fromUrls(roots.urls)));
+        VirtualFile root = VirtualFileUrls.getVirtualFile(data.url());
+        if (root != null) {
+          result.add(new ModuleFilesIteratorImpl(data.module(), root, true, true));
+        }
       }
 
       Map<EntityPointer<?>, List<VirtualFileUrl>> contentRootUrls = new HashMap<>();
@@ -217,17 +212,6 @@ public final class ReincludedRootsUtil {
       return roots;
     }
 
-    private static @NotNull ModuleRootUrls getModuleRootUrls(@NotNull Map<ModuleId, ModuleRootUrls> map,
-                                                             @NotNull ModuleId key,
-                                                             @NotNull Module module) {
-      ModuleRootUrls roots = map.get(key);
-      if (roots == null) {
-        roots = new ModuleRootUrls(module);
-        map.put(key, roots);
-      }
-      return roots;
-    }
-
     private static @NotNull ExternalRootUrls getExternalRootUrls(@NotNull Map<EntityPointer<?>, ExternalRootUrls> map,
                                                                  @NotNull EntityPointer<?> key) {
       ExternalRootUrls roots = map.get(key);
@@ -236,19 +220,6 @@ public final class ReincludedRootsUtil {
         map.put(key, roots);
       }
       return roots;
-    }
-
-    private static final class ModuleRootUrls {
-      private final @NotNull Module module;
-      private final List<VirtualFileUrl> urls = new ArrayList<>();
-
-      private ModuleRootUrls(@NotNull Module module) {
-        this.module = module;
-      }
-
-      private void add(@NotNull VirtualFileUrl url) {
-        urls.add(url);
-      }
     }
 
     private static final class ExternalRootUrls {
