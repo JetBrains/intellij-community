@@ -81,25 +81,24 @@ internal class ModernDiffPreviewPanel(
   }
 
   private fun createTopCaptionComponent(@NlsSafe highlightingHtml: String?): JPanel? {
-    return if (!highlightingHtml.isNullOrBlank() || Registry.`is`("modern.diff.show.header.when.empty")) {
-      val layeredPane = popup.content.rootPane.layeredPane
-      val hintHint = HintHint().setAwtTooltip(true).setStatus(HintHint.Status.Info)
+    val layeredPane = popup.content.rootPane.layeredPane
+    val hintHint = HintHint().setAwtTooltip(true).setStatus(HintHint.Status.Info)
 
-      val editorPane = LineTooltipRenderer.createEditorPane(
-        if (!highlightingHtml.isNullOrBlank())
-          highlightingHtml
-        else
-          LangBundle.message("modern.diff.dummy.preview.text"),
-        hintHint, layeredPane, false
-      )
-      val scrollPane = LineTooltipRenderer.createScrollPane(editorPane, hintHint)
-      val layoutingPanel = LineTooltipRenderer.createLayoutingPanel(hintHint, scrollPane, editorPane, true, false)
+    val editorPane = LineTooltipRenderer.createEditorPane(
+      if (!highlightingHtml.isNullOrBlank())
+        highlightingHtml
+      else
+        LangBundle.message("modern.diff.dummy.preview.text"),
+      hintHint, layeredPane, false
+    )
 
-      WrapperPanel(layoutingPanel).apply {
-        background = hintHint.textBackground
-        isOpaque = true
-      }
-    } else null
+    val scrollPane = LineTooltipRenderer.createScrollPane(editorPane, hintHint)
+    val layoutingPanel = LineTooltipRenderer.createLayoutingPanel(hintHint, scrollPane, editorPane, true, false)
+
+    return WrapperPanel(layoutingPanel).apply {
+      background = hintHint.textBackground
+      isOpaque = true
+    }
   }
 
   private fun configureUiPanel(panel: JPanel, omitTopGap: Boolean = true, omitBottomGap: Boolean = false,): JPanel {
@@ -109,9 +108,10 @@ internal class ModernDiffPreviewPanel(
   }
 
   private fun createSingleDiffPanel(ui: CreatedPreviewUI): JPanel {
-    return if (!ui.isFileNameTrivial || Registry.`is`("modern.diff.show.file.name.when.trivial")) {
+    return if (ui.isFileNameTrivial)
+      configureUiPanel(ui.panel, omitTopGap = false, omitBottomGap = false)
+    else
       createVerticalFlowingContainerWithCaptionsForUis(listOf(ui))
-    } else configureUiPanel(ui.panel, omitTopGap = false, omitBottomGap = false)
   }
 
   private fun createVerticalFlowingContainerWithCaptionsForUis(diffUis: List<CreatedPreviewUI>): JPanel {
