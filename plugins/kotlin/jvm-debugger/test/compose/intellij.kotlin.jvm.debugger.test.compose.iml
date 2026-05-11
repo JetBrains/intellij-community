@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.android.streaming" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-compose" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.compose.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.android.logcat.gradle" scope="TEST" />
   </component>
 </module>
