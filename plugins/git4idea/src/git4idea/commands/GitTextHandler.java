@@ -64,11 +64,6 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, executable, command, configParameters);
   }
 
-  /** @deprecated no-op since a mediator is no longer used */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  public void setWithMediator(boolean value) { }
-
   public void setTerminationTimeout(int timeoutMs) {
     myTerminationTimeoutMs = timeoutMs;
   }

@@ -143,7 +143,6 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
                            afterHash: @NlsSafe String,
                            filePath: FilePath): VcsFileStatusInfo? {
       val h = GitLineHandler(project, root, GitCommand.DIFF)
-      h.setWithMediator(false)
       h.setStdoutSuppressed(true)
       h.addParameters("-M", "--diff-filter=R", "--name-status", "--encoding=UTF-8", "--follow", "$beforeHash..$afterHash")
       h.endOptions()
