@@ -442,6 +442,7 @@ public final class SearchEverywhereHeader {
         .orElse(null);
     }
 
+    @ApiStatus.Internal
     public void closeFilterPopup() {
       if (myFilterAction != null) myFilterAction.closeFilterPopup();
     }
