@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -36,14 +37,18 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import kotlin.Unit;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -372,19 +377,81 @@ public class XDebuggerTestUtil {
 
   public static void disposeDebugSession(final XDebugSession debugSession) {
     WriteAction.runAndWait(() -> {
-      XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
-      XDebugSessionProxy sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(session.getProject(), session.getId());
+      var sessionProxy = findSessionProxy(debugSession);
       if (sessionProxy != null) {
         var sessionTab = sessionProxy.getSessionTab();
         if (sessionTab != null) {
           Disposer.dispose(sessionTab);
         }
       }
-      ConsoleView consoleView = session.getConsoleView();
+      ConsoleView consoleView = debugSession.getConsoleView();
       if (consoleView != null) {
         Disposer.dispose(consoleView);
       }
     });
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy findSessionProxy(XDebugSession session) {
+    var sessionImpl = (XDebugSessionImpl)session;
+    return XDebugManagerProxy.getInstance().findSessionProxy(session.getProject(), sessionImpl.getId());
+  }
+
+  public static @Nullable XDebugSessionTab awaitSessionTab(@NotNull XDebugSessionProxy proxy) {
+    if (proxy.getSessionTab() instanceof XDebugSessionTab sessionTab) {
+      return sessionTab;
+    }
+
+    XDebugSession session = XDebuggerEntityConverter.getSession(proxy);
+    if (!(session instanceof XDebugSessionImpl sessionImpl)) {
+      return null;
+    }
+
+    Ref<XDebugSessionTab> sessionTab = Ref.create();
+    Semaphore semaphore = new Semaphore(0);
+    //noinspection UsagesOfObsoleteApi
+    sessionImpl.runWhenTabReady(tab -> {
+      sessionTab.set(tab);
+      semaphore.release();
+      return Unit.INSTANCE;
+    });
+    waitFor(semaphore, TIMEOUT_MS);
+    return sessionTab.get();
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy awaitSessionProxy(XDebugSession session) {
+    var sessionProxy = findSessionProxy(session);
+    if (sessionProxy != null) {
+      return sessionProxy;
+    }
+
+    Ref<XDebugSessionProxy> result = Ref.create();
+    Semaphore semaphore = new Semaphore(0);
+    var disposable = Disposer.newDisposable();
+    try {
+      session.getProject().getMessageBus().connect(disposable).subscribe(XDebuggerManagerProxyListener.TOPIC, new XDebuggerManagerProxyListener() {
+        @Override
+        public void sessionStarted(@NotNull XDebugSessionProxy startedSession) {
+          var sessionProxy = findSessionProxy(session);
+          if (sessionProxy != null) {
+            result.set(sessionProxy);
+            semaphore.release();
+          }
+        }
+      });
+
+      sessionProxy = findSessionProxy(session);
+      if (sessionProxy != null) {
+        return sessionProxy;
+      }
+
+      waitFor(semaphore, TIMEOUT_MS);
+      return result.get();
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   public static class XTestExecutionStackContainer extends XTestContainer<XExecutionStack> implements XSuspendContext.XExecutionStackContainer {
