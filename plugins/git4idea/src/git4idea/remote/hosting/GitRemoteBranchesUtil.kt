@@ -32,6 +32,8 @@ import git4idea.ui.branch.GitBranchCheckoutOperation
 import git4idea.ui.branch.hasTrackingConflicts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 
 data class HostedGitRepositoryRemote(
@@ -271,8 +273,10 @@ object GitRemoteBranchesUtil {
       }
     }
 
+  @VisibleForTesting
+  @ApiStatus.Internal
   @RequiresBackgroundThread
-  private fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
+  fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
     val existingRemote = findRemote(repository, remote)
     if (existingRemote != null) return existingRemote
 
