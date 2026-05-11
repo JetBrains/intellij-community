@@ -202,9 +202,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent(project, holder);
       }
     }
-    else if (isHelpSet(element)) {
-      highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
-    }
     else if (element instanceof Listeners listeners) {
       annotateListeners(listeners, holder);
     }
@@ -218,11 +215,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotatePsiClassValue(psiClassDomValue, holder);
       }
     }
-  }
-
-  @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"})
-  private static boolean isHelpSet(DomElement element) {
-    return element instanceof org.jetbrains.idea.devkit.dom.Helpset;
   }
 
   private static void annotateDependencyDescriptor(DependencyDescriptor descriptor, DomElementAnnotationHolder holder) {
