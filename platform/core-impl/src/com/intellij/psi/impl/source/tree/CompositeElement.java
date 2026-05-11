@@ -109,8 +109,11 @@ public class CompositeElement extends TreeElement {
     return clone;
   }
 
-  private void copyChildrenToClone(@NotNull CompositeElement clone) {
-    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
+  @ApiStatus.Internal
+  protected final void copyChildrenToClone(@NotNull CompositeElement clone) {
+    long version = getVersionForReading();
+    myCachedLengthGetter.setVolatile(clone, doGetMyCachedLength(version));
+    for (TreeElement child = getFirstChildNodeVersioned(version); child != null; child = child.getTreeNextVersioned(version)) {
       TreeElement childClone = (TreeElement)child.clone();
       clone.rawAddChildrenWithoutNotifications(childClone);
     }

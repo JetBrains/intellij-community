@@ -115,7 +115,8 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   public @NotNull CompositeElement clone() {
-    LazyParseableElement clone = (LazyParseableElement)super.clone();
+    LazyParseableElement clone = isParsed() ? (LazyParseableElement)super.clone()
+                                            : (LazyParseableElement)cloneWithoutCopyingChildren();
     // we need to forcibly drop the cloned lists to avoid accidental sharing of lists between this and clone
     clone.clearCaches();
     return clone;
@@ -129,7 +130,11 @@ public class LazyParseableElement extends CompositeElement {
     myParsedGetter.setVolatile(this, null);
     myTextGetter.setVolatile(this, null);
     doSetMyText(cloneVersion, ((LazyParseableElement)origin).doGetMyText(originVersion));
-    doSetMyParsed(cloneVersion, ((LazyParseableElement)origin).doGetMyParsed(originVersion));
+    Boolean parsed = ((LazyParseableElement)origin).doGetMyParsed(originVersion);
+    doSetMyParsed(cloneVersion, parsed);
+    if (parsed == null) {
+      setCachedLength(origin.getCachedLength());
+    }
   }
 
 
@@ -184,11 +189,22 @@ public class LazyParseableElement extends CompositeElement {
 
   @Override
   public int getTextLength() {
-    CharSequence text = myText();
-    if (text != null) {
-      return text.length();
+    long version = getVersionForReading();
+    return getTextLengthVersioned(version);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public int getTextLengthVersioned(long version) {
+    Supplier<CharSequence> textGetter = doGetMyText(version);
+    if (textGetter == null) {
+      return super.getTextLengthVersioned(version);
     }
-    return super.getTextLength();
+    CharSequence text = textGetter.get();
+    if (text == null) {
+      return super.getTextLengthVersioned(version);
+    }
+    return text.length();
   }
 
   @Override
