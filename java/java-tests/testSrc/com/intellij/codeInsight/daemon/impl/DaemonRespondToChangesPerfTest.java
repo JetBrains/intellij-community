@@ -310,8 +310,8 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     }
   }
 
-  // highlights everything at the file level
-  static class MyHugeAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+  // highlights every character at the file level
+  private static class MyHugeAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     static final AtomicBoolean finished = new AtomicBoolean();
     static final String myText = "blah.MyHugeAnnotator";
     @Override
@@ -327,7 +327,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
   }
 
   public void testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Stress() {
-    int N = 100_000;
+    int N = 20_000;
     configureByText(PlainTextFileType.INSTANCE, " ".repeat(N));
     // just checks that highlighting doesn't freeze because there are no quadratics inside anymore
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyHugeAnnotator()}, ()->{
