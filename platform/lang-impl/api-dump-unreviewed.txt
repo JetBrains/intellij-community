@@ -7090,13 +7090,11 @@ a:com.intellij.ide.actions.BigPopupUI
 - addViewTypeListener(com.intellij.ide.actions.BigPopupUI$ViewTypeListener):V
 - pa:createCellRenderer():javax.swing.ListCellRenderer
 - p:createFooterPanel(javax.swing.JPanel):javax.swing.JPanel
-- p:createHeader():javax.swing.JComponent
+- pa:createHeader():javax.swing.JComponent
 - a:createList():com.intellij.ui.components.JBList
 - p:createListPane():javax.swing.JScrollPane
 - p:createSearchField():com.intellij.ui.components.fields.ExtendableTextField
-- p:createSettingsPanel():javax.swing.JPanel
 - p:createSuggestionsPanel():javax.swing.JPanel
-- p:createTopLeftPanel():javax.swing.JPanel
 - pa:getAccessibleName():java.lang.String
 - getExpandedSize():java.awt.Dimension
 - p:getInitialHint():java.lang.String
