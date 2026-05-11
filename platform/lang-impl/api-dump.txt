@@ -735,7 +735,6 @@ com.intellij.ide.actions.SearchEverywhereClassifier
 - a:isClass(java.lang.Object):Z
 - a:isSymbol(java.lang.Object):Z
 a:com.intellij.ide.actions.bigPopup.ShowFilterAction
-- closeFilterPopup():V
 com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:EXECUTING_CONTEXT:com.intellij.openapi.actionSystem.DataKey

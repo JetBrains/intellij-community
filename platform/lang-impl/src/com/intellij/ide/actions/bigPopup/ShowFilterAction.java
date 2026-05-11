@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.BadgeIconSupplier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,6 +142,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
 
   protected abstract ElementsChooser<?> createChooser();
 
+  @ApiStatus.Internal
   public void closeFilterPopup() {
     if (myFilterPopup != null && !myFilterPopup.isDisposed()) {
       myFilterPopup.cancel();
