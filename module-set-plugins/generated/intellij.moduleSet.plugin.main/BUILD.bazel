@@ -13,12 +13,15 @@ jvm_library(
     "//grid/impl",
     "//grid/impl-ide",
     "//grid/types",
+    "//libraries/groovy",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.grid.core:moduleSet-plugin-grid-core",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend",
     "//platform/recentFiles/shared:recentFiles",
     "//platform/recentFiles/backend",
     "//platform/recentFiles/frontend",
+    "//platform/structuralsearch:structuralSearch",
     "//platform/vcs-impl/frontend",
   ]
 )
@@ -37,12 +40,15 @@ jvm_library(
     "//grid/impl:impl_test_lib",
     "//grid/impl-ide:impl-ide_test_lib",
     "//grid/types:types_test_lib",
+    "//libraries/groovy:groovy_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.grid.core:moduleSet-plugin-grid-core_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles:moduleSet-plugin-recentFiles_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend:moduleSet-plugin-vcs-frontend_test_lib",
     "//platform/recentFiles/shared:recentFiles_test_lib",
     "//platform/recentFiles/backend:backend_test_lib",
     "//platform/recentFiles/frontend:frontend_test_lib",
+    "//platform/structuralsearch:structuralSearch_test_lib",
     "//platform/vcs-impl/frontend:frontend_test_lib",
   ]
 )

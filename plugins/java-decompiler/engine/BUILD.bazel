@@ -25,7 +25,8 @@ jvm_library(
     "@lib//:junit6Params",
     "@lib//:junit6Launcher",
     "@lib//:eclipse",
-    "@lib//:org-codehaus-groovy-groovy",
+    "//libraries/groovy",
+    "//libraries/groovy:groovy_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end
@@ -61,7 +62,8 @@ jvm_library(
     "@lib//:junit6Params",
     "@lib//:junit6Launcher",
     "@lib//:eclipse",
-    "@lib//:org-codehaus-groovy-groovy",
+    "//libraries/groovy",
+    "//libraries/groovy:groovy_test_lib",
   ],
   runtime_deps = [":java-decompiler-engine-tests"]
 )

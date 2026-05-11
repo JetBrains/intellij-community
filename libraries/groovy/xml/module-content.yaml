@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.groovy.xml.jar
+  modules:
+  - name: intellij.libraries.groovy.xml
+    libraries:
+      groovy-xml:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/3/groovy-xml-3.jar

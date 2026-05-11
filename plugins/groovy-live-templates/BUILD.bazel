@@ -11,7 +11,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:org-codehaus-groovy-groovy",
+    "//libraries/groovy",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -30,6 +30,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":groovy-live-templates",
+    "//libraries/groovy:groovy_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",

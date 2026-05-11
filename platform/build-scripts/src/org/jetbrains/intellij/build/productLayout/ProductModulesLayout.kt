@@ -25,6 +25,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.jcef.plugin",
   "intellij.moduleSet.plugin.grid.core",
   "intellij.moduleSet.plugin.recentFiles",
+  "intellij.moduleSet.plugin.structuralSearch",
   "intellij.moduleSet.plugin.vcs.frontend",
   "intellij.platform.images",
 )

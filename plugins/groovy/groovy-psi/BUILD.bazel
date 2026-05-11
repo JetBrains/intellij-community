@@ -9,7 +9,7 @@ jvm_library(
   resources = glob(["resources/**/*"]),
   resource_strip_prefix = "resources",
   deps = [
-    "@lib//:org-codehaus-groovy-groovy",
+    "//libraries/groovy",
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
@@ -47,7 +47,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/lang-api:lang",
   ],
-  exports = ["@lib//:org-codehaus-groovy-groovy"]
+  exports = ["//libraries/groovy"]
 )
 
 jvm_library(
@@ -56,9 +56,13 @@ jvm_library(
   module_name = "intellij.groovy.psi",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = ["@lib//:org-codehaus-groovy-groovy"],
+  exports = [
+    "//libraries/groovy",
+    "//libraries/groovy:groovy_test_lib",
+  ],
   runtime_deps = [
     ":psi",
+    "//libraries/groovy:groovy_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
     "//java/openapi:java_test_lib",

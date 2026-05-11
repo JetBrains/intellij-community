@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.gradle.toolingExtension` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 create_kotlinc_options(
   name = "custom_toolingExtension",
@@ -9,6 +9,16 @@ create_kotlinc_options(
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ]
+)
+
+jvm_provided_library(
+  name = "libraries_groovy_provided",
+  lib = "//libraries/groovy"
+)
+
+jvm_provided_library(
+  name = "libraries_groovy_ant_provided",
+  lib = "//libraries/groovy/ant"
 )
 
 jvm_library(
@@ -25,8 +35,8 @@ jvm_library(
     "//platform/external-system-rt:externalSystem-rt",
     "//platform/util-rt",
     "@lib//:gradle",
-    "@lib//:org-codehaus-groovy-groovy-provided",
-    "@lib//:org-codehaus-groovy-groovy-ant-provided",
+    ":libraries_groovy_provided",
+    ":libraries_groovy_ant_provided",
   ]
 )
 
@@ -41,8 +51,10 @@ jvm_library(
     ":toolingExtension",
     "//platform/external-system-rt:externalSystem-rt_test_lib",
     "//platform/util-rt:util-rt_test_lib",
-    "@lib//:org-codehaus-groovy-groovy-provided",
-    "@lib//:org-codehaus-groovy-groovy-ant-provided",
+    "//libraries/groovy",
+    "//libraries/groovy:groovy_test_lib",
+    "//libraries/groovy/ant",
+    "//libraries/groovy/ant:ant_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension` end

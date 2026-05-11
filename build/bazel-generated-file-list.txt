@@ -389,6 +389,12 @@ libraries/detekt-compose-rules
 libraries/dokka
 libraries/download-pgp-verifier
 libraries/fastutil
+libraries/groovy
+libraries/groovy/ant
+libraries/groovy/json
+libraries/groovy/jsr223
+libraries/groovy/templates
+libraries/groovy/xml
 libraries/grpc
 libraries/grpc-netty-shaded
 libraries/gson
@@ -522,6 +528,7 @@ module-set-plugins/generated/intellij.moduleSet.plugin.debugger.streams
 module-set-plugins/generated/intellij.moduleSet.plugin.grid.core
 module-set-plugins/generated/intellij.moduleSet.plugin.main
 module-set-plugins/generated/intellij.moduleSet.plugin.recentFiles
+module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch
 module-set-plugins/generated/intellij.moduleSet.plugin.vcs.frontend
 mps/build
 mps/build/intellij.mps.resources

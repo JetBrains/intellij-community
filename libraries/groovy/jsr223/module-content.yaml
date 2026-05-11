@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.groovy.jsr223.jar
+  modules:
+  - name: intellij.libraries.groovy.jsr223
+    libraries:
+      groovy-jsr223:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-jsr223/3/groovy-jsr223-3.jar

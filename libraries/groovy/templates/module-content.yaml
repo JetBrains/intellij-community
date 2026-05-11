@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.groovy.templates.jar
+  modules:
+  - name: intellij.libraries.groovy.templates
+    libraries:
+      groovy-templates:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3/groovy-templates-3.jar

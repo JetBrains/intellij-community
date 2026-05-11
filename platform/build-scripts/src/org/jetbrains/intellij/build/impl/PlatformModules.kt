@@ -128,21 +128,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "jaxb-api",
   ))
 
-  layout.withProjectLibraries(
-    sequenceOf(
-      "org.codehaus.groovy:groovy",
-      "org.codehaus.groovy:groovy-jsr223",
-      "org.codehaus.groovy:groovy-json",
-      "org.codehaus.groovy:groovy-templates",
-      "org.codehaus.groovy:groovy-xml",
-    ),
-    "groovy.jar"
-  )
-  // ultimate only
-  if (context.project.libraryCollection.findLibrary("org.apache.ivy") != null) {
-    @Suppress("DEPRECATION")
-    layout.withProjectLibrary("org.apache.ivy", "groovy.jar", reason = "ivy workaround")
-  }
   // TODO(Shumaf.Lovpache): IJPL-1014 convert lsp4j to product modules after merge into master
   if (context.project.libraryCollection.findLibrary("eclipse.lsp4j") != null) {
     layout.withProjectLibraries(

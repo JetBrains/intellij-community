@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 create_kotlinc_options(
   name = "custom_toolingExtension-impl",
@@ -9,6 +9,16 @@ create_kotlinc_options(
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ]
+)
+
+jvm_provided_library(
+  name = "libraries_groovy_provided",
+  lib = "//libraries/groovy"
+)
+
+jvm_provided_library(
+  name = "libraries_groovy_ant_provided",
+  lib = "//libraries/groovy/ant"
 )
 
 jvm_library(
@@ -37,8 +47,8 @@ jvm_library(
     "//libraries/commons/io",
     "//libraries/guava",
     "//platform/util/trove",
-    "@lib//:org-codehaus-groovy-groovy-provided",
-    "@lib//:org-codehaus-groovy-groovy-ant-provided",
+    ":libraries_groovy_provided",
+    ":libraries_groovy_ant_provided",
   ],
   exports = [
     "@lib//:slf4j-api",
@@ -71,8 +81,10 @@ jvm_library(
     "//libraries/commons/io:io_test_lib",
     "//libraries/guava:guava_test_lib",
     "//platform/util/trove:trove_test_lib",
-    "@lib//:org-codehaus-groovy-groovy-provided",
-    "@lib//:org-codehaus-groovy-groovy-ant-provided",
+    "//libraries/groovy",
+    "//libraries/groovy:groovy_test_lib",
+    "//libraries/groovy/ant",
+    "//libraries/groovy/ant:ant_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end

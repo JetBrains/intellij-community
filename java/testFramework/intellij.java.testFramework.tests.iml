@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />

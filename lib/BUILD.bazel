@@ -11684,6 +11684,96 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.codehaus.groovy/groovy-ant-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-ant-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-ant-groovy-ant",
+  jar = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-ant-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.codehaus.groovy/groovy-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-groovy",
+  jar = "@org_codehaus_groovy-groovy-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.codehaus.groovy/groovy-json-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-json-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-json-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-json-groovy-json",
+  jar = "@org_codehaus_groovy-groovy-json-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-json-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.codehaus.groovy/groovy-jsr223-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-jsr223-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-jsr223-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-jsr223-groovy-jsr223",
+  jar = "@org_codehaus_groovy-groovy-jsr223-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-jsr223-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.codehaus.groovy/groovy-templates-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-templates-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-templates-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-templates-groovy-templates",
+  jar = "@org_codehaus_groovy-groovy-templates-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-templates-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.codehaus.groovy/groovy-xml-3.0.25.jar_copy",
+  src = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
+  out = "org.codehaus.groovy/groovy-xml-3.0.25.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-groovy-xml-groovy-xml",
+  jar = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
+  source_jar = "@org_codehaus_groovy-groovy-xml-3_0_25-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.github.seregamorph/hamcrest-more-matchers-0.1.jar_copy",
   src = "@com_github_seregamorph-hamcrest-more-matchers-0_1_http//file",
   out = "com.github.seregamorph/hamcrest-more-matchers-0.1.jar",
@@ -18123,110 +18213,6 @@ java_library(
   name = "opentest4j-provided",
   exports = [":opentest4j"],
   neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy",
-  jar = "@org_codehaus_groovy-groovy-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-3_0_25-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "org-codehaus-groovy-groovy-provided",
-  exports = [":org-codehaus-groovy-groovy"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-ant-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-ant-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy-ant",
-  jar = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-ant-3_0_25-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "org-codehaus-groovy-groovy-ant-provided",
-  exports = [":org-codehaus-groovy-groovy-ant"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-json-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-json-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-json-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy-json",
-  jar = "@org_codehaus_groovy-groovy-json-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-json-3_0_25-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-jsr223-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-jsr223-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-jsr223-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy-jsr223",
-  jar = "@org_codehaus_groovy-groovy-jsr223-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-jsr223-3_0_25-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-templates-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-templates-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-templates-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy-templates",
-  jar = "@org_codehaus_groovy-groovy-templates-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-templates-3_0_25-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.codehaus.groovy/groovy-xml-3.0.25.jar_copy",
-  src = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
-  out = "org.codehaus.groovy/groovy-xml-3.0.25.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org-codehaus-groovy-groovy-xml",
-  jar = "@org_codehaus_groovy-groovy-xml-3_0_25_http//file",
-  source_jar = "@org_codehaus_groovy-groovy-xml-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

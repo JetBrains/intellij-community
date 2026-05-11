@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.groovy.jar
+  modules:
+  - name: intellij.libraries.groovy
+    libraries:
+      groovy:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3/groovy-3.jar

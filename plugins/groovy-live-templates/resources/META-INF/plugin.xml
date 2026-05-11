@@ -6,7 +6,15 @@
   ]]></description>
   <vendor>JetBrains</vendor>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.groovy"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.modules.platform</depends>
+
+  <content namespace="jetbrains">
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <liveTemplateMacro implementation="com.intellij.groovy.live.templates.GroovyScriptMacro"/>

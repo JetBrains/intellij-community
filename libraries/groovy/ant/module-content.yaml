@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.groovy.ant.jar
+  modules:
+  - name: intellij.libraries.groovy.ant
+    libraries:
+      groovy-ant:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-ant/3/groovy-ant-3.jar

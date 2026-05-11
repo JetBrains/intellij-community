@@ -72,7 +72,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy-ant" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.groovy" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.groovy.ant" scope="PROVIDED" />
   </component>
 </module>

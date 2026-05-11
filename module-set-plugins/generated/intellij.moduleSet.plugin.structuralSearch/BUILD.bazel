@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.moduleSet.plugin.structuralSearch` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "moduleSet-plugin-structuralSearch",
+  module_name = "intellij.moduleSet.plugin.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = glob(["resources/**/*"]),
+  resource_strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "moduleSet-plugin-structuralSearch_test_lib",
+  testonly = True,
+  module_name = "intellij.moduleSet.plugin.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":moduleSet-plugin-structuralSearch"]
+)
+### auto-generated section `build intellij.moduleSet.plugin.structuralSearch` end
+
+### auto-generated section `iml intellij.moduleSet.plugin.structuralSearch` start
+exports_files([
+  "intellij.moduleSet.plugin.structuralSearch.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.moduleSet.plugin.structuralSearch` end
