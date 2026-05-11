@@ -801,10 +801,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static void registerClassFromTypeElement(LookupElement element, JavaCompletionSession session) {
     PsiType type = Objects.requireNonNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
-    if (type instanceof PsiPrimitiveType) {
-      session.registerKeyword(type.getCanonicalText(false));
-    }
-    else if (type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0) {
+    if (type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0) {
       PsiClass aClass = ((PsiClassType)type).resolve();
       if (aClass != null) {
         session.registerClass(aClass);
