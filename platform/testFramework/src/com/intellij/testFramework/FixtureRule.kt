@@ -41,10 +41,6 @@ import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -80,22 +76,6 @@ open class ApplicationRule : TestRule {
   }
 
   protected open fun after() { }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use com.intellij.testFramework.junit5.TestApplication annotation")
-open class ApplicationExtension : BeforeAllCallback, AfterAllCallback {
-  companion object {
-    init {
-      Logger.setFactory(TestLoggerFactory::class.java)
-    }
-  }
-
-  override fun beforeAll(context: ExtensionContext) {
-    TestApplicationManager.getInstance()
-  }
-
-  override fun afterAll(context: ExtensionContext) { }
 }
 
 /**
