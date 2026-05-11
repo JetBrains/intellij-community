@@ -5,7 +5,6 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -356,12 +355,9 @@ internal class AgentSessionRefreshScheduler(
 
   private fun normalizeActivityHints(
     activityHintsByThreadId: Map<String, AgentThreadActivity>,
-    activityHintPolicy: AgentSessionActivityHintPolicy,
+    @Suppress("UNUSED_PARAMETER") activityHintPolicy: AgentSessionActivityHintPolicy,
   ): Map<String, AgentThreadActivity> {
     if (activityHintsByThreadId.isEmpty()) {
-      return emptyMap()
-    }
-    if (activityHintPolicy == AgentSessionActivityHintPolicy.OPTIMISTIC && !AgentSessionActivityHintSettings.isOptimisticActivityHintsEnabled()) {
       return emptyMap()
     }
     val normalized = LinkedHashMap<String, AgentThreadActivity>(activityHintsByThreadId.size)

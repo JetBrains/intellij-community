@@ -121,6 +121,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
         }
 
         "task_complete", "turn_complete", "turn_aborted" -> {
+          parseState.clearPendingFunctionCallsForCompletedTurn(completedTurnId = event.payloadTurnId)
           if (shouldClearProcessingTurn(parseState = parseState, completedTurnId = event.payloadTurnId)) {
             parseState.processing = false
             parseState.processingTurnId = null
@@ -186,7 +187,7 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
             parseState.markPendingUserInput(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
           }
           else {
-            parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
+            parseState.markPendingFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId, turnId = event.payloadTurnId)
           }
         }
 
@@ -330,9 +331,14 @@ private data class RolloutParseState(
   @JvmField var latestAgentMessageAt: Long = Long.MIN_VALUE,
   @JvmField var latestPlanAt: Long = Long.MIN_VALUE,
   @JvmField val pendingUserInputByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
-  @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, Long> = LinkedHashMap(),
+  @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
   @JvmField var nextSyntheticPendingUserInputId: Int = 0,
   @JvmField var nextSyntheticPendingFunctionCallId: Int = 0,
+)
+
+private data class PendingFunctionCall(
+  @JvmField val updatedAt: Long,
+  @JvmField val turnId: String?,
 )
 
 private fun shouldClearProcessingTurn(parseState: RolloutParseState, completedTurnId: String?): Boolean {
@@ -350,10 +356,28 @@ private fun RolloutParseState.markPendingUserInput(eventTimestamp: Long?, callId
   pendingUserInputByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
 }
 
-private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?) {
+private fun RolloutParseState.markPendingFunctionCall(eventTimestamp: Long?, callId: String?, turnId: String?) {
   val resolvedTimestamp = eventTimestamp ?: updatedAt
   val resolvedCallId = callId ?: "pending-function-call-${nextSyntheticPendingFunctionCallId++}"
-  pendingFunctionCallByCallId.merge(resolvedCallId, resolvedTimestamp, ::maxOf)
+  val previous = pendingFunctionCallByCallId[resolvedCallId]
+  if (previous == null || resolvedTimestamp >= previous.updatedAt) {
+    pendingFunctionCallByCallId[resolvedCallId] = PendingFunctionCall(updatedAt = resolvedTimestamp, turnId = turnId)
+  }
+}
+
+private fun RolloutParseState.clearPendingFunctionCallsForCompletedTurn(completedTurnId: String?) {
+  if (completedTurnId == null) {
+    pendingFunctionCallByCallId.clear()
+    return
+  }
+
+  val iterator = pendingFunctionCallByCallId.entries.iterator()
+  while (iterator.hasNext()) {
+    val pendingFunctionCall = iterator.next().value
+    if (pendingFunctionCall.turnId == null || pendingFunctionCall.turnId == completedTurnId) {
+      iterator.remove()
+    }
+  }
 }
 
 private fun parseIsoTimestamp(value: String?): Long? {

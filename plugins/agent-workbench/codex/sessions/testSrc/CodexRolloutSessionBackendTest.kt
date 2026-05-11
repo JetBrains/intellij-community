@@ -130,6 +130,41 @@ class CodexRolloutSessionBackendTest {
           expected = CodexSessionActivity.UNREAD,
         ),
         ActivityCase(
+          id = "session-function-call-completion-unread",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:30.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run a tool to completion"}}""",
+            """{"timestamp":"2026-02-13T11:01:31.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:32.000Z",
+              callId = "call-completion-unread",
+              name = "exec_command",
+            ),
+            turnCompleteLine(timestamp = "2026-02-13T11:01:33.000Z"),
+          ),
+          expected = CodexSessionActivity.UNREAD,
+        ),
+        ActivityCase(
+          id = "session-newer-function-call-survives-stale-turn-complete",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:01:40.000Z","type":"event_msg","payload":{"type":"user_message","message":"Run overlapping tools"}}""",
+            """{"timestamp":"2026-02-13T11:01:41.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[]}}""",
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:42.000Z",
+              callId = "call-old-turn",
+              name = "exec_command",
+              turnId = "turn-old",
+            ),
+            responseItemFunctionCall(
+              timestamp = "2026-02-13T11:01:43.000Z",
+              callId = "call-new-turn",
+              name = "exec_command",
+              turnId = "turn-new",
+            ),
+            turnCompleteLine(timestamp = "2026-02-13T11:01:44.000Z", turnId = "turn-old"),
+          ),
+          expected = CodexSessionActivity.PROCESSING,
+        ),
+        ActivityCase(
           id = "session-pending-input",
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:02:05.000Z","type":"event_msg","payload":{"type":"request_user_input"}}"""
@@ -930,6 +965,74 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun planItemAppendedWithoutWatcherEventBecomesNeedsInputAfterRefreshPing() {
+    // Regression marker for the IJPL-244497 plan-mode "blue" case. When codex enters plan mode
+    // it appends an item_completed/plan event to the rollout via its long-lived O_APPEND fd;
+    // macOS FSEvents withholds the MODIFY notification (see MacOSXListeningWatchServiceTest).
+    // The IDE relies on an external refresh ping (the per-tab rollout poll) to re-stat the file
+    // and reparse it; this test simulates that ping and asserts the activity resolves to
+    // NEEDS_INPUT, not PROCESSING.
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-plan-mode")
+      Files.createDirectories(projectDir)
+
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("16")
+        .resolve("rollout-plan-mode.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-16T12:00:00.000Z", id = "session-plan-mode", cwd = projectDir),
+          """{"timestamp":"2026-02-16T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Draft a plan"}}""",
+          """{"timestamp":"2026-02-16T12:00:02.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initial = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(initial).hasSize(1)
+        assertThat(initial.single().activity).isEqualTo(CodexSessionActivity.PROCESSING)
+
+        drainUpdateChannel(updates)
+        // Codex appends a plan item via its long-lived fd; FSEvents stays silent so no path-scoped
+        // change set is available.
+        writeRollout(
+          file = rollout,
+          lines = listOf(
+            sessionMetaLine(timestamp = "2026-02-16T12:00:00.000Z", id = "session-plan-mode", cwd = projectDir),
+            """{"timestamp":"2026-02-16T12:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Draft a plan"}}""",
+            """{"timestamp":"2026-02-16T12:00:02.000Z","type":"event_msg","payload":{"type":"task_started"}}""",
+            """{"timestamp":"2026-02-16T12:00:03.000Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"plan"}}}""",
+          ),
+        )
+        // The per-tab rollout poll emits a path-less refresh ping. The stat-diff inside the index
+        // detects the size change and reparses; activity must resolve to NEEDS_INPUT.
+        sourceUpdates.emit(FileBackedSessionChangeSet())
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun refreshesThreadAfterSameSizeRewriteWhenLastModifiedTimeIsReset() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-updates-same-size")
@@ -1013,8 +1116,14 @@ private fun sessionMetaLine(timestamp: String, id: String, cwd: Path): String {
   }"}}"""
 }
 
-private fun responseItemFunctionCall(timestamp: String, callId: String, name: String = "request_user_input"): String {
-  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"{}","call_id":"$callId"}}"""
+private fun responseItemFunctionCall(timestamp: String, callId: String, name: String = "request_user_input", turnId: String? = null): String {
+  val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call","name":"$name","arguments":"{}","call_id":"$callId"$turnIdField}}"""
+}
+
+private fun turnCompleteLine(timestamp: String, turnId: String? = null): String {
+  val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"turn_complete"$turnIdField}}"""
 }
 
 private fun itemCompletedPlan(timestamp: String): String {

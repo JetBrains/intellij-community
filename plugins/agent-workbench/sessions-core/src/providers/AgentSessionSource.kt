@@ -50,7 +50,7 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
   @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
-  @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
+  @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
 )
 
 data class AgentSessionSourceRefreshRequest(

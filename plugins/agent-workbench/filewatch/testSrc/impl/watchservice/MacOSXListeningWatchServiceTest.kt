@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
 import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
@@ -61,6 +62,56 @@ class MacOSXListeningWatchServiceTest {
       Files.delete(file)
       awaitEvent(watchService, watchKey, ENTRY_DELETE, file)
     }
+  }
+
+  @Test
+  fun longLivedAppendFdDoesNotDeliverModifyEventsUntilClose(): Unit = runBlocking(Dispatchers.IO) {
+    // Regression marker for the codex live-status bug: macOS FSEvents withholds MODIFY events
+    // for writes performed through a long-lived O_APPEND fd. The events only flush when the fd
+    // is closed. fsync/FileChannel.force(true) between writes does not break the silence.
+    //
+    // Codex keeps the rollout JSONL fd open for the entire session lifetime, so during a long
+    // in-flight turn no MODIFY events reach the IDE and live activity hints cannot update. If
+    // this test ever starts failing, FSEvents has changed semantics and the workaround
+    // (opportunistic mtime poll for active rollout files) can be reconsidered.
+    assumeMacOS()
+    val watchService = createWatchService()
+    WatchablePath(tempDir).register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE)
+
+    watchService.use {
+      delay(200.milliseconds)
+      val file = tempDir.resolve("rollout-long-lived.jsonl")
+      Files.createFile(file)
+      assertThat(collectKinds(watchService)).contains(ENTRY_CREATE)
+
+      Files.newOutputStream(file, StandardOpenOption.APPEND).use { stream ->
+        stream.write("line1\n".toByteArray())
+        stream.flush()
+        delay(800.milliseconds)
+        assertThat(collectKinds(watchService))
+          .describedAs("FSEvents must not deliver MODIFY for write through long-lived O_APPEND fd")
+          .doesNotContain(ENTRY_MODIFY)
+
+        stream.write("line2\n".toByteArray())
+        stream.flush()
+        delay(800.milliseconds)
+        assertThat(collectKinds(watchService))
+          .describedAs("FSEvents must not deliver MODIFY for second write through long-lived O_APPEND fd")
+          .doesNotContain(ENTRY_MODIFY)
+      }
+      // Closing the fd finally flushes a single MODIFY for the accumulated writes.
+      delay(800.milliseconds)
+      assertThat(collectKinds(watchService))
+        .describedAs("FSEvents delivers a flushed MODIFY only after the writing fd closes")
+        .contains(ENTRY_MODIFY)
+    }
+  }
+
+  private fun collectKinds(watchService: MacOSXListeningWatchService): List<WatchEvent.Kind<*>> {
+    val key = watchService.poll(50, TimeUnit.MILLISECONDS) ?: return emptyList()
+    val events = key.pollEvents()
+    key.reset()
+    return events.map { it.kind() }
   }
 
   @Test

@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -11,15 +10,22 @@ import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentChatScopedTerminalRefreshController>()
 private const val AGENT_CHAT_SCOPED_REFRESH_DEBOUNCE_MS: Long = 750L
+private const val AGENT_CHAT_ROLLOUT_POLL_INTERVAL_MS: Long = 1_500L
 
 internal fun createAgentChatScopedTerminalRefreshController(
   file: AgentChatVirtualFile,
@@ -54,12 +60,16 @@ internal class AgentChatScopedTerminalRefreshController(
   sessionState: StateFlow<TerminalViewSessionState>,
   parentScope: CoroutineScope,
   debounceMs: Long = AGENT_CHAT_SCOPED_REFRESH_DEBOUNCE_MS,
+  rolloutPollIntervalMs: Long = AGENT_CHAT_ROLLOUT_POLL_INTERVAL_MS,
   emitInitialRefresh: Boolean = true,
   private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatTerminalOutputForRefresh,
 ) : AgentChatDisposableController {
   private val initialRefreshJob: Job?
   private val outputRefreshJob: Job?
   private val terminationRefreshJob: Job
+  // Polls the rollout source while the terminal session is Started, compensating for macOS FSEvents
+  // silence on codex's long-lived O_APPEND fd (see MacOSXListeningWatchServiceTest regression marker).
+  private val rolloutPollJob: Job
 
   init {
     initialRefreshJob = if (emitInitialRefresh) {
@@ -75,7 +85,7 @@ internal class AgentChatScopedTerminalRefreshController(
         changes
           .debounce(debounceMs.milliseconds)
           .collect {
-            emitScopedRefresh("terminal output", activityHint = terminalOutputActivityHint())
+            emitScopedRefresh("terminal output")
           }
       }
     }
@@ -86,12 +96,25 @@ internal class AgentChatScopedTerminalRefreshController(
           emitScopedRefresh("terminal termination")
         }
     }
+    rolloutPollJob = parentScope.launch {
+      sessionState
+        .map { it == TerminalViewSessionState.Running }
+        .distinctUntilChanged()
+        .collectLatest { isRunning ->
+          if (!isRunning) return@collectLatest
+          while (currentCoroutineContext().isActive) {
+            delay(rolloutPollIntervalMs.milliseconds)
+            emitScopedRefresh("rollout poll")
+          }
+        }
+    }
   }
 
   override fun dispose() {
     initialRefreshJob?.cancel()
     outputRefreshJob?.cancel()
     terminationRefreshJob.cancel()
+    rolloutPollJob.cancel()
   }
 
   private fun emitScopedRefresh(reason: String, activityHint: AgentThreadActivity? = null) {
@@ -102,9 +125,5 @@ internal class AgentChatScopedTerminalRefreshController(
       "Emitting ${provider.value} scoped refresh from agent chat terminal ($reason, path=$projectPath, threadId=${threadId != null})"
     }
     notifyRefresh(provider, projectPath, threadId, activityHint)
-  }
-
-  private fun terminalOutputActivityHint(): AgentThreadActivity? {
-    return if (AgentSessionActivityHintSettings.isOptimisticActivityHintsEnabled()) AgentThreadActivity.PROCESSING else null
   }
 }
