@@ -1,5 +1,5 @@
-from typing import Literal, TypedDict, type_check_only
-from typing_extensions import NotRequired, TypeAlias
+from typing import Literal, TypeAlias, TypedDict, type_check_only
+from typing_extensions import NotRequired
 
 _NodeType: TypeAlias = Literal[
     "comparator",

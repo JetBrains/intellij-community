@@ -1,7 +1,6 @@
 from _typeshed import Unused
 from collections.abc import Callable
-from typing import Any, Final
-from typing_extensions import TypeAlias
+from typing import Any, Final, TypeAlias
 
 from Xlib._typing import ErrorHandler
 from Xlib.display import Display

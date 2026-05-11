@@ -7,8 +7,21 @@ from collections.abc import Callable, Container, Iterable, Mapping, Sequence, Se
 from contextlib import AbstractContextManager
 from re import Pattern
 from types import GenericAlias, TracebackType
-from typing import Any, AnyStr, Final, Generic, NoReturn, Protocol, SupportsAbs, SupportsRound, TypeVar, overload, type_check_only
-from typing_extensions import Never, ParamSpec, Self
+from typing import (
+    Any,
+    AnyStr,
+    Final,
+    Generic,
+    NoReturn,
+    ParamSpec,
+    Protocol,
+    SupportsAbs,
+    SupportsRound,
+    TypeVar,
+    overload,
+    type_check_only,
+)
+from typing_extensions import Never, Self
 from unittest._log import _AssertLogsContext, _LoggingWatcher
 from warnings import WarningMessage
 
@@ -54,7 +67,7 @@ def skipIf(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
 def skipUnless(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
 
 class SkipTest(Exception):
-    def __init__(self, reason: str) -> None: ...
+    def __init__(self, reason: str, /) -> None: ...
 
 @type_check_only
 class _SupportsAbsAndDunderGE(SupportsDunderGE[Any], SupportsAbs[Any], Protocol): ...
@@ -165,14 +178,21 @@ class TestCase:
     def assertWarnsRegex(
         self, expected_warning: type[Warning] | tuple[type[Warning], ...], expected_regex: str | Pattern[str], *, msg: Any = ...
     ) -> _AssertWarnsContext: ...
-    def assertLogs(
-        self, logger: str | logging.Logger | None = None, level: int | str | None = None
-    ) -> _AssertLogsContext[_LoggingWatcher]: ...
-    if sys.version_info >= (3, 10):
-        def assertNoLogs(
+    if sys.version_info >= (3, 15):
+        def assertLogs(
+            self,
+            logger: str | logging.Logger | None = None,
+            level: int | str | None = None,
+            formatter: logging.Formatter | None = None,
+        ) -> _AssertLogsContext[_LoggingWatcher]: ...
+    else:
+        def assertLogs(
             self, logger: str | logging.Logger | None = None, level: int | str | None = None
-        ) -> _AssertLogsContext[None]: ...
+        ) -> _AssertLogsContext[_LoggingWatcher]: ...
 
+    def assertNoLogs(
+        self, logger: str | logging.Logger | None = None, level: int | str | None = None
+    ) -> _AssertLogsContext[None]: ...
     @overload
     def assertAlmostEqual(self, first: _S, second: _S, places: None, msg: Any, delta: _SupportsAbsAndDunderGE) -> None: ...
     @overload
@@ -277,9 +297,8 @@ class TestCase:
             self, subset: Mapping[Any, Any], dictionary: Mapping[Any, Any], msg: object = None
         ) -> None: ...
 
-    if sys.version_info >= (3, 10):
-        # Runtime has *args, **kwargs, but will error if any are supplied
-        def __init_subclass__(cls, *args: Never, **kwargs: Never) -> None: ...
+    # Runtime has *args, **kwargs, but will error if any are supplied
+    def __init_subclass__(cls, *args: Never, **kwargs: Never) -> None: ...
 
     if sys.version_info >= (3, 14):
         def assertIsSubclass(self, cls: type, superclass: type | tuple[type, ...], msg: Any = None) -> None: ...

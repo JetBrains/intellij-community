@@ -6,8 +6,7 @@ from _typeshed import ConvertibleToFloat, FileDescriptorOrPath, Incomplete, StrO
 from collections import defaultdict
 from collections.abc import Callable
 from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
-from typing import BinaryIO, Final, SupportsIndex, TypeVar, overload
-from typing_extensions import ParamSpec
+from typing import BinaryIO, Final, ParamSpec, SupportsIndex, TypeVar, overload
 
 from . import _ntuples as ntp
 

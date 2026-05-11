@@ -1,8 +1,8 @@
 from _typeshed import Incomplete, SupportsKeysAndGetItem
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any, ClassVar, overload, type_check_only
-from typing_extensions import TypeAlias, deprecated
+from typing import Any, ClassVar, TypeAlias, overload, type_check_only
+from typing_extensions import deprecated
 
 from referencing.jsonschema import Schema, SchemaRegistry
 from referencing.typing import URI

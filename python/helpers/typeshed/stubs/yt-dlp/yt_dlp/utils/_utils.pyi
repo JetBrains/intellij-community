@@ -23,8 +23,8 @@ from functools import cache
 from optparse import Values
 from os import PathLike
 from re import Pattern
-from typing import IO, Any, AnyStr, BinaryIO, Final, Generic, Literal, NamedTuple, TextIO, TypeVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import IO, Any, AnyStr, BinaryIO, Final, Generic, Literal, NamedTuple, TextIO, TypeAlias, TypeVar, overload
+from typing_extensions import Self
 from urllib.parse import _QueryType, _QuoteVia
 from xml.etree import ElementTree as ET
 

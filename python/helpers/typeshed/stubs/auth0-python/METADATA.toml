@@ -1,3 +1,4 @@
 version = "4.10.*"
 upstream-repository = "https://github.com/auth0/auth0-python"
 dependencies = ["cryptography", "types-requests"]
+obsolete-since = "5.4.0" # Released on 2026-05-04

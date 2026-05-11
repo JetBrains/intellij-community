@@ -4,19 +4,21 @@ import subprocess
 import sys
 from collections.abc import Iterable
 from http.client import HTTPResponse
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-from mypy_protobuf.main import (  # type: ignore[import-untyped]  # pyright: ignore[reportMissingTypeStubs]
-    __version__ as mypy_protobuf__version__,
-)
+try:
+    _mypy_protobuf_version = version("mypy-protobuf")
+except PackageNotFoundError:
+    _mypy_protobuf_version = "unavailable"
 
 if TYPE_CHECKING:
     from _typeshed import StrOrBytesPath, StrPath
 
-MYPY_PROTOBUF_VERSION = mypy_protobuf__version__
+MYPY_PROTOBUF_VERSION = _mypy_protobuf_version
 
 
 def download_file(url: str, destination: Path) -> None:

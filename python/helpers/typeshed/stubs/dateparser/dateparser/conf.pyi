@@ -1,7 +1,7 @@
 import datetime
 from collections.abc import Callable
-from typing import Any, Literal, TypeVar
-from typing_extensions import ParamSpec, Self
+from typing import Any, Literal, ParamSpec, TypeVar
+from typing_extensions import Self
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")

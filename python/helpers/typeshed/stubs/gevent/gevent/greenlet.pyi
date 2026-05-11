@@ -1,8 +1,8 @@
 import weakref
 from collections.abc import Callable, Iterable, Sequence
 from types import FrameType, TracebackType
-from typing import Any, ClassVar, Generic, TypeVar, overload
-from typing_extensions import ParamSpec, Self, disjoint_base
+from typing import Any, ClassVar, Generic, ParamSpec, TypeVar, overload
+from typing_extensions import Self, disjoint_base
 
 import greenlet
 from gevent._types import _Loop

@@ -2,8 +2,7 @@ from collections.abc import Iterable
 from datetime import timedelta
 from logging import Logger
 from re import Match, Pattern
-from typing import Any, Final, Literal, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Final, Literal, TypeAlias, TypedDict, TypeVar, overload, type_check_only
 
 import flask
 

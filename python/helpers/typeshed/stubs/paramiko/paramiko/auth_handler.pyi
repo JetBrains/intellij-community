@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from threading import Event
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from paramiko.message import Message
 from paramiko.pkey import PKey

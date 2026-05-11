@@ -2,8 +2,7 @@ from _typeshed import Incomplete, SupportsKeysAndGetItem
 from collections.abc import Callable, Iterable, Mapping
 from html.parser import HTMLParser
 from logging import Logger
-from typing import ClassVar, Final, Literal
-from typing_extensions import TypeAlias
+from typing import ClassVar, Final, Literal, TypeAlias
 
 from fpdf import FPDF
 

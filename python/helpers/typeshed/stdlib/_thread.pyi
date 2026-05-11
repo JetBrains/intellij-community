@@ -77,13 +77,7 @@ def start_new(function: Callable[[Unpack[_Ts]], object], args: tuple[Unpack[_Ts]
 @overload
 @deprecated("Obsolete synonym. Use `start_new_thread()` instead.")
 def start_new(function: Callable[..., object], args: tuple[Any, ...], kwargs: dict[str, Any], /) -> int: ...  # undocumented
-
-if sys.version_info >= (3, 10):
-    def interrupt_main(signum: signal.Signals = signal.SIGINT, /) -> None: ...
-
-else:
-    def interrupt_main() -> None: ...
-
+def interrupt_main(signum: signal.Signals = signal.SIGINT, /) -> None: ...
 def exit() -> NoReturn: ...
 @deprecated("Obsolete synonym. Use `exit()` instead.")
 def exit_thread() -> NoReturn: ...  # undocumented
@@ -98,8 +92,7 @@ TIMEOUT_MAX: Final[float]
 def get_native_id() -> int: ...  # only available on some platforms
 @final
 class _ExceptHookArgs(structseq[Any], tuple[type[BaseException], BaseException | None, TracebackType | None, Thread | None]):
-    if sys.version_info >= (3, 10):
-        __match_args__: Final = ("exc_type", "exc_value", "exc_traceback", "thread")
+    __match_args__: Final = ("exc_type", "exc_value", "exc_traceback", "thread")
 
     @property
     def exc_type(self) -> type[BaseException]: ...

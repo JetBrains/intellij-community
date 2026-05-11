@@ -1,7 +1,7 @@
 from _typeshed import SupportsItems, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Mapping, MutableMapping
-from typing import Any, TypedDict, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, TypeAlias, TypedDict, type_check_only
+from typing_extensions import Self
 
 from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, utils
 from .models import _JSON, Response

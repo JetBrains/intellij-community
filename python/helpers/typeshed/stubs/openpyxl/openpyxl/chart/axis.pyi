@@ -1,6 +1,6 @@
 from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
-from typing import ClassVar, Literal, overload
-from typing_extensions import Self, TypeAlias
+from typing import ClassVar, Literal, TypeAlias, overload
+from typing_extensions import Self
 
 from openpyxl.chart.layout import Layout
 from openpyxl.chart.shapes import GraphicalProperties

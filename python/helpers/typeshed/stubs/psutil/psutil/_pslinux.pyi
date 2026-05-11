@@ -6,8 +6,7 @@ if sys.platform == "linux":
     from _typeshed import FileDescriptorOrPath
     from collections import defaultdict
     from collections.abc import Callable, Generator, Sequence
-    from typing import Final, TypeVar, overload
-    from typing_extensions import ParamSpec
+    from typing import Final, ParamSpec, TypeVar, overload
 
     from psutil._common import (
         ENCODING as ENCODING,

@@ -1,7 +1,7 @@
 from _typeshed import Unused
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Final, Literal, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias, Unpack
+from typing import Any, Final, Literal, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Unpack
 
 from reportlab.lib.styles import ParagraphStyle, PropertySet
 from reportlab.pdfgen.canvas import Canvas

@@ -2,8 +2,8 @@ import sys
 from _typeshed import FileDescriptor
 from collections.abc import Callable, Sequence
 from types import TracebackType
-from typing import Any
-from typing_extensions import ParamSpec, disjoint_base
+from typing import Any, ParamSpec
+from typing_extensions import disjoint_base
 
 from gevent._ffi.loop import _ErrorHandler
 from gevent._types import _Callback

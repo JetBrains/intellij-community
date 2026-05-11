@@ -4,8 +4,8 @@ from collections.abc import Callable, Collection, Iterable, Iterator
 from contextlib import AbstractContextManager
 from subprocess import _CMD, _ENV, _FILE
 from types import TracebackType
-from typing import Any, Literal, Protocol, overload, type_check_only
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Any, Literal, Protocol, TypeAlias, overload, type_check_only
+from typing_extensions import Self, deprecated
 
 from psutil._common import (
     AIX as AIX,
@@ -237,36 +237,6 @@ class Popen(Process):
             pipesize: int = -1,
             process_group: int | None = None,
         ) -> None: ...
-    elif sys.version_info >= (3, 10):
-        def __init__(
-            self,
-            args: _CMD,
-            bufsize: int = -1,
-            executable: StrOrBytesPath | None = None,
-            stdin: _FILE | None = None,
-            stdout: _FILE | None = None,
-            stderr: _FILE | None = None,
-            preexec_fn: Callable[[], object] | None = None,
-            close_fds: bool = True,
-            shell: bool = False,
-            cwd: StrOrBytesPath | None = None,
-            env: _ENV | None = None,
-            universal_newlines: bool | None = None,
-            startupinfo: Any | None = None,
-            creationflags: int = 0,
-            restore_signals: bool = True,
-            start_new_session: bool = False,
-            pass_fds: Collection[int] = (),
-            *,
-            text: bool | None = None,
-            encoding: str | None = None,
-            errors: str | None = None,
-            user: str | int | None = None,
-            group: str | int | None = None,
-            extra_groups: Iterable[str | int] | None = None,
-            umask: int = -1,
-            pipesize: int = -1,
-        ) -> None: ...
     else:
         def __init__(
             self,
@@ -295,6 +265,7 @@ class Popen(Process):
             group: str | int | None = None,
             extra_groups: Iterable[str | int] | None = None,
             umask: int = -1,
+            pipesize: int = -1,
         ) -> None: ...
 
     def __enter__(self) -> Self: ...

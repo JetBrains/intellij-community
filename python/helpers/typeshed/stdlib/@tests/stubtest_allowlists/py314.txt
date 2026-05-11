@@ -53,6 +53,35 @@ types.SimpleNamespace.__delattr__
 typing.NewType.__mro_entries__
 
 
+# =====
+# <3.15
+# =====
+
+tkinter.simpledialog.[A-Z_]+
+tkinter.simpledialog.TclVersion
+tkinter.simpledialog.TkVersion
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <3.15
+# =============================================================
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+# These have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+
+
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.14
 # =============================================================

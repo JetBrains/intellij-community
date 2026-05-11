@@ -13,8 +13,7 @@ import urllib.parse
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Any, Final, NamedTuple, cast, final
-from typing_extensions import TypeGuard
+from typing import Annotated, Any, Final, NamedTuple, TypeGuard, cast, final
 
 if sys.version_info >= (3, 11):
     import tomllib

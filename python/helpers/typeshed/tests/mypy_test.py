@@ -16,14 +16,14 @@ from enum import Enum
 from itertools import product
 from pathlib import Path
 from threading import Lock
-from typing import Annotated, Any, NamedTuple
-from typing_extensions import TypeAlias
+from typing import Annotated, Any, NamedTuple, TypeAlias
 
 from packaging.requirements import Requirement
 
 from ts_utils.metadata import PackageDependencies, get_recursive_requirements, read_metadata
 from ts_utils.mypy import MypyDistConf, mypy_configuration_from_distribution, temporary_mypy_config_file
 from ts_utils.paths import STDLIB_PATH, STUBS_PATH, TESTS_DIR, TS_BASE_PATH, distribution_path
+from ts_utils.py315 import PY315_INCOMPATIBLE_RUNTIME_DEPENDENCIES
 from ts_utils.utils import (
     PYTHON_VERSION,
     colored,
@@ -44,7 +44,7 @@ except ImportError:
     print_error("Cannot import mypy. Did you install it?")
     sys.exit(1)
 
-SUPPORTED_VERSIONS = ["3.14", "3.13", "3.12", "3.11", "3.10"]
+SUPPORTED_VERSIONS = ["3.15", "3.14", "3.13", "3.12", "3.11", "3.10"]
 SUPPORTED_PLATFORMS = ("linux", "win32", "darwin")
 DIRECTORIES_TO_TEST = [STDLIB_PATH, STUBS_PATH]
 
@@ -494,7 +494,17 @@ def test_third_party_stubs(args: TestConfig, tempdir: Path) -> TestSummary:
                 summary.skip_package()
                 continue
 
-            distributions_to_check[distribution] = get_recursive_requirements(distribution)
+            requirements = get_recursive_requirements(distribution)
+            if args.version == "3.15" and distribution in PY315_INCOMPATIBLE_RUNTIME_DEPENDENCIES:
+                msg = (
+                    f"skipping {distribution!r} for target Python {args.version} "
+                    "(runtime dependencies do not support 3.15 yet)"
+                )
+                print(colored(msg, "yellow"))
+                summary.skip_package()
+                continue
+
+            distributions_to_check[distribution] = requirements
 
     # Setup the necessary virtual environments for testing the third-party stubs.
     # Note that some stubs may not be tested on all Python versions

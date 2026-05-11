@@ -2,8 +2,7 @@ import sqlite3
 from _typeshed import Incomplete, SupportsLenAndGetItem
 from collections.abc import Container, Iterator, Mapping
 from contextlib import AbstractContextManager
-from typing import Any, Protocol, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, overload, type_check_only
 
 from pandas._typing import Scalar
 

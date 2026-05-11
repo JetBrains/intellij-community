@@ -1,7 +1,12 @@
+from braintree.graphql.inputs.billing_address_input import BillingAddressInput as BillingAddressInput
 from braintree.graphql.inputs.create_customer_session_input import CreateCustomerSessionInput as CreateCustomerSessionInput
+from braintree.graphql.inputs.create_local_payment_context_input import (
+    CreateLocalPaymentContextInput as CreateLocalPaymentContextInput,
+)
 from braintree.graphql.inputs.customer_recommendations_input import CustomerRecommendationsInput as CustomerRecommendationsInput
 from braintree.graphql.inputs.customer_session_input import CustomerSessionInput as CustomerSessionInput
 from braintree.graphql.inputs.monetary_amount_input import MonetaryAmountInput as MonetaryAmountInput
+from braintree.graphql.inputs.payer_info_input import PayerInfoInput as PayerInfoInput
 from braintree.graphql.inputs.paypal_payee_input import PayPalPayeeInput as PayPalPayeeInput
 from braintree.graphql.inputs.paypal_purchase_unit_input import PayPalPurchaseUnitInput as PayPalPurchaseUnitInput
 from braintree.graphql.inputs.phone_input import PhoneInput as PhoneInput

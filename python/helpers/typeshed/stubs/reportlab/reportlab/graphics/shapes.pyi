@@ -1,8 +1,8 @@
 from _typeshed import Incomplete, SupportsItems
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
-from typing import Any, Final, Literal, NoReturn, TypedDict, type_check_only
-from typing_extensions import Self, TypeAlias, Unpack
+from typing import Any, Final, Literal, NoReturn, TypeAlias, TypedDict, type_check_only
+from typing_extensions import Self, Unpack
 
 from reportlab.lib.colors import Color
 from reportlab.lib.validators import NoneOr, Validator

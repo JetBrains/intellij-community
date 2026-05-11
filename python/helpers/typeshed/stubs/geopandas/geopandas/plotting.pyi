@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Collection, Hashable, Iterable, Mapping, Sequence
-from typing import Literal, overload
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias, overload
 
 import numpy as np
 import pandas as pd

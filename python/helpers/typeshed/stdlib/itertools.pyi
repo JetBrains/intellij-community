@@ -2,8 +2,8 @@ import sys
 from _typeshed import MaybeNone
 from collections.abc import Callable, Iterable, Iterator
 from types import GenericAlias
-from typing import Any, Generic, Literal, SupportsComplex, SupportsFloat, SupportsIndex, SupportsInt, TypeVar, overload
-from typing_extensions import Self, TypeAlias, disjoint_base
+from typing import Any, Generic, Literal, SupportsComplex, SupportsFloat, SupportsIndex, SupportsInt, TypeAlias, TypeVar, overload
+from typing_extensions import Self, disjoint_base
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -332,12 +332,11 @@ class combinations_with_replacement(Generic[_T_co]):
     def __iter__(self) -> Self: ...
     def __next__(self) -> _T_co: ...
 
-if sys.version_info >= (3, 10):
-    @disjoint_base
-    class pairwise(Generic[_T_co]):
-        def __new__(cls, iterable: Iterable[_T], /) -> pairwise[tuple[_T, _T]]: ...
-        def __iter__(self) -> Self: ...
-        def __next__(self) -> _T_co: ...
+@disjoint_base
+class pairwise(Generic[_T_co]):
+    def __new__(cls, iterable: Iterable[_T], /) -> pairwise[tuple[_T, _T]]: ...
+    def __iter__(self) -> Self: ...
+    def __next__(self) -> _T_co: ...
 
 if sys.version_info >= (3, 12):
     @disjoint_base

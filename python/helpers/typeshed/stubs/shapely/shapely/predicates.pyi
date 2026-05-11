@@ -1,6 +1,4 @@
-import sys
-from typing import Any, Literal, overload
-from typing_extensions import TypeAlias, TypeGuard
+from typing import Any, Literal, TypeGuard, overload
 
 import numpy as np
 from numpy.typing import NDArray
@@ -8,13 +6,6 @@ from numpy.typing import NDArray
 from ._typing import ArrayLike, ArrayLikeSeq, OptGeoArrayLike, OptGeoArrayLikeSeq
 from .geometry.base import BaseGeometry
 from .lib import Geometry
-
-if sys.version_info >= (3, 10):
-    _NPTrue: TypeAlias = np.bool_[Literal[True]]
-    _NPFalse: TypeAlias = np.bool_[Literal[False]]
-else:
-    _NPTrue: TypeAlias = np.bool_
-    _NPFalse: TypeAlias = np.bool_
 
 __all__ = [
     "contains",
@@ -71,17 +62,17 @@ def is_empty(geometry: Geometry | None, **kwargs) -> np.bool_: ...
 @overload
 def is_empty(geometry: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
 @overload
-def is_geometry(geometry: Geometry, **kwargs) -> _NPTrue: ...
+def is_geometry(geometry: Geometry, **kwargs) -> np.bool_[Literal[True]]: ...
 @overload
-def is_geometry(geometry: None, **kwargs) -> _NPFalse: ...
+def is_geometry(geometry: None, **kwargs) -> np.bool_[Literal[False]]: ...
 @overload
 def is_geometry(geometry: ArrayLikeSeq[Any], **kwargs) -> NDArray[np.bool_]: ...  # type: ignore[overload-overlap]
 @overload
 def is_geometry(geometry: object, **kwargs) -> TypeGuard[BaseGeometry]: ...
 @overload
-def is_missing(geometry: Geometry, **kwargs) -> _NPFalse: ...
+def is_missing(geometry: Geometry, **kwargs) -> np.bool_[Literal[False]]: ...
 @overload
-def is_missing(geometry: None, **kwargs) -> _NPTrue: ...
+def is_missing(geometry: None, **kwargs) -> np.bool_[Literal[True]]: ...
 @overload
 def is_missing(geometry: ArrayLikeSeq[Any], **kwargs) -> NDArray[np.bool_]: ...  # type: ignore[overload-overlap]
 @overload
@@ -91,7 +82,7 @@ def is_prepared(geometry: Geometry | None, **kwargs) -> np.bool_: ...
 @overload
 def is_prepared(geometry: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
 @overload
-def is_valid_input(geometry: Geometry | None, **kwargs) -> _NPTrue: ...
+def is_valid_input(geometry: Geometry | None, **kwargs) -> np.bool_[Literal[True]]: ...
 @overload
 def is_valid_input(geometry: ArrayLikeSeq[Any], **kwargs) -> NDArray[np.bool_]: ...  # type: ignore[overload-overlap]
 @overload

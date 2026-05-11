@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from logging import Logger
-from typing import Any, Literal, Protocol, TypedDict, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Literal, Protocol, TypeAlias, TypedDict, overload, type_check_only
 
 import requests
 from oauthlib.oauth2 import Client

@@ -106,7 +106,7 @@ select = [
     "PYI044", # `from __future__ import annotations` has no effect in stub files, since type checkers automatically treat stubs as having those semantics
     "PYI055", # Multiple `type[T]` usages in a union. Combine them into one, e.g., `type[{union_str}]`.
     "PYI058", # Use `{return_type}` as the return value for simple `{method}` methods
-    # "PYI059", # TODO: Add when dropping Python 3.9 support
+    "PYI059", # Checks for classes inheriting from typing.Generic[] where Generic[] is not the last base class in the bases tuple
     "PYI061", # Use `None` rather than `Literal[None]`
     "PYI062", # Duplicate literal member `{}`
     "PYI064", # `Final[Literal[{literal}]]` can be replaced with a bare Final
@@ -147,12 +147,6 @@ extend-safe-fixes = [
     "UP036", # Remove unnecessary `sys.version_info` blocks
 ]
 ignore = [
-    ###
-    # TODO: Disabled temporarily, until Python 3.9 support is fully removed in
-    # May 2026.
-    ###
-    "UP035", # import from typing
-    "UP036", # Remove unnecessary `sys.version_info` blocks
     ###
     # Rules that can conflict with the formatter (Black)
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
@@ -238,6 +232,7 @@ ignore = [
     "D", # pydocstyle
     # See comment on black's force-exclude config above
     "E501", # Line too long
+    "UP036", # Remove unnecessary `sys.version_info` blocks
 ]
 
 [tool.ruff.lint.pydocstyle]

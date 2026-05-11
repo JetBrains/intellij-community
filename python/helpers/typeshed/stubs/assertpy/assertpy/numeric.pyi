@@ -1,5 +1,6 @@
 from datetime import date
-from typing_extensions import Self, TypeAlias
+from typing import TypeAlias
+from typing_extensions import Self
 
 __tracebackhide__: bool
 

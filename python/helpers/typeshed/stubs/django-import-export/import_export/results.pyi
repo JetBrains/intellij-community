@@ -2,8 +2,7 @@ from _typeshed import Incomplete
 from collections import OrderedDict
 from collections.abc import Iterator
 from functools import cached_property
-from typing import Any, ClassVar, Literal
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, Literal, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.db.models import Model

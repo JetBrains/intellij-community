@@ -2,7 +2,6 @@
 # New errors in Python 3.10
 # =========================
 
-
 # =========
 # 3.10 only
 # =========
@@ -132,6 +131,35 @@ importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see
 # Will always raise. Not included to avoid type checkers inferring that
 # TypeAliasType instances are callable.
 typing_extensions.TypeAliasType.__call__
+
+
+# =====
+# <3.15
+# =====
+
+tkinter.simpledialog.[A-Z_]+
+tkinter.simpledialog.TclVersion
+tkinter.simpledialog.TkVersion
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <3.15
+# =============================================================
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+# These have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
 
 
 # ===============================================================

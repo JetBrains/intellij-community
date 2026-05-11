@@ -1,6 +1,6 @@
 from collections.abc import Iterable
-from typing import Any, Literal, Protocol, TypeVar, type_check_only
-from typing_extensions import TypeAlias, deprecated
+from typing import Any, Literal, Protocol, TypeAlias, TypeVar, type_check_only
+from typing_extensions import deprecated
 
 from matplotlib.axes import Axes
 from matplotlib.colors import Colormap

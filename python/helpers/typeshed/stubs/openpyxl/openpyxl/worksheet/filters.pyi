@@ -1,7 +1,6 @@
 from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
 from datetime import datetime
-from typing import ClassVar, Final, Literal, overload
-from typing_extensions import TypeAlias
+from typing import ClassVar, Final, Literal, TypeAlias, overload
 
 from openpyxl.descriptors.base import (
     Alias,

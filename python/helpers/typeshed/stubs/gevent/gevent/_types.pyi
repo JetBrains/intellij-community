@@ -2,8 +2,8 @@ import sys
 from _typeshed import FileDescriptor, StrOrBytesPath
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Literal, Protocol, overload, type_check_only
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing import Any, Literal, Protocol, TypeAlias, overload, type_check_only
+from typing_extensions import TypeVarTuple, Unpack
 
 _Ts = TypeVarTuple("_Ts")
 

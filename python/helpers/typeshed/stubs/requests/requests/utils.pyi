@@ -3,8 +3,7 @@ from _typeshed import Incomplete, StrOrBytesPath
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import _GeneratorContextManager
 from io import BufferedWriter
-from typing import AnyStr
-from typing_extensions import TypeAlias
+from typing import AnyStr, TypeAlias
 
 from . import compat, cookies, exceptions, structures
 from .models import PreparedRequest, Request

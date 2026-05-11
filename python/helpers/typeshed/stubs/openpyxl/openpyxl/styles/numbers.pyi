@@ -1,7 +1,6 @@
 from _typeshed import ConvertibleToInt, Incomplete, Unused
 from re import Pattern
-from typing import ClassVar, Final, Literal, SupportsIndex, overload
-from typing_extensions import TypeGuard
+from typing import ClassVar, Final, Literal, SupportsIndex, TypeGuard, overload
 
 from openpyxl.descriptors import Strict, String
 from openpyxl.descriptors.base import Integer

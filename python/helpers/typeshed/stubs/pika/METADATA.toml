@@ -1,4 +1,4 @@
-version = "1.3.*"
+version = "1.4.*"
 upstream-repository = "https://github.com/pika/pika"
 stub-distribution = "types-pika-ts" # https://github.com/python/typeshed/issues/9246
 extra-description = """\

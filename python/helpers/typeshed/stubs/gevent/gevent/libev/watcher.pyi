@@ -1,7 +1,7 @@
 import sys
 from _typeshed import FileDescriptor
 from collections.abc import Callable
-from typing_extensions import ParamSpec, TypeAlias
+from typing import ParamSpec, TypeAlias
 
 from gevent._ffi import watcher as _base
 from gevent.libev.corecffi import loop as cffi_loop

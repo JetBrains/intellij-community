@@ -1,5 +1,4 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 _Image: TypeAlias = Any  # actually PIL.Image, but not worth adding a dependency
 

@@ -33,20 +33,22 @@ from _typeshed import (
 from collections.abc import Awaitable, Callable, Iterable, Iterator, MutableSet, Reversible, Set as AbstractSet, Sized
 from io import BufferedRandom, BufferedReader, BufferedWriter, FileIO, TextIOWrapper
 from os import PathLike
-from types import CellType, CodeType, GenericAlias, TracebackType
+from types import CellType, CodeType, EllipsisType, GenericAlias, NotImplementedType, TracebackType
 
 # mypy crashes if any of {ByteString, Sequence, MutableSequence, Mapping, MutableMapping}
 # are imported from collections.abc in builtins.pyi
-from typing import (  # noqa: Y022,UP035,RUF100
+from typing import (  # noqa: Y022,UP035
     IO,
     Any,
     BinaryIO,
     ClassVar,
+    Concatenate,
     Final,
     Generic,
     Mapping,
     MutableMapping,
     MutableSequence,
+    ParamSpec,
     Protocol,
     Sequence,
     SupportsAbs,
@@ -54,6 +56,8 @@ from typing import (  # noqa: Y022,UP035,RUF100
     SupportsComplex,
     SupportsFloat,
     SupportsIndex,
+    TypeAlias,
+    TypeGuard,
     TypeVar,
     final,
     overload,
@@ -61,19 +65,7 @@ from typing import (  # noqa: Y022,UP035,RUF100
 )
 
 # we can't import `Literal` from typing or mypy crashes: see #11247
-from typing_extensions import (  # noqa: Y023
-    Concatenate,
-    Literal,
-    LiteralString,
-    ParamSpec,
-    Self,
-    TypeAlias,
-    TypeGuard,
-    TypeIs,
-    TypeVarTuple,
-    deprecated,
-    disjoint_base,
-)
+from typing_extensions import Literal, LiteralString, Self, TypeIs, TypeVarTuple, deprecated, disjoint_base  # noqa: Y023, UP035
 
 if sys.version_info >= (3, 14):
     from _typeshed import AnnotateFunc
@@ -143,6 +135,8 @@ class object:
 
 @disjoint_base
 class staticmethod(Generic[_P, _R_co]):
+    __name__: str
+    __qualname__: str
     @property
     def __func__(self) -> Callable[_P, _R_co]: ...
     @property
@@ -152,18 +146,17 @@ class staticmethod(Generic[_P, _R_co]):
     def __get__(self, instance: None, owner: type, /) -> Callable[_P, _R_co]: ...
     @overload
     def __get__(self, instance: _T, owner: type[_T] | None = None, /) -> Callable[_P, _R_co]: ...
-    if sys.version_info >= (3, 10):
-        __name__: str
-        __qualname__: str
-        @property
-        def __wrapped__(self) -> Callable[_P, _R_co]: ...
-        def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R_co: ...
+    @property
+    def __wrapped__(self) -> Callable[_P, _R_co]: ...
+    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R_co: ...
     if sys.version_info >= (3, 14):
         def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
         __annotate__: AnnotateFunc | None
 
 @disjoint_base
 class classmethod(Generic[_T, _P, _R_co]):
+    __name__: str
+    __qualname__: str
     @property
     def __func__(self) -> Callable[Concatenate[type[_T], _P], _R_co]: ...
     @property
@@ -173,11 +166,8 @@ class classmethod(Generic[_T, _P, _R_co]):
     def __get__(self, instance: _T, owner: type[_T] | None = None, /) -> Callable[_P, _R_co]: ...
     @overload
     def __get__(self, instance: None, owner: type[_T], /) -> Callable[_P, _R_co]: ...
-    if sys.version_info >= (3, 10):
-        __name__: str
-        __qualname__: str
-        @property
-        def __wrapped__(self) -> Callable[Concatenate[type[_T], _P], _R_co]: ...
+    @property
+    def __wrapped__(self) -> Callable[Concatenate[type[_T], _P], _R_co]: ...
     if sys.version_info >= (3, 14):
         def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
         __annotate__: AnnotateFunc | None
@@ -227,11 +217,10 @@ class type:
     def __subclasscheck__(self, subclass: type, /) -> bool: ...
     @classmethod
     def __prepare__(metacls, name: str, bases: tuple[type, ...], /, **kwds: Any) -> MutableMapping[str, object]: ...
-    if sys.version_info >= (3, 10):
-        # `int | str` produces an instance of `UnionType`, but `int | int` produces an instance of `type`,
-        # and `abc.ABC | abc.ABC` produces an instance of `abc.ABCMeta`.
-        def __or__(self: _typeshed.Self, value: Any, /) -> types.UnionType | _typeshed.Self: ...
-        def __ror__(self: _typeshed.Self, value: Any, /) -> types.UnionType | _typeshed.Self: ...
+    # `int | str` produces an instance of `UnionType`, but `int | int` produces an instance of `type`,
+    # and `abc.ABC | abc.ABC` produces an instance of `abc.ABCMeta`.
+    def __or__(self: _typeshed.Self, value: Any, /) -> types.UnionType | _typeshed.Self: ...
+    def __ror__(self: _typeshed.Self, value: Any, /) -> types.UnionType | _typeshed.Self: ...
     if sys.version_info >= (3, 12):
         __type_params__: tuple[TypeVar | ParamSpec | TypeVarTuple, ...]
     __annotations__: dict[str, AnnotationForm]
@@ -268,8 +257,7 @@ class int:
     def denominator(self) -> Literal[1]: ...
     def conjugate(self) -> int: ...
     def bit_length(self) -> int: ...
-    if sys.version_info >= (3, 10):
-        def bit_count(self) -> int: ...
+    def bit_count(self) -> int: ...
 
     if sys.version_info >= (3, 11):
         def to_bytes(
@@ -615,9 +603,25 @@ class str(Sequence[str]):
     def zfill(self: LiteralString, width: SupportsIndex, /) -> LiteralString: ...
     @overload
     def zfill(self, width: SupportsIndex, /) -> str: ...  # type: ignore[misc]
-    @staticmethod
-    @overload
-    def maketrans(x: dict[int, _T] | dict[str, _T] | dict[str | int, _T], /) -> dict[int, _T]: ...
+    if sys.version_info >= (3, 15):
+        @staticmethod
+        @overload
+        def maketrans(
+            x: (
+                dict[int, _T]
+                | dict[str, _T]
+                | dict[str | int, _T]
+                | frozendict[int, _T]
+                | frozendict[str, _T]
+                | frozendict[str | int, _T]
+            ),
+            /,
+        ) -> dict[int, _T]: ...
+    else:
+        @staticmethod
+        @overload
+        def maketrans(x: dict[int, _T] | dict[str, _T] | dict[str | int, _T], /) -> dict[int, _T]: ...
+
     @staticmethod
     @overload
     def maketrans(x: str, y: str, /) -> dict[int, int]: ...
@@ -703,7 +707,11 @@ class bytes(Sequence[int]):
     def lower(self) -> bytes: ...
     def lstrip(self, bytes: ReadableBuffer | None = None, /) -> bytes: ...
     def partition(self, sep: ReadableBuffer, /) -> tuple[bytes, bytes, bytes]: ...
-    def replace(self, old: ReadableBuffer, new: ReadableBuffer, count: SupportsIndex = -1, /) -> bytes: ...
+    if sys.version_info >= (3, 15):
+        def replace(self, old: ReadableBuffer, new: ReadableBuffer, /, count: SupportsIndex = -1) -> bytes: ...
+    else:
+        def replace(self, old: ReadableBuffer, new: ReadableBuffer, count: SupportsIndex = -1, /) -> bytes: ...
+
     def removeprefix(self, prefix: ReadableBuffer, /) -> bytes: ...
     def removesuffix(self, suffix: ReadableBuffer, /) -> bytes: ...
     def rfind(
@@ -815,7 +823,11 @@ class bytearray(MutableSequence[int]):
     def remove(self, value: int, /) -> None: ...
     def removeprefix(self, prefix: ReadableBuffer, /) -> bytearray: ...
     def removesuffix(self, suffix: ReadableBuffer, /) -> bytearray: ...
-    def replace(self, old: ReadableBuffer, new: ReadableBuffer, count: SupportsIndex = -1, /) -> bytearray: ...
+    if sys.version_info >= (3, 15):
+        def replace(self, old: ReadableBuffer, new: ReadableBuffer, /, count: SupportsIndex = -1) -> bytearray: ...
+    else:
+        def replace(self, old: ReadableBuffer, new: ReadableBuffer, count: SupportsIndex = -1, /) -> bytearray: ...
+
     def rfind(
         self, sub: ReadableBuffer | SupportsIndex, start: SupportsIndex | None = None, end: SupportsIndex | None = None, /
     ) -> int: ...
@@ -839,6 +851,9 @@ class bytearray(MutableSequence[int]):
     def swapcase(self) -> bytearray: ...
     def title(self) -> bytearray: ...
     def translate(self, table: ReadableBuffer | None, /, delete: bytes = b"") -> bytearray: ...
+    if sys.version_info >= (3, 15):
+        def take_bytes(self, n: int | None = None, /) -> bytes: ...
+
     def upper(self) -> bytearray: ...
     def zfill(self, width: SupportsIndex, /) -> bytearray: ...
     if sys.version_info >= (3, 14):
@@ -943,11 +958,7 @@ class memoryview(Sequence[_I]):
     def __setitem__(self, key: slice[SupportsIndex | None], value: ReadableBuffer, /) -> None: ...
     @overload
     def __setitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], value: _I, /) -> None: ...
-    if sys.version_info >= (3, 10):
-        def tobytes(self, order: Literal["C", "F", "A"] | None = "C") -> bytes: ...
-    else:
-        def tobytes(self, order: Literal["C", "F", "A"] | None = None) -> bytes: ...
-
+    def tobytes(self, order: Literal["C", "F", "A"] | None = "C") -> bytes: ...
     def tolist(self) -> list[int]: ...
     def toreadonly(self) -> memoryview: ...
     def release(self) -> None: ...
@@ -1038,6 +1049,8 @@ class slice(Generic[_StartT_co, _StopT_co, _StepT_co]):
         __hash__: ClassVar[None]  # type: ignore[assignment]
 
     def indices(self, len: SupportsIndex, /) -> tuple[int, int, int]: ...
+    if sys.version_info >= (3, 15):
+        def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
 
 @disjoint_base
 class tuple(Sequence[_T_co]):
@@ -1086,9 +1099,8 @@ class function:
     if sys.version_info >= (3, 14):
         __annotate__: AnnotateFunc | None
     __kwdefaults__: dict[str, Any] | None
-    if sys.version_info >= (3, 10):
-        @property
-        def __builtins__(self) -> dict[str, Any]: ...
+    @property
+    def __builtins__(self) -> dict[str, Any]: ...
     if sys.version_info >= (3, 12):
         __type_params__: tuple[TypeVar | ParamSpec | TypeVarTuple, ...]
 
@@ -1240,13 +1252,68 @@ class dict(MutableMapping[_KT, _VT]):
     def __reversed__(self) -> Iterator[_KT]: ...
     __hash__: ClassVar[None]  # type: ignore[assignment]
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
-    def __or__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
-    def __ror__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
+    if sys.version_info >= (3, 15):
+        def __or__(self, value: dict[_T1, _T2] | frozendict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
+        @overload
+        def __ror__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
+        @overload
+        def __ror__(self, value: frozendict[_T1, _T2], /) -> frozendict[_KT | _T1, _VT | _T2]: ...
+    else:
+        def __or__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
+        def __ror__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
     # dict.__ior__ should be kept roughly in line with MutableMapping.update()
     @overload  # type: ignore[misc]
     def __ior__(self, value: SupportsKeysAndGetItem[_KT, _VT], /) -> Self: ...
     @overload
     def __ior__(self, value: Iterable[tuple[_KT, _VT]], /) -> Self: ...
+
+if sys.version_info >= (3, 15):
+    @disjoint_base
+    class frozendict(Mapping[_KT, _VT]):
+        @overload
+        def __new__(cls, /) -> frozendict[Any, Any]: ...
+        @overload
+        def __new__(cls: type[frozendict[str, _VT]], /, **kwargs: _VT) -> frozendict[str, _VT]: ...
+        @overload
+        def __new__(cls, map: SupportsKeysAndGetItem[_KT, _VT], /) -> frozendict[_KT, _VT]: ...
+        @overload
+        def __new__(
+            cls: type[frozendict[str, _VT]], map: SupportsKeysAndGetItem[str, _VT], /, **kwargs: _VT
+        ) -> frozendict[str, _VT]: ...
+        @overload
+        def __new__(cls, iterable: Iterable[tuple[_KT, _VT]], /) -> frozendict[_KT, _VT]: ...
+        @overload
+        def __new__(
+            cls: type[frozendict[str, _VT]], iterable: Iterable[tuple[str, _VT]], /, **kwargs: _VT
+        ) -> frozendict[str, _VT]: ...
+        def __init__(self) -> None: ...
+        def copy(self) -> frozendict[_KT, _VT]: ...
+        @overload
+        @classmethod
+        def fromkeys(cls, iterable: Iterable[_T], value: None = None, /) -> frozendict[_T, Any | None]: ...
+        @overload
+        @classmethod
+        def fromkeys(cls, iterable: Iterable[_T], value: _S, /) -> frozendict[_T, _S]: ...
+        @overload  # type: ignore[override]
+        def get(self, key: _KT, default: None = None, /) -> _VT | None: ...
+        @overload
+        def get(self, key: _KT, default: _VT, /) -> _VT: ...
+        @overload
+        def get(self, key: _KT, default: _T, /) -> _VT | _T: ...
+        def keys(self) -> dict_keys[_KT, _VT]: ...
+        def values(self) -> dict_values[_KT, _VT]: ...
+        def items(self) -> dict_items[_KT, _VT]: ...
+        def __len__(self) -> int: ...
+        def __getitem__(self, key: _KT, /) -> _VT: ...
+        def __reversed__(self) -> Iterator[_KT]: ...
+        def __iter__(self) -> Iterator[_KT]: ...
+        def __hash__(self) -> int: ...
+        def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
+        def __or__(self, value: dict[_T1, _T2] | frozendict[_T1, _T2], /) -> frozendict[_KT | _T1, _VT | _T2]: ...
+        @overload
+        def __ror__(self, value: dict[_T1, _T2], /) -> dict[_KT | _T1, _VT | _T2]: ...
+        @overload
+        def __ror__(self, value: frozendict[_T1, _T2], /) -> frozendict[_KT | _T1, _VT | _T2]: ...
 
 @disjoint_base
 class set(MutableSet[_T]):
@@ -1379,71 +1446,125 @@ def abs(x: SupportsAbs[_T], /) -> _T: ...
 def all(iterable: Iterable[object], /) -> bool: ...
 def any(iterable: Iterable[object], /) -> bool: ...
 def ascii(obj: object, /) -> str: ...
-def bin(number: SupportsIndex, /) -> str: ...
+
+if sys.version_info >= (3, 15):
+    def bin(integer: SupportsIndex, /) -> str: ...
+
+else:
+    def bin(number: SupportsIndex, /) -> str: ...
+
 def breakpoint(*args: Any, **kws: Any) -> None: ...
 def callable(obj: object, /) -> TypeIs[Callable[..., object]]: ...
 def chr(i: SupportsIndex, /) -> str: ...
+def aiter(async_iterable: SupportsAiter[_SupportsAnextT_co], /) -> _SupportsAnextT_co: ...
+@type_check_only
+class _SupportsSynchronousAnext(Protocol[_AwaitableT_co]):
+    def __anext__(self) -> _AwaitableT_co: ...
 
-if sys.version_info >= (3, 10):
-    def aiter(async_iterable: SupportsAiter[_SupportsAnextT_co], /) -> _SupportsAnextT_co: ...
-    @type_check_only
-    class _SupportsSynchronousAnext(Protocol[_AwaitableT_co]):
-        def __anext__(self) -> _AwaitableT_co: ...
-
-    @overload
-    # `anext` is not, in fact, an async function. When default is not provided
-    # `anext` is just a passthrough for `obj.__anext__`
-    # See discussion in #7491 and pure-Python implementation of `anext` at https://github.com/python/cpython/blob/ea786a882b9ed4261eafabad6011bc7ef3b5bf94/Lib/test/test_asyncgen.py#L52-L80
-    def anext(i: _SupportsSynchronousAnext[_AwaitableT], /) -> _AwaitableT: ...
-    @overload
-    async def anext(i: SupportsAnext[_T], default: _VT, /) -> _T | _VT: ...
+@overload
+# `anext` is not, in fact, an async function. When default is not provided
+# `anext` is just a passthrough for `obj.__anext__`
+# See discussion in #7491 and pure-Python implementation of `anext` at https://github.com/python/cpython/blob/ea786a882b9ed4261eafabad6011bc7ef3b5bf94/Lib/test/test_asyncgen.py#L52-L80
+def anext(i: _SupportsSynchronousAnext[_AwaitableT], /) -> _AwaitableT: ...
+@overload
+async def anext(i: SupportsAnext[_T], default: _VT, /) -> _T | _VT: ...
 
 # compile() returns a CodeType, unless the flags argument includes PyCF_ONLY_AST (=1024),
 # in which case it returns ast.AST. We have overloads for flag 0 (the default) and for
 # explicitly passing PyCF_ONLY_AST. We fall back to Any for other values of flags.
-@overload
-def compile(
-    source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
-    filename: str | bytes | PathLike[Any],
-    mode: str,
-    flags: Literal[0],
-    dont_inherit: bool = False,
-    optimize: int = -1,
-    *,
-    _feature_version: int = -1,
-) -> CodeType: ...
-@overload
-def compile(
-    source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
-    filename: str | bytes | PathLike[Any],
-    mode: str,
-    *,
-    dont_inherit: bool = False,
-    optimize: int = -1,
-    _feature_version: int = -1,
-) -> CodeType: ...
-@overload
-def compile(
-    source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
-    filename: str | bytes | PathLike[Any],
-    mode: str,
-    flags: Literal[1024],
-    dont_inherit: bool = False,
-    optimize: int = -1,
-    *,
-    _feature_version: int = -1,
-) -> _ast.AST: ...
-@overload
-def compile(
-    source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
-    filename: str | bytes | PathLike[Any],
-    mode: str,
-    flags: int,
-    dont_inherit: bool = False,
-    optimize: int = -1,
-    *,
-    _feature_version: int = -1,
-) -> Any: ...
+if sys.version_info >= (3, 15):
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: Literal[0],
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        module: str | None = None,
+        _feature_version: int = -1,
+    ) -> CodeType: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        *,
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        module: str | None = None,
+        _feature_version: int = -1,
+    ) -> CodeType: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: Literal[1024],
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        module: str | None = None,
+        _feature_version: int = -1,
+    ) -> _ast.AST: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: int,
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        module: str | None = None,
+        _feature_version: int = -1,
+    ) -> Any: ...
+
+else:
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: Literal[0],
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        _feature_version: int = -1,
+    ) -> CodeType: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        *,
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        _feature_version: int = -1,
+    ) -> CodeType: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: Literal[1024],
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        _feature_version: int = -1,
+    ) -> _ast.AST: ...
+    @overload
+    def compile(
+        source: str | ReadableBuffer | _ast.Module | _ast.Expression | _ast.Interactive,
+        filename: str | bytes | PathLike[Any],
+        mode: str,
+        flags: int,
+        dont_inherit: bool = False,
+        optimize: int = -1,
+        *,
+        _feature_version: int = -1,
+    ) -> Any: ...
 
 copyright: _sitebuiltins._Printer
 credits: _sitebuiltins._Printer
@@ -1457,7 +1578,15 @@ def divmod(x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co], /) -> _T_co: ...
 
 # The `globals` argument to `eval` has to be `dict[str, Any]` rather than `dict[str, object]` due to invariance.
 # (The `globals` argument has to be a "real dict", rather than any old mapping, unlike the `locals` argument.)
-if sys.version_info >= (3, 13):
+if sys.version_info >= (3, 15):
+    def eval(
+        source: str | ReadableBuffer | CodeType,
+        /,
+        globals: dict[str, Any] | frozendict[str, Any] | None = None,
+        locals: Mapping[str, object] | None = None,
+    ) -> Any: ...
+
+elif sys.version_info >= (3, 13):
     def eval(
         source: str | ReadableBuffer | CodeType,
         /,
@@ -1474,7 +1603,17 @@ else:
     ) -> Any: ...
 
 # Comment above regarding `eval` applies to `exec` as well
-if sys.version_info >= (3, 13):
+if sys.version_info >= (3, 15):
+    def exec(
+        source: str | ReadableBuffer | CodeType,
+        /,
+        globals: dict[str, Any] | frozendict[str, Any] | None = None,
+        locals: Mapping[str, object] | None = None,
+        *,
+        closure: tuple[CellType, ...] | None = None,
+    ) -> None: ...
+
+elif sys.version_info >= (3, 13):
     def exec(
         source: str | ReadableBuffer | CodeType,
         /,
@@ -1540,7 +1679,12 @@ def hash(obj: object, /) -> int: ...
 
 help: _sitebuiltins._Helper
 
-def hex(number: SupportsIndex, /) -> str: ...
+if sys.version_info >= (3, 15):
+    def hex(integer: SupportsIndex, /) -> str: ...
+
+else:
+    def hex(number: SupportsIndex, /) -> str: ...
+
 def id(obj: object, /) -> int: ...
 def input(prompt: object = "", /) -> str: ...
 @type_check_only
@@ -1556,10 +1700,7 @@ def iter(object: Callable[[], _T | None], sentinel: None, /) -> Iterator[_T]: ..
 @overload
 def iter(object: Callable[[], _T], sentinel: object, /) -> Iterator[_T]: ...
 
-if sys.version_info >= (3, 10):
-    _ClassInfo: TypeAlias = type | types.UnionType | tuple[_ClassInfo, ...]
-else:
-    _ClassInfo: TypeAlias = type | tuple[_ClassInfo, ...]
+_ClassInfo: TypeAlias = type | types.UnionType | tuple[_ClassInfo, ...]
 
 def isinstance(obj: object, class_or_tuple: _ClassInfo, /) -> bool: ...
 def issubclass(cls: type, class_or_tuple: _ClassInfo, /) -> bool: ...
@@ -1707,7 +1848,12 @@ def min(iterable: Iterable[_T1], /, *, key: Callable[[_T1], SupportsRichComparis
 def next(i: SupportsNext[_T], /) -> _T: ...
 @overload
 def next(i: SupportsNext[_T], default: _VT, /) -> _T | _VT: ...
-def oct(number: SupportsIndex, /) -> str: ...
+
+if sys.version_info >= (3, 15):
+    def oct(integer: SupportsIndex, /) -> str: ...
+
+else:
+    def oct(number: SupportsIndex, /) -> str: ...
 
 _Opener: TypeAlias = Callable[[str, int], int]
 
@@ -1907,6 +2053,18 @@ def round(number: _SupportsRound2[_T], ndigits: SupportsIndex) -> _T: ...
 # See https://github.com/python/typeshed/pull/6292#discussion_r748875189
 # for why arg 3 of `setattr` should be annotated with `Any` and not `object`
 def setattr(obj: object, name: str, value: Any, /) -> None: ...
+
+if sys.version_info >= (3, 15):
+    @final
+    class sentinel:
+        __name__: str
+        __module__: str
+        def __new__(cls, name: str, /) -> Self: ...
+        def __copy__(self, /) -> Self: ...
+        def __deepcopy__(self, memo: Any, /) -> Self: ...
+        def __or__(self, other: Any, /) -> Any: ...
+        def __ror__(self, other: Any, /) -> Any: ...
+
 @overload
 def sorted(
     iterable: Iterable[SupportsRichComparisonT], /, *, key: None = None, reverse: bool = False
@@ -1941,83 +2099,45 @@ def vars(object: type, /) -> types.MappingProxyType[str, Any]: ...
 def vars(object: Any = ..., /) -> dict[str, Any]: ...
 @disjoint_base
 class zip(Generic[_T_co]):
-    if sys.version_info >= (3, 10):
-        @overload
-        def __new__(cls, *, strict: bool = False) -> zip[Any]: ...
-        @overload
-        def __new__(cls, iter1: Iterable[_T1], /, *, strict: bool = False) -> zip[tuple[_T1]]: ...
-        @overload
-        def __new__(cls, iter1: Iterable[_T1], iter2: Iterable[_T2], /, *, strict: bool = False) -> zip[tuple[_T1, _T2]]: ...
-        @overload
-        def __new__(
-            cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], /, *, strict: bool = False
-        ) -> zip[tuple[_T1, _T2, _T3]]: ...
-        @overload
-        def __new__(
-            cls,
-            iter1: Iterable[_T1],
-            iter2: Iterable[_T2],
-            iter3: Iterable[_T3],
-            iter4: Iterable[_T4],
-            /,
-            *,
-            strict: bool = False,
-        ) -> zip[tuple[_T1, _T2, _T3, _T4]]: ...
-        @overload
-        def __new__(
-            cls,
-            iter1: Iterable[_T1],
-            iter2: Iterable[_T2],
-            iter3: Iterable[_T3],
-            iter4: Iterable[_T4],
-            iter5: Iterable[_T5],
-            /,
-            *,
-            strict: bool = False,
-        ) -> zip[tuple[_T1, _T2, _T3, _T4, _T5]]: ...
-        @overload
-        def __new__(
-            cls,
-            iter1: Iterable[Any],
-            iter2: Iterable[Any],
-            iter3: Iterable[Any],
-            iter4: Iterable[Any],
-            iter5: Iterable[Any],
-            iter6: Iterable[Any],
-            /,
-            *iterables: Iterable[Any],
-            strict: bool = False,
-        ) -> zip[tuple[Any, ...]]: ...
-    else:
-        @overload
-        def __new__(cls) -> zip[Any]: ...
-        @overload
-        def __new__(cls, iter1: Iterable[_T1], /) -> zip[tuple[_T1]]: ...
-        @overload
-        def __new__(cls, iter1: Iterable[_T1], iter2: Iterable[_T2], /) -> zip[tuple[_T1, _T2]]: ...
-        @overload
-        def __new__(cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], /) -> zip[tuple[_T1, _T2, _T3]]: ...
-        @overload
-        def __new__(
-            cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], /
-        ) -> zip[tuple[_T1, _T2, _T3, _T4]]: ...
-        @overload
-        def __new__(
-            cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], iter5: Iterable[_T5], /
-        ) -> zip[tuple[_T1, _T2, _T3, _T4, _T5]]: ...
-        @overload
-        def __new__(
-            cls,
-            iter1: Iterable[Any],
-            iter2: Iterable[Any],
-            iter3: Iterable[Any],
-            iter4: Iterable[Any],
-            iter5: Iterable[Any],
-            iter6: Iterable[Any],
-            /,
-            *iterables: Iterable[Any],
-        ) -> zip[tuple[Any, ...]]: ...
-
+    @overload
+    def __new__(cls, *, strict: bool = False) -> zip[Any]: ...
+    @overload
+    def __new__(cls, iter1: Iterable[_T1], /, *, strict: bool = False) -> zip[tuple[_T1]]: ...
+    @overload
+    def __new__(cls, iter1: Iterable[_T1], iter2: Iterable[_T2], /, *, strict: bool = False) -> zip[tuple[_T1, _T2]]: ...
+    @overload
+    def __new__(
+        cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], /, *, strict: bool = False
+    ) -> zip[tuple[_T1, _T2, _T3]]: ...
+    @overload
+    def __new__(
+        cls, iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], /, *, strict: bool = False
+    ) -> zip[tuple[_T1, _T2, _T3, _T4]]: ...
+    @overload
+    def __new__(
+        cls,
+        iter1: Iterable[_T1],
+        iter2: Iterable[_T2],
+        iter3: Iterable[_T3],
+        iter4: Iterable[_T4],
+        iter5: Iterable[_T5],
+        /,
+        *,
+        strict: bool = False,
+    ) -> zip[tuple[_T1, _T2, _T3, _T4, _T5]]: ...
+    @overload
+    def __new__(
+        cls,
+        iter1: Iterable[Any],
+        iter2: Iterable[Any],
+        iter3: Iterable[Any],
+        iter4: Iterable[Any],
+        iter5: Iterable[Any],
+        iter6: Iterable[Any],
+        /,
+        *iterables: Iterable[Any],
+        strict: bool = False,
+    ) -> zip[tuple[Any, ...]]: ...
     def __iter__(self) -> Self: ...
     def __next__(self) -> _T_co: ...
 
@@ -2030,31 +2150,24 @@ def __import__(
     fromlist: Sequence[str] | None = (),
     level: int = 0,
 ) -> types.ModuleType: ...
+
+if sys.version_info >= (3, 15):
+    def __lazy_import__(
+        name: str,
+        globals: Mapping[str, object] | None = None,
+        locals: Mapping[str, object] | None = None,
+        fromlist: Sequence[str] | None = (),
+        level: int = 0,
+    ) -> Any: ...
+
 def __build_class__(func: Callable[[], CellType | Any], name: str, /, *bases: Any, metaclass: Any = ..., **kwds: Any) -> Any: ...
 
-if sys.version_info >= (3, 10):
-    from types import EllipsisType, NotImplementedType
+# Backwards compatibility hack for folks who relied on the ellipsis type
+# existing in typeshed in Python 3.9 and earlier.
+ellipsis = EllipsisType
 
-    # Backwards compatibility hack for folks who relied on the ellipsis type
-    # existing in typeshed in Python 3.9 and earlier.
-    ellipsis = EllipsisType
-
-    Ellipsis: EllipsisType
-    NotImplemented: NotImplementedType
-else:
-    # Actually the type of Ellipsis is <type 'ellipsis'>, but since it's
-    # not exposed anywhere under that name, we make it private here.
-    @final
-    @type_check_only
-    class ellipsis: ...
-
-    Ellipsis: ellipsis
-
-    @final
-    @type_check_only
-    class _NotImplementedType(Any): ...
-
-    NotImplemented: _NotImplementedType
+Ellipsis: EllipsisType
+NotImplemented: NotImplementedType
 
 @disjoint_base
 class BaseException:
@@ -2107,15 +2220,11 @@ if sys.platform == "win32":
 class ArithmeticError(Exception): ...
 class AssertionError(Exception): ...
 
-if sys.version_info >= (3, 10):
-    @disjoint_base
-    class AttributeError(Exception):
-        def __init__(self, *args: object, name: str | None = None, obj: object = None) -> None: ...
-        name: str | None
-        obj: object
-
-else:
-    class AttributeError(Exception): ...
+@disjoint_base
+class AttributeError(Exception):
+    def __init__(self, *args: object, name: str | None = None, obj: object = None) -> None: ...
+    name: str | None
+    obj: object
 
 class BufferError(Exception): ...
 class EOFError(Exception): ...
@@ -2129,17 +2238,16 @@ class ImportError(Exception):
     if sys.version_info >= (3, 12):
         name_from: str | None  # undocumented
 
+if sys.version_info >= (3, 15):
+    class ImportCycleError(ImportError): ...
+
 class LookupError(Exception): ...
 class MemoryError(Exception): ...
 
-if sys.version_info >= (3, 10):
-    @disjoint_base
-    class NameError(Exception):
-        def __init__(self, *args: object, name: str | None = None) -> None: ...
-        name: str | None
-
-else:
-    class NameError(Exception): ...
+@disjoint_base
+class NameError(Exception):
+    def __init__(self, *args: object, name: str | None = None) -> None: ...
+    name: str | None
 
 class ReferenceError(Exception): ...
 class RuntimeError(Exception): ...
@@ -2155,9 +2263,8 @@ class SyntaxError(Exception):
     # Errors are displayed differently if this attribute exists on the exception.
     # The value is always None.
     print_file_and_line: None
-    if sys.version_info >= (3, 10):
-        end_lineno: int | None
-        end_offset: int | None
+    end_lineno: int | None
+    end_offset: int | None
 
     @overload
     def __init__(self) -> None: ...
@@ -2166,12 +2273,11 @@ class SyntaxError(Exception):
     # Second argument is the tuple (filename, lineno, offset, text)
     @overload
     def __init__(self, msg: str, info: tuple[str | None, int | None, int | None, str | None], /) -> None: ...
-    if sys.version_info >= (3, 10):
-        # end_lineno and end_offset must both be provided if one is.
-        @overload
-        def __init__(
-            self, msg: str, info: tuple[str | None, int | None, int | None, str | None, int | None, int | None], /
-        ) -> None: ...
+    # end_lineno and end_offset must both be provided if one is.
+    @overload
+    def __init__(
+        self, msg: str, info: tuple[str | None, int | None, int | None, str | None, int | None, int | None], /
+    ) -> None: ...
     # If you provide more than two arguments, it still creates the SyntaxError, but
     # the arguments from the info tuple are not parsed. This form is omitted.
 
@@ -2247,9 +2353,7 @@ class ImportWarning(Warning): ...
 class UnicodeWarning(Warning): ...
 class BytesWarning(Warning): ...
 class ResourceWarning(Warning): ...
-
-if sys.version_info >= (3, 10):
-    class EncodingWarning(Warning): ...
+class EncodingWarning(Warning): ...
 
 if sys.version_info >= (3, 11):
     _BaseExceptionT_co = TypeVar("_BaseExceptionT_co", bound=BaseException, covariant=True, default=BaseException)

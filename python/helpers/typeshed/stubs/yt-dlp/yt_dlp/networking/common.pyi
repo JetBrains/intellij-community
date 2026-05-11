@@ -5,8 +5,8 @@ from _typeshed import Unused
 from collections.abc import Callable, Iterable, Mapping
 from email.message import Message
 from logging import Logger
-from typing import IO, Any, Final
-from typing_extensions import Self, TypeAlias
+from typing import IO, Any, Final, TypeAlias
+from typing_extensions import Self
 
 from ..cookies import YoutubeDLCookieJar
 from ..utils._utils import _YDLLogger

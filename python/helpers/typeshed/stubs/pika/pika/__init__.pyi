@@ -13,3 +13,17 @@ from pika.delivery_mode import DeliveryMode as DeliveryMode
 from pika.spec import BasicProperties as BasicProperties
 
 __version__: Final[str]
+
+__all__ = [
+    "adapters",
+    "AMQPConnectionWorkflow",
+    "BaseConnection",
+    "BasicProperties",
+    "BlockingConnection",
+    "ConnectionParameters",
+    "DeliveryMode",
+    "PlainCredentials",
+    "SelectConnection",
+    "SSLOptions",
+    "URLParameters",
+]

@@ -4,8 +4,7 @@ import sys
 if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darwin":
     from _typeshed import Incomplete
     from collections.abc import Callable
-    from typing import Final, Literal, NamedTuple, TypeVar, overload
-    from typing_extensions import ParamSpec
+    from typing import Final, Literal, NamedTuple, ParamSpec, TypeVar, overload
 
     from psutil._common import (
         AF_INET6 as AF_INET6,

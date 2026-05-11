@@ -1,8 +1,7 @@
 from _typeshed import SupportsItems
 from collections.abc import Iterable, Iterator, KeysView, Mapping, Sequence
 from datetime import datetime, timedelta, tzinfo
-from typing import Any as tAny
-from typing_extensions import TypeAlias
+from typing import Any as tAny, TypeAlias
 
 from google.protobuf import struct_pb2
 from google.protobuf.descriptor import Descriptor

@@ -31,9 +31,9 @@ if sys.platform != "win32":
         def unregister(self, fd: FileDescriptorLike, /) -> None: ...
         def poll(self, timeout: float | None = None, /) -> list[tuple[int, int]]: ...
 
-_R = TypeVar("_R", default=Never)
-_W = TypeVar("_W", default=Never)
-_X = TypeVar("_X", default=Never)
+_R = TypeVar("_R", default=Never, bound=FileDescriptorLike)
+_W = TypeVar("_W", default=Never, bound=FileDescriptorLike)
+_X = TypeVar("_X", default=Never, bound=FileDescriptorLike)
 
 def select(
     rlist: Iterable[_R], wlist: Iterable[_W], xlist: Iterable[_X], timeout: float | None = None, /

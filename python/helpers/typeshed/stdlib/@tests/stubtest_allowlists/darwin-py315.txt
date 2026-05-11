@@ -1,0 +1,27 @@
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
+_pyrepl.fancy_termios
+_pyrepl.unix_console
+_pyrepl.unix_eventqueue
+ctypes.c_double_complex._type_
+ctypes.c_float_complex._type_
+ctypes.c_longdouble_complex._type_
+os.NODEV
+os.__all__
+posix.NODEV
+readline.get_pre_input_hook
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.15
+# =============================================================
+
+# Internal implementation details of the sampling profiler.
+profiling.sampling.live_collector
+profiling.sampling.live_collector.collector
+profiling.sampling.live_collector.constants
+profiling.sampling.live_collector.display
+profiling.sampling.live_collector.trend_tracker
+profiling.sampling.live_collector.widgets

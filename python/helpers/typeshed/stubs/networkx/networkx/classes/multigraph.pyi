@@ -1,7 +1,7 @@
 from collections.abc import Hashable
 from functools import cached_property
-from typing import Any, ClassVar, overload
-from typing_extensions import Self, TypeAlias, TypeVar
+from typing import Any, ClassVar, TypeAlias, overload
+from typing_extensions import Self, TypeVar
 
 from networkx.classes.coreviews import MultiAdjacencyView
 from networkx.classes.graph import Graph, _MapFactory, _Node

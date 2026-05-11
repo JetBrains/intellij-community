@@ -1,7 +1,6 @@
 from _typeshed import SupportsWrite
 from collections.abc import Callable, Mapping, MutableMapping
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 from xml.sax import _Source, handler
 from xml.sax.xmlreader import AttributesImpl, InputSource, XMLReader
 

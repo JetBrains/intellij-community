@@ -2,8 +2,8 @@
 # This does not match a module in docker-py.
 
 from pathlib import Path
-from typing import TypedDict, type_check_only
-from typing_extensions import NotRequired, TypeAlias
+from typing import TypeAlias, TypedDict, type_check_only
+from typing_extensions import NotRequired
 
 # Type alias for JSON, explained at:
 # https://github.com/python/typing/issues/182#issuecomment-1320974824.

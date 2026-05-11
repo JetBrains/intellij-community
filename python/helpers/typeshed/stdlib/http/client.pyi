@@ -7,8 +7,8 @@ from _typeshed import MaybeNone, ReadableBuffer, StrOrBytesPath, SupportsRead, S
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from email._policybase import _MessageT
 from socket import socket
-from typing import BinaryIO, Final, TypeVar, overload
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import BinaryIO, Final, TypeAlias, TypeVar, overload
+from typing_extensions import Self, deprecated
 
 __all__ = [
     "HTTPResponse",

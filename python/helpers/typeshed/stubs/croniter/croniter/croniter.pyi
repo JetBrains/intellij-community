@@ -2,8 +2,8 @@ import datetime
 from _typeshed import Unused
 from collections.abc import Generator, Iterable
 from re import Match, Pattern
-from typing import Any, Final, Generic, Literal, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import Never, Self, TypeAlias
+from typing import Any, Final, Generic, Literal, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Never, Self
 
 _R_co = TypeVar("_R_co", float, datetime.datetime, default=float, covariant=True)
 _R2_co = TypeVar("_R2_co", float, datetime.datetime, covariant=True)

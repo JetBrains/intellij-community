@@ -1,6 +1,5 @@
 from collections.abc import Callable
-from typing import TypeVar
-from typing_extensions import TypeAlias
+from typing import TypeAlias, TypeVar
 
 from Xlib.error import XError
 from Xlib.protocol.rq import Request

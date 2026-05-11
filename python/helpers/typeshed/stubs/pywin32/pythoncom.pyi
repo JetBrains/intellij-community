@@ -1,8 +1,8 @@
 from _typeshed import Incomplete, Unused
 from abc import abstractmethod
 from collections.abc import Sequence
-from typing import ClassVar, SupportsInt, overload
-from typing_extensions import TypeAlias, deprecated, disjoint_base
+from typing import ClassVar, SupportsInt, TypeAlias, overload
+from typing_extensions import deprecated, disjoint_base
 
 import _win32typing
 from win32.lib.pywintypes import TimeType, com_error as com_error

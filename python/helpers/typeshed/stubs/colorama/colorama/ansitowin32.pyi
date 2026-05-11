@@ -3,8 +3,7 @@ from _typeshed import SupportsWrite
 from collections.abc import Callable, Sequence
 from re import Pattern
 from types import TracebackType
-from typing import Any, ClassVar, TextIO
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, TextIO, TypeAlias
 
 if sys.platform == "win32":
     from .winterm import WinTerm

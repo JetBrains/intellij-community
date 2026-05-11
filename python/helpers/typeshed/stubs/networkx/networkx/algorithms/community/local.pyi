@@ -1,6 +1,5 @@
 from collections.abc import Callable, Hashable
-from typing import Literal
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias
 
 from networkx.classes.graph import Graph, _Node
 

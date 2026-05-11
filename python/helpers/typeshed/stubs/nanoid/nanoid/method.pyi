@@ -1,5 +1,5 @@
 from collections.abc import Callable, Sequence
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _Algorithm: TypeAlias = Callable[[int], Sequence[int]]
 

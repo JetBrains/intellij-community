@@ -1,6 +1,6 @@
 import io
 from collections.abc import Callable, Generator, Iterator
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from gunicorn.http.message import Request
 from gunicorn.http.unreader import Unreader

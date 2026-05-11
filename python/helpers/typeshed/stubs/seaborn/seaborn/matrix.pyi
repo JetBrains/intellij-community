@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Hashable, Iterable, Mapping, Sequence
-from typing import Literal, TypedDict, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Literal, TypeAlias, TypedDict, type_check_only
+from typing_extensions import Self
 
 import numpy as np
 import pandas as pd

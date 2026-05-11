@@ -1,7 +1,7 @@
 from collections.abc import Iterable, Mapping
 from types import TracebackType
-from typing import Literal, NamedTuple
-from typing_extensions import Self, TypeAlias
+from typing import Literal, NamedTuple, TypeAlias
+from typing_extensions import Self
 
 from tensorflow._aliases import DTypeLike, ShapeLike, TensorCompatible, TensorLike
 from tensorflow.io import gfile as gfile

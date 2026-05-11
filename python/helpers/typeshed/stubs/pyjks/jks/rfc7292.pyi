@@ -1,6 +1,5 @@
 from hashlib import _Hash
-from typing import Final, Literal
-from typing_extensions import TypeAlias
+from typing import Final, Literal, TypeAlias
 
 from pyasn1.type.namedtype import NamedTypes
 from pyasn1.type.univ import Sequence

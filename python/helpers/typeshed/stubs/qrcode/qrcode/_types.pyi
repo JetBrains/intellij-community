@@ -1,7 +1,6 @@
 # Type aliases used in this stub package
 from _typeshed import SupportsWrite
-from typing import Any, Protocol, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, type_check_only
 
 Box: TypeAlias = tuple[tuple[int, int], tuple[int, int]]
 Ink: TypeAlias = tuple[int, int, int] | tuple[int, int, int, int]

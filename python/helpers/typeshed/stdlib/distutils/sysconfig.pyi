@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Mapping
 from distutils.ccompiler import CCompiler
 from typing import Final, Literal, overload
@@ -28,6 +27,3 @@ def get_python_lib(
     plat_specific: bool | Literal[0, 1] = 0, standard_lib: bool | Literal[0, 1] = 0, prefix: str | None = None
 ) -> str: ...
 def customize_compiler(compiler: CCompiler) -> None: ...
-
-if sys.version_info < (3, 10):
-    def get_python_version() -> str: ...

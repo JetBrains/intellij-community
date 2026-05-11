@@ -11,8 +11,8 @@ from collections.abc import Callable, Iterable, Sequence
 from concurrent.futures import Executor, ThreadPoolExecutor
 from contextvars import Context
 from socket import AddressFamily, AddressInfo, SocketKind, _Address, _RetAddress, socket
-from typing import IO, Any, Literal, TypeVar, overload
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing import IO, Any, Literal, TypeAlias, TypeVar, overload
+from typing_extensions import TypeVarTuple, Unpack
 
 # Keep asyncio.__all__ updated with any changes to __all__ here
 __all__ = ("BaseEventLoop", "Server")

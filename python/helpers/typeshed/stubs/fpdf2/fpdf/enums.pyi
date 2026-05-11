@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, Flag, IntEnum, IntFlag
-from typing import Final, Literal
-from typing_extensions import Self, TypeAlias
+from typing import Final, Literal, TypeAlias
+from typing_extensions import Self
 
 from .drawing import DeviceCMYK, DeviceGray, DeviceRGB
 from .syntax import Name

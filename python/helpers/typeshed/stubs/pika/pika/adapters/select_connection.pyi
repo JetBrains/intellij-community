@@ -1,13 +1,22 @@
 import abc
+import select
 from _typeshed import Incomplete
+from collections.abc import Callable
 from logging import Logger
+from typing import Final, Literal, TypeAlias, TypedDict
 
 import pika.compat
 from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils.selector_ioloop_adapter import AbstractSelectorIOLoop
 
+SELECT_ERROR_T: TypeAlias = OSError | InterruptedError | select.error
+
+class POLLER_PARAMS(TypedDict):
+    get_wait_seconds: Callable[[], float | None]
+    process_timeouts: Callable[[], object]
+
 LOGGER: Logger
-SELECT_TYPE: Incomplete
+SELECT_TYPE: Literal["epoll", "kqueue", "poll"] | None
 
 class SelectConnection(BaseConnection):
     def __init__(
@@ -43,9 +52,10 @@ class _Timer:
     def process_timeouts(self) -> None: ...
 
 class PollEvents:
-    READ: Incomplete
-    WRITE: Incomplete
-    ERROR: Incomplete
+    READ: Final[int]
+    WRITE: Final[int]
+    ERROR: Final[int]
+    HANGUP: Final[int]
 
 class IOLoop(AbstractSelectorIOLoop):
     READ: Incomplete

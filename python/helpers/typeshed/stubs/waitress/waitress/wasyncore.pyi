@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from io import BytesIO
 from logging import Logger
 from socket import _RetAddress, socket
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _Socket: TypeAlias = socket
 _SocketMap: TypeAlias = Mapping[int, socket]

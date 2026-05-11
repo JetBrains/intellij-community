@@ -1,7 +1,6 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable
-from typing import Final, Literal
-from typing_extensions import TypeAlias
+from typing import Final, Literal, TypeAlias
 
 from reportlab.lib.colors import Color
 from reportlab.pdfbase.ttfonts import ShapedStr

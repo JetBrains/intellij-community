@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Protocol
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, Protocol, TypeAlias
 
 import referencing.jsonschema
 from jsonschema._format import FormatChecker

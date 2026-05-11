@@ -1,22 +1,54 @@
 import sys
-from _typeshed import Incomplete
-from typing import Any, Final, final
-from typing_extensions import Self
+from _typeshed import Incomplete, ReadableBuffer, WriteableBuffer
+from collections.abc import Callable
+from datetime import datetime
+from types import TracebackType
+from typing import Any, Final, NamedTuple
+from typing_extensions import Self, disjoint_base
 
 version: str
 
 def global_init(option: int) -> None: ...
 def global_cleanup() -> None: ...
-def version_info() -> (
-    tuple[int, str, int, str, int, str, int, str, tuple[str, ...], Incomplete | None, int, Incomplete | None]
-): ...
+def version_info(
+    stamp: int = ...,
+) -> tuple[int, str, int, str, int, str, int, str, tuple[str, ...], Incomplete | None, int, Incomplete | None]: ...
 
-class error(Exception): ...
+class error(Exception):
+    # libcurl protocol errors raise (code, message); arg-parse errors raise (message,).
+    args: tuple[int, str] | tuple[str]
 
-@final
+class WsFrame(NamedTuple):
+    age: int
+    flags: int
+    offset: int
+    bytesleft: int
+    len: int
+
+class HstsEntry(NamedTuple):
+    host: bytes
+    expire: datetime | None
+    include_subdomains: bool
+
+class HstsIndex(NamedTuple):
+    index: int  # type: ignore[assignment]
+    total: int
+
+class KhKey(NamedTuple):
+    key: bytes
+    keytype: int
+
+class CurlSockAddr(NamedTuple):
+    family: int
+    socktype: int
+    protocol: int
+    addr: tuple[str, int] | tuple[str, int, int, int] | bytes
+
+@disjoint_base
 class Curl:
     USERPWD: int
     def close(self) -> None: ...
+    def closed(self) -> bool: ...
     def setopt(self, option: int, value) -> None: ...
     def setopt_string(self, option: int, value: str) -> None: ...
     def perform(self) -> None: ...
@@ -27,17 +59,35 @@ class Curl:
     def getinfo(self, info: int) -> Any: ...
     def getinfo_raw(self, info: int) -> Any: ...
     def reset(self) -> None: ...
-    def unsetopt(self, option: int): ...
-    def pause(self, bitmask): ...
+    def unsetopt(self, option: int) -> None: ...
+    def pause(self, bitmask: int = ...) -> None: ...
+    def unpause(self) -> None: ...
     def errstr(self) -> str: ...
     def duphandle(self) -> Self: ...
     def errstr_raw(self) -> bytes: ...
+    def multi(self) -> CurlMulti | None: ...
+    def share(self) -> CurlShare | None: ...
+    def recv(self, buffersize: int, /) -> bytes: ...
+    def recv_into(self, buffer: WriteableBuffer, nbytes: int = 0) -> int: ...
+    def send(self, data: ReadableBuffer, /) -> int: ...
+    def ws_send(
+        self, data: ReadableBuffer | str, flags: int | None = None, fragsize: int = 0, encoding: str = "utf-8"
+    ) -> int: ...
+    def ws_recv(self, buffersize: int, /) -> tuple[bytes, WsFrame]: ...
+    def ws_recv_into(self, buffer: WriteableBuffer, nbytes: int = 0) -> tuple[int, WsFrame]: ...
+    def ws_meta(self) -> WsFrame | None: ...
+    def ws_close(self, code: int | None = None, reason: ReadableBuffer | str | None = None, encoding: str = "utf-8") -> int: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None, /
+    ) -> None: ...
     if sys.platform == "linux" or sys.platform == "darwin":
-        def set_ca_certs(self, value: bytes | str, /) -> None: ...
+        def set_ca_certs(self, value: str | bytes, /) -> None: ...
 
-@final
+@disjoint_base
 class CurlMulti:
     def close(self) -> None: ...
+    def closed(self) -> bool: ...
     def add_handle(self, obj: Curl) -> None: ...
     def remove_handle(self, obj: Curl) -> None: ...
     def setopt(self, option: int, value) -> None: ...
@@ -46,14 +96,83 @@ class CurlMulti:
     def select(self, timeout: float) -> int: ...
     def info_read(self, max_objects: int = ...) -> tuple[int, list[Incomplete], list[Incomplete]]: ...
     def socket_action(self, sockfd: int, ev_bitmask: int) -> tuple[int, int]: ...
-    def assign(self, sockfd: int, socket, /): ...
+    def assign(self, sockfd: int, obj, /) -> None: ...
+    def unassign(self, sock_fd: int, /) -> None: ...
     def socket_all(self) -> tuple[int, int]: ...
     def timeout(self) -> int: ...
+    def __contains__(self, key: Curl, /) -> bool: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None, /
+    ) -> None: ...
 
-@final
+@disjoint_base
 class CurlShare:
     def close(self) -> None: ...
-    def setopt(self, option: int, value): ...
+    def closed(self) -> bool: ...
+    def setopt(self, option: int, value) -> None: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None, /
+    ) -> None: ...
+
+@disjoint_base
+class CurlMime:
+    def __new__(cls, curl: Curl) -> Self: ...
+    def add(
+        self,
+        name: str | bytes | None = None,
+        data: ReadableBuffer | str | None = None,
+        file: str | bytes | None = None,
+        filename: str | bytes | None = None,
+        content_type: str | bytes | None = None,
+        headers: list[str | bytes] | tuple[str | bytes, ...] | None = None,
+        encoder: str | bytes | None = None,
+    ) -> CurlMimePart: ...
+    def add_field(
+        self,
+        name: str | bytes,
+        value: str | bytes,
+        content_type: str | bytes | None = None,
+        encoder: str | bytes | None = None,
+        headers: list[str | bytes] | tuple[str | bytes, ...] | None = None,
+    ) -> CurlMimePart: ...
+    def add_file(
+        self,
+        name: str | bytes,
+        path: str | bytes,
+        filename: str | bytes | None = None,
+        content_type: str | bytes | None = None,
+        headers: list[str | bytes] | tuple[str | bytes, ...] | None = None,
+        encoder: str | bytes | None = None,
+    ) -> CurlMimePart: ...
+    def add_multipart(self, name: str | bytes | None = None, subtype: str | bytes | None = None) -> CurlMime: ...
+    def addpart(self) -> CurlMimePart: ...
+    def close(self) -> None: ...
+    def closed(self) -> bool: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None, /
+    ) -> None: ...
+
+@disjoint_base
+class CurlMimePart:
+    def name(self, name: str | bytes, /) -> None: ...
+    def data(self, data: ReadableBuffer | str, /) -> None: ...
+    def data_cb(
+        self,
+        datasize: int | None,
+        read: Callable[[Any, int], ReadableBuffer | str | int],
+        seek: Callable[[Any, int, int], int | None] | None = None,
+        free: Callable[[Any], object] | None = None,
+        userdata: Any = None,
+    ) -> None: ...
+    def filedata(self, path: str | bytes, /) -> None: ...
+    def filename(self, name: str | bytes, /) -> None: ...
+    def type(self, content_type: str | bytes, /) -> None: ...
+    def encoder(self, name: str | bytes, /) -> None: ...
+    def headers(self, headers: list[str | bytes] | tuple[str | bytes, ...] | None, /) -> None: ...
+    def subparts(self, mime: CurlMime, /) -> None: ...
 
 APPCONNECT_TIME_T: Final[int] = ...
 CONNECT_TIME_T: Final[int] = ...
@@ -75,6 +194,7 @@ TOTAL_TIME_T: Final[int] = ...
 
 ACCEPTTIMEOUT_MS: Final = 212
 ACCEPT_ENCODING: Final = 10102
+ACTIVESOCKET: Final[int]
 ADDRESS_SCOPE: Final = 171
 APPCONNECT_TIME: Final = 3145761
 APPEND: Final = 50
@@ -108,6 +228,11 @@ CRLFILE: Final = 10169
 CSELECT_ERR: Final = 4
 CSELECT_IN: Final = 1
 CSELECT_OUT: Final = 2
+CURLHSTS_ENABLE: Final[int]
+CURLHSTS_READONLYFILE: Final[int]
+CURLSTS_DONE: Final[int]
+CURLSTS_FAIL: Final[int]
+CURLSTS_OK: Final[int]
 CURL_HTTP_VERSION_1_0: Final = 1
 CURL_HTTP_VERSION_1_1: Final = 2
 CURL_HTTP_VERSION_2: Final = 3
@@ -264,6 +389,11 @@ E_USE_SSL_FAILED: Final = 64
 E_WRITE_ERROR: Final = 23
 FAILONERROR: Final = 45
 FILE: Final = 10001
+FNMATCHFUNC_FAIL: Final[int]
+FNMATCHFUNC_MATCH: Final[int]
+FNMATCHFUNC_NOMATCH: Final[int]
+FNMATCH_DATA: Final[int]
+FNMATCH_FUNCTION: Final[int]
 FOLLOWLOCATION: Final = 52
 FORBID_REUSE: Final = 75
 FORM_BUFFER: Final = 11
@@ -319,11 +449,17 @@ HEADEROPT: Final = 229
 HEADER_SEPARATE: Final = 1
 HEADER_SIZE: Final = 2097163
 HEADER_UNIFIED: Final = 0
+HSTS: Final[int]
+HSTSREADDATA: Final[int]
+HSTSREADFUNCTION: Final[int]
+HSTSWRITEDATA: Final[int]
+HSTSWRITEFUNCTION: Final[int]
+HSTS_CTRL: Final[int]
 HTTP09_ALLOWED: Final = 285
 HTTP200ALIASES: Final = 10104
 HTTPAUTH: Final = 107
-HTTPAUTH_ANY: Final = -17
-HTTPAUTH_ANYSAFE: Final = -18
+HTTPAUTH_ANY: Final[int]
+HTTPAUTH_ANYSAFE: Final[int]
 HTTPAUTH_AVAIL: Final = 2097175
 HTTPAUTH_BASIC: Final = 1
 HTTPAUTH_DIGEST: Final = 2
@@ -416,6 +552,7 @@ PREREQFUNC_ABORT: Final = 1
 MAXREDIRS: Final = 68
 MAX_RECV_SPEED_LARGE: Final = 30146
 MAX_SEND_SPEED_LARGE: Final = 30145
+MIMEPOST: Final[int]
 M_CHUNK_LENGTH_PENALTY_SIZE: Final = 30010
 M_CONTENT_LENGTH_PENALTY_SIZE: Final = 30009
 M_MAXCONNECTS: Final = 6
@@ -483,7 +620,7 @@ PRIMARY_IP: Final = 1048608
 PRIMARY_PORT: Final = 2097192
 PROGRESSFUNCTION: Final = 20056
 PROTOCOLS: Final = 181
-PROTO_ALL: Final = -1
+PROTO_ALL: Final[int]
 PROTO_DICT: Final = 512
 PROTO_FILE: Final = 1024
 PROTO_FTP: Final = 4
@@ -572,6 +709,8 @@ REFERER: Final = 10016
 REQUEST_SIZE: Final = 2097164
 REQUEST_TARGET: Final = 10266
 RESOLVE: Final = 10203
+RESOLVER_START_DATA: Final[int]
+RESOLVER_START_FUNCTION: Final[int]
 RESPONSE_CODE: Final = 2097154
 RESUME_FROM: Final = 30116
 RESUME_FROM_LARGE: Final = 30116
@@ -612,8 +751,8 @@ SOCKTYPE_IPCXN: Final = 0
 SPEED_DOWNLOAD: Final = 3145737
 SPEED_UPLOAD: Final = 3145738
 SSH_AUTH_AGENT: Final = 16
-SSH_AUTH_ANY: Final = -1
-SSH_AUTH_DEFAULT: Final = -1
+SSH_AUTH_ANY: Final[int]
+SSH_AUTH_DEFAULT: Final[int]
 SSH_AUTH_HOST: Final = 4
 SSH_AUTH_KEYBOARD: Final = 8
 SSH_AUTH_NONE: Final = 0
@@ -684,6 +823,10 @@ TLSAUTH_PASSWORD: Final = 10205
 TLSAUTH_TYPE: Final = 10206
 TLSAUTH_USERNAME: Final = 10204
 TOTAL_TIME: Final = 3145731
+TRAILERDATA: Final[int]
+TRAILERFUNCTION: Final[int]
+TRAILERFUNC_ABORT: Final[int]
+TRAILERFUNC_OK: Final[int]
 TRANSFERTEXT: Final = 53
 TRANSFER_ENCODING: Final = 207
 UNIX_SOCKET_PATH: Final = 10231
@@ -735,5 +878,15 @@ WRITEDATA: Final = 10001
 WRITEFUNCTION: Final = 20011
 WRITEFUNC_PAUSE: Final = 268435457
 WRITEHEADER: Final = 10029
+WS_BINARY: Final[int]
+WS_CLOSE: Final[int]
+WS_CONT: Final[int]
+WS_NOAUTOPONG: Final[int]
+WS_OFFSET: Final[int]
+WS_OPTIONS: Final[int]
+WS_PING: Final[int]
+WS_PONG: Final[int]
+WS_RAW_MODE: Final[int]
+WS_TEXT: Final[int]
 XFERINFOFUNCTION: Final = 20219
 XOAUTH2_BEARER: Final = 10220

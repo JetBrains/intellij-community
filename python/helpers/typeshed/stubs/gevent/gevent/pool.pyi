@@ -1,6 +1,5 @@
 from collections.abc import Callable, Collection, Iterable, Iterator
-from typing import Any, TypeVar, overload
-from typing_extensions import ParamSpec
+from typing import Any, ParamSpec, TypeVar, overload
 
 from gevent._imap import IMap, IMapUnordered
 from gevent.greenlet import Greenlet

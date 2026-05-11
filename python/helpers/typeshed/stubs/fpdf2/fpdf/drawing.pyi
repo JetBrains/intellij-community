@@ -1,18 +1,12 @@
 import decimal
-import sys
 from _typeshed import Incomplete, SupportsWrite
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Sequence
 from contextlib import contextmanager
 from re import Pattern
-from typing import Any, ClassVar, Literal, NamedTuple, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
-
-if sys.version_info >= (3, 10):
-    from types import EllipsisType
-else:
-    # Rely on builtins.ellipsis
-    from builtins import ellipsis as EllipsisType
+from types import EllipsisType
+from typing import Any, ClassVar, Literal, NamedTuple, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 from .enums import PathPaintRule
 from .syntax import Name, Raw

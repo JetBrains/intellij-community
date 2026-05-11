@@ -1,4 +1,3 @@
-import sys
 from _typeshed import StrPath
 from collections.abc import Iterator, Sequence
 from http.client import HTTPResponse
@@ -49,9 +48,7 @@ class FileCookieJar(CookieJar):
     def load(self, filename: str | None = None, ignore_discard: bool = False, ignore_expires: bool = False) -> None: ...
     def revert(self, filename: str | None = None, ignore_discard: bool = False, ignore_expires: bool = False) -> None: ...
 
-class MozillaCookieJar(FileCookieJar):
-    if sys.version_info < (3, 10):
-        header: ClassVar[str]  # undocumented
+class MozillaCookieJar(FileCookieJar): ...
 
 class LWPCookieJar(FileCookieJar):
     def as_lwp_str(self, ignore_discard: bool = True, ignore_expires: bool = True) -> str: ...  # undocumented

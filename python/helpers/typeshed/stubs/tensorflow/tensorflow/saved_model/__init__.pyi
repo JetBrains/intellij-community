@@ -1,8 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Generic, Literal, TypeVar
-from typing_extensions import ParamSpec, TypeAlias
+from typing import Any, Generic, Literal, ParamSpec, TypeAlias, TypeVar
 
 import tensorflow as tf
 from tensorflow.python.training.tracking.autotrackable import AutoTrackable

@@ -1,4 +1,4 @@
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _Graph: TypeAlias = dict[str, list[str | None]]
 

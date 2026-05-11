@@ -1,8 +1,8 @@
 # Not available at runtime. Contains type definitions that are otherwise not exposed and not part of a specific module.
 from _typeshed import Incomplete, Unused
 from collections.abc import Iterable, Sequence
-from typing import Literal, NoReturn, SupportsIndex, final, overload
-from typing_extensions import Self, TypeAlias, deprecated, disjoint_base
+from typing import Literal, NoReturn, SupportsIndex, TypeAlias, final, overload
+from typing_extensions import Self, deprecated, disjoint_base
 
 from win32.lib.pywintypes import TimeType
 

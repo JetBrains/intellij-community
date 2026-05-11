@@ -1,8 +1,7 @@
 from collections.abc import Callable, Iterable, Sequence
 from re import Pattern
 from types import FunctionType, MethodType
-from typing import Any, Literal, TypedDict, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias, TypedDict, overload, type_check_only
 
 from Xlib import error
 from Xlib._typing import ErrorHandler

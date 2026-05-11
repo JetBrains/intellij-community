@@ -3,8 +3,8 @@ from _typeshed import SupportsRead
 from collections.abc import Callable, Mapping
 from datetime import _TzInfo, datetime
 from io import StringIO
-from typing import IO, Any, Literal, overload
-from typing_extensions import Self, TypeAlias
+from typing import IO, Any, Literal, TypeAlias, overload
+from typing_extensions import Self
 
 _FileOrStr: TypeAlias = bytes | str | IO[str] | IO[Any]
 _TzData: TypeAlias = _TzInfo | int | str | None

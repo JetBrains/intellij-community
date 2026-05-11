@@ -6,8 +6,8 @@ from _typeshed import Incomplete
 from collections import defaultdict
 from collections.abc import Callable, Generator
 from logging import Logger
-from typing import Literal, NoReturn, TypeVar
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Literal, NoReturn, TypeAlias, TypeVar
+from typing_extensions import Self, deprecated
 
 import pony as pony
 from pony.orm.asttranslation import TranslationError as TranslationError

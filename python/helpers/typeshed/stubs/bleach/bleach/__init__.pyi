@@ -1,5 +1,5 @@
 from collections.abc import Container, Iterable
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from .callbacks import _Callback
 from .css_sanitizer import CSSSanitizer

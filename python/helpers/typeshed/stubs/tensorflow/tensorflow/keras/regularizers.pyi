@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from typing import Any, overload
-from typing_extensions import Self, TypeAlias
+from typing import Any, TypeAlias, overload
+from typing_extensions import Self
 
 from tensorflow import Tensor
 

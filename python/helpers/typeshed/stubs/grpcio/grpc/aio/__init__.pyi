@@ -4,8 +4,8 @@ from _typeshed import Incomplete
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Generator, Iterable, Iterator, Mapping, Sequence
 from concurrent import futures
 from types import TracebackType
-from typing import Any, Generic, NoReturn, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Generic, NoReturn, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 from grpc import (
     CallCredentials,

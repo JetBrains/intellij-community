@@ -2,8 +2,7 @@ from _typeshed import Incomplete, SupportsWrite
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable
 from types import ModuleType
-from typing import Final, Literal
-from typing_extensions import TypeAlias, TypeGuard
+from typing import Final, Literal, TypeAlias, TypeGuard
 
 IS_INTERACTIVE: bool
 

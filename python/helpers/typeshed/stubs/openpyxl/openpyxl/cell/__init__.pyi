@@ -1,7 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from openpyxl.cell.rich_text import CellRichText
 from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula

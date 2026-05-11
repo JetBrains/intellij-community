@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from types import TracebackType
-from typing import TypeVar
-from typing_extensions import ParamSpec, Self
+from typing import ParamSpec, TypeVar
+from typing_extensions import Self
 
 _AC = TypeVar("_AC", bound=Callable[..., object])
 _R = TypeVar("_R")

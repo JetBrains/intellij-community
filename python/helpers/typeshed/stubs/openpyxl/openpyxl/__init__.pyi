@@ -1,6 +1,5 @@
 from _typeshed import StrPath, SupportsRead, SupportsWrite
-from typing import IO, Literal, Protocol, type_check_only
-from typing_extensions import TypeAlias
+from typing import IO, Literal, Protocol, TypeAlias, type_check_only
 
 from openpyxl.compat.numbers import NUMPY as NUMPY
 from openpyxl.reader.excel import load_workbook as load_workbook

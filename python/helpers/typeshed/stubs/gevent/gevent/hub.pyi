@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Generic, Protocol, TextIO, TypeVar, overload, type_check_only
-from typing_extensions import ParamSpec
+from typing import Any, Generic, ParamSpec, Protocol, TextIO, TypeVar, overload, type_check_only
 
 import gevent._hub_local
 import gevent._waiter

@@ -6,9 +6,6 @@
 
 importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
-tkinter.simpledialog.[A-Z_]+
-tkinter.simpledialog.TclVersion
-tkinter.simpledialog.TkVersion
 tarfile.TarInfo.__slots__  # it's a big dictionary at runtime and the dictionary values are a bit long
 
 
@@ -457,17 +454,6 @@ typing(_extensions)?\.TextIO\.newlines
 typing(_extensions)?\.IO\.__iter__
 typing(_extensions)?\.IO\.__next__
 
-# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
-# to mark these as positional-only for compatibility with existing sub-classes.
-typing(_extensions)?\.BinaryIO\.write
-typing(_extensions)?\.IO\.read
-typing(_extensions)?\.IO\.readline
-typing(_extensions)?\.IO\.readlines
-typing(_extensions)?\.IO\.seek
-typing(_extensions)?\.IO\.truncate
-typing(_extensions)?\.IO\.write
-typing(_extensions)?\.IO\.writelines
-
 types.MethodType.__closure__  # read-only but not actually a property; stubtest thinks it doesn't exist.
 types.MethodType.__code__  # read-only but not actually a property; stubtest thinks it doesn't exist.
 types.MethodType.__defaults__  # read-only but not actually a property; stubtest thinks it doesn't exist.
@@ -499,7 +485,3 @@ xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signatur
 # Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
 xml.etree.ElementTree.Element.__iter__
-
-# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
-posixpath.join
-ntpath.join

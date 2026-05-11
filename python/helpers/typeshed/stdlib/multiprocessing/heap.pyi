@@ -2,8 +2,7 @@ import sys
 from collections.abc import Callable
 from mmap import mmap
 from multiprocessing import popen_forkserver, popen_spawn_posix, resource_sharer
-from typing import Protocol, type_check_only
-from typing_extensions import TypeAlias
+from typing import Protocol, TypeAlias, type_check_only
 
 __all__ = ["BufferWrapper"]
 

@@ -22,8 +22,8 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypedDict, TypeVar
-from typing_extensions import Self, TypeAlias
+from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, TypeVar
+from typing_extensions import Self
 
 if sys.version_info >= (3, 11):
     import tomllib

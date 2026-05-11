@@ -1,8 +1,8 @@
 from _typeshed import StrOrBytesPath
 from collections.abc import Callable, Iterator
 from logging import Logger
-from typing import IO
-from typing_extensions import Self, TypeAlias
+from typing import IO, TypeAlias
+from typing_extensions import Self
 
 from paramiko.channel import Channel
 from paramiko.sftp import BaseSFTP

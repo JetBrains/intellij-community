@@ -1,6 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any, TypedDict, TypeVar, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, TypedDict, TypeVar, type_check_only
 
 _T = TypeVar("_T")
 _Callback: TypeAlias = Callable[[str, _Result], object]

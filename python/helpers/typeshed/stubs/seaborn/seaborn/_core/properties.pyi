@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from matplotlib.markers import MarkerStyle
 from matplotlib.path import Path

@@ -4,7 +4,7 @@
 # However, some PyiModuleGraph typed class attributes are still documented as existing in imphookapi.
 from _typeshed import Incomplete, StrPath, SupportsKeysAndGetItem
 from collections.abc import Iterable
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from PyInstaller.lib.modulegraph.modulegraph import Alias, Node
 

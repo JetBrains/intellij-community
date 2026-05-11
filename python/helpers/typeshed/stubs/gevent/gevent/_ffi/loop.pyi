@@ -2,8 +2,8 @@ import sys
 from _typeshed import FileDescriptor
 from collections.abc import Callable, Sequence
 from types import TracebackType
-from typing import Protocol, type_check_only
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing import Protocol, TypeAlias, type_check_only
+from typing_extensions import TypeVarTuple, Unpack
 
 from gevent._types import _AsyncWatcher, _Callback, _ChildWatcher, _IoWatcher, _StatWatcher, _TimerWatcher, _Watcher
 

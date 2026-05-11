@@ -1,8 +1,7 @@
 import _csv
 from _typeshed import FileDescriptorOrPath, StrOrBytesPath
 from collections.abc import Iterable
-from typing import Any, BinaryIO, TextIO
-from typing_extensions import TypeAlias
+from typing import Any, BinaryIO, TextIO, TypeAlias
 
 from netaddr.core import Publisher, Subscriber
 
@@ -11,7 +10,7 @@ OUI_INDEX: _INDEX
 IAB_INDEX: _INDEX
 
 class FileIndexer(Subscriber):
-    writer: _csv._writer
+    writer: _csv.Writer
     def __init__(self, index_file: TextIO | FileDescriptorOrPath) -> None: ...
     def update(self, data: Iterable[Any]) -> None: ...
 

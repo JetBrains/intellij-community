@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 def known_hosts() -> str: ...
 def st_mode_to_int(val: int) -> int: ...

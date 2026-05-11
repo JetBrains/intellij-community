@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Sequence
-from typing import Literal, TypeVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import Literal, TypeAlias, TypeVar, overload
+from typing_extensions import Self
 
 from matplotlib.colors import Colormap, LinearSegmentedColormap, ListedColormap
 from matplotlib.typing import ColorType

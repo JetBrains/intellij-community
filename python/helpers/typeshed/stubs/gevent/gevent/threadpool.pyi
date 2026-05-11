@@ -1,7 +1,6 @@
 import concurrent.futures
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar
-from typing_extensions import ParamSpec, TypeAlias
+from typing import Any, Generic, ParamSpec, TypeAlias, TypeVar
 
 from gevent._threading import Queue
 from gevent._types import _AsyncWatcher, _Watcher

@@ -1,8 +1,8 @@
 from _typeshed import Incomplete, SupportsRichComparison, sentinel
 from collections import deque
 from collections.abc import Callable, Container, Iterable, Iterator, Mapping, MutableMapping, Sequence
-from typing import Any
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Any, TypeAlias
+from typing_extensions import Self, deprecated
 
 from ._types import TypeChecker
 from ._utils import Unset

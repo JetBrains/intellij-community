@@ -7,8 +7,8 @@ from _typeshed import SupportsWrite
 from contextlib import _GeneratorContextManager
 from threading import Thread
 from types import TracebackType
-from typing import Any, Final, Literal, Protocol, TextIO, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Final, Literal, Protocol, TextIO, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 STDOUT: Final = 2
 PIPE: Final = 3

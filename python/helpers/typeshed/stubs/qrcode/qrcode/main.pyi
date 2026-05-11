@@ -1,7 +1,6 @@
 from _typeshed import ConvertibleToInt
 from collections.abc import Sequence
-from typing import Any, Generic, NamedTuple, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Generic, NamedTuple, Protocol, TypeAlias, TypeVar, overload, type_check_only
 
 from ._types import ErrorCorrect, MaskPattern
 from .image.base import BaseImage

@@ -1,6 +1,5 @@
 from collections.abc import Callable, Mapping
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from m3u8.httpclient import _HTTPClientProtocol
 from m3u8.model import (

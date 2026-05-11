@@ -1,7 +1,6 @@
 import io
 from _typeshed import Incomplete, StrPath
-from typing import Final
-from typing_extensions import TypeAlias
+from typing import Final, TypeAlias
 
 from .cffi_opcode import *
 from .error import VerificationError as VerificationError

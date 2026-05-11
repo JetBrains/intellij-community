@@ -1,8 +1,8 @@
 import sys
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from re import Match, Pattern
-from typing import Any, ClassVar, Final, Generic, SupportsIndex, TypeVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import Any, ClassVar, Final, Generic, SupportsIndex, TypeAlias, TypeVar, overload
+from typing_extensions import Self
 
 _T = TypeVar("_T")
 _Context = TypeVar("_Context")

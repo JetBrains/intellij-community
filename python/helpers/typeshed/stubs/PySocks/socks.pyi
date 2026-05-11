@@ -3,8 +3,7 @@ import socket
 import types
 from _typeshed import ReadableBuffer
 from collections.abc import Callable, Iterable, Mapping
-from typing import Final, TypeVar, overload
-from typing_extensions import ParamSpec, TypeAlias
+from typing import Final, ParamSpec, TypeAlias, TypeVar, overload
 
 __version__: Final[str]
 

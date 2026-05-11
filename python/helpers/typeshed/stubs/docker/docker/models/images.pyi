@@ -1,8 +1,7 @@
 from _typeshed import SupportsRead
 from collections.abc import Iterator
 from io import StringIO
-from typing import IO, Any, Literal, TypedDict, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import IO, Any, Literal, TypeAlias, TypedDict, overload, type_check_only
 
 from docker._types import JSON
 

@@ -1,6 +1,6 @@
 from _typeshed import StrPath, SupportsWrite
 from collections.abc import Collection
-from typing_extensions import TypeAlias, TypeVar
+from typing import TypeAlias, TypeVar
 
 from networkx.classes.graph import Graph, _Node
 

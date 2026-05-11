@@ -2,8 +2,8 @@ import datetime
 from _typeshed import Incomplete, MaybeNone, Unused
 from collections.abc import Callable, Iterator
 from json import JSONDecoder
-from typing import Any
-from typing_extensions import Self, TypeAlias
+from typing import Any, TypeAlias
+from typing_extensions import Self
 
 from urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
 from urllib3.response import HTTPResponse

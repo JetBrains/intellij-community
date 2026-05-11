@@ -2,8 +2,7 @@ from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from re import Match, Pattern
 from types import ModuleType, SimpleNamespace as Struct
-from typing import Any, ClassVar, Final, NoReturn
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, Final, NoReturn, TypeAlias
 
 from docutils import ApplicationError, DataError, nodes
 from docutils.nodes import Node, system_message

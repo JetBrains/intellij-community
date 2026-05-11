@@ -1,6 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Literal, TypedDict, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias, TypedDict, type_check_only
 
 from docker.types import IPAMConfig
 

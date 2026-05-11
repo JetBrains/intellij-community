@@ -1,6 +1,6 @@
 from _typeshed import SupportsKeysAndGetItem, Unused
-from typing import Final, Literal
-from typing_extensions import Self, TypeAlias
+from typing import Final, Literal, TypeAlias
+from typing_extensions import Self
 
 from .jks import TrustedCertEntry
 from .util import AbstractKeystore, AbstractKeystoreEntry

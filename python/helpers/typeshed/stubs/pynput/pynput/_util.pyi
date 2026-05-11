@@ -3,8 +3,8 @@ from _typeshed import OptExcInfo
 from collections.abc import Callable
 from queue import Queue
 from types import ModuleType, TracebackType
-from typing import Any, ClassVar, Generic, TypedDict, TypeVar, type_check_only
-from typing_extensions import ParamSpec, Self
+from typing import Any, ClassVar, Generic, ParamSpec, TypedDict, TypeVar, type_check_only
+from typing_extensions import Self
 
 _T = TypeVar("_T")
 _AbstractListenerT = TypeVar("_AbstractListenerT", bound=AbstractListener)

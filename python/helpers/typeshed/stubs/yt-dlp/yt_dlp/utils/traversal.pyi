@@ -1,6 +1,5 @@
 from collections.abc import Callable, Collection, Iterable, Mapping
-from typing import Any, TypeVar, overload
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, TypeVar, overload
 
 from ._utils import NO_DEFAULT, ExtractorError
 

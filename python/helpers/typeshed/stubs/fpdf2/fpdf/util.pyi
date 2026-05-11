@@ -1,6 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, AnyStr, Final, Literal, NamedTuple
-from typing_extensions import TypeAlias
+from typing import Any, AnyStr, Final, Literal, NamedTuple, TypeAlias
 
 _Unit: TypeAlias = Literal["pt", "mm", "cm", "in"]
 

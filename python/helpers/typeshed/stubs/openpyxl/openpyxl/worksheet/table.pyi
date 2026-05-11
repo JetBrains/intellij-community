@@ -1,7 +1,7 @@
 from _typeshed import ConvertibleToInt, Incomplete, Unused
 from collections.abc import Iterator
-from typing import ClassVar, Final, Literal, overload
-from typing_extensions import Self, TypeAlias
+from typing import ClassVar, Final, Literal, TypeAlias, overload
+from typing_extensions import Self
 
 from openpyxl.descriptors import Strict, String
 from openpyxl.descriptors.base import Alias, Bool, Integer, NoneSet, Typed, _ConvertibleToBool

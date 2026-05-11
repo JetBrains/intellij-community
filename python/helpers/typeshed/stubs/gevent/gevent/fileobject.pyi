@@ -1,6 +1,5 @@
 import sys
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from gevent._fileobjectcommon import FileObjectBlock as FileObjectBlock, FileObjectThread as FileObjectThread
 

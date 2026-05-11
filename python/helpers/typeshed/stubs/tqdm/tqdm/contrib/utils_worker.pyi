@@ -2,8 +2,7 @@ from _typeshed import Incomplete
 from collections import deque
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import TypeVar
-from typing_extensions import ParamSpec
+from typing import ParamSpec, TypeVar
 
 __all__ = ["MonoWorker"]
 

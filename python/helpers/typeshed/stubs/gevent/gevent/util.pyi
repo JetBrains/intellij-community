@@ -1,8 +1,8 @@
 from _typeshed import SupportsWrite
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Generic, TypeVar
-from typing_extensions import ParamSpec, Self
+from typing import Any, Generic, ParamSpec, TypeVar
+from typing_extensions import Self
 
 from gevent.hub import Hub
 from greenlet import greenlet as greenlet_t

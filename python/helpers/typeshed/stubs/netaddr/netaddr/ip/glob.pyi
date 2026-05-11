@@ -1,4 +1,4 @@
-from typing_extensions import TypeGuard
+from typing import TypeGuard
 
 from netaddr.ip import IPAddress, IPNetwork, IPRange, _IPAddressAddr, _IPNetworkAddr
 

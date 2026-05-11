@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from dataclasses import dataclass
-from typing import Any, Literal
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from fpdf.enums import Align
 

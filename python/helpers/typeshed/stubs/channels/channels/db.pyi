@@ -3,8 +3,7 @@ from _typeshed import OptExcInfo
 from asyncio import BaseEventLoop
 from collections.abc import Callable, Coroutine
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import Any, ParamSpec, TypeVar
 
 from asgiref.sync import SyncToAsync
 

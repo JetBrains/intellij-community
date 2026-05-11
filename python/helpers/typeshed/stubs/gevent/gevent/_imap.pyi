@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
-from typing_extensions import ParamSpec, Self, disjoint_base
+from typing import Any, ParamSpec, TypeVar
+from typing_extensions import Self, disjoint_base
 
 from gevent.greenlet import Greenlet
 from gevent.queue import UnboundQueue

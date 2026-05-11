@@ -1,6 +1,6 @@
 from collections.abc import Collection
-from typing import NoReturn, overload
-from typing_extensions import Self, TypeAlias
+from typing import NoReturn, TypeAlias, overload
+from typing_extensions import Self
 
 from .base import BaseGeometry
 from .linestring import LineString, _ConvertibleToLineString

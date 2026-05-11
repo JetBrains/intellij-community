@@ -2,8 +2,8 @@ import sys
 from collections.abc import Callable
 from contextvars import Context
 from types import FrameType, TracebackType
-from typing import Any, Literal, Protocol, overload, type_check_only
-from typing_extensions import TypeAlias, disjoint_base
+from typing import Any, Literal, Protocol, TypeAlias, overload, type_check_only
+from typing_extensions import disjoint_base
 
 _TraceEvent: TypeAlias = Literal["switch", "throw"]
 _TraceCallback: TypeAlias = Callable[[_TraceEvent, tuple[greenlet, greenlet]], object]

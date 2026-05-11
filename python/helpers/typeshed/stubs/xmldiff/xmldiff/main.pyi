@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, overload
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, overload
 
 from xmldiff.actions import (
     DeleteAttrib,

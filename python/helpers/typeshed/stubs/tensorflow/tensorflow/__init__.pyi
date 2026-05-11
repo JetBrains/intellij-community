@@ -6,8 +6,8 @@ from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from enum import Enum
 from types import TracebackType
-from typing import Any, Generic, Literal, TypeVar, overload
-from typing_extensions import ParamSpec, Self
+from typing import Any, Generic, Literal, ParamSpec, TypeVar, overload
+from typing_extensions import Self
 
 from google.protobuf.message import Message
 from tensorflow import (

@@ -1,7 +1,7 @@
 from builtins import type as _type  # type is being shadowed in Field
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Generic, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Generic, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 from markupsafe import Markup
 from wtforms.form import BaseForm

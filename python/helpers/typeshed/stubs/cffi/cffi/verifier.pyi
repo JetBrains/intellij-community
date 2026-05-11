@@ -1,8 +1,7 @@
 import io
 import os
 from _typeshed import Incomplete, StrPath
-from typing import AnyStr
-from typing_extensions import TypeAlias
+from typing import AnyStr, TypeAlias
 
 NativeIO: TypeAlias = io.StringIO
 

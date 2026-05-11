@@ -2,8 +2,8 @@ from _typeshed import Incomplete
 from collections.abc import Callable
 from io import BytesIO
 from tarfile import _Fileobj
-from typing import Final, TypeVar, overload
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Final, TypeAlias, TypeVar, overload
+from typing_extensions import Self, deprecated
 
 from dateutil.tz import tzfile as _tzfile
 

@@ -1,5 +1,4 @@
-from typing import Literal, TypedDict, type_check_only
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias, TypedDict, type_check_only
 
 import numpy as np
 import numpy.typing as npt

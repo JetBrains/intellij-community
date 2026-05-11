@@ -11,6 +11,7 @@ from braintree.discount_gateway import DiscountGateway
 from braintree.dispute_gateway import DisputeGateway
 from braintree.document_upload_gateway import DocumentUploadGateway
 from braintree.exchange_rate_quote_gateway import ExchangeRateQuoteGateway
+from braintree.local_payment_context_gateway import LocalPaymentContextGateway as LocalPaymentContextGateway
 from braintree.merchant_account_gateway import MerchantAccountGateway
 from braintree.merchant_gateway import MerchantGateway
 from braintree.oauth_gateway import OAuthGateway
@@ -44,6 +45,7 @@ class BraintreeGateway:
     dispute: DisputeGateway
     document_upload: DocumentUploadGateway
     exchange_rate_quote: ExchangeRateQuoteGateway
+    local_payment_context: LocalPaymentContextGateway
     graphql_client: GraphQLClient
     merchant: MerchantGateway
     merchant_account: MerchantAccountGateway

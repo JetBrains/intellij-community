@@ -3,8 +3,8 @@ from collections.abc import Iterator, Mapping
 from enum import Enum
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Protocol
-from typing_extensions import Self, TypeAlias
+from typing import ClassVar, Protocol, TypeAlias
+from typing_extensions import Self
 
 from .. import Command, errors, namespaces
 from ..dist import Distribution

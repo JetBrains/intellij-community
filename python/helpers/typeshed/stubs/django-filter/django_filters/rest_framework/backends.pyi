@@ -1,5 +1,4 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from django.db.models import QuerySet
 from django.http import HttpRequest

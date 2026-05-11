@@ -2,8 +2,7 @@ import argparse
 from _typeshed import ConvertibleToInt
 from collections.abc import Callable, Container
 from ssl import SSLContext, _SSLMethod
-from typing import Annotated, Any, ClassVar, Final, overload
-from typing_extensions import TypeAlias
+from typing import Annotated, Any, ClassVar, Final, TypeAlias, overload
 
 from gunicorn.arbiter import Arbiter
 from gunicorn.glogging import Logger as GLogger

@@ -1,4 +1,4 @@
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 # PyiBlockCipher is deprecated and misleads users into thinking it adds any security. Runtime deprecation warning:
 # DEPRECATION: Bytecode encryption will be removed in PyInstaller v6.

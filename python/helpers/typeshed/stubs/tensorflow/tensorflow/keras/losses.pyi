@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any, Final, Literal, TypeVar, overload
-from typing_extensions import Self, TypeAlias, TypeGuard
+from typing import Any, Final, Literal, TypeAlias, TypeGuard, TypeVar, overload
+from typing_extensions import Self
 
 from tensorflow import Tensor
 from tensorflow._aliases import KerasSerializable, TensorCompatible

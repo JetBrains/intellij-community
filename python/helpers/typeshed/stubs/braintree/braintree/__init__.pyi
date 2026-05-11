@@ -49,7 +49,10 @@ from braintree.europe_bank_account import EuropeBankAccount as EuropeBankAccount
 from braintree.graphql import *
 from braintree.liability_shift import LiabilityShift as LiabilityShift
 from braintree.local_payment_completed import LocalPaymentCompleted as LocalPaymentCompleted
+from braintree.local_payment_context import LocalPaymentContext as LocalPaymentContext
+from braintree.local_payment_context_gateway import LocalPaymentContextGateway as LocalPaymentContextGateway
 from braintree.local_payment_reversed import LocalPaymentReversed as LocalPaymentReversed
+from braintree.local_payment_type import LocalPaymentType as LocalPaymentType
 from braintree.merchant import Merchant as Merchant
 from braintree.merchant_account import MerchantAccount as MerchantAccount
 from braintree.merchant_account_gateway import MerchantAccountGateway as MerchantAccountGateway

@@ -3,8 +3,8 @@ from _typeshed import StrOrBytesPath, SupportsLenAndGetItem, Unused
 from collections import defaultdict
 from collections.abc import Collection, Iterable
 from io import BytesIO
-from typing import Literal
-from typing_extensions import Self, TypeAlias
+from typing import Literal, TypeAlias
+from typing_extensions import Self
 
 FREE_NS: str
 types: dict[str, MIMEtype]

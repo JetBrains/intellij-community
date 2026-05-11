@@ -4,8 +4,8 @@ import io
 import logging
 import traceback
 from collections.abc import Sequence
-from typing import IO, AnyStr, Generic
-from typing_extensions import Self, TypeAlias
+from typing import IO, AnyStr, Generic, TypeAlias
+from typing_extensions import Self
 
 __date__: str
 __version__: str

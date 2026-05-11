@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http.cookiejar import CookieJar
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from .models import _JSON, Response
 from .sessions import _Auth, _Cert, _Data, _Files, _HooksInput, _Params, _TextMapping, _Timeout, _Verify

@@ -3,8 +3,8 @@ from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Supports
 from collections.abc import Iterable, Iterator
 from enum import Enum
 from re import Pattern
-from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, TypeAlias, overload, type_check_only
+from typing_extensions import Self
 
 from .caselessdict import CaselessDict
 from .parser import Parameters

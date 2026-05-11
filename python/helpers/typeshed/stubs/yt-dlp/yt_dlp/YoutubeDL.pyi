@@ -2,8 +2,8 @@ import types
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from functools import cached_property
 from types import TracebackType
-from typing import Any
-from typing_extensions import Self, TypeAlias
+from typing import Any, TypeAlias
+from typing_extensions import Self
 from urllib.request import Request
 
 from yt_dlp.cache import Cache

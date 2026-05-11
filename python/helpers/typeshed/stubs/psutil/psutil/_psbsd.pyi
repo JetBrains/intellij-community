@@ -6,8 +6,7 @@ if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darw
     from collections import defaultdict
     from collections.abc import Callable
     from contextlib import AbstractContextManager
-    from typing import Final, NamedTuple, TypeVar, overload
-    from typing_extensions import ParamSpec
+    from typing import Final, NamedTuple, ParamSpec, TypeVar, overload
 
     from psutil._common import (
         FREEBSD as FREEBSD,

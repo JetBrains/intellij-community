@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _Value: TypeAlias = str | bytes | bool | int | Decimal | datetime | _ArgumentMapping | list[_Value] | None
 _ArgumentMapping: TypeAlias = Mapping[str, _Value]

@@ -1,8 +1,7 @@
 import abc
 from collections.abc import Callable
 from datetime import datetime, timedelta, tzinfo
-from typing import ClassVar, TypeVar
-from typing_extensions import ParamSpec
+from typing import ClassVar, ParamSpec, TypeVar
 
 ZERO: timedelta
 

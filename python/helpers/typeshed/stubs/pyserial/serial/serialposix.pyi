@@ -20,12 +20,7 @@ if sys.platform == "linux":
     SER_RS485_RTS_AFTER_SEND: int
     SER_RS485_RX_DURING_TX: int
 
-    class PlatformSpecific(PlatformSpecificBase): ...
-
-elif sys.platform == "cygwin":
-    class PlatformSpecific(PlatformSpecificBase): ...
-
-elif sys.platform == "darwin":
+if sys.platform == "darwin":
     IOSSIOSPEED: int
 
     class PlatformSpecific(PlatformSpecificBase):

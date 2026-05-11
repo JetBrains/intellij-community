@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsItems
 from collections.abc import Callable, Collection, Hashable, Iterable, Mapping, Sequence
-from typing import Any, Generic, Literal, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias, Unpack
+from typing import Any, Generic, Literal, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Unpack
 
 import numpy as np
 from matplotlib.axes import Axes  # type: ignore[import-not-found]

@@ -1,0 +1,16 @@
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
+_winapi.DeregisterEventSource
+_winapi.EVENTLOG_AUDIT_FAILURE
+_winapi.EVENTLOG_AUDIT_SUCCESS
+_winapi.EVENTLOG_ERROR_TYPE
+_winapi.EVENTLOG_INFORMATION_TYPE
+_winapi.EVENTLOG_SUCCESS
+_winapi.EVENTLOG_WARNING_TYPE
+_winapi.GetOEMCP
+_winapi.RegisterEventSource
+_winapi.ReportEvent
+asyncio.windows_events.IocpProactor.finish_socket_func
+winreg.DeleteTree

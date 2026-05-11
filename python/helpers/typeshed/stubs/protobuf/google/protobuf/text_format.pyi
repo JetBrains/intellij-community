@@ -1,7 +1,6 @@
 from _typeshed import SupportsWrite
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, TypeVar
 
 from .descriptor import FieldDescriptor
 from .descriptor_pool import DescriptorPool

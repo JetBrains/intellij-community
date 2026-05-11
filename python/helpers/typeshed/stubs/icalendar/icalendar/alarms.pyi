@@ -1,5 +1,5 @@
 import datetime
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from .cal import Alarm, Event, Todo
 from .error import (

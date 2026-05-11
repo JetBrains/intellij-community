@@ -2,8 +2,8 @@ import optparse
 from _typeshed import StrPath, SupportsWrite
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from re import Pattern
-from typing import Any, Final, Literal, TypeVar
-from typing_extensions import TypeAlias, deprecated
+from typing import Any, Final, Literal, TypeAlias, TypeVar
+from typing_extensions import deprecated
 
 from docutils import ApplicationError, DataError, nodes
 from docutils.frontend import Values

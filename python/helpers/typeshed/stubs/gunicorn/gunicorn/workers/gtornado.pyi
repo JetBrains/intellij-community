@@ -1,6 +1,5 @@
 from types import FrameType
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from gunicorn.workers.base import Worker
 

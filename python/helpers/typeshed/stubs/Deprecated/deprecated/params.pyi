@@ -1,7 +1,6 @@
 from collections.abc import Callable, Iterable
 from inspect import Signature
-from typing import Any, TypeVar
-from typing_extensions import ParamSpec
+from typing import Any, ParamSpec, TypeVar
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")

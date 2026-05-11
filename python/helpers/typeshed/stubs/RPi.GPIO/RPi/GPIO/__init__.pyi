@@ -1,6 +1,5 @@
 from collections.abc import Callable
-from typing import Final, Literal, TypedDict, type_check_only
-from typing_extensions import TypeAlias
+from typing import Final, Literal, TypeAlias, TypedDict, type_check_only
 
 @type_check_only
 class _RPi_Info(TypedDict):

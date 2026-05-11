@@ -116,7 +116,7 @@ class Transaction(Resource):
     @staticmethod
     def update_details(transaction_id, params=None): ...
     @staticmethod
-    def void(transaction_id): ...
+    def void(transaction_id, params=None): ...
     @staticmethod
     def create(params): ...
     @staticmethod
@@ -141,6 +141,7 @@ class Transaction(Resource):
     tax_amount: Decimal | None
     discount_amount: Decimal | None
     shipping_amount: Decimal | None
+    surcharge_amount: Decimal | None
     billing_details: Address
     credit_card_details: CreditCard
     packages: list[PackageDetails]

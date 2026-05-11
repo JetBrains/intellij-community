@@ -1,18 +1,19 @@
 # Type checkers that we test our stubs against. These should always
 # be pinned to a specific version to make failure reproducible.
-mypy==1.20.0
-pyright==1.1.408
+mypy==2.0.0
+pyright==1.1.409
 
 # Libraries used by our various scripts.
 aiohttp==3.13.5
-grpcio-tools>=1.76.0 # For grpc_tools.protoc
-mypy-protobuf==5.0.0
+grpcio-tools>=1.76.0; python_version < "3.15" # For grpc_tools.protoc
+mypy-protobuf==5.0.0; python_version < "3.15"
 packaging==26.0
 pathspec>=1.1.1
 pre-commit
-# Required by create_baseline_stubs.py. Must match .pre-commit-config.yaml.
+# Required by create_baseline_stubs.py.
+# stubdefaulter depends on libcst, which does not yet install cleanly on Python 3.15.
 ruff==0.15.8
-stubdefaulter==0.1.0
+stubdefaulter==0.1.0; python_version < "3.15"
 termcolor>=2.3
 tomli==2.4.1; python_version < "3.11"
 tomlkit==0.14.0

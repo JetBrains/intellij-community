@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Mapping
-from typing import Any, Final, Generic, TypeVar, overload
-from typing_extensions import ParamSpec, Self
+from typing import Any, Final, Generic, ParamSpec, TypeVar, overload
+from typing_extensions import Self
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")

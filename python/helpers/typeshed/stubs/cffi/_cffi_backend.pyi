@@ -2,8 +2,8 @@ import sys
 import types
 from _typeshed import Incomplete, ReadableBuffer, WriteableBuffer
 from collections.abc import Callable, Hashable
-from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeVar, final, overload, type_check_only
-from typing_extensions import Self, TypeAlias, disjoint_base
+from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, final, overload, type_check_only
+from typing_extensions import Self, disjoint_base
 
 _T = TypeVar("_T")
 
@@ -68,7 +68,7 @@ class _CDataBase:
     def __complex__(self) -> complex: ...
     def __delitem__(self, other, /) -> None: ...
     def __dir__(self): ...
-    def __enter__(self): ...
+    def __enter__(self) -> Self: ...
     def __eq__(self, other, /): ...
     def __exit__(
         self, type: type[BaseException] | None, value: BaseException | None, traceback: types.TracebackType | None, /

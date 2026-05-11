@@ -4,8 +4,8 @@ from _typeshed import SupportsGetItem, SupportsItems, SupportsWrite
 # as a type annotation or type alias.
 from builtins import str as _str
 from collections.abc import Iterator
-from typing import Any, Final, Literal
-from typing_extensions import LiteralString, Self, TypeAlias
+from typing import Any, Final, Literal, TypeAlias
+from typing_extensions import LiteralString, Self
 
 # Custom type helpers
 _ColorModeType: TypeAlias = Literal[0, 8, 16, 256, 16777215]

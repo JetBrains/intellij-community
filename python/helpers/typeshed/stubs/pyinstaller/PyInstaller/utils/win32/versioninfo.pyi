@@ -1,7 +1,6 @@
 from _typeshed import SliceableBuffer, Unused
 from collections.abc import Sequence
-from typing import Any, Protocol, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, type_check_only
 
 _FourIntSequence: TypeAlias = Sequence[int]
 _TwoIntSequence: TypeAlias = Sequence[int]

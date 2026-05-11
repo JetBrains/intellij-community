@@ -421,7 +421,7 @@ class TemporaryDirectory(Generic[AnyStr]):
             *,
             delete: bool = True,
         ) -> None: ...
-    elif sys.version_info >= (3, 10):
+    else:
         @overload
         def __init__(
             self: TemporaryDirectory[str],
@@ -437,18 +437,6 @@ class TemporaryDirectory(Generic[AnyStr]):
             prefix: bytes | None = None,
             dir: BytesPath | None = None,
             ignore_cleanup_errors: bool = False,
-        ) -> None: ...
-    else:
-        @overload
-        def __init__(
-            self: TemporaryDirectory[str], suffix: str | None = None, prefix: str | None = None, dir: StrPath | None = None
-        ) -> None: ...
-        @overload
-        def __init__(
-            self: TemporaryDirectory[bytes],
-            suffix: bytes | None = None,
-            prefix: bytes | None = None,
-            dir: BytesPath | None = None,
         ) -> None: ...
 
     def cleanup(self) -> None: ...

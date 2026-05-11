@@ -2,8 +2,7 @@ import sys
 
 if sys.platform == "darwin":
     from collections.abc import Callable
-    from typing import Final, TypeVar
-    from typing_extensions import ParamSpec
+    from typing import Final, ParamSpec, TypeVar
 
     from psutil._common import (
         AccessDenied as AccessDenied,

@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
-from typing import NoReturn
-from typing_extensions import TypeAlias
+from typing import NoReturn, TypeAlias
 
 from authlib.oauth2.auth import ClientAuth, TokenAuth
 from authlib.oauth2.client import OAuth2Client as _OAuth2Client

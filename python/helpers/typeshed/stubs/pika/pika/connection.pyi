@@ -125,10 +125,11 @@ class Parameters:
 
 class ConnectionParameters(Parameters):
     __slots__ = ()
+
     def __init__(
         self,
         host: str = ...,
-        port: int | str = ...,
+        port: int = ...,
         virtual_host: str = ...,
         credentials: _Credentials = ...,
         channel_max: int = ...,

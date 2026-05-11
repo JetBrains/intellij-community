@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 from weakref import ReferenceType
 
+from reportlab.lib.colors import Color
 from reportlab.pdfbase.pdfdoc import PDFDictionary, PDFObject, PDFStream
 
 __all__ = ("AcroForm",)
@@ -36,6 +37,8 @@ class AcroForm(PDFObject):
     extras: dict[Incomplete, Incomplete]
     def __init__(self, canv, **kwds) -> None: ...
     @property
+    def useDefault(self) -> object: ...
+    @property
     def canv(self) -> ReferenceType[Incomplete]: ...
     def fontRef(self, f) -> str: ...
     def format(self, doc) -> bytes: ...
@@ -51,7 +54,7 @@ class AcroForm(PDFObject):
         fillColor=None,
         borderColor=None,
         textColor=None,
-        borderWidth: int = 1,
+        borderWidth: int | None = None,
         borderStyle: str = "solid",
         size: int = 20,
         dashLen: int = 3,
@@ -61,8 +64,10 @@ class AcroForm(PDFObject):
     def zdMark(self, c, size, ds, iFontName) -> str: ...
     def getRef(self, obj): ...
     def getRefStr(self, obj) -> str: ...
-    @staticmethod
-    def stdColors(t, b, f) -> tuple[Incomplete, Incomplete, Incomplete]: ...
+    def setDefault(self, name: str, value: Color | float | None) -> None: ...
+    def getDefaults(
+        self, textColor, borderColor, fillColor, borderWidth
+    ) -> tuple[Incomplete, Incomplete, Incomplete, Incomplete]: ...
     @staticmethod
     def varyColors(key, t, b, f) -> tuple[Incomplete, Incomplete, Incomplete]: ...
     def checkForceBorder(
@@ -73,10 +78,10 @@ class AcroForm(PDFObject):
         checked: bool = False,
         buttonStyle: str = "check",
         shape: str = "square",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         size: int = 20,
         x: int = 0,
@@ -95,10 +100,10 @@ class AcroForm(PDFObject):
         selected: bool = False,
         buttonStyle: str = "circle",
         shape: str = "circle",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         size: int = 20,
         x: int = 0,
@@ -123,7 +128,7 @@ class AcroForm(PDFObject):
         fillColor=None,
         borderColor=None,
         textColor=None,
-        borderWidth: int = 1,
+        borderWidth: int | None = None,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -138,10 +143,10 @@ class AcroForm(PDFObject):
     def textfield(
         self,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -161,10 +166,10 @@ class AcroForm(PDFObject):
     def listbox(
         self,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -185,10 +190,10 @@ class AcroForm(PDFObject):
     def choice(
         self,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -212,10 +217,10 @@ class AcroForm(PDFObject):
         checked: bool = False,
         buttonStyle: str = "check",
         shape: str = "square",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         size: int = 20,
         x: int = 0,
@@ -234,10 +239,10 @@ class AcroForm(PDFObject):
         selected: bool = False,
         buttonStyle: str = "circle",
         shape: str = "circle",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         size: int = 20,
         x: int = 0,
@@ -253,10 +258,10 @@ class AcroForm(PDFObject):
         self,
         *,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -276,10 +281,10 @@ class AcroForm(PDFObject):
         self,
         *,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,
@@ -299,10 +304,10 @@ class AcroForm(PDFObject):
         self,
         *,
         value: str = "",
-        fillColor=None,
-        borderColor=None,
-        textColor=None,
-        borderWidth: int = 1,
+        fillColor=...,
+        borderColor=...,
+        textColor=...,
+        borderWidth: int = ...,
         borderStyle: str = "solid",
         width: int = 120,
         height: int = 36,

@@ -3,8 +3,8 @@ from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cached_property
 from json.decoder import JSONDecoder
-from typing import Any, ClassVar, Literal, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import Never, Required, TypeAlias, deprecated
+from typing import Any, ClassVar, Literal, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Never, Required, deprecated
 from urllib.request import Request, _DataType
 from xml.etree import ElementTree as ET
 

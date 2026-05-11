@@ -2,8 +2,7 @@ from abc import abstractmethod
 from collections.abc import Callable, Iterable
 from threading import local
 from types import ModuleType
-from typing import Literal, NewType
-from typing_extensions import TypeAlias
+from typing import Literal, NewType, TypeAlias
 
 from fanstatic.compiler import Compiler, Minifier
 

@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from logging import Logger
-from typing import Final, Literal
-from typing_extensions import Self, TypeAlias
+from typing import Final, Literal, TypeAlias
+from typing_extensions import Self
 
 _SampledTrue: TypeAlias = Literal[True, "1", 1]
 _SampledFalse: TypeAlias = Literal[False, "0", 0]

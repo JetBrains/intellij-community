@@ -1,7 +1,6 @@
 from _typeshed import SupportsWrite
 from collections.abc import Generator
-from typing import Any, Literal
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from . import base
 

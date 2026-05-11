@@ -3,8 +3,8 @@ from _weakref import getweakrefcount as getweakrefcount, getweakrefs as getweakr
 from _weakrefset import WeakSet as WeakSet
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from types import GenericAlias
-from typing import Any, ClassVar, Generic, TypeVar, final, overload
-from typing_extensions import ParamSpec, Self, disjoint_base
+from typing import Any, ClassVar, Generic, ParamSpec, TypeVar, final, overload
+from typing_extensions import Self, disjoint_base
 
 __all__ = [
     "ref",

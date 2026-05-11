@@ -1,6 +1,5 @@
 from collections.abc import Collection, Mapping
-from typing import Any, Literal
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from networkx._typing import Array1D, Array2D, ArrayLike1D, Seed

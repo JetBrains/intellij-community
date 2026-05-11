@@ -1,7 +1,6 @@
 from collections.abc import Collection, Sequence
 from pathlib import Path
-from typing import Generic, Literal, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Generic, Literal, TypeAlias, TypedDict, TypeVar, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt

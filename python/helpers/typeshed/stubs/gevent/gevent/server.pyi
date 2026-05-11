@@ -1,8 +1,7 @@
 from _socket import _Address as _StrictAddress
 from _typeshed import ReadableBuffer, StrOrBytesPath
 from collections.abc import Callable
-from typing import Any, ClassVar, TypedDict, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, TypeAlias, TypedDict, overload, type_check_only
 
 from gevent.baseserver import BaseServer, _Spawner
 from gevent.socket import socket as _GeventSocket

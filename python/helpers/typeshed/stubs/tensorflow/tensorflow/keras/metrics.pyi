@@ -2,8 +2,8 @@ from _typeshed import Incomplete
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
-from typing import Any, Literal, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Literal, TypeAlias, type_check_only
+from typing_extensions import Self
 
 import tensorflow as tf
 from tensorflow import Operation, Tensor

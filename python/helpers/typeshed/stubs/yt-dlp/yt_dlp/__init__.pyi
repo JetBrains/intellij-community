@@ -105,7 +105,7 @@ class _Params(TypedDict, total=False):
     listformats: bool | None
     outtmpl: str | Mapping[str, str] | None
     outtmpl_na_placeholder: str | None
-    paths: str | None
+    paths: dict[str, str] | None
     restrictfilenames: bool | None
     windowsfilenames: bool | None
     ignoreerrors: bool | Literal["only_download"] | None

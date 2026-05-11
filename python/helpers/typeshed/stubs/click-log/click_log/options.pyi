@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Callable
-from typing import Any, TypeVar
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, TypeVar
 
 import click
 

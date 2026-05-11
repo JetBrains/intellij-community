@@ -2,8 +2,8 @@ import re
 from _io import BytesIO, StringIO
 from _typeshed import Incomplete, ReadableBuffer, SupportsRead
 from collections.abc import Callable, Iterable
-from typing import Any, AnyStr, Generic, Literal, TypeVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import Any, AnyStr, Generic, Literal, TypeAlias, TypeVar, overload
+from typing_extensions import Self
 
 from webencodings import Encoding
 

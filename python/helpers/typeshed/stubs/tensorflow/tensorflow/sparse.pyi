@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from abc import ABCMeta
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from tensorflow import Tensor, TensorShape
 from tensorflow._aliases import TensorCompatible

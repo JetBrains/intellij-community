@@ -1,12 +1,10 @@
 import enum
-import sre_compile
-import sre_constants
 import sys
 from _typeshed import MaybeNone, ReadableBuffer
 from collections.abc import Callable, Iterator, Mapping
 from types import GenericAlias
-from typing import Any, AnyStr, Final, Generic, Literal, TypeVar, final, overload
-from typing_extensions import TypeAlias, deprecated
+from typing import Any, AnyStr, Final, Generic, Literal, TypeAlias, TypeVar, final, overload
+from typing_extensions import deprecated
 
 __all__ = [
     "match",
@@ -38,6 +36,8 @@ __all__ = [
     "Match",
     "Pattern",
 ]
+if sys.version_info >= (3, 15):
+    __all__ += ["prefixmatch"]
 if sys.version_info < (3, 13):
     __all__ += ["template"]
 
@@ -46,8 +46,6 @@ if sys.version_info >= (3, 11):
 
 if sys.version_info >= (3, 13):
     __all__ += ["PatternError"]
-
-    PatternError = sre_constants.error
 
 _T = TypeVar("_T")
 
@@ -60,6 +58,9 @@ class error(Exception):
     lineno: int
     colno: int
     def __init__(self, msg: str, pattern: str | bytes | None = None, pos: int | None = None) -> None: ...
+
+if sys.version_info >= (3, 13):
+    PatternError = error
 
 @final
 class Match(Generic[AnyStr]):
@@ -139,6 +140,9 @@ class Pattern(Generic[AnyStr]):
     def match(self: Pattern[bytes], string: ReadableBuffer, pos: int = 0, endpos: int = sys.maxsize) -> Match[bytes] | None: ...
     @overload
     def match(self, string: AnyStr, pos: int = 0, endpos: int = sys.maxsize) -> Match[AnyStr] | None: ...
+    if sys.version_info >= (3, 15):
+        prefixmatch = match
+
     @overload
     def fullmatch(self: Pattern[str], string: str, pos: int = 0, endpos: int = sys.maxsize) -> Match[str] | None: ...
     @overload
@@ -199,23 +203,23 @@ class Pattern(Generic[AnyStr]):
 # ----- re variables and constants -----
 
 class RegexFlag(enum.IntFlag):
-    A = sre_compile.SRE_FLAG_ASCII
+    A = 256
     ASCII = A
-    DEBUG = sre_compile.SRE_FLAG_DEBUG
-    I = sre_compile.SRE_FLAG_IGNORECASE
+    DEBUG = 128
+    I = 2
     IGNORECASE = I
-    L = sre_compile.SRE_FLAG_LOCALE
+    L = 4
     LOCALE = L
-    M = sre_compile.SRE_FLAG_MULTILINE
+    M = 8
     MULTILINE = M
-    S = sre_compile.SRE_FLAG_DOTALL
+    S = 16
     DOTALL = S
-    X = sre_compile.SRE_FLAG_VERBOSE
+    X = 64
     VERBOSE = X
-    U = sre_compile.SRE_FLAG_UNICODE
+    U = 32
     UNICODE = U
     if sys.version_info < (3, 13):
-        T = sre_compile.SRE_FLAG_TEMPLATE
+        T = 1
         TEMPLATE = T
     if sys.version_info >= (3, 11):
         NOFLAG = 0
@@ -261,6 +265,13 @@ def search(pattern: bytes | Pattern[bytes], string: ReadableBuffer, flags: _Flag
 def match(pattern: str | Pattern[str], string: str, flags: _FlagsType = 0) -> Match[str] | None: ...
 @overload
 def match(pattern: bytes | Pattern[bytes], string: ReadableBuffer, flags: _FlagsType = 0) -> Match[bytes] | None: ...
+
+if sys.version_info >= (3, 15):
+    @overload
+    def prefixmatch(pattern: str | Pattern[str], string: str, flags: _FlagsType = 0) -> Match[str] | None: ...
+    @overload
+    def prefixmatch(pattern: bytes | Pattern[bytes], string: ReadableBuffer, flags: _FlagsType = 0) -> Match[bytes] | None: ...
+
 @overload
 def fullmatch(pattern: str | Pattern[str], string: str, flags: _FlagsType = 0) -> Match[str] | None: ...
 @overload
@@ -307,8 +318,5 @@ def escape(pattern: AnyStr) -> AnyStr: ...
 def purge() -> None: ...
 
 if sys.version_info < (3, 13):
-    if sys.version_info >= (3, 11):
-        @deprecated("Deprecated since Python 3.11; removed in Python 3.13. Use `re.compile()` instead.")
-        def template(pattern: AnyStr | Pattern[AnyStr], flags: _FlagsType = 0) -> Pattern[AnyStr]: ...  # undocumented
-    else:
-        def template(pattern: AnyStr | Pattern[AnyStr], flags: _FlagsType = 0) -> Pattern[AnyStr]: ...  # undocumented
+    @deprecated("Deprecated since Python 3.11; removed in Python 3.13. Use `re.compile()` instead.")
+    def template(pattern: AnyStr | Pattern[AnyStr], flags: _FlagsType = 0) -> Pattern[AnyStr]: ...  # undocumented

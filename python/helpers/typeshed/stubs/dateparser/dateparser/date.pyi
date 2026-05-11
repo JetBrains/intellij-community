@@ -3,8 +3,7 @@ from _typeshed import Incomplete
 from collections import OrderedDict
 from collections.abc import Callable, Iterable, Iterator, Set as AbstractSet
 from datetime import date, datetime, tzinfo
-from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias, TypeVar, overload, type_check_only
 
 from dateparser.conf import Settings
 from dateparser.languages.loader import LocaleDataLoader

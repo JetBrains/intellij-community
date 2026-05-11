@@ -1,7 +1,7 @@
 from collections.abc import Callable, Generator, Iterable, Sequence
 from queue import Queue
 from threading import Event as _UninterruptibleEvent
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from ._canonical_names import all_modifiers as all_modifiers, sided_modifiers as sided_modifiers
 from ._keyboard_event import KEY_DOWN as KEY_DOWN, KEY_UP as KEY_UP, KeyboardEvent as KeyboardEvent

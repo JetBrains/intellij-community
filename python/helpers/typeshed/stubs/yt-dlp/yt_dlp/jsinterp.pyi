@@ -1,8 +1,7 @@
 import collections
 import types
 from collections.abc import Callable, Collection, Iterable, Mapping
-from typing import Any, NoReturn
-from typing_extensions import TypeAlias
+from typing import Any, NoReturn, TypeAlias
 
 from yt_dlp.extractor.common import InfoExtractor
 from yt_dlp.utils._utils import function_with_repr

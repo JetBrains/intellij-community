@@ -2,8 +2,8 @@ from _typeshed import SupportsItems, SupportsRead
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable, Iterator, Sequence
 from datetime import timedelta
-from typing import IO, Any, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import IO, Any, Literal, Protocol, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 from webob._types import AsymmetricProperty, AsymmetricPropertyWithDelete, SymmetricProperty, SymmetricPropertyWithDelete
 from webob.byterange import ContentRange

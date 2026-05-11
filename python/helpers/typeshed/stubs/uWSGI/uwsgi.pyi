@@ -2,8 +2,8 @@ from _typeshed import HasFileno, OptExcInfo, ReadOnlyBuffer
 from _typeshed.wsgi import WSGIApplication
 from collections.abc import Callable
 from types import ModuleType
-from typing import Any, Literal, Protocol, final, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Literal, Protocol, TypeAlias, final, overload, type_check_only
+from typing_extensions import Self
 
 import uwsgidecorators
 

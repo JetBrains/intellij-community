@@ -6,8 +6,8 @@ import _typeshed
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager
-from typing import Any, Final, Generic, Literal, Protocol, TypedDict, TypeVar, final, overload, type_check_only
-from typing_extensions import TypeAlias, deprecated, disjoint_base
+from typing import Any, Final, Generic, Literal, Protocol, TypeAlias, TypedDict, TypeVar, final, overload, type_check_only
+from typing_extensions import deprecated, disjoint_base
 
 import gdb.FrameDecorator
 import gdb.types

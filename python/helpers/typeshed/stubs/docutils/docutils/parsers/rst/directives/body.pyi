@@ -1,6 +1,5 @@
 from collections.abc import Callable
-from typing import ClassVar, Final
-from typing_extensions import TypeAlias
+from typing import ClassVar, Final, TypeAlias
 
 from docutils import nodes
 from docutils.parsers.rst import Directive

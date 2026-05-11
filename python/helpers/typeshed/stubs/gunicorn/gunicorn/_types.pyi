@@ -1,8 +1,8 @@
 ### This .pyi file is a helper for centralized storage types that are reused across different runtime modules. ###
 from _typeshed import FileDescriptor
 from collections.abc import Awaitable, Callable, Iterable, MutableMapping
-from typing import Any
-from typing_extensions import LiteralString, TypeAlias
+from typing import Any, TypeAlias
+from typing_extensions import LiteralString
 
 _StatusType: TypeAlias = str
 _HeadersType: TypeAlias = Iterable[tuple[str, str]]

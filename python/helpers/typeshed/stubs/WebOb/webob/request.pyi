@@ -4,8 +4,8 @@ from _typeshed import OptExcInfo, SupportsKeysAndGetItem, SupportsNoArgReadline,
 from _typeshed.wsgi import WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable, Mapping
 from re import Pattern
-from typing import IO, Any, ClassVar, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import IO, Any, ClassVar, Literal, Protocol, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 from webob._types import AsymmetricProperty, AsymmetricPropertyWithDelete, SymmetricProperty, SymmetricPropertyWithDelete
 from webob.acceptparse import _AcceptCharsetProperty, _AcceptEncodingProperty, _AcceptLanguageProperty, _AcceptProperty

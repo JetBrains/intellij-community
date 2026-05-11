@@ -3,8 +3,7 @@ import sys
 # sys.platform.startswith("aix"):
 if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darwin":
     from collections.abc import Callable
-    from typing import Final, Literal, NamedTuple, TypeVar, overload
-    from typing_extensions import ParamSpec
+    from typing import Final, Literal, NamedTuple, ParamSpec, TypeVar, overload
 
     from psutil._common import (
         NIC_DUPLEX_FULL as NIC_DUPLEX_FULL,

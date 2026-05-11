@@ -1,7 +1,7 @@
 from _typeshed import SupportsKeysAndGetItem
 from collections.abc import Generator, ItemsView, Iterable, KeysView, ValuesView
-from typing import NoReturn, TypeVar, overload
-from typing_extensions import Self, TypeAlias
+from typing import NoReturn, TypeAlias, TypeVar, overload
+from typing_extensions import Self
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")

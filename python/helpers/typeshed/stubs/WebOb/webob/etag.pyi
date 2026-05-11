@@ -1,7 +1,6 @@
 from collections.abc import Collection
 from datetime import datetime
-from typing import Literal
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias
 
 from webob._types import AsymmetricPropertyWithDelete
 from webob.response import Response

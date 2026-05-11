@@ -1,6 +1,5 @@
 from collections.abc import Collection
-from typing import Literal, overload
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias, overload
 
 from ._typing import GeoT
 from .geometry import Point

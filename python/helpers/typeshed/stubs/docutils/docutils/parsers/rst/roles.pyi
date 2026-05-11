@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Final
-from typing_extensions import TypeAlias, deprecated
+from typing import Any, Final, TypeAlias
+from typing_extensions import deprecated
 
 import docutils.parsers.rst.states
 from docutils import nodes

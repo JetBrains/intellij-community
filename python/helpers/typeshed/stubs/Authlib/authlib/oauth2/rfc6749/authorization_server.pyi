@@ -1,6 +1,6 @@
 from collections.abc import Callable, Collection, Mapping
-from typing import overload
-from typing_extensions import TypeAlias, deprecated
+from typing import TypeAlias, overload
+from typing_extensions import deprecated
 
 from authlib.oauth2 import JsonRequest, OAuth2Error, OAuth2Request
 from authlib.oauth2.rfc6749 import BaseGrant, ClientMixin

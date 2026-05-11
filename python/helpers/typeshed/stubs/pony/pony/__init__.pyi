@@ -1,5 +1,4 @@
-from typing import Final, Literal
-from typing_extensions import TypeAlias
+from typing import Final, Literal, TypeAlias
 
 _Mode: TypeAlias = Literal[
     "GAE-LOCAL", "GAE-SERVER", "MOD_WSGI", "INTERACTIVE", "FCGI-FLUP", "UWSGI", "FLASK", "CHERRYPY", "BOTTLE", "UNKNOWN"

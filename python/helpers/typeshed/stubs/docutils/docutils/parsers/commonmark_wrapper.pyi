@@ -1,5 +1,4 @@
-from typing import Literal
-from typing_extensions import TypeAlias
+from typing import Literal, TypeAlias
 
 from docutils import parsers
 

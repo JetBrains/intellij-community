@@ -10,8 +10,7 @@ from asyncio import AbstractEventLoop
 from collections.abc import Callable
 from concurrent.futures import Executor
 from functools import _SingleDispatchCallable
-from typing import Any, Literal, overload
-from typing_extensions import TypeAlias
+from typing import Any, Literal, TypeAlias, overload
 
 from ..base import AiofilesContextManager
 from .binary import AsyncBufferedIOBase, AsyncBufferedReader, AsyncFileIO, AsyncIndirectBufferedIOBase, _UnknownAsyncBinaryIO

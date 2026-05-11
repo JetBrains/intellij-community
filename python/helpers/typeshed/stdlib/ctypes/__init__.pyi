@@ -26,8 +26,8 @@ from _ctypes import (
 from _typeshed import StrPath, SupportsBool, SupportsLen
 from ctypes._endian import BigEndianStructure as BigEndianStructure, LittleEndianStructure as LittleEndianStructure
 from types import GenericAlias
-from typing import Any, ClassVar, Final, Generic, Literal, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Any, ClassVar, Final, Generic, Literal, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self, deprecated
 
 if sys.platform == "win32":
     from _ctypes import FormatError as FormatError, get_last_error as get_last_error, set_last_error as set_last_error
@@ -166,15 +166,12 @@ c_buffer = create_string_buffer
 
 def create_unicode_buffer(init: int | str, size: int | None = None) -> Array[c_wchar]: ...
 
-if sys.version_info >= (3, 13):
+if sys.version_info < (3, 15):
     @deprecated("Deprecated since Python 3.13; will be removed in Python 3.15.")
     def SetPointerType(pointer: type[_Pointer[Any]], cls: _CTypeBaseType) -> None: ...
-    @deprecated("Soft deprecated since Python 3.13. Use multiplication instead.")
-    def ARRAY(typ: _CT, len: int) -> Array[_CT]: ...
 
-else:
-    def SetPointerType(pointer: type[_Pointer[Any]], cls: _CTypeBaseType) -> None: ...
-    def ARRAY(typ: _CT, len: int) -> Array[_CT]: ...
+@deprecated("Soft deprecated since Python 3.13. Use multiplication instead.")
+def ARRAY(typ: _CT, len: int) -> Array[_CT]: ...
 
 if sys.platform == "win32":
     def DllCanUnloadNow() -> int: ...

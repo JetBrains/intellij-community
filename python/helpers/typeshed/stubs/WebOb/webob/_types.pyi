@@ -1,5 +1,4 @@
-from typing import Protocol, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias
+from typing import Protocol, TypeAlias, TypeVar, overload, type_check_only
 
 _T = TypeVar("_T")
 _GetterReturnType_co = TypeVar("_GetterReturnType_co", covariant=True)

@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Collection
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from authlib.oauth2 import OAuth2Request
 from authlib.oauth2.rfc6749 import ClientMixin

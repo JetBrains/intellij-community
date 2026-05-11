@@ -2,8 +2,7 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
 from logging import Logger
-from typing import Any, Protocol, type_check_only
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TypeAlias, type_check_only
 
 # from fonttools.ttLib.ttGlyphSet
 @type_check_only

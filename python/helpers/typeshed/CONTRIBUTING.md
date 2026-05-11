@@ -366,10 +366,6 @@ Features from the `typing` module that are not present in all
 supported Python versions must be imported from `typing_extensions`
 instead in typeshed stubs. This currently affects:
 
-- `TypeAlias` (new in Python 3.10)
-- `Concatenate` (new in Python 3.10)
-- `ParamSpec` (new in Python 3.10)
-- `TypeGuard` (new in Python 3.10)
 - `Self` (new in Python 3.11)
 - `Never` (new in Python 3.11)
 - `LiteralString` (new in Python 3.11)

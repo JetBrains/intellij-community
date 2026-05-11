@@ -1,6 +1,5 @@
 from collections.abc import Callable
-from typing import Any
-from typing_extensions import TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 import numpy as np
 

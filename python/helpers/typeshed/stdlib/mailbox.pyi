@@ -5,8 +5,8 @@ from _typeshed import StrPath, SupportsItems, SupportsNoArgReadline, SupportsRea
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from types import GenericAlias, TracebackType
-from typing import Any, Generic, Literal, Protocol, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Generic, Literal, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self
 
 __all__ = [
     "Mailbox",

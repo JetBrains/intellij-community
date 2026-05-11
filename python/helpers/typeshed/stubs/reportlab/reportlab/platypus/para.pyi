@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Mapping
-from typing import Any, Final, Literal, Protocol, TypedDict, TypeVar, overload, type_check_only
-from typing_extensions import TypeAlias, Unpack
+from typing import Any, Final, Literal, Protocol, TypeAlias, TypedDict, TypeVar, overload, type_check_only
+from typing_extensions import Unpack
 
 from reportlab.lib.colors import Color
 from reportlab.lib.styles import ParagraphStyle, PropertySet, StyleSheet1

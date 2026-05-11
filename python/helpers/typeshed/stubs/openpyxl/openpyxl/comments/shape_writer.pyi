@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
 from ..xml._functions_overloads import _lxml_Element, _ParentElement
 

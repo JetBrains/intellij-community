@@ -2,8 +2,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time
 from itertools import repeat
 from re import Pattern
-from typing import Any, overload
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias, overload
 
 _CustomTagsParser: TypeAlias = Callable[[str, int, dict[str, Any], dict[str, Any]], object]
 

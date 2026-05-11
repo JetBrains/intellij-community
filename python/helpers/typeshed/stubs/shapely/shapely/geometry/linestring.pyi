@@ -1,6 +1,6 @@
 from collections.abc import Iterable
-from typing import Literal, SupportsFloat, SupportsIndex
-from typing_extensions import Self, TypeAlias
+from typing import Literal, SupportsFloat, SupportsIndex, TypeAlias
+from typing_extensions import Self
 
 from .._typing import ArrayLikeSeq
 from ..constructive import BufferJoinStyle

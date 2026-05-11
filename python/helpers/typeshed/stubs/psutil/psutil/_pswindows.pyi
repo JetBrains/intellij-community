@@ -4,8 +4,7 @@ if sys.platform == "win32":
     import enum
     from collections.abc import Callable, Iterable, Iterator
     from signal import Signals
-    from typing import Final, Literal, TypedDict, TypeVar, overload, type_check_only
-    from typing_extensions import ParamSpec
+    from typing import Final, Literal, ParamSpec, TypedDict, TypeVar, overload, type_check_only
 
     from psutil import _psutil_windows
     from psutil._common import (

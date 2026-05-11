@@ -4,8 +4,8 @@ from _typeshed import Incomplete
 from abc import abstractmethod
 from collections import Counter
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, TypeVar, overload, type_check_only
-from typing_extensions import Self, TypeAlias, deprecated
+from typing import Any, ClassVar, Final, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Self, deprecated
 
 from docutils.frontend import Values
 from docutils.transforms import Transform, Transformer

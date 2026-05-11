@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Literal, NoReturn, Protocol, type_check_only
-from typing_extensions import Self, TypeAlias
+from typing import Any, Literal, NoReturn, Protocol, TypeAlias, type_check_only
+from typing_extensions import Self
 
 from reportlab.lib.colors import Color
 from reportlab.lib.styles import ListStyle, ParagraphStyle, PropertySet
