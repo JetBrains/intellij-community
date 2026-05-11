@@ -309,7 +309,6 @@ e:git4idea.fetch.GitFetchTagsMode
 - s:values():git4idea.fetch.GitFetchTagsMode[]
 f:git4idea.i18n.GitBundle
 - sf:BUNDLE:java.lang.String
-- s:getString(java.lang.String):java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:git4idea.push.GitPushTagMode

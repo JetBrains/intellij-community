@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
-import com.intellij.dvcs.MultiRootMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ArrayUtilRt;
 import git4idea.GitLocalBranch;
@@ -36,7 +34,6 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
-import static git4idea.GitNotificationIdsHolder.FETCH_DETAILS;
 import static git4idea.GitNotificationIdsHolder.FETCH_ERROR;
 import static git4idea.GitNotificationIdsHolder.FETCH_SUCCESS;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
@@ -187,6 +184,11 @@ public class GitFetcher {
     return myErrors;
   }
 
+
+  /**
+   * @deprecated Use {@link GitFetchSupport}
+   */
+  @Deprecated
   public static void displayFetchResult(@NotNull Project project,
                                         @NotNull GitFetchResult result,
                                         @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
@@ -212,49 +214,6 @@ public class GitFetcher {
       VcsNotifier.getInstance(project)
         .notifyError(FETCH_ERROR, GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
     }
-  }
-
-  /**
-   * Fetches all specified roots.
-   * Once a root has failed, stops and displays the notification.
-   * If needed, displays the successful notification at the end.
-   *
-   * @param roots                  roots to fetch.
-   * @param errorNotificationTitle if specified, this notification title will be used instead of the standard "Fetch failed".
-   *                               Use this when fetch is a part of a compound process.
-   * @param notifySuccess          if set to {@code true} successful notification will be displayed.
-   * @return true if all fetches were successful, false if at least one fetch failed.
-   * @deprecated Use {@link GitFetchSupport}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
-                                     @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
-                                     boolean notifySuccess) {
-    MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), false, true);
-    for (GitRepository repository : roots) {
-      LOG.info("fetching " + repository);
-      GitFetchResult result = fetch(repository);
-      String ai = result.getAdditionalInfo();
-      if (!StringUtil.isEmptyOrSpaces(ai)) {
-        additionalInfo.append(repository.getRoot(), ai);
-      }
-      if (!result.isSuccess()) {
-        Collection<Exception> errors = new ArrayList<>(getErrors());
-        errors.addAll(result.getErrors());
-        displayFetchResult(myProject, result, errorNotificationTitle, errors);
-        return false;
-      }
-    }
-    if (notifySuccess) {
-      VcsNotifier.getInstance(myProject).notifySuccess(FETCH_SUCCESS, "", GitBundle.message("notification.content.fetched.successfully"));
-    }
-
-    if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject)
-        .notifyMinorInfo(FETCH_DETAILS, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
-    }
-
-    return true;
   }
 
   private static class GitFetchPruneDetector implements GitLineHandlerListener {

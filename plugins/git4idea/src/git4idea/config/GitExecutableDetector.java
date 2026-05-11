@@ -552,14 +552,6 @@ public class GitExecutableDetector {
     return null;
   }
 
-  /**
-   * @deprecated use {@link #getBashExecutablePath(Project, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
-    return getBashExecutablePath(null, gitExecutable);
-  }
-
   static @NotNull List<String> getDependencyPaths(@NotNull String executablePath, @NotNull Boolean isMac) {
     if (isMac && ArrayUtil.contains(executablePath, APPLEGIT_PATHS)) {
       return Arrays.stream(APPLEGIT_DEPENDENCY_PATHS).toList();

@@ -1578,18 +1578,6 @@ e:git4idea.commands.GitSimpleEventDetector$Event
 - sf:UNMERGED_PREVENTING_MERGE:git4idea.commands.GitSimpleEventDetector$Event
 - s:valueOf(java.lang.String):git4idea.commands.GitSimpleEventDetector$Event
 - s:values():git4idea.commands.GitSimpleEventDetector$Event[]
-c:git4idea.commands.GitSimpleHandler
-- git4idea.commands.GitTextHandler
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.GitCommand):V
-- <init>(com.intellij.openapi.project.Project,java.nio.file.Path,git4idea.commands.GitCommand):V
-- p:createProcess(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
-- getStderr():java.lang.String
-- getStdout():java.lang.String
-- ignoreErrorCode(I):V
-- isIgnoredErrorCode(I):Z
-- p:onTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
-- p:processTerminated(I):V
-- run():java.lang.String
 f:git4idea.commands.GitStandardProgressAnalyzer
 - git4idea.commands.GitProgressAnalyzer
 - <init>():V
@@ -1605,7 +1593,6 @@ a:git4idea.commands.GitTextHandler
 - p:createProcess(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
 - pa:processTerminated(I):V
 - setTerminationTimeout(I):V
-- setWithMediator(Z):V
 - p:startHandlingStreams():V
 - p:startProcess():java.lang.Process
 - p:waitForProcess():V
@@ -1799,7 +1786,6 @@ c:git4idea.config.GitExecutableDetector
 - <init>():V
 - clear():V
 - s:getBashExecutablePath(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- s:getBashExecutablePath(java.lang.String):java.lang.String
 - s:getDefaultExecutable():java.lang.String
 - getExecutable(com.intellij.openapi.project.Project,java.nio.file.Path,Z):java.lang.String
 - s:getGitExecutable(com.intellij.openapi.project.Project,java.lang.String):git4idea.config.GitExecutable
@@ -3319,9 +3305,6 @@ f:git4idea.log.GitRefManager
 - setFavorite(com.intellij.vcs.log.VcsRef,Z):V
 f:git4idea.log.GitRefManager$Companion
 - f:getRefType(java.lang.String):com.intellij.vcs.log.VcsRefType
-c:git4idea.log.GitShowCommitInLogAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
 f:git4idea.log.GitWarmupConfigurator
 - com.intellij.ide.warmup.WarmupConfigurator
 - <init>():V
@@ -5147,7 +5130,6 @@ e:git4idea.update.GitFetchResult$Type
 c:git4idea.update.GitFetcher
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,Z):V
 - s:displayFetchResult(com.intellij.openapi.project.Project,git4idea.update.GitFetchResult,java.lang.String,java.util.Collection):V
-- fetchRootsAndNotify(java.util.Collection,java.lang.String,Z):Z
 - getErrors():java.util.Collection
 c:git4idea.update.GitMergeUpdater
 - git4idea.update.GitUpdater
