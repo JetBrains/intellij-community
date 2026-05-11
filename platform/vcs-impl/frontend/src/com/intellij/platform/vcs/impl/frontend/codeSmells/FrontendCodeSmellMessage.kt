@@ -6,41 +6,40 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel.Companion.createRend
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.CodeSmellDto
 import com.intellij.pom.Navigatable
 import com.intellij.util.ui.MessageCategory
 
-internal class FrontendCodeSmellMessage {
-  val type: Int
-  val text: Array<String>
-  val filePath: String
-  val navigatable: Navigatable
-  val exportPrefix: String
+internal class FrontendCodeSmellMessage(
+  val type: Int,
+  val text: Array<String>,
+  val filePath: String,
+  val navigatable: Navigatable,
+  val exportPrefix: String,
   val rendererPrefix: String
-
-  constructor(
-    smell: CodeSmellDto,
-    file: VirtualFile,
-    project: Project
-  ) {
-    this.navigatable = OpenFileDescriptor(project, file, smell.line, smell.column)
-
-    this.type = when (smell.severityName) {
-      "ERROR" -> MessageCategory.ERROR
-      else -> MessageCategory.WARNING
-    }
-
-    this.text = arrayOf(smell.description)
-    this.filePath = smell.filePath
-    this.exportPrefix = createExportPrefix(smell.line + 1)
-    this.rendererPrefix = createRendererPrefix(smell.line + 1, smell.column + 1)
-  }
-}
+)
 
 internal fun convertCodeSmellDtosToMessages(codeSmells: List<CodeSmellDto>, project: Project): List<FrontendCodeSmellMessage> {
   return codeSmells.mapNotNull { smell ->
     val file = smell.fileId.virtualFile() ?: return@mapNotNull null
-    FrontendCodeSmellMessage(smell, file, project)
+
+    val type = when (smell.severityName) {
+      "ERROR" -> MessageCategory.ERROR
+      else -> MessageCategory.WARNING
+    }
+
+    // the logic behind the prefix creation is taken from the original (monolithic) implementation in
+    // com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl.showCodeSmellErrors
+    val exportPrefix = createExportPrefix(smell.line + 1)
+    val rendererPrefix = createRendererPrefix(smell.line + 1, smell.column + 1)
+
+    FrontendCodeSmellMessage(
+      navigatable = OpenFileDescriptor(project, file, smell.line, smell.column),
+      type = type,
+      text = arrayOf(smell.description),
+      filePath = smell.filePath,
+      exportPrefix = exportPrefix,
+      rendererPrefix = rendererPrefix
+    )
   }
 }
