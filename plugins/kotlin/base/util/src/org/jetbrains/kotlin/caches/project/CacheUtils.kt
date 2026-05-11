@@ -37,26 +37,6 @@ fun <T> Project.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, pr
     return CachedValuesManager.getManager(this).cache(this, dependencies, classForKey, provider)
 }
 
-@ApiStatus.Internal
-@Deprecated("consider to use WorkspaceModelChangeListener")
-@ApiStatus.ScheduledForRemoval
-fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>, provider: () -> T): T {
-    return cacheByClass(classForKey, ProjectRootModificationTracker.getInstance(this), provider = provider)
-}
-
-/**
- * Note that it uses lambda's class for caching (essentially, anonymous class), which means that all invocations will be cached
- * by the one and the same key.
- * It is encouraged to use explicit class, just for the sake of readability.
- */
-@Suppress("DEPRECATION")
-@ApiStatus.Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated("consider to use WorkspaceModelChangeListener")
-fun <T> Project.cacheInvalidatingOnRootModifications(provider: () -> T): T {
-    return cacheByClassInvalidatingOnRootModifications(provider::class.java, provider)
-}
-
 private fun <T> CachedValuesManager.cache(
     holder: UserDataHolder,
     dependencies: Array<out Any>,
