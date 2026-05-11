@@ -10,10 +10,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,9 +29,11 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.SearchTextField
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.rememberSearchTextFieldState
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.textFieldStyle
@@ -40,16 +41,16 @@ import org.jetbrains.jewel.ui.theme.textFieldStyle
 @Composable
 public fun TextFields(modifier: Modifier = Modifier) {
     VerticallyScrollableContainer(modifier.fillMaxSize()) {
-        Column {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             TextFieldsRows(readOnly = false)
-
-            Spacer(Modifier.height(16.dp))
 
             GroupHeader("Read-only")
 
-            Spacer(Modifier.height(16.dp))
-
             TextFieldsRows(readOnly = true)
+
+            GroupHeader("Custom Types")
+
+            CustomTextFieldsRows()
         }
     }
 }
@@ -132,6 +133,22 @@ private fun TextFieldsRows(readOnly: Boolean) {
                 readOnly = readOnly,
             )
         }
+    }
+}
+
+@Composable
+private fun CustomTextFieldsRows(modifier: Modifier = Modifier) {
+    FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        val searchState = rememberSearchTextFieldState()
+        SearchTextField(state = searchState, modifier = Modifier.width(200.dp), undecorated = false)
+
+        val searchStateWithHistory = rememberSearchTextFieldState()
+        SearchTextField(
+            state = searchStateWithHistory,
+            modifier = Modifier.width(200.dp),
+            history = listOf("Lorem", "Ipsum", "Dolor", "Sit", "Amet"),
+            undecorated = false,
+        )
     }
 }
 

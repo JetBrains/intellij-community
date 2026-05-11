@@ -15,7 +15,7 @@ package org.jetbrains.jewel.ui {
   }
 
   @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DefaultComponentStyling implements org.jetbrains.jewel.ui.ComponentStyling {
-    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle);
+    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle searchTextFieldStyle);
     method public org.jetbrains.jewel.ui.component.styling.CheckboxStyle getCheckboxStyle();
     method public org.jetbrains.jewel.ui.component.styling.ChipStyle getChipStyle();
     method public org.jetbrains.jewel.ui.component.styling.CircularProgressStyle getCircularProgressStyle();
@@ -43,6 +43,7 @@ package org.jetbrains.jewel.ui {
     method public org.jetbrains.jewel.ui.component.styling.RadioButtonStyle getRadioButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.ScrollbarStyle getScrollbarStyle();
     method public org.jetbrains.jewel.ui.component.styling.SearchMatchStyle getSearchMatchStyle();
+    method public org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle getSearchTextFieldStyle();
     method public org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle getSegmentedControlButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle getSegmentedControlStyle();
     method public org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle getSelectableLazyColumnStyle();
@@ -82,6 +83,7 @@ package org.jetbrains.jewel.ui {
     property public org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle;
     property public org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle;
     property public org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle;
+    property public org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle searchTextFieldStyle;
     property public org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle;
     property public org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle;
     property public org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle;
@@ -654,6 +656,21 @@ package org.jetbrains.jewel.ui.component {
   public final class ScrollbarKt {
     method @androidx.compose.runtime.Composable public static void HorizontalScrollbar(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional boolean reverseLayout, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean keepVisible);
     method @androidx.compose.runtime.Composable public static void VerticalScrollbar(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional boolean reverseLayout, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean keepVisible);
+  }
+
+  public final class SearchTextFieldKt {
+    method @androidx.compose.runtime.Composable public static void SearchTextField(org.jetbrains.jewel.ui.component.SearchTextFieldState state, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional boolean readOnly, optional androidx.compose.foundation.text.input.InputTransformation? inputTransformation, optional androidx.compose.ui.text.TextStyle textStyle, optional androidx.compose.foundation.text.KeyboardOptions keyboardOptions, optional androidx.compose.foundation.text.input.KeyboardActionHandler? onKeyboardAction, optional kotlin.jvm.functions.Function2<? super androidx.compose.ui.unit.Density,? super kotlin.jvm.functions.Function0<androidx.compose.ui.text.TextLayoutResult?>,kotlin.Unit>? onTextLayout, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle style, optional org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, optional org.jetbrains.jewel.ui.Outline outline, optional kotlin.jvm.functions.Function0<kotlin.Unit>? placeholder, optional androidx.compose.foundation.text.input.OutputTransformation? outputTransformation, optional boolean undecorated, optional org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupStyle, optional java.util.List<? extends java.lang.CharSequence> history, optional boolean error, optional boolean allowClear, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> fallbackKeyEventHandler);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.ui.component.SearchTextFieldState rememberSearchTextFieldState(optional androidx.compose.foundation.text.input.TextFieldState textFieldState);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.ui.component.SearchTextFieldState rememberSearchTextFieldState(optional String initialText, optional long initialSelection);
+  }
+
+  public final class SearchTextFieldState {
+    method public String getSearchText();
+    method public androidx.compose.foundation.text.input.TextFieldState getTextFieldState();
+    method public boolean processKeyEvent(Object event);
+    method public void setShowSearchHistory(boolean show);
+    property public String searchText;
+    property public androidx.compose.foundation.text.input.TextFieldState textFieldState;
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SegmentedControlButtonData {
@@ -2169,6 +2186,62 @@ package org.jetbrains.jewel.ui.component.styling {
   public final class SearchMatchStyleKt {
     method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.SearchMatchStyle> getLocalSearchMatchStyle();
     property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.SearchMatchStyle> LocalSearchMatchStyle;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SearchTextFieldColors {
+    ctor @KotlinOnly public SearchTextFieldColors(androidx.compose.ui.graphics.Color foreground, androidx.compose.ui.graphics.Color error);
+    property public androidx.compose.ui.graphics.Color error;
+    property public androidx.compose.ui.graphics.Color foreground;
+    field public static final org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors.Companion Companion;
+  }
+
+  public static final class SearchTextFieldColors.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SearchTextFieldIcons {
+    ctor public SearchTextFieldIcons(org.jetbrains.jewel.ui.icon.IconKey searchIcon, org.jetbrains.jewel.ui.icon.IconKey searchHistoryIcon, org.jetbrains.jewel.ui.icon.IconKey clearIcon);
+    method public org.jetbrains.jewel.ui.icon.IconKey getClearIcon();
+    method public org.jetbrains.jewel.ui.icon.IconKey getSearchHistoryIcon();
+    method public org.jetbrains.jewel.ui.icon.IconKey getSearchIcon();
+    property public org.jetbrains.jewel.ui.icon.IconKey clearIcon;
+    property public org.jetbrains.jewel.ui.icon.IconKey searchHistoryIcon;
+    property public org.jetbrains.jewel.ui.icon.IconKey searchIcon;
+    field public static final org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons.Companion Companion;
+  }
+
+  public static final class SearchTextFieldIcons.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SearchTextFieldMetrics {
+    ctor @KotlinOnly public SearchTextFieldMetrics(androidx.compose.foundation.layout.PaddingValues contentPadding, androidx.compose.foundation.layout.PaddingValues popupContentPadding, androidx.compose.ui.unit.Dp spaceBetweenIcons);
+    method public androidx.compose.foundation.layout.PaddingValues getContentPadding();
+    method public androidx.compose.foundation.layout.PaddingValues getPopupContentPadding();
+    property public androidx.compose.foundation.layout.PaddingValues contentPadding;
+    property public androidx.compose.foundation.layout.PaddingValues popupContentPadding;
+    property public androidx.compose.ui.unit.Dp spaceBetweenIcons;
+    field public static final org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics.Companion Companion;
+  }
+
+  public static final class SearchTextFieldMetrics.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SearchTextFieldStyle {
+    ctor public SearchTextFieldStyle(org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors colors, org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics metrics, org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons icons);
+    method public org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors getColors();
+    method public org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons getIcons();
+    method public org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics getMetrics();
+    property public org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors colors;
+    property public org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons icons;
+    property public org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics metrics;
+    field public static final org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle.Companion Companion;
+  }
+
+  public static final class SearchTextFieldStyle.Companion {
+  }
+
+  public final class SearchTextFieldStyleKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle> getLocalSearchTextFieldStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle> LocalSearchTextFieldStyle;
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class SegmentedControlButtonColors {
@@ -4693,6 +4766,7 @@ package org.jetbrains.jewel.ui.theme {
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.RadioButtonStyle getRadioButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ScrollbarStyle getScrollbarStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SearchMatchStyle getSearchMatchStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle getSearchTextFieldStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle getSegmentedControlButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle getSegmentedControlStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle getSelectableLazyColumnStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
@@ -4731,6 +4805,7 @@ package org.jetbrains.jewel.ui.theme {
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.RadioButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.radioButtonStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ScrollbarStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.scrollbarStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SearchMatchStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.searchMatchStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.searchTextFieldStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.segmentedControlButtonStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.segmentedControlStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.selectableLazyColumnStyle;
