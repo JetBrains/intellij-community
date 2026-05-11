@@ -25,7 +25,6 @@ import java.util.zip.ZipOutputStream
 
 object MockLibraryUtilExt {
     @JvmStatic
-    @JvmOverloads
     fun compileJvmLibraryToJar(
         sourcesPath: String,
         jarName: String,
@@ -41,6 +40,32 @@ object MockLibraryUtilExt {
             addSources,
             allowKotlinSources,
             extraOptions,
+            emptyList(),
+            extraClasspath,
+            extraModulepath = listOf(),
+            useJava11,
+        )
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun compileJvmLibraryToJar(
+        sourcesPath: String,
+        jarName: String,
+        addSources: Boolean = false,
+        allowKotlinSources: Boolean = true,
+        extraOptions: List<String> = emptyList(),
+        extraJavacOptions: List<String> = emptyList(),
+        extraClasspath: List<String> = emptyList(),
+        useJava11: Boolean = false,
+    ): File {
+        return MockLibraryUtil.compileJvmLibraryToJar(
+            sourcesPath,
+            jarName,
+            addSources,
+            allowKotlinSources,
+            extraOptions,
+            extraJavacOptions,
             extraClasspath,
             extraModulepath = listOf(),
             useJava11,
@@ -71,6 +96,7 @@ object MockLibraryUtil {
         addSources: Boolean = false,
         allowKotlinSources: Boolean = true,
         extraOptions: List<String> = emptyList(),
+        extraJavacOptions: List<String> = emptyList(),
         extraClasspath: List<String> = emptyList(),
         useJava11: Boolean = false,
     ): File {
@@ -80,6 +106,7 @@ object MockLibraryUtil {
             addSources,
             allowKotlinSources,
             extraOptions,
+            extraJavacOptions,
             extraClasspath,
             extraModulepath = listOf(),
             useJava11
@@ -92,6 +119,7 @@ object MockLibraryUtil {
         addSources: Boolean = false,
         allowKotlinSources: Boolean = true,
         extraOptions: List<String> = emptyList(),
+        extraJavacOptions: List<String> = emptyList(),
         extraClasspath: List<String> = emptyList(),
         extraModulepath: List<String> = emptyList(),
         useJava11: Boolean = false,
@@ -103,6 +131,7 @@ object MockLibraryUtil {
             addSources,
             allowKotlinSources,
             extraOptions,
+            extraJavacOptions,
             extraClasspath,
             extraModulepath,
             useJava11,
@@ -116,6 +145,7 @@ object MockLibraryUtil {
         addSources: Boolean = false,
         allowKotlinSources: Boolean = true,
         extraOptions: List<String> = emptyList(),
+        extraJavacOptions: List<String> = emptyList(),
         extraClasspath: List<String> = emptyList(),
         extraModulepath: List<String> = emptyList(),
         useJava11: Boolean = false,
@@ -157,6 +187,7 @@ object MockLibraryUtil {
                 }
                 add("-encoding")
                 add("utf8")
+                addAll(extraJavacOptions)
             }
 
             val jdkHome = if (useJava11) KtTestUtil.getJdk11Home() else null
