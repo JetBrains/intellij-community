@@ -1,30 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
-import org.jetbrains.kotlin.idea.refactoring.rename.runProcessWithProgressSynchronously
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -47,17 +44,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : SelfTargetingIntention<KtExpression>(
-  KtExpression::class.java,
-  KotlinBundle.messagePointer("convert.to.0", scopeFunction.functionName)
-) {
+sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : PsiBasedModCommandAction<KtExpression>(KtExpression::class.java) {
     enum class ScopeFunction(val functionName: String, val isParameterScope: Boolean) {
         ALSO(functionName = "also", isParameterScope = true),
         APPLY(functionName = "apply", isParameterScope = false),
         RUN(functionName = "run", isParameterScope = false),
         WITH(functionName = "with", isParameterScope = false);
 
-        val receiver = if (isParameterScope) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else "this"
+        val receiver: String = if (isParameterScope) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else "this"
     }
 
     private data class RefactoringTargetAndItsValueExpression(
@@ -70,25 +64,40 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
       val block: KtBlockExpression
     )
 
-    override fun isApplicableTo(element: KtExpression, caretOffset: Int) = tryApplyTo(element, dryRun = true)
+    private data class ConversionData(
+      val firstTarget: PsiElement,
+      val lastTarget: PsiElement,
+      val refactoringTarget: RefactoringTargetAndItsValueExpression,
+      val referencesToReplace: List<KtNameReferenceExpression>,
+    )
 
-    override fun applyTo(element: KtExpression, editor: Editor?) {
-        if (!tryApplyTo(element, dryRun = false)) {
-            val message = RefactoringBundle.getCannotRefactorMessage(
-              JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", text)
-            )
-            CommonRefactoringUtil.showErrorHint(element.project, editor, message, text, null)
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("convert.to.0", scopeFunction.functionName)
+
+    override fun isElementApplicable(element: KtExpression, context: ActionContext): Boolean =
+        prepareConversion(element, greedy = false, collectReferences = false) != null
+
+    override fun getPresentation(context: ActionContext, element: KtExpression): Presentation =
+        Presentation.of(familyName)
+
+    override fun perform(context: ActionContext, element: KtExpression): ModCommand {
+        val conversionData = prepareConversion(element, greedy = true, collectReferences = true)
+            ?: return ModCommand.error(cannotConvertMessage())
+
+        return ModCommand.psiUpdate(element) { _, updater ->
+            applyConversion(conversionData, updater)
         }
     }
 
-    override fun startInWriteAction(): Boolean {
-        return false
-    }
+    private fun cannotConvertMessage(): @NlsContexts.Tooltip String = RefactoringBundle.getCannotRefactorMessage(
+      JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", familyName)
+    )
 
-    private fun KtExpression.childOfBlock(): KtExpression? = PsiTreeUtil.findFirstParent(this) {
-        val parent = it.parent
-        parent is KtBlockExpression || parent is KtValueArgument
-    } as? KtExpression
+    private fun KtExpression.childOfBlock(): KtExpression? =
+        PsiTreeUtil.findFirstParent(this) {
+            val parent = it.parent
+            parent is KtBlockExpression || parent is KtValueArgument
+        } as? KtExpression
 
     private fun KtExpression.tryGetExpressionToApply(referenceName: String): KtExpression? {
         val childOfBlock: KtExpression = childOfBlock() ?: return null
@@ -96,47 +105,57 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         return if (childOfBlock is KtProperty || childOfBlock.isTarget(referenceName)) childOfBlock else null
     }
 
-    private fun tryApplyTo(element: KtExpression, dryRun: Boolean): Boolean {
-
+    private fun prepareConversion(element: KtExpression, greedy: Boolean, collectReferences: Boolean): ConversionData? {
         val invalidElementToRefactoring = when (element) {
             is KtProperty -> !element.isLocal
             is KtCallExpression -> false
             is KtDotQualifiedExpression -> false
             else -> true
         }
-        if (invalidElementToRefactoring) return false
+        if (invalidElementToRefactoring) return null
 
-        val (referenceElement, referenceName) = element.tryExtractReferenceName() ?: return false
-        val expressionToApply = element.tryGetExpressionToApply(referenceName) ?: return false
-        val (firstTarget, lastTarget) = expressionToApply.collectTargetElementsRange(referenceName, greedy = !dryRun) ?: return false
+        val (referenceElement, referenceName) = element.tryExtractReferenceName() ?: return null
+        val expressionToApply = element.tryGetExpressionToApply(referenceName) ?: return null
+        val (firstTarget, lastTarget) = expressionToApply.collectTargetElementsRange(referenceName, greedy) ?: return null
 
-        val refactoringTarget = tryGetFirstElementToRefactoring(expressionToApply, firstTarget, lastTarget, referenceElement) ?: return false
+        val refactoringTarget = tryGetFirstElementToRefactoring(expressionToApply, firstTarget, lastTarget, referenceElement) ?: return null
+        val referencesToReplace = if (collectReferences) {
+            collectReferencesToReplace(referenceElement, refactoringTarget.targetElementValue, lastTarget)
+        } else {
+            emptyList()
+        }
 
-        if (dryRun) return true
+        return ConversionData(firstTarget, lastTarget, refactoringTarget, referencesToReplace)
+    }
 
-        val psiFactory = KtPsiFactory(expressionToApply.project)
+    private fun applyConversion(conversionData: ConversionData, updater: ModPsiUpdater) {
+        val firstTarget = updater.getWritable(conversionData.firstTarget)
+        val lastTarget = updater.getWritable(conversionData.lastTarget)
+        val targetElement = updater.getWritable(conversionData.refactoringTarget.targetElement)
+        val targetElementValue = updater.getWritable(conversionData.refactoringTarget.targetElementValue)
+        val referencesToReplace = conversionData.referencesToReplace.map { updater.getWritable(it) }
+        val psiFactory = KtPsiFactory(firstTarget.project)
 
         val (scopeFunctionCall, block) = createScopeFunctionCall(
             psiFactory,
-            refactoringTarget.targetElement
-        ) ?: return false
-
-        replaceReference(referenceElement, refactoringTarget.targetElementValue, lastTarget, psiFactory)
-
-        runWriteAction {
-            block.addRange(refactoringTarget.targetElementValue, lastTarget)
-
-            if (!scopeFunction.isParameterScope) {
-                removeRedundantThisQualifiers(block)
-            }
-
-            with(firstTarget) {
-                parent.addBefore(scopeFunctionCall, this)
-                parent.deleteChildRange(this, lastTarget)
-            }
+            targetElement
+        ) ?: run {
+            updater.cancel(cannotConvertMessage())
+            return
         }
 
-        return true
+        replaceReferences(referencesToReplace, psiFactory)
+
+        block.addRange(targetElementValue, lastTarget)
+
+        if (!scopeFunction.isParameterScope) {
+            removeRedundantThisQualifiers(block)
+        }
+
+        with(firstTarget) {
+            parent.addBefore(scopeFunctionCall, this)
+            parent.deleteChildRange(this, lastTarget)
+        }
     }
 
     private fun removeRedundantThisQualifiers(block: KtBlockExpression) {
@@ -177,30 +196,26 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         return RefactoringTargetAndItsValueExpression(propertyOrFirst, targetElementValue)
     }
 
-    private fun replaceReference(element: PsiElement, firstTarget: PsiElement, lastTarget: PsiElement, psiFactory: KtPsiFactory) {
-
-        val replacement by lazy(LazyThreadSafetyMode.NONE) {
-            if (scopeFunction.isParameterScope)
-                psiFactory.createSimpleName(scopeFunction.receiver)
-            else
-                psiFactory.createThisExpression()
+    private fun collectReferencesToReplace(
+      element: PsiElement,
+      firstTarget: PsiElement,
+      lastTarget: PsiElement,
+    ): List<KtNameReferenceExpression> {
+        return PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget).flatMap { rangeElement ->
+            rangeElement.collectDescendantsOfType<KtNameReferenceExpression> { reference ->
+                reference.mainReference.resolve() == element
+            }
         }
+    }
 
-        val searchParameters = KotlinReferencesSearchParameters(
-          element, element.useScope(), ignoreAccessScope = false
-        )
-
-        val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)
-
-        runProcessWithProgressSynchronously(KotlinBaseAnalysisBundle.message("dialog.message.collect.usages"), true, element.project) {
-            ReferencesSearch.search(searchParameters)
-                .asIterable()
-                .mapNotNull { it.element as? KtNameReferenceExpression }
-                .filter { reference ->
-                    runReadAction { range.any { rangeElement -> PsiTreeUtil.isAncestor(rangeElement, reference, /* strict = */ true) } }
-                }
-        }.forEach { referenceInRange ->
-            runWriteAction { referenceInRange.replace(replacement) }
+    private fun replaceReferences(referencesToReplace: List<KtNameReferenceExpression>, psiFactory: KtPsiFactory) {
+        referencesToReplace.forEach { referenceInRange ->
+            val replacement = if (scopeFunction.isParameterScope) {
+                psiFactory.createSimpleName(scopeFunction.receiver)
+            } else {
+                psiFactory.createThisExpression()
+            }
+            referenceInRange.replace(replacement)
         }
     }
 
