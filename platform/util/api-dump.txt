@@ -575,7 +575,6 @@ com.intellij.util.io.AppendablePersistentMap$ValueDataAppender
 com.intellij.util.io.BaseDataReader$SleepingPolicy
 - sf:BLOCKING:com.intellij.util.io.BaseDataReader$SleepingPolicy
 - sf:NON_BLOCKING:com.intellij.util.io.BaseDataReader$SleepingPolicy
-- sf:SIMPLE:com.intellij.util.io.BaseDataReader$SleepingPolicy
 - sf:sleepTimeWhenIdle:I
 - sf:sleepTimeWhenWasActive:I
 - a:getTimeToSleep(Z):I

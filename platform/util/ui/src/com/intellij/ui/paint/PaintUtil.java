@@ -7,18 +7,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.ui.AATextInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.JComponent;
 import javax.swing.JRootPane;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
@@ -424,25 +421,6 @@ public final class PaintUtil {
 
   public static @NotNull Point2D insets2offset(@Nullable Insets in) {
     return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
-  }
-
-  /**
-   * Calculates the width of the specified text string when drawn using the provided Graphics context and FontMetrics.
-   * This method provides a more accurate measurement compared to the metrics.stringWidth(...) method, as it takes into account the Graphics context.
-   * <p/>
-   * Note: this method ignores aliasing hints stored in the JComponent and shall NOT be used
-   * in pair with {@link SwingUtilities2#drawString(JComponent, Graphics, String, int, int)}, see {@link AATextInfo}.
-   *
-   * @param text    The text string whose width needs to be calculated.
-   * @param g       The Graphics context used for rendering the text.
-   * @param metrics The FontMetrics object associated with the font used for rendering the text.
-   * @return The width of the text string in pixels when drawn using the specified Graphics context and FontMetrics.
-
-   * @deprecated Prefer using {@link UIUtil#computeStringWidth(JComponent, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
-    return metrics.getStringBounds(text, g).getBounds().width;
   }
 
   @ApiStatus.Internal

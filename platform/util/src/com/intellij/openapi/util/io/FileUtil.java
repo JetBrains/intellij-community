@@ -1057,13 +1057,6 @@ public class FileUtil {
     return file.canExecute();
   }
 
-  /** @deprecated use {@link NioFiles#isWritable} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean canWrite(@NotNull String path) {
-    return NioFiles.isWritable(Paths.get(path));
-  }
-
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }

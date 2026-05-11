@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
@@ -167,12 +166,6 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isJavaVersionAtLeast(String v) {
-    return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
-  }
 
   /** @deprecated might be inaccurate; please use {@link CpuArch} instead */
   @Deprecated

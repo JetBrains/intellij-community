@@ -1459,10 +1459,6 @@ f:com.intellij.openapi.ui.CheckBoxWithDescription
 - javax.swing.JPanel
 - <init>(javax.swing.JCheckBox,java.lang.String):V
 - f:getCheckBox():javax.swing.JCheckBox
-f:com.intellij.openapi.ui.DescriptionLabel
-- javax.swing.JLabel
-- <init>(java.lang.String):V
-- updateUI():V
 a:com.intellij.openapi.ui.Divider
 - javax.swing.JPanel
 - <init>(java.awt.LayoutManager):V
@@ -3237,7 +3233,6 @@ f:com.intellij.ui.paint.PaintUtil
 - s:getFractOffsetInRootPane(javax.swing.JComponent):java.awt.geom.Point2D
 - s:getParityMode(D,com.intellij.ui.scale.ScaleContext,com.intellij.ui.paint.PaintUtil$RoundingMode):com.intellij.ui.paint.PaintUtil$ParityMode
 - s:getParityMode(D,java.awt.Graphics2D):com.intellij.ui.paint.PaintUtil$ParityMode
-- s:getStringWidth(java.lang.String,java.awt.Graphics,java.awt.FontMetrics):I
 - s:insets2offset(java.awt.Insets):java.awt.geom.Point2D
 - s:isFractionalScale(java.awt.geom.AffineTransform):Z
 - s:negate(java.awt.geom.Point2D):java.awt.geom.Point2D
@@ -4279,7 +4274,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$DefaultTabs
 - s:inactiveColoredTabBackground():java.awt.Color
 - s:inactiveUnderlineColor():java.awt.Color
 - s:underlineColor():java.awt.Color
-- s:underlineHeight():I
 - s:underlinedTabBackground():java.awt.Color
 - s:underlinedTabForeground():java.awt.Color
 com.intellij.util.ui.JBUI$CurrentTheme$DragAndDrop
@@ -5181,11 +5175,6 @@ f:com.intellij.util.ui.TimerUtil
 - <init>():V
 - s:createNamedTimer(java.lang.String,I):javax.swing.Timer
 - s:createNamedTimer(java.lang.String,I,java.awt.event.ActionListener):javax.swing.Timer
-c:com.intellij.util.ui.TwoColorsIcon
-- com.intellij.util.ui.ColorsIcon
-- <init>(I,java.awt.Color,java.awt.Color):V
-- p:<init>(com.intellij.util.ui.TwoColorsIcon):V
-- copy():com.intellij.util.ui.TwoColorsIcon
 f:com.intellij.util.ui.UIUtil
 - sf:AQUA_SEPARATOR_BACKGROUND_COLOR:java.awt.Color
 - sf:BORDER_LINE:java.lang.String
@@ -5221,7 +5210,6 @@ f:com.intellij.util.ui.UIUtil
 - s:addUndoRedoActions(javax.swing.text.JTextComponent):V
 - s:appendColor(java.awt.Color,java.lang.StringBuilder):V
 - s:applyDeprecatedBackground(javax.swing.JComponent):V
-- s:applyRenderingHints(java.awt.Graphics):V
 - s:applyStyle(com.intellij.util.ui.UIUtil$ComponentStyle,java.awt.Component):V
 - s:assignMnemonic(java.lang.String,javax.swing.Action):V
 - s:canDisplayFocusedState(java.awt.Component):Z
