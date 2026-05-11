@@ -52,7 +52,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -899,6 +898,13 @@ public class GitImpl extends GitImplBase {
     }
     handler.addAbsoluteFile(workingTreePath.getIOFile());
     handler.addParameters(sourceBranch.getName());
+    return Git.getInstance().runCommand(handler);
+  }
+
+  @Override
+  public @NotNull GitCommandResult pruneWorktrees(@NotNull GitRepository repository) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.addParameters("prune");
     return Git.getInstance().runCommand(handler);
   }
 

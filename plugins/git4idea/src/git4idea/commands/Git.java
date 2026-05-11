@@ -354,4 +354,6 @@ public interface Git {
                                      @NotNull FilePath workingTreePath,
                                      @NotNull GitBranch sourceBranch,
                                      @Nullable String newBranchName);
+  @NotNull
+  GitCommandResult pruneWorktrees(@NotNull GitRepository repository);
 }

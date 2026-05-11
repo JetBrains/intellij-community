@@ -1195,6 +1195,7 @@ git4idea.commands.Git
 - a:lsRemote(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):git4idea.commands.GitCommandResult
 - a:lsRemoteRefs(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.repo.GitRemote,java.util.List,java.lang.String[]):git4idea.commands.GitCommandResult
 - a:merge(git4idea.repo.GitRepository,java.lang.String,java.util.List,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- a:pruneWorktrees(git4idea.repo.GitRepository):git4idea.commands.GitCommandResult
 - a:push(git4idea.repo.GitRepository,git4idea.push.GitPushParams,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - a:push(git4idea.repo.GitRepository,java.lang.String,java.lang.String,java.lang.String,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - a:rebase(git4idea.repo.GitRepository,git4idea.branch.GitRebaseParams,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitRebaseCommandResult
@@ -1437,6 +1438,7 @@ c:git4idea.commands.GitImpl
 - lsRemote(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):git4idea.commands.GitCommandResult
 - lsRemoteRefs(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.repo.GitRemote,java.util.List,java.lang.String[]):git4idea.commands.GitCommandResult
 - merge(git4idea.repo.GitRepository,java.lang.String,java.util.List,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- pruneWorktrees(git4idea.repo.GitRepository):git4idea.commands.GitCommandResult
 - push(git4idea.repo.GitRepository,git4idea.push.GitPushParams,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - push(git4idea.repo.GitRepository,java.lang.String,java.lang.String,java.lang.String,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - rebase(git4idea.repo.GitRepository,git4idea.branch.GitRebaseParams,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitRebaseCommandResult
