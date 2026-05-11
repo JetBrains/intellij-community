@@ -109,10 +109,8 @@ c:com.intellij.xdebugger.impl.ui.XDebugSessionData
 - com.intellij.openapi.util.UserDataHolderBase
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - getConfigurationName():java.lang.String
-- getWatchExpressions():java.util.List
 - isBreakpointsMuted():Z
 - setBreakpointsMuted(Z):V
-- setWatchExpressions(java.util.List):V
 f:com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 - sf:CHANGED_VALUE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
 - sf:COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
