@@ -40,10 +40,6 @@ public class MavenRunnerSettings implements Cloneable {
     this.delegateBuildToMaven = delegateBuildToMaven;
   }
 
-  @Deprecated(forRemoval = true)
-  public void setRunMavenInBackground(boolean ignored) {
-  }
-
   public @NotNull @NlsSafe String getJreName() {
     return jreName;
   }

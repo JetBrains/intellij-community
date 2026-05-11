@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.zip.JBZipFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -61,13 +60,6 @@ object MavenArtifactUtil {
   @Deprecated("this method does not support split repositories")
   internal fun hasArtifactFile(localRepository: Path, id: MavenId, type: String = "jar"): Boolean {
     return Files.exists(getArtifactFile(localRepository, id, type))
-  }
-
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("this method does not support split repositories")
-  fun getArtifactFile(localRepository: File, id: MavenId, type: String): Path {
-    return getArtifactNioPath(localRepository.toPath(), id.groupId, id.artifactId, id.version, type)
   }
 
   @JvmStatic
