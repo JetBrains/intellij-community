@@ -50,23 +50,6 @@ public class AnActionEvent implements PlaceProvider {
     this(dataContext, presentation, place, ActionUiKind.NONE, inputEvent, modifiers, actionManager);
   }
 
-  /** @deprecated Use {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
-  @Deprecated(forRemoval = true)
-  public AnActionEvent(@Nullable InputEvent inputEvent,
-                       @NotNull DataContext dataContext,
-                       @NotNull @NonNls String place,
-                       @NotNull Presentation presentation,
-                       @NotNull ActionManager actionManager,
-                       @JdkConstants.InputEventMask int modifiers,
-                       boolean isContextMenuAction,
-                       boolean isActionToolbar) {
-    this(dataContext, presentation, place,
-         isContextMenuAction ? ActionUiKind.POPUP :
-         isActionToolbar ? ActionUiKind.TOOLBAR :
-         ActionUiKind.NONE,
-         inputEvent, modifiers, actionManager);
-  }
-
   public AnActionEvent(@NotNull DataContext dataContext,
                        @NotNull Presentation presentation,
                        @NotNull @NonNls String place,

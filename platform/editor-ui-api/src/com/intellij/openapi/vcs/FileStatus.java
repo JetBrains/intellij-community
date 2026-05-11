@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.ui.Gray;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,22 +26,6 @@ import java.awt.Color;
 
 @SuppressWarnings("UseJBColor")
 public interface FileStatus {
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
-  Color COLOR_MERGE = new Color(117, 3, 220);
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
-  Color COLOR_MODIFIED = new Color(0, 50, 160);
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
-  Color COLOR_MISSING = Gray._97;
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
-  Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
-  /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated(forRemoval = true)
-  Color COLOR_UNKNOWN = new Color(153, 51, 0);
-
   FileStatus NOT_CHANGED = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED", PlatformEditorBundle
     .messagePointer("file.status.name.up.to.date"), null);
   FileStatus NOT_CHANGED_IMMEDIATE = FileStatusFactory.getInstance().createFileStatus("NOT_CHANGED_IMMEDIATE", PlatformEditorBundle
