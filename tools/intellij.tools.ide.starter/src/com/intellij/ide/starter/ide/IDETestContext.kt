@@ -855,7 +855,7 @@ open class IDETestContext(
     return this
   }
 
-  protected fun writeConfigFile(relativePath: String, text: String): IDETestContext {
+  internal fun writeConfigFile(relativePath: String, text: String): IDETestContext {
     val configFile = paths.configDir.toAbsolutePath().resolve(relativePath)
     configFile.parent.createDirectories()
     configFile.writeText(text.trimIndent())

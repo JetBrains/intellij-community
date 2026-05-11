@@ -89,7 +89,7 @@ class IDERemDevTestContext private constructor(
     val domainsXml = domains.joinToString("\n") {
       "<option value=\"$it\" />"
     }
-    writeConfigFile("options/trusted-domains.xml", """
+    frontendIDEContext.writeConfigFile("options/trusted-domains.xml", """
       <application>
         <component name="trustedDomains">
           <option name="trustedDomains">
@@ -154,4 +154,3 @@ fun IDERemDevTestContext.setFrontendEventLogsMetadataCustomPath(path: Path = pat
   }
   return this
 }
-
