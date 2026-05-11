@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        kotlin("multiplatform") version "1.8.21"
+        kotlin("multiplatform") version "2.2.20"
     }
     repositories {
         jcenter()

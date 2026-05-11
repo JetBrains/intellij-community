@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        id 'org.jetbrains.kotlin.multiplatform' version '1.8.0'
+        id 'org.jetbrains.kotlin.multiplatform' version '2.2.20'
     }
     repositories {
         maven {

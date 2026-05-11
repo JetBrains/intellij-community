@@ -1,6 +1,6 @@
 plugins {
     id 'groovy-gradle-plugin'
-    id 'org.jetbrains.kotlin.jvm' version "1.8.20"
+    id 'org.jetbrains.kotlin.jvm' version "2.2.0"
 }
 
 repositories {
@@ -9,5 +9,5 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
+    implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.20"
 }

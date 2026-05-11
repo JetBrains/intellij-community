@@ -59,11 +59,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(subModule),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -84,11 +84,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -109,11 +109,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -132,11 +132,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -155,11 +155,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -178,11 +178,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -203,11 +203,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -228,11 +228,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -254,11 +254,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule, rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -280,11 +280,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule, rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.3.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -305,11 +305,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -330,11 +330,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(subModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.0"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -355,11 +355,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -378,11 +378,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                   myProject,
                   listOf(rootModule),
-                  IdeKotlinVersion.get("1.8.0"),
+                  IdeKotlinVersion.get("2.2.20"),
                   collector,
                   kotlinVersionsAndModules,
                 )
@@ -401,11 +401,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.9.0-RC"),
+                    IdeKotlinVersion.get("2.3.0-RC"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -426,11 +426,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.3.20"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -451,11 +451,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -476,11 +476,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.20"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -500,11 +500,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.20"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -523,11 +523,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.8.22"),
+                    IdeKotlinVersion.get("2.3.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -547,11 +547,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(moduleApp),
-                    IdeKotlinVersion.get("1.8.22"),
+                    IdeKotlinVersion.get("2.3.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -570,11 +570,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
-                    IdeKotlinVersion.get("1.8.22"),
+                    IdeKotlinVersion.get("2.3.20"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -595,12 +595,12 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
 
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
-                    IdeKotlinVersion.get("1.8.22"),
+                    IdeKotlinVersion.get("2.3.20"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -621,7 +621,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
                 assertTrue(kotlinVersionsAndModules.isEmpty())
@@ -629,7 +629,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -682,7 +682,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
 
             runWriteAction {
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
                 assertTrue(kotlinVersionsAndModules.isEmpty())
@@ -690,7 +690,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -715,7 +715,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
             runWriteAction {
 
                 val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
 
                 // buildSrc Kotlin version should be ignored
                 assertTrue(kotlinVersionsAndModules.isEmpty())
@@ -723,7 +723,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 configurator.configureWithVersion(
                     myProject,
                     listOf(module),
-                    IdeKotlinVersion.get("1.9.0"),
+                    IdeKotlinVersion.get("2.2.0"),
                     collector,
                     kotlinVersionsAndModules,
                 )
@@ -737,38 +737,38 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseGroovy() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.2.20")
     }
 
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseKts() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.2.20")
     }
 
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseAndVersionGroovy() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.3.0")
     }
 
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseAndVersionKts() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.3.0")
     }
 
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseAndVersion2Groovy() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.3.0")
     }
 
 
     @Test
     @TargetVersions("7.6+")
     fun testApplyFalseAndVersion2Kts() {
-        runSimpleTestcase("1.8.0")
+        runSimpleTestcase("2.3.0")
     }
 
     /**
