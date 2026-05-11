@@ -76,6 +76,27 @@ internal object SplitModeDependencyQuickFixes {
     return fixes.toTypedArray()
   }
 
+  fun createNonNativePluginFixes(
+    module: Module,
+    currentDescriptor: IdeaPlugin?,
+    actualModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  ): Array<LocalQuickFix> {
+    if (actualModuleKind != SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+        && actualModuleKind != SplitModeApiRestrictionsService.ModuleKind.BACKEND) {
+      return emptyArray()
+    }
+
+    val availableDependencies = getRuntimeDependencies(module, currentDescriptor)
+    val fixes = mutableListOf<LocalQuickFix>()
+    if (shouldOfferAddExplicitDependencyFix(availableDependencies, actualModuleKind)) {
+      fixes.add(AddExplicitPlatformDependencyFix(module.name, actualModuleKind))
+    }
+    if (shouldOfferMonolithDependencyFix(availableDependencies)) {
+      fixes.add(AddExplicitPlatformDependencyFix(module.name, SplitModeApiRestrictionsService.ModuleKind.MONOLITH))
+    }
+    return fixes.toTypedArray()
+  }
+
   fun createAddExplicitDependencyFix(moduleName: String, moduleKind: SplitModeApiRestrictionsService.ModuleKind): LocalQuickFix {
     return AddExplicitPlatformDependencyFix(moduleName, moduleKind)
   }

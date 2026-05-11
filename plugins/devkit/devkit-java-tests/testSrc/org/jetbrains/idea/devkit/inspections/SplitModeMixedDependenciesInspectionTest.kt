@@ -299,6 +299,48 @@ via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.mo
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
     myFixture.checkHighlighting()
+    myFixture.findSingleIntention("Make module 'unique.module.name.50' work in 'frontend' only")
+    myFixture.findSingleIntention("Make module 'unique.module.name.50' work in 'monolith' only")
+    Assert.assertTrue(myFixture.filterAvailableIntentions("Make module 'unique.module.name.50' work in 'backend' only").isEmpty())
+  }
+
+  fun testPluginXmlWithIndirectBackendOnlyDependenciesGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
+    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+      .setValue(false, testRootDisposable)
+
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.52.backend.support",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.52.backend.support.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.52",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      pluginXmlContent = """
+        <<error descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode.
+
+Computed module kind reasoning:
+
+Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.52'
+via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.module.name.52.backend.support.xml' in module 'unique.module.name.52.backend.support'.">idea-plugin</error>>
+          <dependencies>
+            <module name="unique.module.name.52.backend.support"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+
+    myFixture.checkHighlighting()
+    myFixture.findSingleIntention("Make module 'unique.module.name.52' work in 'backend' only")
+    myFixture.findSingleIntention("Make module 'unique.module.name.52' work in 'monolith' only")
+    Assert.assertTrue(myFixture.filterAvailableIntentions("Make module 'unique.module.name.52' work in 'frontend' only").isEmpty())
   }
 
   fun testMixedPluginXmlGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
