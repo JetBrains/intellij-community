@@ -2,6 +2,7 @@ package com.intellij.mcpserver.util
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ExecutionTargetManager
 import com.intellij.execution.Executor
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
@@ -619,13 +620,21 @@ private fun createExecutionEnvironment(
   runConfiguration: RunConfiguration,
   useOriginalSettings: Boolean,
   runnerAndConfigurationSettings: RunnerAndConfigurationSettings,
-) = if (useOriginalSettings) {
-  // Reuse persisted settings when we are launching the original configuration instance.
-  ExecutionEnvironmentBuilder.create(executor, runnerAndConfigurationSettings).build()
-}
-else {
-  // Use the effective configuration directly when this launch uses a cloned configuration with overrides.
-  ExecutionEnvironmentBuilder.create(project, executor, runConfiguration).build()
+) = run {
+  // Bind a real execution target for multi-target run configurations (CMake, Gradle, ...).
+  // Without this the builder falls back to <default>, which `ProgramRunnerUtil.executeConfigurationAsync`
+  // rejects with `Cannot run '<name>' on '<default>'`.
+  val target = ExecutionTargetManager.getInstance(project).findTarget(runConfiguration)
+  val builder = if (useOriginalSettings) {
+    // Reuse persisted settings when we are launching the original configuration instance.
+    ExecutionEnvironmentBuilder.create(executor, runnerAndConfigurationSettings)
+  }
+  else {
+    // Use the effective configuration directly when this launch uses a cloned configuration with overrides.
+    ExecutionEnvironmentBuilder.create(project, executor, runConfiguration)
+  }
+  if (target != null) builder.target(target)
+  builder.build()
 }
 
 /**
