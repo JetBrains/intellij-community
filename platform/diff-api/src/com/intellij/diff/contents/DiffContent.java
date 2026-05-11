@@ -2,11 +2,9 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +31,4 @@ public interface DiffContent extends UserDataHolder {
    */
   @RequiresEdt
   default void onAssigned(boolean isAssigned) { }
-
-  /**
-   * @deprecated isn't called by the platform anymore
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable OpenFileDescriptor getOpenFileDescriptor() {
-    return ObjectUtils.tryCast(getNavigatable(), OpenFileDescriptor.class);
-  }
 }

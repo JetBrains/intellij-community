@@ -239,7 +239,6 @@ com.intellij.diff.contents.DiffContent
 - com.intellij.openapi.util.UserDataHolder
 - a:getContentType():com.intellij.openapi.fileTypes.FileType
 - getNavigatable():com.intellij.pom.Navigatable
-- getOpenFileDescriptor():com.intellij.openapi.fileEditor.OpenFileDescriptor
 - onAssigned(Z):V
 a:com.intellij.diff.contents.DiffContentBase
 - com.intellij.openapi.util.UserDataHolderBase
@@ -255,7 +254,6 @@ com.intellij.diff.contents.DocumentContent
 - getHighlightFile():com.intellij.openapi.vfs.VirtualFile
 - getLineSeparator():com.intellij.util.LineSeparator
 - getNavigatable(com.intellij.diff.util.LineCol):com.intellij.pom.Navigatable
-- getOpenFileDescriptor(I):com.intellij.openapi.fileEditor.OpenFileDescriptor
 - hasBom():java.lang.Boolean
 c:com.intellij.diff.contents.EmptyContent
 - com.intellij.diff.contents.DiffContentBase

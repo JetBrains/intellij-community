@@ -3,11 +3,9 @@ package com.intellij.diff.contents;
 
 import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,13 +49,4 @@ public interface DocumentContent extends DiffContent {
    * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    */
   default @Nullable Boolean hasBom() { return null; }
-
-  /**
-   * @deprecated isn't called by the platform anymore
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    LineCol position = LineCol.fromOffset(getDocument(), offset);
-    return ObjectUtils.tryCast(getNavigatable(position), OpenFileDescriptor.class);
-  }
 }
