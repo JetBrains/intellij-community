@@ -89,8 +89,8 @@ class LocalProcessServiceImpl : LocalProcessService {
     return r
   }
 
-  override fun killWinProcessRecursively(process: Process) {
-    WinProcess(process.pid().toInt()).killRecursively()
+  override fun killWinProcessRecursively(pid: Int) {
+    WinProcess(pid).killRecursively()
   }
 
   override fun isLocalPtyProcess(process: Process): Boolean = process is PtyProcess

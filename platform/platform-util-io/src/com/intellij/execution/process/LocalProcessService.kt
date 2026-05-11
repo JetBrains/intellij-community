@@ -27,15 +27,15 @@ interface LocalProcessService {
 
   /**
    * For better CTRL+C emulation a process output stream is needed,
-   * just sending CTRL+C event might not be enough. Consider using
-   * `sendWinProcessCtrlC(process: Process)` or
+   * just sending a CTRL+C event might not be enough.
+   * Consider using `sendWinProcessCtrlC(process: Process)` or
    * `sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?)` instead.
    */
   fun sendWinProcessCtrlC(pid: Int): Boolean
 
   fun sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?): Boolean
 
-  fun killWinProcessRecursively(process: Process)
+  fun killWinProcessRecursively(pid: Int)
 
   fun isLocalPtyProcess(process: Process): Boolean
 
