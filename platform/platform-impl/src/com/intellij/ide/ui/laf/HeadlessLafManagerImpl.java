@@ -116,9 +116,6 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override
-  public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
-
-  @Override
   public UIThemeLookAndFeelInfo getDefaultLightLaf() { return null; }
 
   @Override

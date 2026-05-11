@@ -547,7 +547,6 @@ f:com.intellij.codeInsight.hint.HintUtil
 - sf:ERROR_COLOR_KEY:com.intellij.openapi.editor.colors.ColorKey
 - sf:HINT_BORDER_COLOR_KEY:com.intellij.openapi.editor.colors.ColorKey
 - sf:INFORMATION_BORDER_COLOR:java.awt.Color
-- sf:INFORMATION_COLOR:java.awt.Color
 - sf:INFORMATION_COLOR_KEY:com.intellij.openapi.editor.colors.ColorKey
 - sf:PROMOTION_PANE_KEY:com.intellij.openapi.editor.colors.ColorKey
 - sf:QUESTION_COLOR_KEY:com.intellij.openapi.editor.colors.ColorKey
@@ -746,7 +745,6 @@ f:com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter
 - getPrivacyNoticeText():java.lang.String
 - getReportActionText():java.lang.String
 f:com.intellij.diagnostic.ReportMessages
-- sf:ERROR_REPORT:java.lang.String
 - sf:GROUP:com.intellij.notification.NotificationGroup
 - s:getErrorReport():java.lang.String
 f:com.intellij.diagnostic.VMOptions
@@ -1005,7 +1003,6 @@ f:com.intellij.execution.impl.EditorHyperlinkSupport
 - getHyperlinks():java.util.Map
 - s:getLineText(com.intellij.openapi.editor.Document,I,Z):java.lang.String
 - getLinkNavigationRunnable(com.intellij.openapi.editor.LogicalPosition):java.lang.Runnable
-- s:getNextOccurrence(com.intellij.openapi.editor.Editor,I,com.intellij.util.Consumer):com.intellij.ide.OccurenceNavigator$OccurenceInfo
 - highlightHyperlinks(com.intellij.execution.filters.Filter,I,I):V
 - highlightHyperlinksLater(com.intellij.execution.filters.Filter,I,I,com.intellij.openapi.util.Expirable):V
 - removeHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter):V
@@ -1896,9 +1893,7 @@ f:com.intellij.ide.actions.ShowFilePathAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:findLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getFileManagerName():java.lang.String
 - s:openFile(java.io.File):V
 - s:show(com.intellij.openapi.vfs.VirtualFile,java.awt.event.MouseEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -3005,16 +3000,12 @@ f:com.intellij.ide.plugins.PluginInstaller
 f:com.intellij.ide.plugins.PluginManagerMain
 - s:checkThirdPartyPluginsAllowed(java.util.Collection):Z
 - s:downloadPlugins(java.util.List,java.util.Collection,Z,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.util.function.Consumer):Z
-- s:downloadPlugins(java.util.List,java.util.List,java.lang.Runnable,com.intellij.ide.plugins.PluginManagerMain$PluginEnabler,java.lang.Runnable):Z
 - s:downloadPluginsAndCleanup(java.util.List,java.util.Collection,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.lang.Runnable):Z
 - s:downloadPluginsModal(java.util.List,java.util.Collection,Z,java.lang.Runnable,com.intellij.ide.plugins.PluginEnabler,com.intellij.openapi.application.ModalityState,java.util.function.Consumer):Z
 - s:notifyPluginsUpdated(com.intellij.openapi.project.Project):V
 - s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List):Z
 f:com.intellij.ide.plugins.PluginManagerMain$MyHyperlinkListener
 - com.intellij.ui.HyperlinkAdapter
-- <init>():V
-f:com.intellij.ide.plugins.PluginManagerMain$PluginEnabler$HEADLESS
-- com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 - <init>():V
 f:com.intellij.ide.plugins.PluginManagerUISettings
 - com.intellij.openapi.components.PersistentStateComponent
@@ -3101,7 +3092,6 @@ f:com.intellij.ide.plugins.PluginNode
 - setDefaultTrialPeriod(java.lang.Integer):V
 - setDependencies(java.util.List):V
 - setDependencyNames(java.util.Collection):V
-- setDepends(java.util.List,com.intellij.openapi.extensions.PluginId[]):V
 - setDescription(java.lang.String):V
 - setDocumentationUrl(java.lang.String):V
 - setDownloadUrl(java.lang.String):V
@@ -3602,7 +3592,6 @@ f:com.intellij.ide.ui.laf.LafManagerImpl
 - loadState(org.jdom.Element):V
 - noStateLoaded():V
 - rememberSchemeForLaf(com.intellij.openapi.editor.colors.EditorColorsScheme):V
-- removeLafManagerListener(com.intellij.ide.ui.LafManagerListener):V
 - repaintUI():V
 - resetPreferredEditorColorScheme():V
 - setAutodetect(Z):V
@@ -3622,9 +3611,6 @@ a:com.intellij.ide.ui.laf.SystemDarkThemeDetector
 f:com.intellij.ide.ui.laf.SystemDarkThemeDetector$Companion
 - f:createDetector(java.util.function.Consumer):com.intellij.ide.ui.laf.SystemDarkThemeDetector
 - f:createParametrizedDetector(java.util.function.BiConsumer):com.intellij.ide.ui.laf.SystemDarkThemeDetector
-c:com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
-- com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
-- <init>(com.intellij.ide.ui.UITheme):V
 c:com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 - javax.swing.UIManager$LookAndFeelInfo
 - com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
@@ -3698,7 +3684,6 @@ f:com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 - sf:COMPONENT_ARC:com.intellij.util.ui.JBValue
 - sf:LW:com.intellij.util.ui.JBValue
 - sf:MINIMUM_HEIGHT:com.intellij.util.ui.JBValue
-- sf:MINIMUM_WIDTH:com.intellij.util.ui.JBValue
 - <init>():V
 - s:computeOutlineFor(java.awt.Component):com.intellij.ide.ui.laf.darcula.DarculaUIUtil$Outline
 - s:doPaint(java.awt.Graphics2D,I,I,F,F,Z):V
@@ -5946,7 +5931,6 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - sf:TEXT_ALIGNMENT_LEFT:I
 - sf:TEXT_ALIGNMENT_RIGHT:I
 - f:myDisableRtl:Z
-- myFractionalMetricsHintValue:java.lang.Object
 - addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener):V
 - addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener):V
@@ -6561,7 +6545,6 @@ a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - <init>(java.lang.String):V
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
-- register(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
@@ -7167,7 +7150,6 @@ c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 - com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.vfs.SafeWriteRequestor
 - sf:NOT_RELOADABLE_DOCUMENT_KEY:com.intellij.openapi.util.Key
-- s:ourConflictsSolverEnabled:Z
 - <init>():V
 - contentsChanged(com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent):V
 - p:createDocument(java.lang.CharSequence,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.ex.DocumentEx
@@ -8127,7 +8109,6 @@ c:com.intellij.openapi.options.newEditor.SettingsTreeView
 pf:com.intellij.openapi.options.newEditor.SettingsTreeView$AccessibleSettingsTreeView
 - javax.swing.JComponent$AccessibleJComponent
 - getAccessibleRole():javax.accessibility.AccessibleRole
-f:com.intellij.openapi.preview.PreviewProviderId
 c:com.intellij.openapi.progress.BackgroundTaskQueue
 - pf:myProcessor:com.intellij.util.concurrency.QueueProcessor
 - pf:myTitle:java.lang.String
@@ -9139,7 +9120,6 @@ a:com.intellij.openapi.wm.ex.ToolWindowManagerEx
 - com.intellij.openapi.wm.ToolWindowManager
 - sf:Companion:com.intellij.openapi.wm.ex.ToolWindowManagerEx$Companion
 - <init>():V
-- addToolWindowManagerListener(com.intellij.openapi.wm.ex.ToolWindowManagerListener):V
 - a:clearSideStack():V
 - a:getIdsOn(com.intellij.openapi.wm.ToolWindowAnchor):java.util.List
 - sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -10172,7 +10152,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor
 - sf:Companion:com.intellij.platform.PlatformProjectOpenProcessor$Companion
 - <init>():V
 - canOpenProject(com.intellij.openapi.vfs.VirtualFile):Z
-- sf:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,I,com.intellij.projectImport.ProjectOpenedCallback,java.util.EnumSet):com.intellij.openapi.project.Project
 - sf:getInstance():com.intellij.platform.PlatformProjectOpenProcessor
 - sf:getInstanceIfItExists():com.intellij.platform.PlatformProjectOpenProcessor
 - getName():java.lang.String
@@ -10180,7 +10159,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor
 - lookForProjectsInDirectory():Z
 - openProjectAndFile(java.nio.file.Path,Z,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
-- f:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,I,com.intellij.projectImport.ProjectOpenedCallback,java.util.EnumSet):com.intellij.openapi.project.Project
 - f:getInstance():com.intellij.platform.PlatformProjectOpenProcessor
 - f:getInstanceIfItExists():com.intellij.platform.PlatformProjectOpenProcessor
 - f:isNewProject(com.intellij.openapi.project.Project):Z
@@ -10688,7 +10666,6 @@ f:com.intellij.ui.ColorPicker
 - insertUpdate(javax.swing.event.DocumentEvent):V
 - removeUpdate(javax.swing.event.DocumentEvent):V
 - saveRecentColors():V
-- s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener):V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener,com.intellij.ui.awt.RelativePoint,Z):V
 - s:showDialog(java.awt.Component,java.lang.String,java.awt.Color,Z,java.util.List,Z):java.awt.Color
 f:com.intellij.ui.ColorPicker$ColorWheelImageProducer
@@ -12212,8 +12189,6 @@ f:com.intellij.ui.components.ComponentsKt
 - bs:DialogPanel$default(java.lang.String,java.awt.LayoutManager2,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 - sf:Label(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z):javax.swing.JLabel
 - bs:Label$default(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z,I,java.lang.Object):javax.swing.JLabel
-- sf:Link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):javax.swing.JComponent
-- bs:Link$default(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
 - sf:RadioButton(java.lang.String):javax.swing.JRadioButton
 - sf:dialog(java.lang.String,javax.swing.JComponent):com.intellij.openapi.ui.DialogWrapper
 - sf:dialog(java.lang.String,javax.swing.JComponent,Z):com.intellij.openapi.ui.DialogWrapper
@@ -12444,7 +12419,6 @@ f:com.intellij.ui.content.impl.TabbedContentImpl
 - com.intellij.ui.content.impl.ContentImpl
 - com.intellij.ui.content.TabbedContent
 - <init>(com.intellij.ui.content.TabGroupId,com.intellij.ui.content.TabDescriptor,Z):V
-- <init>(javax.swing.JComponent,java.lang.String,Z,java.lang.String):V
 - addContent(com.intellij.ui.content.TabDescriptor,Z):V
 - addContent(javax.swing.JComponent,java.lang.String,Z):V
 - findAndSelectContent(javax.swing.JComponent):Z
@@ -14088,7 +14062,6 @@ f:com.intellij.util.ui.SwingHelper
 - s:createHtmlViewer(Z,java.awt.Font,java.awt.Color,java.awt.Color):javax.swing.JEditorPane
 - s:createTextFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.function.Supplier):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - s:createTextFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.util.NotNullProducer):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-- s:createWebHyperlink(java.lang.String):com.intellij.ui.HyperlinkLabel
 - s:createWebHyperlink(java.lang.String,java.lang.String):com.intellij.ui.HyperlinkLabel
 - s:getComponentFromRecentMouseEvent():java.awt.Component
 - s:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
@@ -14188,7 +14161,6 @@ a:com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer
 - com.intellij.util.ui.table.JBTableRowRenderer
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.lang.Language,com.intellij.openapi.Disposable):V
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.Disposable):V
 - p:createRendererComponent(com.intellij.openapi.project.Project,com.intellij.lang.Language,Z):com.intellij.ui.EditorTextFieldCellRenderer$RendererComponent
 - f:getRowRendererComponent(javax.swing.JTable,I,Z,Z):javax.swing.JComponent
 - pa:getText(javax.swing.JTable,I):java.lang.String

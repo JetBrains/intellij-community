@@ -30,14 +30,5 @@ public abstract class JarFileSystem extends ArchiveFileSystem implements Virtual
     return getVirtualFileForJar(entryVFile);
   }
 
-  /** @deprecated use {@code #findFileByPath(path)} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile findLocalVirtualFileByPath(@NotNull String path) {
-    if (!path.contains(JAR_SEPARATOR)) {
-      path += JAR_SEPARATOR;
-    }
-    return findFileByPath(path);
-  }
-
   //</editor-fold>
 }

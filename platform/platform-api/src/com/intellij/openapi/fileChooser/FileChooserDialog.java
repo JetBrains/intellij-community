@@ -10,12 +10,6 @@ import org.jetbrains.annotations.Nullable;
 public interface FileChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = PathChooserDialog.PREFER_LAST_OVER_EXPLICIT;
 
-  /** @deprecated use {@link #choose(Project, VirtualFile...)} instead */
-  @Deprecated(forRemoval = true)
-  default VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
-    return toSelect != null ? choose(project, toSelect) : choose(project);
-  }
-
   /**
    * Choose one or more files.
    *

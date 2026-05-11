@@ -36,7 +36,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -160,14 +159,6 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
       }
     }
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #allowWriting(Iterable)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void allowWriting(VirtualFile... allowedFiles) {
-    allowWriting(Arrays.asList(allowedFiles));
   }
 
   public static void allowWriting(Iterable<? extends VirtualFile> allowedFiles) {

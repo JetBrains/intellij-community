@@ -23,7 +23,6 @@ com.intellij.openapi.observable.properties.GraphProperty
 - a:afterPropagation(kotlin.jvm.functions.Function0):V
 - afterReset(kotlin.jvm.functions.Function0):V
 - afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
-- dependsOn(com.intellij.openapi.observable.properties.ObservableClearableProperty):V
 - b:dependsOn(com.intellij.openapi.observable.properties.ObservableClearableProperty,kotlin.jvm.functions.Function0):V
 - dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function0):V
 - dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0):V

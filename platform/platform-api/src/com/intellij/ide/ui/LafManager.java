@@ -104,12 +104,6 @@ public abstract class LafManager {
   @Deprecated(forRemoval = true)
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
-  /**
-   * @deprecated Use {@link LafManagerListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
-
   public abstract @Nullable UIThemeLookAndFeelInfo getDefaultLightLaf();
 
   public abstract @Nullable UIThemeLookAndFeelInfo getDefaultDarkLaf();

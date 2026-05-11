@@ -302,13 +302,6 @@ f:com.intellij.ide.plugins.PluginManagerMain
 - s:getDisabledDependants(com.intellij.ide.plugins.PluginEnabler,java.util.List):java.util.Set
 - s:getDisabledPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):java.util.Set
 - s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):Z
-com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
-- com.intellij.ide.plugins.PluginEnabler
-- disable(java.util.Collection):Z
-- disableById(java.util.Set):Z
-- enable(java.util.Collection):Z
-- enableById(java.util.Set):Z
-- isDisabled(com.intellij.openapi.extensions.PluginId):Z
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V
@@ -1162,7 +1155,6 @@ com.intellij.platform.DirectoryProjectGenerator
 - getHelpId():java.lang.String
 - a:getLogo():javax.swing.Icon
 - a:getName():java.lang.String
-- isPrimaryGenerator():Z
 - a:validate(java.lang.String):com.intellij.facet.ui.ValidationResult
 com.intellij.platform.HideableProjectGenerator
 - a:isHidden():Z

@@ -3,7 +3,6 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabDescriptor;
@@ -12,7 +11,6 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -28,15 +26,6 @@ import java.util.List;
 public final class TabbedContentImpl extends ContentImpl implements TabbedContent {
   private final @NotNull List<TabDescriptor> myTabs = new ArrayList<>();
   private final @NotNull TabGroupId myId;
-
-  /**
-   * @deprecated use {@link TabbedContentImpl#TabbedContentImpl(TabGroupId, TabDescriptor, boolean)} instead
-   * as it allows to set tab group id separately from display name.
-   */
-  @Deprecated(forRemoval = true)
-  public TabbedContentImpl(JComponent component, @NotNull @NlsContexts.TabTitle String displayName, boolean isPinnable, @NotNull @NonNls String titlePrefix) {
-    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable); //NON-NLS
-  }
 
   public TabbedContentImpl(@NotNull TabGroupId id, @NotNull TabDescriptor tab, boolean isPinnable) {
     super(tab.getComponent(), id.getDisplayName(tab), isPinnable);

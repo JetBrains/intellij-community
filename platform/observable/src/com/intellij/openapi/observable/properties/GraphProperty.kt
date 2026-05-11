@@ -54,12 +54,6 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
   @ApiStatus.ScheduledForRemoval
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {}
 
-  @Deprecated("Use dependsOn with update", ReplaceWith("this.dependsOn(parent) { this.reset(); this.get() }"))
-  @ApiStatus.ScheduledForRemoval
-  fun dependsOn(parent: ObservableClearableProperty<*>) {
-    dependsOn(parent) { reset(); get() }
-  }
-
   @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun dependsOn(parent: ObservableClearableProperty<*>, update: () -> T) {

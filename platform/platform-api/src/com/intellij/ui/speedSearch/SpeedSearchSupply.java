@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
@@ -27,10 +25,6 @@ public abstract class SpeedSearchSupply {
   public static final String SEARCH_QUERY_KEY = "SEARCH_QUERY";
 
   private static final Key<SpeedSearchSupply> SPEED_SEARCH_COMPONENT_MARKER = Key.create("SPEED_SEARCH_COMPONENT_MARKER");
-
-  /** @deprecated Use {@link PlatformDataKeys#SPEED_SEARCH_TEXT} instead */
-  @Deprecated(forRemoval = true)
-  public static final DataKey<String> SPEED_SEARCH_CURRENT_QUERY = PlatformDataKeys.SPEED_SEARCH_TEXT;
 
   public static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 

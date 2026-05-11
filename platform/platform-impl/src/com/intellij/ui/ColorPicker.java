@@ -442,14 +442,6 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
    * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
    */
   @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
-    showColorPickerPopup(project, currentColor, listener, null, false);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(final @Nullable Project project, @Nullable Color currentColor, final @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     showColorPickerPopup(project, currentColor, listener, location, showAlpha, false, null);
   }

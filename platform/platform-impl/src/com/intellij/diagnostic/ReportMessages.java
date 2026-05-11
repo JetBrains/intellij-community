@@ -10,10 +10,6 @@ public final class ReportMessages {
 
   /** @deprecated Please use {@code DiagnosticBundle.message("error.report.title")} instead. */
   @Deprecated(forRemoval = true)
-  public static final String ERROR_REPORT = "Error Report";
-
-  /** @deprecated Please use {@code DiagnosticBundle.message("error.report.title")} instead. */
-  @Deprecated(forRemoval = true)
   public static @Nls String getErrorReport() {
     return DiagnosticBundle.message("error.report.title");
   }

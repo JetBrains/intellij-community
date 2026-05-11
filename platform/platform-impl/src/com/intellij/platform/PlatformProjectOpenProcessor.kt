@@ -41,11 +41,9 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.EnumSet
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
@@ -106,26 +104,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     fun getInstanceIfItExists(): PlatformProjectOpenProcessor? {
       return EXTENSION_POINT_NAME.findExtension(PlatformProjectOpenProcessor::class.java)
-    }
-
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)}", level = DeprecationLevel.ERROR)
-    fun doOpenProject(
-      virtualFile: VirtualFile,
-      projectToClose: Project?,
-      line: Int,
-      callback: ProjectOpenedCallback?,
-      options: EnumSet<Option>,
-    ): Project? {
-      val openProjectOptions = OpenProjectTask {
-        forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options
-        this.projectToClose = projectToClose
-        this.callback = callback
-        runConfigurators = callback != null
-        this.line = line
-      }
-      return doOpenProject(virtualFile.toNioPath(), openProjectOptions)
     }
 
     private fun createTempProjectOpenTask(

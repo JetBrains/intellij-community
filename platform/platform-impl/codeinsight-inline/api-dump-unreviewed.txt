@@ -1,7 +1,6 @@
 a:com.intellij.codeInsight.inline.completion.DebouncedInlineCompletionProvider
 - com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 - <init>():V
-- f:debounce(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - p:getDebounceDelay-3nIYWDw(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - getSuggestion(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - a:getSuggestionDebounced(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object

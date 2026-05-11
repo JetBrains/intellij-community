@@ -512,16 +512,6 @@ public final class EditorHyperlinkSupport {
     }
   }
 
-  /**
-   * @deprecated use {@link EditorHyperlinkSupport#getNextOccurrence(int, Consumer)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable OccurenceNavigator.OccurenceInfo getNextOccurrence(@NotNull Editor editor,
-                                                                             int delta,
-                                                                             @NotNull com.intellij.util.Consumer<? super RangeHighlighter> action) {
-    return get(editor).getNextOccurrence(delta, action);
-  }
-
   @ApiStatus.Internal
   public @Nullable OccurenceNavigator.OccurenceInfo getNextOccurrence(
     int delta,

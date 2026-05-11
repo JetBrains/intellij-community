@@ -440,22 +440,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
            null;
   }
 
-  /**
-   * @deprecated Use {@link #setDependencies(List)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setDepends(@NotNull List<PluginId> depends, PluginId @Nullable [] optionalDependencies) {
-    myDependencies = new ArrayList<>();
-    for (PluginId id : depends) {
-      myDependencies.add(new PluginNodeDependency(id, false));
-    }
-    if (optionalDependencies != null) {
-      for (PluginId dependency : optionalDependencies) {
-        myDependencies.add(new PluginNodeDependency(dependency, true));
-      }
-    }
-  }
-
   public void setDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies) {
     myDependencies = new ArrayList<>(dependencies);
   }

@@ -187,11 +187,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return subRows
   }
 
-  override fun <T : JComponent> component(component: T): CellBuilder<T> {
-    addComponent(component)
-    return CellBuilderImpl(builder, this, component)
-  }
-
   internal fun addComponent(component: JComponent, cc: CC = CC()) {
     components.add(component)
     builder.componentConstraints.put(component, cc)

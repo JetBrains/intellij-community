@@ -187,6 +187,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static class AnActionButtonWrapper extends AnActionButton implements ActionWithDelegate<AnAction> {
     private final AnAction myAction;
