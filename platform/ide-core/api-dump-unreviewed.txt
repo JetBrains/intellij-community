@@ -693,7 +693,6 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:EDITOR_TAB:java.lang.String
 - sf:EDITOR_TAB_POPUP:java.lang.String
 - sf:EDITOR_TOOLBAR:java.lang.String
-- sf:FAVORITES_VIEW_POPUP:java.lang.String
 - sf:FILEHISTORY_VIEW_TOOLBAR:java.lang.String
 - sf:FILEVIEW_POPUP:java.lang.String
 - sf:FILE_STRUCTURE_POPUP:java.lang.String

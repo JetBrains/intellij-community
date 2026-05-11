@@ -82,10 +82,10 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test add common popup place`() {
-    val build = FeatureUsageData().addPlace("FavoritesPopup").build()
+    val build = FeatureUsageData().addPlace("BookmarksPopup").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
-    Assert.assertTrue(build["place"] == "FavoritesPopup")
+    Assert.assertTrue(build["place"] == "BookmarksPopup")
   }
 
   @Test

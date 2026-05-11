@@ -68,9 +68,6 @@ public abstract class ActionPlaces {
 
   public static final String REVEAL_IN_POPUP = "RevealInPopup";
 
-  /** @deprecated replaced by {@link #BOOKMARKS_VIEW_POPUP} */
-  @Deprecated(forRemoval = true)
-  public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
   public static final String BOOKMARKS_VIEW_POPUP = "BookmarksPopup";
 
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";

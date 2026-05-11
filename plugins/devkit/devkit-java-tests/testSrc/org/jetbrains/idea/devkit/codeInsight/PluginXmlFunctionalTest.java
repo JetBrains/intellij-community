@@ -789,7 +789,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.completeBasic();
     var lookupElements = myFixture.getLookupElements();
-    assertLookupElement(lookupElements, "FavoritesPopup", " (FAVORITES_VIEW_POPUP)", "ActionPlaces");
+    assertLookupElement(lookupElements, "BookmarksPopup", " (BOOKMARKS_VIEW_POPUP)", "ActionPlaces");
     assertLookupElement(lookupElements, "custom", " (CUSTOM)", "CustomPlaces");
   }
 
@@ -798,7 +798,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     var reference = myFixture.getReferenceAtCaretPositionWithAssertion();
     var resolvedField = assertInstanceOf(reference.resolve(), PsiField.class);
-    assertEquals("FAVORITES_VIEW_POPUP", resolvedField.getName());
+    assertEquals("BOOKMARKS_VIEW_POPUP", resolvedField.getName());
   }
 
   public void testExtensionPointNameValidity() {

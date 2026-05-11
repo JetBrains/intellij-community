@@ -1,7 +1,7 @@
 <idea-plugin>
   <actions>
     <action>
-      <override-text place="Favorites<caret>Popup"/>
+      <override-text place="Bookmarks<caret>Popup"/>
     </action>
   </actions>
 </idea-plugin>
