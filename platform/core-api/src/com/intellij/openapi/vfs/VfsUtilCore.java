@@ -613,7 +613,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Converts VsfUrl info {@link URL}.
+   * Converts VFS url into {@link URL}.
    *
    * @param vfsUrl VFS url (as constructed by {@link VirtualFile#getUrl()}
    * @return converted URL or null if error has occurred.
@@ -796,7 +796,7 @@ public class VfsUtilCore {
    * @return virtual files that represents paths from root to the passed file
    */
   @ApiStatus.Internal
-  public static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
+  protected static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);

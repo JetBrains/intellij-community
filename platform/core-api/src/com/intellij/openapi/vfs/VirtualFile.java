@@ -315,7 +315,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /// Returns the [FileType] of this file, or [com.intellij.openapi.fileTypes.FileTypes#UNKNOWN] if a type cannot be determined
   /// (i.e. file type is not registered via [FileTypeRegistry]).
   ///
-  /// Performance notice: this method can be slow. See [FileTypeRegistry] javadoc for the details.
+  /// Performance notice: this method can be slow. See [FileTypeRegistry] Javadoc for the details.
   ///
   /// @see FileTypeRegistry
   public @NotNull FileType getFileType() {
