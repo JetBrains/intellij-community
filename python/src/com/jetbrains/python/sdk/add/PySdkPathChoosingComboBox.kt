@@ -24,13 +24,11 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComboboxSpeedSearch
@@ -40,12 +38,8 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
-import com.jetbrains.python.sdk.findBaseSdks
-import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -258,37 +252,6 @@ private fun PySdkPathChoosingComboBox.removeAllItems() {
   else {
     childComponent.removeAllItems()
   }
-}
-
-/**
- * Obtains a list of sdk to be used as a base for a virtual environment on a pool,
- * then fills the [sdkComboBox] on the EDT and chooses [com.jetbrains.python.sdk.PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
- */
-@ApiStatus.Internal
-fun addBaseInterpretersAsync(
-  sdkComboBox: @Suppress("DEPRECATION_ERROR") PySdkPathChoosingComboBox,
-
-  existingSdks: List<Sdk>,
-  module: Module?,
-  context: UserDataHolder,
-  callback: () -> Unit = {},
-) {
-  addInterpretersToComboAsync(
-    sdkComboBox,
-    { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
-    {
-      sdkComboBox.apply {
-        val preferredSdk = findPreferredVirtualEnvBaseSdk(items)
-        if (preferredSdk != null) {
-          if (items.find { it.homePath == preferredSdk.homePath } == null) {
-            addSdkItemOnTop(preferredSdk)
-          }
-          selectedSdk = preferredSdk
-        }
-      }
-      callback()
-    }
-  )
 }
 
 sealed class PySdkComboBoxItem

@@ -8,18 +8,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.Version
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.BinaryInstallation
@@ -75,21 +70,6 @@ class PySdkToInstall(
     val preview = installation.toResourcePreview()
     renderer.append(" ${preview.description}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
-  }
-
-  @CalledInAny
-  @NlsContexts.DialogMessage
-  fun getInstallationWarning(@NlsContexts.Button defaultButtonName: String): String {
-    val preview = installation.toResourcePreview()
-    val fileSize = StringUtil.formatFileSize(preview.size)
-    return HtmlBuilder()
-      .append(PyBundle.message("python.sdk.executable.not.found.header"))
-      .append(HtmlChunk.tag("ul").children(
-        HtmlChunk.tag("li").children(HtmlChunk.raw(
-          PyBundle.message("python.sdk.executable.not.found.option.specify.path", HtmlChunk.text("...").bold(), "python.exe"))),
-        HtmlChunk.tag("li").children(HtmlChunk.raw(PyBundle.message("python.sdk.executable.not.found.option.download.and.install",
-                                                                    HtmlChunk.text(defaultButtonName).bold(), fileSize)))
-      )).toString()
   }
 
   @RequiresEdt
