@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.LinuxUiUtil
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
@@ -18,14 +19,14 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
   }
 
   private enum class ScreenMagnifier {
-    WindowsMagnifier, MacOSZoom
+    WindowsMagnifier, MacOSZoom, GnomeMagnifier
   }
 
   private enum class VoiceControl {
     WindowsVoiceAccess, MacOSVoiceControl
   }
 
-  private val GROUP = EventLogGroup("accessibility.tools.state", 1)
+  private val GROUP = EventLogGroup("accessibility.tools.state", 2)
 
   private val SCREEN_READER = GROUP.registerEvent(
     "screen.reader",
@@ -111,6 +112,17 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
             Foundation.cfRelease(accessibility)
           }
           pool.drain()
+        }
+      }
+      SystemInfoRt.isLinux -> {
+        if (LinuxUiUtil.isOrcaProcessRunning()) {
+          set.add(SCREEN_READER.metric(ScreenReader.Orca))
+        }
+        if (LinuxUiUtil.isGnomeZoomEnabled()) {
+          set.add(SCREEN_MAGNIFIER.metric(ScreenMagnifier.GnomeMagnifier))
+        }
+        if (LinuxUiUtil.isGnomeHighContrastEnabled()) {
+          set.add(OS_HIGH_CONTRAST.metric(true))
         }
       }
     }

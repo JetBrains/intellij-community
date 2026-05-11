@@ -7,8 +7,11 @@ import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.UnixDesktopEnv
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.Path
+import kotlin.io.path.name
 
 @ApiStatus.Internal
 sealed interface ExecResult {
@@ -68,6 +71,85 @@ object LinuxUiUtil {
       }
       return ExecResult.Failure()
     }
+  }
+
+  @JvmStatic
+  fun isOrcaProcessRunning(): Boolean {
+    val orcaProcessName = "orca"
+
+    fun baseName(path: String?): String? =
+      path?.let { runCatching { Path(it).name }.getOrNull() }
+
+    fun isPythonExecutable(name: String?): Boolean =
+      name == "python" || name?.startsWith("python3") == true
+
+    return try {
+      ProcessHandle.allProcesses().anyMatch { processHandle ->
+        val info = processHandle.info()
+
+        val commandName = baseName(info.command().orElse(null))
+        if (commandName == orcaProcessName) {
+          return@anyMatch true
+        }
+
+        val args = info.arguments().orElse(null)
+        return@anyMatch args != null && args.isNotEmpty() &&
+                        isPythonExecutable(commandName) &&
+                        baseName(args[0]) == orcaProcessName
+      }
+    }
+    catch (e: UnsupportedOperationException) {
+      LOG.debug("Failed to make snapshot of processes: ProcessHandle.allProcesses() is not supported", e)
+      return false
+    }
+    catch (e: SecurityException) {
+      LOG.debug("Failed to make snapshot of processes: access denied", e)
+      return false
+    }
+  }
+
+  fun isGnomeZoomEnabled(): Boolean {
+    if (UnixDesktopEnv.CURRENT != UnixDesktopEnv.GNOME) {
+      return false
+    }
+
+    return getGSettingsValue("org.gnome.desktop.a11y.applications", "screen-magnifier-enabled") == "true"
+  }
+
+  fun isGnomeHighContrastEnabled(): Boolean {
+    if (UnixDesktopEnv.CURRENT != UnixDesktopEnv.GNOME) {
+      return false
+    }
+
+    // GNOME 42+ / Ubuntu 22.04+
+    val isHighContrastEnabled = getGSettingsValue("org.gnome.desktop.a11y.interface", "high-contrast")
+    if (isHighContrastEnabled != null) {
+      return isHighContrastEnabled == "true"
+    }
+
+    return isHighContrastTheme(getGSettingsValue("org.gnome.desktop.interface", "gtk-theme"))
+           || isHighContrastTheme(getGSettingsValue("org.gnome.desktop.interface", "icon-theme"))
+  }
+
+  private fun getGSettingsValue(schema: String, key: String): String? {
+    val commandLine = GeneralCommandLine(
+      "gsettings",
+      "get",
+      schema,
+      key,
+    )
+
+    return ExecUtil.execAndReadLine(commandLine)?.trim()
+  }
+
+  private fun isHighContrastTheme(theme: String?): Boolean {
+    val normalizedTheme = theme
+      ?.trim()
+      ?.removeSurrounding("'")
+      ?.removeSurrounding("\"")
+
+    return normalizedTheme.equals("HighContrast", ignoreCase = true) ||
+           normalizedTheme.equals("HighContrastInverse", ignoreCase = true)
   }
 }
 
