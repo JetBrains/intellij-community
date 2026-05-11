@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.BatchSuppressManager;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ReadAction;
@@ -29,13 +28,8 @@ import java.util.regex.Matcher;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
 
-public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
-
-  /**
-   * @deprecated don't extend this class, extend {@link LocalInspectionTool} instead
-   */
-  @Deprecated(forRemoval = true)
-  public GroovySuppressableInspectionTool() {}
+public final class GroovySuppressableInspectionTool {
+  private GroovySuppressableInspectionTool() {}
 
   public static SuppressQuickFix @NotNull [] getSuppressActions(@NotNull String toolId) {
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
