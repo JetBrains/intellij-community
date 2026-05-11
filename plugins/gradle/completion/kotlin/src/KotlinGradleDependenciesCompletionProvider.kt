@@ -286,13 +286,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
   override fun invoke(it: DependencyCompletionResult): String {
     val scope = it.scope
-    /*  if (!scope.isNullOrEmpty() && scope.contains(":")) {
-          val items = scope.split(":")
-          val configurationName = items[0]
-          val dependencyNotation = items[1]
-          if (configurationName in configurationNames && dependencyNotation in dependencyNotations)
-              return "$configurationName($dependencyNotation(\"${it.groupId}:${it.artifactId}:${it.version}\"))"
-      }*/
+    if (!scope.isNullOrEmpty() && scope.contains(",")) {
+      val items = scope.split(",")
+      val configurationName = items[0]
+      val dependencyNotation = items[1]
+      return "$configurationName($dependencyNotation(\"${it.groupId}:${it.artifactId}:${it.version}\"))"
+    }
     val configurationName = if (scope.isNullOrBlank()) "implementation" else scope
     return "$configurationName(\"${it.groupId}:${it.artifactId}:${it.version}\")"
   }
