@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea
 import com.intellij.psi.NonClasspathClassFinder
 import com.intellij.psi.PsiElementFinder
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.junit.Assert
@@ -14,7 +13,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class RegisteredFindersTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_LATEST
+    override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST
 
     fun testKnownNonClasspathFinder() {
         val expectedFindersNames = setOf(
