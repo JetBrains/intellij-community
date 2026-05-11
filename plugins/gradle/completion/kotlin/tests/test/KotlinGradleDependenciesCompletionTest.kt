@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -78,46 +79,47 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @TestMetadata("configurationOnTopLevelPartialInput.test")
     fun `test configuration completion on top level partial input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun `test second completion invocation shows unfiltered input`(gradleVersion: GradleVersion) =
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit("build.gradle.kts", "dependencies { cla<caret> }")
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        repeat(times = 2) {
-          codeInsightFixture.completeBasic()
+    @ParameterizedTest
+    @BaseGradleVersionSource(
+        """
+            dependencies { cla<caret> } : class,
+            dependencies { i<caret> } : iter
+        """
+    )
+    fun `test second completion invocation shows unfiltered input`(
+        gradleVersion: GradleVersion,
+        expression: String,
+        expectedSuggestion: String,
+    ) {
+        LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
+        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+            val file = writeTextAndCommit("build.gradle.kts", expression)
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                repeat(times = 2) {
+                    codeInsightFixture.completeBasic()
+                }
+                val lookupStrings = codeInsightFixture.lookupElementStrings
+                assertNotNull(lookupStrings) {
+                    "Autocompletion was not expected (codeInsightFixture.lookupElementStrings returned null)"
+                }
+                Assertions.assertTrue(lookupStrings.contains(expectedSuggestion)) {
+                    "The completion was expected to contain `$expectedSuggestion`, but it doesn't. Actual suggestions: $lookupStrings"
+                }
+            }
         }
-        assertTrue { codeInsightFixture.lookupElementStrings!!.contains("class") }
-      }
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun `test dependency configurations are shown above live templates`(gradleVersion: GradleVersion) {
+    fun `test live templates are not shown if completion is not called at least twice`(gradleVersion: GradleVersion) {
         LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
         testJavaProject(gradleVersion) {
             val buildGradleKts = writeTextAndCommit("build.gradle.kts", "dependencies { i<caret> }")
-            runInEdtAndWait {
-                codeInsightFixture.configureFromExistingVirtualFile(buildGradleKts)
-                codeInsightFixture.completeBasic()
-                codeInsightFixture.assertPreferredCompletionItems(
-                    0,
-                    "implementation",
-                    "testImplementation",
-                    "annotationProcessor",
-                    "compileOnly",
-                    "runtimeOnly",
-                    "testAnnotationProcessor",
-                    "testCompileOnly",
-                    "testRuntimeOnly",
-                    // live templates are below
-                    "ifn",
-                    "inn",
-                    "interface",
-                    "iter",
-                )
-            }
+            assertCompletionDoesntSuggest(
+                buildGradleKts,
+                unexpectedSuggestions = listOf("ifn", "inn", "interface", "iter")
+            )
         }
     }
 

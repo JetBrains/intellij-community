@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR
-import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.psi.PsiElement
@@ -36,12 +35,7 @@ private class RemainingCompletionContributorsFilterer : CompletionProvider<Compl
         val sortedResult = prioritizeGradleCompletion(result)
         sortedResult.runRemainingContributors(parameters) { otherResult ->
             if (isContributorIgnored(otherResult)) return@runRemainingContributors
-            if (isContributorDeprioritized(otherResult)) {
-                // Disable ML ranking to keep deprioritized elements at the bottom of the list
-                sortedResult.addElement(MLRankingIgnorable.wrap(otherResult.lookupElement))
-            } else {
-                sortedResult.passResult(otherResult)
-            }
+            sortedResult.passResult(otherResult)
         }
     }
 
@@ -80,16 +74,8 @@ private fun isProducedByK2Contributor(lookupElement: LookupElement): Boolean {
 
 private val ignoredContributors = setOf(
     "com.intellij.codeInsight.completion.LegacyCompletionContributor",          // `java`, `javax`, `jdk`, `META-INF`, etc.
-    "com.intellij.lang.properties.references.PropertiesCompletionContributor",
-)
-
-private fun isContributorDeprioritized(otherResult: CompletionResult): Boolean {
-    val contributorClass = getContributorClass(otherResult.lookupElement) ?: return true
-    return contributorClass.name in deprioritizedContributors
-}
-
-private val deprioritizedContributors = setOf(
-    "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor",
+    "com.intellij.lang.properties.references.PropertiesCompletionContributor",  // properties from */src/main/resources/*.properties file
+    "com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor", // interface, ifn, fun, etc.
 )
 
 private fun getContributorClass(lookupElement: LookupElement): Class<CompletionContributor>? =
