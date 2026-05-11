@@ -3,7 +3,9 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import com.intellij.testFramework.junit5.SystemProperty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -50,7 +52,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
   }
 
   @Test
-  fun debouncesTerminalOutputIntoScopedRefresh() = runBlocking(Dispatchers.Default) {
+  fun debouncesTerminalOutputIntoScopedRefreshWithoutActivityHintByDefault() = runBlocking(Dispatchers.Default) {
     val outputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
     val signals = LinkedBlockingQueue<RefreshSignal>()
 
@@ -71,9 +73,38 @@ class AgentChatScopedTerminalRefreshControllerTest {
 
       val signal = withTimeout(5.seconds) { signals.take() }
 
-      assertThat(signal).isEqualTo(
-        RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", AgentThreadActivity.PROCESSING)
-      )
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX, "/work/project", "codex-thread", null))
+      assertThat(signals).isEmpty()
+    }
+  }
+
+  @Test
+  @SystemProperty(propertyKey = AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY, propertyValue = "true")
+  fun debouncesTerminalOutputIntoScopedRefreshWithActivityHintWhenEnabled() = runBlocking(Dispatchers.Default) {
+    val outputChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+    val signals = LinkedBlockingQueue<RefreshSignal>()
+
+    AgentChatScopedTerminalRefreshController(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project",
+      outputChanges = outputChanges,
+      sessionState = MutableStateFlow(TerminalViewSessionState.Running),
+      parentScope = this,
+      debounceMs = 25L,
+      emitInitialRefresh = false,
+      threadId = "codex-thread",
+      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+    ).use {
+      delay(50.milliseconds)
+      outputChanges.emit(Unit)
+      outputChanges.emit(Unit)
+
+      val signal = withTimeout(5.seconds) { signals.take() }
+
+      assertThat(signal).isEqualTo(RefreshSignal(AgentSessionProvider.CODEX,
+                                                 "/work/project",
+                                                 "codex-thread",
+                                                 AgentThreadActivity.PROCESSING))
       assertThat(signals).isEmpty()
     }
   }

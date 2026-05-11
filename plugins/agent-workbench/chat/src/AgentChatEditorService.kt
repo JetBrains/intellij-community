@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRes
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -59,7 +60,11 @@ private object AgentChatScopedRefreshSignalBus {
   ): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
     val normalizedThreadId = threadId?.trim()?.takeIf { it.isNotEmpty() }
-    val activityHintsByThreadId = if (normalizedThreadId != null && activityHint != null) {
+    val activityHintsByThreadId = if (
+      AgentSessionActivityHintSettings.isOptimisticActivityHintsEnabled() &&
+      normalizedThreadId != null &&
+      activityHint != null
+    ) {
       mapOf(normalizedThreadId to activityHint)
     }
     else {

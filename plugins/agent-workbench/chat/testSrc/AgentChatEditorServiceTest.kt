@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
@@ -26,6 +27,7 @@ import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -1338,6 +1340,27 @@ class AgentChatEditorServiceTest {
 
   @Test
   fun testCodexScopedRefreshSignalsCarryKnownThreadId(): Unit = timeoutRunBlocking {
+    val signalWaiter = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      withTimeout(5.seconds) {
+        codexScopedRefreshSignals().first()
+      }
+    }
+
+    notifyAgentChatTerminalOutputForRefresh(
+      provider = AgentSessionProvider.CODEX,
+      projectPath = "/work/project-terminal-output-thread/",
+      threadId = "codex-thread-1",
+    )
+
+    val signal = signalWaiter.await()
+    assertThat(signal.scopedPaths).containsExactly("/work/project-terminal-output-thread")
+    assertThat(signal.threadIds).containsExactly("codex-thread-1")
+    assertThat(signal.activityHintsByThreadId).isEmpty()
+  }
+
+  @Test
+  @SystemProperty(propertyKey = AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY, propertyValue = "true")
+  fun testCodexScopedRefreshSignalsCarryActivityHintsWhenEnabled(): Unit = timeoutRunBlocking {
     val signalWaiter = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       withTimeout(5.seconds) {
         codexScopedRefreshSignals().first()

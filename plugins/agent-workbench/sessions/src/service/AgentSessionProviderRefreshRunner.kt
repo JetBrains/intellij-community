@@ -201,11 +201,6 @@ internal class AgentSessionProviderRefreshRunner(
           refreshHintsByPath = refreshHintsByPath,
         )
       }
-      applyEventActivityHints(
-        provider = provider,
-        outcomes = outcomes,
-        activityHintsByThreadId = updateEvent.activityHintsByThreadId,
-      )
 
       val allowedNewThreadIdsByPath = if (refreshSupport != null) {
         calculateNewProviderThreadIdsByPath(
@@ -589,41 +584,6 @@ private fun buildRefreshThreadSeedsByPath(
     result[path] = seeds
   }
   return result
-}
-
-private fun applyEventActivityHints(
-  provider: AgentSessionProvider,
-  outcomes: MutableMap<String, ProviderRefreshOutcome>,
-  activityHintsByThreadId: Map<String, AgentThreadActivity>,
-) {
-  if (activityHintsByThreadId.isEmpty()) {
-    return
-  }
-
-  val updatedOutcomes = LinkedHashMap<String, ProviderRefreshOutcome>()
-  for ((path, outcome) in outcomes) {
-    val threads = outcome.threads ?: continue
-    var updatedThreads: MutableList<AgentSessionThread>? = null
-    for (index in threads.indices) {
-      val thread = threads[index]
-      if (thread.provider != provider) {
-        continue
-      }
-      val hintedActivity = activityHintsByThreadId[thread.id] ?: continue
-      if (hintedActivity == thread.activity) {
-        continue
-      }
-      val mutableThreads = updatedThreads ?: ArrayList(threads).also { updatedThreads = it }
-      mutableThreads[index] = thread.copy(activity = hintedActivity)
-    }
-    updatedThreads?.let { updatedThreads ->
-      updatedOutcomes[path] = outcome.copy(threads = updatedThreads)
-    }
-  }
-
-  for ((path, updatedOutcome) in updatedOutcomes) {
-    outcomes[path] = updatedOutcome
-  }
 }
 
 private fun AgentProjectSessions.withProviderRefreshOutcome(

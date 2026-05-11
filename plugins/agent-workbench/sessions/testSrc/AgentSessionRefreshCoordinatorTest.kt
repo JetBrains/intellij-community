@@ -15,6 +15,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -29,6 +30,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordina
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -1483,6 +1485,7 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  @SystemProperty(propertyKey = AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY, propertyValue = "true")
   fun providerUpdateActivityHintsUpdateLoadedThreadBeforeRefreshGateOpens() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)
@@ -1550,9 +1553,11 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun providerUpdateActivityHintsOverrideStaleRefreshActivity() = runBlocking(Dispatchers.Default) {
+  @SystemProperty(propertyKey = AGENT_SESSION_OPTIMISTIC_ACTIVITY_HINTS_PROPERTY, propertyValue = "true")
+  fun providerRefreshActivityClearsOptimisticActivityHint() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = AtomicInteger(0)
+    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1591,6 +1596,10 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
+      openChatTabPresentationUpdater = { _, _, _, activityMap ->
+        receivedActivityMaps.add(activityMap)
+        activityMap.size
+      },
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1623,7 +1632,12 @@ class AgentSessionRefreshCoordinatorTest {
                      ?: return@waitForCondition false
         closedRefreshInvocations.get() == 1 &&
         thread.updatedAt == 500L &&
-        thread.activity == AgentThreadActivity.PROCESSING
+        thread.activity == AgentThreadActivity.UNREAD
+      }
+
+      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      waitForCondition {
+        receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.UNREAD }
       }
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -74,7 +75,7 @@ internal class AgentChatScopedTerminalRefreshController(
         changes
           .debounce(debounceMs.milliseconds)
           .collect {
-            emitScopedRefresh("terminal output", activityHint = AgentThreadActivity.PROCESSING)
+            emitScopedRefresh("terminal output", activityHint = terminalOutputActivityHint())
           }
       }
     }
@@ -101,5 +102,9 @@ internal class AgentChatScopedTerminalRefreshController(
       "Emitting ${provider.value} scoped refresh from agent chat terminal ($reason, path=$projectPath, threadId=${threadId != null})"
     }
     notifyRefresh(provider, projectPath, threadId, activityHint)
+  }
+
+  private fun terminalOutputActivityHint(): AgentThreadActivity? {
+    return if (AgentSessionActivityHintSettings.isOptimisticActivityHintsEnabled()) AgentThreadActivity.PROCESSING else null
   }
 }
