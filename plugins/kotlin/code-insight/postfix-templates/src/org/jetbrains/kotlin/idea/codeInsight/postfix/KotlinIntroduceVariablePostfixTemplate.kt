@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -40,7 +39,6 @@ internal abstract class KotlinIntroduceVariablePostfixTemplate(
                     isVar = isVar
                 )
             }
-            KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR = isVar
         }
     }
 }
