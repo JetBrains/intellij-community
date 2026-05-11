@@ -16,7 +16,7 @@ import com.intellij.platform.vcs.impl.shared.CodeSmellEvent
 
 private val LOG = logger<CodeSmellDetectorImpl>()
 
-internal fun showCodeSmellErrorsInFrontend(smellList: MutableList<out CodeSmellInfo>, project: Project){
+internal fun showCodeSmellErrorsInFrontend(smellList: List<@JvmWildcard CodeSmellInfo>, project: Project){
   val dtos = convertToDtos(smellList)
   if (dtos.isEmpty()) {
     LOG.debug("the list of code smells is empty, nothing will be displayed")
