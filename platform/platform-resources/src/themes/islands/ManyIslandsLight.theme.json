@@ -1630,6 +1630,12 @@
       "errorBackground": "#FFFAEB",
       "errorBorder": "#FED277",
       "errorForeground": "#000000"
+    },
+
+    "AgentPicker": {
+      "Advertiser": {
+        "background": "gray-160"
+      }
     }
   },
 
