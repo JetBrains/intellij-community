@@ -57,9 +57,6 @@ a:com.intellij.util.indexing.IndexableSetContributor
 *:com.intellij.util.indexing.hints.FileTypeIndexingHint
 - a:acceptsFileTypeFastPath(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
 - a:slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
-*:com.intellij.util.indexing.roots.IndexableFilesContributor
-- a:getIndexableFiles(com.intellij.openapi.project.Project):java.util.List
-- a:getOwnFilePredicate(com.intellij.openapi.project.Project):java.util.function.Predicate
 *:com.intellij.util.indexing.roots.IndexableFilesIterator
 - a:getDebugName():java.lang.String
 - a:getIndexingProgressText():java.lang.String
