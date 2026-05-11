@@ -25,6 +25,7 @@ import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.push.GitSpecialRefRemoteBranch
+import git4idea.remote.hosting.GitHostingUrlUtil.getUriFromRemoteUrl
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
@@ -297,13 +298,23 @@ object GitRemoteBranchesUtil {
   fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
     findRemote(repository.info, remote)
 
-  private fun findRemote(repositoryInfo: GitRepoInfo, remote: HostedGitRepositoryRemote): GitRemote? =
-    repositoryInfo.remotes.find {
+  private fun findRemote(repositoryInfo: GitRepoInfo, remote: HostedGitRepositoryRemote): GitRemote? {
+    val remoteUrl = remote.sshUrl ?: remote.httpUrl
+    if (remoteUrl != null) {
+      repositoryInfo.remotes.find { gitRemote ->
+        val firstUri = gitRemote.firstUrl?.let { getUriFromRemoteUrl(it) } ?: return@find false
+        val remoteUri = getUriFromRemoteUrl(remoteUrl) ?: return@find false
+        firstUri.path.equals(remoteUri.path, true) && firstUri.host.equals(remoteUri.host, true)
+      }?.let { return it }
+    }
+
+    return repositoryInfo.remotes.find {
       val url = it.firstUrl
       url != null &&
       GitHostingUrlUtil.match(remote.serverUri, url) &&
       (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(remote.path))
     }
+  }
 
   private fun shouldAddHttpRemote(repository: GitRepository): Boolean {
     val preferredRemoteUrl = repository.remotes.find { it.name == "origin" }?.firstUrl

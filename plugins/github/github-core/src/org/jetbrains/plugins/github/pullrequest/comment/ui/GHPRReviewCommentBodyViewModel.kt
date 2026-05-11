@@ -71,6 +71,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   val htmlImageLoader: AsyncHtmlImageLoader = dataContext.htmlImageLoader
   private val server: GithubServerPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
   private val repository: GitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
+  private val remoteUrlCoordinates = dataContext.repositoryDataService.remoteCoordinates
 
   private val vm by lazy { project.service<GHPRProjectViewModel>() }
 
@@ -163,7 +164,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
     .stateInNow(cs, null)
   val isOnReviewBranch: StateFlow<Boolean> = repository.infoStateIn(cs)
     .combineState(loadedDetailsState) { _, details ->
-      val remote = details?.getHeadRemoteDescriptor(server) ?: return@combineState false
+      val remote = details?.getHeadRemoteDescriptor(remoteUrlCoordinates) ?: return@combineState false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(repository, remote, details.headRefName)
     }
 

@@ -193,7 +193,7 @@ class GitRemoteBranchesUtilTest {
   }
 
   @Test
-  fun `test findRemote returns no matches if firstUrl host doesn't match the alias`() {
+  fun `test findRemote returns a match if firstUrl host matches the real host, not the alias`() {
     val mockRepository = mock(GitRepository::class.java)
     val mockRepositoryInfo = mock(GitRepoInfo::class.java)
     val remote1 = gitRemoteTest("remote1", "https://example.com/org/repo.git")
@@ -211,7 +211,8 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNull("Matching remote should not be found", result)
+    assertNotNull("Matching remote should be found", result)
+    assertEquals("remote1", result?.name)
   }
 
   @Test

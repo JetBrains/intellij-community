@@ -59,7 +59,7 @@ internal class GHPRReviewBranchStateSharedViewModel(
       _updateErrors.emit(e)
       return
     }
-    val server = dataContext.repositoryDataService.repositoryCoordinates.serverPath
-    GHPRBranchesViewModel.fetchAndCheckoutBranch(repository, server, details)
+    val remoteCoordinates = dataContext.repositoryDataService.remoteCoordinates
+    GHPRBranchesViewModel.fetchAndCheckoutBranch(remoteCoordinates, details)
   }
 }

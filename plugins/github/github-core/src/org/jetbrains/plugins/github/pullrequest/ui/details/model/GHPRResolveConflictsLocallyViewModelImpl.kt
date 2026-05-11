@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.findFirstRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.infoFlow
@@ -15,18 +16,17 @@ import git4idea.remote.hosting.ui.BaseOrHead.Base
 import git4idea.remote.hosting.ui.BaseOrHead.Head
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyCoordinates
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getBaseRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.AlreadyResolvedLocally
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.DetailsNotLoaded
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.MergeInProgress
@@ -39,35 +39,34 @@ private val REPO_MERGING_STATES = setOf(Repository.State.REBASING, Repository.St
 fun GHPRResolveConflictsLocallyViewModel(
   parentCs: CoroutineScope,
   project: Project,
-  server: GithubServerPath,
-  gitRepository: GitRepository,
+  remoteUrlCoordinates: GitRemoteUrlCoordinates,
   detailsData: GHPRDetailsDataProvider,
 ): GHPRResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel.createIn(
-  parentCs, project, gitRepository,
+  parentCs, project, remoteUrlCoordinates.repository,
   hasConflicts =
     detailsData.mergeabilityStateComputationFlow
       .filter { !it.isInProgress }
       .map { it.getOrNull()?.hasConflicts },
   requestOrError =
     combine(
-      gitRepository.isInCurrentHistory(
+      remoteUrlCoordinates.repository.isInCurrentHistory(
         rev = detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.baseRefOid }
       ).map { it ?: false }.withInitial(false),
-      detailsData.detailsComputationFlow, gitRepository.infoFlow()
+      detailsData.detailsComputationFlow, remoteUrlCoordinates.repository.infoFlow()
     ) { isBaseInHistory, detailsResult, repoState ->
       if (repoState.state in REPO_MERGING_STATES) return@combine Either.left(MergeInProgress)
 
       val details = detailsResult.getOrNull() ?: return@combine Either.left(DetailsNotLoaded)
 
-      val headRemoteDescriptor = details.headRepository?.getRemoteDescriptor(server)
+      val headRemoteDescriptor = details.getHeadRemoteDescriptor(remoteUrlCoordinates)
                                  ?: return@combine Either.left(RepositoryNotFound(Head))
-      val baseRemoteDescriptor = details.baseRepository?.getRemoteDescriptor(server)
+      val baseRemoteDescriptor = details.getBaseRemoteDescriptor(remoteUrlCoordinates)
                                  ?: return@combine Either.left(RepositoryNotFound(Base))
 
       val currentRemoteBranch = repoState.findFirstRemoteBranchTrackedByCurrent()
       if (currentRemoteBranch != null && isBaseInHistory &&
           currentRemoteBranch.nameForRemoteOperations == details.headRefName &&
-          currentRemoteBranch.remote == GitRemoteBranchesUtil.findRemote(gitRepository, headRemoteDescriptor))
+          currentRemoteBranch.remote == GitRemoteBranchesUtil.findRemote(remoteUrlCoordinates.repository, headRemoteDescriptor))
         return@combine Either.left(AlreadyResolvedLocally)
 
       Either.right(

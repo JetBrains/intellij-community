@@ -13,10 +13,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.impl.PluginListenerDescriptor
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemoteBranch
 import git4idea.remote.hosting.infoFlow
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -27,11 +27,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
@@ -55,6 +53,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.util.AcquirableScopedValueOwner
 import java.util.EventListener
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class GHPRDataProviderRepositoryImpl(
   parentCs: CoroutineScope,
@@ -100,8 +99,7 @@ internal class GHPRDataProviderRepositoryImpl(
     }
 
     providerCs.launch {
-      detailsData.launchDetailsReloadOnHeadRevChange(repositoryService.repositoryCoordinates.serverPath,
-                                                     repositoryService.repositoryMapping.gitRepository)
+      detailsData.launchDetailsReloadOnHeadRevChange(repositoryService.remoteCoordinates)
     }
 
     val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
@@ -177,20 +175,20 @@ internal class GHPRDataProviderRepositoryImpl(
  * Signal details reload when PR branches hashes are changed (if there are known remote branches corresponding to PR branches)
  */
 private suspend fun GHPRDetailsDataProviderImpl.launchDetailsReloadOnHeadRevChange(
-  server: GithubServerPath,
-  repository: GitRepository,
+  gitRemoteUrlCoordinates: GitRemoteUrlCoordinates,
 ): Nothing {
-  val remoteBranchDescriptor = loadedDetailsState.filterNotNull().map { details ->
-    details.getHeadRemoteDescriptor(server)?.let {
+
+  val remoteBranchDescriptor = loadedDetailsState.filterNotNull().mapNotNull { details ->
+    details.getHeadRemoteDescriptor(gitRemoteUrlCoordinates)?.let {
       HostedGitRepositoryRemoteBranch(it, details.headRefName)
     }
-  }.filterNotNull().distinctUntilChanged()
+  }.distinctUntilChanged()
 
-  combine(remoteBranchDescriptor, repository.infoFlow()) { descriptor, repoInfo ->
+  combine(remoteBranchDescriptor, gitRemoteUrlCoordinates.repository.infoFlow()) { descriptor, repoInfo ->
     GitRemoteBranchesUtil.findRemoteBranch(repoInfo, descriptor)?.let { repoInfo.remoteBranchesWithHashes[it] }?.asString()
   }.filterNotNull().distinctUntilChanged()
     .drop(1).collectLatest {
-      delay(2000) // some delay to let the server consume changes
+      delay(2000.milliseconds) // some delay to let the server consume changes
       signalDetailsNeedReload()
     }
   awaitCancellation()

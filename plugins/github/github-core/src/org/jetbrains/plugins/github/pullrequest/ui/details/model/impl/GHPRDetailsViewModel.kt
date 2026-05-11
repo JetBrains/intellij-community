@@ -90,10 +90,8 @@ internal class GHPRDetailsViewModelImpl(
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider, openPullRequestDiff)
 
-  private val serverPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, serverPath,
-                                                  dataContext.repositoryDataService.repositoryMapping.gitRepository,
-                                                  dataProvider.detailsData, detailsState)
+  private val remoteUrlCoordinates = dataContext.repositoryDataService.repositoryMapping.remote
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, remoteUrlCoordinates, dataProvider.detailsData, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,
