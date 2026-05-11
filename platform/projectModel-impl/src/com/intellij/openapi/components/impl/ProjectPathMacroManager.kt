@@ -41,7 +41,7 @@ class ProjectPathMacroManager private constructor(
       addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, basePathPointer())
       namePointer?.let { result.addMacroExpand(PathMacroUtil.PROJECT_NAME_MACRO_NAME, it()) }
       projectFilePathPointer()?.let { projectFile ->
-        ProjectWidePathMacroContributor.getAllMacros(projectFile).forEach { (key, value) ->
+        getAllMacros(projectFile).forEach { (key, value) ->
           result.addMacroExpand(key, value)
         }
       }
@@ -52,7 +52,7 @@ class ProjectPathMacroManager private constructor(
     val result = super.computeReplacePathMap()
     addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, basePathPointer(), null)
     projectFilePathPointer()?.let { projectFile ->
-      ProjectWidePathMacroContributor.getAllMacros(projectFile).forEach { (key, value) ->
+      getAllMacros(projectFile).forEach { (key, value) ->
         result.addMacroReplacement(value, key)
       }
     }

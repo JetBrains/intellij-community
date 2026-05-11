@@ -44,7 +44,7 @@ public final class ModulePathMacroManager extends PathMacroManager {
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()));
     String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
-      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributorKt.getAllMacros(projectFile).entrySet()) {
         result.addMacroExpand(entry.getKey(), entry.getValue());
       }
     }
@@ -57,7 +57,7 @@ public final class ModulePathMacroManager extends PathMacroManager {
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()), PathMacroUtil.getUserHomePath());
     String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
-      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributorKt.getAllMacros(projectFile).entrySet()) {
         result.addMacroReplacement(entry.getValue(), entry.getKey());
       }
     }
