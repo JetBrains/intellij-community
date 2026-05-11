@@ -91,14 +91,18 @@ object MessagePool {
     notifyPoolCleared()
   }
 
+  /**
+   * Noop, unsupported
+   */
   @Deprecated("Use MessagePoolAdvisor")
-  fun addListener(listener: MessagePoolListener) {
-    addAdvisor(MessagePoolAdvisorAdapter(listener))
+  fun addListener(@Suppress("unused") listener: MessagePoolListener) {
   }
 
+  /**
+   * Noop, unsupported
+   */
   @Deprecated("Use MessagePoolAdvisor")
-  fun removeListener(listener: MessagePoolListener) {
-    removeAdvisor(MessagePoolAdvisorAdapter(listener))
+  fun removeListener(@Suppress("unused") listener: MessagePoolListener) {
   }
 
   fun addAdvisor(advisor: MessagePoolAdvisor) {
@@ -151,36 +155,5 @@ object MessagePool {
 
   private fun shallAddSilently(message: AbstractMessage): Boolean {
     return SlowOperations.isMyMessage(message.getThrowable().message)
-  }
-}
-
-private class MessagePoolAdvisorAdapter(val listener: MessagePoolListener) : MessagePoolAdvisor {
-  override suspend fun beforeEntryAdded(e: BeforeEntryAddedEvent): Boolean {
-    return listener.beforeEntryAdded(e.message)
-  }
-
-  override suspend fun afterEntryAdded(e: AfterEntryAddedEvent) {
-    listener.newEntryAdded()
-  }
-
-  override fun poolCleared(e: PoolClearedEvent) {
-    listener.poolCleared()
-  }
-
-  override fun entryWasRead(e: EntryReadEvent) {
-    listener.entryWasRead()
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as MessagePoolAdvisorAdapter
-
-    return listener == other.listener
-  }
-
-  override fun hashCode(): Int {
-    return listener.hashCode()
   }
 }

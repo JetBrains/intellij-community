@@ -8,6 +8,9 @@ import java.util.EventListener
 @ApiStatus.Internal
 @IntellijInternalApi
 interface MessagePoolAdvisor : EventListener {
+  /**
+   * @return false to stop processing and do not add the message to the pool
+   */
   suspend fun beforeEntryAdded(e: BeforeEntryAddedEvent): Boolean {
     return true
   }

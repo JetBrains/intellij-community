@@ -31,6 +31,8 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Internal API. See a note in {@link MessagePool}. */
 @ApiStatus.Internal
-public final class IdeMessagePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
+public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
   private static final String GROUP_ID = "IDE-errors";
@@ -94,7 +96,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
       });
     }
 
-    messagePool.addListener(this);
+    messagePool.addAdvisor(this);
 
     updateIconAndNotify();
   }
@@ -111,7 +113,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   @Override
   public void dispose() {
-    messagePool.removeListener(this);
+    messagePool.removeAdvisor(this);
   }
 
   @Override
@@ -186,19 +188,21 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   }
 
   @Override
-  public void newEntryAdded() {
+  public @Nullable Object afterEntryAdded(@NotNull AfterEntryAddedEvent e, @NotNull Continuation<? super @NotNull Unit> $completion) {
     UIUtil.invokeLaterIfNeeded(() -> {
       updateIconAndNotify();
     });
+
+    return MessagePoolAdvisor.super.afterEntryAdded(e, $completion);
   }
 
   @Override
-  public void poolCleared() {
+  public void poolCleared(@NotNull PoolClearedEvent e) {
     updateIconAndNotify();
   }
 
   @Override
-  public void entryWasRead() {
+  public void entryWasRead(@NotNull EntryReadEvent e) {
     updateIconAndNotify();
   }
 
