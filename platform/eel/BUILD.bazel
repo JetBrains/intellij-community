@@ -161,6 +161,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/test:test_test_lib",
     "//platform/util-class-loader:util-classLoader",
     "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
   ],
   runtime_deps = [":eel-tests"]
 )

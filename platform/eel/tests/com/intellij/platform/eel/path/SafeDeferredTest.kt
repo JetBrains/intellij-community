@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.util.coroutines.childScope
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -11,10 +12,14 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("checkedExceptions")
 @OptIn(DelicateCoroutinesApi::class)
@@ -126,6 +131,22 @@ class SafeDeferredTest {
           is SafeDeferred.State.Failed -> it.error.message shouldBe "oops"
           is SafeDeferred.State.Canceled, is SafeDeferred.State.Completed -> error(it)
         }
+      }
+    }
+  }
+
+  @Test
+  fun `mass cancellation`() {
+    shouldThrow<CancellationException> {
+      runBlocking {
+        val safeDeferred = SafeDeferred(async(start = CoroutineStart.UNDISPATCHED) {
+          awaitCancellation()
+        })
+        childScope("sdfsdfgsd", supervisor = false).launch(start = CoroutineStart.UNDISPATCHED) {
+          safeDeferred.await()
+        }
+        delay(100.milliseconds)
+        cancel()
       }
     }
   }
