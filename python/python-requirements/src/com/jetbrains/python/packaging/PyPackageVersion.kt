@@ -1,11 +1,14 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Presents normalized version of python package or requirement as described in [PEP-440][https://www.python.org/dev/peps/pep-0440/#normalization].
  *
  * Instances of this class MUST be obtained from [PyPackageVersionNormalizer.normalize].
  */
+@ApiStatus.Internal
 @ConsistentCopyVisibility
 data class PyPackageVersion internal constructor(
   val epoch: String? = null,

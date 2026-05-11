@@ -36,6 +36,7 @@ import static com.jetbrains.python.packaging.parser.RequirementsParserHelper.VCS
  * @see PyRequirement
  * @see PyPackageVersionNormalizer
  */
+@ApiStatus.Experimental
 public final class PyRequirementParser {
 
   // common regular expressions

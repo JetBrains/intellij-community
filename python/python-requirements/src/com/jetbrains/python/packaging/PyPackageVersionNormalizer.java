@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.util.text.StringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
  * and
  * <a href="https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering">https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering</a>.
  */
+@ApiStatus.Internal
 public final class PyPackageVersionNormalizer {
 
   private static final @NotNull String EPOCH_GROUP = "epoch";

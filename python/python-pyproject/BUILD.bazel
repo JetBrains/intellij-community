@@ -38,6 +38,7 @@ jvm_library(
     "//platform/core-ui",
     "//jps/model-api:model",
     "//platform/util:util-ui",
+    "//python/python-requirements:requirements",
   ],
   exports = ["@lib//:tuweni-toml"]
 )
@@ -78,6 +79,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//jps/model-api:model_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//python/python-requirements:requirements_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.pyproject` end

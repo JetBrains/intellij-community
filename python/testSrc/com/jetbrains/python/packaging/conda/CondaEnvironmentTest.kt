@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.refreshRecursively
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.testDataPath
 import org.junit.jupiter.api.Test
 import java.io.File

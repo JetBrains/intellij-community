@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging
 
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This class is not an API, consider using methods listed below.
@@ -11,6 +12,7 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromFile
  */
+@ApiStatus.Internal
 class PyRequirementImpl(
   private val presentableName: String,
   private val versionSpecs: List<PyRequirementVersionSpec>,

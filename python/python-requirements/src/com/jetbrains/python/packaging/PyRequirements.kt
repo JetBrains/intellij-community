@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This helper is not an API, consider using methods listed below.
@@ -13,6 +14,7 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
  * @see PyRequirementParser.fromFile
  */
 
+@ApiStatus.Internal
 fun pyRequirement(
   name: String,
   versionSpecs: List<PyRequirementVersionSpec>,
@@ -26,6 +28,7 @@ fun pyRequirement(
 }
 
 
+@ApiStatus.Internal
 fun pyRequirement(
   name: String,
   versionSpec: PyRequirementVersionSpec? = null,
@@ -34,6 +37,7 @@ fun pyRequirement(
                                      listOf(name),
                                      "")
 
+@ApiStatus.Internal
 fun pyRequirement(
   name: String,
   versionSpec: PyRequirementVersionSpec?,
@@ -64,11 +68,13 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
  *
  * @see pyRequirementVersionSpec
  */
+@ApiStatus.Internal
 fun pyRequirement(name: String, relation: PyRequirementRelation, version: String, extras: String = ""): PyRequirement {
   val versionSpec = pyRequirementVersionSpec(relation, version)
   return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras)
 }
 
+@ApiStatus.Internal
 fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyRequirementVersionSpec {
   val value = relationWithVersion.trim()
   val relation =
@@ -100,6 +106,7 @@ fun pyRequirementVersionSpec(relation: PyRequirementRelation, version: String): 
  * @see PyPackageVersion
  * @see PyPackageVersionNormalizer.normalize
  */
+@ApiStatus.Internal
 fun pyRequirementVersionSpec(relation: PyRequirementRelation, version: PyPackageVersion): PyRequirementVersionSpec {
   return PyRequirementVersionSpecImpl(relation, version, version.presentableText)
 }

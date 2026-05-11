@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging.conda.environmentYml.format
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.impl.conda.environmentYml.format
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.conda.PyCondaBundle.message
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,7 +27,7 @@ object EnvironmentYmlModifier {
 
     // Write the modified content back to the file
     @Suppress("DialogTitleCapitalization")
-    WriteCommandAction.runWriteCommandAction(project, PyBundle.message("command.name.add.package.to.conda.environments.yml"), null, {
+    WriteCommandAction.runWriteCommandAction(project, message("command.name.add.package.to.conda.environments.yml"), null, {
       document.setText(modifiedText)
       FileDocumentManager.getInstance().saveDocument(document)
     }, PsiManager.getInstance(project).findFile(file))

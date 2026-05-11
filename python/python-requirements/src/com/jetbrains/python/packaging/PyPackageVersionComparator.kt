@@ -5,6 +5,7 @@ import com.intellij.webcore.packaging.PackageVersionComparator
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import one.util.streamex.EntryStream
 import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
 import java.util.stream.Stream
 
@@ -13,10 +14,11 @@ import java.util.stream.Stream
  *
  * Based on [PEP-440][https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering].
  */
+@ApiStatus.Experimental
 object PyPackageVersionComparator : Comparator<PyPackageVersion> {
 
   /**
-   * Compares versions by normalizing them or using [com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR] as a fallback
+   * Compares versions by normalizing them or using [PackageVersionComparator.VERSION_COMPARATOR] as a fallback
    */
   @JvmStatic
   val STR_COMPARATOR: Comparator<String> = Comparator { o1, o2 ->

@@ -1,6 +1,8 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
+    <module name="intellij.python.requirements"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>
