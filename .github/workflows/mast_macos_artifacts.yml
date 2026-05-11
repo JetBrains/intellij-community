@@ -1,0 +1,113 @@
+name: Mast macOS Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner label for Apple Silicon macOS builds"
+        required: true
+        default: "macos-15-xlarge"
+      android_ref:
+        description: "JetBrains/android ref to checkout"
+        required: true
+        default: "master"
+      skip_steps:
+        description: "Comma-separated IntelliJ build steps to skip"
+        required: true
+        default: "mac_sign,mac_notarize,mac_dmg,mac_sit"
+      build_properties:
+        description: "Additional JVM/system properties passed to installers.cmd"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  macos-aarch64:
+    name: Build macOS aarch64 app
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 360
+    env:
+      MAST_OUTPUT_ROOT: ${{ github.workspace }}/out/mast-idea-ce
+
+    steps:
+      - name: Checkout Mast
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 1
+
+      - name: Checkout JetBrains Android modules
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: ${{ inputs.android_ref }}
+          fetch-depth: 1
+
+      - name: Show runner diagnostics
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sw_vers
+          uname -a
+          sysctl -n hw.optional.arm64 || true
+          xcodebuild -version || true
+          df -h
+
+      - name: Show Bazel version
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./bazel.cmd --version
+
+      - name: Build IntelliJ Community macOS aarch64 artifact
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./installers.cmd \
+            -Dintellij.build.target.os=mac \
+            -Dintellij.build.target.arch=aarch64 \
+            -Dintellij.build.output.root="$MAST_OUTPUT_ROOT" \
+            -Dintellij.build.skip.build.steps="${{ inputs.skip_steps }}" \
+            ${{ inputs.build_properties }}
+
+      - name: List build outputs
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          find out -maxdepth 6 \( -type f -o -type d \) \
+            \( -name "*.app" -o -name "*.zip" -o -name "*.dmg" -o -name "*.sit" -o -name "*.tar.gz" -o -name "*.log" -o -name "*.json" \) \
+            -print || true
+          du -sh out || true
+
+      - name: Upload Mast macOS aarch64 artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: mast-macos-aarch64
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            out/mast-idea-ce/artifacts/*.zip
+            out/mast-idea-ce/artifacts/*.dmg
+            out/mast-idea-ce/artifacts/*.sit
+            out/mast-idea-ce/artifacts/*.tar.gz
+            out/mast-idea-ce/artifacts/*.spdx.json
+            out/mast-idea-ce/artifacts/**/*.zip
+            out/mast-idea-ce/artifacts/**/*.dmg
+            out/mast-idea-ce/artifacts/**/*.sit
+            out/mast-idea-ce/artifacts/**/*.tar.gz
+            out/mast-idea-ce/artifacts/**/*.spdx.json
+
+      - name: Upload Mast macOS build logs
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: mast-macos-aarch64-logs
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            out/**/*.log
+            out/**/*.json
+            out/**/*.txt
