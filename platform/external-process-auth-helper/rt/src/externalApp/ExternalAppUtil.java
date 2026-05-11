@@ -65,18 +65,6 @@ public final class ExternalAppUtil {
     }
   }
 
-  /**
-   * @deprecated use the version with ExternalAppEntry
-   */
-  @Deprecated(since = "2025.2", forRemoval = true)
-  public static @NotNull String getEnv(@NotNull String env) {
-    String value = System.getenv(env);
-    if (value == null) {
-      throw new IllegalStateException(env + " environment variable is not defined!");
-    }
-    return value;
-  }
-
   public static @NotNull String getEnv(@NotNull String env, @NotNull Map<String, String> environment) {
     String value = environment.get(env);
     if (value == null) {
@@ -85,31 +73,8 @@ public final class ExternalAppUtil {
     return value;
   }
 
-  /**
-   * @deprecated use the version with ExternalAppEntry
-   */
-  @Deprecated(since = "2025.2", forRemoval = true)
-  public static int getEnvInt(@NotNull String env) {
-    return Integer.parseInt(getEnv(env));
-  }
-
   public static int getEnvInt(@NotNull String env, @NotNull Map<String, String> environment) {
     return Integer.parseInt(getEnv(env, environment));
-  }
-
-  /**
-   * @deprecated use the version with ExternalAppEntry
-   */
-  @Deprecated(since = "2025.2", forRemoval = true)
-  public static void handleAskPassInvocation(@NotNull String handlerIdEnvName,
-                                             @NotNull String idePortEnvName,
-                                             @NotNull String entryPoint,
-                                             String[] args) {
-    var exitCode = handleAskPassInvocation(handlerIdEnvName,
-                                           idePortEnvName,
-                                           entryPoint,
-                                           ExternalAppEntry.fromMain(args));
-    System.exit(exitCode);
   }
 
   public static int handleAskPassInvocation(@NotNull String handlerIdEnvName,

@@ -59,11 +59,6 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.
   private val coroutineScope: CoroutineScope?
 ) {
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use constructor with scriptBody")
-  constructor(scriptNamePrefix: String, scriptMainClass: Class<out ExternalApp>) :
-    this(scriptNamePrefix, scriptMainClass, null, emptyList(), null)
-
   private val scriptPaths = HashMap<@NonNls String, File>()
   private val SCRIPT_FILE_LOCK = Any()
 
