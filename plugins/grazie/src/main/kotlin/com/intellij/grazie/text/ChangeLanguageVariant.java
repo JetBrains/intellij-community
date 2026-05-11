@@ -56,11 +56,12 @@ record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOx
       Set<Lang> languages =  EnumSet.copyOf(s.getEnabledLanguages());
       languages.remove(from);
       languages.add(to);
-      return s.withLanguages(languages);
+      GrazieConfig.State newState = s.withLanguages(languages);
+      if (from.isEnglish()) {
+        newState = newState.withOxfordSpelling(toOxford);
+      }
+      return newState;
     });
-    if (from.isEnglish()) {
-      GrazieConfig.Companion.update(state -> state.withOxfordSpelling(toOxford));
-    }
   }
 
   @Nullable

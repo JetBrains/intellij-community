@@ -142,7 +142,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    if (prevState.availableLanguages == newState.availableLanguages) return
+    if (prevState.enabledLanguages == newState.enabledLanguages) return
     checkers = null
     configurationScope.launch {
       heavyInit()

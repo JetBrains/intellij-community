@@ -228,7 +228,7 @@ object LangTool : GrazieStateLifecycle {
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     if (
-      prevState.availableLanguages == newState.availableLanguages
+      prevState.enabledLanguages == newState.enabledLanguages
       && prevState.userDisabledRules == newState.userDisabledRules
       && prevState.userEnabledRules == newState.userEnabledRules
       && prevState.domainEnabledRules == newState.domainEnabledRules
