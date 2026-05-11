@@ -21,7 +21,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
 
   @PropertyMapping({"name", "description", "visible", "declarationAlternatives"})
   public DefaultGradleConfiguration(String name, String description, boolean visible, @NotNull List<String> declarationAlternatives) {
-    this(name, description, visible, false, declarationAlternatives, false);
+    this(name, description, visible, false, declarationAlternatives, null);
   }
 
   public DefaultGradleConfiguration(
