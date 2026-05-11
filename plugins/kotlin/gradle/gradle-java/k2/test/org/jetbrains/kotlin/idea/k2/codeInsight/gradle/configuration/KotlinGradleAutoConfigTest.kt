@@ -1,18 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.AutoConfigurationSettings
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-
 
 class KotlinGradleAutoConfigTest : KotlinGradleImportingTestCase() {
     private fun findGradleModuleConfigurator(): KotlinGradleModuleConfigurator {
