@@ -102,7 +102,7 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
           logError("screenshot should be a regular file, but it is not: $screenshotPath")
         }
         else if (!CIServer.instance.isBuildRunningOnCI) {
-          val prefix = if (OS.CURRENT != OS.Windows) "file:/" else "file://"
+          val prefix = "file:"
           append("Screenshot: $prefix${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
         }
         else {
