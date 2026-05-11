@@ -279,8 +279,6 @@ public final class SearchEverywhereHeader {
       throw new IllegalArgumentException(String.format("Tab %s is not found in tabs list", tab.toString()));
     }
 
-    mySelectedTab.closeFilterPopup();
-
     mySelectedTab.setSelected(false);
     mySelectedTab = tab;
     mySelectedTab.setSelected(true);
