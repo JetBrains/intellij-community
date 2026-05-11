@@ -17,7 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 abstract class GradleJvmResolver {
 
   companion object {
-    internal val EP_NAME: ExtensionPointName<GradleJvmResolver> = ExtensionPointName("org.jetbrains.plugins.gradle.gradleJvmResolver")
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<GradleJvmResolver> = ExtensionPointName("org.jetbrains.plugins.gradle.gradleJvmResolver")
   }
 
   abstract fun canBeResolved(gradleJvm: String): Boolean
