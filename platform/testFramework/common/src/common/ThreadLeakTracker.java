@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
+import com.intellij.diagnostic.CoroutineDumperKt;
 import com.intellij.diagnostic.JVMResponsivenessMonitor;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -34,6 +35,8 @@ import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.prefs.Preferences;
+
+import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER;
 
 @TestOnly
 @Internal
@@ -223,11 +226,16 @@ public final class ThreadLeakTracker {
     Map<Thread, StackTraceElement[]> newStackTraces = new HashMap<>(stackTraces);
     newStackTraces.put(thread, stackTrace);
 
+    // null when kotlinx.coroutines DebugProbes is not installed (no coroutine info available)
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, true, true);
+    String coroutineSection = coroutineDump == null ? "" : "\n" + COROUTINE_DUMP_HEADER + "\n" + coroutineDump;
+
     throw new AssertionError(
       "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
       internalDiagnostic +
       "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, newStackTraces) +
-      "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
+      "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces) +
+      coroutineSection
     );
   }
 
