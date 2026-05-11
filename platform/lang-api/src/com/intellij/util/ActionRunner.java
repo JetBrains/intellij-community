@@ -23,26 +23,10 @@ public abstract class ActionRunner {
   }
 
   /**
-   * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static <T> T runInsideWriteAction(final @NotNull InterruptibleRunnableWithResult<T> runnable) throws Exception {
-    return WriteAction.computeAndWait(() -> runnable.run());
-  }
-
-  /**
    * @deprecated obsolete API
    */
   @Deprecated
   public interface InterruptibleRunnable {
     void run() throws Exception;
-  }
-
-  /**
-   * @deprecated obsolete API
-   */
-  @Deprecated(forRemoval = true)
-  public interface InterruptibleRunnableWithResult<T> {
-    T run() throws Exception;
   }
 }

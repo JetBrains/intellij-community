@@ -52,10 +52,4 @@ public final class ModuleUtil extends ModuleUtilCore {
   public static boolean hasTestSourceRoots(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, HAS_TEST_ROOTS_KEY, HAS_TEST_ROOTS_PROVIDER, false, project);
   }
-
-  /** @deprecated use {@link ModuleType#get(Module)} instead */
-  @Deprecated(forRemoval = true)
-  public static ModuleType<?> getModuleType(@NotNull Module module) {
-    return ModuleType.get(module);
-  }
 }

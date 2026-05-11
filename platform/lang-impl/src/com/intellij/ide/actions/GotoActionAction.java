@@ -68,12 +68,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     });
   }
 
-  /** @deprecated Use {@link ActionManager#tryToExecute(AnAction, InputEvent, Component, String, boolean)} instead */
-  @Deprecated(forRemoval = true)
-  public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
-    performAction(element, component, e, 0, null);
-  }
-
   private static void performAction(@NotNull Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,

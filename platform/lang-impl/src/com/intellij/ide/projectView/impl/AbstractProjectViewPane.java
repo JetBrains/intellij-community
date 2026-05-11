@@ -114,7 +114,6 @@ import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.SwingConstants;
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -481,13 +480,6 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   @Deprecated(forRemoval = true)
   public final @Nullable NodeDescriptor<?> getSelectedDescriptor() {
     return TreeUtil.getLastUserObject(NodeDescriptor.class, getSelectedPath());
-  }
-
-  /** @deprecated Use {@link #getSelectedPath} */
-  @Deprecated(forRemoval = true)
-  public final DefaultMutableTreeNode getSelectedNode() {
-    TreePath path = getSelectedPath();
-    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   /** @deprecated Use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)} */

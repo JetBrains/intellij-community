@@ -1082,5 +1082,3 @@ com.intellij.testIntegration.TestFinder
 - a:isTest(com.intellij.psi.PsiElement):Z
 com.intellij.util.ActionRunner$InterruptibleRunnable
 - a:run():V
-com.intellij.util.ActionRunner$InterruptibleRunnableWithResult
-- a:run():java.lang.Object

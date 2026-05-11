@@ -2491,8 +2491,6 @@ c:com.intellij.codeInsight.documentation.DocumentationManager
 - updateToolwindowContext():V
 pa:com.intellij.codeInsight.documentation.DocumentationManager$DocumentationCollector
 - getElement(Z):com.intellij.psi.PsiElement
-f:com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider
-- sf:ID:com.intellij.openapi.preview.PreviewProviderId
 f:com.intellij.codeInsight.documentation.QuickDocUtil
 - sf:CUT_AT_CMD:java.lang.Object
 - <init>():V
@@ -3008,7 +3006,6 @@ f:com.intellij.codeInsight.hint.DeclarationRangeUtil
 - s:getDeclarationRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - s:getPossibleDeclarationAtRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 f:com.intellij.codeInsight.hint.ElementLocationUtil
-- s:customizeElementLabel(com.intellij.psi.PsiElement,javax.swing.JLabel):V
 - s:renderElementLocation(com.intellij.psi.PsiElement,com.intellij.openapi.util.Ref):java.lang.String
 com.intellij.codeInsight.hint.ExternalParameterInfoChangesProvider
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -3759,10 +3756,8 @@ f:com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 - isModified():Z
 - reset():V
 - sf:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language):V
-- sf:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.util.function.Predicate):V
 f:com.intellij.codeInsight.hints.settings.InlayHintsConfigurable$Companion
 - f:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language):V
-- f:showSettingsDialogForLanguage(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.util.function.Predicate):V
 f:com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.Configurable$NoScroll
@@ -4365,7 +4360,6 @@ a:com.intellij.codeInsight.navigation.GotoTargetHandler
 - p:createComparator(com.intellij.codeInsight.navigation.GotoTargetHandler$GotoData):java.util.Comparator
 - s:createRenderer(com.intellij.codeInsight.navigation.GotoTargetHandler$GotoData,com.intellij.psi.PsiElement):com.intellij.ide.util.PsiElementListCellRenderer
 - p:getAdText(com.intellij.psi.PsiElement,I):java.lang.String
-- p:getChooserTitle(com.intellij.psi.PsiElement,java.lang.String,I):java.lang.String
 - p:getChooserTitle(com.intellij.psi.PsiElement,java.lang.String,I,Z):java.lang.String
 - pa:getFeatureUsedKey():java.lang.String
 - p:getFindUsagesTitle(com.intellij.psi.PsiElement,java.lang.String,I):java.lang.String
@@ -5469,10 +5463,8 @@ f:com.intellij.codeInspection.naming.NamingConventionWithFallbackBean
 - isInheritDefaultSettings():Z
 f:com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil
 - s:parse(java.io.Reader):java.util.Map
-- s:parse(java.lang.String):java.util.Map
 - s:parse(java.nio.file.Path):java.util.Map
 - s:parseProfileName(java.io.Reader):java.lang.String
-- s:parseProfileName(java.lang.String):java.lang.String
 - s:parseProfileName(java.nio.file.Path):java.lang.String
 c:com.intellij.codeInspection.ui.DefaultInspectionToolPresentation
 - com.intellij.codeInspection.DefaultInspectionToolResultExporter
@@ -6715,7 +6707,6 @@ f:com.intellij.find.impl.FindInProjectUtil
 - s:initStringToFindFromDataContext(com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
 - s:setDirectoryName(com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
 - s:setScope(com.intellij.openapi.project.Project,com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
-- s:setupProcessPresentation(com.intellij.openapi.project.Project,Z,com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupProcessPresentation(com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupProcessPresentation(Z,com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupViewPresentation(com.intellij.find.FindModel):com.intellij.usages.UsageViewPresentation
@@ -7322,7 +7313,6 @@ c:com.intellij.ide.actions.GotoActionAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - s:openOptionOrPerformAction(java.lang.Object,java.lang.String,com.intellij.openapi.project.Project,java.awt.Component,I,com.intellij.openapi.util.Computable):V
-- s:performAction(java.lang.Object,java.awt.Component,com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:requiresProject():Z
 a:com.intellij.ide.actions.GotoActionBase
 - com.intellij.openapi.actionSystem.AnAction
@@ -11923,7 +11913,6 @@ c:com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog
 - setSingleSelectionMode():V
 c:com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor
 - com.intellij.openapi.roots.ui.configuration.ModuleElementsEditor
-- sf:NAME:java.lang.String
 - p:myEditorsPanel:javax.swing.JPanel
 - pf:myEntryToEditorMap:java.util.Map
 - p:myRootTreeEditor:com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor

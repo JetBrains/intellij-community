@@ -706,9 +706,6 @@ com.intellij.find.impl.livePreview.SearchResults$SearchResultsListener
 - a:cursorMoved():V
 - a:searchResultsUpdated(com.intellij.find.impl.livePreview.SearchResults):V
 - updateFinished():V
-com.intellij.formatting.FormattingModelBuilderEx
-- com.intellij.formatting.FormattingModelBuilder
-- getIndentOptionsToUse(com.intellij.psi.PsiFile,com.intellij.formatting.FormatTextRanges,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 com.intellij.ide.TwoPaneIdeView
 - a:selectElement(com.intellij.psi.PsiElement,Z):V
 com.intellij.ide.actions.CreateDirectoryCompletionContributor
@@ -879,7 +876,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - p:getSelectedDirectoriesInAmbiguousCase(java.lang.Object):com.intellij.psi.PsiDirectory[]
 - f:getSelectedElement():java.lang.Object
 - f:getSelectedElements():java.lang.Object[]
-- f:getSelectedNode():javax.swing.tree.DefaultMutableTreeNode
 - f:getSelectedPSIElements():com.intellij.psi.PsiElement[]
 - f:getSelectedPath():javax.swing.tree.TreePath
 - f:getSelectedUserObjects():java.lang.Object[]

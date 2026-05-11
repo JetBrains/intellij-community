@@ -326,18 +326,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return true;
   }
 
-
-  /**
-   * @deprecated use getChooserTitle(PsiElement, String, int, boolean) instead
-   */
-  @Deprecated(forRemoval = true)
-  protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
-    LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
-    return "";
-  }
-
   protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
-    return getChooserTitle(sourceElement, name, length);
+    return "";
   }
 
   protected @NotNull @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
