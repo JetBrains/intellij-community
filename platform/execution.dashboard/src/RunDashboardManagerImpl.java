@@ -213,8 +213,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
         RunConfiguration configuration = settings.getConfiguration();
-        myHiddenConfigurations.remove(configuration);
-        myShownConfigurations.remove(configuration);
+        myHiddenConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
+        myShownConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
         myConfigurationStatuses.remove(configuration);
         synchronizationScheduler.submit(() -> {
           fireAvailableConfigurationsUpdated();
@@ -225,9 +225,22 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        RunConfiguration configuration = settings.getConfiguration();
+        if (!myHiddenConfigurations.contains(configuration)) {
+          boolean replaced = myHiddenConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
+          if (replaced) {
+            myHiddenConfigurations.add(configuration);
+          }
+        }
+        if (!myShownConfigurations.contains(configuration)) {
+          boolean replaced = myShownConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
+          if (replaced) {
+            myShownConfigurations.add(configuration);
+          }
+        }
+
         synchronizationScheduler.submit(() -> {
           fireAvailableConfigurationsUpdated();
-          RunConfiguration configuration = settings.getConfiguration();
           if (isShowInDashboard(configuration) ||
               !filterByContent(getConfigurationDescriptors(configuration)).isEmpty()) {
             mySharedState.setServices(getRunConfigurations());
@@ -370,16 +383,20 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private boolean isShown(@NotNull RunConfiguration runConfiguration) {
     if (!myTypes.contains(runConfiguration.getType().getId())) return false;
     if (myState.excludedNewTypes.contains(runConfiguration.getType().getId())) {
-      return myShownConfigurations.contains(runConfiguration);
+      return ContainerUtil.exists(myShownConfigurations, c -> isSameConfiguration(c, runConfiguration));
     }
     else {
-      return !myHiddenConfigurations.contains(runConfiguration);
+      return !ContainerUtil.exists(myHiddenConfigurations, c -> isSameConfiguration(c, runConfiguration));
     }
   }
 
   public static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
     RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(runConfiguration);
     return runProfile instanceof RunConfiguration ? (RunConfiguration)runProfile : null;
+  }
+
+  private static boolean isSameConfiguration(@NotNull RunConfiguration c1, @NotNull RunConfiguration c2) {
+    return c1.getType().getId().equals(c2.getType().getId()) && c1.getName().equals(c2.getName());
   }
 
   @Override
@@ -439,14 +456,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     if (type == null) return Collections.emptyList();
 
     List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
-    return ContainerUtil.filter(configurations, configuration -> !toExclude.contains(configuration));
+    return ContainerUtil.filter(configurations,
+                                configuration -> !ContainerUtil.exists(toExclude, c -> isSameConfiguration(c, configuration)));
   }
 
   @Override
   public void hideConfigurations(@NotNull Collection<? extends RunConfiguration> configurations) {
     for (RunConfiguration configuration : configurations) {
       if (myState.excludedNewTypes.contains(configuration.getType().getId())) {
-        myShownConfigurations.remove(configuration);
+        myShownConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
       }
       else {
         myHiddenConfigurations.add(configuration);
@@ -464,7 +482,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myShownConfigurations.add(configuration);
       }
       else {
-        myHiddenConfigurations.remove(configuration);
+        myHiddenConfigurations.removeIf(c -> isSameConfiguration(c, configuration));
       }
     }
     syncConfigurations();
