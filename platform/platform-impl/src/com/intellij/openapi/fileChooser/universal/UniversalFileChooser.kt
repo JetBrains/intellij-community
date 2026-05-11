@@ -233,6 +233,22 @@ object UniversalFileChooser {
         }
       }
 
+      val desktopAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.desktop.text"),
+        IdeBundle.message("universal.file.chooser.action.desktop.description"),
+        AllIcons.Nodes.Desktop
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun update(e: AnActionEvent) {
+          e.presentation.isVisible = getActiveFileView()?.contributor?.getDesktopPath() != null
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+          navigateToDesktop()
+        }
+      }
+
       val projectAction = if (!project.isDefault) object : AnAction(
         IdeBundle.message("universal.file.chooser.action.project.text"),
         IdeBundle.message("universal.file.chooser.action.project.description"),
@@ -427,6 +443,7 @@ object UniversalFileChooser {
 
       val actionGroup = DefaultActionGroup().apply {
         add(homeAction)
+        add(desktopAction)
         if (projectAction != null) add(projectAction)
         addSeparator()
         add(createDirectoryAction)
@@ -500,6 +517,11 @@ object UniversalFileChooser {
           text = IdeBundle.message("universal.file.chooser.action.home.text"),
           action = { navigateToHome() }
         ))
+        add(LocationData(
+          icon = AllIcons.Nodes.Desktop,
+          text = IdeBundle.message("universal.file.chooser.action.desktop.text"),
+          action = { navigateToDesktop() }
+        ))
         if (!project.isDefault) {
           add(LocationData(
             icon = AllIcons.Nodes.Project,
@@ -561,6 +583,21 @@ object UniversalFileChooser {
         withContext(Dispatchers.IO) {
           runOnEdt {
             navigateToFile(Path.of(basePath))
+          }
+        }
+      }
+    }
+
+    private fun navigateToDesktop() {
+      val activeView = getActiveFileView() ?: return
+      activeView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          activeView.contributor.getDesktopPath()?.let { desktopPath ->
+            runOnEdt {
+              activeView.topComponent.cursor = Cursor.getDefaultCursor()
+              navigateToFile(desktopPath)
+            }
           }
         }
       }

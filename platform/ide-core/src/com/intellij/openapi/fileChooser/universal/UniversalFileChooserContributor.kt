@@ -64,6 +64,8 @@ interface UniversalFileChooserContributor {
   suspend fun getPresentation(path: Path): Presentation? = null
 
   fun getFileName(path: Path): String? = path.fileName?.toString()
+
+  fun getDesktopPath(): Path? = null
 }
 
 

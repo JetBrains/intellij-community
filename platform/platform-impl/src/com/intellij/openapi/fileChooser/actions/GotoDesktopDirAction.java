@@ -67,7 +67,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
     }
   }
 
-  private static Path getDesktopDirectory() {
+  static Path getDesktopDirectory() {
     if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
       var path = new char[WinDef.MAX_PATH];
       var res = Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_DESKTOP, null, ShlObj.SHGFP_TYPE_CURRENT, path);
