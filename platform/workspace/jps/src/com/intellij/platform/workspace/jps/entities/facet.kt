@@ -60,24 +60,6 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder = FacetEntityType.compatibilityInvoke(moduleId, name, typeId, entitySource, init)
-
-    //region compatibility generated code
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(
-      message = "This method is deprecated and will be removed in next major release",
-      replaceWith = ReplaceWith("invoke(moduleId, name, typeId, entitySource, init)"),
-    )
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    fun create(
-      name: String,
-      moduleId: ModuleId,
-      typeId: FacetEntityTypeId,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder = invoke(moduleId, name, typeId, entitySource, init)
-    //endregion compatibility generated code
   }
   //endregion
 }
