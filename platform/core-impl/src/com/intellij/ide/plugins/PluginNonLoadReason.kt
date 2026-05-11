@@ -2,10 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.PlatformUtils
 import com.intellij.util.system.CpuArch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -123,7 +125,11 @@ class PluginSinceBuildConstraintViolation(
   val productBuildNumber: BuildNumber,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.incompatible.since.build", plugin.name, plugin.version, plugin.sinceBuild, productBuildNumber)
+    get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.since.build",
+                                              "plugin.loading.error.long.incompatible.since.build.on.remote.dev.side",
+                                              plugin,
+                                              plugin.sinceBuild,
+                                              productBuildNumber)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.since.build", plugin.sinceBuild)
   override val logMessage: @NonNls String
@@ -137,12 +143,40 @@ class PluginUntilBuildConstraintViolation(
   val productBuildNumber: BuildNumber,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.incompatible.until.build", plugin.name, plugin.version, plugin.untilBuild, productBuildNumber)
+    get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.until.build",
+                                              "plugin.loading.error.long.incompatible.until.build.on.remote.dev.side",
+                                              plugin,
+                                              plugin.untilBuild,
+                                              productBuildNumber)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.until.build", plugin.untilBuild)
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.untilBuild} or older, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
+}
+
+private fun buildCompatibilityDetailedMessage(
+  regularMessageKey: @NonNls String,
+  remoteDevMessageKey: @NonNls String,
+  plugin: IdeaPluginDescriptor,
+  requiredBuild: String?,
+  productBuildNumber: BuildNumber,
+): @NlsContexts.DetailedDescription String {
+  val remoteDevSide = remoteDevPluginLoadingSide()
+  return if (remoteDevSide == null) {
+    CoreBundle.message(regularMessageKey, plugin.name, plugin.version, requiredBuild, productBuildNumber)
+  }
+  else {
+    CoreBundle.message(remoteDevMessageKey, plugin.name, plugin.version, requiredBuild, productBuildNumber, remoteDevSide)
+  }
+}
+
+private fun remoteDevPluginLoadingSide(): @Nls String? {
+  return when {
+    AppMode.isRemoteDevHost() -> CoreBundle.message("plugin.loading.error.remote.dev.side.backend")
+    PlatformUtils.isJetBrainsClient() -> CoreBundle.message("plugin.loading.error.remote.dev.side.client")
+    else -> null
+  }
 }
 
 @ApiStatus.Internal
