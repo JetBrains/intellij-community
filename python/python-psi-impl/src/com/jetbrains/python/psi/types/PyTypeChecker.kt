@@ -353,7 +353,7 @@ object PyTypeChecker {
     }
 
     // Remove value-specific components from the actual type to make it safe to propagate
-    var safeActual = if (constraints.isEmpty() && bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual)
+    var safeActual = if (constraints.isEmpty() && bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual, context.context)
     safeActual = PyNumericTowerUtil.enrich(safeActual)
 
     if (substitutedRef != null) {
@@ -510,31 +510,12 @@ object PyTypeChecker {
     return variadic;
   }
 
-  private fun replaceLiteralStringWithStr(actual: PyType?): PyType? {
-    // TODO replace with PyTypeVisitor API once it's ready
-    if (actual is PyLiteralStringType) {
-      return PyClassTypeImpl(actual.pyClass, false)
-    }
-    if (actual is PyUnionType) {
-      return actual.map { replaceLiteralStringWithStr(it) }
-    }
-    if (actual is PyNamedTupleType) {
-      return actual
-    }
-    if (actual is PyTupleType) {
-      return PyTupleType(
-        actual.pyClass,
-        actual.elementTypes.map { replaceLiteralStringWithStr(it) },
-        actual.isHomogeneous, actual.isDefinition
-      )
-    }
-    if (actual is PyCollectionType) {
-      return PyCollectionTypeImpl(
-        actual.pyClass, actual.isDefinition,
-        actual.elementTypes.map { replaceLiteralStringWithStr(it) }
-      )
-    }
-    return actual
+  private fun replaceLiteralStringWithStr(actual: PyType?, context: TypeEvalContext): PyType? {
+    return PyCloningTypeVisitor.clone(actual, object : PyCloningTypeVisitor(context) {
+      override fun visitPyLiteralStringType(literalStringType: PyLiteralStringType): PyType {
+        return PyClassTypeImpl(literalStringType.pyClass, false)
+      }
+    })
   }
 
   private fun match(expected: PyParamSpecType, actual: PyType?, context: MatchContext): Boolean {
@@ -544,7 +525,7 @@ object PyTypeChecker {
     val bound = expected.bound
 
     // Remove value-specific components from the actual type to make it safe to propagate
-    var safeActual = if (bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual)
+    var safeActual = if (bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual, context.context)
     safeActual = PyNumericTowerUtil.enrich(safeActual)
 
     val match = match(bound, safeActual, context)
