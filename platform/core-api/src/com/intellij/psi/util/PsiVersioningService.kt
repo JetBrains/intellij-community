@@ -24,7 +24,7 @@ interface PsiVersioningService {
      * }
      * ```
      * Without [inVersionedEnvironment], we could have a violation of versioned PSI invariants:
-     * the created `whitespace` could be non-versioned, and `element` could be versioned,
+     * the created `whitespace` could be versioned, and `element` could be non-versioned,
      * where the Platform disallows adding non-versioned trees to versioned ones.
      *
      * With [inVersionedEnvironment], the created `whitespaceElement` will be compatible with [node], and it can be safely attached to `element`.
@@ -36,7 +36,13 @@ interface PsiVersioningService {
      * Overload of [inVersionedEnvironment] with [PsiElement] instead of [ASTNode]
      */
     @JvmStatic
-    fun <T> inVersionedEnvironment(element: PsiElement, action: () -> T): T = getInstance().runInVersionedEnvironment(element.node, action)
+    fun <T> inVersionedEnvironment(element: PsiElement, action: () -> T): T {
+      val node = element.node
+      if (node == null) {
+        return action()
+      }
+      return getInstance().runInVersionedEnvironment(element.node, action)
+    }
 
     /**
      * Executes [action] with allowing access to PSI Syntax Tree (the [ASTNode] hierarchy).

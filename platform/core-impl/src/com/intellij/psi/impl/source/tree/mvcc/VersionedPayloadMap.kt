@@ -36,7 +36,7 @@ class VersionedPayloadMap private constructor(
    * Inserts [payload] with [version] into the map.
    * The invariant of sortedness is retained after insertion.
    *
-   * @return `null` if insertion is not needed, or a new instance of with the updated data otherwise
+   * @return `null` if insertion is not needed, or a new instance with the updated data otherwise
    */
   fun insert(version: Long, payload: Any?): VersionedPayloadMap? {
     var index = payloads.size - 1
@@ -128,7 +128,7 @@ class VersionedPayloadMap private constructor(
     return false
   }
 
-  @Suppress("unused")
+  @Suppress("unused") // user in `@Debug.Renderer`
   private fun arrayOfPairs(): Array<VersionedPayload> =
     versions.zip(payloads).map { VersionedPayload(it.first, it.second) }.toTypedArray()
 
