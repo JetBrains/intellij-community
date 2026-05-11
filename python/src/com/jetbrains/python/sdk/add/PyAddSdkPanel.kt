@@ -32,20 +32,3 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   open fun addChangeListener(listener: Runnable) {}
 }
-
-/**
- * Obtains a list of sdk on a pool using [sdkObtainer], then fills [sdkComboBox] and calls [onAdded] on the EDT.
- */
-@Deprecated(
-  message ="this ComboBox was designed only for plain venv, not tool-specific pythons and doesn't supported anymore",
-  replaceWith = ReplaceWith("PythonInterpreterComboBox"),
-  DeprecationLevel.ERROR
-)
-fun addInterpretersAsync(
-  @Suppress("DEPRECATION_ERROR")
-  sdkComboBox: PySdkPathChoosingComboBox,
-  sdkObtainer: () -> List<Sdk>,
-  onAdded: (List<Sdk>) -> Unit,
-) {
-  addInterpretersToComboAsync(sdkComboBox, sdkObtainer, onAdded)
-}
