@@ -34,6 +34,8 @@ It then runs:
 
 Skipping signing, notarization, DMG, and SIT is intentional for the first artifact workflow. It should produce a zip artifact without requiring Apple Developer certificates or notary credentials.
 
+The workflow also removes the upstream Bazel downloader rewrite from `swcdn.apple.com` to JetBrains' private `packages.jetbrains.team` Apple CDN mirror. Public forks do not have access to that mirror, so Mast builds fetch the Apple Command Line Tools SDK package directly from Apple's public CDN instead.
+
 ## Artifacts
 Successful runs upload:
 
