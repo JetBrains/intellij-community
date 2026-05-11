@@ -17,10 +17,12 @@ class MinimapRenderer {
     }
 
     val colorContext = MinimapTokenColorContext(context, metrics)
+    val clipBounds = graphics.clipBounds
 
     try {
       GraphicsUtil.paintWithAlpha(graphics, TOKEN_FILLER_ALPHA) {
         for (entry in entries) {
+          if (clipBounds != null && !entry.rect2d.intersects(clipBounds)) continue
           graphics.color = colorContext.colorFor(entry)
           graphics.fill(entry.rect2d)
         }

@@ -35,6 +35,7 @@ class MinimapStateListeners(
   private val scheduleFoldingUpdate: () -> Unit,
   private val invalidateLineProjection: () -> Unit,
   private val updateParameters: () -> Unit,
+  private val updateVisibleArea: () -> Unit,
   private val repaint: () -> Unit,
 ) {
   private val documentListener = object : DocumentListener {
@@ -74,8 +75,14 @@ class MinimapStateListeners(
           visibleArea.width == newArea.width) {
         return
       }
+      val sizeChanged = visibleArea.height != newArea.height || visibleArea.width != newArea.width
       visibleArea = newArea
-      updateParameters()
+      if (sizeChanged) {
+        updateParameters()
+      }
+      else {
+        updateVisibleArea()
+      }
       repaint()
     }
   }

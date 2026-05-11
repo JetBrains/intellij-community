@@ -12,6 +12,7 @@ import com.intellij.ide.minimap.layout.MinimapLayoutPolicy
 import com.intellij.ide.minimap.model.MinimapModel
 import com.intellij.ide.minimap.scene.MinimapSceneBuilder
 import com.intellij.ide.minimap.settings.MinimapSettings
+import com.intellij.ide.minimap.settings.MinimapScaleMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -70,7 +71,8 @@ class MinimapController(
     scheduleFoldingUpdate = { scheduleDiagnosticsUpdate() },
     invalidateLineProjection = model::invalidateLineProjection,
     updateParameters = ::refreshSnapshot,
-      repaint = panel::repaint,
+    updateVisibleArea = ::refreshVisibleArea,
+    repaint = panel::repaint,
   )
 
   private val uiListeners = MinimapUiListeners(
@@ -132,8 +134,43 @@ class MinimapController(
     }
   }
 
+  private fun refreshVisibleArea() {
+    if (tryRefreshFitVisibleAreaGeometry()) return
+    refreshSnapshot()
+  }
+
   fun isIndependentScrollEnabled(): Boolean {
     return MinimapInteractionPolicy.useIndependentMinimapScroll(editor)
+  }
+
+  private fun tryRefreshFitVisibleAreaGeometry(): Boolean {
+    if (isIndependentScrollEnabled()) return false
+
+    val current = panel.currentSnapshot() ?: return false
+    val state = settings.state
+    val panelHeight = max(if (panel.height > 0) panel.height else container.height, 0)
+    val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, state.scaleMode)
+    if (effectiveScaleMode != MinimapScaleMode.FIT) return false
+
+    val scaleData = MinimapScaleUtil.computeScale(editor, panelHeight, state.width, effectiveScaleMode)
+    if (!scaleData.fitToHeight) return false
+
+    val panelWidth = max(panel.width, scaleData.width)
+    if (current.context.panelWidth != panelWidth || current.context.panelHeight != panelHeight) return false
+
+    val lineProjection = model.getLineProjection()
+    if (lineProjection !== current.context.lineProjection) return false
+
+    val geometry = geometryCalculator.compute(panelHeight, scaleData, effectiveScaleMode, lineProjection.projectedLineCount)
+    if (geometry.minimapHeight != current.geometry.minimapHeight ||
+        geometry.areaStart != current.geometry.areaStart ||
+        geometry.areaEnd != current.geometry.areaEnd) {
+      return false
+    }
+
+    val context = current.context.copy(geometry = geometry)
+    panel.updateSnapshot(current.copy(context = context, geometry = geometry))
+    return true
   }
 
   fun scrollIndependentViewportBy(deltaPx: Int): Boolean {
