@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.openapi.vcs.impl.BackendCodeSmellsUtilsKt.isCodeAnalysisSplitEnabled;
+import static com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemsViewImplementationChooserKt.isSplitProblemsViewKeyEnabled;
 import static com.intellij.openapi.vcs.impl.BackendCodeSmellsUtilsKt.showCodeSmellErrorsInFrontend;
 import static com.intellij.platform.vcs.impl.shared.CodeSmellToolWindowUtilKt.showCodeSmellsPanelInToolWindow;
 
@@ -68,7 +68,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @Override
   public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList) {
-    if (isCodeAnalysisSplitEnabled()) { // rem-dev implementation
+    if (isSplitProblemsViewKeyEnabled()) { // rem-dev implementation
       showCodeSmellErrorsInFrontend(smellList, myProject);
       return;
     }

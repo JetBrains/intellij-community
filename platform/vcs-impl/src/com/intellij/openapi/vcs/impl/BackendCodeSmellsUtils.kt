@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.platform.vcs.impl.shared.CODE_SMELL_REMOTE_TOPIC
 import com.intellij.platform.vcs.impl.shared.CodeSmellDto
@@ -46,9 +45,5 @@ private fun convertToDtos(smellList: List<CodeSmellInfo>): List<CodeSmellDto> {
         severityValue = smellInfo.severity.myVal
       )
     }
-}
-
-internal fun isCodeAnalysisSplitEnabled(): Boolean {
-  return Registry.`is`("problems.view.code.analysis.frontend.enabled", false)
 }
 
