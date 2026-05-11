@@ -49,7 +49,6 @@ com.intellij.execution.RunnerAndConfigurationSettings
 - a:isEditBeforeRun():Z
 - a:isFocusToolWindowBeforeRun():Z
 - isShared():Z
-- isSingleton():Z
 - a:isStoredInArbitraryFileInProject():Z
 - a:isStoredInDotIdeaFolder():Z
 - a:isStoredInLocalWorkspace():Z

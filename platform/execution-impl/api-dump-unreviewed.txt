@@ -217,7 +217,6 @@ a:com.intellij.execution.RunManagerEx
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.execution.RunManagerEx
 - f:getSortedConfigurations():java.util.Collection
 - s:getTasksCount(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration,com.intellij.openapi.util.Key[]):I
-- f:setActiveConfiguration(com.intellij.execution.RunnerAndConfigurationSettings):V
 - a:setBeforeRunTasks(com.intellij.execution.configurations.RunConfiguration,java.util.List):V
 - f:setBeforeRunTasks(com.intellij.execution.configurations.RunConfiguration,java.util.List,Z):V
 f:com.intellij.execution.TerminateRemoteProcessDialog
