@@ -194,6 +194,13 @@ public final class DaemonListeners implements Disposable {
           stopDaemon(false, "Document bulk modifications started");
         }
       }
+
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        if (worthBothering(document, myProject)) {
+          stopDaemon(true, "Document bulk modifications finished");
+        }
+      }
     }, this);
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
