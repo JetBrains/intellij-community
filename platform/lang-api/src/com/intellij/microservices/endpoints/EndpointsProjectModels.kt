@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -35,6 +36,8 @@ interface EndpointsProjectModel {
   fun isTestModule(entity: EndpointsModuleEntity): Boolean
 
   fun createFilter(entity: EndpointsModuleEntity, fromLibraries: Boolean, fromTests: Boolean): EndpointsFilter
+
+  fun getModuleEntityForFile(file: PsiFile): EndpointsModuleEntity? = null
 
   companion object {
     @JvmField
