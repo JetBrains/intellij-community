@@ -1,7 +1,7 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider
@@ -17,9 +17,9 @@ import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
+import com.intellij.mcpserver.widget.enableIfNotExplicitlyDisabled
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.mcpserver.widget.enableIfNotExplicitlyDisabled
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
@@ -224,11 +224,10 @@ open class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  class MyProjectListener : ProjectActivity {
+  internal class MyProjectListener : ProjectActivity {
     override suspend fun execute(project: Project) {
       // TODO: consider start on app startup
-      val service = serviceAsync<McpServerService>() // initialize service
-      service.showForceEnabledNotificationIfNeeded(project)
+      serviceAsync<McpServerService>().showForceEnabledNotificationIfNeeded(project)
     }
   }
 
