@@ -16,9 +16,13 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.common.toPythonPackages
-import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlFile
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.requirements.PyDependenciesFile
+import com.jetbrains.python.requirements.RequirementsTxtFile
+import com.jetbrains.python.requirements.SetupPyFile
 import com.jetbrains.python.sdk.associatedModuleDir
 import org.jetbrains.annotations.TestOnly
 
@@ -80,14 +84,14 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return PyResult.success(listInstalledPackagesSnapshot())
   }
 
-  override fun getDependencyFile(): VirtualFile? {
+  override fun getDependencyFile(): PyDependenciesFile? {
     val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
     val moduleDir = sdk.associatedModuleDir ?: return null
 
     return when (providerType) {
-      RequirementsProviderType.REQUIREMENTS_TXT -> moduleDir.findChild("requirements.txt")
-      RequirementsProviderType.SETUP_PY -> moduleDir.findChild("setup.py")
-      RequirementsProviderType.ENVIRONMENT_YML -> moduleDir.findChild("environment.yml")
+      RequirementsProviderType.REQUIREMENTS_TXT -> moduleDir.findChild("requirements.txt")?.let { RequirementsTxtFile(it) }
+      RequirementsProviderType.SETUP_PY -> moduleDir.findChild("setup.py")?.let { SetupPyFile(it) }
+      RequirementsProviderType.ENVIRONMENT_YML -> moduleDir.findChild("environment.yml")?.let { CondaEnvironmentYmlFile(it) }
     }
   }
 

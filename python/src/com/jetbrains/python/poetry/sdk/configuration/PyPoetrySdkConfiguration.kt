@@ -78,8 +78,8 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
     val isPoetryProject = if (checkToml) {
       withContext(Dispatchers.IO) {
-        PyProjectToml.findFile(module)
-          ?.let { toml -> getPyProjectTomlForPoetry(toml) } != null || poetryLockExists
+        PyProjectToml.findPyProjectTomlFile(module)
+          ?.let { toml -> getPyProjectTomlForPoetry(toml.virtualFile) } != null || poetryLockExists
       }
     }
     else true
@@ -126,9 +126,9 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
           )
         )
       }
-      val tomlFile = PyProjectToml.findFile(module)
-      val versionSpecifiers = tomlFile?.let { vf ->
-        readAction { vf.findPsiFile(module.project)?.resolvePythonVersionSpecifiers() }
+      val tomlFile = PyProjectToml.findPyProjectTomlFile(module)
+      val versionSpecifiers = tomlFile?.let { pyProjectTomlFile ->
+        readAction { pyProjectTomlFile.virtualFile.findPsiFile(module.project)?.resolvePythonVersionSpecifiers() }
       } ?: PyVersionSpecifiers.ANY_SUPPORTED
 
       val baseSystemPython = getSystemPython(

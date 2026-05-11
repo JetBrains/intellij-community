@@ -24,4 +24,6 @@ public final class PythonPyprojectIcons {
 
     /** 16x16 */ public static final @NotNull Icon PyProjectModule = load("icons/com/intellij/python/pyproject/expui/model/pyProjectModule.svg", 623489112, 2);
   }
+
+  /** 16x16 */ public static final @NotNull Icon Toml = load("icons/com/intellij/python/pyproject/expui/toml.svg", 945785471, 2);
 }

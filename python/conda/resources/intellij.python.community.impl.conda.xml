@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.requirements"/>
+    <module name="intellij.python.sdk"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>

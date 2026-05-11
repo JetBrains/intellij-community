@@ -8,9 +8,9 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.PyProjectTomlFile
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
@@ -270,17 +270,17 @@ class UvPackageManager internal constructor(project: Project, sdk: Sdk, uvExecut
   override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess {  } }
 
   private suspend fun resolvePackageName(module: Module): String {
-    val pyProjectFile = PyProjectToml.findFile(module) ?: return module.name
-    return PyProjectToml.parseCached(module.project, pyProjectFile)?.project?.name ?: module.name
+    val pyProjectFile = PyProjectToml.findPyProjectTomlFile(module) ?: return module.name
+    return PyProjectToml.parseCached(module.project, pyProjectFile.virtualFile)?.project?.name ?: module.name
   }
 
   // TODO PY-87712 Double check for remotes
-  override fun getDependencyFile(): VirtualFile? {
+  override fun getDependencyFile(): PyProjectTomlFile? {
     val uvWorkingDirectory = runBlockingMaybeCancellable { uvExecutionContextDeferred.await().workingDir }
     return resolvePyProjectToml(uvWorkingDirectory)
   }
 
-  override suspend fun getDependencyFiles(): List<VirtualFile> {
+  override suspend fun getDependencyFiles(): List<PyProjectTomlFile> {
     val rootFile = getDependencyFile() ?: return emptyList()
     val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
     val memberModules = readAction {
@@ -289,7 +289,7 @@ class UvPackageManager internal constructor(project: Project, sdk: Sdk, uvExecut
       } ?: return@readAction emptyList()
       rootModule.getToolWorkspaceLayout(UV_TOOL_ID)?.memberModules.orEmpty()
     }
-    val memberFiles = memberModules.mapNotNull { PyProjectToml.findFile(it) }
+    val memberFiles = memberModules.mapNotNull { PyProjectToml.findPyProjectTomlFile(it) }
     return listOf(rootFile) + memberFiles
   }
 

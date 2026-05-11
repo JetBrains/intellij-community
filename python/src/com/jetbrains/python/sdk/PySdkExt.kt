@@ -248,35 +248,6 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
   return basePath != associatedPath
 }
 
-@get:Internal
-val Sdk.associatedModulePath: String?
-  // TODO: Support .project associations
-  get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
-
-
-@get:Internal
-val Sdk.associatedModuleNioPath: Path?
-  get() =
-    try {
-      associatedModulePath?.let { Path(it) }
-    }
-    catch (e: InvalidPathException) {
-      if (getUserData(SDK_ERROR_REPORTED) != true) {
-        LOGGER.warn("Can't convert ${associatedModulePath} to path", e)
-        putUserData(SDK_ERROR_REPORTED, true)
-      }
-      null
-    }
-
-private val SDK_ERROR_REPORTED = Key.create<Boolean>("pySdkErrorReported")
-
-@get:Internal
-val Sdk.associatedModuleDir: VirtualFile?
-  get() {
-    val nioPath = associatedModuleNioPath ?: return null
-    return VirtualFileManager.getInstance().findFileByNioPath(nioPath) ?: TempFileSystem.getInstance().findFileByNioFile(nioPath)
-  }
-
 @Internal
 fun Sdk.setup(existingSdks: List<Sdk>): Sdk? {
   val homeDir = homeDirectory ?: return null
@@ -383,9 +354,6 @@ val Sdk.isReadOnly: Boolean
 @get:Internal
 val Sdk.readOnlyErrorMessage: String
   get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
-
-private val Sdk.associatedPathFromAdditionalData: String?
-  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
 
 val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
 

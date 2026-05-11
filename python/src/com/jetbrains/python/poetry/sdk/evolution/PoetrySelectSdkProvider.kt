@@ -35,7 +35,7 @@ internal class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
     getPoetryExecutable() ?:PyResult.localizedError(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
     val pyProjectTomlFile = withContext(Dispatchers.IO) {
-      PyProjectToml.findFile(evoModuleSdk.module)
+      PyProjectToml.findPyProjectTomlFile(evoModuleSdk.module)?.virtualFile
     } ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.pyproject.toml.file.is.required.for.poetry"))
 
     val envList = runPoetry(pyProjectTomlFile.parent.toNioPath(), "env", "list", "--full-path").getOr { return@EvoTreeLazyNodeElement it }
@@ -44,7 +44,7 @@ internal class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
     val envByFolders = environments.groupBy { it.parent }.toMutableMap()
 
 
-    val (projectName, requiresPython) = withContext(Dispatchers.IO) {
+    val (projectName, _) = withContext(Dispatchers.IO) {
       val toml = PyProjectToml.parse(pyProjectTomlFile.readText())
       (toml.project?.name) to (toml.project?.requiresPython)
     }
