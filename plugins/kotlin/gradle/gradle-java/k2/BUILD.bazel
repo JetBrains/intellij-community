@@ -157,6 +157,8 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     "@lib//:kotlin-tooling-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
   ],
   runtime_deps = [
     ":kotlin-gradle-java-tests",

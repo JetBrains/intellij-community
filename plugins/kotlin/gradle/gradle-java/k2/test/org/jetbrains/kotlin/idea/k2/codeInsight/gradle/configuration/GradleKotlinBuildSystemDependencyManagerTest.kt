@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
@@ -17,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
@@ -26,6 +28,10 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
 class GradleKotlinBuildSystemDependencyManagerTest : KotlinGradleImportingTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     private lateinit var gradleDependencyManager: GradleKotlinBuildSystemDependencyManager
     override fun testDataDirName(): String = "gradleKotlinBuildSystemDependencyManager"
 
@@ -47,9 +53,9 @@ class GradleKotlinBuildSystemDependencyManagerTest : KotlinGradleImportingTestCa
         importProjectFromTestData()
         val module = myProject.modules.firstOrNull { it.name == moduleName }
         assertNotNull(module)
-        val buildScript = runReadAction {
+        val buildScript = ReadAction.nonBlocking<VirtualFile> {
             gradleDependencyManager.getBuildScriptFile(module!!)
-        }
+        }.executeSynchronously()
         assertNotNull(buildScript)
         val buildScriptPath = buildScript!!.toNioPath()
         val projectPath = myProjectRoot.toNioPath()
