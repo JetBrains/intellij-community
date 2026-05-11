@@ -50,7 +50,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,15 +59,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
   public PsiResolveHelperImpl(@NotNull Project project) {
     myManager = PsiManager.getInstance(project);
-  }
-
-  /**
-   * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public PsiResolveHelperImpl(@NotNull PsiManager manager) {
-    myManager = manager;
   }
 
   @Override

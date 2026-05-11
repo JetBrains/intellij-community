@@ -186,7 +186,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(
-    psiElement().withText("(").afterLeaf(PsiKeyword.FOR));
+    psiElement().withText("(").afterLeaf(JavaKeywords.FOR));
   private static final ElementPattern<PsiElement> START_SWITCH =
     psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchBlock.class));
   private static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =

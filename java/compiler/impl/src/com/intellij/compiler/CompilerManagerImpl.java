@@ -114,7 +114,6 @@ public class CompilerManagerImpl extends CompilerManager {
 
   private final List<CompileTask> myBeforeTasks = new ArrayList<>();
   private final List<CompileTask> myAfterTasks = new ArrayList<>();
-  private final Set<FileType> myCompilableTypes = new HashSet<>();
   private volatile Set<FileType> myCachedCompilableTypes;
   private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
@@ -194,11 +193,6 @@ public class CompilerManagerImpl extends CompilerManager {
     return myCompilationSemaphore.availablePermits() == 0;
   }
 
-  @Override
-  public final void addCompiler(@NotNull Compiler compiler) {
-    addCompiler(compiler, NO_FACTORY_ID);
-  }
-
   private void addCompiler(@NotNull Compiler compiler, final @NotNull String factoryId) {
     myCompilers.put(compiler, factoryId);
     // supporting file instrumenting compilers and validators for external build
@@ -215,8 +209,7 @@ public class CompilerManagerImpl extends CompilerManager {
     return factory == null? NO_FACTORY_ID : factory.getClass().getName();
   }
 
-  @Override
-  public final void removeCompiler(@NotNull Compiler compiler) {
+  private void removeCompiler(@NotNull Compiler compiler) {
     if (myCompilers.remove(compiler) != null) {
       for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
         tasks.removeIf(
@@ -244,15 +237,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public void addCompilableFileType(@NotNull FileType type) {
-    myCompilableTypes.add(type);
-  }
-
-  @Override
   public boolean isCompilableFileType(@NotNull FileType type) {
-    if (myCompilableTypes.contains(type)) {
-      return true;
-    }
     Set<FileType> types = myCachedCompilableTypes;
     if (types == null) {
       types = new HashSet<>();

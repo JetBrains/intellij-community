@@ -350,14 +350,6 @@ public final class ImportUtils {
   }
 
   /**
-   * @deprecated use {@link ImportUtils#findOnDemandImportConflict(String, PsiElement)}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
-    OnDemandImportConflict conflict = findOnDemandImportConflict(fqName, context);
-    return conflict != OnDemandImportConflict.NO_CONFLICTS;
-  }
-  /**
    * @param strict if strict is true this method checks if the conflicting
    *               class which is imported is actually used in the file. If it isn't the
    *               on demand import can be overridden with an exact import for the fqName

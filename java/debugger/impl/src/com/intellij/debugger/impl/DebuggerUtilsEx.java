@@ -111,7 +111,6 @@ import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Field;
-import com.sun.jdi.InterfaceType;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.InvalidTypeException;
 import com.sun.jdi.Location;
@@ -131,7 +130,6 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,41 +189,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  @Deprecated(forRemoval = true)
-  public static ReferenceType getSuperClass(final @NotNull String baseQualifiedName, @NotNull ReferenceType checkedType) {
-    if (baseQualifiedName.equals(checkedType.name())) {
-      return checkedType;
-    }
-
-    if (checkedType instanceof ClassType classType) {
-      ClassType superClassType = classType.superclass();
-      if (superClassType != null) {
-        ReferenceType superClass = getSuperClass(baseQualifiedName, superClassType);
-        if (superClass != null) {
-          return superClass;
-        }
-      }
-      List<InterfaceType> interfaces = classType.allInterfaces();
-      for (InterfaceType iface : interfaces) {
-        ReferenceType superClass = getSuperClass(baseQualifiedName, iface);
-        if (superClass != null) {
-          return superClass;
-        }
-      }
-    }
-
-    if (checkedType instanceof InterfaceType) {
-      List<InterfaceType> list = ((InterfaceType)checkedType).superinterfaces();
-      for (InterfaceType superInterface : list) {
-        ReferenceType superClass = getSuperClass(baseQualifiedName, superInterface);
-        if (superClass != null) {
-          return superClass;
-        }
-      }
-    }
-    return null;
-  }
-
   public static ClassFilter create(Element element) throws InvalidDataException {
     return DebuggerSettingsUtils.create(element);
   }
@@ -262,32 +225,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
-  }
-
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#readFilters} directly
-   */
-  @Deprecated(forRemoval = true)
-  public static ClassFilter[] readFilters(List<? extends Element> children) {
-    return DebuggerSettingsUtils.readFilters(children);
-  }
-
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#writeFilters} directly
-   */
-  @Deprecated(forRemoval = true)
-  public static void writeFilters(@NotNull Element parentNode,
-                                  @NonNls String tagName,
-                                  ClassFilter[] filters) throws WriteExternalException {
-    DebuggerSettingsUtils.writeFilters(parentNode, tagName, filters);
-  }
-
-  /**
-   * @deprecated Use {@link DebuggerSettingsUtils#filterEquals} directly
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean filterEquals(ClassFilter[] filters1, ClassFilter[] filters2) {
-    return DebuggerSettingsUtils.filterEquals(filters1, filters2);
   }
 
   private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
