@@ -82,7 +82,6 @@ a:org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer
 - getElementClass():java.lang.Class
 - getTypeId():java.lang.String
 - a:load(org.jdom.Element):org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
-- save(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement,org.jdom.Element):V
 f:org.jetbrains.jps.model.serialization.facet.FacetState
 - <init>():V
 - equals(java.lang.Object):Z
