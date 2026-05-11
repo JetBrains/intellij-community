@@ -343,6 +343,38 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+f:com.intellij.ide.settings.RemoteSettingInfo
+- <init>(com.intellij.ide.settings.RemoteSettingInfo$Direction,Z):V
+- b:<init>(com.intellij.ide.settings.RemoteSettingInfo$Direction,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getAllowedInCwm():Z
+- f:getDirection():com.intellij.ide.settings.RemoteSettingInfo$Direction
+e:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- java.lang.Enum
+- sf:DoNotSynchronize:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:InitialFromBackend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:InitialFromFrontend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:OnlyFromBackend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- sf:OnlyFromFrontend:com.intellij.ide.settings.RemoteSettingInfo$Direction
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getFrom():com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- f:getTo():com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- f:isOneDirectionOnly():Z
+- s:valueOf(java.lang.String):com.intellij.ide.settings.RemoteSettingInfo$Direction
+- s:values():com.intellij.ide.settings.RemoteSettingInfo$Direction[]
+e:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- java.lang.Enum
+- sf:Backend:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- sf:Frontend:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- sf:None:com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ide.settings.RemoteSettingInfo$Endpoint
+- s:values():com.intellij.ide.settings.RemoteSettingInfo$Endpoint[]
+com.intellij.ide.settings.RemoteSettingInfoProvider
+- sf:Companion:com.intellij.ide.settings.RemoteSettingInfoProvider$Companion
+- getPluginIdMapping(com.intellij.ide.settings.RemoteSettingInfo$Endpoint):java.util.Map
+- a:getRemoteSettingsInfo():java.util.Map
+f:com.intellij.ide.settings.RemoteSettingInfoProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider
 - sf:Companion:com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider$Companion
 - a:getSettingsFileList():java.util.List
