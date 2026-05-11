@@ -115,10 +115,6 @@
                                          converter="com.intellij.codeInsight.completion.CharTailTypeConverter"
                                          descriptor="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
 
-    <registryKey defaultValue="300000"
-                 description="Maximum combined size of all precalculated roots for ModulesWithDependencies cache."
-                 key="module.with.dependencies.scope.cache.max.total.entries.count"
-                 restartRequired="true"/>
     <applicationSettings service="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
     <applicationSettings service="com.intellij.find.impl.FindUsagesSettingsImpl"/>
     <projectSettings service="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
