@@ -5,6 +5,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.PlatformUtils
 import fleet.util.openmap.SerializedValue
@@ -47,6 +48,7 @@ fun <ValueClass : Any> serializeToRpc(value: ValueClass, logErrorAsWarning: Bool
       }
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       if (logErrorAsWarning) {
         LOG.warn("Error during custom type serialization", e)
       }
@@ -98,6 +100,7 @@ fun <ValueClass: Any> deserializeFromRpcWithDiagnostics(
       }
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       serializerClassName = serializer::class.java.name
       failure = failure ?: e
       LOG.warn("Error during custom type deserialization", e)
