@@ -10,8 +10,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
@@ -24,13 +24,15 @@ internal class MonorepoCustomSourceRootSetuptoolsTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("Setuptools custom source root detection is not yet supported")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("myprj1", contentRoot = "prj1", sourceRoots = listOf("prj1/mysrc1")),
-      ExpectedModule("myprj2", contentRoot = "prj2", sourceRoots = listOf("prj2/mysrc2")),
-    )
+    // PY-88898 py workspace: to support source roots described in pyproject.toml
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+        ExpectedModule("myprj1", contentRoot = "prj1", sourceRoots = listOf("prj1/mysrc1")),
+        ExpectedModule("myprj2", contentRoot = "prj2", sourceRoots = listOf("prj2/mysrc2")),
+      )
+    }
   }
 }

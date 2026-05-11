@@ -10,8 +10,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 private const val BASE = $$"$CONTENT_ROOT/../testData/monorepo/some_projects_with_src_nonstandard_naming"
 
@@ -47,14 +47,16 @@ internal class HatchBuildTargetsWheelTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("Hatch custom source root detection is not yet supported")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-    )
+    // PY-88898 py workspace: to support source roots described in pyproject.toml
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
+        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+      )
+    }
   }
 }
 
@@ -90,14 +92,16 @@ internal class SetuptoolsPackagesFindTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("Setuptools custom source root detection is not yet supported")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-    )
+    // PY-88898 py workspace: to support source roots described in pyproject.toml
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
+        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+      )
+    }
   }
 }
 
@@ -112,14 +116,16 @@ internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("Setuptools multiple source root detection is not yet supported")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src", "uv1/my_src2")),
-      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-    )
+    // PY-88898 py workspace: to support source roots described in pyproject.toml
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src", "uv1/my_src2")),
+        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+      )
+    }
   }
 }
 
@@ -134,13 +140,15 @@ internal class UvBuildBackendTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("uv build-backend custom source root detection is not yet supported")
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-    )
+    // PY-88898 py workspace: to support source roots described in pyproject.toml
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
+        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+      )
+    }
   }
 }

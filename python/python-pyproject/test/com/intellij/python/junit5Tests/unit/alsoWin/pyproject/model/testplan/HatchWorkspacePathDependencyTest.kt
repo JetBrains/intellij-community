@@ -9,8 +9,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath ="python-pyproject/test")
@@ -23,13 +23,16 @@ internal class HatchWorkspacePathDependencyTest {
   private val f by pyProjectTomlSyncFixture(projectFixture, tempDirFixture)
 
   @Test
-  @Disabled("Hatch dependency resolution is not yet supported")
-  fun `sanity`(): Unit = timeoutRunBlocking {
+  fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    f.assertProjectStructure(
-      ExpectedModule("my-hatch-monorepo", contentRoot = ".", deps = listOf("package_a", "package_b")),
-      ExpectedModule("package_a", contentRoot = "packages/package_a"),
-      ExpectedModule("package_b", contentRoot = "packages/package_b", deps = listOf("package_a")),
-    )
+    // PY-87339 Hatch monorepo local dependencies are not show in settings
+    // PY-86924 Hatch workspace members are not handled correctly
+    assertThrows<AssertionError> {
+      f.assertProjectStructure(
+        ExpectedModule("my-hatch-monorepo", contentRoot = ".", deps = listOf("package_a", "package_b")),
+        ExpectedModule("package_a", contentRoot = "packages/package_a"),
+        ExpectedModule("package_b", contentRoot = "packages/package_b", deps = listOf("package_a")),
+      )
+    }
   }
 }
