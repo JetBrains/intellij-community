@@ -98,6 +98,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.objects.class" to "java.util.Objects API",
     "feature.override.interface" to "@Override in interfaces",
     "feature.package.import.shadow.module.import" to "Import-on-demand over module import",
+    "feature.package.info.imports" to "Unqualified Javadoc references in package-info Javadoc",
     "feature.package.transitive.dependency.on.java.base" to "Transitive dependency on java.base module",
     "feature.pattern.guard.and.record.patterns" to "Pattern guards and record patterns",
     "feature.patterns.in.switch" to "Patterns in switch",

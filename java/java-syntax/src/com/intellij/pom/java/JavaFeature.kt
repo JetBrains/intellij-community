@@ -35,6 +35,11 @@ enum class JavaFeature {
   STREAM_OPTIONAL(LanguageLevel.JDK_1_8, "feature.stream.and.optional.api", true),
 
   /**
+   * `javadoc` tool has a different resolution behavior past JDK1.8, it now supports imports
+   */
+  PACKAGE_INFO_DOC_IMPORTS(LanguageLevel.JDK_1_8, "feature.package.info.imports"),
+
+  /**
    * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
    * java.util.Map#putIfAbsent, java.util.Map#forEach
    */

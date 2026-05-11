@@ -42,6 +42,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.CommonClassNames;
@@ -768,7 +769,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiElement element = context.getFile().findElementAt(offset);
       final PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
-      if (!JavaDocUtil.isInsidePackageInfo(docComment)) {
+      if (!JavaDocUtil.isInsidePackageInfo(docComment) || PsiUtil.isAvailable(JavaFeature.PACKAGE_INFO_DOC_IMPORTS, docComment)) {
         final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
         if (tagValue != null) {
           try {

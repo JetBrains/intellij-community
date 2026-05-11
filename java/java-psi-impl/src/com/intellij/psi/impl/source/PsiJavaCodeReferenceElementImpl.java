@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
@@ -225,7 +226,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         i == JavaDocElementType.DOC_REFERENCE_HOLDER ||
         i == JavaDocElementType.DOC_TYPE_HOLDER) {
       PsiDocComment docComment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
-      if (JavaDocUtil.isInsidePackageInfo(docComment)) {
+      if (JavaDocUtil.isInsidePackageInfo(docComment) && !PsiUtil.isAvailable(JavaFeature.PACKAGE_INFO_DOC_IMPORTS, docComment)) {
         return Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND;
       }
 
