@@ -347,10 +347,8 @@ object InternalPsiVersioning {
       threadLocalVersioningTracker.set(newVersion)
       // Intention actions and quick-fixes often create synthetic PSI elements and insert them to the main live tree.
       // To support such use-case, we make all synthetic elements automatically versioned. This helps to avoid assertions about the mismatch of direct and versioned nodes.
-      versionedComputationKey.set(VersioningKey.Versioned)
       object : AccessToken() {
         override fun finish() {
-          versionedComputationKey.remove()
           threadContextInstallation.finish()
           threadLocalVersioningTracker.remove()
           val latestVersion = PsiVersionRegistry.instance.latestPublishedVersion

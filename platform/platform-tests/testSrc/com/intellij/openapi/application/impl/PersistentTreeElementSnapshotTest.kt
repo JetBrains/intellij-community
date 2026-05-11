@@ -53,7 +53,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, firstLeaf, removableLeaf, replacedBranch) = runWriteAction {
+    val (root, firstLeaf, removableLeaf, replacedBranch) = runSyncVersionedWriteAction {
       val firstLeaf = leaf("a")
       val left = composite("left", firstLeaf, leaf("b"))
       val removableLeaf = leaf("c")
@@ -131,7 +131,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, firstLeaf, middleLeaf, tailLeaf) = runWriteAction {
+    val (root, firstLeaf, middleLeaf, tailLeaf) = runSyncVersionedWriteAction {
       val firstLeaf = leaf("a")
       val middleLeaf = leaf("b")
       val row = composite("row", firstLeaf, middleLeaf, leaf("c"))
@@ -185,7 +185,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val root = runWriteAction {
+    val root = runSyncVersionedWriteAction {
       composite("root", *shapeAChildren())
     }
     val expectedShapeA = branchSnapshot(
@@ -254,7 +254,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, left, right, movingBranch, rightTail) = runWriteAction {
+    val (root, left, right, movingBranch, rightTail) = runSyncVersionedWriteAction {
       val movingBranch = composite("moving", leaf("m"), leaf("n"))
       val left = composite("left", leaf("a"), movingBranch, leaf("b"))
       val rightTail = leaf("d")
@@ -323,7 +323,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, headInner, firstHeadInnerLeaf, middle, tail, tailInner, tailLeaf) = runWriteAction {
+    val (root, headInner, firstHeadInnerLeaf, middle, tail, tailInner, tailLeaf) = runSyncVersionedWriteAction {
       val firstHeadInnerLeaf = leaf("b")
       val headInner = composite("headInner", firstHeadInnerLeaf, leaf("c"))
       val middle = composite("middle", leaf("d"), leaf("ee"))
@@ -412,7 +412,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, left, right, originalBranch, rightTail) = runWriteAction {
+    val (root, left, right, originalBranch, rightTail) = runSyncVersionedWriteAction {
       val originalBranch = composite("original", leaf("p"), leaf("q"))
       val left = composite("left", leaf("u"), originalBranch, leaf("v"))
       val rightTail = leaf("z")
@@ -481,7 +481,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, growingLeaf, emptyBeforeMiddle, middle, emptyBeforeTail, tail, tailInner, tailLeaf) = runWriteAction {
+    val (root, growingLeaf, emptyBeforeMiddle, middle, emptyBeforeTail, tail, tailInner, tailLeaf) = runSyncVersionedWriteAction {
       val growingLeaf = leaf("b")
       val emptyBeforeMiddle = composite("gapOne")
       val middle = composite("middle", leaf("cc"))
@@ -589,7 +589,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, left, right, originalBranch, originalInner, innerTailLeaf, rightTail) = runWriteAction {
+    val (root, left, right, originalBranch, originalInner, innerTailLeaf, rightTail) = runSyncVersionedWriteAction {
       val innerTailLeaf = leaf("r")
       val originalInner = composite("inner", leaf("q"), innerTailLeaf)
       val originalBranch = composite("original", leaf("p"), originalInner)
@@ -683,7 +683,7 @@ internal class PersistentTreeElementSnapshotTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
 
-    val (root, subject, removedLeaf, suffix, tail) = runWriteAction {
+    val (root, subject, removedLeaf, suffix, tail) = runSyncVersionedWriteAction {
       val removedLeaf = leaf("cd")
       val subject = composite("subject", leaf("ab"), removedLeaf)
       val suffix = composite("suffix", leaf("xy"), leaf("z"))
@@ -797,7 +797,7 @@ internal class PersistentTreeElementSnapshotTest {
     installVersioningListeners(disposable)
 
     val parseProbe = LazyParseProbe()
-    val (root, lazyHost, lazyChild) = runWriteAction {
+    val (root, lazyHost, lazyChild) = runSyncVersionedWriteAction {
       exoticLazyTree(lazyName = "lazy-old", lazyText = "ab", parseProbe = parseProbe)
     }
     val beforeSnapshot = exoticLazySnapshot(lazyName = "lazy-old", lazyText = "ab")
@@ -830,7 +830,7 @@ internal class PersistentTreeElementSnapshotTest {
     installVersioningListeners(disposable)
 
     val parseProbe = LazyParseProbe()
-    val (root, _, lazyChild) = runWriteAction {
+    val (root, _, lazyChild) = runSyncVersionedWriteAction {
       exoticLazyTree(lazyName = "lazy", lazyText = "cabd", parseProbe = parseProbe)
     }
     val secondSnapshotReachedLazy = CompletableDeferred<Unit>()
@@ -1301,6 +1301,12 @@ internal class PersistentTreeElementSnapshotTest {
         probe.continueParsing.asCompletableFuture().get()
       }
       return parsedChildren(chameleon.chars)
+    }
+  }
+
+  fun <T> runSyncVersionedWriteAction(action: () -> T): T {
+    return runWriteAction {
+      InternalPsiVersioning.inVersionedEnvironment(true, action)
     }
   }
 }
