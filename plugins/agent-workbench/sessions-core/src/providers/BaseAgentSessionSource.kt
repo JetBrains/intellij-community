@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.map
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class BaseAgentSessionSource(
@@ -22,10 +21,9 @@ abstract class BaseAgentSessionSource(
    */
   protected val readTracker: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
 
-  private val readStateUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  private val readStateUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
 
-  protected val readStateUpdateEvents: Flow<AgentSessionSourceUpdateEvent> =
-    readStateUpdates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) }
+  protected val readStateUpdateEvents: Flow<AgentSessionSourceUpdateEvent> = readStateUpdates
 
   @Volatile
   protected var activeThreadId: String? = null
@@ -36,8 +34,24 @@ abstract class BaseAgentSessionSource(
   }
 
   final override fun markThreadAsRead(threadId: String, updatedAt: Long) {
-    readTracker.merge(threadId, updatedAt, ::maxOf)
-    readStateUpdates.tryEmit(Unit)
+    var advanced = false
+    readTracker.compute(threadId) { _, current ->
+      if (current == null || updatedAt > current) {
+        advanced = true
+        updatedAt
+      }
+      else {
+        current
+      }
+    }
+    if (advanced) {
+      readStateUpdates.tryEmit(
+        AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          threadIds = setOf(threadId),
+        )
+      )
+    }
   }
 
   /**

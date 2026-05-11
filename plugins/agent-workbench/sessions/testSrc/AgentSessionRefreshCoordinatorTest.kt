@@ -781,6 +781,63 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun providerRefreshDoesNotTouchStateTimestampWhenOutcomeMatchesState() = runBlocking(Dispatchers.Default) {
+    val codexRefreshInvocations = AtomicInteger(0)
+    val completionRefreshInvocations = AtomicInteger(0)
+    val existingThread = thread(id = "codex-1", updatedAt = 100L, provider = AgentSessionProvider.CODEX)
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            listFromClosedProject = { path ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                codexRefreshInvocations.incrementAndGet()
+                listOf(existingThread)
+              }
+            },
+          ),
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CLAUDE,
+            listFromClosedProject = { path ->
+              if (path == PROJECT_PATH) {
+                completionRefreshInvocations.incrementAndGet()
+              }
+              emptyList()
+            },
+          )
+        )
+      },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(existingThread),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+      val lastUpdatedAtBeforeRefresh = stateStore.snapshot().lastUpdatedAt
+
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CODEX, scopedPaths = setOf(PROJECT_PATH))
+      coordinator.refreshProviderScope(provider = AgentSessionProvider.CLAUDE, scopedPaths = setOf(PROJECT_PATH))
+
+      waitForCondition { completionRefreshInvocations.get() == 1 }
+      assertThat(codexRefreshInvocations.get()).isEqualTo(1)
+      assertThat(stateStore.snapshot().lastUpdatedAt).isEqualTo(lastUpdatedAtBeforeRefresh)
+    }
+  }
+
+  @Test
   fun providerUpdateIgnoredWhenSourceDoesNotSupportUpdates() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = AtomicInteger(0)

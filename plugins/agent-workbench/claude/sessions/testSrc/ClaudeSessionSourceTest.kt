@@ -8,13 +8,19 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class ClaudeSessionSourceTest {
@@ -275,6 +281,35 @@ class ClaudeSessionSourceTest {
       assertThat(result?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
       assertThat(result?.scopedPaths).containsExactly("/work/project")
       assertThat(result?.threadIds).containsExactly("session-1")
+    }
+  }
+
+  @Test
+  fun markThreadAsReadEmitsThreadScopedUpdateOnlyWhenReadTimestampAdvances() {
+    val source = ClaudeSessionSource(backend = staticBackend(emptyList()))
+
+    runBlocking(Dispatchers.Default) {
+      val events = Channel<AgentSessionSourceUpdateEvent>(Channel.UNLIMITED)
+      val collector = launch(start = CoroutineStart.UNDISPATCHED) {
+        source.updateEvents.collect { event -> events.send(event) }
+      }
+
+      try {
+        delay(50.milliseconds)
+        source.markThreadAsRead("s1", 1000L)
+
+        val event = withTimeoutOrNull(2.seconds) { events.receive() }
+        assertThat(event?.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+        assertThat(event?.threadIds).containsExactly("s1")
+
+        source.markThreadAsRead("s1", 1000L)
+        source.markThreadAsRead("s1", 999L)
+
+        assertThat(withTimeoutOrNull(200.milliseconds) { events.receive() }).isNull()
+      }
+      finally {
+        collector.cancelAndJoin()
+      }
     }
   }
 

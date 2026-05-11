@@ -29,9 +29,13 @@ import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
 import java.awt.Graphics
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
@@ -161,7 +165,7 @@ internal class AgentSessionsToolWindowPanel(
     },
     invalidateTreeModel = ::invalidateTreeModel,
     expandNode = { id -> structureTreeModel.expand(id, tree) { } },
-    selectNode = { id -> structureTreeModel.select(id, tree) { } },
+    selectNodes = ::selectNodes,
   )
 
   private val northPanel = buildNorthPanel()
@@ -274,6 +278,54 @@ internal class AgentSessionsToolWindowPanel(
         .thenCompose { structureTreeModel.invalidateAsync(id, false) }
     }
     return future
+  }
+
+  private fun selectNodes(ids: List<SessionTreeId>, shouldApply: () -> Boolean, onApplied: (List<SessionTreeId>) -> Unit) {
+    if (!shouldApply()) return
+    val distinctIds = ids.distinct()
+    if (distinctIds.isEmpty()) {
+      tree.clearSelection()
+      onApplied(emptyList())
+      return
+    }
+
+    val remaining = AtomicInteger(distinctIds.size)
+    val visiblePaths = Collections.synchronizedList(mutableListOf<TreePath>())
+
+    fun applySelectionPaths(selectionPaths: Array<TreePath>) {
+      if (!shouldApply()) return
+      if (selectionPaths.isEmpty()) {
+        tree.clearSelection()
+        onApplied(emptyList())
+        return
+      }
+      tree.selectionPaths = selectionPaths
+      TreeUtil.scrollToVisible(tree, selectionPaths.first(), false)
+      onApplied(selectionPaths.mapNotNull(::idFromPath).distinct())
+    }
+
+    fun finish(path: TreePath?) {
+      if (path != null) {
+        visiblePaths.add(path)
+      }
+      if (remaining.decrementAndGet() != 0) return
+      val selectionPaths = synchronized(visiblePaths) { visiblePaths.toTypedArray() }
+      EdtInvocationManager.invokeLaterIfNeeded { applySelectionPaths(selectionPaths) }
+    }
+
+    distinctIds.forEach { id ->
+      structureTreeModel.promiseVisitor(id)
+        .onSuccess { visitor ->
+          if (!shouldApply()) {
+            finish(null)
+            return@onSuccess
+          }
+          TreeUtil.promiseMakeVisible(tree, visitor)
+            .onSuccess { path -> finish(path) }
+            .onError { finish(null) }
+        }
+        .onError { finish(null) }
+    }
   }
 
   private fun idFromPath(path: TreePath?): SessionTreeId? {

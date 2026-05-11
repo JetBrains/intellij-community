@@ -248,8 +248,11 @@ internal class AgentSessionProviderRefreshRunner(
           val updatedProject = if (shouldApplyProjectOutcome) {
             val outcome = outcomes[project.path]
             if (outcome != null) {
-              changed = true
-              project.withProviderRefreshOutcome(provider, outcome)
+              val refreshedProject = project.withProviderRefreshOutcome(provider, outcome)
+              if (refreshedProject != project) {
+                changed = true
+              }
+              refreshedProject
             }
             else {
               project
@@ -263,8 +266,11 @@ internal class AgentSessionProviderRefreshRunner(
             val shouldApplyWorktreeOutcome = worktree.hasLoaded || worktree.path in pendingProjectionPaths
             if (!shouldApplyWorktreeOutcome) return@map worktree
             val outcome = outcomes[worktree.path] ?: return@map worktree
-            changed = true
-            worktree.withProviderRefreshOutcome(provider, outcome)
+            val refreshedWorktree = worktree.withProviderRefreshOutcome(provider, outcome)
+            if (refreshedWorktree != worktree) {
+              changed = true
+            }
+            refreshedWorktree
           }
 
           if (nextWorktrees == updatedProject.worktrees) {
