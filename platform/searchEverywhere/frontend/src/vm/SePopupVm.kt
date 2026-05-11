@@ -311,6 +311,9 @@ class SePopupVm(
   fun setSearchText(text: String) {
     SeLog.log(SeLog.PATTERN) { "SePopupVm: setting text: ['$text']" }
     _searchPattern.value = text
+    coroutineScope.launch(Dispatchers.UI) {
+      currentTab.filterEditor.getValue()?.closeFilterPopup()
+    }
   }
 
   private suspend fun fetchPreview(newValue: SeItemData): List<UsageInfo>? {

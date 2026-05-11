@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs
 
 import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.bigPopup.ShowFilterAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -57,12 +58,18 @@ class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>
   override val resultFlow: StateFlow<SeFilterState> get() = _resultFlow.asStateFlow()
   private val _resultFlow = MutableStateFlow(SeAdaptedTabFilter().toState())
 
-  override fun getHeaderActions(): List<AnAction> = contributor.getActions {
+  private val actions: List<AnAction> = contributor.getActions {
     // Generate the new value to restart the search
     _resultFlow.value = SeAdaptedTabFilter().toState()
   }.filter {
     // Intentionally avoid preview action because it's not supported at this moment for adapted tabs
     it !is PreviewAction
+  }
+
+  override fun getHeaderActions(): List<AnAction> = actions
+
+  override fun closeFilterPopup() {
+    actions.filterIsInstance<ShowFilterAction>().forEach { it.closeFilterPopup() }
   }
 }
 
