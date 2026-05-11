@@ -1,9 +1,9 @@
-### auto-generated section `build intellij.compose.ide.plugin.resources.android` start
+### auto-generated section `build intellij.compose.ide.plugin.android` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-plugin-resources-android",
-  module_name = "intellij.compose.ide.plugin.resources.android",
+  name = "ide-plugin-android",
+  module_name = "intellij.compose.ide.plugin.android",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = glob(["resources/**/*"]),
@@ -17,22 +17,22 @@ jvm_library(
 )
 
 jvm_library(
-  name = "ide-plugin-resources-android_test_lib",
+  name = "ide-plugin-android_test_lib",
   testonly = True,
-  module_name = "intellij.compose.ide.plugin.resources.android",
+  module_name = "intellij.compose.ide.plugin.android",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
-    ":ide-plugin-resources-android",
+    ":ide-plugin-android",
     "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources_test_lib",
     "@lib//:studio-platform-provided",
     "//platform/util:util_test_lib",
   ]
 )
-### auto-generated section `build intellij.compose.ide.plugin.resources.android` end
+### auto-generated section `build intellij.compose.ide.plugin.android` end
 
-### auto-generated section `iml intellij.compose.ide.plugin.resources.android` start
+### auto-generated section `iml intellij.compose.ide.plugin.android` start
 exports_files([
-  "intellij.compose.ide.plugin.resources.android.iml",
+  "intellij.compose.ide.plugin.android.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.compose.ide.plugin.resources.android` end
+### auto-generated section `iml intellij.compose.ide.plugin.android` end

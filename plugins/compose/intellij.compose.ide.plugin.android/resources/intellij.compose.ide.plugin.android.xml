@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.compose.ide.plugin.resources.android">
+<idea-plugin package="com.intellij.compose.ide.plugin.android">
   <dependencies>
     <plugin id="org.jetbrains.android"/>
     <module name="intellij.compose.ide.plugin.resources"/>
@@ -6,7 +6,7 @@
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
     <drawablePreviewRenderer
-      implementation="com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewRenderer"
+      implementation="com.intellij.compose.ide.plugin.android.resources.AndroidDrawablePreviewRenderer"
       order="first"/>
   </extensions>
 </idea-plugin>

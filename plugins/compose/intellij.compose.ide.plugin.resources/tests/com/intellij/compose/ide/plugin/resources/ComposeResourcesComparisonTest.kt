@@ -2,7 +2,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.android.ide.common.util.GeneratorTester
-import com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewRenderer
+import com.intellij.compose.ide.plugin.android.resources.AndroidDrawablePreviewRenderer
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.RenderResult
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
 import com.intellij.testFramework.PlatformTestUtil

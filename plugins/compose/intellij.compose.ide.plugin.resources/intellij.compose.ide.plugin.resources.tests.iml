@@ -55,7 +55,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.resources" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.compose.ide.plugin.resources.android" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.android" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="studio-test-platform" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.resources" />
