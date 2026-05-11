@@ -64,7 +64,7 @@ public final class ElementToWorkOn {
     if (element instanceof PsiLocalVariable localVariable) {
       return new ElementToWorkOn(localVariable, null);
     }
-    if (element.getParent() != null && element.getParent().getTextRange().equals(element.getTextRange())) {
+    if (element.getParent() != null && element.getParent().getTextRange()!=null && element.getParent().getTextRange().equals(element.getTextRange())) {
       return tryToCreate(element.getParent());
     }
     return null;
