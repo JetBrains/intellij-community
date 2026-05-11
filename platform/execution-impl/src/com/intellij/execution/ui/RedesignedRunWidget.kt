@@ -509,7 +509,8 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
     delegate.update(e)
     val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName != null) {
-      e.presentation.text = configurationName // Replace the maybe-cut-off name with the full one, the UI will then cut it as needed.
+      // Replace the maybe-cut-off name (set by delegate.update) with the full one, the UI will then cut it as needed.
+      e.presentation.setText(configurationName, false)
     }
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
