@@ -1,0 +1,9 @@
+fun foo(a: (String, Int) -> Unit) {}
+
+fun test() {
+    foo { string, i -> <caret> }
+}
+
+// ELEMENT: foo
+// TAIL_TEXT: " { a: (String, Int) -> Unit } (<root>)"
+// ESCAPES: 2
