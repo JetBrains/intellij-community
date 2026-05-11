@@ -1,10 +1,13 @@
 package com.intellij.driver.sdk.ui.components.elements
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.xQuery
@@ -17,6 +20,10 @@ fun Finder.popup(@Language("xpath") xpath: String? = null) =
 
 fun Finder.popupLux(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='LuxFrontendWindow']", PopupUiComponent::class.java)
+
+fun Finder.popups(): UIComponentsList<UiComponent> = xx("//div[@class='HeavyWeightWindow']")
+
+fun Driver.getPopups(): UIComponentsList<UiComponent> = ideFrame().popups()
 
 fun Finder.popupMenu(locator: QueryBuilder.() -> String = { byClass("MyMenu") }) =
   x(xQuery(locator), PopupMenuUiComponent::class.java)
