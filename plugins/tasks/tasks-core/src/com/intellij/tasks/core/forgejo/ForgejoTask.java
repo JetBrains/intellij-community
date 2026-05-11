@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.core.forgejo;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
@@ -9,6 +8,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.core.forgejo.model.ForgejoIssue;
 import com.intellij.tasks.core.forgejo.model.ForgejoProject;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +51,7 @@ public class ForgejoTask extends Task {
 
   @Override
   public @NotNull Icon getIcon() {
-    // TODO: replace with Forgejo icon
-    return AllIcons.Actions.Stub;
+    return TasksCoreIcons.Forgejo;
   }
 
   @Override

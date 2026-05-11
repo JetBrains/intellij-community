@@ -22,6 +22,7 @@ public final class TasksCoreIcons {
   /** 16x16 */ public static final @NotNull Icon Bugzilla = load("icons/bugzilla.svg", 644193743, 0);
   /** 13x13 */ public static final @NotNull Icon Clock = load("icons/expui/toolWindowTimer.svg", "icons/clock.svg", -1071466953, 2);
   /** 16x16 */ public static final @NotNull Icon Fogbugz = load("icons/fogbugz.svg", -305019715, 0);
+  /** 16x16 */ public static final @NotNull Icon Forgejo = load("icons/forgejo.svg", 1907252404, 0);
   /** 16x16 */ public static final @NotNull Icon Gitlab = load("icons/gitlab.svg", 802755203, 0);
   /** 16x16 */ public static final @NotNull Icon Jira = load("icons/jira.svg", -1857924451, 0);
   /** 16x16 */ public static final @NotNull Icon Lighthouse = load("icons/lighthouse.svg", -41721602, 0);
