@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: Unresolved reference 'bar' on receiver of type 'String'.
 /* KTIJ-34522 */
 
 context(c1: Int)

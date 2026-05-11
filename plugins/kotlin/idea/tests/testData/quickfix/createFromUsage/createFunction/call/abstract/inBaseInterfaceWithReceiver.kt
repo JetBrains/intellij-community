@@ -1,5 +1,5 @@
 // "Create abstract function 'I.bar'" "true"
-// K2_ERROR: Unresolved reference 'bar'.
+// K2_ERROR: Unresolved reference 'bar' on receiver of type 'I'.
 
 interface I
 

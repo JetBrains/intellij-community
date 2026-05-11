@@ -1,7 +1,7 @@
 // "Create member property 'A.foo'" "true"
 // K2_ACTION: "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<U (of fun <U> test)>'.
 // K2_AFTER_ERROR: Property must be initialized or be abstract.
 
 class A<T>(val n: T) {

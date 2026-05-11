@@ -10,7 +10,7 @@ UTypeReferenceExpression (name = Annotation[]) -> USimpleNameReferenceExpression
 UAnnotation (fqName = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:AnnotationClass: AnnotationArray
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:AnnotationClass: Annotation
 null -> USimpleNameReferenceExpression (identifier = strings) -> Kotlin_Light_Method: strings
-UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> null: null
+UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
 UAnnotation (fqName = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> Kotlin_Light_Class:AnnotationClass: AnnotationArray
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = Annotation) -> Kotlin_Light_Class:AnnotationClass: Annotation
 null -> USimpleNameReferenceExpression (identifier = strings) -> Kotlin_Light_Method: strings

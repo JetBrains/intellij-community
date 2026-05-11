@@ -1,5 +1,5 @@
 // "Create parameter 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo' on receiver of type 'String'.
 
 fun bar() {
     val p: String = "abc".fo<caret>o()

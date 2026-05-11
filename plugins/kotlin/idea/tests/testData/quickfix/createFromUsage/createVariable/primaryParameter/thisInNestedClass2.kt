@@ -1,5 +1,5 @@
 // "Create property 'foo' as constructor parameter" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<T (of class A<T>)>'.
 
 class A<T>(val n: T) {
     inner class B<U>(val m: U) {

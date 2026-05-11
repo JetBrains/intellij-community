@@ -1,5 +1,5 @@
 // "Create extension property 'String?.notExistingVal'" "true"
-// K2_ERROR: Unresolved reference 'notExistingVal'.
+// K2_ERROR: Unresolved reference 'notExistingVal' on receiver of type 'String?'.
 // K2_AFTER_ERROR: Extension property must have accessors or be abstract.
 fun foo(n: Int) {}
 

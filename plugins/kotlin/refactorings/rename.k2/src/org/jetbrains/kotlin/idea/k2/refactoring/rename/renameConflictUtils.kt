@@ -297,6 +297,12 @@ private data class QualifiedState(val expression: KtExpression?, val explicitlyQ
 
 @OptIn(KaExperimentalApi::class)
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
+    val callableReferenceExpression = callExpression.takeIf { it is KtNameReferenceExpression }?.parent as? KtCallableReferenceExpression
+    if (callableReferenceExpression?.callableReference == callExpression) {
+        // Callable reference cannot be qualified
+        return null
+    }
+
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
         val appliedSymbol = callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol

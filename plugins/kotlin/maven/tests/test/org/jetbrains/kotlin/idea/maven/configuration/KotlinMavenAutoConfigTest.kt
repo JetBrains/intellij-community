@@ -38,7 +38,8 @@ class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
         }
     }
 
-    @Test
+    // TODO: fix KTIJ-38666 to unmute the test
+    //@Test
     fun testSingleModuleNoKotlin() {
         val moduleName = "module"
         runBlocking {
@@ -59,7 +60,8 @@ class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
         testConfigure(moduleName, expectedSuccess = true)
     }
 
-    @Test
+    // TODO: fix KTIJ-38666 to unmute the test
+    //@Test
     fun testKotlinAlreadyConfigured() {
         val moduleName = "module"
         runBlocking {

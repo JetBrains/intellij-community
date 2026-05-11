@@ -2,7 +2,7 @@
 // WITH_STDLIB
 // K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
 // K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_ERROR: Unresolved reference 'extension'.
+// K2_ERROR: Unresolved reference 'extension' on receiver of type 'C'.
 package p
 
 class A

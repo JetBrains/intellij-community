@@ -3,7 +3,7 @@
 // ERROR: Type mismatch: inferred type is A<Int> but Int was expected
 // ERROR: Property must be initialized or be abstract
 // K2_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<Int>'.
 // K2_AFTER_ERROR: Property must be initialized or be abstract.
 // K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
 

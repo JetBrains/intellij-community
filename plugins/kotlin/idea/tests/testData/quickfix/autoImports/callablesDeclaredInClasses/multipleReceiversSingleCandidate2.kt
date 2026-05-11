@@ -3,7 +3,7 @@
 // K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
 // K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
 // K2_ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// K2_ERROR: Unresolved reference 'extension'.
+// K2_ERROR: Unresolved reference 'extension' on receiver of type 'A'.
 package p
 
 class A

@@ -58,6 +58,10 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleOutputProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.IdeKotlinModuleOutputProvider"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleConverter"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.KaIdeModuleConverter"/>
+
     <postStartupActivity
             implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
   </extensions>

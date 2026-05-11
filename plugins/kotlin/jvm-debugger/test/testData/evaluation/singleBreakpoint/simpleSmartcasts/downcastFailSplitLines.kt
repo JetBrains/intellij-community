@@ -20,7 +20,7 @@ class Derived : Base() {
 open class Base
 
 // EXPRESSION: derived.prop
-// RESULT: Unresolved reference: prop
+// RESULT: Unresolved reference 'prop' on receiver of type 'Base'.
 
 // EXPRESSION: derived is Derived && derived.prop == 1
 // RESULT: 0: Z
