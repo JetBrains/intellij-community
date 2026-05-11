@@ -21,8 +21,14 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
@@ -39,6 +45,7 @@ import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -46,6 +53,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
@@ -54,12 +62,12 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.BASE_DIR
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.detectTool
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -75,12 +83,15 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isExecutable
+import kotlin.io.path.listDirectoryEntries
 
 
 private val LOG: Logger = fileLogger()
@@ -94,8 +105,10 @@ internal class VenvAlreadyExistsError<P : PathHolder>(
 
 sealed interface FileSystem<P : PathHolder> {
   val isReadOnly: Boolean
-  val isBrowseable: Boolean
+  val isBrowsable: Boolean
   val isLocal: Boolean
+  val userReadableName: @NonNls String
+  val platformAndRoot: PlatformAndRoot
 
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
@@ -113,9 +126,12 @@ sealed interface FileSystem<P : PathHolder> {
    * [pathToPython] has to be system (not venv) if set [requireSystemPython]
    */
   suspend fun getSystemPythonFromSelection(pathToPython: P, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<P>>
+
+  // TODO sdkAdditionalData should become non-nullable when we start passing proper additional data at the time of SDK creation everywhere
   suspend fun setupSdk(
     project: Project?,
     pythonBinaryPath: P,
+    sdkAdditionalData: PythonSdkAdditionalData?,
     targetPanelExtension: TargetPanelExtension?,
   ): PyResult<Sdk>
 
@@ -130,18 +146,47 @@ sealed interface FileSystem<P : PathHolder> {
   fun resolvePythonHome(pythonBinary: P): P
   fun getVenvName(pythonHome: P): String?
 
-  fun getBinaryToExec(path: P): BinaryToExec
-  suspend fun which(cmd: String): P?
+  fun getBinaryToExec(path: P, workingDir: Path? = null): BinaryToExec
   suspend fun getHomePath(): P?
+
+  /**
+   * Normalizes the given path to a remote-compatible format. For eel-based systems it just returns a path, for target-based ones we
+   * sometimes want to have a path on target. For target dialogs we can receive a string that is a WSL path, so we should normalize it to
+   * represent a path on target.
+   */
+  fun normalizePathToRemote(path: P): P
+
+  suspend fun detectEnvironments(workingDir: Path, uiInfoGetter: (P) -> PyToolUIInfo?): List<DetectedSelectableInterpreter<P>>
+  suspend fun detectTool(
+    toolName: String,
+    additionalSearchPaths: List<P> = listOf(),
+    filter: (P) -> Boolean = { true },
+  ): P?
+
+  /** Resolves [pathComponents] under the value of environment variable [prefixEnvVar]. Null if the variable is unset or unreadable. */
+  suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): P?
+
+  /** Resolves [pathComponents] under the user's home directory. Null if the home cannot be determined. */
+  suspend fun getFullPathFromHome(pathComponents: List<String>): P?
+
+  /**
+   * Resolves [dirName] relative to [workingDir]. For [Eel] this is a plain path resolve; for [Target] it
+   * shells out to `pwd` inside [workingDir] on the remote machine so that the returned path is in the
+   * target's namespace rather than the host's. Null if the remote lookup fails.
+   */
+  suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): P?
 
   data class Eel(
     val eelApi: EelApi,
   ) : FileSystem<PathHolder.Eel> {
-    override val isBrowseable: Boolean = true
+    override val isBrowsable: Boolean = true
     override val isReadOnly: Boolean = false
     override val isLocal: Boolean = eelApi == localEel
-    override fun getBinaryToExec(path: PathHolder.Eel): BinaryToExec {
-      return BinOnEel(path.path)
+    override val userReadableName: @NonNls String = eelApi.descriptor.name
+    override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
+
+    override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
+      return BinOnEel(path.path, workingDir)
     }
 
     override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
@@ -167,10 +212,10 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun setupSdk(
       project: Project?,
       pythonBinaryPath: PathHolder.Eel,
+      sdkAdditionalData: PythonSdkAdditionalData?,
       targetPanelExtension: TargetPanelExtension?,
     ): PyResult<Sdk> {
-
-      return createSdk(pythonBinaryPath, null, null)
+      return createSdk(pythonBinaryPath, null, sdkAdditionalData)
     }
 
     override fun parsePath(raw: String): PyResult<PathHolder.Eel> = try {
@@ -186,6 +231,8 @@ sealed interface FileSystem<P : PathHolder> {
       return when {
         !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
         path.path.isDirectory() -> PyResult.localizedError(message("sdk.create.executable.directory.error"))
+        !path.path.isExecutable() -> PyResult.localizedError(message("sdk.create.binary.not.executable"))
+        path.path.getEelDescriptor().toEelApi() != eelApi -> PyResult.localizedError(message("sdk.create.binary.eel.not.matching"))
         else -> PyResult.success(Unit)
       }
     }
@@ -313,9 +360,77 @@ sealed interface FileSystem<P : PathHolder> {
       return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
     }
 
-    override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi)?.let { PathHolder.Eel(it) }
-
     override suspend fun getHomePath(): PathHolder.Eel = PathHolder.Eel(eelApi.userInfo.home.asNioPath())
+
+    override fun normalizePathToRemote(path: PathHolder.Eel): PathHolder.Eel = path
+
+    override suspend fun detectEnvironments(
+      workingDir: Path,
+      uiInfoGetter: (PathHolder.Eel) -> PyToolUIInfo?,
+    ): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
+      if (workingDir.getEelDescriptor().toEelApi() != eelApi) return emptyList()
+
+      return withContext(Dispatchers.IO) {
+        workingDir.listDirectoryEntries().filter { it.isDirectory() }.mapNotNull { possibleVenvHome ->
+          val pythonBinary = resolvePythonBinary(PathHolder.Eel(possibleVenvHome)) ?: return@mapNotNull null
+          val pythonInfo = pythonBinary.path.validatePythonAndGetInfo().successOrNull ?: return@mapNotNull null
+          val ui = uiInfoGetter(pythonBinary)
+          DetectedSelectableInterpreter(pythonBinary, pythonInfo, false, ui)
+        }
+      }
+    }
+
+    override suspend fun detectTool(
+      toolName: String,
+      additionalSearchPaths: List<PathHolder.Eel>,
+      filter: (PathHolder.Eel) -> Boolean,
+    ): PathHolder.Eel? = withContext(Dispatchers.IO) {
+      val fromPath = eelApi.exec.where(toolName)
+        ?.asNioPath()
+        ?.let { PathHolder.Eel(it) }
+        ?.takeIf(filter)
+      if (fromPath != null) return@withContext fromPath
+
+      val binaryNames =
+        if (eelApi.platform.isWindows) listOf("$toolName.exe", "$toolName.bat")
+        else listOf(toolName)
+      for (path in additionalSearchPaths) {
+        assert(path.path.getEelDescriptor() == eelApi.descriptor) {
+          "Additional search paths should be on the same descriptor as Eel API, but $path isn't on $eelApi"
+        }
+        for (binaryName in binaryNames) {
+          val candidate = path.path.resolve(binaryName)
+            .takeIf { it.isExecutable() }
+            ?.let { PathHolder.Eel(it) }
+            ?.takeIf(filter)
+          if (candidate != null) return@withContext candidate
+        }
+      }
+
+      null
+    }
+
+    override suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): PathHolder.Eel? {
+      val prefix = try {
+        eelApi.exec.environmentVariables().eelIt().await()[prefixEnvVar] ?: return null
+      }
+      catch (e: EelExecApi.EnvironmentVariablesException) {
+        LOG.warn("Cannot get environment variables from eel", e)
+        return null
+      }
+
+      val prefixResolvedPath = parsePath(prefix).successOrNull ?: return null
+      return PathHolder.Eel(pathComponents.fold(prefixResolvedPath.path, Path::resolve))
+    }
+
+    override suspend fun getFullPathFromHome(pathComponents: List<String>): PathHolder.Eel {
+      val home = eelApi.userInfo.home.asNioPath()
+      return PathHolder.Eel(pathComponents.fold(home, Path::resolve))
+    }
+
+    override suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): PathHolder.Eel {
+      return PathHolder.Eel(workingDir.resolve(dirName))
+    }
   }
 
   data class Target(
@@ -324,12 +439,15 @@ sealed interface FileSystem<P : PathHolder> {
   ) : FileSystem<PathHolder.Target> {
     override val isReadOnly: Boolean
       get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
-    override val isBrowseable: Boolean
+    override val isBrowsable: Boolean
       get() = targetEnvironmentConfiguration.getTargetType() is BrowsableTargetEnvironmentType
     override val isLocal: Boolean = false
+    override val userReadableName: @NonNls String = targetEnvironmentConfiguration.displayName
+    override val platformAndRoot: PlatformAndRoot = targetEnvironmentConfiguration.getPlatformAndRoot()
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
     private lateinit var shellImpl: String
+    private lateinit var home: PathHolder.Target
 
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
@@ -371,13 +489,14 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun setupSdk(
       project: Project?,
       pythonBinaryPath: PathHolder.Target,
+      sdkAdditionalData: PythonSdkAdditionalData?,
       targetPanelExtension: TargetPanelExtension?,
     ): PyResult<Sdk> {
-
       val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
       val (additionalData, customSdkSuggestedName) = run {
-        val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())).also {
+        val flavorAndData = sdkAdditionalData?.flavorAndData ?: PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())
+        val data = PyTargetAwareAdditionalData(flavorAndData).also {
           it.interpreterPath = pythonBinaryPath.toString()
           it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
         }
@@ -468,8 +587,8 @@ sealed interface FileSystem<P : PathHolder> {
       return SdkWrapper(sdk, PathHolder.Target(sdk.homePath!!))
     }
 
-    override fun getBinaryToExec(path: PathHolder.Target): BinaryToExec {
-      return BinOnTarget(path.pathString, targetEnvironmentConfiguration)
+    override fun getBinaryToExec(path: PathHolder.Target, workingDir: Path?): BinaryToExec {
+      return BinOnTarget(path.pathString, targetEnvironmentConfiguration, workingDir)
     }
 
     override suspend fun getSystemPythonFromSelection(
@@ -503,19 +622,78 @@ sealed interface FileSystem<P : PathHolder> {
       return VirtualEnvReader().getVenvNameForTarget(pythonBinaryString, platform)
     }
 
-    override suspend fun which(cmd: String): PathHolder.Target? {
+    override suspend fun getHomePath(): PathHolder.Target? {
+      if (!this::home.isInitialized) {
+        val homeValue = getEnvVar("HOME").successOrNull ?: return null
+        home = PathHolder.Target(homeValue)
+      }
+      return home
+    }
+
+    override fun normalizePathToRemote(path: PathHolder.Target): PathHolder.Target {
+      val mapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(targetEnvironmentConfiguration)
+      val targetPath = mapper?.getTargetPath(Path.of(path.pathString)) ?: path.pathString
+      return PathHolder.Target(targetPath)
+    }
+
+    // TODO PY-87712 Support detection for remotes
+    override suspend fun detectEnvironments(
+      workingDir: Path,
+      uiInfoGetter: (PathHolder.Target) -> PyToolUIInfo?,
+    ): List<DetectedSelectableInterpreter<PathHolder.Target>> {
+      return emptyList()
+    }
+
+    private suspend fun which(cmd: String): PathHolder.Target? {
       val binaryPathString = executeCommand("which $cmd").getOr { return null }
       val binaryPathOnFS = parsePath(binaryPathString).getOr { return null }
       return binaryPathOnFS
     }
 
-    override suspend fun getHomePath(): PathHolder.Target? = executeCommand($$"echo ${HOME}").successOrNull?.let { PathHolder.Target(it) }
+    override suspend fun detectTool(
+      toolName: String,
+      additionalSearchPaths: List<PathHolder.Target>,
+      filter: (PathHolder.Target) -> Boolean,
+    ): PathHolder.Target? = withContext(Dispatchers.IO) {
+      val fromWhich = which(toolName)?.takeIf(filter)
+      if (fromWhich != null) return@withContext fromWhich
 
-    private suspend fun executeCommand(cmd: String): PyResult<String> {
+      for (path in additionalSearchPaths) {
+        val candidate = parsePath("${path.pathString}/$toolName").successOrNull
+          ?.takeIf { filter(it) && fileExists(it) }
+        if (candidate != null) return@withContext candidate
+      }
+
+      null
+    }
+
+    override suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): PathHolder.Target? {
+      val prefix = getEnvVar(prefixEnvVar).successOrNull ?: return null
+      return getFullPathWithPrefix(prefix, pathComponents)
+    }
+
+    override suspend fun getFullPathFromHome(pathComponents: List<String>): PathHolder.Target? {
+      val homePath = getHomePath()?.pathString ?: return null
+      return getFullPathWithPrefix(homePath, pathComponents)
+    }
+
+    override suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): PathHolder.Target? {
+      val remoteWorkingDir = executeCommand("pwd", workingDir).successOrNull ?: return null
+      return PathHolder.Target("$remoteWorkingDir/$dirName")
+    }
+
+    private fun getFullPathWithPrefix(prefix: String, pathComponents: List<String>): PathHolder.Target {
+      val resolvedPath = if (pathComponents.isEmpty()) prefix else "$prefix/${pathComponents.joinToString("/")}"
+      return PathHolder.Target(resolvedPath)
+    }
+
+    private suspend fun executeCommand(cmd: String, workingDir: Path? = null): PyResult<String> {
       val shell = getShell()
-      val bin = getBinaryToExec(PathHolder.Target(shell))
+      val bin = getBinaryToExec(PathHolder.Target(shell), workingDir)
       return ExecService().execGetStdout(bin, Args("-l", "-c", cmd))
     }
+
+    private suspend fun getEnvVar(envVarName: String): PyResult<String> = executeCommand("printenv ${envVarName}")
 
     private suspend fun getShell(): String {
       if (!this::shellImpl.isInitialized) {
@@ -537,25 +715,31 @@ sealed interface FileSystem<P : PathHolder> {
   }
 }
 
+/**
+ * Returns a [FileSystem.Eel] backed by the EEL of [this] path, falling back to [localEel] when [this] is null
+ * or has no EEL descriptor. Convenience for callers that operate on local-host paths and want a [FileSystem]
+ * to pass to a tool runner.
+ */
+internal suspend fun Path?.toEelFileSystem(): FileSystem.Eel =
+  FileSystem.Eel(this?.getEelDescriptor()?.toEelApi() ?: localEel)
+
 internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
-  when ((this as? FileSystem.Eel)?.eelApi) {
-    localEel -> {
-      getSdksToInstall()
-        .mapNotNull { sdk ->
-          LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
-        }
-        .sortedByDescending { it.first }
-        .map { (languageLevel, sdk) ->
-          InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
-        }
-    }
-    else -> emptyList()
+  if (isLocal) {
+    getSdksToInstall()
+      .mapNotNull { sdk ->
+        LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
+      }
+      .sortedByDescending { it.first }
+      .map { (languageLevel, sdk) ->
+        InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
+      }
   }
+  else emptyList()
 
 internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpreters(
   projectPathPrefix: Path,
 ): List<ExistingSelectableInterpreter<P>> = withContext(Dispatchers.IO) {
-  if ((this@getExistingSelectableInterpreters as? FileSystem.Eel)?.eelApi != localEel) return@withContext emptyList()
+  if (!isLocal) return@withContext emptyList()
 
   val allValidSdks = PythonSdkUtil
     .getAllSdks()

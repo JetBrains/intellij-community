@@ -6,16 +6,14 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
-import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
@@ -25,7 +23,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -39,19 +36,27 @@ private var PropertiesComponent.uvPath: Path?
     setValue(UV_PATH_SETTING, value.toString())
   }
 
+private val UV_TOOL: ToolCommandExecutor = ToolCommandExecutor(
+  "uv",
+  getToolPathFromSettings = { uvPath?.pathString }
+)
+
 private fun <P : PathHolder> validateUvExecutable(uvPath: P?, platformAndRoot: PlatformAndRoot): ValidationInfo? {
-  val path = when (uvPath) {
-    is PathHolder.Eel -> uvPath.path.pathString
-    is PathHolder.Target -> uvPath.pathString
-  }
   return validateExecutableFile(ValidationRequest(
-    path = path,
+    path = uvPath?.toString(),
     fieldIsEmpty = PyBundle.message("python.sdk.uv.executable.not.found"),
     platformAndRoot = platformAndRoot
   ))
 }
 
-private suspend fun <P : PathHolder> runUv(uv: P, workingDir: Path, venvPath: P?, fileSystem: FileSystem<P>, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> {
+private suspend fun <P : PathHolder> runUv(
+  uv: P,
+  workingDir: Path,
+  venvPath: P?,
+  fileSystem: FileSystem<P>,
+  canChangeTomlOrLock: Boolean,
+  vararg args: String,
+): PyResult<String> {
   val env = buildMap {
     if (venvPath == null) {
       put("VIRTUAL_ENV", VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
@@ -61,66 +66,28 @@ private suspend fun <P : PathHolder> runUv(uv: P, workingDir: Path, venvPath: P?
     }
     venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toString()) }
   }
-  val bin = when (uv) {
-    is PathHolder.Eel -> BinOnEel(uv.path, workingDir)
-    is PathHolder.Target -> BinOnTarget(uv.pathString, (fileSystem as FileSystem.Target).targetEnvironmentConfiguration, workingDir)
-  }
+  val bin = fileSystem.getBinaryToExec(uv, workingDir)
   val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf("pyproject.toml", "uv.lock")) else null
-  return runExecutableWithProgress(bin, env = env, timeout = 10.minutes, args = args, transformer = ZeroCodeStdoutTransformer, downloadConfig = downloadConfig)
+  return runExecutableWithProgress(bin,
+                                   env = env,
+                                   timeout = 10.minutes,
+                                   args = args,
+                                   transformer = ZeroCodeStdoutTransformer,
+                                   downloadConfig = downloadConfig)
 }
 
 private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val uv: P, private val fileSystem: FileSystem<P>) : UvCli<P> {
 
-  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> = withContext(dispatcher) {
-    runUv(uv, workingDir, venvPath, fileSystem, canChangeTomlOrLock, *args)
-  }
-}
-
-suspend fun <P : PathHolder> detectUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? = detectTool("uv", fileSystem, pathFromSdk)
-
-private suspend fun <P : PathHolder> detectTool(
-  toolName: String,
-  fileSystem: FileSystem<P>,
-  pathFromSdk: FullPathOnTarget?,
-  additionalSearchPaths: List<P> = listOf(),
-): P? = withContext(Dispatchers.IO) {
-  pathFromSdk?.let { fileSystem.parsePath(it) }?.successOrNull?.also { return@withContext it }
-  when (fileSystem) {
-    is FileSystem.Eel -> fileSystem.which(toolName)
-    is FileSystem.Target -> {
-      val binary = fileSystem.which(toolName)
-      if (binary != null) {
-        return@withContext binary
-      }
-
-      val searchPaths: List<FullPathOnTarget> = buildList {
-        fileSystem.getHomePath()?.also {
-          add("$it/.local/bin/uv")
-        }
-
-        for (path in additionalSearchPaths) {
-          add(path.toString())
-        }
-      }
-
-      searchPaths.firstOrNull { fileSystem.fileExists(PathHolder.Target(it)) }
-        ?.let { fileSystem.parsePath(it).successOrNull }
+  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> =
+    withContext(dispatcher) {
+      runUv(uv, workingDir, venvPath, fileSystem, canChangeTomlOrLock, *args)
     }
-  }
 }
 
-suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? {
-  return PropertiesComponent.getInstance().uvPath?.takeIf { it.exists() } ?: detectUvExecutable(FileSystem.Eel(eel), null)?.path
-}
+suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutable(FileSystem.Eel(eel), null)?.path
 
-// TODO PY-87712 check that path in SDK is from the same eel or something
-suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? {
-  val pathFromProperty = PropertiesComponent.getInstance().uvPath
-  return when (fileSystem) {
-    is FileSystem.Eel -> (pathFromProperty?.takeIf { fileSystem.eelApi == localEel && it.exists() }?.let { PathHolder.Eel(it) as P }) ?: detectUvExecutable(fileSystem, pathFromSdk)
-    is FileSystem.Target -> detectUvExecutable(fileSystem, pathFromSdk)
-  }
-}
+suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
+  UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
 
 fun setUvExecutableLocal(path: Path) {
   PropertiesComponent.getInstance().uvPath = path
@@ -134,13 +101,13 @@ suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher =
   return createUvCli(uv?.let { PathHolder.Eel(it) }, FileSystem.Eel(localEel), dispatcher)
 }
 
-suspend fun <P : PathHolder> createUvCli(uv: P?, fileSystem: FileSystem<P>, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<P>> {
+suspend fun <P : PathHolder> createUvCli(
+  uv: P?,
+  fileSystem: FileSystem<P>,
+  dispatcher: CoroutineDispatcher = Dispatchers.IO,
+): PyResult<UvCli<P>> {
   val path = uv ?: getUvExecutable(fileSystem, null)
-  val platformAndRoot = when (fileSystem) {
-    is FileSystem.Eel -> fileSystem.eelApi.getPlatformAndRoot()
-    is FileSystem.Target -> fileSystem.targetEnvironmentConfiguration.getPlatformAndRoot()
-  }
-  val error = validateUvExecutable(path, platformAndRoot)
+  val error = validateUvExecutable(path, fileSystem.platformAndRoot)
   return if (error != null) {
     PyResult.localizedError(error.message)
   }

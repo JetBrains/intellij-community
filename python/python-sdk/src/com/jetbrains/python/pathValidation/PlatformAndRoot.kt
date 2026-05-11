@@ -7,7 +7,6 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.local
 import java.nio.file.Path
 
 /**

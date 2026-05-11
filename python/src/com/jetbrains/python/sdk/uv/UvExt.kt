@@ -12,10 +12,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -23,22 +20,15 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.detectUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
-import com.jetbrains.python.uv.sdk.configuration.isUvEnv
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -46,18 +36,10 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.pathString
 
 
 internal val Sdk.isUv: Boolean
-  get() {
-    if (!PythonSdkUtil.isPythonSdk(this)) {
-      return false
-    }
-    return uvFlavorData != null
-  }
+  get() = PythonSdkUtil.isPythonSdk(this) && uvFlavorData != null
 
 internal val Sdk.uvFlavorData: UvSdkFlavorData?
   get() {
@@ -69,13 +51,7 @@ internal val Sdk.uvFlavorData: UvSdkFlavorData?
   }
 
 internal val Sdk.uvUsePackageManagement: Boolean
-  get() {
-    if (!PythonSdkUtil.isPythonSdk(this)) {
-      return false
-    }
-
-    return uvFlavorData?.usePip == true
-  }
+  get() = PythonSdkUtil.isPythonSdk(this) && uvFlavorData?.usePip == true
 
 /**
  * Execution context for UV SDK operations.
@@ -108,118 +84,6 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
   }
 }
 
-/**
- * Operations helper for UV SDK creation code.
- * Consolidates all PathHolder type-specific operations needed to create UV SDKs.
- *
- * Use [createUvPathOperations] factory to create an instance.
- */
-sealed interface UvPathOperations<P : PathHolder> {
-  val workingDir: Path
-  val fileSystem: FileSystem<P>
-
-  /**
-   * Creates SDK additional data appropriate for this context type.
-   */
-  fun createSdkAdditionalData(
-    workingDir: Path,
-    pythonBinary: P,
-    usePip: Boolean,
-    uvPath: P,
-  ): PythonSdkAdditionalData
-
-  /**
-   * Maps a path using target VFS mapper if needed.
-   */
-  fun mapProbablyWslPath(path: P): P
-
-  /**
-   * Detects UV environments in immediate subdirectories of [workingDir].
-   */
-  suspend fun detectEnvironments(): List<DetectedSelectableInterpreter<P>>
-
-  class Eel(
-    override val workingDir: Path,
-    override val fileSystem: FileSystem.Eel,
-  ) : UvPathOperations<PathHolder.Eel> {
-    override fun createSdkAdditionalData(
-      workingDir: Path,
-      pythonBinary: PathHolder.Eel,
-      usePip: Boolean,
-      uvPath: PathHolder.Eel,
-    ): PythonSdkAdditionalData {
-      val venvPath = fileSystem.resolvePythonHome(pythonBinary)
-      return UvSdkAdditionalData(workingDir, usePip, venvPath.path, uvPath.path)
-    }
-
-    override suspend fun detectEnvironments(): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
-      if (workingDir.getEelDescriptor().toEelApi() != fileSystem.eelApi) return emptyList()
-
-      return workingDir.listDirectoryEntries().filter { it.isDirectory() }.mapNotNull { possibleVenvHome ->
-        val pythonBinary = possibleVenvHome.resolvePythonBinary() ?: return@mapNotNull null
-        val pythonInfo = pythonBinary.validatePythonAndGetInfo().successOrNull ?: return@mapNotNull null
-        val ui = if (pythonBinary.isUvEnv()) UV_UI_INFO else null
-        DetectedSelectableInterpreter(PathHolder.Eel(pythonBinary), pythonInfo, false, ui)
-      }
-    }
-
-    override fun mapProbablyWslPath(path: PathHolder.Eel): PathHolder.Eel = path
-  }
-
-  class Target(
-    override val workingDir: Path,
-    override val fileSystem: FileSystem.Target,
-  ) : UvPathOperations<PathHolder.Target> {
-    override fun createSdkAdditionalData(
-      workingDir: Path,
-      pythonBinary: PathHolder.Target,
-      usePip: Boolean,
-      uvPath: PathHolder.Target,
-    ): PythonSdkAdditionalData {
-      val venvPath = fileSystem.resolvePythonHome(pythonBinary)
-      val targetConfig = fileSystem.targetEnvironmentConfiguration
-      val flavorAndData = PyFlavorAndData(UvSdkFlavorData(workingDir, usePip.takeIf { it }, venvPath.pathString, uvPath.pathString), UvSdkFlavor)
-      return PyTargetAwareAdditionalData(flavorAndData, targetConfig).also {
-        it.interpreterPath = pythonBinary.pathString
-      }
-    }
-
-    // TODO PY-87712 Support detection for remotes
-    override suspend fun detectEnvironments(): List<DetectedSelectableInterpreter<PathHolder.Target>> {
-      return emptyList()
-    }
-
-    override fun mapProbablyWslPath(path: PathHolder.Target): PathHolder.Target {
-      val targetConfig = fileSystem.targetEnvironmentConfiguration
-      val mapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(targetConfig)
-      val targetPath = mapper?.getTargetPath(Path.of(path.pathString)) ?: path.pathString
-      return PathHolder.Target(targetPath)
-    }
-  }
-}
-
-/**
- * Creates a [UvPathOperations] instance for the given parameters.
- * This factory consolidates the type dispatch in one place.
- */
-// TODO PY-87712 Think about contracts
-@Suppress("UNCHECKED_CAST")
-internal fun <P : PathHolder> createUvPathOperations(
-  workingDir: Path,
-  fileSystem: FileSystem<P>,
-): UvPathOperations<P> {
-  return when (fileSystem) {
-    is FileSystem.Eel -> UvPathOperations.Eel(
-      workingDir = workingDir,
-      fileSystem = fileSystem,
-    ) as UvPathOperations<P>
-    is FileSystem.Target -> UvPathOperations.Target(
-      workingDir = workingDir,
-      fileSystem = fileSystem,
-    ) as UvPathOperations<P>
-  }
-}
-
 private suspend fun createEelUvExecutionContext(
   workingDir: Path,
   venvPathString: String?,
@@ -227,7 +91,7 @@ private suspend fun createEelUvExecutionContext(
 ): UvExecutionContext.Eel {
   val eelApi = workingDir.getEelDescriptor().toEelApi()
   val fileSystem = FileSystem.Eel(eelApi)
-  val uvPath = detectUvExecutable(fileSystem, uvPathString)
+  val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Eel(
     workingDir = workingDir,
     venvPath = venvPathString?.let { PathHolder.Eel(Path.of(it)) },
@@ -243,7 +107,7 @@ private suspend fun createTargetUvExecutionContext(
   targetConfig: TargetEnvironmentConfiguration,
 ): UvExecutionContext.Target {
   val fileSystem = FileSystem.Target(targetConfig, PythonLanguageRuntimeConfiguration())
-  val uvPath = detectUvExecutable(fileSystem, uvPathString)
+  val uvPath = getUvExecutable(fileSystem, uvPathString)
   return UvExecutionContext.Target(
     workingDir = workingDir,
     venvPath = venvPathString?.let { PathHolder.Target(it) },
@@ -308,19 +172,17 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   version: Version?,
   errorSink: ErrorSink,
 ): PyResult<Sdk> {
-  val ops = createUvPathOperations(workingDir, fileSystem)
-
   val shouldInitProject = !workingDir.resolve(PY_PROJECT_TOML).exists()
-  val mappedUvExecutable = ops.mapProbablyWslPath(uvExecutable)
+  val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
 
-  val uv = createUvLowLevel(workingDir, createUvCli(mappedUvExecutable, fileSystem).getOr { return it }, fileSystem, venvPath)
+  val uv = createUvLowLevel(workingDir, createUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, fileSystem, venvPath)
   val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
     uv.initializeEnvironment(shouldInitProject, version)
   }.getOr { return it }
 
   val sdk = setupExistingEnvAndSdk(
     pythonBinary = pythonBinary,
-    uvPath = mappedUvExecutable,
+    uvPath = normalizedUvExecutablePath,
     workingDir = workingDir,
     fileSystem = fileSystem,
     usePip = false
@@ -356,8 +218,7 @@ suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   fileSystem: FileSystem<P>,
   usePip: Boolean,
 ): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
-  val ops = createUvPathOperations(workingDir, fileSystem)
-  val sdkAdditionalData = ops.createSdkAdditionalData(workingDir, pythonBinary, usePip, uvPath)
-  val sdk = createSdk(pythonBinary, sdkAdditionalData = sdkAdditionalData)
+  val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, fileSystem.resolvePythonHome(pythonBinary).toString(), uvPath.toString())
+  val sdk = fileSystem.setupSdk(null, pythonBinary, sdkAdditionalData, null)
   sdk
 }

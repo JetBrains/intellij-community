@@ -4,15 +4,12 @@ package com.jetbrains.python.sdk.add.v2.conda
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
-import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
@@ -54,23 +51,7 @@ class CondaViewModel<P : PathHolder>(
     backProperty = condaExecutable,
     propertyGraph = propertyGraph,
     defaultPathSupplier = {
-      val eelApi = (fileSystem as? FileSystem.Eel)?.eelApi
-      if (eelApi == localEel) {
-        loadLocalPythonCondaPath()?.let {
-          return@ToolValidator PathHolder.Eel(it) as P?
-        }
-      }
-
-      val suggestedCondaPath = runCatching {
-        findConda(fileSystem)
-      }.getOrElse {
-        rethrowControlFlowException(it)
-        LOG.warn(it)
-        null
-      }
-      suggestedCondaPath?.let {
-        fileSystem.parsePath(suggestedCondaPath).successOrNull
-      }
+      findConda(fileSystem)
     }
   )
 

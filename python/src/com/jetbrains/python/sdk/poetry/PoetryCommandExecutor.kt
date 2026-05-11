@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
+import com.intellij.execution.Platform
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.poetryPath
@@ -24,6 +24,9 @@ import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.ToolSearchPath
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pyRichSdkAsync
 import com.jetbrains.python.sdk.runTool
@@ -47,13 +50,10 @@ private val VERSION_2 = "2.0.0".toVersion()
 
 private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
   "poetry",
-  getAdditionalSearchPaths = {
-    // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
-    listOf(userInfo.home.asNioPath().resolve(Path.of(".poetry", ".bin")))
-  },
-  getToolPathFromSettings = {
-    poetryPath
-  })
+  // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
+  additionalSearchPaths = listOf(ToolSearchPath.RelativePathFromHome(listOf(".poetry", ".bin"), Platform.WINDOWS)),
+  getToolPathFromSettings = { poetryPath }
+)
 
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
 
@@ -67,7 +67,13 @@ suspend fun runPoetry(
   val env = baseEnv.toMutableMap().apply {
     if (inProjectEnv != null) put("POETRY_VIRTUALENVS_IN_PROJECT", inProjectEnv.toString())
   }
-  return POETRY_TOOL.runTool(projectPath, *args, env = env)
+  return POETRY_TOOL.runTool(
+    fileSystem = projectPath.toEelFileSystem(),
+    pathFromSdk = null,
+    dirPath = projectPath,
+    args = args,
+    env = env,
+  )
 }
 
 
@@ -75,7 +81,8 @@ suspend fun runPoetry(
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
-suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? = POETRY_TOOL.getToolExecutable(eel)
+suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
+  POETRY_TOOL.getToolExecutable(FileSystem.Eel(eel), pathFromSdk = null)?.path
 
 /**
  * Runs poetry command for the specified Poetry SDK.
@@ -142,7 +149,8 @@ suspend fun setupPoetry(
   return runPoetry(projectPath, "env", "info", "-p", inProjectEnv = inProjectEnv).mapSuccess { Path.of(it) }
 }
 
-internal suspend fun detectPoetryEnvs(searchPath: Path): List<PythonBinary> = getPoetryEnvs(searchPath).mapNotNull { getPythonExecutable(it) }
+internal suspend fun detectPoetryEnvs(searchPath: Path): List<PythonBinary> =
+  getPoetryEnvs(searchPath).mapNotNull { getPythonExecutable(it) }
 
 internal suspend fun getPoetryVersion(): String? =
   runPoetry(null, "--version")

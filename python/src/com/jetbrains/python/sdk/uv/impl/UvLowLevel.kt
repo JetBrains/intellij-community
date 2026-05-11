@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
@@ -16,8 +13,8 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
@@ -38,7 +35,12 @@ private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
 private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
-private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val venvPath: P?, private val uvCli: UvCli<P>, private val fileSystem: FileSystem<P>) : UvLowLevel<P> {
+private class UvLowLevelImpl<P : PathHolder>(
+  private val cwd: Path,
+  private val venvPath: P?,
+  private val uvCli: UvCli<P>,
+  private val fileSystem: FileSystem<P>,
+) : UvLowLevel<P> {
   override suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
@@ -66,27 +68,16 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
       .getOr { return it }
 
-    // TODO PY-87712 Would be great to get rid of unsafe casts
-    val path: P? = when (fileSystem) {
-      is FileSystem.Eel -> {
-        VirtualEnvReader().findPythonInPythonRoot((venvPath as? PathHolder.Eel)?.path ?: cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
-          ?.let { fileSystem.resolvePythonBinary(PathHolder.Eel(it)) } as P?
-      }
-      is FileSystem.Target -> {
-        val pythonBinary = if (venvPath == null) {
-          val targetPath = constant(cwd.pathString)
-          val venvPath = targetPath.getRelativeTargetPath(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
-          venvPath.apply(fileSystem.targetEnvironmentConfiguration.createEnvironmentRequest(project = null).prepareEnvironment(TargetProgressIndicator.EMPTY))
-        } else venvPath.toString()
-        fileSystem.resolvePythonBinary(PathHolder.Target(pythonBinary)) as P?
-      }
+    val resolvedVenvPath = venvPath?.let { fileSystem.resolvePythonBinary(it) }
+    if (resolvedVenvPath != null) {
+      return PyResult.success(resolvedVenvPath)
     }
 
-    if (path == null) {
-      return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
-    }
+    val resolvedFallback = fileSystem.resolveInWorkingDir(cwd, VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+                             ?.let { fileSystem.resolvePythonBinary(it) }
+                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
 
-    return PyResult.success(path)
+    return PyResult.success(resolvedFallback)
   }
 
   override suspend fun listUvPythons(): PyResult<Set<Path>> {
@@ -200,7 +191,11 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun addDependency(
+    pyPackages: PythonPackageInstallRequest,
+    options: List<String>,
+    workspaceMember: PyWorkspaceMember?,
+  ): PyResult<Unit> {
     val args = mutableListOf("add")
     if (workspaceMember != null) {
       args.add("--package")

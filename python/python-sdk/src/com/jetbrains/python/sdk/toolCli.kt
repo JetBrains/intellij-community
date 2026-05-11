@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.isWindows
@@ -37,6 +39,7 @@ import kotlin.io.path.isExecutable
  * @return [PyResult] containing the resolved executable [Path] on success; otherwise a localized error
  *   explaining that the executable could not be found on the target machine.
  */
+// TODO: Should be dropped after migrating to FileSystem tool detection in Hatch
 @ApiStatus.Internal
 suspend fun detectTool(
   toolName: String,
@@ -50,8 +53,9 @@ suspend fun detectTool(
 
   val binaryName = if (eel.platform.isWindows) "$toolName.exe" else toolName
   val paths = buildList {
-    if (eel.platform.isWindows) addWindowsPaths(eel, binaryName) else addUnixPaths(eel, binaryName)
-    for(path in additionalSearchPaths) {
+    addCommonPaths(eel, binaryName)
+    if (eel.platform.isWindows) addWindowsPaths(eel, binaryName)
+    for (path in additionalSearchPaths) {
       assert(path.getEelDescriptor() == eel.descriptor) {
         "Additional search paths should be on the same descriptor as Eel API, but $path isn't on $eel"
       }
@@ -62,12 +66,19 @@ suspend fun detectTool(
   paths.firstOrNull { it.isExecutable() }
 }
 
-private fun MutableList<Path>.addUnixPaths(eel: EelApi, binaryName: String) {
-  add(eel.userInfo.home.asNioPath().resolve(Path.of(".local", "bin", binaryName)))
+private fun MutableList<Path>.addCommonPaths(eel: EelApi, binaryName: String) {
+  add(eel.userInfo.home.asNioPath().resolve(".local", "bin", binaryName))
 }
 
 private suspend fun MutableList<Path>.addWindowsPaths(eel: EelApi, binaryName: String) {
-  val env = eel.exec.environmentVariables().eelIt().await()
+  val env = try {
+    eel.exec.environmentVariables().eelIt().await()
+  }
+  catch (e: EelExecApi.EnvironmentVariablesException) {
+    fileLogger().warn("Unable to get environment variables, won't check some known Windows locations", e)
+    return
+  }
+
   val envsToCheck = listOf("APPDATA", "LOCALAPPDATA")
   envsToCheck.forEach { envToCheck ->
     env[envToCheck]?.let {

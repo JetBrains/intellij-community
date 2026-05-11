@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -15,10 +16,10 @@ import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.uv.createUvPathOperations
 import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.uv.sdk.configuration.isUvEnv
 import java.nio.file.Path
 
 
@@ -33,7 +34,8 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val sdkHomePath = selectedEnv.get()?.homePath
-    val selectedInterpreterPath = sdkHomePath ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))
+    val selectedInterpreterPath =
+      sdkHomePath ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))
 
     val associatedModule = extractModule(moduleOrProject)
 
@@ -52,8 +54,12 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
-    val ops = createUvPathOperations(modulePath, model.fileSystem)
-    return ops.detectEnvironments()
+    return model.fileSystem.detectEnvironments(modulePath) { pythonBinary ->
+      when (pythonBinary) {
+        is PathHolder.Eel -> if (pythonBinary.path.isUvEnv()) UV_UI_INFO else null
+        is PathHolder.Target -> UV_UI_INFO
+      }
+    }
   }
 
   private fun extractModule(moduleOrProject: ModuleOrProject): Module? =

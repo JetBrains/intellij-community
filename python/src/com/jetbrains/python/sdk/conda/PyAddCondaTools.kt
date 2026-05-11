@@ -2,18 +2,9 @@
 package com.jetbrains.python.sdk.conda
 
 import com.intellij.execution.Platform
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -28,8 +19,10 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.ToolSearchPath
 import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
@@ -38,16 +31,32 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.pyRichSdk
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import kotlin.io.path.Path
-import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
+
+private val CONDA_TOOL: ToolCommandExecutor = ToolCommandExecutor(
+  "conda",
+  additionalSearchPaths = listOf(
+    ToolSearchPath.RelativePathFromHome(listOf("anaconda3", "bin"), Platform.UNIX),
+    ToolSearchPath.RelativePathFromHome(listOf("miniconda3", "bin"), Platform.UNIX),
+    ToolSearchPath.AbsolutePath("/usr/local/bin", Platform.UNIX),
+    ToolSearchPath.RelativePathFromHome(listOf("opt", "miniconda3", "bin"), Platform.UNIX),
+    ToolSearchPath.RelativePathFromHome(listOf("opt", "anaconda3", "bin"), Platform.UNIX),
+    ToolSearchPath.AbsolutePath("/opt/miniconda3/condabin", Platform.UNIX),
+    ToolSearchPath.AbsolutePath("/opt/conda/bin", Platform.UNIX),
+    ToolSearchPath.AbsolutePath("/opt/anaconda3/condabin", Platform.UNIX),
+    ToolSearchPath.AbsolutePath("/opt/homebrew/anaconda3/bin", Platform.UNIX),
+    ToolSearchPath.RelativePath("ALLUSERSPROFILE", listOf("Anaconda3", "condabin"), Platform.WINDOWS),
+    ToolSearchPath.RelativePath("ALLUSERSPROFILE", listOf("Miniconda3", "condabin"), Platform.WINDOWS),
+    ToolSearchPath.RelativePath("USERPROFILE", listOf("Anaconda3", "condabin"), Platform.WINDOWS),
+    ToolSearchPath.RelativePath("USERPROFILE", listOf("Miniconda3", "condabin"), Platform.WINDOWS),
+  ),
+  getToolPathFromSettings = { loadLocalPythonCondaPath()?.pathString }
+)
 
 /**
  * Levels to be used for new conda envs
@@ -154,119 +163,10 @@ private fun NewCondaEnvRequest.toIdentity(): PyCondaEnvIdentity =
 /**
  * Detects conda binary in PATH and then well-known locations on the local machine.
  */
-suspend fun findConda(filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? = findConda(FileSystem.Eel(localEel), filter)
+suspend fun findCondaLocal(filter: (PathHolder.Eel) -> Boolean = { true }): PathHolder.Eel? = findConda(FileSystem.Eel(localEel), filter)
 
 /**
  * Detects conda binary in PATH and then well-known locations on the provided FileSystem
  */
-internal suspend fun findConda(fileSystem: FileSystem<*>, filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
-  val condaFromPath = fileSystem.which("conda")?.toString()?.takeIf(filter)
-  if (condaFromPath != null) return condaFromPath
-
-  // legacy slow fallback detection via the defined list of paths in case of there is no conda on the PATH (PY-85060),
-  // not sure if it is worth it to keep it, because if there is no conda on the PATH the installation might be broken
-  val request = fileSystem.createTargetRequest()
-
-  return suggestCondaPath(TargetEnvironmentRequestCommandExecutor(request), filter)
-}
-
-/**
- * Detects conda binary in well-known locations on target
- */
-private suspend fun suggestCondaPath(
-  targetCommandExecutor: TargetCommandExecutor,
-  filter: (FullPathOnTarget) -> Boolean = { true },
-): FullPathOnTarget? {
-  val targetPlatform = withContext(Dispatchers.IO) {
-    targetCommandExecutor.targetPlatform.await()
-  }
-  var possiblePaths: Array<FullPathOnTarget> = when (targetPlatform.platform) {
-    Platform.UNIX -> arrayOf(
-      "~/anaconda3/bin/conda",
-      "~/miniconda3/bin/conda",
-      "/usr/local/bin/conda",
-      "~/opt/miniconda3/condabin/conda",
-      "~/opt/anaconda3/condabin/conda",
-      "/opt/miniconda3/condabin/conda",
-      "/opt/conda/bin/conda",
-      "/opt/anaconda3/condabin/conda",
-      "/opt/homebrew/anaconda3/bin/conda",
-    )
-    Platform.WINDOWS -> arrayOf(
-      "%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
-      "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
-      "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",
-      "%USERPROFILE%\\Miniconda3\\condabin\\conda.bat",
-    )
-  }
-  // If conda is local then store path
-  if (targetCommandExecutor.isLocalMachineExecutor) {
-    loadLocalPythonCondaPath()?.let {
-      possiblePaths = arrayOf(it.pathString) + possiblePaths
-    }
-  }
-  return possiblePaths.firstNotNullOfOrNull { targetCommandExecutor.getExpandedPathIfExecutable(it)?.takeIf { filter(it) } }
-}
-
-private val TargetCommandExecutor.isLocalMachineExecutor: Boolean
-  get() = this is TargetEnvironmentRequestCommandExecutor && request is LocalTargetEnvironmentRequest
-
-private fun TargetCommandExecutor.executeShellCommand(command: String): CompletableFuture<ProcessOutput> =
-  targetPlatform
-    .thenApply { targetPlatform -> command.asCommandInShell(targetPlatform) }
-    .thenCompose { commandInShell -> execute(commandInShell) }
-
-private fun String.asCommandInShell(targetPlatform: TargetPlatform): List<String> =
-  if (targetPlatform.platform == Platform.WINDOWS) listOf("cmd.exe", "/c", this)
-  else listOf("sh", "-c", this)
-
-/**
- * If [file] is executable returns it in expanded (env vars resolved) manner.
- */
-private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: FullPathOnTarget): FullPathOnTarget? = withContext(
-  Dispatchers.IO) {
-  if (isLocalMachineExecutor) {
-    val expandedPath = expandPathLocally(file)
-    return@withContext if (Path.of(expandedPath).isExecutable()) expandedPath else null
-  }
-  else {
-    val expandedPath = executeShellCommand("echo $file").thenApply(ProcessOutput::getStdout).thenApply(String::trim).await()
-    // TODO: Should we test with browsable target as well?
-
-    if (targetPlatform.await().platform == Platform.WINDOWS) {
-      logger<TargetCommandExecutor>().warn("Remote windows target not supported")
-      return@withContext null
-    }
-    return@withContext if (executeShellCommand("test -x $expandedPath").await().exitCode == 0) expandedPath
-    else null
-  }
-}
-
-@ApiStatus.Internal
-interface TargetCommandExecutor {
-  val targetPlatform: CompletableFuture<TargetPlatform>
-  fun execute(command: List<String>): CompletableFuture<ProcessOutput>
-
-  /**
-   * Command will be executed on local machine
-   */
-  val local: Boolean
-}
-
-@ApiStatus.Internal
-class TargetEnvironmentRequestCommandExecutor(internal val request: TargetEnvironmentRequest) : TargetCommandExecutor {
-  override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(request.targetPlatform)
-  override val local: Boolean = request is LocalTargetEnvironmentRequest
-  override fun execute(command: List<String>): CompletableFuture<ProcessOutput> {
-    val commandLineBuilder = TargetedCommandLineBuilder(request)
-    commandLineBuilder.setExePath(command.first())
-    commandLineBuilder.addParameters(command.subList(fromIndex = 1, toIndex = command.size))
-    val process = request.prepareEnvironment(TargetProgressIndicator.EMPTY).createProcess(commandLineBuilder.build())
-    return CompletableFuture.supplyAsync({ process.captureProcessOutput(command) }, ProcessIOExecutorService.INSTANCE)
-  }
-}
-
-private fun Process.captureProcessOutput(commandLine: List<String>): ProcessOutput {
-  val commandLineString = commandLine.joinToString(separator = " ")
-  return CapturingProcessHandler(this, Charsets.UTF_8, commandLineString).runProcess()
-}
+internal suspend fun <P : PathHolder> findConda(fileSystem: FileSystem<P>, filter: (P) -> Boolean = { true }): P? =
+  CONDA_TOOL.getToolExecutable(fileSystem, null, filter)
