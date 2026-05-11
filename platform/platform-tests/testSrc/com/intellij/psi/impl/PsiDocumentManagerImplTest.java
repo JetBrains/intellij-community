@@ -685,23 +685,24 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     for (int i = 0; i < 300; i++) {
       getPsiDocumentManager().commitAllDocuments();
-      assertCommitted(document, true, "");
+      assertCommitted(document, true, "wait ");
 
       String insert = "ddfdkjh";
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, insert));
-      assertCommitted(document, false, i);
+      assertCommitted(document, false, "wait "+i);
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, insert.length(), ""));
-      assertCommitted(document, false, i);
+      assertCommitted(document, false, "wait 2 "+i);
       FileDocumentManager.getInstance().saveDocument(document);
 
       assertEquals(text, editor.getDocument().getText());
 
       waitForCommits();
-      assertCommitted(document, true, i);
+      assertCommitted(document, true, "wait 3 "+i);
     }
     Reference.reachabilityFence(fileNode); // do not let cached view providers to gc
+    Reference.reachabilityFence(psiFile); // do not let psi to gc
   }
 
   private void assertCommitted(@NotNull Document document, boolean mustBeCommitted, @NotNull Object msg) {
