@@ -26,7 +26,7 @@ public final class JarFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return PsiFileReferenceHelper.getContextsForScope(module.getProject(), "", module.getModuleWithDependenciesScope());
   }
 

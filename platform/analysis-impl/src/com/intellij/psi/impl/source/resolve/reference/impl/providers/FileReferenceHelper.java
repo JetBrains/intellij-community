@@ -66,7 +66,7 @@ public abstract class FileReferenceHelper {
    * @return roots, which could be used as the start resolution context.
    */
   public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
-    return getRoots(module);
+    return emptyList();
   }
 
   /**
@@ -155,14 +155,6 @@ public abstract class FileReferenceHelper {
 
   public static @Nullable PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager psiManager, @NotNull VirtualFile file) {
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
-  }
-
-  /**
-   * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
-   */
-  @Deprecated(forRemoval = true)
-  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
-    return emptyList();
   }
 
   /**

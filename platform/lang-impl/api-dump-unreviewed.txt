@@ -13368,7 +13368,7 @@ c:com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference
 - findRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiFileSystemItem
 - getContexts(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - s:getInstance():com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper
-- getRoots(com.intellij.openapi.module.Module):java.util.Collection
+- getRoots(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - getTargetContexts(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):java.util.Collection
 - isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - registerFixes(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference):java.util.List

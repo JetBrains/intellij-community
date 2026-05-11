@@ -68,7 +68,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module, @NotNull VirtualFile hostFile) {
     return getContextsForModule(module, "", module.getModuleWithDependenciesScope());
   }
 

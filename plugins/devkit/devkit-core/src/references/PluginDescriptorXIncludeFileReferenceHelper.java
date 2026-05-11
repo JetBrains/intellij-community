@@ -49,7 +49,7 @@ final class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHel
   }
 
   @Override
-  public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRootsContainingPluginXmlFiles(module.getProject());
   }
 
