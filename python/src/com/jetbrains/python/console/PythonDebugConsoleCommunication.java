@@ -34,7 +34,9 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
   private boolean firstExecution = true;
   private final @NotNull PythonConsoleView myConsoleView;
   private boolean isExecuting = false;
-  // Set after stdin is written so that the pydevd "input ended" notification is ignored.
+  // Set true after stdin is written. Cleared by the next "input ended" notification:
+  //  - pydevd path -> via notifyInputReceived() (see PyDebugProcess.consoleInputRequested(false))
+  //  - DAP path    -> via notifyInputRequested() (DAP collapses started=true/false into one event)
   private volatile boolean inputRecentlyConsumed = false;
 
   @ApiStatus.Internal
@@ -155,11 +157,22 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
   @Override
   public void notifyInputRequested() {
     if (inputRecentlyConsumed) {
+      // DAP path: "input ended" notification arrives here too because the JSON
+      // factory does not carry the started flag. Swallow exactly one such notification.
       inputRecentlyConsumed = false;
       return;
     }
     waitingForInput = true;
     super.notifyInputRequested();
+  }
+
+  @Override
+  public void notifyInputReceived() {
+    // pydevd routes the "input ended" notification here (not through notifyInputRequested),
+    // so this is where the one-shot flag set in execInterpreter must be cleared.
+    // Without this, subsequent input() calls in the pydevd path are filtered out and stall.
+    inputRecentlyConsumed = false;
+    super.notifyInputReceived();
   }
 
   @Override
