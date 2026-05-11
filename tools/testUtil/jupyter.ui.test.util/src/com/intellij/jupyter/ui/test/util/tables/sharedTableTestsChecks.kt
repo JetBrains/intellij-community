@@ -44,28 +44,3 @@ fun NotebookEditorUiComponent.checkTableCellContextMenuActions(column: Int) {
     waitFor { driver.getClipboardText() == "Daniel" }
   }
 }
-
-
-fun NotebookEditorUiComponent.checkTableScenario(codeForTable: String, type: String,
-                                                        runAllCellsAndAwait: NotebookEditorUiComponent.(kotlin.time.Duration) -> Unit = { runAllCellsAndWaitExecuted() }) {
-  val column = when (type) {
-    "Kotlin" -> 0
-    "Jupyter" -> 1
-    else -> error("Invalid test type: '$type'. Expected 'Kotlin' or 'Jupyter'.")
-  }
-
-  step("Create a table") {
-    pasteToCell(LastCell, codeForTable)
-    runAllCellsAndAwait(1.minutes)
-    waitFor("Expect 1 table rendered") {
-      notebookTables.size == 1
-    }
-  }
-
-  step("Check the table") {
-    notebookTables.first().run {
-      // Check the first row
-      tableView.should { getValueAt(0, column).equals("a") }
-    }
-  }
-}
