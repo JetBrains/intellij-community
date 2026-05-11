@@ -18,12 +18,6 @@ internal class FrontendXValueModifier(
 ) : XValueModifier() {
   private val sequentialExecutor = SequentialRpcRequestsExecutor.create(cs)
 
-  @Suppress("removal", "DEPRECATED_JAVA_ANNOTATION")
-  @Deprecated(forRemoval = true)
-  override fun setValue(expression: String, callback: XModificationCallback) {
-    setValue(XExpressionImpl.fromText(expression), callback)
-  }
-
   override fun setValue(expression: XExpression, callback: XModificationCallback) {
     sequentialExecutor.execute {
       val result = XDebuggerValueModifierApi.getInstance().setValue(xValueDto.id, expression.toRpc()).await()
