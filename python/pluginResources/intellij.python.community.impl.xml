@@ -38,6 +38,10 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory id="pythonDependencyFileWidget"
+                            implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
+                            order="after pythonInterpreterWidget, before git, before hg, before Notifications"/>
+
     <localInspection language="TOML" enabledByDefault="true"
                      implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
