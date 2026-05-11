@@ -7,8 +7,11 @@ import java.net.URL
 
 @Internal
 class DialogBackgroundImageProviderImpl : DialogBackgroundImageProviderBase() {
-  override fun getImageUrl(isDark: Boolean): URL? =
-    if (PlatformUtils.isIntelliJ()) javaClass.getResource(if (isDark) "/images/gradientBackground-dark.svg"
-                                                          else "/images/gradientBackground-light.svg")
+  override fun getImageUrl(isDark: Boolean, isIslands: Boolean): URL? =
+    if (PlatformUtils.isIntelliJ()) javaClass.getResource(if (isDark) {
+      if (isIslands) "/images/gradientBackground-islands-dark.svg" else "/images/gradientBackground-dark.svg"
+    } else {
+      "/images/gradientBackground-light.svg"
+    })
     else null
 }

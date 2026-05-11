@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
@@ -214,8 +213,7 @@ internal class UpdateInfoPanel(
 
     mainPanel.addToCenter(infoPanel)
     mainPanel.addToBottom(additionalInfoPanel)
-    val isDark = LafManager.getInstance().currentUIThemeLookAndFeel?.isDark ?: true
-    val bgImage = DialogBackgroundImageProvider.getInstance().getImage(isDark)
+    val bgImage = DialogBackgroundImageProvider.getInstance().getImage()
     if (bgImage != null) {
       DialogBackgroundImageProvider.getInstance().setBackgroundImageToDialog(dialog, bgImage)
       mainPanel.putClientProperty(DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
