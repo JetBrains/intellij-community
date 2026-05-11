@@ -6,7 +6,6 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.tools.ide.util.common.logOutput
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarFile
@@ -46,11 +45,6 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     @OptIn(ExperimentalPathApi::class)
     pathToPluginDir.copyToRecursively(targetPluginDir, followLinks = false, overwrite = false)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use [installPluginFromDir] instead", level = DeprecationLevel.ERROR)
-  @Suppress("unused")
-  fun installPluginFromFolder(pathToPluginFolder: java.io.File): PluginConfigurator = installPluginFromDir(pathToPluginFolder.toPath())
 
   fun installPluginFromURL(urlToPluginZipFile: String): PluginConfigurator = apply {
     val pluginRootDir = GlobalPaths.instance.getCacheDirectoryFor("plugins")
