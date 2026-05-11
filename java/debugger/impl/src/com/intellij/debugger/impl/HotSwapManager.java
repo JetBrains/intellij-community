@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,17 +50,55 @@ public final class HotSwapManager {
     final long timeStamp = getTimeStamp(session);
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
-    List<String> paths = outputPaths != null ? outputPaths.getValue() :
-                         ReadAction.compute(() -> ContainerUtil.mapNotNull(
-                           OrderEnumerator.orderEntries(session.getProject()).classes().getRoots(),
-                           o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null
-                         ));
+    List<String> paths = outputPaths != null ? outputPaths.getValue() : getWritableOutputPaths(session);
     for (String path : paths) {
       String rootPath = FileUtil.toCanonicalPath(path);
       collectModifiedClasses(new File(path), rootPath, rootPath.length() + 1, modifiedClasses, progress, timeStamp);
     }
 
     return modifiedClasses;
+  }
+
+  private static @NotNull List<String> getWritableOutputPaths(@NotNull DebuggerSession session) {
+    return ReadAction.computeBlocking(() -> ContainerUtil.mapNotNull(
+      OrderEnumerator.orderEntries(session.getProject()).classes().getRoots(),
+      o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null
+    ));
+  }
+
+  /** Finds already compiled class files in output roots without applying the session HotSwap timestamp filter. */
+  @ApiStatus.Internal
+  @SuppressWarnings("IO_FILE_USAGE")
+  public static @NotNull Map<String, HotSwapFile> findExistingClassesForHotSwap(@NotNull DebuggerSession session,
+                                                                                @NotNull Collection<String> qualifiedNames,
+                                                                                @NotNull HotSwapProgress progress) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (qualifiedNames.isEmpty() || progress.isCancelled()) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, HotSwapFile> result = new HashMap<>();
+    for (String outputPath : getWritableOutputPaths(session)) {
+      File outputRoot = new File(outputPath);
+      for (String qualifiedName : qualifiedNames) {
+        if (result.containsKey(qualifiedName)) {
+          continue;
+        }
+
+        File classFile = new File(outputRoot, getClassFileRelativePath(qualifiedName));
+        if (!classFile.isFile()) {
+          continue;
+        }
+
+        progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", classFile.getPath()));
+        result.put(qualifiedName, new HotSwapFile(classFile));
+      }
+    }
+    return result;
+  }
+
+  private static @NotNull String getClassFileRelativePath(@NotNull String qualifiedName) {
+    return qualifiedName.replace('.', '/') + CLASS_EXTENSION;
   }
 
   private static boolean collectModifiedClasses(
@@ -99,6 +138,22 @@ public final class HotSwapManager {
     else {
       setTimeStamp(session, newSwapTime);
     }
+  }
+
+  /**
+   * Redefines selected already compiled classes without treating them as newly compiled modified classes.
+   * Does not update the session HotSwap timestamp or force the next HotSwap to do a full modified-class scan.
+   */
+  @ApiStatus.Internal
+  public static void reloadExistingClasses(@NotNull DebuggerSession session,
+                                           @NotNull Map<String, HotSwapFile> classesToReload,
+                                           @NotNull HotSwapProgress progress) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (classesToReload.isEmpty()) {
+      return;
+    }
+    progress.setDebuggerSession(session);
+    new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(
