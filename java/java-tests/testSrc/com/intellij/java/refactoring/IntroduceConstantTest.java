@@ -44,12 +44,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  //todo
   public void testInNonNls() {
     doTest(false);
   }
 
-  //todo
   public void testChooseStaticContainer() {
     doTest(false);
   }
@@ -67,12 +65,9 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  //todo
   public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
 
-  //todo
   public void testStaticFieldInAnonymous() { doTest(); }
-  //todo
   public void testStaticFieldInAnonymousJava8() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest()); }
 
   private void doTest(boolean makeEnumConstant) {
@@ -82,7 +77,6 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  //todo
   public void testFromEnumConstantInitializer() {
     doTest();
   }
@@ -93,7 +87,6 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  //todo
   public void testFromEnumConstantInitializer1() {
     doTest();
   }
@@ -108,37 +101,30 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     doTest(true);    
   }
 
-  //todo
   public void testAnonymousClassWithThrownClause() {
     doTest();
   }
 
-  //todo
   public void testAnnotationDescription() {
     doTest();
   }
 
-  //todo
   public void testNoExternalTypeAnnotations() {
     doTest();
   }
 
-  //todo
   public void testTailingErrorUnacceptableWholeLineSelection() {
     doTest();
   }
 
-  //todo
   public void testPartialStringLiteral() {
     doTest();
   }
 
-  //todo
   public void testPartialStringLiteralConvertibleToInt() {
     doTest();
   }
 
-  //todo
   public void testStringLiteralConvertibleToInt() {
     doTest();
   }
@@ -153,32 +139,26 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  //todo
   public void testPartialStringLiteralAnchor() {
     doTest();
   }
 
-  //todo
   public void testPartialStringLiteralAnchorFromAnnotation() {
     doTest();
   }
 
-  //todo
   public void testIntroduceConstantFromThisCall() {
     doTest();
   }
 
-  //todo
   public void testForwardReferences() {
     doTest();
   }
 
-  //todo
   public void testArrayFromVarargs() {
     doTest();
   }
 
-  //todo
   public void testWithMethodReferenceBySecondSearch() {
     doTest();
   }
@@ -193,17 +173,14 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  //todo
   public void testContainingClass() {
     doTestExpr();
   }
 
-  //todo
   public void testConstantFromAnnotationOnFieldWithoutInitializer() {
     doTestExpr();
   }
 
-  //todo
   public void testEscalateVisibility() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass[] classes = ((PsiJavaFile)getFile()).getClasses();

@@ -38,6 +38,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
@@ -75,26 +76,36 @@ final class FieldExtractor {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
 
-    PsiElement psiElementAfter = psiFile.findElementAt(offset);
-    PsiElement psiElementBefore = psiFile.findElementAt(offset - 1);
-    PsiElement expressionAfter = PsiTreeUtil.getParentOfType(psiElementAfter, PsiExpression.class);
-    PsiElement expressionBefore = PsiTreeUtil.getParentOfType(psiElementBefore, PsiExpression.class);
-    PsiElement psiElement = psiElementBefore;
-    if (psiElementAfter != null && expressionAfter != null) {
-      if (expressionBefore == null) {
-        psiElement = psiElementAfter;
+    PsiElement psiElement;
+    if (range.getEndOffset() == range.getStartOffset()) {
+      PsiElement psiElementAfter = psiFile.findElementAt(offset);
+      PsiElement psiElementBefore = psiFile.findElementAt(offset - 1);
+      PsiElement expressionAfter = PsiTreeUtil.getParentOfType(psiElementAfter, PsiExpression.class);
+      PsiElement expressionBefore = PsiTreeUtil.getParentOfType(psiElementBefore, PsiExpression.class);
+      psiElement = psiElementBefore;
+      if (psiElementAfter != null && expressionAfter != null) {
+        if (expressionBefore == null) {
+          psiElement = psiElementAfter;
+        }
+        else if (PsiTreeUtil.isAncestor(expressionBefore, expressionAfter, true)) {
+          psiElement = psiElementAfter;
+        }
       }
     }
+    else {
+      psiElement = psiFile.findElementAt(range.getStartOffset());
+    }
+
     ElementToWorkOn targetElement = null;
     if (range.getStartOffset() != range.getEndOffset()) {
       while (psiElement != null && psiElement.getTextRange() != null && !psiElement.getTextRange().equals(range)) {
         psiElement = psiElement.getParent();
       }
       if (psiElement != null && psiElement.getTextRange() != null && psiElement.getTextRange().equals(range)) {
-        ElementToWorkOn elementToWorkOn = ElementToWorkOn.tryToCreate(psiElement);
-        if (elementToWorkOn != null && myHandler.accept(elementToWorkOn)) {
-          targetElement = elementToWorkOn;
-        }
+        targetElement = ElementToWorkOn.tryToCreate(psiElement);
+      }
+      if (targetElement == null ) {
+        targetElement = ElementToWorkOn.tryToCreate(IntroduceVariableUtil.getSelectedExpression(psiFile.getProject(), psiFile, range.getStartOffset(), range.getEndOffset()));
       }
     }
     else {
@@ -116,10 +127,10 @@ final class FieldExtractor {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
     if (targetElement.getExpression() != null) {
-      return getContext(targetElement.getExpression());
+      return getContext(psiFile, targetElement.getExpression());
     }
     if (targetElement.getLocalVariable() != null) {
-      return getContext(targetElement.getLocalVariable());
+      return getContext(psiFile, targetElement.getLocalVariable());
     }
     return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
@@ -310,15 +321,15 @@ final class FieldExtractor {
   }
 
 
-  @NotNull ToFieldContext getContext(@NotNull PsiExpression selectedExpr) {
-    if (selectedExpr.getContainingFile() == null || !selectedExpr.isPhysical()) {
+  @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiExpression selectedExpr) {
+    if (psiFile == null || !psiFile.isPhysical()) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
     return getContext(myHandler, selectedExpr);
   }
 
-  @NotNull ToFieldContext getContext(@NotNull PsiLocalVariable selectedVariable) {
-    if (selectedVariable.getContainingFile() == null || !selectedVariable.isPhysical()) {
+  @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiLocalVariable selectedVariable) {
+    if (psiFile == null || !psiFile.isPhysical()) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
     return getContext(myHandler, selectedVariable);

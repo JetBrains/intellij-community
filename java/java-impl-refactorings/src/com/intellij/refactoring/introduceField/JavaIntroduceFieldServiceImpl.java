@@ -17,7 +17,7 @@ public final class JavaIntroduceFieldServiceImpl extends JavaIntroduceFieldServi
 
   @Override
   public @NotNull JavaIntroduceFieldService.AvailableSettings getAvailableSettings(@NotNull PsiExpression expression) {
-    ToFieldContext ctx = myFieldExtractor.getContext(expression);
+    ToFieldContext ctx = myFieldExtractor.getContext(expression.getContainingFile(), expression);
     if (!(ctx instanceof ToFieldContext.ExpressionContext success)) {
       return new AvailableSettings(List.of());
     }
