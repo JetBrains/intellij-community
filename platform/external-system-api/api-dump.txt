@@ -89,7 +89,6 @@ f:com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificati
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 - f:isNotificationVisibleProperty(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.observable.properties.ObservableProperty
 - f:whenNotificationChanged(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
-- f:whenNotificationChanged(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener
 - onNotificationChanged(com.intellij.openapi.project.Project):V
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
@@ -1360,9 +1359,7 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 - s:executeOnEdt(com.intellij.openapi.util.Computable):java.lang.Object
 - s:executeOnEdt(Z,java.lang.Runnable):V
 - s:executeProjectChangeAction(com.intellij.openapi.components.ComponentManager,java.lang.Runnable):V
-- s:executeProjectChangeAction(com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange):V
 - s:executeProjectChangeAction(Z,com.intellij.openapi.components.ComponentManager,java.lang.Runnable):V
-- s:executeProjectChangeAction(Z,com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange):V
 - s:extractNameFromPath(java.lang.String):java.lang.String
 - s:find(com.intellij.openapi.externalSystem.model.DataNode,com.intellij.openapi.externalSystem.model.Key):com.intellij.openapi.externalSystem.model.DataNode
 - s:find(com.intellij.openapi.externalSystem.model.DataNode,com.intellij.openapi.externalSystem.model.Key,com.intellij.util.BooleanFunction):com.intellij.openapi.externalSystem.model.DataNode

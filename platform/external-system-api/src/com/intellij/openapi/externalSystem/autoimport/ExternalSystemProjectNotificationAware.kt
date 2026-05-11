@@ -67,12 +67,6 @@ interface ExternalSystemProjectNotificationAware {
 
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
-    fun whenNotificationChanged(project: Project, listener: () -> Unit) {
-      whenNotificationChanged(project, null, listener)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
     fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project
       val messageBus = ApplicationManager.getApplication().messageBus

@@ -366,14 +366,6 @@ public final class ExternalSystemApiUtil {
     executeProjectChangeAction(true, componentManager, task);
   }
 
-  /**
-   * @deprecated Use executeProjectChangeAction(ComponentManager, Runnable) instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void executeProjectChangeAction(final @NotNull DisposeAwareProjectChange task) {
-    executeProjectChangeAction(true, task);
-  }
-
   public static void executeProjectChangeAction(boolean synchronous, @NotNull ComponentManager componentManager, @NotNull Runnable task) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
@@ -383,17 +375,6 @@ public final class ExternalSystemApiUtil {
         task.run();
       }
     }));
-  }
-
-  /**
-   * @deprecated Use executeProjectChangeAction(boolean, ComponentManager, Runnable) instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void executeProjectChangeAction(boolean synchronous, final @NotNull DisposeAwareProjectChange task) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    }
-    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
