@@ -136,6 +136,9 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       coroutineScope.launch(CoroutineName("EDT Freeze Detector")) {
         asyncInit()
 
+        // ensure Registry is ready before reporting the freezes
+        ApplicationManager.getApplication().serviceAsync<RegistryManager>()
+
         taskFlow.collectLatest { task ->
           if (task == null) {
             return@collectLatest
@@ -163,7 +166,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
 
     startEdtSampling()
 
-    if (Registry.`is`("performance.watcher.pooled.enabled")) {
+    if (Registry.`is`("performance.watcher.pooled.enabled", true)) {
       CoroutineDispatcherWatcher(Dispatchers.Default, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
       CoroutineDispatcherWatcher(Dispatchers.IO, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
     }
