@@ -126,7 +126,7 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
   }
 
   fun checkFirstDebuggerFrame(frameText: String) {
-    step("Check com.debugger.ui.test.util.debugger top frame") {
+    step("Check debugger top frame") {
       ideFrame.run {
         debugToolWindow {
           waitFound(10.seconds)
@@ -145,7 +145,7 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
   }
 
   fun checkDebuggerFrames(frameText: String) {
-    step("Check all com.debugger.ui.test.util.debugger frames") {
+    step("Check all debugger frames") {
       ideFrame.run {
         debugToolWindow {
           waitFound(10.seconds)
@@ -164,7 +164,7 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
   }
 
   fun checkDebuggerTree(variable: String) {
-    step("Check com.debugger.ui.test.util.debugger tree") {
+    step("Check debugger tree") {
       ideFrame.run {
         debugToolWindow {
           accessibleTree().waitContainsText(variable, "Debugger tree does not contain '$variable'", timeout = 10.seconds)
@@ -213,7 +213,7 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
   }
 
   fun checkDebuggerSuccessfullyStops(consoleText: String) {
-    step("Check com.debugger.ui.test.util.debugger stops with text $consoleText") {
+    step("Check debugger stops with text $consoleText") {
       ideFrame.run {
         debugToolWindow().waitFound(timeout = 30.seconds).apply {
           val console = xx { and(byClass("SimpleColoredComponent"), byAccessibleName("Console")) }.list().first()
