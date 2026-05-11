@@ -4,19 +4,20 @@ package com.intellij.ide.minimap.settings
 import com.intellij.util.ui.JBUI
 
 /**
- * @param enabled Enables Minimap globally.
+ * @param enabled Enables Minimap globally. Product-specific defaults are applied by [MinimapSettings].
  * @param width Fixed width (scaled).
  * @param rightAligned If false, Minimap will be on the left side.
+ * @param insideScrollbar If true and [rightAligned] is true, the vertical scrollbar stays to the right of the minimap.
  *
  * The set of file types that support the minimap is determined by the
  * [com.intellij.ide.minimap.model.MinimapFileSupportPolicy] extension point rather than
  * stored here. By default the minimap is shown for all non-binary text files.
  */
-data class MinimapSettingsState(var enabled: Boolean = true,
+data class MinimapSettingsState(var enabled: Boolean = false,
                                 var width: Int = FIXED_WIDTH,
                                 var scaleMode: MinimapScaleMode = MinimapScaleMode.FILL,
                                 var rightAligned: Boolean = true,
-                                var insideScrollbar: Boolean = false) {
+                                var insideScrollbar: Boolean = true) {
   companion object {
     val FIXED_WIDTH: Int = JBUI.scale(160)
   }

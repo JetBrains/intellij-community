@@ -1854,7 +1854,7 @@
                        key="presentation.assistant.notification"/>
 
     <!-- Minimap -->
-    <registryKey key="editor.minimap.mode" defaultValue="[disabled*|legacy|new]"
+    <registryKey key="editor.minimap.mode" defaultValue="[disabled|legacy|new*]"
                  description="Minimap mode: disabled, legacy, new"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
