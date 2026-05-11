@@ -37,14 +37,18 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
+import org.jetbrains.kotlin.platform.presentableDescription
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isActualDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import javax.swing.Icon
 
@@ -192,6 +196,12 @@ class KotlinOverrideHierarchyNodeDescriptor(
                         addText(" ($parentDescriptorAsString)", getPackageNameAttributes())
                         return@forEach
                     }
+                }
+            }
+
+            if (classPsi is KtClassOrObject && classPsi.isActualDeclaration()) {
+                classPsi.platform.presentableDescription.takeUnless { it.isEmpty() }?.let { platformName: @NlsSafe String ->
+                    addText(" [$platformName]", getPackageNameAttributes())
                 }
             }
         }

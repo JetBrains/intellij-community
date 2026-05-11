@@ -11,20 +11,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.ArrayUtil
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.collectInheritors
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
-import org.jetbrains.kotlin.idea.searching.inheritors.includeCommonPlatformIfNeeded
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
-import kotlin.sequences.filter
+
 
 class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDeclaration) : HierarchyTreeStructure(project, null) {
     private val expectOrBaseElement: SmartPsiElementPointer<KtCallableDeclaration>
@@ -44,25 +37,7 @@ class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDecla
         val baseElement = baseElement.element ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
         val psiElement = nodeDescriptor.psiElement ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
 
-        val searchScope = psiElement.getUseScope()
-        val subclasses = if (psiElement is KtClass) {
-            val isCommon = psiElement.isExpectDeclaration()
-            val expectedClassOrObject = psiElement.expectDeclarationIfAny() as? KtClass ?: psiElement
-            val withCommonScope = includeCommonPlatformIfNeeded(searchScope, psiElement, expectedClassOrObject)
-            val actualDeclarations =
-                if (isCommon) expectedClassOrObject.actualsForExpect(if (baseElement != expectOrBase) baseElement.module else null) else emptyList()
-            val platform = baseElement.platform
-            val inheritorsInPlatformAndCommon = KotlinFindUsagesSupport.searchInheritors(expectedClassOrObject, withCommonScope, searchDeeply = false)
-                .filter { inheritor ->
-                    !isCommon ||
-                            (inheritor.unwrapped as? KtElement)?.platform?.isCommon() == true ||
-                            (inheritor.unwrapped as? KtElement)?.platform == platform
-                }
-                .toList()
-            actualDeclarations + inheritorsInPlatformAndCommon
-        } else {
-            KotlinFindUsagesSupport.searchInheritors(psiElement, searchScope, searchDeeply = false).toList()
-        }
+        val subclasses = collectInheritors(psiElement, baseElement.module, psiElement.useScope, baseElement.useScope)
         return subclasses.mapNotNull {
             it.unwrapped?.let { subclass -> KotlinOverrideHierarchyNodeDescriptor(nodeDescriptor, subclass, expectOrBase) }
         }.filter { it.calculateState() != AllIcons.Hierarchy.MethodNotDefined }.toTypedArray()

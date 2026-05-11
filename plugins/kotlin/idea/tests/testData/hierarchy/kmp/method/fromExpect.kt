@@ -15,7 +15,9 @@ abstract class CommonIntermediate : BaseClass()
 actual open class BaseClass actual constructor() {
     actual open fun base() {}
 }
-open class JvmOnlyChild : BaseClass()
+open class JvmOnlyChild : BaseClass() {
+    override fun base() {}
+}
 class JvmIntermediate : CommonIntermediate()
 
 // PLATFORM: Js
@@ -23,5 +25,7 @@ class JvmIntermediate : CommonIntermediate()
 actual open class BaseClass actual constructor() {
     actual open fun base() {}
 }
-open class JsOnlyChild : BaseClass()
+open class JsOnlyChild : BaseClass() {
+    override fun base() {}
+}
 class JsIntermediate : CommonIntermediate()
