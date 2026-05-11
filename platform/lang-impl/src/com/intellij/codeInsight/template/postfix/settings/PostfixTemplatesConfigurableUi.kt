@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.options.createAsyncInitPlaceholder
+import com.intellij.openapi.options.AsyncInitPlaceholder
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -29,6 +29,7 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
@@ -53,7 +54,7 @@ internal class PostfixTemplatesConfigurableUi : Disposable {
   val innerPostfixDescriptionPanel = PostfixDescriptionPanel()
 
   private val selectionChangesJob: Job
-  private val selectionChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  private val selectionChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
   @JvmField
   val panel: DialogPanel = panel {
@@ -169,7 +170,7 @@ internal fun createAsyncSettingsInitPlaceholder(
   parentDisposable: Disposable,
 ): JComponent {
   lateinit var settings: PostfixTemplatesSettings
-  return createAsyncInitPlaceholder(
+  return AsyncInitPlaceholder(
     {
       withContext(Dispatchers.IO) {
         settings = PostfixTemplatesSettings.getInstance()
