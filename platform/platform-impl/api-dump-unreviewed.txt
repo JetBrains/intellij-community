@@ -6317,7 +6317,6 @@ f:com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 - addFocusChangeListener(com.intellij.openapi.editor.ex.FocusChangeListener,com.intellij.openapi.Disposable):V
 - addPrioritizedDocumentListener(com.intellij.openapi.editor.ex.PrioritizedDocumentListener,com.intellij.openapi.Disposable):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
-- addSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V
 - addSelectionListener(com.intellij.openapi.editor.event.SelectionListener,com.intellij.openapi.Disposable):V
 - addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener):V
 - addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener,com.intellij.openapi.Disposable):V

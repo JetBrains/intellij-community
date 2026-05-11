@@ -2118,7 +2118,6 @@ com.intellij.openapi.editor.event.EditorEventMulticaster
 - a:addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener,com.intellij.openapi.Disposable):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener,com.intellij.openapi.Disposable):V
-- a:addSelectionListener(com.intellij.openapi.editor.event.SelectionListener):V
 - a:addSelectionListener(com.intellij.openapi.editor.event.SelectionListener,com.intellij.openapi.Disposable):V
 - a:addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener):V
 - addVisibleAreaListener(com.intellij.openapi.editor.event.VisibleAreaListener,com.intellij.openapi.Disposable):V
