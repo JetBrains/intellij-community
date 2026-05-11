@@ -19,7 +19,7 @@ internal class ConvertStringTemplateToBuildStringIntention :
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")
 
     override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
-        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.NORMAL)
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
         element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList()

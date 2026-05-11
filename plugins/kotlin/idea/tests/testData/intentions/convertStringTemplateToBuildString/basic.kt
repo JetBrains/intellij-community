@@ -1,4 +1,4 @@
-// PRIORITY: LOW
+// PRIORITY: NORMAL
 // WITH_STDLIB
 // AFTER-WARNING: Parameter 'foo' is never used
 // AFTER-WARNING: Variable 's' is never used

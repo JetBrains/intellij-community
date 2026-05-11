@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -19,6 +21,9 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 internal class ConvertToMultiDollarStringIntention :
     KotlinApplicableModCommandAction<KtStringTemplateExpression, MultiDollarConversionInfo>(KtStringTemplateExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.multi.dollar.string")
+
+    override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.NORMAL)
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix == null

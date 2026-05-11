@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-// PRIORITY: LOW
+// PRIORITY: NORMAL
 
 fun test() {
     $$"foo<caret>"

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -37,8 +38,10 @@ import org.jetbrains.kotlin.idea.base.test.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.KEEP_ACTIONS_LIST_ORDER_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -231,6 +234,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
 
         DirectiveBasedActionUtils.checkPriority(fileText, intentionAction)
+        // Action shouldn't be found. Check that other actions are expected and thus tested action isn't there under another name.
+        checkAvailableActionsAreExpected()
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 
@@ -317,6 +322,25 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 }
             }
         }
+    }
+
+    fun checkAvailableActionsAreExpected() {
+        val fileText = dataFile().readText()
+        // We only explicitly enable checking that all actions are listed in the directives if the
+        // KEEP_ACTIONS_LIST_ORDER_DIRECTIVE is present.
+        // Most other tests do not list all possible actions and also not their order.
+        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, KEEP_ACTIONS_LIST_ORDER_DIRECTIVE)) {
+            return
+        }
+        val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
+        cachedIntentions.wrapAndUpdateGutters()
+        val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+            file,
+            dataFile(), actions,
+            actionsToExclude = emptyList(),
+            actionsListDirectives = pluginMode.actionsListDirectives
+        )
     }
 
     /**

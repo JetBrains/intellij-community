@@ -1,2 +1,2 @@
-// PRIORITY: LOW
+// PRIORITY: NORMAL
 val s = """foo bar baz<caret>"""
