@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.codeInsight.gradle
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
@@ -9,6 +9,12 @@ import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
+import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
+import org.jetbrains.kotlin.idea.codeInsight.gradle.nativeDistLibraryDependency
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
