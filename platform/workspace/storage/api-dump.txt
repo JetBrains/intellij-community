@@ -151,8 +151,6 @@ com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - a:getSymbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 @:com.intellij.platform.workspace.storage.annotations.Abstract
 - java.lang.annotation.Annotation
-@:com.intellij.platform.workspace.storage.annotations.Child
-- java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Default
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Open
