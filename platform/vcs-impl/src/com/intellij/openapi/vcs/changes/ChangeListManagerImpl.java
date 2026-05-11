@@ -1315,12 +1315,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     myListeners.removeListener(listener);
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  public void registerCommitExecutor(@NotNull CommitExecutor executor) {
-    myRegisteredCommitExecutors.add(executor);
-  }
-
   @Override
   public void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes) {
     doCommit(changeList, changes, false);

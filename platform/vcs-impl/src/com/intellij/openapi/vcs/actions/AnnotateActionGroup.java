@@ -29,15 +29,6 @@ import java.util.Map;
 public class AnnotateActionGroup extends ActionGroup implements DumbAware {
   private final AnAction[] myActions;
 
-  /**
-   * @deprecated It is an internal API, try to avoid using it.
-   */
-  @Deprecated(forRemoval = true)
-  public AnnotateActionGroup(@NotNull List<? extends AnnotationFieldGutter> gutters,
-                             @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
-    this(null, gutters, bgColorMap);
-  }
-
   public AnnotateActionGroup(@Nullable FileAnnotation fileAnnotation,
                              @NotNull List<? extends AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {

@@ -204,12 +204,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
 
-  /**
-   * @deprecated use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
-
   public abstract @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors();
 
   public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes);

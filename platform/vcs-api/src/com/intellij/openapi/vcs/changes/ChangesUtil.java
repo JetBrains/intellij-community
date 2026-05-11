@@ -22,7 +22,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,16 +94,6 @@ public final class ChangesUtil {
 
   public static @Nullable AbstractVcs getVcsForFile(@NotNull VirtualFile file, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-  }
-
-  /**
-   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
-   * Avoid using the method, if {@code isDirectory} is known from context or not important.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static @Nullable AbstractVcs getVcsForFile(@NotNull File file, @NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
   }
 
   public static @Unmodifiable @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {

@@ -139,12 +139,6 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     return myChanges;
   }
 
-  @Deprecated(forRemoval = true)
-  public List<ShelvedChange> getChanges(Project project) {
-    loadChangesIfNeeded(project);
-    return getChanges();
-  }
-
   public @Nullable @Nls String getChangesLoadingError() {
     return myChangesLoadingError;
   }

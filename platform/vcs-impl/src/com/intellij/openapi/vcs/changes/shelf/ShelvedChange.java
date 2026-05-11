@@ -93,14 +93,6 @@ public final class ShelvedChange {
     return myChange;
   }
 
-  /**
-   * @deprecated Parameter unused, use {@link #getChange()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull Change getChange(@NotNull Project project) {
-    return myChange;
-  }
-
   private static Change createChange(@NotNull Project project,
                                      @NotNull Path patchPath,
                                      @NotNull String beforePath,

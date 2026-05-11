@@ -153,7 +153,6 @@ a:com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy
 - sf:getCachingRoot(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - pf:getNextPolicy():com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy
 - sf:markCachingRoot(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
-- pf:resolveVirtualFile(com.intellij.openapi.vcs.changes.ui.StaticFilePath):com.intellij.openapi.vfs.VirtualFile
 - f:setNextGroupingPolicy(com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy):V
 - pf:setNextPolicy(com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy):V
 f:com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy$Companion

@@ -242,11 +242,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void registerCommitExecutor(@NotNull CommitExecutor executor) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
     throw new UnsupportedOperationException();
   }

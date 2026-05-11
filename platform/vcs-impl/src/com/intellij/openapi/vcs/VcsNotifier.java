@@ -88,15 +88,6 @@ public class VcsNotifier {
     return notification;
   }
 
-  /**
-   * @deprecated use {@link #notifyError(String, String, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull Notification notifyError(@NotificationTitle @NotNull String title,
-                                  @NotificationContent @NotNull String message) {
-    return notifyError(null, title, message, (NotificationListener)null);
-  }
-
   public @NotNull Notification notifyError(@NonNls @Nullable String displayId,
                                            @NotificationTitle @NotNull String title,
                                            @NotificationContent @NotNull String message) {

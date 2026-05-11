@@ -18,7 +18,6 @@ public interface CommitExecutor {
   /**
    * Allows registering additional commit actions for local changes.
    *
-   * @see ChangeListManager#registerCommitExecutor(CommitExecutor)
    * @see com.intellij.openapi.vcs.changes.actions.CommitExecutorAction
    */
   ProjectExtensionPointName<CommitExecutor> LOCAL_COMMIT_EXECUTOR =

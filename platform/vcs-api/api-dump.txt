@@ -765,9 +765,6 @@ c:com.intellij.openapi.vcs.annotate.VcsUsualLineAnnotationData
 - getNumLines():I
 - getRevision(I):com.intellij.openapi.vcs.history.VcsRevisionNumber
 - put(I,com.intellij.openapi.vcs.history.VcsRevisionNumber):V
-f:com.intellij.openapi.vcs.changes.BackgroundFromStartOption
-- <init>():V
-- s:getInstance():com.intellij.openapi.progress.PerformInBackgroundOption
 com.intellij.openapi.vcs.changes.BinaryContentRevision
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - a:getBinaryContent():B[]
@@ -857,7 +854,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:isIgnoredFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - a:isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
-- a:registerCommitExecutor(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:removeChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
 - a:reopenFiles(java.util.List):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
