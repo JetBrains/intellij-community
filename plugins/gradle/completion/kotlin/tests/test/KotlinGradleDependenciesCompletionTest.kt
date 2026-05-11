@@ -3,6 +3,7 @@ package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -162,17 +163,13 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     fun `test scope argument - when quoted, don't suggest Dependency-returning methods`(gradleVersion: GradleVersion) {
         test(gradleVersion, KOTLIN_JVM_PROJECT) {
             val file = writeTextAndCommit("build.gradle.kts", """dependencies { implementation("<caret>") }""")
-            runInEdtAndWait {
-                codeInsightFixture.configureFromExistingVirtualFile(file)
-                codeInsightFixture.completeBasic()
-                val suggestions = codeInsightFixture.lookupElementStrings ?: emptyList()
-                val unexpectedSuggestions = listOf(
+            assertCompletionDoesntSuggest(
+                file,
+                unexpectedSuggestions = listOf(
                     "platform", "enforcedPlatform", "project", "kotlin", "embeddedKotlin", "testFixtures",
                     "files", "fileTree", "variantOf", "gradleApi", "gradleTestKit"
                 )
-                val filtered = suggestions.filter { it in unexpectedSuggestions }
-                assertTrue(filtered.isEmpty(), "Unexpected suggestions: $filtered")
-            }
+            )
         }
     }
 
@@ -326,23 +323,15 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
             val buildScript = writeTextAndCommit("build.gradle.kts", "dependencies { $expression }")
             writeTextAndCommit(
-                "gradle/libs.versions.toml", """
-                [libraries]
-                my-library-aaa = "com.example:my-library-aaa:1.0.0"
-                [bundles]
-                my-bundle-aaa = ["my-library-aaa"]
-            """.trimIndent()
+                "gradle/libs.versions.toml",
+                """
+                    [libraries]
+                    my-library-aaa = "com.example:my-library-aaa:1.0.0"
+                    [bundles]
+                    my-bundle-aaa = ["my-library-aaa"]
+                """.trimIndent()
             )
-            runInEdtAndWait {
-                codeInsightFixture.configureFromExistingVirtualFile(buildScript)
-                codeInsightFixture.completeBasic()
-                val unexpectedLookup = codeInsightFixture.lookupElementStrings
-                    ?.filter { it in listOf("libs", "libs.bundles.my.bundle.aaa", "libs.my.library.aaa") }
-                assertTrue("Version catalog names and aliases shouldn't be suggested in `$expression`, but were: $unexpectedLookup") {
-                    unexpectedLookup.isNullOrEmpty()
-                }
-                codeInsightFixture.checkResult("dependencies { $expression }")
-            }
+            assertCompletionDoesntSuggest(buildScript, listOf("libs", "libs.bundles.my.bundle.aaa", "libs.my.library.aaa"))
         }
     }
 
@@ -628,6 +617,21 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     private fun String.unescape(): String = this
         .replace("<colon>", ":")
         .replace("<comma>", ",")
+
+    private fun assertCompletionDoesntSuggest(file: VirtualFile, unexpectedSuggestions: List<String>) = runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        val contentBeforeCompletion = codeInsightFixture.file.text
+
+        codeInsightFixture.completeBasic()
+        val suggestions = codeInsightFixture.lookupElementStrings
+        if (suggestions == null) {
+            // check that nothing was autocompleted
+            codeInsightFixture.checkResult(contentBeforeCompletion)
+        } else {
+            val filtered = suggestions.filter { it in unexpectedSuggestions }
+            assertTrue(filtered.isEmpty(), "The completion lookup contains unexpected suggestions: $filtered")
+        }
+    }
 
     companion object {
         const val DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS = """
