@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Key
@@ -900,14 +901,18 @@ object UniversalFileChooser {
         breadcrumbs.setCrumbs(crumbs)
       }
 
+      private var currentDirectoryPopup: JBPopup? = null
+
       private fun showDirectoryPopup(directory: Path, event: MouseEvent) {
+        if (currentDirectoryPopup?.isVisible == true) return
         val showHidden = fileTree.areHiddensShown()
         scope.launch {
           withContext(Dispatchers.IO) {
             val children = NioFileChooserUtil.safeGetChildren(directory, showHidden, false)
             if (!children.isEmpty()) {
               runOnEdt {
-                JBPopupFactory.getInstance()
+                if (currentDirectoryPopup?.isVisible == true) return@runOnEdt
+                val popup = JBPopupFactory.getInstance()
                   .createPopupChooserBuilder(children)
                   .setRenderer(listCellRenderer("") {
                     icon(AllIcons.Nodes.Folder)
@@ -915,7 +920,8 @@ object UniversalFileChooser {
                   })
                   .setItemChosenCallback { chosen -> fileTree.select(chosen) { fileTree.expand(chosen, null) } }
                   .createPopup()
-                  .show(RelativePoint(event))
+                currentDirectoryPopup = popup
+                popup.show(RelativePoint(event))
               }
             }
           }
