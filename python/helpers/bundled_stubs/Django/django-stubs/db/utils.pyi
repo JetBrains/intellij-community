@@ -1,13 +1,13 @@
 from collections.abc import Callable, Iterable
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any
 
 from django.apps import AppConfig
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Model
 from django.utils.connection import BaseConnectionHandler
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 DEFAULT_DB_ALIAS: str
 DJANGO_VERSION_PICKLE_KEY: str

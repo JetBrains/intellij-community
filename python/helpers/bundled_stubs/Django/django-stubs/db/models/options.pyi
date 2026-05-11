@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Sequence
-from typing import Any, Generic, TypeAlias, TypeVar, overload
+from typing import Any, Generic, TypeAlias, overload
 
 from django.apps.config import AppConfig
 from django.apps.registry import Apps
@@ -14,6 +14,7 @@ from django.db.models.query import _OrderByFieldName
 from django.db.models.query_utils import PathInfo
 from django.utils.datastructures import ImmutableList, _ListOrTuple
 from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import TypeVar
 
 PROXY_PARENTS: object
 EMPTY_RELATION_TREE: Any

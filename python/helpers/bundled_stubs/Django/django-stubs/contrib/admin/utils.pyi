@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Literal, TypeVar, overload, type_check_only
+from typing import Any, Literal, overload, type_check_only
 from uuid import UUID
 
 from _typeshed import Unused
@@ -16,7 +16,7 @@ from django.forms.forms import BaseForm, Form
 from django.forms.formsets import BaseFormSet
 from django.http.request import HttpRequest
 from django.utils.datastructures import _IndexableCollection
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict, TypeVar, override
 
 _T = TypeVar("_T")
 

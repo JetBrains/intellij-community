@@ -1,7 +1,8 @@
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any
 
 from django.middleware.csrf import CsrfViewMiddleware
+from typing_extensions import TypeVar
 
 csrf_protect: Callable[[_F], _F]
 

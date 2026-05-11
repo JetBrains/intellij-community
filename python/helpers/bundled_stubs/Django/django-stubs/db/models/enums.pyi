@@ -1,10 +1,10 @@
 import enum
 import sys
-from typing import Any, Literal, TypeVar, overload, type_check_only
+from typing import Any, Literal, overload, type_check_only
 
 from _typeshed import ConvertibleToInt
 from django.utils.functional import _StrOrPromise
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 if sys.version_info >= (3, 11):
     from enum import EnumType, IntEnum, StrEnum

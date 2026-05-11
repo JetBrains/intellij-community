@@ -1,8 +1,8 @@
-from typing import Any, TypeVar
+from typing import Any
 
 from django.db.models import Model
 from django.forms.models import BaseModelFormSet, ModelForm
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 _M = TypeVar("_M", bound=Model)
 _ModelFormT = TypeVar("_ModelFormT", bound=ModelForm)

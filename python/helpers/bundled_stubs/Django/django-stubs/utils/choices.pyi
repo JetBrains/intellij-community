@@ -1,7 +1,8 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Protocol, TypeAlias, TypeVar, type_check_only
+from typing import Any, Protocol, TypeAlias, type_check_only
 
 from django.db.models import Choices
+from typing_extensions import TypeVar
 
 _Choice: TypeAlias = tuple[Any, Any]
 _ChoiceNamedGroup: TypeAlias = tuple[str, Iterable[_Choice]]

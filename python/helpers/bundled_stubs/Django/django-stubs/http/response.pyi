@@ -3,11 +3,11 @@ from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator, Ma
 from http.cookies import SimpleCookie
 from io import BytesIO
 from json import JSONEncoder
-from typing import Any, Literal, NoReturn, TypeVar, overload, type_check_only
+from typing import Any, Literal, NoReturn, overload, type_check_only
 
 from django.utils.datastructures import CaseInsensitiveMapping, _PropertyDescriptor
 from django.utils.functional import _StrOrPromise, cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 class BadHeaderError(ValueError): ...
 

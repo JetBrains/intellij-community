@@ -1,11 +1,12 @@
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Literal, Protocol, TypeVar, overload, type_check_only
+from typing import Any, Literal, Protocol, overload, type_check_only
 
 from django.db.models import Manager, QuerySet
 from django.db.models.base import Model
 from django.http import HttpRequest
 from django.http.response import HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.utils.functional import _StrOrPromise
+from typing_extensions import TypeVar
 
 def render(
     request: HttpRequest | None,

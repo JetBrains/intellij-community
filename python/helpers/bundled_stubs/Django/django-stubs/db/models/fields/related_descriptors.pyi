@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Generic, TypeVar, overload, type_check_only
+from typing import Any, Generic, overload, type_check_only
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.base import Model
@@ -10,7 +10,7 @@ from django.db.models.manager import BaseManager, Manager
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.functional import cached_property
-from typing_extensions import Never, Self, override
+from typing_extensions import Never, Self, TypeVar, override
 
 _M = TypeVar("_M", bound=Model)
 _F = TypeVar("_F", bound=Field)

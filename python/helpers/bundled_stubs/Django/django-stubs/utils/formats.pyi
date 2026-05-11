@@ -3,7 +3,9 @@ from collections.abc import Iterator
 from datetime import date, time
 from datetime import datetime as builtin_datetime
 from decimal import Decimal
-from typing import Any, TypeVar, overload
+from typing import Any, overload
+
+from typing_extensions import TypeVar
 
 ISO_INPUT_FORMATS: dict[str, list[str]]
 FORMAT_SETTINGS: frozenset[str]

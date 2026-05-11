@@ -1,12 +1,12 @@
 import datetime
 from collections.abc import AsyncIterator, Collection, Iterable, Iterator, Mapping, Sequence
-from typing import Any, Generic, Literal, NoReturn, TypeVar, overload
+from typing import Any, Generic, Literal, NoReturn, overload
 
 from django.core.checks.messages import CheckMessage
 from django.db.models.base import Model
 from django.db.models.expressions import Combinable, OrderBy
 from django.db.models.query import Prefetch, QuerySet, RawQuerySet, _LookupT, _PrefetchedQuerySetT, _ToAttrT
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar
 
 _T = TypeVar("_T", bound=Model, covariant=True)
 

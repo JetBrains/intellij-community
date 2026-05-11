@@ -1,8 +1,8 @@
 from collections.abc import Collection, Iterable, Iterator, Mapping, MutableMapping, MutableSet
-from typing import Any, Generic, NoReturn, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, Generic, NoReturn, Protocol, TypeAlias, overload, type_check_only
 
 from _typeshed import Incomplete
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 _K = TypeVar("_K")
 _V = TypeVar("_V")

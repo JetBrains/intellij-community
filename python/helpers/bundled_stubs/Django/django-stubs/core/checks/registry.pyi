@@ -1,8 +1,9 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Protocol, TypeVar, overload, type_check_only
+from typing import Any, Protocol, overload, type_check_only
 
 from django.apps.config import AppConfig
 from django.core.checks.messages import CheckMessage
+from typing_extensions import TypeVar
 
 class Tags:
     admin: str

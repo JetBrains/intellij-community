@@ -5,7 +5,7 @@ from io import BytesIO, IOBase
 from json import JSONEncoder
 from re import Pattern
 from types import TracebackType
-from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypedDict, TypeVar, type_check_only
+from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypedDict, type_check_only
 
 from asgiref.typing import ASGIVersions
 from django.contrib.auth.models import _User
@@ -19,7 +19,7 @@ from django.template.base import Template
 from django.test.utils import ContextList
 from django.urls import ResolverMatch
 from django.utils.functional import _StrOrPromise, cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 BOUNDARY: str
 MULTIPART_CONTENT: str

@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Literal, NamedTuple, TypeVar
+from typing import Any, ClassVar, Literal, NamedTuple
 
 from _typeshed import Incomplete
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -15,6 +15,7 @@ from django.db.models.sql.query import Query
 from django.db.models.sql.where import WhereNode
 from django.utils import tree
 from django.utils.functional import cached_property
+from typing_extensions import TypeVar
 
 logger: logging.Logger
 

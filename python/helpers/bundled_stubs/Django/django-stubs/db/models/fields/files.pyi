@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Callable, Iterable
-from typing import Any, Protocol, TypeVar, overload, type_check_only
+from typing import Any, Protocol, overload, type_check_only
 
 from django.core import validators  # due to weird mypy.stubtest error
 from django.core.files.base import File
@@ -14,7 +14,7 @@ from django.db.models.utils import AltersData
 from django.utils._os import _PathCompatible
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 class FieldFile(File, AltersData):
     instance: Model

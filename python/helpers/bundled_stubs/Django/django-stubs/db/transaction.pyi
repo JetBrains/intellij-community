@@ -1,9 +1,10 @@
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeVar, overload
+from typing import Any, overload
 
 from django.db import ProgrammingError
+from typing_extensions import TypeVar
 
 class TransactionManagementError(ProgrammingError): ...
 

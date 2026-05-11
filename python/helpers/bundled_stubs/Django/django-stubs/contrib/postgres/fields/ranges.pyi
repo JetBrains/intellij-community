@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Literal, TypeVar
+from typing import Any, ClassVar, Literal
 
 from _typeshed import Unused
 from django.contrib.postgres import forms
@@ -8,7 +8,7 @@ from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.lookups import PostgresOperatorLookup
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from psycopg2.extras import DateRange, DateTimeTZRange, NumericRange, Range  # type: ignore[import-untyped]
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 class RangeBoundary(models.Expression):
     lower: str

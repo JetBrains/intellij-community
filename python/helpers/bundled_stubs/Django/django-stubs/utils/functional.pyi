@@ -2,10 +2,10 @@ from collections.abc import Callable, Iterable, Iterator
 
 # Mypy has special handling for functools.cached_property, reuse typeshed's definition instead of defining our own
 from functools import cached_property as cached_property
-from typing import Any, Generic, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, Generic, Protocol, SupportsIndex, TypeAlias, overload, type_check_only
 
 from django.db.models.base import Model
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 _T = TypeVar("_T")
 

@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TypeVar
 
 from django.contrib.sitemaps import Sitemap
 from django.http.request import HttpRequest
 from django.template.response import TemplateResponse
+from typing_extensions import TypeVar
 
 _C = TypeVar("_C", bound=Callable)
 

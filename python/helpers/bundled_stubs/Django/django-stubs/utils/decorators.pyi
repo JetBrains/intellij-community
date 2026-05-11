@@ -1,9 +1,10 @@
 from collections.abc import Callable, Iterable
-from typing import Any, Protocol, TypeAlias, TypeVar, type_check_only
+from typing import Any, Protocol, TypeAlias, type_check_only
 
 from django.http.response import HttpResponseBase
 from django.utils.deprecation import MiddlewareMixin
 from django.views.generic.base import View
+from typing_extensions import TypeVar
 
 @type_check_only
 class _MiddlewareClass(Protocol):

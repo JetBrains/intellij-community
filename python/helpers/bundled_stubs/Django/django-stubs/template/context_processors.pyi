@@ -1,8 +1,8 @@
 from collections.abc import Callable
-from typing import TypeVar
 
 from django.http.request import HttpRequest
 from django.utils.functional import SimpleLazyObject
+from typing_extensions import TypeVar
 
 _R = TypeVar("_R", bound=HttpRequest)
 

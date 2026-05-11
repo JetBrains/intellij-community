@@ -1,4 +1,6 @@
-from typing import Any, Protocol, TypeVar, type_check_only
+from typing import Any, Protocol, type_check_only
+
+from typing_extensions import TypeVar
 
 _RT_co = TypeVar("_RT_co", covariant=True)
 

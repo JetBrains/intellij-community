@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any
 
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import _User, _UserModel
@@ -8,7 +8,7 @@ from django.http.response import HttpResponse, HttpResponseRedirect
 from django.utils.functional import _StrOrPromise
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 UserModel = _UserModel
 _AuthForm = TypeVar("_AuthForm", bound=AuthenticationForm, default=AuthenticationForm)

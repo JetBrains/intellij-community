@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias
 from weakref import WeakSet
 
 from django.apps.config import AppConfig
@@ -14,6 +14,7 @@ from django.http.response import HttpResponse, HttpResponseBase
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, URLResolver
 from django.utils.functional import LazyObject, _StrOrPromise
+from typing_extensions import TypeVar
 
 all_sites: WeakSet[AdminSite]
 
@@ -47,7 +48,7 @@ class AdminSite:
     def register(
         self,
         model_or_iterable: type[Model] | Iterable[type[Model]],
-        admin_class: type[ModelAdmin] | None = ...,
+        admin_class: type[ModelAdmin[Model]] | None = ...,
         **options: Any,
     ) -> None: ...
     def unregister(self, model_or_iterable: type[Model] | Iterable[type[Model]]) -> None: ...

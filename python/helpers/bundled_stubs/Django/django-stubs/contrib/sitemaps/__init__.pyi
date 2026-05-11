@@ -1,13 +1,13 @@
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 from django.contrib.sites.models import Site
 from django.contrib.sites.requests import RequestSite
 from django.core.paginator import Paginator
 from django.db.models.base import Model
 from django.db.models.query import QuerySet
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 _ItemT = TypeVar("_ItemT")
 

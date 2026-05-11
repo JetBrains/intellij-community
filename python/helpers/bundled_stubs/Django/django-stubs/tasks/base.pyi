@@ -1,12 +1,12 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Generic, overload
 
 from django.db.models.enums import TextChoices as TextChoices
 from django.utils.module_loading import import_string as import_string
 from django.utils.translation import pgettext_lazy as pgettext_lazy
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeVar
 
 from .backends.base import BaseTaskBackend
 from .exceptions import TaskResultMismatch as TaskResultMismatch

@@ -2,10 +2,10 @@ from collections.abc import Callable, Iterable
 from datetime import date, datetime
 from sqlite3 import dbapi2 as Database
 from types import ModuleType
-from typing import Any, TypeVar
+from typing import Any
 
 from django.db.backends.base.base import BaseDatabaseWrapper
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from .client import DatabaseClient
 from .creation import DatabaseCreation

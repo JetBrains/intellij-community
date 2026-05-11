@@ -1,8 +1,8 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 from django.db.models import Model, Prefetch
 from django.db.models.query import QuerySet
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 # The type of the lookup passed to Prefetch(...)
 # This will be specialized to a `LiteralString` in the plugin for further processing and validation

@@ -1,6 +1,5 @@
-from typing import TypeVar
-
 from django.db import models
+from typing_extensions import TypeVar
 
 _T = TypeVar("_T", bound=models.Model)
 

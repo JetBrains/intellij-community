@@ -1,8 +1,9 @@
 from collections.abc import Awaitable, Callable, Sequence
-from typing import Any, ClassVar, Protocol, TypeAlias, TypeVar, type_check_only
+from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBase
+from typing_extensions import TypeVar
 
 _C = TypeVar("_C", bound=Callable[..., Any])
 

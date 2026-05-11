@@ -1,6 +1,6 @@
 from collections.abc import Awaitable, Callable, Iterator, Mapping, Sequence
 from logging import Logger
-from typing import IO, Any, TypeAlias, TypeVar
+from typing import IO, Any, TypeAlias
 
 from django.core.files import uploadedfile
 from django.core.handlers import base
@@ -9,7 +9,7 @@ from django.http.response import HttpResponseBase
 from django.urls.resolvers import ResolverMatch, URLResolver
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 _ReceiveCallback: TypeAlias = Callable[[], Awaitable[Mapping[str, Any]]]
 

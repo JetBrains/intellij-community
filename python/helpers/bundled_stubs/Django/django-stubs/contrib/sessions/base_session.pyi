@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar
 
 from django.contrib.sessions.backends.base import SessionBase
 from django.db import models
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar
 
 _T = TypeVar("_T", bound=AbstractBaseSession)
 

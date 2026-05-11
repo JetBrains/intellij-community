@@ -1,6 +1,7 @@
 from collections.abc import Iterator, Mapping
 from re import Pattern
-from typing import TypeVar
+
+from typing_extensions import TypeVar
 
 ESCAPE_MAPPINGS: Mapping[str, str | None]
 

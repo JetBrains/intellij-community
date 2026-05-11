@@ -1,7 +1,7 @@
 import datetime
 from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from typing import Any, BinaryIO, Literal, NoReturn, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, BinaryIO, Literal, NoReturn, Protocol, TypeAlias, overload, type_check_only
 
 from django.contrib.auth.models import _AnyUser
 from django.contrib.sessions.backends.base import SessionBase
@@ -10,7 +10,7 @@ from django.core.files import uploadedfile, uploadhandler
 from django.urls import ResolverMatch
 from django.utils.datastructures import CaseInsensitiveMapping, ImmutableList, MultiValueDict
 from django.utils.functional import cached_property
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 RAISE_ERROR: object
 host_validation_re: Pattern[str]

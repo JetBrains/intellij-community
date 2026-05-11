@@ -4,6 +4,7 @@ from typing import Any, Protocol, SupportsInt, TypeAlias, overload, type_check_o
 
 from _typeshed import ReadableBuffer
 from django.core.cache.backends.base import BaseCache
+from django.utils.functional import cached_property
 from redis._parsers import BaseParser
 from redis.client import Redis
 from redis.connection import ConnectionPool
@@ -52,3 +53,6 @@ class RedisCacheClient:
 
 class RedisCache(BaseCache):
     def __init__(self, server: str | list[str], params: dict[str, Any]) -> None: ...
+    # We need this, because it is the only way to get the Redis connection from cache:
+    @cached_property
+    def _cache(self) -> RedisCacheClient: ...

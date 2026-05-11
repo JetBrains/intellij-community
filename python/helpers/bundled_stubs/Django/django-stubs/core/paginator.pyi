@@ -1,9 +1,9 @@
 from collections.abc import AsyncIterator, Iterable, Iterator, Sequence, Sized
-from typing import ClassVar, Generic, Protocol, TypeVar, overload, type_check_only
+from typing import ClassVar, Generic, Protocol, overload, type_check_only
 
 from django.db.models.fields import _ErrorMessagesDict
 from django.utils.functional import _StrPromise, cached_property
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 class UnorderedObjectListWarning(RuntimeWarning): ...
 class InvalidPage(Exception): ...

@@ -1,10 +1,10 @@
 from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias
 
 from django.test import LiveServerTestCase
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 

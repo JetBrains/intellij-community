@@ -1,12 +1,12 @@
 from collections.abc import Sequence
-from typing import Any, Generic, Protocol, TypeVar, overload, type_check_only
+from typing import Any, Generic, Protocol, overload, type_check_only
 
 from django.core.paginator import Page, Paginator, _SupportsPagination
 from django.db.models import Model, QuerySet
 from django.db.models.query import _OrderByFieldName
 from django.http import HttpRequest, HttpResponse
 from django.views.generic.base import ContextMixin, TemplateResponseMixin, View
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 _M = TypeVar("_M", bound=Model)
 

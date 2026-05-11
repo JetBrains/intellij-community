@@ -1,7 +1,8 @@
 from collections.abc import Callable
-from typing import TypeVar, overload
+from typing import overload
 
 from django.utils.functional import _StrOrPromise
+from typing_extensions import TypeVar
 
 _C = TypeVar("_C", bound=Callable)
 

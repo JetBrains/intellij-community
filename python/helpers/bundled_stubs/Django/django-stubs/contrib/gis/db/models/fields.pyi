@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, NamedTuple, TypeVar
+from typing import Any, NamedTuple
 
 from django.contrib.gis import forms
 from django.contrib.gis.geos import (
@@ -18,7 +18,7 @@ from django.db.models.expressions import Combinable, Expression
 from django.db.models.fields import NOT_PROVIDED, Field, _ErrorMessagesMapping
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 # __set__ value type
 _ST = TypeVar("_ST")

@@ -1,5 +1,5 @@
 from collections.abc import Callable, Collection, Container, Iterator, Mapping, MutableMapping, Sequence
-from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar, overload
+from typing import Any, ClassVar, Generic, Literal, TypeAlias, overload
 from uuid import UUID
 
 from django.db import models
@@ -18,7 +18,7 @@ from django.forms.widgets import Widget
 from django.utils.choices import BaseChoiceIterator, CallableChoiceIterator, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import _PropertyDescriptor
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 ALL_FIELDS: Literal["__all__"]
 

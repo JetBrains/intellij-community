@@ -1,9 +1,10 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.utils.feedgenerator import Enclosure, SyndicationFeed
+from typing_extensions import TypeVar
 
 def add_domain(domain: str, url: str, secure: bool = ...) -> str: ...
 

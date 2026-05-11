@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Collection, Iterable, Sequence
-from typing import Any, ClassVar, Final, TypeVar, overload
+from typing import Any, ClassVar, Final, overload
 
 from django.core.checks.messages import CheckMessage
 from django.core.exceptions import MultipleObjectsReturned as BaseMultipleObjectsReturned
@@ -9,7 +9,7 @@ from django.db.models import BaseConstraint, Field, QuerySet
 from django.db.models.manager import Manager
 from django.db.models.options import Options
 from django.db.models.utils import AltersData
-from typing_extensions import Self, override
+from typing_extensions import Self, TypeVar, override
 
 _Self = TypeVar("_Self", bound=Model)
 

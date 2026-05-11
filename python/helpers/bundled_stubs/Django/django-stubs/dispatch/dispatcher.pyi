@@ -1,7 +1,9 @@
 import threading
 from collections.abc import Callable, MutableMapping
 from logging import Logger
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias
+
+from typing_extensions import TypeVar
 
 _AnyHashable: TypeAlias = Any
 

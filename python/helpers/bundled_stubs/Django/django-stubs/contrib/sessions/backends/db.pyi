@@ -1,8 +1,9 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 from django.contrib.sessions.backends.base import SessionBase
 from django.contrib.sessions.base_session import AbstractBaseSession
 from django.utils.functional import cached_property
+from typing_extensions import TypeVar
 
 _ST = TypeVar("_ST", bound=AbstractBaseSession, default=AbstractBaseSession)
 

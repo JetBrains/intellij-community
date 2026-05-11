@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Sequence
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar
 
 from _typeshed import Unused
 from django.contrib.postgres.utils import CheckPostgresInstalledMixin
@@ -13,7 +13,7 @@ from django.db.models.fields.mixins import CheckFieldDefaultMixin
 from django.db.models.lookups import Transform
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 # __set__ value type
 _ST = TypeVar("_ST")

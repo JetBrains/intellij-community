@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar, cast, type_check_only
+from typing import Any, ClassVar, Generic, Literal, TypeAlias, cast, type_check_only
 
 from django import forms
 from django.contrib.admin.filters import FieldListFilter, ListFilter
@@ -33,7 +33,7 @@ from django.urls.resolvers import URLPattern
 from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import _StrOrPromise
 from django.utils.safestring import SafeString
-from typing_extensions import Self, TypedDict, override
+from typing_extensions import Self, TypedDict, TypeVar, override
 
 IS_POPUP_VAR: str
 TO_FIELD_VAR: str

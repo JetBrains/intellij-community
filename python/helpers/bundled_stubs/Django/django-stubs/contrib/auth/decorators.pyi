@@ -1,9 +1,10 @@
 from collections.abc import Awaitable, Callable, Iterable
-from typing import TypeVar, overload
+from typing import overload
 
 from django.contrib.auth.models import _AnyUser
 from django.http.response import HttpResponseBase
 from django.utils.functional import _StrOrPromise
+from typing_extensions import TypeVar
 
 _VIEW = TypeVar("_VIEW", bound=Callable[..., HttpResponseBase | Awaitable[HttpResponseBase]])
 

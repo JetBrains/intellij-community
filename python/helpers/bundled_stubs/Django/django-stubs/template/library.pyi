@@ -1,9 +1,10 @@
 from collections.abc import Callable, Collection, Iterable, Mapping, Sequence, Sized
-from typing import Any, TypeVar, overload
+from typing import Any, overload
 
 from django.template.base import FilterExpression, Parser
 from django.template.context import Context
 from django.utils.safestring import SafeString
+from typing_extensions import TypeVar
 
 from .base import Node, NodeList, Template
 
@@ -23,11 +24,35 @@ class Library:
     def tag(self, name: str | None = None, compile_function: None = None) -> Callable[[_C], _C]: ...
     def tag_function(self, func: _C) -> _C: ...
     @overload
-    def filter(self, name: _C, filter_func: None = None, **flags: Any) -> _C: ...
+    def filter(
+        self,
+        name: _C,
+        filter_func: None = None,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> _C: ...
     @overload
-    def filter(self, name: str | None, filter_func: _C, **flags: Any) -> _C: ...
+    def filter(
+        self,
+        name: str | None,
+        filter_func: _C,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> _C: ...
     @overload
-    def filter(self, name: str | None = None, filter_func: None = None, **flags: Any) -> Callable[[_C], _C]: ...
+    def filter(
+        self,
+        name: str | None = None,
+        filter_func: None = None,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> Callable[[_C], _C]: ...
     def filter_function(self, func: _C, **flags: Any) -> _C: ...
     @overload
     def simple_tag(self, func: _C, takes_context: bool | None = None, name: str | None = None) -> _C: ...
