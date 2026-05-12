@@ -117,6 +117,9 @@ class JdkAuto : UnknownSdkResolver {
     return createResolverImpl(project, indicator)
   }
 
+  @Service(Service.Level.PROJECT)
+  private class ProjectServiceScope(val coroutineScope: CoroutineScope)
+
   @Service
   private class ServiceScope(val coroutineScope: CoroutineScope)
 
@@ -132,7 +135,7 @@ class JdkAuto : UnknownSdkResolver {
                     }.firstOrNull() ?: return null
 
     return object : UnknownSdkLookup {
-      private val coroutineScope = service<ServiceScope>().coroutineScope
+      private val coroutineScope = project?.service<ProjectServiceScope>()?.coroutineScope ?: service<ServiceScope>().coroutineScope
 
       val projectEelDescriptor by lazy { project?.getEelDescriptor() ?: LocalEelDescriptor }
 
