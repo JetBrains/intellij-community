@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ToolbarService
@@ -186,7 +188,9 @@ abstract class NonModalWindowWrapper(
     return if (float) {
       FloatDialog(getIdeJFrame(), title).also { dialog ->
         dialog.contentPane.layout = BorderLayout()
-        dialog.contentPane.add(content)
+        val dialogContent = if (IdeFrameDecorator.isCustomDecorationActive())
+          CustomFrameDialogContent.getCustomContentHolder(dialog, content, false) else content
+        dialog.contentPane.add(dialogContent)
         dialog.minimumSize = minSize
         dialog.size = size
         dialog.setLocationRelativeTo(dialog.owner)
@@ -204,7 +208,9 @@ abstract class NonModalWindowWrapper(
     else {
       WindowFrame(title).also { frame ->
         frame.contentPane.layout = BorderLayout()
-        frame.contentPane.add(content)
+        val frameContent = if (IdeFrameDecorator.isCustomDecorationActive())
+          CustomFrameDialogContent.getCustomContentHolder(frame, content, false) else content
+        frame.contentPane.add(frameContent)
         frame.minimumSize = minSize
         frame.size = size
         frame.setLocationRelativeTo(getIdeJFrame())
