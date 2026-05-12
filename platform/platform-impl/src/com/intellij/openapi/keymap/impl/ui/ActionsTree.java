@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
-import com.intellij.openapi.actionSystem.AbbreviationManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -87,21 +86,20 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class ActionsTree {
+  public static final int SHORTCUTS_RIGHT_GAP = 9;
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-  private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
   private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
   private final JScrollPane myComponent;
-  private Keymap myKeymap;
+  @Nullable Keymap myKeymap;
   private Group myMainGroup = new Group("");
 
   private static final @NonNls String ROOT = "ROOT";
 
-  private String myFilter = null;
+  @Nullable
+  String myFilter = null;
   private Condition<? super AnAction> myBaseFilter;
-
-  private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
@@ -110,10 +108,15 @@ public final class ActionsTree {
       @Override
       public void paint(Graphics g) {
         super.paint(g);
+
+        if (NewKeymapsRenderer.isFeatureEnabled()) {
+          return;
+        }
+
         Rectangle visibleRect = getVisibleRect();
         Insets insets = getInsets();
         if (insets != null && insets.right > 0) {
-          visibleRect.width -= JBUIScale.scale(9);
+          visibleRect.width -= JBUIScale.scale(SHORTCUTS_RIGHT_GAP);
         }
         Rectangle clip = g.getClipBounds();
         for (int row = 0; row < getRowCount(); row++) {
@@ -147,8 +150,12 @@ public final class ActionsTree {
     myTree.setShowsRootHandles(true);
 
     myTree.putClientProperty(WideSelectionTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
-    myTree.setCellRenderer(new KeymapsRenderer());
-    new TreeLinkMouseListener(new KeymapsRenderer()) {
+
+    ColoredTreeCellRenderer renderer = NewKeymapsRenderer.isFeatureEnabled()
+                                       ? new NewKeymapsRenderer(this)
+                                       : new KeymapsRenderer(this);
+    myTree.setCellRenderer(renderer);
+    new TreeLinkMouseListener(renderer) {
       @Override
       protected boolean doCacheLastNode() {
         return false;
@@ -190,11 +197,6 @@ public final class ActionsTree {
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-  }
-
-  // silently replace current map
-  void setKeymap(@NotNull Keymap keymap) {
-    myKeymap = keymap;
   }
 
   public void setBaseFilter(@Nullable Condition<? super AnAction> baseFilter) { myBaseFilter = baseFilter; }
@@ -543,15 +545,23 @@ public final class ActionsTree {
     }
   }
 
-  private final class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+  static class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
 
+    private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
+    private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
     private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
+    private final @NotNull ActionsTree actionsTree;
+
     private boolean myHaveLink;
     private int myLinkOffset;
     private int myLinkWidth;
     private int myRow;
 
     private boolean myIsSeparator;
+
+    KeymapsRenderer(@NotNull ActionsTree actionsTree) {
+      this.actionsTree = actionsTree;
+    }
 
     // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     @Override
@@ -565,6 +575,7 @@ public final class ActionsTree {
       myRow = row;
       myHaveLink = false;
       myIsSeparator = false;
+      @Nullable Keymap myKeymap = actionsTree.myKeymap;
 
       @Nullable @Nls String text;
       boolean changed;
@@ -644,7 +655,7 @@ public final class ActionsTree {
       }
       Color background = UIUtil.getTreeBackground(selected, true);
 
-      SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
+      SearchUtil.appendFragments(actionsTree.myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
 
       if (boundId != null) {
         AnAction boundAction = ActionManager.getInstance().getActionOrStub(boundId);
@@ -715,6 +726,10 @@ public final class ActionsTree {
       }
     }
 
+    protected boolean isLinkOrSeparator() {
+      return myIsSeparator || myHaveLink;
+    }
+
     @Override
     public @NotNull Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
@@ -755,21 +770,8 @@ public final class ActionsTree {
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
           if (!(data instanceof Hyperlink)) {
-            RowData rowData = extractRowData(data);
-            Shortcut[] shortcuts = rowData.shortcuts;
-            if (shortcuts != null && shortcuts.length > 0) {
-              StringBuilder sb = new StringBuilder();
-              for (Shortcut shortcut : shortcuts) {
-                if (!sb.isEmpty()) {
-                  sb.append(", ");
-                }
-                sb.append(KeyMapBundle.message("accessible.name.shortcut"));
-                sb.append(KeymapUtil.getShortcutText(shortcut));
-              }
-              if (!sb.isEmpty()) {
-                shortcutName = sb.toString();
-              }
-            }
+            ActionsTreeRendererHelper rendererHelper = new ActionsTreeRendererHelper(data, actionsTree.myKeymap);
+            shortcutName = rendererHelper.getAccessibleString();
           }
         }
 
@@ -778,44 +780,25 @@ public final class ActionsTree {
     }
 
     private final class SelectActionRunnable implements Runnable {
+      @NotNull
       private final String myActionId;
 
-      SelectActionRunnable(@NonNls String actionId) {
+      SelectActionRunnable(@NonNls @NotNull String actionId) {
         myActionId = actionId;
       }
 
       @Override
       public void run() {
-        selectAction(myActionId);
+        actionsTree.selectAction(myActionId);
       }
     }
   }
 
-  private @NotNull RowData extractRowData(Object data) {
-    String actionId = null;
-    if (data instanceof String) {
-      actionId = (String)data;
-    }
-    else if (data instanceof QuickList) {
-      actionId = ((QuickList)data).getActionId();
-    }
-    else if (data instanceof Group) {
-      actionId = ((Group)data).getId();
-    }
-    if (actionId == null) return new RowData(null, null);
-    Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
-    Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
-    return new RowData(shortcuts, abbreviations);
-  }
-
-  private record RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
-  }
-
   @SuppressWarnings("UseJBColor")
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
-    RowData rowData = extractRowData(data);
-    Shortcut[] shortcuts = rowData.shortcuts;
-    Set<String> abbreviations = rowData.abbreviations;
+    ActionsTreeRendererHelper rendererHelper = new ActionsTreeRendererHelper(data, myKeymap);
+    Shortcut[] shortcuts = rendererHelper.shortcuts;
+    Set<String> abbreviations = rendererHelper.abbreviations;
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
@@ -827,7 +810,7 @@ public final class ActionsTree {
 
     int totalWidth = 0;
     final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
-    if (shortcuts != null && shortcuts.length > 0) {
+    if (shortcuts.length > 0) {
       for (Shortcut shortcut : shortcuts) {
         totalWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
         totalWidth += 10;
@@ -853,7 +836,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (abbreviations != null && !abbreviations.isEmpty()) {
+    if (!abbreviations.isEmpty()) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;
