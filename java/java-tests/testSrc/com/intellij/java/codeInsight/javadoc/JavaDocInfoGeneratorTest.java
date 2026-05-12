@@ -257,6 +257,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPreTagInJavadocTag() { doTestClass();}
   public void testLinkTagMalformed() { doTestClass(); }
   public void testCursedCodeBlock() { doTestClass(); }
+  public void testCursedCodeBlock2() { doTestClass(); }
   public void testSnippetMarkup() { doTestClass(); }
   public void testSealedClass() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "sealedClasses");

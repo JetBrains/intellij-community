@@ -375,7 +375,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
        <blockquote><pre><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></pre></blockquote>
        <p> Continuing...
        <blockquote><pre>
-          (this.charAt(<i>k</i>) == ch) && (<i>k</i> &lt;= fromIndex)
+          (this.charAt(<i>k</i>) == ch) &amp;&amp; (<i>k</i> &lt;= fromIndex)
         </pre></blockquote>
        <blockquote><pre>
           Unfinished blockquote

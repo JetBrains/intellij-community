@@ -1945,7 +1945,8 @@ public class JavaDocInfoGenerator {
             StringBuilder value = new StringBuilder();
             generateLiteralValue(value, tag, false);
             int offset = !value.isEmpty() && value.charAt(0) == ' ' ? 1 : 0;
-            htmlCodeBlockContents.append(value, offset, value.length());
+            String escapedValue = StringUtil.escapeXmlEntities(value.toString());
+            htmlCodeBlockContents.append(escapedValue, offset, escapedValue.length());
             continue;
           }
           else {
