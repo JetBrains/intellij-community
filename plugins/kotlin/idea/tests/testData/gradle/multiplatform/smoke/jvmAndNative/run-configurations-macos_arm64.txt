@@ -7,7 +7,7 @@ project.appleTest
 
 project.commonMain
     fqName: main
-    name: commonMain.CommonMain [jvm]
+    name: CommonMain [jvm]
     type: Gradle
     tasks: [:jvmRun]
     scriptParameters: -DmainClass=CommonMainKt --quiet
@@ -43,7 +43,7 @@ project.commonTest
 
 project.jvmMain
     fqName: jvm.main
-    name: jvmMain.JvmMain [jvm]
+    name: JvmMain [jvm]
     type: Gradle
     tasks: [:jvmRun]
     scriptParameters: -DmainClass=jvm.JvmMainKt --quiet

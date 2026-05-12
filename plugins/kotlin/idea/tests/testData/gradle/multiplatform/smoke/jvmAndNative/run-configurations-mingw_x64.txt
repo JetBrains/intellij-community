@@ -9,7 +9,7 @@ project.commonMain
     fqName: main
     name: CommonMain [jvm]
     type: Gradle
-    tasks: [jvmRun]
+    tasks: [:jvmRun]
     scriptParameters: -DmainClass=CommonMainKt --quiet
     isDebugAllEnabled: false
     isRunAsTest: false
@@ -45,7 +45,7 @@ project.jvmMain
     fqName: jvm.main
     name: JvmMain [jvm]
     type: Gradle
-    tasks: [jvmRun]
+    tasks: [:jvmRun]
     scriptParameters: -DmainClass=jvm.JvmMainKt --quiet
     isDebugAllEnabled: false
     isRunAsTest: false
