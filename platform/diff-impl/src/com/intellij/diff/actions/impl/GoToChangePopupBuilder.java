@@ -4,10 +4,13 @@ package com.intellij.diff.actions.impl;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -33,7 +36,18 @@ public final class GoToChangePopupBuilder {
     return new SimpleGoToChangePopupAction(chain, onSelected, defaultSelection);
   }
 
-  public abstract static class BaseGoToChangePopupAction extends GoToChangePopupAction {
+  public abstract static class BaseGoToChangePopupAction extends ActionGroup implements DumbAware {
+    public BaseGoToChangePopupAction() {
+      ActionUtil.copyFrom(this, "GotoChangedFile");
+      setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return EMPTY_ARRAY;
+    }
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
