@@ -12,6 +12,8 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jediterm.terminal.ProcessTtyConnector
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.TerminalModelListener
@@ -135,6 +137,8 @@ private fun getKeymapToModify(): Keymap? {
   else keymapToModify
 }
 
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresReadLockAbsence(generateAssertion = false)
 internal fun String?.toExistentNioDirectory(labelToLogOnFailure: String? = null): Path? {
   val directory = this ?: return null
   if (directory.isBlank()) {
