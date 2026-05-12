@@ -303,6 +303,20 @@ class CodexWebSocketAppServerClient(
     return thread ?: throw CodexAppServerException("Codex app-server returned empty thread/start result")
   }
 
+  suspend fun forkThread(threadId: String): CodexStartedThreadSession {
+    val thread = request(
+      method = "thread/fork",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeEndObject()
+      },
+      resultParser = { parser -> protocol.parseThreadStartResult(parser) },
+      defaultResult = null,
+    )
+    return thread ?: throw CodexAppServerException("Codex app-server returned empty thread/fork result")
+  }
+
   private suspend fun <T> request(
     method: String,
     paramsWriter: ((JsonGenerator) -> Unit)? = null,

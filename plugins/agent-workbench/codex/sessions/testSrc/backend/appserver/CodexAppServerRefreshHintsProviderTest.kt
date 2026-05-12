@@ -240,7 +240,7 @@ class CodexAppServerRefreshHintsProviderTest {
         val updateEvent = withTimeout(2.seconds) {
             provider.updateEvents.first()
         }
-        assertThat(updateEvent.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+        assertThat(updateEvent.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(updateEvent.scopedPaths).containsExactly("/work/project")
         assertThat(updateEvent.threadIds).isNull()
 
@@ -256,6 +256,95 @@ class CodexAppServerRefreshHintsProviderTest {
         assertThat(candidate.title).isEqualTo("thread-started")
         assertThat(candidate.updatedAt).isEqualTo(900L)
         assertThat(candidate.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    }
+
+    @Test
+    fun threadStartedNotificationsEmitDelayedRetryForThreadListRefresh(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { null },
+            notifications = notifications,
+        )
+        val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.UNLIMITED)
+        val collectJob = launch {
+            provider.updateEvents.collect {
+                updates.send(it)
+            }
+        }
+        try {
+            withTimeout(2.seconds) {
+                notifications.subscriptionCount.first { it > 0 }
+            }
+            notifications.emit(
+                CodexAppServerNotification(
+                    method = "thread/started",
+                    kind = CodexAppServerNotificationKind.THREAD_STARTED,
+                    threadId = "thread-started",
+                    startedThread = startedThread(
+                        threadId = "thread-started",
+                        path = "/work/project",
+                        updatedAt = 100L,
+                    ),
+                )
+            )
+
+            val firstUpdate = withTimeout(2.seconds) { updates.receive() }
+            val retryUpdate = withTimeout(2.seconds) { updates.receive() }
+            assertThat(firstUpdate.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+            assertThat(firstUpdate.scopedPaths).containsExactly("/work/project")
+            assertThat(firstUpdate.threadIds).isNull()
+            assertThat(retryUpdate).isEqualTo(firstUpdate)
+        }
+        finally {
+            collectJob.cancel()
+            updates.close()
+        }
+    }
+
+    @Test
+    fun threadNameUpdatedNotificationsUseRecentStartedThreadPathWhenAvailable(): Unit = runBlocking(Dispatchers.Default) {
+        val notifications = MutableSharedFlow<CodexAppServerNotification>(replay = 1, extraBufferCapacity = 16)
+        val provider = CodexAppServerRefreshHintsProvider(
+            readThreadActivitySnapshot = { null },
+            notifications = notifications,
+        )
+
+        notifications.emit(
+            CodexAppServerNotification(
+                method = "thread/started",
+                kind = CodexAppServerNotificationKind.THREAD_STARTED,
+                threadId = "thread-rename",
+                startedThread = startedThread(
+                    threadId = "thread-rename",
+                    path = "/work/project",
+                    updatedAt = 100L,
+                ),
+            )
+        )
+        withTimeout(2.seconds) {
+            provider.updateEvents.first()
+        }
+
+        notifications.emit(
+            CodexAppServerNotification(
+                method = "thread/name/updated",
+                kind = CodexAppServerNotificationKind.THREAD_NAME_UPDATED,
+                threadId = "thread-rename",
+            )
+        )
+
+        val updateEvent = withTimeout(2.seconds) {
+            provider.updateEvents.first()
+        }
+        assertThat(updateEvent.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+        assertThat(updateEvent.scopedPaths).containsExactly("/work/project")
+        assertThat(updateEvent.threadIds).containsExactly("thread-rename")
+
+        val hintsByPath = provider.prefetchRefreshHints(
+            paths = listOf("/work/project"),
+            refreshThreadSeedsByPath = emptyMap(),
+        )
+        assertThat(hintsByPath.getValue("/work/project").rebindCandidates.single().threadId).isEqualTo("thread-rename")
     }
 
     @Test

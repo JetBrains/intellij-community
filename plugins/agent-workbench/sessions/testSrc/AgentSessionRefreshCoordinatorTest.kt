@@ -543,6 +543,113 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
+  fun repeatedScopedForkRefreshKeepsOriginalAndAddsRenamedFork() = runBlocking(Dispatchers.Default) {
+    val projectB = "/work/project-b"
+    val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 2)
+    val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updateEvents = updates,
+      listFromClosedProject = { path ->
+        val invocation = closedRefreshInvocations.getOrPut(path) { AtomicInteger() }.incrementAndGet()
+        when (path) {
+          PROJECT_PATH -> {
+            val original = thread(
+              id = "codex-original",
+              updatedAt = 100L,
+              title = "Original thread",
+              provider = AgentSessionProvider.CODEX,
+            )
+            if (invocation == 1) {
+              listOf(original)
+            }
+            else {
+              listOf(
+                original,
+                thread(
+                  id = "codex-fork",
+                  updatedAt = 300L,
+                  title = "Renamed fork",
+                  provider = AgentSessionProvider.CODEX,
+                ),
+              )
+            }
+          }
+          projectB -> listOf(
+            thread(id = "codex-b", updatedAt = 400L, title = "Project B updated", provider = AgentSessionProvider.CODEX)
+          )
+          else -> emptyList()
+        }
+      },
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      isRefreshGateActive = { true },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = PROJECT_PATH,
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(
+                id = "codex-original",
+                updatedAt = 100L,
+                title = "Original thread",
+                provider = AgentSessionProvider.CODEX,
+              )
+            ),
+          ),
+          AgentProjectSessions(
+            path = projectB,
+            name = "Project B",
+            isOpen = true,
+            hasLoaded = true,
+            threads = listOf(
+              thread(id = "codex-b", updatedAt = 100L, title = "Project B stable", provider = AgentSessionProvider.CODEX)
+            ),
+          ),
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      updates.tryEmit(threadsChangedEvent(scopedPaths = setOf(PROJECT_PATH)))
+
+      waitForCondition {
+        closedRefreshInvocations[PROJECT_PATH]?.get() == 1
+      }
+      assertThat(
+        stateStore.snapshot().projects.single { it.path == PROJECT_PATH }.threads.map { it.id }
+      ).containsExactly("codex-original")
+
+      updates.tryEmit(threadsChangedEvent(scopedPaths = setOf(PROJECT_PATH)))
+
+      waitForCondition {
+        val projects = stateStore.snapshot().projects.associateBy { it.path }
+        val projectAThreads = projects[PROJECT_PATH]?.threads.orEmpty().associateBy { it.id }
+        projectAThreads["codex-original"]?.title == "Original thread" &&
+        projectAThreads["codex-fork"]?.title == "Renamed fork" &&
+        projects[projectB]?.threads?.singleOrNull()?.title == "Project B stable"
+      }
+
+      val projects = stateStore.snapshot().projects.associateBy { it.path }
+      val projectAThreads = projects.getValue(PROJECT_PATH).threads
+      assertThat(projectAThreads.map { it.id }).containsExactly("codex-fork", "codex-original")
+      assertThat(projectAThreads.single { it.id == "codex-original" }.title).isEqualTo("Original thread")
+      assertThat(projectAThreads.single { it.id == "codex-fork" }.title).isEqualTo("Renamed fork")
+      assertThat(projects.getValue(projectB).threads.single().title).isEqualTo("Project B stable")
+      assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(2)
+      assertThat(closedRefreshInvocations[projectB]?.get() ?: 0).isEqualTo(0)
+    }
+  }
+
+  @Test
   fun scopedThreadsChangedUpdateRefreshesOnlyScopedPathForClaude() = runBlocking(Dispatchers.Default) {
     val projectB = "/work/project-b"
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
