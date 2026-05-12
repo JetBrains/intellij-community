@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-public final class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
+public final class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<InternalPluginResults> {
   private final CountComponent myCountLabel = new CountComponent();
 
   private PluginUpdatesService myService;
@@ -36,7 +37,7 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
                                                         @Nullable UnnamedConfigurable configurable,
                                                         boolean selected) {
     if (myTree == null) {
-      myService = PluginUpdatesService.connectWithCounter(this);
+      myService = PluginUpdatesService.connectWithUpdates(this);
       tree.addAncestorListener(this);
       myTree = (SimpleTree)tree;
     }
@@ -71,9 +72,10 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
   }
 
   @Override
-  public void accept(Integer countValue) {
+  public void accept(InternalPluginResults results) {
     String oldCountValue = myCountValue;
-    myCountValue = countValue == null || countValue <= 0 ? null : countValue.toString();
+    int countValue = results == null ? 0 : results.getPluginUpdates().getAll().size();
+    myCountValue = countValue <= 0 ? null : Integer.toString(countValue);
     if (myTree != null && !StringUtil.equals(oldCountValue, myCountValue)) {
       myTree.repaint();
     }

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -49,8 +48,7 @@ public class PluginUpdatesService {
   private static boolean ourPreparing;
   private static boolean ourReset;
 
-  private Consumer<? super Integer> myCountCallback;
-  private List<Consumer<InternalPluginResults>> myUpdateCallbacks;
+  private final List<Consumer<InternalPluginResults>> myUpdateCallbacks = new ArrayList<>();
   private boolean mySetFilter;
 
   static {
@@ -68,30 +66,17 @@ public class PluginUpdatesService {
   }
 
   @ApiStatus.Internal
-  public static @NotNull PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
-    PluginUpdatesService service = new PluginUpdatesService();
-    service.myCountCallback = callback;
-    synchronized (ourLock) {
-      SERVICES.add(service);
-      if (ourPrepared) {
-        callback.accept(getCount(getFilteredUpdateResult()));
-        return service;
-      }
-    }
-    calculateUpdates();
-    return service;
-  }
-
-  @ApiStatus.Internal
   public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<@Nullable InternalPluginResults> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
-    service.myUpdateCallbacks = Collections.singletonList(callback);
+    service.myUpdateCallbacks.add(callback);
     synchronized (ourLock) {
       SERVICES.add(service);
       if (ourPrepared) {
         callback.accept(getFilteredUpdateResult());
+        return service;
       }
     }
+    calculateUpdates();
     return service;
   }
 
@@ -115,9 +100,6 @@ public class PluginUpdatesService {
 
   public void calculateUpdates(@NotNull Consumer<? super Collection<PluginUiModel>> callback) {
     synchronized (ourLock) {
-      if (myUpdateCallbacks == null) {
-        myUpdateCallbacks = new ArrayList<>();
-      }
       final var adaptedCallback = adaptDescriptorConsumerToUpdateResultConsumer(callback);
       myUpdateCallbacks.add(adaptedCallback);
       if (ourPrepared) {
@@ -135,9 +117,9 @@ public class PluginUpdatesService {
       }
       boolean removed = removeUpdate(descriptor.getPluginId());
       if (removed) {
-        Integer countValue = getCount(getFilteredUpdateResult());
+        var results = getFilteredUpdateResult();
         for (PluginUpdatesService service : SERVICES) {
-          service.runCountCallbacks(countValue);
+          service.runAllCallbacks(results);
         }
       }
     }
@@ -165,9 +147,9 @@ public class PluginUpdatesService {
       if (!ourPrepared || ourAllUpdates == null) {
         return;
       }
-      Integer countValue = getCount(getFilteredUpdateResult());
+      var results = getFilteredUpdateResult();
       for (PluginUpdatesService service : SERVICES) {
-        service.runCountCallbacks(countValue);
+        service.runAllCallbacks(results);
       }
     }
   }
@@ -227,8 +209,7 @@ public class PluginUpdatesService {
   public void dispose() {
     synchronized (ourLock) {
       dispose(this);
-      myCountCallback = null;
-      myUpdateCallbacks = null;
+      myUpdateCallbacks.clear();
       if (mySetFilter) {
         setOurFilter(DEFAULT_FILTER);
         mySetFilter = false;
@@ -313,22 +294,9 @@ public class PluginUpdatesService {
   }
 
   private void runAllCallbacks(@Nullable InternalPluginResults filteredUpdates) {
-    runCountCallbacks(getCount(filteredUpdates));
-    if (myUpdateCallbacks != null) {
-      for (var callback : myUpdateCallbacks) {
-        callback.accept(filteredUpdates);
-      }
+    for (var callback : myUpdateCallbacks) {
+      callback.accept(filteredUpdates);
     }
-  }
-
-  private void runCountCallbacks(@Nullable Integer countValue) {
-    if (myCountCallback != null) {
-      myCountCallback.accept(countValue);
-    }
-  }
-
-  private static @Nullable Integer getCount(@Nullable InternalPluginResults filteredUpdates) {
-    return filteredUpdates == null ? null : filteredUpdates.getPluginUpdates().getAll().size();
   }
 
   private static @NotNull Consumer<InternalPluginResults> adaptDescriptorConsumerToUpdateResultConsumer(

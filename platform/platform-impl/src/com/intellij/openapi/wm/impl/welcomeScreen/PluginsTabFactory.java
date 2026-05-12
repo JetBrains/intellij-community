@@ -44,8 +44,9 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
       myKeyComponent.add(myCountLabel, BorderLayout.EAST);
       myCountLabel.setVisible(false);
 
-      myService = PluginUpdatesService.connectWithCounter(countValue -> {
-        @NlsSafe String text = countValue == null || countValue <= 0 ? null : countValue.toString();
+      myService = PluginUpdatesService.connectWithUpdates(results -> {
+        int countValue = results == null ? 0 : results.getPluginUpdates().getAll().size();
+        @NlsSafe String text = countValue <= 0 ? null : Integer.toString(countValue);
         myCountLabel.setText(text);
         myCountLabel.setVisible(text != null);
         if (myParent != null) {
