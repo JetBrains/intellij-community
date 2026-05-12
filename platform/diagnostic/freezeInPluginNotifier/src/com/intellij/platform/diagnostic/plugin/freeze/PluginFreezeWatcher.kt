@@ -18,7 +18,7 @@ import com.intellij.util.application
 @Service(Service.Level.APP)
 internal class PluginFreezeWatcher {
   @Volatile
-  private var reason: FreezeReason? = null
+  private var currentFreeze: FreezeReason? = null
 
   private val stackTracePattern: Regex = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
@@ -27,10 +27,10 @@ internal class PluginFreezeWatcher {
     fun getInstance(): PluginFreezeWatcher = service()
   }
 
-  fun getFreezeReason(): FreezeReason? = reason
+  fun getFreezeReason(): FreezeReason? = currentFreeze
 
   fun reset() {
-    reason = null
+    currentFreeze = null
   }
 
   fun dumpedThreads(event: LogMessage, dump: ThreadDump, durationMs: Long): FreezeReason? {
@@ -48,12 +48,14 @@ internal class PluginFreezeWatcher {
     }
 
     val freezeStorageService = PluginsFreezesService.getInstance()
-    if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
+    if (freezeStorageService.shouldBeIgnored(frozenPlugin)) {
+      return FreezeReason(frozenPlugin, event, durationMs, reportToUser = false)
+    }
     freezeStorageService.setLatestFreezeDate(frozenPlugin)
 
-    reason = FreezeReason(frozenPlugin, event, durationMs, reportToUser = true)
+    currentFreeze = FreezeReason(frozenPlugin, event, durationMs, reportToUser = true)
 
-    return reason
+    return currentFreeze
   }
 
   private fun isWorthReportingToUser(plugin: IdeaPluginDescriptor, frozenPlugin: PluginId): Boolean {
