@@ -21,7 +21,12 @@ class SeClassesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val priority: Int get() = PRIORITY
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
+    SeTargetsFilterEditor(delegate.project,
+                          tabId = id,
+                          delegate.getSearchScopesInfos().firstOrNull(),
+                          delegate.getTypeVisibilityStates(),
+                          hasPreviewAction = true,
+                          persistScopeIfAvailable = true)
   }
 
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor.getValue()

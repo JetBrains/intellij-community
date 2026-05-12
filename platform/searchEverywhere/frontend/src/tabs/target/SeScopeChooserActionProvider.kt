@@ -11,12 +11,17 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val onSelectedScopeChanged: (String?, Boolean) -> Unit) {
+class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo,
+                                   initialSelectedScopeId: String? = scopesInfo.selectedScopeId,
+                                   private val onPersistScope: ((String?) -> Unit)? = null,
+                                   private val onSelectedScopeChanged: (String?, Boolean) -> Unit) {
   private val descriptors: Map<String, ScopeDescriptor> = scopesInfo.getScopeDescriptors()
-  private var selectedScopeId: String? = scopesInfo.selectedScopeId
+  private var selectedScopeId: String? = initialSelectedScopeId
 
-  private fun setSelectedScope(scopeId: String?, isAutoToggleEnabled: Boolean) {
+  private fun setSelectedScope(scopeId: String?, isAutoToggleEnabled: Boolean, byUser: Boolean) {
     selectedScopeId = scopeId
+    if (byUser) onPersistScope?.invoke(scopeId)
+
     onSelectedScopeChanged(scopeId, isAutoToggleEnabled && !action.isEverywhere)
   }
 
@@ -26,7 +31,7 @@ class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val
     override fun onScopeSelected(o: ScopeDescriptor) {
       scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
         isAutoToggleEnabled = false
-        setSelectedScope(it.scopeId, false)
+        setSelectedScope(it.scopeId, isAutoToggleEnabled = false, true)
       }
     }
 
@@ -43,14 +48,14 @@ class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val
 
     override fun isEverywhere(): Boolean = selectedScopeId == scopesInfo.everywhereScopeId
 
-    private fun updateScope(everywhere: Boolean) {
+    private fun updateScope(everywhere: Boolean, byUser: Boolean) {
       val targetScope = if (everywhere) scopesInfo.everywhereScopeId else scopesInfo.projectScopeId
-      setSelectedScope(targetScope, isAutoToggleEnabled)
+      setSelectedScope(targetScope, isAutoToggleEnabled, byUser = byUser)
     }
 
     override fun setEverywhere(everywhere: Boolean) {
       isAutoToggleEnabled = false
-      updateScope(everywhere)
+      updateScope(everywhere, true)
     }
 
     override fun canToggleEverywhere(): Boolean {
@@ -62,7 +67,7 @@ class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val
     override fun autoToggle(everywhere: Boolean): Boolean {
       if (!canToggleEverywhere() || !isAutoToggleEnabled || isEverywhere == everywhere) return false
 
-      updateScope(everywhere)
+      updateScope(everywhere, false)
       return true
     }
   }

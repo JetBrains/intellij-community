@@ -18,6 +18,7 @@ enum class SeLog {
   LISTENERS,
   BALANCING,
   EQUALITY,
+  SCOPE,
   PATTERN;
 
   companion object {
