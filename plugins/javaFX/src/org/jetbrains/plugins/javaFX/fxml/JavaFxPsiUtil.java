@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -445,6 +445,10 @@ public final class JavaFxPsiUtil {
 
   public static boolean isExpressionBinding(@Nullable String value) {
     return value != null && value.startsWith("${") && value.endsWith("}");
+  }
+
+  public static boolean isIncompleteExpressionBinding(@Nullable String value) {
+    return value != null && value.startsWith("${") && !value.endsWith("}");
   }
 
   public static boolean isIncorrectExpressionBinding(@Nullable String value) {

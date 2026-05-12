@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
@@ -85,6 +85,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testExpressionBinding() {
+    doTest("text");
+  }
+
+  public void testExpressionBindingIncomplete() {
     doTest("text");
   }
 
