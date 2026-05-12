@@ -140,6 +140,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
 import com.intellij.psi.javadoc.PsiMarkdownReferenceLabel;
 import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
@@ -1987,6 +1988,9 @@ public class JavaDocInfoGenerator {
       else if (element instanceof PsiMarkdownReferenceLink link) {
         generateMarkdownLinkValue(link, subBuffer);
       }
+      else if (element instanceof PsiMarkdownLink link) {
+        collectElementText(subBuffer, link);
+      }
       else {
         String text;
         if (element instanceof PsiWhiteSpace) {
@@ -2437,7 +2441,7 @@ public class JavaDocInfoGenerator {
     PsiElement label = referenceLink.getLabel();
 
     String referenceText = reference != null ? reference.getText() : "";
-    String labelText = label instanceof PsiMarkdownReferenceLabel ? label.getText() : null;
+    String labelText = label instanceof PsiMarkdownReferenceLabel referenceLabel ? referenceLabel.getLabelText() : null;
 
     // JEP 467 requires reference brackets to be escaped, remove the escape to match the reference
     referenceText = referenceText.replace("\\[", "[").replace("\\]", "]");
