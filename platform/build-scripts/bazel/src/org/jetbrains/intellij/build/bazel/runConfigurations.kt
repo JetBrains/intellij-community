@@ -184,8 +184,12 @@ internal class RunConfigurationsFile : BuildFile() {
     target("intellij_dev_binary_ultimate") {
       option("#xmlFile", xmlFile.fileName.toString())
       option("name", generatedName)
-      option("platform_prefix", runConfiguration.vmOptions.properties["idea.platform.prefix"] ?: error("idea.platform.prefix not found in VM options"))
-
+      val prefix = runConfiguration.vmOptions.properties["idea.platform.prefix"]
+                   ?: error("idea.platform.prefix not found in VM options")
+      option("platform_prefix", prefix)
+      if (prefix.startsWith("IntelliJServer") || prefix == "KotlinServer") {
+        option("data", listOf("//language-server/build:filewatcher_jni_all_platforms"))
+      }
 
       val runConfigurationProperties = runConfiguration.vmOptions.properties
         .filterNot { (k, _) -> k == "idea.platform.prefix" }
