@@ -21,19 +21,7 @@ internal object SplitModeModuleKindResolver {
   }
 
   fun getOrComputeModuleAnalysis(module: Module, descriptorFile: XmlFile? = null): ModuleAnalysis {
-    val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(module, descriptorFile)
-    if (predefinedModuleKind != null) {
-      return ModuleAnalysis(ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning))
-    }
-
-    return computeModuleAnalysis(module)
-  }
-
-  private fun computeModuleAnalysis(
-    module: Module,
-  ): ModuleAnalysis {
-    val contentModuleXmlDescriptor = PluginModuleType.getContentModuleDescriptorXml(module)
-    val xmlDescriptor = contentModuleXmlDescriptor ?: PluginModuleType.getPluginXml(module)
+    val xmlDescriptor = descriptorFile ?: PluginModuleType.getContentModuleDescriptorXml(module) ?: PluginModuleType.getPluginXml(module)
     if (xmlDescriptor == null) {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
     }
@@ -47,11 +35,12 @@ internal object SplitModeModuleKindResolver {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
     }
 
+    val contentModuleXmlDescriptor = PluginModuleType.getContentModuleDescriptorXml(module)
     val descriptorAnalysisStates = mutableMapOf<XmlFile, DescriptorDependencyFactsState>()
     val ownDependencyFacts = SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(parsedXmlDescriptor, descriptorAnalysisStates)
     val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(parsedXmlDescriptor).toSet()
     val containingPlugins =
-      if (contentModuleXmlDescriptor != null && SplitModeAnalysisFlags.isContainingPluginsAnalysisEnabled()) {
+      if (contentModuleXmlDescriptor?.virtualFile == xmlDescriptor.virtualFile && SplitModeAnalysisFlags.isContainingPluginsAnalysisEnabled()) {
         analyzeContainingPlugins(collectContainingPlugins(contentModuleXmlDescriptor), descriptorAnalysisStates)
       }
       else {
