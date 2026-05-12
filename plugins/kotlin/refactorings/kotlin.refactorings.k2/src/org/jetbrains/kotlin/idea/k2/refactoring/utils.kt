@@ -170,11 +170,12 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
 context(_: KaSession)
 fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
-    return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
+    val classKind = (symbol as? KaClassSymbol)?.classKind
+    return if (classKind == KaClassKind.COMPANION_OBJECT) {
         //specify companion name to avoid clashes with enum entries
         (symbol.containingSymbol as KaClassifierSymbol).importableFqName!!.asString() + "." + symbol.name!!.asString()
     }
-    else if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
+    else if (classKind == KaClassKind.OBJECT || classKind == KaClassKind.ENUM_CLASS) {
         symbol.name!!.asString()
     }
     else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {

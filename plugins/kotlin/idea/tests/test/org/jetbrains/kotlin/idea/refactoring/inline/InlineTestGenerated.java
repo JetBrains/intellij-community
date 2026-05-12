@@ -2260,6 +2260,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/emptyVarargs.kt");
             }
 
+            @TestMetadata("EnumEntryImplicitReceiver.kt")
+            public void testEnumEntryImplicitReceiver() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/EnumEntryImplicitReceiver.kt");
+            }
+
             @TestMetadata("expect.kt")
             public void testExpect() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/expect.kt");
