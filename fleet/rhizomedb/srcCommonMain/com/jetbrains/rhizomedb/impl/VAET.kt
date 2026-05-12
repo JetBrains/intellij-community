@@ -4,6 +4,7 @@ package com.jetbrains.rhizomedb.impl
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.Datom
 import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.ReduceDecision
 import com.jetbrains.rhizomedb.TX
 import com.jetbrains.rhizomedb.VersionedEID
 import fleet.util.radixTrie.RadixTrie
@@ -12,7 +13,6 @@ import fleet.util.radixTrie.get
 import fleet.util.radixTrie.put
 import fleet.util.radixTrie.remove
 import fleet.util.radixTrie.update
-import fleet.util.reducible.ReduceDecision
 import kotlin.jvm.JvmInline
 
 /**
@@ -75,7 +75,7 @@ internal value class VAET(private val trie: RadixTrie<IntMapWithEditor<Any>>) {
             sink(Datom(et.eid, a, v, et.tx))
           }
           else -> {
-            (value as RadixTrie<TX>).reduce { e, t ->
+            (value as RadixTrie<TX>).reduceRhizome { e, t ->
               sink(Datom(e, a, v, t))
               ReduceDecision.Continue
             }

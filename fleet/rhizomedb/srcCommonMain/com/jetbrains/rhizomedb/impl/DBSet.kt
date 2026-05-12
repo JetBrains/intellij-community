@@ -8,11 +8,11 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.IndexQuery
 import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.ReduceDecision
 import com.jetbrains.rhizomedb.Remove
 import com.jetbrains.rhizomedb.RetractAttribute
 import com.jetbrains.rhizomedb.mutate
 import com.jetbrains.rhizomedb.queryIndex
-import fleet.util.reducible.ReduceDecision
 
 internal data class DBSet<T : Any>(val eid: EID,
                                    val attr: Attribute<Any>) : MutableSet<T> {

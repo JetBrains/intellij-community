@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.radixTrie
 
-import fleet.util.reducible.ReduceDecision
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -68,25 +67,25 @@ class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
     }
   }
 
-  fun reduce(reducer: (Int, V) -> ReduceDecision): ReduceDecision = run {
+  fun reduce(reducer: (Int, V) -> RadixTrieReduceDecision): RadixTrieReduceDecision = run {
     val keysCount = dataMap.countOneBits()
     val ints = ints
     val objects = buffer
     repeat(keysCount) { dataIndex ->
       val key = ints!![dataIndex]
       val value = objects[dataIndex] as V
-      if (reducer(key, value) == ReduceDecision.Stop) {
-        return ReduceDecision.Stop
+      if (reducer(key, value) == RadixTrieReduceDecision.Stop) {
+        return RadixTrieReduceDecision.Stop
       }
     }
     val collisionsCount = collisionsMap.countOneBits()
     repeat(collisionsCount) { i ->
       val child = objects[objects.size - 1 - i] as RadixTrieNode<V>
-      if (child.reduce(reducer) == ReduceDecision.Stop) {
-        return ReduceDecision.Stop
+      if (child.reduce(reducer) == RadixTrieReduceDecision.Stop) {
+        return RadixTrieReduceDecision.Stop
       }
     }
-    ReduceDecision.Continue
+    RadixTrieReduceDecision.Continue
   }
 
   private inline fun mutate(editor: Any, body: RadixTrieNode<V>.() -> Unit): RadixTrieNode<V> =
@@ -240,7 +239,7 @@ typealias RadixTrie<T> = RadixTrieNode<T>
 typealias RadixTrieLong = RadixTrieNode<Long>
 
 inline fun <V : Any> RadixTrie<V>.forEach(crossinline f: (Int, V) -> Unit) {
-  reduce { i, v -> f(i, v); ReduceDecision.Continue }
+  reduce { i, v -> f(i, v); RadixTrieReduceDecision.Continue }
 }
 
 operator fun <V : Any> RadixTrie<V>.get(key: Int): V? = getIntObject(key, 0)
@@ -386,9 +385,9 @@ private fun radix() {
     require(t[i] == "hey $i")
   }
   val kvs = HashMap<Int, Any?>()
-  t.reduce { k, v ->
-    kvs[k] = v
-    ReduceDecision.Continue
+  t.reduce { k, value ->
+    kvs[k] = value
+    RadixTrieReduceDecision.Continue
   }
   repeat(10000000) { i ->
     require(kvs[i] == "hey $i")
@@ -399,7 +398,7 @@ private fun radix() {
   repeat(10000000) { i ->
     require(t[i] == null)
   }
-  t.reduce { k, v ->
+  t.reduce { k, _ ->
     error("should be empty: $k")
   }
 }

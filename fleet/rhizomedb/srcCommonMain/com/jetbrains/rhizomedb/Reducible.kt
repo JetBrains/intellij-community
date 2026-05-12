@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util.reducible
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.rhizomedb
 
 import kotlin.jvm.JvmInline
 
 @JvmInline
 value class ReduceDecision(private val continueReduce: Boolean) {
   companion object {
-    val Continue = ReduceDecision(true)
-    val Stop = ReduceDecision(false)
+    val Continue: ReduceDecision = ReduceDecision(true)
+    val Stop: ReduceDecision = ReduceDecision(false)
   }
 }
 
@@ -180,7 +180,7 @@ fun <T> Reducible<T>.toList(): List<T> {
 
 fun <K, V> Reducible<Pair<K, V>>.toMap(m: MutableMap<K, V> = HashMap()): Map<K, V> {
   forEach { (k, v) ->
-    m.put(k, v)
+    m[k] = v
     ReduceDecision.Continue
   }
   return m

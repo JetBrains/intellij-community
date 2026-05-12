@@ -9,10 +9,6 @@ import fleet.fastutil.ints.IntOpenHashSet
 import fleet.fastutil.ints.IntSet
 import fleet.fastutil.ints.isNotEmpty
 import fleet.fastutil.ints.map
-import fleet.util.reducible.Reducible
-import fleet.util.reducible.emptyReducible
-import fleet.util.reducible.reducible
-import fleet.util.reducible.reducibleOf
 
 fun DbContext<Q>.displayAttribute(attribute: Attribute<*>): String = impl.displayAttribute(attribute)
 fun Q.displayAttribute(attribute: Attribute<*>): String = 
