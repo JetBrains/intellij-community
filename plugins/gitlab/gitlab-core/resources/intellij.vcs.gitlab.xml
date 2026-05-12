@@ -243,7 +243,7 @@
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
       <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="BookmarksPopup" use-text-of-place="EditorTabPopup"/>
       <add-to-group group-id="Git.Hosting.Open.In.Browser.Group"/>
     </group>
 
