@@ -11,10 +11,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface FrontendModuleFilter {
-  /**
-   * Returns `true` if module [moduleName] is included in the frontend variant of the distribution.
-   */
-  fun isBackendModule(moduleName: String): Boolean
 
   /**
    * Returns `true` if module [moduleName] can be loaded by the frontend process (JetBrains Client) according to its dependencies.

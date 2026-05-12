@@ -373,13 +373,12 @@ private class DistributionResourcePathsSchema(
  * following heuristics:
  *   * the entry from IDE_HOME/lib is preferred (unless it's also included in a separate JAR in the split frontend part and scrambled there);
  *   * otherwise, the entry which is put to a separate JAR file is preferred;
- *   * otherwise, a JAR included in JetBrains Client is preferred.
- *   * otherwise, a JAR located in a directory named 'client' or 'frontend' is preferred.
+ *   * otherwise, a JAR located in a directory named 'client', 'frontend' or 'frontend-split' is preferred.
  * 
  * This heuristic is verified by RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct.
  * It would be better to get rid of this heuristic and store multiple descriptors for such libraries and modules instead, see IJPL-243081.
  */
-private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
+private fun computeMainPathsForResourcesCopiedToMultiplePlaces(
   entries: List<RuntimeModuleRepositoryEntry>,
   context: BuildContext,
 ): Map<JpsNamedElement, String> {
@@ -410,15 +409,11 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     }
     .groupBy({ it.first }, { Path(it.second) })
 
-  suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
-    return entry is ModuleOutputEntry && context.isEmbeddedFrontendEnabled && !context.getFrontendModuleFilter().isBackendModule(entry.owner.moduleName)
-  }
-  
-  suspend fun chooseMainLocation(element: JpsNamedElement, paths: List<Path>): String {
+  fun chooseMainLocation(element: JpsNamedElement, paths: List<Path>): String {
     val mainLocation = paths.singleOrNull { it.parent?.pathString == "lib" && !isScrambledWithFrontend(element) && !it.name.endsWith("-backend.jar") } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInEmbeddedFrontend(entry.origin) } == true } ?:
-                       paths.singleOrNull { it.parent?.name in setOf("client", "frontend", "frontend-split") }
+                       paths.singleOrNull { it.parent?.name in setOf("client", "frontend", "frontend-split") } ?:
+                       paths.find { pathToEntries[it]?.size == 1 }
     if (mainLocation != null) {
       return mainLocation.invariantSeparatorsPathString
     }

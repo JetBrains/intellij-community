@@ -339,8 +339,7 @@ class BuildContextImpl internal constructor(
   private val _frontendModuleFilter = suspendingLazy("frontend module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
-      val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND, this@BuildContextImpl)
-      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, outputProvider = outputProvider)
+      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project)
     }
     else {
       productProperties.frontendModuleFilter?.invoke(this@BuildContextImpl) ?: EmptyFrontendModuleFilter
