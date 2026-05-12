@@ -21,9 +21,6 @@ jvm_library(
   resources = [":acp_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/platform-impl/rpc",
-    "//platform/kernel/shared:kernel",
-    "//platform/platform-frontend:frontend",
     "//platform/eel",
     "//platform/core-api:core",
     "//platform/util",
