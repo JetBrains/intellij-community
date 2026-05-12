@@ -1423,6 +1423,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       foundElementsInfo = ContainerUtil.copyList(myListModel.getFoundElementsInfo());
     }
 
+    for (int i : indexes) {
+      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
+      String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
+      String reportableContributorID = getReportableContributorID(contributor);
+      ContributorsLocalSummary.getInstance().updateContributorsLocalSummary(reportableContributorID,
+                                                                            selectedTabContributorID.equals(ALL_CONTRIBUTORS_GROUP_ID));
+    }
+
     boolean closePopup = false;
     List<Object> selectedItems = new ArrayList<>();
     for (int i : indexes) {
@@ -1460,14 +1468,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       var correctIndexes = hasNotificationElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
       myMlService.onItemSelected(
         tabId, correctIndexes, selectedItems, ContainerUtil.copyList(foundElementsInfo), searchText);
-    }
-
-    for (int i : indexes) {
-      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(i);
-      String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
-      String reportableContributorID = getReportableContributorID(contributor);
-      ContributorsLocalSummary.getInstance().updateContributorsLocalSummary(reportableContributorID,
-                                                                            selectedTabContributorID.equals(ALL_CONTRIBUTORS_GROUP_ID));
     }
 
     if (closePopup) {
