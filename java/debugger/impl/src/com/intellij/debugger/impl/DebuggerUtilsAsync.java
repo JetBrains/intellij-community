@@ -113,6 +113,13 @@ public final class DebuggerUtilsAsync {
     return completedFuture(value.type());
   }
 
+  public static CompletableFuture<Value> getStaticValue(ReferenceType type, Field field) {
+    if (type instanceof ReferenceTypeImpl typeImpl && isAsyncEnabled()) {
+      return reschedule(typeImpl.getValueAsync(field));
+    }
+    return completedFuture(type.getValue(field));
+  }
+
   public static CompletableFuture<Value> getValue(ObjectReference ref, Field field) {
     if (ref instanceof ObjectReferenceImpl && isAsyncEnabled()) {
       return reschedule(((ObjectReferenceImpl)ref).getValueAsync(field));
