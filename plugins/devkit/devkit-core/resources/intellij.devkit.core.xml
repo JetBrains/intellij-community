@@ -145,7 +145,7 @@
     <registryKey key="devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
     <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file" defaultValue=""
-                 description="Optional filesystem path to an extra predefined split-mode module kinds JSON file loaded in addition to the bundled DevKit data."
+                 description="Optional filesystem path to a predefined split-mode module kinds JSON file loaded instead of the bundled DevKit data when the file exists."
                  restartRequired="true"/>
     <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
                  description="Enables old-fashioned File-New actions for plugin modules"/>

@@ -179,6 +179,23 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     buildPredefinedModuleKindsLookup(loadPredefinedModuleKindsData())
   }
 
+  @TestOnly
+  fun reloadRestrictionsForTest() {
+    val apiRestrictions = buildApiRestrictionsLookup(loadApiRestrictionsData())
+    val predefinedModuleKinds = buildPredefinedModuleKindsLookup(loadPredefinedModuleKindsData())
+    state.set(
+      RestrictionsState(
+        loadingState = LoadingState.COMPLETED,
+        restrictionsSnapshot = RestrictionsSnapshot(
+          codeRestrictions = apiRestrictions.codeRestrictions,
+          extensionPointToApiName = apiRestrictions.extensionPointToApiName,
+          apiHints = apiRestrictions.apiHints,
+          predefinedModuleKinds = predefinedModuleKinds,
+        )
+      )
+    )
+  }
+
   fun scheduleLoadRestrictions() {
     startLoadingIfNeeded()
   }
@@ -249,13 +266,13 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
   }
 
   private fun loadPredefinedModuleKindsData(): List<PredefinedModuleKind> {
-    val bundledJsonText = readRestrictionsJson(PREDEFINED_MODULE_KINDS_FILE_PATH) ?: return emptyList()
-    val predefinedModuleKinds = json.decodeFromString<List<PredefinedModuleKind>>(bundledJsonText).toMutableList()
     val additionalJsonText = readAdditionalPredefinedModuleKindsJson()
     if (additionalJsonText != null) {
-      predefinedModuleKinds.addAll(json.decodeFromString<List<PredefinedModuleKind>>(additionalJsonText))
+      return json.decodeFromString(additionalJsonText)
     }
-    return predefinedModuleKinds
+
+    val bundledJsonText = readRestrictionsJson(PREDEFINED_MODULE_KINDS_FILE_PATH) ?: return emptyList()
+    return json.decodeFromString(bundledJsonText)
   }
 
   private fun readRestrictionsJson(filePath: String): String? {
@@ -276,7 +293,7 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
       return null
     }
 
-    LOG.info("Loading additional predefined split-mode module kinds from $filePath")
+    LOG.info("Loading predefined split-mode module kinds from $filePath instead of bundled DevKit data")
     return Files.newBufferedReader(path).use { it.readText() }
   }
 
