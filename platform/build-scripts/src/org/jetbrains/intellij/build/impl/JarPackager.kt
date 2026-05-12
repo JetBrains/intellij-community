@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
@@ -46,7 +45,6 @@ import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
@@ -89,17 +87,16 @@ private val libsUsedInJps = setOf(
   "kotlin-stdlib",
 )
 
-private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFilter) -> Boolean>>(
-  "groovy.jar" to { it, _ -> it.startsWith("org.codehaus.groovy:") },
-  "jsch-agent.jar" to { it, _ -> it.startsWith("jsch-agent") },
-  "opentelemetry.jar" to { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
-  PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
-  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
+private val predefinedMergeRules = listOf<Pair<String, (String) -> Boolean>>(
+  "groovy.jar" to { it.startsWith("org.codehaus.groovy:") },
+  "jsch-agent.jar" to { it.startsWith("jsch-agent") },
+  "opentelemetry.jar" to { it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
+  PRODUCT_BACKEND_JAR to { name -> name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.") },
   // see ClassPathUtil.getUtilClassPath
-  UTIL_8_JAR to { it, _ -> libsUsedInJps.contains(it) || (it.startsWith("kotlinx-")) },
+  UTIL_8_JAR to { libsUsedInJps.contains(it) || (it.startsWith("kotlinx-")) },
 
   // used in an external process - see `ConsoleProcessListFetcher.getConsoleProcessCount`
-  UTIL_JAR to { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" },
+  UTIL_JAR to { it == "pty4j" || it == "jvm-native-trusted-roots" },
 )
 
 internal fun getLibraryFileName(library: JpsLibrary): String {
@@ -171,12 +168,10 @@ class JarPackager private constructor(
       )
       packager.computeModuleCustomLibrarySources(layout)
 
-      val frontendModuleFilter = context.getFrontendModuleFilter()
       val libraryToMerge = packager.computeProjectLibrariesSources(
         outDir = outputDir,
         layout = layout,
         copiedFiles = packager.copiedFiles,
-        frontendModuleFilter = frontendModuleFilter,
       )
       if (isRootDir) {
         for ((jarName, predicate) in predefinedMergeRules) {
@@ -185,20 +180,11 @@ class JarPackager private constructor(
             libraryToMerge = libraryToMerge,
             outputDir = outputDir,
             predicate = predicate,
-            frontendModuleFilter = frontendModuleFilter,
           )
         }
 
         if (!libraryToMerge.isEmpty()) {
-          val commonLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isBackendProjectLibrary(it.name) }
-          if (commonLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = commonLibraries)
-          }
-
-          val backendLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isBackendProjectLibrary(it.name) }
-          if (backendLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_BACKEND_JAR), libraryToMerge = backendLibraries)
-          }
+          packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = libraryToMerge)
         }
       }
       else if (!libraryToMerge.isEmpty()) {
@@ -612,14 +598,13 @@ class JarPackager private constructor(
     jarName: String,
     libraryToMerge: MutableMap<JpsLibrary, List<Path>>,
     outputDir: Path,
-    predicate: (String, FrontendModuleFilter) -> Boolean,
-    frontendModuleFilter: FrontendModuleFilter,
+    predicate: (String) -> Boolean,
   ) {
     val result = LinkedHashMap<JpsLibrary, List<Path>>()
     val iterator = libraryToMerge.entries.iterator()
     while (iterator.hasNext()) {
       val (key, value) = iterator.next()
-      if (predicate(key.name, frontendModuleFilter)) {
+      if (predicate(key.name)) {
         iterator.remove()
         result.put(key, value)
       }
@@ -642,7 +627,6 @@ class JarPackager private constructor(
     outDir: Path,
     layout: BaseLayout,
     copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
-    frontendModuleFilter: FrontendModuleFilter,
   ): MutableMap<JpsLibrary, List<Path>> {
     if (layout.includedProjectLibraries.isEmpty()) {
       return LinkedHashMap()
@@ -661,7 +645,7 @@ class JarPackager private constructor(
         if (layout is PluginLayout) {
           throw IllegalStateException("PackMode.MERGED is deprecated for plugins, please check why the library is marked as MERGED (libName=$libName, plugin=${layout.mainModule})")
         }
-        else if (!predefinedMergeRules.any { it.second(libName, frontendModuleFilter) } && !isLibraryMergeable(libName)) {
+        else if (!predefinedMergeRules.any { it.second(libName) } && !isLibraryMergeable(libName)) {
           packMode = LibraryPackMode.STANDALONE_MERGED
         }
       }

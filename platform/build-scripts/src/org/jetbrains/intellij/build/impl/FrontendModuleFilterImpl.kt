@@ -67,10 +67,6 @@ internal class FrontendModuleFilterImpl private constructor(
     return moduleName !in includedModuleNames
   }
 
-  override fun isBackendProjectLibrary(libraryName: String): Boolean {
-    return libraryName !in includedProjectLibraryNames
-  }
-
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean {
     val module = project.findModuleByName(moduleName)
     return module != null && frontendModeMatcher.matches(module)
@@ -98,7 +94,6 @@ fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) 
 
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
   override fun isBackendModule(moduleName: String): Boolean = false
-  override fun isBackendProjectLibrary(libraryName: String): Boolean = false
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
 }
 

@@ -17,11 +17,6 @@ interface FrontendModuleFilter {
   fun isBackendModule(moduleName: String): Boolean
 
   /**
-   * Returns `true` if a project library [libraryName] is included in the frontend variant of the distribution.
-   */
-  fun isBackendProjectLibrary(libraryName: String): Boolean
-
-  /**
    * Returns `true` if module [moduleName] can be loaded by the frontend process (JetBrains Client) according to its dependencies.
    * This doesn't indicate that the module will be included in the frontend variant of this particular IDE.
    * This function is supposed to be used for plugins, including non-bundled ones, where it's not known in which specific frontend variant a plugin will be included.
