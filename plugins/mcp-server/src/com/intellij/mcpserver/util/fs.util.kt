@@ -29,6 +29,8 @@ private val logger = fileLogger()
  * Returns the project's base directory as a [Path].
  *
  * If the project directory cannot be determined, an McpExpectedException is thrown.
+ *
+ * Consider using [com.intellij.openapi.project.BaseProjectDirectories] instead, it handles more cases.
  */
 val Project.projectDirectory: Path
   get() {

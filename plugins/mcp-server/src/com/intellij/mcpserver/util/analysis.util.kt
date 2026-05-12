@@ -3,9 +3,9 @@ package com.intellij.mcpserver.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
@@ -23,11 +23,9 @@ suspend fun awaitExternalChangesAndIndexing(project: Project) {
   val dumbService = project.serviceAsync<DumbService>()
   val localFileSystem = LocalFileSystem.getInstance()
   // Get project roots
-  val projectDirectory = project.projectDirectory
-  val contentRoots = project.serviceAsync<ProjectRootManager>().contentRoots.toSet()
-  val projectDirVirtualFile = localFileSystem.refreshAndFindFileByNioFile(projectDirectory)
+  val baseDirectories = project.getBaseDirectories()
   (LocalFileSystem.getInstance() as LocalFileSystemImpl).markSuspiciousFilesDirty(emptyList<VirtualFile>())
-  val dirtyFiles = (setOf(projectDirVirtualFile) + contentRoots).filter { (it as VirtualFileSystemEntry).isDirty }
+  val dirtyFiles = baseDirectories.filter { (it as VirtualFileSystemEntry).isDirty }
 
   if (dirtyFiles.isNotEmpty()) {
     suspendCancellableCoroutine { cont ->
