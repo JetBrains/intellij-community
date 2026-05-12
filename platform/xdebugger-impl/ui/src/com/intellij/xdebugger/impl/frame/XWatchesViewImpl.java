@@ -596,7 +596,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   /**
-   * @deprecated Use {@link XDebuggerWatchesManager#getWatches(String)} directly
+   * @deprecated Use {@link XDebuggerWatchesManager#getWatchEntries} directly
    */
   @Deprecated
   protected @NotNull List<XExpression> getExpressions() {
