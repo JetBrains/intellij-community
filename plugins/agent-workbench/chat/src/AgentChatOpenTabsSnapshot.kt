@@ -86,6 +86,9 @@ internal fun collectOpenAgentChatTabsSnapshot(
     val exManager = manager as? FileEditorManagerEx
     for (openFile in manager.openFiles) {
       val chatFile = openFile as? AgentChatVirtualFile ?: continue
+      if (chatFile.projectPath.isBlank() || chatFile.threadIdentity.isBlank()) {
+        continue
+      }
       val normalizedProjectPath = normalizeAgentWorkbenchPath(chatFile.projectPath)
       val hasPendingThreadIdentity = chatFile.isPendingThread
       val participatesInPendingThreadLifecycle = chatFile.participatesInPendingThreadLifecycle()
@@ -390,10 +393,7 @@ internal class AgentChatOpenTabsSnapshot(
 
 internal fun isPendingThreadIdentityForProvider(threadIdentity: String, provider: AgentSessionProvider): Boolean {
   val identity = splitAgentThreadIdentity(threadIdentity) ?: return false
-  if (!provider.value.equals(identity.first, ignoreCase = true)) {
-    return false
-  }
-  return identity.second.startsWith("new-")
+  return provider.value.equals(identity.first, ignoreCase = true) && identity.second.startsWith("new-")
 }
 
 internal fun pendingProviderForThreadIdentity(threadIdentity: String): AgentSessionProvider? {

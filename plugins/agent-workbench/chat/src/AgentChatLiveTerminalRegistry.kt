@@ -3,6 +3,7 @@
 
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -36,7 +37,11 @@ internal interface AgentChatLiveTerminalRegistry {
   /**
    * Returns the existing live terminal for [file], or creates it on first attachment.
    */
-  fun acquireOrCreate(file: AgentChatVirtualFile, terminalTabs: AgentChatTerminalTabs): AgentChatTerminalTab
+  fun acquireOrCreate(
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab
 }
 
 /**
@@ -84,9 +89,13 @@ internal class AgentChatLiveTerminalRegistryService(
     }
   }
 
-  override fun acquireOrCreate(file: AgentChatVirtualFile, terminalTabs: AgentChatTerminalTabs): AgentChatTerminalTab {
+  override fun acquireOrCreate(
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab {
     cancelPendingCloseJob(file.tabKey)
-    return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
+    return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
   }
 
   override fun dispose() {
@@ -176,7 +185,12 @@ internal class AgentChatLiveTerminalStore(
    * Reuses the retained terminal for the same logical tab, preserving the running session across editor recreation.
    */
   @Synchronized
-  fun acquireOrCreate(project: Project, file: AgentChatVirtualFile, terminalTabs: AgentChatTerminalTabs): AgentChatTerminalTab {
+  fun acquireOrCreate(
+    project: Project,
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec = AgentSessionTerminalLaunchSpec(command = emptyList()),
+  ): AgentChatTerminalTab {
     pendingCloseTabKeys.remove(file.tabKey)
     val existing = entries.get(file.tabKey)
     if (existing != null) {
@@ -185,7 +199,7 @@ internal class AgentChatLiveTerminalStore(
       return existing.tab
     }
 
-    val createdTab = terminalTabs.createTab(project, file)
+    val createdTab = terminalTabs.createTab(project, file, startupLaunchSpec)
     entries.put(file.tabKey, LiveTerminalEntry(project = project, file = file, tab = createdTab, terminalTabs = terminalTabs))
     return createdTab
   }

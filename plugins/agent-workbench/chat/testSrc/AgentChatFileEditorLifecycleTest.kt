@@ -4,10 +4,12 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
@@ -15,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorNavigatable
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -23,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +52,7 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.coroutines.CoroutineContext
 
 private val editorsToDispose = CopyOnWriteArrayList<AgentChatFileEditor>()
 
@@ -86,6 +91,11 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun codexPatchFoldingIsNotInstalledWithoutApplication() {
+    assertThat(shouldInstallAgentChatPatchFolding(AgentSessionProvider.CODEX)).isFalse()
+  }
+
+  @Test
   fun preferredFocusedComponentDoesNotStartTerminalInitialization() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val editor = testEditor(terminalTabs = terminalTabs)
@@ -106,6 +116,42 @@ class AgentChatFileEditorLifecycleTest {
 
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(editor.preferredFocusedComponent).isSameAs(terminalTabs.tab.preferredFocusableComponent)
+  }
+
+  @Test
+  fun pendingContextCanBeQueuedBeforeAsyncTerminalInitialization() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editorScope = object : CoroutineScope {
+      override val coroutineContext = Job() + PausedCoroutineDispatcher
+    }
+    val editor = testEditor(
+      file = restoredConcreteTestFile(),
+      terminalTabs = terminalTabs,
+      editorCoroutineScope = editorScope,
+    )
+
+    try {
+      val added = editor.addPendingContextItems(listOf(testContextItem()))
+
+      assertThat(added).isTrue()
+      assertThat(terminalTabs.createCalls).isEqualTo(0)
+      assertThat(editor.pendingContextItemsForTests().map { it.title }).containsExactly("Queued.kt")
+    }
+    finally {
+      editorScope.cancel()
+    }
+  }
+
+  @Test
+  fun nonRestorableFileProducesEmptyEditorState() {
+    val file = pendingTestFile()
+    file.updateRestoreOnRestart(false)
+    val editor = testEditor(file = file)
+
+    val state = editor.getState(FileEditorStateLevel.FULL) as AgentChatFileEditorState
+
+    assertThat(state.snapshot).isNull()
+    assertThat(state.startupIntent).isNull()
   }
 
   @Test
@@ -174,6 +220,7 @@ class AgentChatFileEditorLifecycleTest {
 
     firstEditor.selectNotify()
     Disposer.dispose(firstEditor)
+    file.setStartupLaunchSpecOverride(AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", "session-1")))
 
     val secondEditor = testEditor(
       project = project,
@@ -424,6 +471,7 @@ class AgentChatFileEditorLifecycleTest {
     Disposer.dispose(firstEditor)
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     val closeResult = liveTerminalStore.handleFileClosed(project, testFileEditorManager(isFileOpen = false), file)
+    file.setStartupLaunchSpecOverride(AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", "session-1")))
 
     val secondEditor = testEditor(
       project = project,
@@ -1310,8 +1358,6 @@ class AgentChatFileEditorLifecycleTest {
 
       file.rebindPendingThread(
         threadIdentity = buildAgentThreadIdentity(AgentSessionProvider.CODEX.value, "thread-42"),
-        shellCommand = listOf("codex", "resume", "thread-42"),
-        shellEnvVariables = emptyMap(),
         threadId = "thread-42",
         threadTitle = "Recovered thread",
         threadActivity = AgentThreadActivity.READY,
@@ -1387,7 +1433,11 @@ private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
   var closeCalls: Int = 0
   val tab = FakeAgentChatTerminalTab()
 
-  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
+  override fun createTab(
+    project: Project,
+    file: AgentChatVirtualFile,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab {
     createCalls++
     return tab
   }
@@ -1639,6 +1689,30 @@ private fun pendingTestFile(
   }
 }
 
+private fun restoredConcreteTestFile(): AgentChatVirtualFile {
+  val snapshot = AgentChatTabSnapshot.create(
+    projectHash = "hash-1",
+    projectPath = "/work/project-a",
+    threadIdentity = "CODEX:thread-restored",
+    threadId = "thread-restored",
+    threadTitle = "Restored thread",
+    subAgentId = null,
+  )
+  return AgentChatVirtualFile(
+    fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
+    resolution = AgentChatTabResolution.Resolved(snapshot),
+  )
+}
+
+private fun testContextItem(): AgentPromptContextItem {
+  return AgentPromptContextItem(
+    rendererId = "test",
+    title = "Queued.kt",
+    body = "body",
+    source = "test",
+  )
+}
+
 private fun claudeLifecycleTestFile(): AgentChatVirtualFile {
   return testFile(
     threadIdentity = "CLAUDE:session-1",
@@ -1653,6 +1727,7 @@ private fun testEditor(
   liveTerminalRegistry: AgentChatLiveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project),
   snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
+  editorCoroutineScope: CoroutineScope? = null,
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
     project = project,
@@ -1661,7 +1736,12 @@ private fun testEditor(
     liveTerminalRegistry = liveTerminalRegistry,
     tabSnapshotWriter = snapshotWriter,
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
+    editorCoroutineScope = editorCoroutineScope,
   ).also(editorsToDispose::add)
+}
+
+private object PausedCoroutineDispatcher : CoroutineDispatcher() {
+  override fun dispatch(context: CoroutineContext, block: Runnable) = Unit
 }
 
 private fun codexPlanDispatchSteps(
@@ -1721,8 +1801,12 @@ private class TestAgentChatLiveTerminalRegistry(
   private val project: Project,
   private val store: AgentChatLiveTerminalStore = AgentChatLiveTerminalStore(),
 ) : AgentChatLiveTerminalRegistry {
-  override fun acquireOrCreate(file: AgentChatVirtualFile, terminalTabs: AgentChatTerminalTabs): AgentChatTerminalTab {
-    return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
+  override fun acquireOrCreate(
+    file: AgentChatVirtualFile,
+    terminalTabs: AgentChatTerminalTabs,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab {
+    return store.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs, startupLaunchSpec = startupLaunchSpec)
   }
 }
 

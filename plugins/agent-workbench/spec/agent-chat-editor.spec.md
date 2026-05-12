@@ -22,15 +22,16 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
 - Agent Chat registers an async file editor provider, virtual file system key `agent-chat`, and editor-tab title/icon providers.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- Chat virtual files use v2 URLs `agent-chat://2/<tabKey>`, where `tabKey` is a lowercase base36 SHA-256 digest over full tab identity. Full restore metadata is stored in app-level cache state keyed by `tabKey`.
+- Chat virtual files use v2 URLs `agent-chat://2/<tabKey>`, where `tabKey` is a lowercase base36 SHA-256 digest over full tab identity. The URL carries tab identity only; editor-provider state stores the restore metadata for open tabs. The legacy app-level tab cache may be read for old sessions, but is not the canonical restore store.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Opening a chat must reuse an existing tab for the same canonical thread identity and sub-agent id. Already-open top-level concrete tabs are addressable by normalized path, provider, and thread id for ordered post-start dispatch.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatOpenTopLevelDispatchTest.kt
 
-- Restore must restore all previously open Agent Chat tabs, prune stale/invalid tab state, and use persisted title/activity only as bootstrap fallback until live shared thread presentation is available.
+- Restore must restore all previously open Agent Chat tabs from editor state, tolerate unresolved URL materialization before provider state is applied, reconstruct pending new-session startup from provider/mode metadata instead of persisted shell commands, prune stale/invalid legacy tab state, and use persisted title/activity only as bootstrap fallback until live shared thread presentation is available.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Terminal content initialization is lazy: the lightweight editor shell appears immediately, and the terminal starts only after explicit tab selection/focus.
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
@@ -62,11 +63,11 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Archive of a matching top-level thread closes the open chat tab and removes persisted tab state.
+- Archive of a matching top-level thread closes the open chat tab and removes matching legacy tab state when present.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Restore validation and terminal initialization failures close the tab, delete its tab state, and emit de-duplicated warning notifications. Command lookup failures include the attempted command and startup `PATH` snapshot when available.
+- Restore validation and terminal initialization failures close the tab, forget matching legacy tab state when present, and emit de-duplicated warning notifications. Command lookup failures include the attempted command and startup `PATH` snapshot when available from the terminal-start failure.
   [@test] ../chat/testSrc/AgentChatRestoreNotificationServiceTest.kt
 
 ## Testing / Local Run

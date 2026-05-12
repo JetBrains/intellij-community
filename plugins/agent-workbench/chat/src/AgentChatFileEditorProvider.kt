@@ -7,18 +7,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.beans.PropertyChangeListener
-import javax.swing.JComponent
-import javax.swing.JPanel
+import org.jdom.Element
 
 @Suppress("unused")
 internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
@@ -33,27 +29,23 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
     val chatFile = file as AgentChatVirtualFile
-    val validationError = validate(chatFile)
-    if (validationError == null) {
-      return withContext(Dispatchers.EDT) {
-        AgentChatFileEditor(project = project, file = chatFile)
-      }
-    }
-    else {
-      return withContext(Dispatchers.EDT) {
-        handleValidationError(project, chatFile, validationError)
-      }
+    return withContext(Dispatchers.EDT) {
+      AgentChatFileEditor(project = project, file = chatFile, editorCoroutineScope = editorCoroutineScope)
     }
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val chatFile = file as AgentChatVirtualFile
-    val validationError = validate(chatFile)
-    if (validationError == null) {
-      return AgentChatFileEditor(project = project, file = chatFile)
-    }
-    else {
-      return handleValidationError(project, chatFile, validationError)
+    return AgentChatFileEditor(project = project, file = chatFile)
+  }
+
+  override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
+    return readAgentChatFileEditorState(sourceElement, file)
+  }
+
+  override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
+    if (state is AgentChatFileEditorState) {
+      writeAgentChatFileEditorState(state, targetElement)
     }
   }
 
@@ -62,46 +54,11 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
 }
 
-private fun handleValidationError(project: Project, file: AgentChatVirtualFile, validationError: String): FileEditor {
-  forgetAgentChatTabMetadata(file.tabKey)
-  AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
-  if (!project.isDisposed) {
-    FileEditorManager.getInstance(project).closeFile(file)
-  }
-  return AgentChatUnavailableFileEditor(file)
-}
-
-private fun validate(file: AgentChatVirtualFile): String? {
+internal fun validateAgentChatFile(file: AgentChatVirtualFile): String? {
   return when {
     file.projectPath.isBlank() -> AgentChatBundle.message("chat.restore.validation.project.path")
     file.threadIdentity.isBlank() -> AgentChatBundle.message("chat.restore.validation.thread.identity")
-    file.shellCommand.isEmpty() -> AgentChatBundle.message("chat.restore.validation.shell.command")
+    file.provider == null || file.sessionId.isBlank() -> AgentChatBundle.message("chat.restore.validation.thread.identity")
     else -> null
   }
-}
-
-private class AgentChatUnavailableFileEditor(
-  private val file: AgentChatVirtualFile,
-) : UserDataHolderBase(), FileEditor {
-  private val component = JPanel()
-
-  override fun getComponent(): JComponent = component
-
-  override fun getPreferredFocusedComponent(): JComponent = component
-
-  override fun getName(): String = AgentChatBundle.message("chat.filetype.name")
-
-  override fun setState(state: FileEditorState) = Unit
-
-  override fun isModified(): Boolean = false
-
-  override fun isValid(): Boolean = false
-
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) = Unit
-
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
-
-  override fun getFile(): AgentChatVirtualFile = file
-
-  override fun dispose() = Unit
 }

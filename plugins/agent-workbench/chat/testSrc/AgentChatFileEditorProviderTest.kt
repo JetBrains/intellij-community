@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -18,12 +19,14 @@ import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadSt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
 import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,7 +50,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun keepsCodexResumeCommandOnVirtualFile() {
+  fun keepsCodexResumeCommandAsTransientStartupOverride() {
     val file = AgentChatVirtualFile(
       projectPath = "/work/project-a",
       threadIdentity = "CODEX:thread-1",
@@ -57,11 +60,12 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
     )
 
-    assertThat(file.shellCommand).containsExactly("codex", "resume", "thread-1")
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
+    assertThat(startupLaunchSpec.command).containsExactly("codex", "resume", "thread-1")
   }
 
   @Test
-  fun startupLaunchSpecOverrideIsConsumedOnceAndNotPersisted() {
+  fun startupLaunchSpecOverrideIsConsumedOnce() {
     val file = AgentChatVirtualFile(
       projectPath = "/work/project-a",
       threadIdentity = "CODEX:thread-1",
@@ -78,22 +82,16 @@ class AgentChatFileEditorProviderTest {
       )
     )
 
-    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
     assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
     assertThat(startupLaunchSpec.envVariables)
-      .containsExactlyEntriesOf(mapOf("PATH" to "/custom/bin", "TERM" to "xterm-256color", "DISABLE_AUTOUPDATER" to "1"))
+      .containsExactlyEntriesOf(mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"))
 
-    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
-    assertThat(fallbackLaunchSpec.command).containsExactly("codex", "resume", "thread-1")
-    assertThat(fallbackLaunchSpec.envVariables)
-      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
-    assertThat(file.toSnapshot().runtime.shellCommand).containsExactly("codex", "resume", "thread-1")
-    assertThat(file.toSnapshot().runtime.shellEnvVariables)
-      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+    assertThat(file.consumeStartupLaunchSpecOverride()).isNull()
   }
 
   @Test
-  fun startupLaunchSpecOverrideFallsBackToRemoteResumeCommandAndPersistsIt() {
+  fun startupLaunchSpecOverrideDoesNotPersistRemoteResumeCommand() {
     val remoteCommand = listOf(
       "codex",
       "-c",
@@ -119,26 +117,156 @@ class AgentChatFileEditorProviderTest {
       )
     )
 
-    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
     assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
 
-    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
-    assertThat(fallbackLaunchSpec.command).containsExactlyElementsOf(remoteCommand)
-    assertThat(fallbackLaunchSpec.envVariables)
-      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
+    assertThat(file.consumeStartupLaunchSpecOverride()).isNull()
 
     val snapshot = file.toSnapshot()
-    assertThat(snapshot.runtime.shellCommand).containsExactlyElementsOf(remoteCommand)
 
     val store = AgentChatTabsStateService(null)
     store.upsert(snapshot)
     try {
       val loaded = store.load(snapshot.tabKey)
-      assertThat(loaded?.runtime?.shellCommand).containsExactlyElementsOf(remoteCommand)
+      assertThat(loaded?.identity).isEqualTo(snapshot.identity)
+      assertThat(loaded?.runtime?.threadId).isEqualTo(snapshot.runtime.threadId)
     }
     finally {
       store.delete(snapshot.tabKey)
     }
+  }
+
+  @Test
+  fun fileEditorStateRoundTripsMetadataWithoutCommand() {
+    val dispatchSteps = listOf(
+      AgentInitialMessageDispatchStep(text = "first step"),
+      AgentInitialMessageDispatchStep(text = "second step"),
+    )
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-state",
+      threadId = "thread-state",
+      threadTitle = "State thread",
+      subAgentId = "alpha",
+      threadActivity = AgentThreadActivity.UNREAD,
+      pendingCreatedAtMs = 100,
+      pendingFirstInputAtMs = 200,
+      pendingLaunchMode = AgentSessionLaunchMode.STANDARD.name,
+      newThreadRebindRequestedAtMs = 300,
+      initialMessageDispatchSteps = dispatchSteps,
+      initialMessageDispatchStepIndex = 1,
+      initialMessageToken = "token-state",
+      initialMessageSent = false,
+    )
+    val element = Element("state")
+
+    val startupIntent = AgentChatStartupIntent.NewSession(
+      provider = AgentSessionProvider.CODEX,
+      launchMode = AgentSessionLaunchMode.YOLO,
+    )
+
+    writeAgentChatFileEditorState(AgentChatFileEditorState(snapshot = snapshot, startupIntent = startupIntent), element)
+
+    assertThat(element.getAttributeValue("shellCommand")).isNull()
+    assertThat(element.getAttributeValue("shellEnvVariables")).isNull()
+    assertThat(element.getAttributeValue("startupKind")).isEqualTo("newSession")
+    assertThat(element.getAttributeValue("startupProvider")).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(element.getAttributeValue("startupLaunchMode")).isEqualTo(AgentSessionLaunchMode.YOLO.name)
+
+    val file = AgentChatVirtualFile(
+      projectPath = snapshot.identity.projectPath,
+      threadIdentity = snapshot.identity.threadIdentity,
+      shellCommand = emptyList(),
+      threadId = snapshot.runtime.threadId,
+      threadTitle = snapshot.runtime.threadTitle,
+      subAgentId = snapshot.identity.subAgentId,
+      projectHash = snapshot.identity.projectHash,
+    )
+    val restoredState = readAgentChatFileEditorState(element, file)
+    val restored = restoredState.snapshot
+
+    assertThat(restored?.identity).isEqualTo(snapshot.identity)
+    assertThat(restored?.runtime?.threadId).isEqualTo("thread-state")
+    assertThat(restored?.runtime?.threadTitle).isEqualTo("State thread")
+    assertThat(restored?.runtime?.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(restored?.runtime?.pendingCreatedAtMs).isEqualTo(100)
+    assertThat(restored?.runtime?.pendingFirstInputAtMs).isEqualTo(200)
+    assertThat(restored?.runtime?.pendingLaunchMode).isEqualTo(AgentSessionLaunchMode.STANDARD.name)
+    assertThat(restored?.runtime?.newThreadRebindRequestedAtMs).isEqualTo(300)
+    assertThat(restored?.runtime?.initialMessageDispatchSteps).containsExactlyElementsOf(dispatchSteps)
+    assertThat(restored?.runtime?.initialMessageDispatchStepIndex).isEqualTo(1)
+    assertThat(restored?.runtime?.initialMessageToken).isEqualTo("token-state")
+    assertThat(restored?.runtime?.initialMessageSent).isFalse()
+    assertThat(restoredState.startupIntent).isEqualTo(startupIntent)
+  }
+
+  @Test
+  fun fileEditorStateHydratesRestoredPresentationBeforeSetState() {
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-restored-title",
+      threadId = "thread-restored-title",
+      threadTitle = "Restored thread",
+      subAgentId = null,
+      threadActivity = AgentThreadActivity.UNREAD,
+    )
+    val element = Element("state")
+    writeAgentChatFileEditorState(AgentChatFileEditorState(snapshot = snapshot), element)
+    val file = AgentChatVirtualFile(
+      fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
+      resolution = AgentChatTabResolution.Unresolved(snapshot.tabKey),
+    )
+    val titleProvider = AgentChatEditorTabTitleProvider()
+    val project = ProjectManager.getInstance().defaultProject
+    val fallbackTitle = AgentChatBundle.message("chat.filetype.name")
+
+    assertThat(file.projectPath).isBlank()
+    assertThat(file.threadIdentity).isBlank()
+    assertThat(titleProvider.getEditorTabTitle(project, file)).isEqualTo(fallbackTitle)
+
+    val restoredState = readAgentChatFileEditorState(element, file)
+
+    assertThat(restoredState.snapshot).isEqualTo(snapshot)
+    assertThat(file.projectPath).isEqualTo(snapshot.identity.projectPath)
+    assertThat(file.threadIdentity).isEqualTo(snapshot.identity.threadIdentity)
+    assertThat(file.threadTitle).isEqualTo("Restored thread")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(titleProvider.getEditorTabTitle(project, file)).isEqualTo("Restored thread")
+  }
+
+  @Test
+  fun fileEditorStateDoesNotHydrateVirtualFileWhenStateKeyDoesNotMatch() {
+    val snapshot = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-state-title",
+      threadId = "thread-state-title",
+      threadTitle = "State title",
+      subAgentId = null,
+    )
+    val otherSnapshot = AgentChatTabSnapshot.create(
+      projectHash = "hash-1",
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-other-title",
+      threadId = "thread-other-title",
+      threadTitle = "Other title",
+      subAgentId = null,
+    )
+    val element = Element("state")
+    writeAgentChatFileEditorState(AgentChatFileEditorState(snapshot = snapshot), element)
+    val file = AgentChatVirtualFile(
+      fileSystem = createStandaloneAgentChatVirtualFileSystemForTest(),
+      resolution = AgentChatTabResolution.Unresolved(otherSnapshot.tabKey),
+    )
+
+    val restoredState = readAgentChatFileEditorState(element, file)
+
+    assertThat(restoredState.snapshot).isNull()
+    assertThat(file.projectPath).isBlank()
+    assertThat(file.threadIdentity).isBlank()
+    assertThat(file.threadTitle).isEqualTo(AgentChatBundle.message("chat.filetype.name"))
   }
 
   @Test
@@ -158,7 +286,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun keepsClaudeResumeCommandOnVirtualFile() {
+  fun keepsClaudeResumeCommandAsTransientStartupOverride() {
     val file = AgentChatVirtualFile(
       projectPath = "/work/project-a",
       threadIdentity = "CLAUDE:session-1",
@@ -168,7 +296,8 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
     )
 
-    assertThat(file.shellCommand).containsExactly("claude", "--resume", "session-1")
+    val startupLaunchSpec = checkNotNull(file.consumeStartupLaunchSpecOverride())
+    assertThat(startupLaunchSpec.command).containsExactly("claude", "--resume", "session-1")
   }
 
   @Test
@@ -213,7 +342,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-42",
       threadTitle = "Implement parser",
       subAgentId = "alpha",
-      shellCommand = listOf("codex", "resume", "thread-42"),
     )
 
     val uppercasePath = "$AGENT_CHAT_URL_SCHEMA_VERSION/${snapshot.tabKey.value.uppercase()}"
@@ -310,7 +438,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-restore",
       threadTitle = "Restored thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-restore"),
       threadActivity = AgentThreadActivity.UNREAD,
     )
     val tabsService = service<AgentChatTabsService>()
@@ -341,7 +468,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-forget",
       threadTitle = "Forget me",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-forget"),
     )
     val tabsService = service<AgentChatTabsService>()
     val store = service<AgentThreadPresentationStore>()
@@ -371,7 +497,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-empty",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = emptyList(),
       threadActivity = AgentThreadActivity.UNREAD,
     )
     val store = AgentChatTabsStateService(null)
@@ -384,7 +509,6 @@ class AgentChatFileEditorProviderTest {
       assertThat(loaded?.runtime?.threadId).isEqualTo(snapshot.runtime.threadId)
       assertThat(loaded?.runtime?.threadTitle).isEqualTo(snapshot.runtime.threadTitle)
       assertThat(loaded?.identity?.subAgentId).isEqualTo(snapshot.identity.subAgentId)
-      assertThat(loaded?.runtime?.shellCommand).isEqualTo(snapshot.runtime.shellCommand)
       assertThat(loaded?.runtime?.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     }
     finally {
@@ -401,7 +525,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-status",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-status"),
       threadActivity = AgentThreadActivity.UNREAD,
     )
     val store = AgentChatTabsStateService(null)
@@ -424,7 +547,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "codex:thread-legacy",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-legacy"),
     )
     val store = AgentChatTabsStateService(null)
     store.upsert(snapshot)
@@ -447,14 +569,12 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-9",
       threadTitle = "Thread",
       subAgentId = "alpha",
-      shellCommand = listOf("codex", "resume", "thread-9"),
     )
     val fileSystem = AgentChatVirtualFileSystem()
 
     val unresolved = fileSystem.getOrCreateFile(AgentChatTabResolution.Unresolved(snapshot.tabKey))
     assertThat(unresolved.projectPath).isBlank()
     assertThat(unresolved.threadIdentity).isBlank()
-    assertThat(unresolved.shellCommand).isEmpty()
 
     val resolved = fileSystem.getOrCreateFile(snapshot)
     assertThat(resolved).isNotSameAs(unresolved)
@@ -462,7 +582,6 @@ class AgentChatFileEditorProviderTest {
     assertThat(resolved.threadIdentity).isEqualTo(snapshot.identity.threadIdentity)
     assertThat(resolved.threadId).isEqualTo(snapshot.runtime.threadId)
     assertThat(resolved.subAgentId).isEqualTo(snapshot.identity.subAgentId)
-    assertThat(resolved.shellCommand).isEqualTo(snapshot.runtime.shellCommand)
   }
 
   @Test
@@ -475,7 +594,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-1",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-1"),
     )
     val matchingSubAgent = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
@@ -484,7 +602,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-1",
       threadTitle = "Thread",
       subAgentId = "alpha",
-      shellCommand = listOf("codex", "resume", "thread-1"),
     )
     val differentIdentity = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
@@ -493,7 +610,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-2",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-2"),
     )
     val differentProject = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
@@ -502,7 +618,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-1",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-1"),
     )
 
     store.upsert(matchingBase)
@@ -536,7 +651,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "thread-1",
       threadTitle = "Thread",
       subAgentId = null,
-      shellCommand = listOf("codex", "resume", "thread-1"),
     )
     val matchingSubAgent = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
@@ -545,7 +659,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "sub-alpha",
       threadTitle = "Thread",
       subAgentId = "alpha",
-      shellCommand = listOf("codex", "resume", "sub-alpha"),
     )
     val otherSubAgent = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
@@ -554,7 +667,6 @@ class AgentChatFileEditorProviderTest {
       threadId = "sub-beta",
       threadTitle = "Thread",
       subAgentId = "beta",
-      shellCommand = listOf("codex", "resume", "sub-beta"),
     )
 
     store.upsert(matchingBase)

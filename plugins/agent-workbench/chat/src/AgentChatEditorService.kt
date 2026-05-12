@@ -21,7 +21,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -207,10 +206,24 @@ suspend fun openChat(
   )
   val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
-  val startupOverrideForNewTab = if (existing == null) initialMessageDispatchPlan.startupLaunchSpecOverride else null
-  val snapshotInitialMessageDispatchSteps =
-    if (startupOverrideForNewTab != null) emptyList() else initialMessageDispatchPlan.postStartDispatchSteps
-  val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
+  val launchSpec = AgentSessionTerminalLaunchSpec(command = shellCommand, envVariables = shellEnvVariables)
+  val isNewTab = existing == null
+  val startupOverrideForTab = if (isNewTab) {
+    initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf { it.command.isNotEmpty() }
+  }
+  else {
+    null
+  }
+  val startupIntentForTab = if (isNewTab && persistSnapshot) {
+    pendingProviderForThreadIdentity(threadIdentity)?.let { provider ->
+      AgentChatStartupIntent.NewSession(provider = provider, launchMode = parseAgentChatLaunchMode(pendingLaunchMode))
+    }
+  }
+  else {
+    null
+  }
+  val snapshotInitialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps
+  val snapshotInitialMessageToken = initialMessageDispatchPlan.initialMessageToken
   val snapshotInitialMessageSent = false
   val hasExplicitInitialMessageDispatch = snapshotInitialMessageDispatchSteps.isNotEmpty() || snapshotInitialMessageToken != null
   val snapshot = AgentChatTabSnapshot.create(
@@ -220,8 +233,6 @@ suspend fun openChat(
     threadId = threadId,
     threadTitle = threadTitle,
     subAgentId = subAgentId,
-    shellCommand = shellCommand,
-    shellEnvVariables = shellEnvVariables,
     threadActivity = threadActivity,
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
@@ -235,29 +246,24 @@ suspend fun openChat(
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
     "subAgentId=$subAgentId, existing=${existing != null}, title=$threadTitle)"
   }
-  val tabsService = serviceAsync<AgentChatTabsService>()
   val file = existing ?: agentChatVirtualFileSystem().getOrCreateFile(snapshot)
   if (existing != null) {
+    existing.updateRestoreOnRestart(persistSnapshot)
+    if (!persistSnapshot) {
+      existing.updateStartupIntent(null)
+    }
     existing.updateFromResolution(AgentChatTabResolution.Resolved(snapshot))
-    existing.updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
+    existing.updateThreadId(threadId)
     val titleUpdated = existing.updateBootstrapThreadTitle(threadTitle)
     val activityUpdated = existing.updateBootstrapThreadActivity(threadActivity)
     val sharedPresentationUpdated = !syncAgentChatSharedThreadPresentation(existing).isEmpty
     val deferredStartStateUpdated = existing.updateDeferredStartState(deferredStartState)
-    val pendingUpdated = if (
-      pendingCreatedAtMs != null ||
-      pendingFirstInputAtMs != null ||
-      pendingLaunchMode != null
-    ) {
-      existing.updatePendingMetadata(
+    val pendingUpdated = (pendingCreatedAtMs != null || pendingFirstInputAtMs != null || pendingLaunchMode != null) &&
+                         existing.updatePendingMetadata(
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
       )
-    }
-    else {
-      false
-    }
     if (hasExplicitInitialMessageDispatch) {
       existing.updateInitialMessageMetadata(
         initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
@@ -265,9 +271,6 @@ suspend fun openChat(
         initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
         initialMessageSent = false,
       )
-    }
-    if (persistSnapshot) {
-      tabsService.upsert(existing.toSnapshot())
     }
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
@@ -285,13 +288,15 @@ suspend fun openChat(
     }
   }
   else {
+    file.updateRestoreOnRestart(persistSnapshot)
+    file.updateStartupIntent(startupIntentForTab)
     file.updateDeferredStartState(deferredStartState)
     syncAgentChatSharedThreadPresentation(file)
-    if (startupOverrideForNewTab != null) {
-      file.setStartupLaunchSpecOverride(startupOverrideForNewTab)
-    }
-    if (persistSnapshot) {
-      tabsService.upsert(file.toSnapshot())
+    if (startupOverrideForTab != null) {
+      file.setStartupLaunchSpecOverride(
+        launchSpec = startupOverrideForTab,
+        suppressInitialMessageDispatch = initialMessageDispatchPlan.startupLaunchSpecOverride != null,
+      )
     }
     LOG.debug {
       "openChat created new tab(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
@@ -321,8 +326,9 @@ suspend fun openChat(
 }
 
 fun persistAgentChatTabMetadata(file: VirtualFile) {
-  val chatFile = file as? AgentChatVirtualFile ?: return
-  service<AgentChatTabsService>().upsert(chatFile.toSnapshot())
+  if (file !is AgentChatVirtualFile) return
+  file.updateRestoreOnRestart(true)
+  // Agent Chat restore metadata is serialized from FileEditor.getState() with the workspace editor state.
 }
 
 suspend fun refreshOpenAgentChatFile(project: Project, file: VirtualFile) {
@@ -345,7 +351,12 @@ suspend fun updateAgentChatDeferredStartState(
   forgetPersistedSnapshot: Boolean = false,
 ) {
   val chatFile = file as? AgentChatVirtualFile ?: return
-  startupLaunchSpecOverride?.let(chatFile::setStartupLaunchSpecOverride)
+  startupLaunchSpecOverride?.let { launchSpec ->
+    chatFile.setStartupLaunchSpecOverride(
+      launchSpec = launchSpec,
+      suppressInitialMessageDispatch = initialMessageDispatchPlan?.startupLaunchSpecOverride != null,
+    )
+  }
   chatFile.updateDeferredStartState(deferredStartState)
   threadActivity?.let {
     chatFile.updateBootstrapThreadActivity(it)
@@ -360,9 +371,15 @@ suspend fun updateAgentChatDeferredStartState(
     )
   }
   if (persistSnapshot) {
+    chatFile.updateRestoreOnRestart(true)
+    if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
+      chatFile.updateStartupIntent(resolveAgentChatNewSessionStartupIntent(chatFile))
+    }
     persistAgentChatTabMetadata(chatFile)
   }
   else if (forgetPersistedSnapshot) {
+    chatFile.updateRestoreOnRestart(false)
+    chatFile.updateStartupIntent(null)
     forgetAgentChatTabMetadata(chatFile.tabKey)
   }
   refreshOpenAgentChatFile(project = project, file = chatFile)
@@ -515,7 +532,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
       .filter { request -> request.hasConcreteTargetForProvider(provider) }
       .map { request -> request.target }
   )
-  val tabsService = serviceAsync<AgentChatTabsService>()
   val report = withContext(Dispatchers.UI) {
     val openTabsSnapshot = collectOpenAgentChatTabsSnapshot()
 
@@ -612,8 +628,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
           ?.takeIf { pendingFile.isEligibleForSharedPresentationSync() }
         val changed = pendingFile.rebindPendingThread(
           threadIdentity = request.target.threadIdentity,
-          shellCommand = launchSpec.command,
-          shellEnvVariables = launchSpec.envVariables,
           threadId = request.target.threadId,
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
@@ -635,7 +649,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
           previousPresentationKey = previousPresentationKey,
         )
         reboundBindings++
-        tabsService.upsert(pendingFile.toSnapshot())
         changedFiles.add(pendingFile)
         openTabsSnapshot.recordConcreteThreadIdentityOpen(normalizedPath, managers, request.target.threadIdentity)
         outcomes.add(
@@ -699,7 +712,6 @@ suspend fun rebindOpenConcreteAgentChatTabs(
   val launchSpecsByTarget = resolveRebindLaunchSpecs(
     normalizedRequestsByPath.values.asSequence().flatten().map { request -> request.target }
   )
-  val tabsService = serviceAsync<AgentChatTabsService>()
   val report = withContext(Dispatchers.UI) {
     val openTabsSnapshot = collectOpenAgentChatTabsSnapshot()
 
@@ -788,8 +800,6 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           ?.takeIf { concreteFile.isEligibleForSharedPresentationSync() }
         val changed = concreteFile.rebindConcreteThread(
           threadIdentity = request.target.threadIdentity,
-          shellCommand = launchSpec.command,
-          shellEnvVariables = launchSpec.envVariables,
           threadId = request.target.threadId,
           threadTitle = request.target.threadTitle,
           threadActivity = request.target.threadActivity,
@@ -811,7 +821,6 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           previousPresentationKey = previousPresentationKey,
         )
         reboundBindings++
-        tabsService.upsert(concreteFile.toSnapshot())
         changedFiles.add(concreteFile)
         openTabsSnapshot.replaceConcreteThreadIdentity(
           normalizedPath = normalizedPath,
@@ -874,7 +883,6 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
     return 0
   }
 
-  val tabsService = service<AgentChatTabsService>()
   val openTabsSnapshot = collectOpenAgentChatTabsSnapshot()
 
   var cleared = 0
@@ -890,7 +898,6 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
       if (!concreteFile.updateNewThreadRebindRequestedAtMs(newThreadRebindRequestedAtMs = null)) {
         continue
       }
-      tabsService.upsert(concreteFile.toSnapshot())
       cleared++
     }
   }

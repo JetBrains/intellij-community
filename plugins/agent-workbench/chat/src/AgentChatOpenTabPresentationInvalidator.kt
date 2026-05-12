@@ -3,7 +3,6 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -12,8 +11,8 @@ internal object AgentChatOpenTabPresentationInvalidator {
    * Repaints open chat editors whose presentation key was affected by the change set.
    *
    * The resolved presentation is written back into the file's bootstrap fields so that
-   * (a) each repaint has a fast, store-free source for its title/activity and
-   * (b) the persisted snapshot restores the last-seen title/activity after IDE restart.
+   * each repaint has a fast source for its title/activity and the next editor-state save
+   * keeps the latest presentation available after IDE restart.
    * For sub-agent tabs the resolved title is still the sub-agent's own label (per
    * [resolveAgentChatThreadPresentation]); only the activity is inherited from the
    * shared thread presentation. Tabs whose resolved state is unchanged are skipped.
@@ -21,7 +20,6 @@ internal object AgentChatOpenTabPresentationInvalidator {
   suspend fun invalidate(changeSet: AgentThreadPresentationChangeSet): Int {
     if (changeSet.isEmpty) return 0
 
-    val snapshotsToPersist = ArrayList<AgentChatTabSnapshot>()
     var updatedFiles = 0
     withContext(Dispatchers.EDT) {
       val openTabsSnapshot = collectOpenAgentChatTabsSnapshot()
@@ -40,21 +38,9 @@ internal object AgentChatOpenTabPresentationInvalidator {
         val managers = openTabsSnapshot.managersFor(chatFile)
         if (managers.isEmpty()) continue
 
-        if (titleChanged || activityChanged) {
-          snapshotsToPersist.add(chatFile.toSnapshot())
-        }
         updatedFiles++
         for (manager in managers) {
           manager.updateFilePresentation(chatFile)
-        }
-      }
-    }
-
-    if (snapshotsToPersist.isNotEmpty()) {
-      val tabsService = service<AgentChatTabsService>()
-      withContext(Dispatchers.IO) {
-        for (snapshot in snapshotsToPersist) {
-          tabsService.upsert(snapshot)
         }
       }
     }

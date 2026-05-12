@@ -63,14 +63,16 @@ internal class AgentChatVirtualFile internal constructor(
   var subAgentId: String? = null
     private set
 
-  var shellCommand: List<String> = emptyList()
-    private set
-
-  var shellEnvVariables: Map<String, String> = emptyMap()
-    private set
-
   @Volatile
   private var startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null
+
+  @Volatile
+  private var restoreOnRestart: Boolean = true
+
+  @Volatile
+  private var startupIntent: AgentChatStartupIntent? = null
+
+  private var suppressInitialMessageDispatchOnStartup: Boolean = false
 
   var threadId: String = ""
     private set
@@ -143,12 +145,14 @@ internal class AgentChatVirtualFile internal constructor(
       threadId = threadId,
       threadTitle = threadTitle,
       subAgentId = subAgentId,
-      shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
       threadActivity = threadActivity,
       initialMessageTimeoutPolicy = initialMessageTimeoutPolicy,
     ))
-  )
+  ) {
+    if (shellCommand.isNotEmpty() || shellEnvVariables.isNotEmpty()) {
+      setStartupLaunchSpecOverride(AgentSessionTerminalLaunchSpec(command = shellCommand, envVariables = shellEnvVariables))
+    }
+  }
 
   init {
     updateFromResolution(resolution)
@@ -197,9 +201,7 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
-  fun updateCommandAndThreadId(shellCommand: List<String>, shellEnvVariables: Map<String, String>, threadId: String) {
-    this.shellCommand = shellCommand
-    this.shellEnvVariables = shellEnvVariables
+  fun updateThreadId(threadId: String) {
     this.threadId = threadId
   }
 
@@ -212,10 +214,7 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   fun participatesInPendingThreadLifecycle(): Boolean {
-    if (!isPendingThread) {
-      return false
-    }
-    return when (deferredStartState?.phase) {
+    return isPendingThread && when (deferredStartState?.phase) {
       AgentChatDeferredStartPhase.SUCCESS_NO_START,
       AgentChatDeferredStartPhase.FAILURE_NO_START,
         -> false
@@ -225,21 +224,51 @@ internal class AgentChatVirtualFile internal constructor(
   }
 
   @Synchronized
-  fun setStartupLaunchSpecOverride(launchSpec: AgentSessionTerminalLaunchSpec) {
-    startupLaunchSpecOverride = AgentSessionTerminalLaunchSpec(
-      command = launchSpec.command,
-      envVariables = shellEnvVariables + launchSpec.envVariables,
-    )
+  fun setStartupLaunchSpecOverride(
+    launchSpec: AgentSessionTerminalLaunchSpec,
+    suppressInitialMessageDispatch: Boolean = false,
+  ) {
+    startupLaunchSpecOverride = launchSpec
+    suppressInitialMessageDispatchOnStartup = suppressInitialMessageDispatch
   }
 
   @Synchronized
-  fun consumeStartupLaunchSpec(): AgentSessionTerminalLaunchSpec {
+  fun consumeStartupLaunchSpecOverride(): AgentSessionTerminalLaunchSpec? {
     val startupLaunchSpec = startupLaunchSpecOverride
     startupLaunchSpecOverride = null
-    return startupLaunchSpec ?: AgentSessionTerminalLaunchSpec(
-      command = shellCommand,
-      envVariables = shellEnvVariables,
-    )
+    if (startupLaunchSpec == null) {
+      suppressInitialMessageDispatchOnStartup = false
+    }
+    return startupLaunchSpec
+  }
+
+  @Synchronized
+  fun consumeSuppressInitialMessageDispatchOnStartup(): Boolean {
+    val suppress = suppressInitialMessageDispatchOnStartup
+    suppressInitialMessageDispatchOnStartup = false
+    return suppress
+  }
+
+  fun shouldRestoreOnRestart(): Boolean = restoreOnRestart
+
+  fun updateRestoreOnRestart(restoreOnRestart: Boolean): Boolean {
+    if (this.restoreOnRestart == restoreOnRestart) {
+      return false
+    }
+    this.restoreOnRestart = restoreOnRestart
+    return true
+  }
+
+  @Synchronized
+  fun startupIntent(): AgentChatStartupIntent? = startupIntent
+
+  @Synchronized
+  fun updateStartupIntent(startupIntent: AgentChatStartupIntent?): Boolean {
+    if (this.startupIntent == startupIntent) {
+      return false
+    }
+    this.startupIntent = startupIntent
+    return true
   }
 
   fun updatePendingMetadata(
@@ -398,16 +427,12 @@ internal class AgentChatVirtualFile internal constructor(
 
   fun rebindPendingThread(
     threadIdentity: String,
-    shellCommand: List<String>,
-    shellEnvVariables: Map<String, String>,
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
   ): Boolean {
     return rebindThread(
       threadIdentity = threadIdentity,
-      shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
       threadId = threadId,
       threadTitle = threadTitle,
       threadActivity = threadActivity,
@@ -417,19 +442,12 @@ internal class AgentChatVirtualFile internal constructor(
 
   fun rebindConcreteThread(
     threadIdentity: String,
-    shellCommand: List<String>,
-    shellEnvVariables: Map<String, String>,
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
   ): Boolean {
-    if (isPendingThread || newThreadRebindRequestedAtMs == null) {
-      return false
-    }
-    return rebindThread(
+    return !isPendingThread && newThreadRebindRequestedAtMs != null && rebindThread(
       threadIdentity = threadIdentity,
-      shellCommand = shellCommand,
-      shellEnvVariables = shellEnvVariables,
       threadId = threadId,
       threadTitle = threadTitle,
       threadActivity = threadActivity,
@@ -439,8 +457,6 @@ internal class AgentChatVirtualFile internal constructor(
 
   private fun rebindThread(
     threadIdentity: String,
-    shellCommand: List<String>,
-    shellEnvVariables: Map<String, String>,
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
@@ -452,8 +468,8 @@ internal class AgentChatVirtualFile internal constructor(
       updateThreadCoordinates()
       changed = true
     }
-    if (this.shellCommand != shellCommand || this.shellEnvVariables != shellEnvVariables || this.threadId != threadId) {
-      updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
+    if (this.threadId != threadId) {
+      updateThreadId(threadId)
       changed = true
     }
     if (updateBootstrapThreadTitle(threadTitle)) {
@@ -477,6 +493,12 @@ internal class AgentChatVirtualFile internal constructor(
         initialMessageToken = null,
         initialMessageSent = false,
       )) {
+      changed = true
+    }
+    if (updateStartupIntent(null)) {
+      changed = true
+    }
+    if (updateRestoreOnRestart(true)) {
       changed = true
     }
 
@@ -503,16 +525,8 @@ internal class AgentChatVirtualFile internal constructor(
       subAgentId = snapshot.identity.subAgentId
       updateThreadCoordinates()
     }
-    if (
-      snapshot.runtime.threadId.isNotBlank() ||
-      snapshot.runtime.shellCommand.isNotEmpty() ||
-      snapshot.runtime.shellEnvVariables.isNotEmpty()
-    ) {
-      updateCommandAndThreadId(
-        shellCommand = snapshot.runtime.shellCommand,
-        shellEnvVariables = snapshot.runtime.shellEnvVariables,
-        threadId = snapshot.runtime.threadId,
-      )
+    if (snapshot.runtime.threadId.isNotBlank()) {
+      updateThreadId(snapshot.runtime.threadId)
     }
     if (snapshot.runtime.threadTitle.isNotBlank()) {
       updateBootstrapThreadTitle(snapshot.runtime.threadTitle)
@@ -551,8 +565,6 @@ internal class AgentChatVirtualFile internal constructor(
       runtime = AgentChatTabRuntime(
         threadId = threadId,
         threadTitle = bootstrapThreadTitle,
-        shellCommand = shellCommand,
-        shellEnvVariables = shellEnvVariables,
         threadActivity = bootstrapThreadActivity,
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,

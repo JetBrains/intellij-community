@@ -110,14 +110,13 @@ internal enum class AgentChatPendingContextSubmissionResult {
 }
 
 internal interface AgentChatTerminalTabs {
-  fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab
+  fun createTab(project: Project, file: AgentChatVirtualFile, startupLaunchSpec: AgentSessionTerminalLaunchSpec): AgentChatTerminalTab
 
   fun closeTab(project: Project, tab: AgentChatTerminalTab)
 }
 
 internal object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
-  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
-    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+  override fun createTab(project: Project, file: AgentChatVirtualFile, startupLaunchSpec: AgentSessionTerminalLaunchSpec): AgentChatTerminalTab {
     val terminalTab = configureAgentChatTerminalTabBuilder(
       builder = TerminalToolWindowTabsManager.getInstance(project).createTabBuilder(),
       file = file,

@@ -9,17 +9,23 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormat
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributors
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.ide.OccurenceNavigator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -27,11 +33,17 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
-import java.util.concurrent.CancellationException
 import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -46,14 +58,18 @@ internal class AgentChatFileEditor(
   private val liveTerminalRegistry: AgentChatLiveTerminalRegistry = project.service<AgentChatLiveTerminalRegistryService>(),
   private val tabSnapshotWriter: AgentChatTabSnapshotWriter = ApplicationAgentChatTabSnapshotWriter,
   private val currentTimeProvider: () -> Long = System::currentTimeMillis,
-  pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
+  private val pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
+  editorCoroutineScope: CoroutineScope? = null,
 ) : UserDataHolderBase(), FileEditor {
-  private val providerBehavior = resolveAgentChatProviderBehavior(file.provider)
-  private val pendingContextPanel = AgentChatPendingContextPanel(file.projectPath)
+  private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
+  @Suppress("RAW_SCOPE_CREATION")
+  private val terminalStartupScope = editorCoroutineScope ?: CoroutineScope(checkNotNull(ownedTerminalStartupJob) + Dispatchers.Default)
+  private val pendingContextPanel by lazy { AgentChatPendingContextPanel(file.projectPath) }
   private val component = AgentChatFileEditorComponent {
     semanticRegionController?.occurrenceNavigator() ?: OccurenceNavigator.EMPTY
   }
-  private val editorTabActions: ActionGroup? by lazy {
+
+  private fun buildEditorTabActions(): ActionGroup? {
     val actionManager = ActionManager.getInstance()
     val providerActionIds = providerDescriptor?.editorTabActionIds.orEmpty()
     val actions = buildList {
@@ -67,34 +83,22 @@ internal class AgentChatFileEditor(
         actionManager.getAction(actionId)?.let(::add)
       }
     }
-    buildAgentChatEditorTabActionGroup(actions)
+    return buildAgentChatEditorTabActionGroup(actions)
   }
-  private val pendingThreadRefreshController = AgentChatPendingThreadRefreshController(
-    file = file,
-    behavior = providerBehavior,
-    tabSnapshotWriter = tabSnapshotWriter,
-    currentTimeProvider = currentTimeProvider,
-    retryIntervalMs = pendingScopedRefreshRetryIntervalMs,
-  )
-  private val concreteThreadRebindController = AgentChatConcreteThreadRebindController(
-    file = file,
-    behavior = providerBehavior,
-    tabSnapshotWriter = tabSnapshotWriter,
-    currentTimeProvider = currentTimeProvider,
-  )
-  private val initialMessageDispatcher = AgentChatInitialMessageDispatcher(
-    file = file,
-    behavior = providerBehavior,
-    tabSnapshotWriter = tabSnapshotWriter,
-  )
 
   private var tab: AgentChatTerminalTab? = null
   private var initializationStarted: Boolean = false
+  private var initializationRequested: Boolean = false
+  private var stateApplied: Boolean = file.projectPath.isNotBlank() || file.threadIdentity.isNotBlank()
+  private var initializationJob: Job? = null
   private var disposed: Boolean = false
+  private var pendingThreadRefreshController: AgentChatPendingThreadRefreshController? = null
+  private var concreteThreadRebindController: AgentChatConcreteThreadRebindController? = null
+  private var initialMessageDispatcher: AgentChatInitialMessageDispatcher? = null
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
   private var patchFoldController: AgentChatDisposableController? = null
   private var semanticRegionController: AgentChatSemanticRegionController? = null
-  private var crossProjectDockTargetRegistration = AgentChatCrossProjectDockTargetRegistrar().register(project, file)
+  private var crossProjectDockTargetRegistration: Disposable? = null
 
   private val providerDescriptor
     get() = file.provider?.let(AgentSessionProviders::find)
@@ -107,9 +111,34 @@ internal class AgentChatFileEditor(
 
   override fun getName(): String = AgentChatBundle.message("chat.filetype.name")
 
-  override fun getTabActions(): ActionGroup? = editorTabActions
+  override fun getTabActions(): ActionGroup? = buildEditorTabActions()
 
-  override fun setState(state: FileEditorState) = Unit
+  override fun getState(level: FileEditorStateLevel): FileEditorState {
+    if (!file.shouldRestoreOnRestart() || file.projectPath.isBlank() || file.threadIdentity.isBlank()) {
+      return AgentChatFileEditorState(snapshot = null)
+    }
+    return AgentChatFileEditorState(snapshot = file.toSnapshot(), startupIntent = file.startupIntent())
+  }
+
+  override fun setState(state: FileEditorState) {
+    val chatState = state as? AgentChatFileEditorState ?: return
+    stateApplied = true
+    val snapshot = chatState.snapshot
+    if (snapshot != null) {
+      file.updateRestoreOnRestart(true)
+      file.updateFromResolution(AgentChatTabResolution.Resolved(snapshot))
+      file.updateStartupIntent(chatState.startupIntent)
+      ensureCrossProjectDockTargetRegistration()
+      FileEditorManager.getInstance(project).updateFilePresentation(file)
+    }
+    else {
+      file.updateRestoreOnRestart(false)
+      file.updateStartupIntent(null)
+    }
+    if (initializationRequested) {
+      ensureInitialized()
+    }
+  }
 
   override fun isModified(): Boolean = false
 
@@ -127,11 +156,17 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
+    initializationJob?.cancel()
+    initializationJob = null
+    ownedTerminalStartupJob?.cancel()
     crossProjectDockTargetRegistration?.let(Disposer::dispose)
     crossProjectDockTargetRegistration = null
-    initialMessageDispatcher.dispose()
-    pendingThreadRefreshController.dispose()
-    concreteThreadRebindController.dispose()
+    initialMessageDispatcher?.dispose()
+    initialMessageDispatcher = null
+    pendingThreadRefreshController?.dispose()
+    pendingThreadRefreshController = null
+    concreteThreadRebindController?.dispose()
+    concreteThreadRebindController = null
     scopedTerminalRefreshController?.dispose()
     scopedTerminalRefreshController = null
     patchFoldController?.dispose()
@@ -143,7 +178,11 @@ internal class AgentChatFileEditor(
   }
 
   private fun ensureInitialized() {
+    initializationRequested = true
     if (disposed) {
+      return
+    }
+    if (!stateApplied && file.projectPath.isBlank() && file.threadIdentity.isBlank()) {
       return
     }
     val deferredStartState = file.deferredStartState
@@ -154,19 +193,132 @@ internal class AgentChatFileEditor(
     if (initializationStarted) {
       return
     }
+    val validationError = validateAgentChatFile(file)
+    if (validationError != null) {
+      handleRestoreValidationError(validationError)
+      return
+    }
     initializationStarted = true
+    val startupLaunchSpecOverride = file.consumeStartupLaunchSpecOverride()
+    if (startupLaunchSpecOverride != null) {
+      initializeTerminal(
+        startupLaunchSpec = startupLaunchSpecOverride,
+        suppressInitialMessageDispatch = file.consumeSuppressInitialMessageDispatchOnStartup(),
+      )
+      return
+    }
+    val startupIntent = file.startupIntent()
+    if (file.isPendingThread && startupIntent == null) {
+      handleRestoreValidationError(AgentChatBundle.message("chat.restore.validation.pending.thread"))
+      return
+    }
+    initializationJob = terminalStartupScope.launch {
+      try {
+        val startupLaunchSpec = resolveStartupLaunchSpec(startupIntent)
+        withContext(Dispatchers.EDT) {
+          initializeTerminal(startupLaunchSpec)
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        withContext(Dispatchers.EDT) {
+          AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, e)
+        }
+      }
+    }
+  }
+
+  private suspend fun resolveStartupLaunchSpec(startupIntent: AgentChatStartupIntent?): AgentSessionTerminalLaunchSpec {
+    return when (startupIntent) {
+      is AgentChatStartupIntent.NewSession -> resolveNewSessionLaunchSpec(startupIntent)
+      null -> resolveResumeLaunchSpec()
+    }
+  }
+
+  private suspend fun resolveNewSessionLaunchSpec(startupIntent: AgentChatStartupIntent.NewSession): AgentSessionTerminalLaunchSpec {
+    val descriptor = AgentSessionProviders.find(startupIntent.provider)
+                     ?: throw IllegalStateException("Missing Agent Chat provider for ${startupIntent.provider.value}")
+    if (startupIntent.launchMode !in descriptor.supportedLaunchModes) {
+      throw IllegalStateException("Unsupported Agent Chat launch mode ${startupIntent.launchMode} for ${startupIntent.provider.value}")
+    }
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(startupIntent.launchMode)
+    val augmented = AgentSessionLaunchSpecs.augment(
+      projectPath = file.projectPath,
+      provider = startupIntent.provider,
+      launchSpec = baseLaunchSpec,
+    )
+    return AgentSessionLaunchContributors.applyAll(
+      projectPath = file.projectPath,
+      provider = startupIntent.provider,
+      sessionId = null,
+      launchSpec = augmented,
+    )
+  }
+
+  private suspend fun resolveResumeLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    val provider = file.provider ?: throw IllegalStateException("Missing Agent Chat provider for ${file.url}")
+    return AgentSessionLaunchSpecs.resolveResume(
+      projectPath = file.projectPath,
+      provider = provider,
+      sessionId = file.threadId.ifBlank { file.sessionId },
+    )
+  }
+
+  private fun initializeTerminal(
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+    suppressInitialMessageDispatch: Boolean = false,
+  ) {
+    if (disposed || tab != null) {
+      return
+    }
+    ensureCrossProjectDockTargetRegistration()
     try {
+      val deferredStartState = file.deferredStartState
       if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
         file.updateDeferredStartState(null)
       }
-      val createdTab = liveTerminalRegistry.acquireOrCreate(file = file, terminalTabs = terminalTabs)
+      val behavior = resolveAgentChatProviderBehavior(file.provider)
+      val createdTab = liveTerminalRegistry.acquireOrCreate(
+        file = file,
+        terminalTabs = terminalTabs,
+        startupLaunchSpec = startupLaunchSpec,
+      )
       tab = createdTab
-      pendingThreadRefreshController.attach(createdTab)
-      concreteThreadRebindController.attach(createdTab, providerDescriptor)
-      initialMessageDispatcher.schedule(createdTab)
+      file.updateStartupIntent(null)
+      if (file.isPendingThread) {
+        file.updateRestoreOnRestart(false)
+      }
+      val pendingController = AgentChatPendingThreadRefreshController(
+        file = file,
+        behavior = behavior,
+        tabSnapshotWriter = tabSnapshotWriter,
+        currentTimeProvider = currentTimeProvider,
+        retryIntervalMs = pendingScopedRefreshRetryIntervalMs,
+      )
+      pendingThreadRefreshController = pendingController
+      val concreteController = AgentChatConcreteThreadRebindController(
+        file = file,
+        behavior = behavior,
+        tabSnapshotWriter = tabSnapshotWriter,
+        currentTimeProvider = currentTimeProvider,
+      )
+      concreteThreadRebindController = concreteController
+      val messageDispatcher = AgentChatInitialMessageDispatcher(
+        file = file,
+        behavior = behavior,
+        tabSnapshotWriter = tabSnapshotWriter,
+      )
+      initialMessageDispatcher = messageDispatcher
+      pendingController.attach(createdTab)
+      concreteController.attach(createdTab, providerDescriptor)
+      if (!suppressInitialMessageDispatch) {
+        messageDispatcher.schedule(createdTab)
+      }
       scopedTerminalRefreshController = createAgentChatScopedTerminalRefreshController(file, createdTab, providerDescriptor)
-      patchFoldController = providerBehavior.createPatchFoldController(createdTab)
-      semanticRegionController = providerBehavior.createSemanticRegionController(createdTab)
+      patchFoldController = behavior.createPatchFoldController(createdTab)
+      semanticRegionController = behavior.createSemanticRegionController(createdTab)
       installPendingContextInterceptor(createdTab)
       component.removeAll()
       component.add(createdTab.component, BorderLayout.CENTER)
@@ -184,6 +336,26 @@ internal class AgentChatFileEditor(
     }
   }
 
+  private fun ensureCrossProjectDockTargetRegistration() {
+    if (crossProjectDockTargetRegistration == null && file.projectPath.isNotBlank()) {
+      crossProjectDockTargetRegistration = AgentChatCrossProjectDockTargetRegistrar().register(project, file)
+    }
+  }
+
+  private fun handleRestoreValidationError(validationError: String) {
+    if (file.projectPath.isBlank() && file.threadIdentity.isBlank()) {
+      if (!project.isDisposed) {
+        FileEditorManager.getInstance(project).closeFile(file)
+      }
+      return
+    }
+    forgetAgentChatTabMetadata(file.tabKey)
+    AgentChatRestoreNotificationService.reportRestoreFailure(project, file, validationError)
+    if (!project.isDisposed) {
+      FileEditorManager.getInstance(project).closeFile(file)
+    }
+  }
+
   internal fun refreshForFileStateChange() {
     if (disposed) {
       return
@@ -198,14 +370,13 @@ internal class AgentChatFileEditor(
 
   internal fun flushPendingInitialMessageIfInitialized() {
     val initializedTab = tab ?: return
-    initialMessageDispatcher.schedule(initializedTab)
+    initialMessageDispatcher?.schedule(initializedTab)
   }
 
   internal fun addPendingContextItems(items: List<AgentPromptContextItem>): Boolean {
     ensureInitialized()
-    val initializedTab = tab ?: return false
     val added = pendingContextPanel.addItems(items)
-    initializedTab.preferredFocusableComponent.requestFocusInWindow()
+    tab?.preferredFocusableComponent?.requestFocusInWindow()
     return added
   }
 
@@ -372,9 +543,8 @@ internal fun interface AgentChatTabSnapshotWriter {
 }
 
 private object ApplicationAgentChatTabSnapshotWriter : AgentChatTabSnapshotWriter {
-  override suspend fun upsert(snapshot: AgentChatTabSnapshot) {
-    serviceAsync<AgentChatTabsService>().upsert(snapshot)
-  }
+  @Suppress("UNUSED_PARAMETER")
+  override suspend fun upsert(snapshot: AgentChatTabSnapshot) = Unit
 }
 
 internal fun buildAgentChatEditorTabActionGroup(actions: List<AnAction>): ActionGroup? {

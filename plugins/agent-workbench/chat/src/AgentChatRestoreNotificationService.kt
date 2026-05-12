@@ -21,7 +21,7 @@ internal object AgentChatRestoreNotificationService {
   fun reportTerminalInitializationFailure(project: Project, file: AgentChatVirtualFile, throwable: Throwable) {
     LOG.warn("Failed to initialize Agent Chat terminal tab for ${file.url}", throwable)
     forgetAgentChatTabMetadata(file.tabKey)
-    val reason = buildTerminalInitializationReason(file, throwable)
+    val reason = buildTerminalInitializationReason(throwable)
     reportWarning(
       project = project,
       file = file,
@@ -55,11 +55,11 @@ internal object AgentChatRestoreNotificationService {
     }
   }
 
-  internal fun buildTerminalInitializationReason(file: AgentChatVirtualFile, throwable: Throwable): String {
+  internal fun buildTerminalInitializationReason(throwable: Throwable): String {
     val diagnostic = extractTerminalStartDiagnostic(throwable)
-    val command = diagnostic?.command ?: file.shellCommand.firstOrNull()
+    val command = diagnostic?.command
     if (command != null && isCommandMissingFailure(throwable)) {
-      val path = diagnostic?.path ?: AgentChatBundle.message("chat.restore.validation.editor.init.path.unknown")
+      val path = diagnostic.path ?: AgentChatBundle.message("chat.restore.validation.editor.init.path.unknown")
       return AgentChatBundle.message("chat.restore.validation.editor.init.command.missing", command, path)
     }
     return AgentChatBundle.message("chat.restore.validation.editor.init")

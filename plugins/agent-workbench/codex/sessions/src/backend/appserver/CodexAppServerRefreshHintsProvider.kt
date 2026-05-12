@@ -304,10 +304,9 @@ internal class CodexAppServerRefreshHintsProvider(
             val updateEvent = toUpdateEvent(notification)
             send(updateEvent)
             if (notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && updateEvent.type == AgentSessionSourceUpdate.THREADS_CHANGED) {
-              launch {
-                delay(APP_SERVER_STARTED_THREAD_REFRESH_RETRY_DELAY_MS.milliseconds)
-                send(updateEvent)
-              }
+              // Keep the retry ordered in the collector coroutine: it gives the app-server time to publish the new thread.
+              delay(APP_SERVER_STARTED_THREAD_REFRESH_RETRY_DELAY_MS.milliseconds)
+              send(updateEvent)
             }
           }
           in outputBurstUpdateKinds -> {

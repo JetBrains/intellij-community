@@ -510,8 +510,7 @@ class AgentChatOpenTopLevelDispatchTest {
         file.threadIdentity == threadIdentity &&
         file.subAgentId == subAgentId &&
         file.threadId == threadId &&
-        file.threadTitle == threadTitle &&
-        file.shellCommand == shellCommand
+        file.threadTitle == threadTitle
       }
     }
   }
@@ -561,7 +560,11 @@ class AgentChatOpenTopLevelDispatchTest {
 private class OpenTabDispatchFakeAgentChatTerminalTabs : AgentChatTerminalTabs {
   val tab = OpenTabDispatchFakeAgentChatTerminalTab()
 
-  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
+  override fun createTab(
+    project: Project,
+    file: AgentChatVirtualFile,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentChatTerminalTab {
     return tab
   }
 

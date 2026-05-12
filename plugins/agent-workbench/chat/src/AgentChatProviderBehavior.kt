@@ -176,7 +176,7 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
   }
 
   override fun shouldInstallPatchFolding(): Boolean {
-    return RegistryManager.getInstance().`is`(CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY)
+    return ApplicationManager.getApplication() != null && RegistryManager.getInstance().`is`(CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY)
   }
 
   override fun createPatchFoldController(tab: AgentChatTerminalTab): AgentChatDisposableController? {

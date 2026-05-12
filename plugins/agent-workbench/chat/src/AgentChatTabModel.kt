@@ -15,8 +15,6 @@ internal data class AgentChatTabIdentity(
 internal data class AgentChatTabRuntime(
   @JvmField val threadId: String,
   @JvmField val threadTitle: String,
-  @JvmField val shellCommand: List<String>,
-  @JvmField val shellEnvVariables: Map<String, String> = emptyMap(),
   @JvmField val threadActivity: AgentThreadActivity,
   @JvmField val pendingCreatedAtMs: Long? = null,
   @JvmField val pendingFirstInputAtMs: Long? = null,
@@ -41,8 +39,6 @@ internal data class AgentChatTabSnapshot(
       threadId: String,
       threadTitle: String,
       subAgentId: String?,
-      shellCommand: List<String>,
-      shellEnvVariables: Map<String, String> = emptyMap(),
       threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
       pendingCreatedAtMs: Long? = null,
       pendingFirstInputAtMs: Long? = null,
@@ -72,8 +68,6 @@ internal data class AgentChatTabSnapshot(
         runtime = AgentChatTabRuntime(
           threadId = threadId,
           threadTitle = threadTitle,
-          shellCommand = shellCommand,
-          shellEnvVariables = shellEnvVariables,
           threadActivity = threadActivity,
           pendingCreatedAtMs = pendingCreatedAtMs,
           pendingFirstInputAtMs = pendingFirstInputAtMs,
