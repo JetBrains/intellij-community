@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.structureView.frontend
 
+import com.intellij.ide.util.FileStructureUtil
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelImpl
 import com.intellij.platform.structureView.impl.StructureTreeApi
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
   init {
     cs.launch {
-      if (!Registry.`is`("frontend.structure.popup")) return@launch
+      if (!FileStructureUtil.isSplitPopupEnabled()) return@launch
       durable {
         StructureTreeApi.getInstance().getShowPopupRequestFlow().collect { request ->
           try {

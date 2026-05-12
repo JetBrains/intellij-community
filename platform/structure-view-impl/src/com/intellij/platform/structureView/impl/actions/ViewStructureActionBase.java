@@ -2,6 +2,7 @@
 
 package com.intellij.platform.structureView.impl.actions;
 
+import com.intellij.ide.util.FileStructureUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -11,8 +12,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +55,7 @@ public abstract class ViewStructureActionBase extends DumbAwareAction {
   public static boolean isPopupAvailableFor(@Nullable FileEditor fileEditor, @Nullable Editor editor) {
     return fileEditor != null &&
            (!Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) &&
-           (Registry.is("frontend.structure.popup") || fileEditor.getStructureViewBuilder() != null);
+           (FileStructureUtil.isSplitPopupEnabled() || fileEditor.getStructureViewBuilder() != null);
   }
 
   @Override

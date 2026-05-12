@@ -2,6 +2,7 @@
 package com.intellij.platform.structureView.backend
 
 import com.intellij.ide.actions.ViewStructureAction
+import com.intellij.ide.util.FileStructureUtil
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.service
@@ -9,7 +10,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.structureView.impl.ShowStructurePopupRequest
@@ -35,7 +35,7 @@ fun showFileStructurePopup(
   @NlsContexts.PopupTitle title: String? = null,
   callback: ((AbstractTreeNode<*>) -> Unit)? = null,
 ) {
-  if (!Registry.`is`("frontend.structure.popup")) {
+  if (!FileStructureUtil.isSplitPopupEnabled()) {
     val popup = ViewStructureAction.createPopup(project, fileEditor, callback)
     if (popup == null) return
 

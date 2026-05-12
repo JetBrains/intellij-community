@@ -6,7 +6,6 @@ import com.intellij.platform.structureView.impl.StructurePopupProvider;
 import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +14,7 @@ class OldStructurePopupProviderImpl implements StructurePopupProvider {
   @Override
   public @Nullable FileStructurePopup createPopup(@NotNull Project project,
                                                   @NotNull FileEditor fileEditor) {
-    if (!AppMode.isRemoteDevHost() && Registry.is("frontend.structure.popup")) return null;
+    if (!AppMode.isRemoteDevHost() && FileStructureUtil.isSplitPopupEnabled()) return null;
     return ViewStructureAction.createPopup(project, fileEditor);
   }
 }
