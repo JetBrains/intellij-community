@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.SystemInfoRt
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
@@ -23,34 +23,38 @@ abstract class ProjectManagerEx : ProjectManager() {
     const val PER_PROJECT_OPTION_NAME: String = "ide.per.project.instance"
 
     @JvmField
-    @Experimental
+    @ApiStatus.Experimental
+    @OptIn(LowLevelLocalMachineAccess::class)
     val IS_PER_PROJECT_INSTANCE_READY: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
-      (SystemInfoRt.isMac || SystemInfoRt.isLinux) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
+      (OS.CURRENT != OS.Windows) && PerProjectState.valueOf(it) != PerProjectState.DISABLED
     } == true
 
     @JvmField
-    @Experimental
+    @ApiStatus.Experimental
     val IS_PER_PROJECT_INSTANCE_ENABLED: Boolean = System.getProperty(PER_PROJECT_OPTION_NAME)?.let {
       IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
     } == true
 
+    @Suppress("MayBeConstant", "RedundantSuppression")
     val IS_CHILD_PROCESS: Boolean = false
 
-    @Experimental
+    @ApiStatus.Experimental
     const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
+    @Suppress("UnsafeOpenServiceCast")
     fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
     suspend fun getInstanceExAsync(): ProjectManagerEx = ApplicationManager.getApplication().serviceAsync()
 
     @JvmStatic
+    @Suppress("UnsafeOpenServiceCast")
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
 
-    @Internal
+    @ApiStatus.Internal
     fun getOpenProjects(): List<Project> = getInstanceIfCreated()?.openProjects?.toList() ?: emptyList()
 
-    @Experimental
+    @ApiStatus.Experimental
     fun isChildProcessPath(path: Path): Boolean = path.toString().contains(PER_PROJECT_SUFFIX)
   }
 
@@ -69,14 +73,14 @@ abstract class ProjectManagerEx : ProjectManager() {
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
-  @Internal
+  @ApiStatus.Internal
   abstract suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project
 
   abstract fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
   abstract suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask = OpenProjectTask()): Project?
 
-  @Internal
+  @ApiStatus.Internal
   abstract fun loadProject(path: Path): Project
 
   @get:TestOnly
@@ -89,7 +93,7 @@ abstract class ProjectManagerEx : ProjectManager() {
   /**
    * The project and the app settings will be not saved.
    */
-  @Internal
+  @ApiStatus.Internal
   fun forceCloseProject(project: Project): Boolean {
     @Suppress("TestOnlyProblems")
     return forceCloseProject(project = project, save = false)
@@ -98,10 +102,10 @@ abstract class ProjectManagerEx : ProjectManager() {
   @TestOnly
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
 
-  @Internal
+  @ApiStatus.Internal
   abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
-  @Internal
+  @ApiStatus.Internal
   fun saveAndForceCloseProject(project: Project): Boolean {
     @Suppress("TestOnlyProblems")
     return forceCloseProject(project = project, save = true)
@@ -110,6 +114,6 @@ abstract class ProjectManagerEx : ProjectManager() {
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean
 
-  @get:Internal
-  abstract val allExcludedUrls: List<String>
+  @ApiStatus.Internal
+  abstract fun getAllExcludedUrls(project: Project?): List<String>
 }

@@ -28,81 +28,82 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-// provides list of all excluded folders across all opened projects, fast.
+// provides list of all excluded folders across all opened projects, reasonably fast
 @SuppressWarnings("SplitModeApiUsage")
 final class ExcludeRootsCache {
-  private volatile CachedUrls myCache;
-
   private static final class CachedUrls {
     private final long myModificationCount;
     private final String[] myUrls;
-
     private CachedUrls(long count, String[] urls) {
       myModificationCount = count;
       myUrls = urls;
     }
+
   }
+
+  private final ConcurrentMap<Project, CachedUrls> myCache = new ConcurrentHashMap<>();
 
   ExcludeRootsCache(@NotNull SimpleMessageBusConnection connection) {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      @SuppressWarnings("removal")
-      public void projectOpened(@NotNull Project project) {
-        myCache = null;
-      }
-
-      @Override
       public void projectClosed(@NotNull Project project) {
-        myCache = null;
+        myCache.remove(project);
       }
     });
   }
 
   @NotNull List<String> getExcludedUrls() {
     return ReadAction.computeBlocking(() -> {
-      var cache = myCache;
-      var actualModCount = Stream.of(ProjectManager.getInstance().getOpenProjects())
-        .mapToLong(p -> WorkspaceModel.getInstance(p) instanceof WorkspaceModelInternal wmi ? wmi.getEntityStorage().getVersion() : 0)
-        .sum();
-      String[] urls;
-      if (cache != null && actualModCount == cache.myModificationCount) {
-        urls = cache.myUrls;
+      var projects = ProjectManager.getInstance().getOpenProjects();
+      return switch (projects.length) {
+        case 0 -> List.of();
+        case 1 -> getExcludedUrls(projects[0]);
+        default -> {
+          var result = new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
+          for (var project : projects) {
+            result.addAll(getExcludedUrls(project));
+          }
+          yield List.of(ArrayUtilRt.toStringArray(result));
+        }
+      };
+    });
+  }
+
+  @NotNull List<String> getExcludedUrls(@NotNull Project project) {
+    return ReadAction.computeBlocking(() -> {
+      @SuppressWarnings("UnsafeOpenServiceCast") var wsm = (WorkspaceModelInternal)WorkspaceModel.getInstance(project);
+      var cache = myCache.get(project);
+      if (cache != null && cache.myModificationCount == wsm.getEntityStorage().getVersion()) {
+        return List.of(cache.myUrls);
       }
       else {
-        var result = new HashSet<String>();
-        for (var project : ProjectManager.getInstance().getOpenProjects()) {
-          // WSM contributors
-          @SuppressWarnings("UnsafeOpenServiceCast") var workspaceModel = (WorkspaceModelInternal)WorkspaceModel.getInstance(project);
-          var currentStorage = workspaceModel.getCurrentSnapshot();
-          var unloadedStorage = workspaceModel.getCurrentSnapshotOfUnloadedEntities();
-          var collector = new ExcludedRootsCollector();
-          for (var contributor : WorkspaceFileIndexImpl.EP_NAME.getExtensionList()) {
-            switch (contributor.getStorageKind()) {
-              case MAIN -> collectExcludedRootsFromContributor(contributor, currentStorage, collector);
-              case UNLOADED -> collectExcludedRootsFromContributor(contributor, unloadedStorage, collector);
-            }
-          }
-          result.addAll(collector.excludedUrls);
-          // legacy extensions
-          for (var policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
-            ContainerUtil.addAll(result, policy.getExcludeUrlsForProject());
-            for (var module : ModuleManager.getInstance(project).getModules()) {
-              var additionalModuleExcludedRoots = policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module));
-              result.addAll(ContainerUtil.map(additionalModuleExcludedRoots, VirtualFilePointer::getUrl));
-            }
+        var result = new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
+        // WSM contributors
+        var collector = new ExcludedRootsCollector(result);
+        for (var contributor : WorkspaceFileIndexImpl.EP_NAME.getExtensionList()) {
+          switch (contributor.getStorageKind()) {
+            case MAIN -> collectExcludedRootsFromContributor(contributor, wsm.getCurrentSnapshot(), collector);
+            case UNLOADED -> collectExcludedRootsFromContributor(contributor, wsm.getCurrentSnapshotOfUnloadedEntities(), collector);
           }
         }
-        urls = ArrayUtilRt.toStringArray(result);
-        Arrays.sort(urls, OSAgnosticPathUtil.COMPARATOR);
-        myCache = new CachedUrls(actualModCount, urls);
+        // legacy extensions
+        for (var policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
+          ContainerUtil.addAll(result, policy.getExcludeUrlsForProject());
+          for (var module : ModuleManager.getInstance(project).getModules()) {
+            var additionalModuleExcludedRoots = policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module));
+            result.addAll(ContainerUtil.map(additionalModuleExcludedRoots, VirtualFilePointer::getUrl));
+          }
+        }
+        var urls = ArrayUtilRt.toStringArray(result);
+        myCache.put(project, new CachedUrls(wsm.getEntityStorage().getVersion(), urls));
+        return List.of(urls);
       }
-      return List.of(urls);
     });
   }
 
@@ -118,7 +119,11 @@ final class ExcludeRootsCache {
   }
 
   private static class ExcludedRootsCollector implements WorkspaceFileSetRegistrar {
-    private final Set<String> excludedUrls = new HashSet<>();
+    private final Set<String> excludedUrls;
+
+    private ExcludedRootsCollector(Set<String> excludedUrls) {
+      this.excludedUrls = excludedUrls;
+    }
 
     @Override
     public void registerFileSet(@NotNull VirtualFileUrl root, @NotNull WorkspaceFileKind kind, @NotNull WorkspaceEntity entity, WorkspaceFileSetData customData) {

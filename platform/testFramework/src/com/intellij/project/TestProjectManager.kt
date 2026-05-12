@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
 import com.intellij.ide.AppLifecycleListener
@@ -17,6 +15,7 @@ import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -26,9 +25,10 @@ import com.intellij.openapi.project.impl.runInitProjectActivities
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.coroutineScope
@@ -40,21 +40,21 @@ import java.util.WeakHashMap
 import java.util.concurrent.TimeUnit
 
 private const val MAX_LEAKY_PROJECTS = 5
-private val LEAK_CHECK_INTERVAL = System.getProperty("idea.tests.leaked.projects.check.interval.ms")?.toLongOrNull()
-                                  ?: TimeUnit.MINUTES.toMillis(30)
+private val LEAK_CHECK_INTERVAL = System.getProperty("idea.tests.leaked.projects.check.interval.ms")?.toLongOrNull() ?: TimeUnit.MINUTES.toMillis(30)
 private var CHECK_START = System.currentTimeMillis()
 private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.in.tests", "true")!!.toBoolean()
-var totalCreatedProjectsCount = 0
+var totalCreatedProjectsCount: Int = 0
 
 @ApiStatus.Internal
 @TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
+    @RequiresBackgroundThread
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
-      ApplicationManager.getApplication().assertIsNonDispatchThread()
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
       Disposer.register(parent) {
-        ApplicationManager.getApplication().assertIsNonDispatchThread()
+        ThreadingAssertions.assertBackgroundThread()
+        @Suppress("RAW_RUN_BLOCKING")
         runBlocking {
           getInstanceEx().forceCloseProjectAsync(project)
         }
@@ -77,7 +77,7 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val project = super.newProject(file, options)
     if (project != null && LOG_PROJECT_LEAKAGE) {
-      projects.put(project, null)
+      projects[project] = null
     }
     return project
   }
@@ -114,16 +114,17 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val app = ApplicationManager.getApplication()
     try {
+      @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt(project) {
         coroutineScope {
-          runInitProjectActivities(project = project)
+          runInitProjectActivities(project, thisLogger())
         }
         if (isRunStartUpActivitiesEnabled(project)) {
           (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
         }
       }
     }
-    catch (_: ProcessCanceledException) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, saveProject = false, checkCanClose = false) }
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
       return false
@@ -165,7 +166,7 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
 
     val result = super.closeProject(project = project, saveProject = saveProject, dispose = dispose, checkCanClose = checkCanClose)
-    val undoManager = serviceIfCreated<UndoManager>() as UndoManagerImpl?
+    val undoManager = serviceIfCreated<UndoManager>() as? UndoManagerImpl
     // test may use WrapInCommand (it is ok - in this case HeavyPlatformTestCase will call dropHistoryInTests)
     if (undoManager != null && !undoManager.isInsideCommand) {
       undoManager.dropHistoryInTests()
@@ -222,11 +223,11 @@ open class TestProjectManager : ProjectManagerImpl() {
    * owns such a hard reference. So one way to create a leaked project is by having a static
    * class that owns a PsiElement.
    *
-   * If the above does not trigger enough "aha" to go and fix things, you can find a
-   * leakedProjects.hprof.zip in your build config (not aggregator) artifacts. Open it in
+   * If the above does not trigger enough "aha" feelings to go and fix things, you can find a
+   * `leakedProjects.hprof.zip` in your build config (not aggregator) artifacts. Open it in
    * YourKit's Memory Profiling > Object explorer view. In the search box type ProjectImpl.
    * The search results include all ProjectImpl instances. Select one and click "Calculate
-   * paths". Traverse down a bit and you should see who's owning the hard reference.
+   * paths". Traverse down a bit, and you should see who owns the hard reference.
    */
   private fun checkProjectLeaksInTests() {
     if (!LOG_PROJECT_LEAKAGE || getLeakedProjectCount() < MAX_LEAKY_PROJECTS) {
@@ -275,16 +276,19 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
     hashCodes.add(hashCode)
     message += LeakHunter.getLeakedObjectDetails(project, null, false)
   }
-  val dumpPath = publishHeapDump(LEAKED_PROJECTS)
-  LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
-                          { hashCodes.contains(System.identityHashCode(it)) },
-                          null,
-                          { leaked, backLink ->
-                            val hashCode = System.identityHashCode(leaked)
-                            message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)
-                            hashCodes.remove(hashCode)
-                            !hashCodes.isEmpty()
-                          })
+  val dumpPath = com.intellij.testFramework.common.publishHeapDump(LEAKED_PROJECTS)
+  LeakHunter.processLeaks(
+    LeakHunter.allRoots(),
+    ProjectImpl::class.java,
+    { hashCodes.contains(System.identityHashCode(it)) },
+    null,
+    { leaked, backLink ->
+      val hashCode = System.identityHashCode(leaked)
+      message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)
+      hashCodes.remove(hashCode)
+      !hashCodes.isEmpty()
+    }
+  )
   message += LeakHunter.getLeakedObjectErrorDescription(dumpPath)
   throw AssertionError(message)
 }

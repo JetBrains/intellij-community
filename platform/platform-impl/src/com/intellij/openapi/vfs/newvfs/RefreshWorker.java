@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -606,10 +606,10 @@ final class RefreshWorker {
     ChildInfo[] children = null;
     if (attributes.isDirectory() && !attributes.isSymLink() && parent.getFileSystem() instanceof LocalFileSystem) {
       try {
-        Path childPath = getChildPath(parent.getPath(), childName);
+        var childPath = getChildPath(parent.getPath(), childName);
         if (childPath != null && shouldScanDirectory(parent, childPath, childName)) {
-          List<Path> relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(), url -> {
-            Path path = Path.of(VirtualFileManager.extractPath(url));
+          var relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(null), url -> {
+            var path = Path.of(VirtualFileManager.extractPath(url));
             return path.startsWith(childPath) ? path : null;
           });
           var t = System.nanoTime();
