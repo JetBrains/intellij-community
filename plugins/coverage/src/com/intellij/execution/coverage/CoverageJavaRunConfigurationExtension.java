@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Registers "Coverage" tab in Java run configurations
@@ -160,8 +159,9 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
      if (!isApplicableFor(runConfiguration)) {
       return;
     }
-
-    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).readExternal(element);
+    JavaCoverageEnabledConfiguration configuration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+    if (configuration == null) return;
+    configuration.readExternal(element);
   }
 
   @Override
@@ -169,13 +169,15 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
-    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).writeExternal(element);
+    JavaCoverageEnabledConfiguration configuration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+    if (configuration == null) return;
+    configuration.writeExternal(element);
   }
 
   @Override
   public void extendCreatedConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, @NotNull Location location) {
     final JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
-    assert coverageEnabledConfiguration != null;
+    if (coverageEnabledConfiguration == null) return;
     if (runJavaConfiguration instanceof CommonJavaRunConfigurationParameters) {
       coverageEnabledConfiguration.setUpCoverageFilters(((CommonJavaRunConfigurationParameters)runJavaConfiguration).getRunClass(),
                                                         ((CommonJavaRunConfigurationParameters)runJavaConfiguration).getPackage());
