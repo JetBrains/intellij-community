@@ -370,79 +370,6 @@ object UniversalFileChooser {
         }
       }
 
-      val mountStatusAction = object : AnAction() {
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-        override fun update(e: AnActionEvent) {
-          val fileView = getActiveFileView()
-          if (fileView == null) { e.presentation.isVisible = false; return }
-          e.presentation.icon = AllIcons.Actions.Execute
-          e.presentation.text = IdeBundle.message("universal.file.chooser.action.mount.status.unmounted")
-          val selectedVirtualRoot = fileView.fileTree.getSelectedVirtualRoot()
-          if (selectedVirtualRoot != null) {
-            e.presentation.isVisible = true
-            e.presentation.isEnabled = !fileView.isMountActionInProgress
-            return
-          }
-          val selected = fileView.fileTree.getSelectedFile()
-          if (selected == null) {
-            e.presentation.isVisible = false
-            return
-          }
-          val status = fileView.mountStatusCache[selected.invariantSeparatorsPathString]
-          e.presentation.isVisible = !(status == MountStatus.Permanent || status == null)
-          e.presentation.isEnabled = !fileView.isMountActionInProgress && status != MountStatus.Mounted
-        }
-
-        override fun actionPerformed(e: AnActionEvent) {
-          val fileView = getActiveFileView() ?: return
-          val selectedVirtualRoot = fileView.fileTree.getSelectedVirtualRoot()
-          if (selectedVirtualRoot != null) {
-            fileView.isMountActionInProgress = true
-            fileView.cacheUpdateJob?.cancel()
-            fileView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
-            scope.launch {
-              try {
-                withContext(Dispatchers.IO) {
-                  fileView.contributor.mountVirtualRoot(selectedVirtualRoot)
-                }
-              }
-              finally {
-                fileView.topComponent.cursor = Cursor.getDefaultCursor()
-                fileView.isMountActionInProgress = false
-                fileView.loadRoots()
-              }
-            }
-            return
-          }
-          val selected = fileView.fileTree.getSelectedFile() ?: return
-          val root = selected.root
-          fileView.isMountActionInProgress = true
-          fileView.cacheUpdateJob?.cancel()
-          fileView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
-          scope.launch {
-            try {
-              withContext(Dispatchers.IO) {
-                val status = fileView.contributor.getMountStatus(root)
-                if (status == MountStatus.Unmounted) {
-                  fileView.contributor.mount(root)
-                }
-              }
-              fileView.fileToSelect = root
-            }
-            finally {
-              fileView.topComponent.cursor = Cursor.getDefaultCursor()
-              fileView.isMountActionInProgress = false
-              fileView.startCacheUpdates()
-              fileView.loadRoots()
-              runOnEdt {
-                fileView.fileTree.updateTree()
-              }
-            }
-          }
-        }
-      }
-
       val actionGroup = DefaultActionGroup().apply {
         add(homeAction)
         add(desktopAction)
@@ -453,8 +380,6 @@ object UniversalFileChooser {
         addSeparator()
         add(refreshAction)
         add(showHiddenAction)
-        addSeparator()
-        add(mountStatusAction)
       }
 
       return ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", actionGroup, true)
@@ -654,7 +579,16 @@ object UniversalFileChooser {
         tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
         tree.addTreeWillExpandListener(object : TreeWillExpandListener {
           override fun treeWillExpand(event: TreeExpansionEvent) {
+            val virtualRoot = fileTree.getVirtualRoot(event.path)
+            if (virtualRoot != null) {
+              mountVirtualRootAndReload(virtualRoot)
+              throw ExpandVetoException(event)
+            }
             if (isUnderUnmountedRoot(event.path)) {
+              val nioPath = NioFileSystemTree.getNioPath(event.path)
+              if (nioPath != null) {
+                mountUnmountedRootAndReload(nioPath.root)
+              }
               throw ExpandVetoException(event)
             }
           }
@@ -766,8 +700,11 @@ object UniversalFileChooser {
                 val selection = if (it.root == it) {
                   fileTree.matchRoot(it)
                 } else it
-                fileTree.select(selection, null)
+                if (selection != null) {
+                  fileTree.select(selection) { fileTree.expand(selection, null) }
+                }
               }
+              fileToSelect = null
               okEnabledUpdater()
               startCacheUpdates()
             }
@@ -925,6 +862,65 @@ object UniversalFileChooser {
                 currentDirectoryPopup = popup
                 popup.show(RelativePoint(event))
               }
+            }
+          }
+        }
+      }
+
+      fun mountRoot() {
+        val selectedVirtualRoot = fileTree.getSelectedVirtualRoot()
+        if (selectedVirtualRoot != null) {
+          mountVirtualRootAndReload(selectedVirtualRoot)
+          return
+        }
+        val selected = fileTree.getSelectedFile() ?: return
+        mountUnmountedRootAndReload(selected.root)
+      }
+
+      fun mountVirtualRootAndReload(virtualRoot: UniversalFileChooserContributor.Root) {
+        if (isMountActionInProgress) return
+        isMountActionInProgress = true
+        cacheUpdateJob?.cancel()
+        topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+        scope.launch {
+          try {
+            val mountedPath = withContext(Dispatchers.IO) {
+              contributor.mountVirtualRoot(virtualRoot)
+            }
+            if (mountedPath != null) {
+              fileToSelect = mountedPath
+            }
+          }
+          finally {
+            topComponent.cursor = Cursor.getDefaultCursor()
+            isMountActionInProgress = false
+            loadRoots()
+          }
+        }
+      }
+
+      fun mountUnmountedRootAndReload(root: Path) {
+        if (isMountActionInProgress) return
+        isMountActionInProgress = true
+        cacheUpdateJob?.cancel()
+        topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+        scope.launch {
+          try {
+            withContext(Dispatchers.IO) {
+              val status = contributor.getMountStatus(root)
+              if (status == MountStatus.Unmounted) {
+                contributor.mount(root)
+              }
+            }
+            fileToSelect = root
+          }
+          finally {
+            topComponent.cursor = Cursor.getDefaultCursor()
+            isMountActionInProgress = false
+            startCacheUpdates()
+            loadRoots()
+            runOnEdt {
+              fileTree.updateTree()
             }
           }
         }

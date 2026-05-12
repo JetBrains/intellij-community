@@ -161,6 +161,11 @@ class NioFileSystemTree(
     return fileTreeModel.getVirtualRoot(component)
   }
 
+  fun getVirtualRoot(treePath: TreePath): UniversalFileChooserContributor.Root? {
+    val component = treePath.lastPathComponent as? NioFileNode ?: return null
+    return fileTreeModel.getVirtualRoot(component)
+  }
+
   private fun subscribeToChanges(path: Path) {
     if (fileWatcherAdapter == null) return
     if (subscriptionJobs.containsKey(path)) return
