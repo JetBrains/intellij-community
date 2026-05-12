@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.PsiClass;
@@ -46,33 +46,30 @@ class CallSequencePredicate implements PsiElementPredicate {
       return null;
     }
     return getVariable(methodCallExpression);
-}
- private static @Nullable PsiVariable getVariable(PsiMethodCallExpression methodCallExpression) {
-   final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(methodCallExpression.getType());
-   if (aClass == null) {
-     return null;
-   }
-   final PsiMethod method = methodCallExpression.resolveMethod();
-   if (method == null) {
-     return null;
-   }
-   final PsiClass containingClass = method.getContainingClass();
-   if (!aClass.equals(containingClass)) {
-     return null;
-   }
-   final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-   final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-   if (qualifierExpression instanceof PsiMethodCallExpression expression) {
-     return getVariable(expression);
-   }
-   else if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-     return null;
-   }
-   final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
-   final PsiElement target = referenceExpression.resolve();
-   if (!(target instanceof PsiVariable)) {
-     return null;
-   }
-   return (PsiVariable)target;
- }
+  }
+
+  private static @Nullable PsiVariable getVariable(PsiMethodCallExpression methodCallExpression) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(methodCallExpression.getType());
+    if (aClass == null) {
+      return null;
+    }
+    final PsiMethod method = methodCallExpression.resolveMethod();
+    if (method == null) {
+      return null;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    if (!aClass.equals(containingClass)) {
+      return null;
+    }
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
+    if (qualifierExpression instanceof PsiMethodCallExpression expression) {
+      return getVariable(expression);
+    }
+    else if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+    return !(referenceExpression.resolve() instanceof PsiVariable variable) ? null : variable;
+  }
 }
