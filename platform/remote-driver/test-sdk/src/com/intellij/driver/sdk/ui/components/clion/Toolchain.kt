@@ -82,7 +82,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MSVC,
-    toolset: Toolset = Toolset(kind = "MSVC", path = "\"Program Files (x86)\\Microsoft Visual Studio\\2026\\BuildTools\"")
+    toolset: Toolset = Toolset(kind = "MSVC", path = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2026\\BuildTools\"")
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Cygwin(
@@ -175,7 +175,7 @@ enum class Debugger {
   CUSTOM_GDB {
     override fun getDebuggerPath(): String = when (OS.CURRENT) {
       // Windows will use cygwin gdbserver executable as the custom gdb server
-      OS.Windows -> "C:/Tools/cygwin/bin/gdbserver.exe"
+      OS.Windows -> "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
       else -> "/usr/bin/gdb"
     }
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
