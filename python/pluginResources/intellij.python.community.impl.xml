@@ -1020,6 +1020,8 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>
 
+    <pyDependenciesFileProvider implementation="com.jetbrains.python.sdk.pipenv.PipFileLockFileProvider"/>
+
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>
 

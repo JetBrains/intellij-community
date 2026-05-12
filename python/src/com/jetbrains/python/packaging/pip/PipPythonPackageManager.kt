@@ -26,10 +26,7 @@ import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtManipulationHelper
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.requirements.RequirementsTxtFile
-import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +49,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
-    val requirementsFile = getDependencyFile()
+    val requirementsFile = getRootDependenciesFile()
     return if (requirementsFile != null) {
       engine.syncRequirementsTxt(requirementsFile.virtualFile)
     }
@@ -77,22 +74,20 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
-    val requirementsFile = getDependencyFile() ?: return null
+    val requirementsFile = getRootDependenciesFile() ?: return null
     val requirements = readAction {
       PyRequirementParser.fromFile(requirementsFile.virtualFile)
     }
     return PyResult.success(requirements.mapNotNull { it.toPythonPackage() })
   }
 
-  override fun getDependencyFile(): PyDependenciesFile? {
-    val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return null
-    val requirementsPath = data.requiredTxtPath ?: Path.of(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
-    val requirementsTxtFile = sdk.associatedModuleDir?.findFileByRelativePath(requirementsPath.toString())
-    return requirementsTxtFile?.let { RequirementsTxtFile(it) }
-  }
+  override val dependenciesFilesRelativePaths: List<Path>
+    get() = listOf(
+      PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT,
+    )
 
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
-    val requirementsFile = getDependencyFile() ?: return false
+    val requirementsFile = getRootDependenciesFile() ?: return false
     return withContext(Dispatchers.EDT) {
       RequirementsTxtManipulationHelper.addToRequirementsTxt(project, requirementsFile.virtualFile, requirement.presentableText)
     }

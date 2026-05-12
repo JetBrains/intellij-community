@@ -4,10 +4,9 @@ package com.jetbrains.python.requirements
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.impl.FileTypeOverrider
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.requirements.RequirementsUtil.isRequirementsFile
 
 internal class RequirementsFileTypeOverrider : FileTypeOverrider {
   override fun getOverriddenFileType(file: VirtualFile): FileType? {
-    return if (isRequirementsFile(file)) RequirementsFileType.INSTANCE else null
+    return if (file.isRequirementsTxtFile()) RequirementsFileType.INSTANCE else null
   }
 }

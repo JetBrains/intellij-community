@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.name
 
 /**
  * Migrate from the module persistent path to sdk path
@@ -33,7 +34,7 @@ object PythonRequirementTxtSdkUtils {
   @JvmStatic
   fun findRequirementsTxt(sdk: Sdk): VirtualFile? {
     val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return null
-    val requirementsPath = data.requiredTxtPath ?: Path.of(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
+    val requirementsPath = data.requiredTxtPath ?: PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT
     if (requirementsPath.isAbsolute) {
       return VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
     }
@@ -71,8 +72,8 @@ object PythonRequirementTxtSdkUtils {
   }
 
   fun createRequirementsTxtPath(module: Module, sdk: Sdk): VirtualFile? {
-    val basePathString = sdk.associatedModuleDir ?: module.baseDir ?: return null
-    val requirementsFile = basePathString.findOrCreateFile(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
+    val basePath = sdk.associatedModuleDir ?: module.baseDir ?: return null
+    val requirementsFile = basePath.findOrCreateFile(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString())
 
     //Need to pass test, because TempFS doesn't support getNioPath()
     val requirementFilePath = requirementsFile.toNioPathOrNull() ?: Path.of(requirementsFile.path)
@@ -109,7 +110,7 @@ object PythonRequirementTxtSdkUtils {
   @JvmStatic
   fun detectRequirementsTxtInModule(module: Module): VirtualFile? {
     val requirementsPath = ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull {
-      it.findChild(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
+      it.findChild(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.name)
     }
 
     return requirementsPath
@@ -124,7 +125,7 @@ object PythonRequirementTxtSdkUtils {
 
     val requirementsPath = settings.state.myRequirementsPath
 
-    return if (requirementsPath.isNotBlank() && requirementsPath != PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT) {
+    return if (requirementsPath.isNotBlank() && requirementsPath != PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString()) {
       requirementsPath
     }
     else

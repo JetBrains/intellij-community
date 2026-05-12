@@ -10,4 +10,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.conda.CondaIconMapping"/>
   </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pyDependenciesFileProvider implementation="com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlFileProvider"/>
+  </extensions>
 </idea-plugin>

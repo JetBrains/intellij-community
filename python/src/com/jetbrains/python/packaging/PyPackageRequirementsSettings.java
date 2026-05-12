@@ -103,7 +103,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
      * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
      */
     @Deprecated(forRemoval = true)
-    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT;
+    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString();
 
     @OptionTag("versionSpecifier") public @NotNull PyRequirementsVersionSpecifierType myVersionSpecifier =
       PyRequirementsVersionSpecifierType.COMPATIBLE;

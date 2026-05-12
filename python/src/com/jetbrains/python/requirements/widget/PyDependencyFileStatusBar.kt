@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.widget.resolvePythonWidgetContext
-import com.jetbrains.python.requirements.PyRequirementsBundle
 import com.jetbrains.python.requirements.PyDependenciesFile
+import com.jetbrains.python.requirements.PyRequirementsBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
@@ -68,7 +68,9 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
 
   override suspend fun getTooltipText(): String? {
     val state = currentState ?: return null
-    return PyRequirementsBundle.message("python.requirements.dependencies.file.widget.tooltip.with.module", state.module.name, state.file.virtualFile.name)
+    return PyRequirementsBundle.message("python.requirements.dependencies.file.widget.tooltip.with.module",
+                                        state.module.name,
+                                        state.file.virtualFile.name)
   }
 
   override fun getClickConsumer(): (MouseEvent) -> Unit = {
@@ -82,7 +84,7 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
     val (module, sdk) = readAction { resolvePythonWidgetContext(project, virtualFile) } ?: return null
     if (sdk == null) return null
     val packageManager = PythonPackageManager.forSdk(project, sdk)
-    val depFile = readAction { packageManager.getDependencyFile() } ?: return null
+    val depFile = packageManager.getRootDependenciesFile() ?: return null
     return State(module, depFile)
   }
 }

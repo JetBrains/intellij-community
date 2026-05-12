@@ -8,6 +8,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
@@ -17,11 +21,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
-import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlFile
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.intellij.python.community.impl.conda.environmentYml.findCondaEnvironmentYmlFile
-import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
-import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
@@ -29,17 +29,24 @@ import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.nio.file.Path
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
     Disposer.register(this, it)
   }
+  override val dependenciesFilesRelativePaths: List<Path>
+    get() = listOf(
+      Path.of(ENV_YML_FILE_NAME),
+      Path.of(ENV_YAML_FILE_NAME),
+    )
 
   private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
-    val requirementsFile = getDependencyFile() ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
+    val requirementsFile = getRootDependenciesFile()
+                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
     return updateEnv(requirementsFile.virtualFile)
   }
 
@@ -89,7 +96,11 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     PyResult.success(condaPackages + onlyPipOutdated)
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> = when (installRequest) {
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+    module: Module?,
+  ): PyResult<Unit> = when (installRequest) {
     is PythonPackageInstallRequest.ByLocation -> pipPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> installSeveralPackages(installRequest.specifications, options)
   }
@@ -151,15 +162,13 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
-    val envFile = getDependencyFile() ?: return null
+    val envFile = getRootDependenciesFile() ?: return null
     val requirements = CondaEnvironmentYmlParser.fromFile(envFile.virtualFile) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 
-  override fun getDependencyFile(): CondaEnvironmentYmlFile? = sdk.findCondaEnvironmentYmlFile()
-
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
-    val envFile = getDependencyFile() ?: return false
+    val envFile = getRootDependenciesFile() ?: return false
     return EnvironmentYmlModifier.addRequirement(project, envFile.virtualFile, requirement.presentableText)
   }
 }

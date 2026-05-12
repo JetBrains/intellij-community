@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -16,15 +17,11 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.common.toPythonPackages
-import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlFile
-import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.requirements.PyDependenciesFile
-import com.jetbrains.python.requirements.RequirementsTxtFile
-import com.jetbrains.python.requirements.SetupPyFile
 import com.jetbrains.python.sdk.associatedModuleDir
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
 @TestOnly
 class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
@@ -50,7 +47,11 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return PyResult.success(Unit)
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+    module: Module?,
+  ): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
       return PyResult.localizedError("Test Manager supports only simple repository package specification")
     }
@@ -84,16 +85,19 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return PyResult.success(listInstalledPackagesSnapshot())
   }
 
-  override fun getDependencyFile(): PyDependenciesFile? {
-    val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
-    val moduleDir = sdk.associatedModuleDir ?: return null
+  override val dependenciesFilesRelativePaths: List<Path>
+    get() {
+      val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return emptyList()
+      sdk.associatedModuleDir ?: return emptyList()
 
-    return when (providerType) {
-      RequirementsProviderType.REQUIREMENTS_TXT -> moduleDir.findChild("requirements.txt")?.let { RequirementsTxtFile(it) }
-      RequirementsProviderType.SETUP_PY -> moduleDir.findChild("setup.py")?.let { SetupPyFile(it) }
-      RequirementsProviderType.ENVIRONMENT_YML -> moduleDir.findChild("environment.yml")?.let { CondaEnvironmentYmlFile(it) }
+      return listOf(
+        when (providerType) {
+          RequirementsProviderType.REQUIREMENTS_TXT -> Path.of("requirements.txt")
+          RequirementsProviderType.SETUP_PY -> Path.of("setup.py")
+          RequirementsProviderType.ENVIRONMENT_YML -> Path.of("environment.yml")
+        }
+      )
     }
-  }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null

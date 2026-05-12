@@ -5,14 +5,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
-import com.intellij.python.pyproject.PyProjectTomlFile
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
-import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
+import java.nio.file.Path
 
 internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
   fun getSdkAdditionalData(): HatchSdkAdditionalData {
@@ -33,11 +33,10 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
     return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)
   }
 
-  override fun getDependencyFile(): PyProjectTomlFile? {
-    val data = sdk.sdkAdditionalData as? HatchSdkAdditionalData ?: return null
-    val workingDirectory = data.hatchWorkingDirectory ?: return null
-    return resolvePyProjectToml(workingDirectory)
-  }
+  override val dependenciesFilesRelativePaths: List<Path>
+    get() = listOf(
+      Path.of(PY_PROJECT_TOML),
+    )
 }
 
 internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
