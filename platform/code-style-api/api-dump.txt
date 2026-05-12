@@ -599,7 +599,6 @@ com.intellij.psi.codeStyle.CodeStyleSettingsListener
 - a:codeStyleSettingsChanged(com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent):V
 c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-- PER_PROJECT_SETTINGS:com.intellij.psi.codeStyle.CodeStyleSettings
 - PREFERRED_PROJECT_CODE_STYLE:java.lang.String
 - USE_PER_PROJECT_SETTINGS:Z
 - <init>():V

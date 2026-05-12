@@ -37,7 +37,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @Deprecated(forRemoval = true) public volatile @Nullable CodeStyleSettings PER_PROJECT_SETTINGS;
+  @ApiStatus.Internal
+  public volatile @Nullable CodeStyleSettings PER_PROJECT_SETTINGS;
 
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
