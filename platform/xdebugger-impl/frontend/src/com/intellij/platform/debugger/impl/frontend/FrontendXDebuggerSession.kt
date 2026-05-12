@@ -517,6 +517,10 @@ class FrontendXDebuggerSession(
       topSourcePosition = getFrameSourcePosition(frame)
     }
 
+    // N.B. notifyChanged guarantees that we notify listeners about user action,
+    // including side effects, such as navigation to the selected position.
+    // That's why callers should call this method only if the 'frame change' event is actually needed
+    // or check whether the frame is currently the same instead.
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
     val suspendContext = getCurrentSuspendContext() ?: return
     suspendContext.lifetimeScope.launch {

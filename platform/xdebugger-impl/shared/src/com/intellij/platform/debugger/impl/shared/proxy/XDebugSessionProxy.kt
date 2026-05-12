@@ -84,6 +84,13 @@ interface XDebugSessionProxy {
 
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
+
+  /**
+   * Sets the current stack frame and notifies listeners about the change.
+   * N.B. apart from the frame change, this leads to different side effects, such as navigation to the selected position.
+   * Because of these effects, it can make sence to call this method with the current frame as a parameter.
+   * It is the caller's responsibility to check whether the frame is currently the same and behave accordingly.
+   */
   fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean = executionStack.topFrame == frame)
   fun isTopFrameSelected(): Boolean
   fun hasSuspendContext(): Boolean
