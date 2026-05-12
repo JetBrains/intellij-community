@@ -118,7 +118,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * This function performs a lock-free modification of an edge in the graph.
    */
   @ApiStatus.Internal
-  protected void setVersionedField(@NotNull VarHandleWrapper wrapper, long version, @Nullable Object payload) {
+  protected final void setVersionedField(@NotNull VarHandleWrapper wrapper, long version, @Nullable Object payload) {
     while (true) { // loop because of compareAndSet
       Object currentlyStoredValue = wrapper.getVolatile(this);
       boolean isExpanded = currentlyStoredValue instanceof VersionedPayloadMap;
@@ -177,7 +177,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * Technically, we could use `VarHandle` here, but it is more compiler-friendly to read the field directly.
    */
   @ApiStatus.Internal
-  protected @Nullable Object getVersionedField(Object currentlyStoredValue, long version) {
+  protected final @Nullable Object getVersionedField(Object currentlyStoredValue, long version) {
     if (currentlyStoredValue instanceof VersionedPayloadMap) {
       VersionedPayloadMap map = (VersionedPayloadMap)currentlyStoredValue;
       return map.lowerBound(version);
