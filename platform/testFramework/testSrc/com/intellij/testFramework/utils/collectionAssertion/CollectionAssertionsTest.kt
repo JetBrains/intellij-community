@@ -10,7 +10,7 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-class CollectionAssertionTest {
+class CollectionAssertionsTest {
 
   @Test
   fun `test CollectionAssertions#assertEqualsOrdered`() {
