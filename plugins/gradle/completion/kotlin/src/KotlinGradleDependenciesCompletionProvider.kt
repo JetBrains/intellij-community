@@ -153,6 +153,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     lookupStringProvider: (DependencyCompletionResult) -> String,
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
+
     filterResultsFromOtherContributors(result, parameters)
 
     val documentText = parameters.editor.document.text
@@ -165,9 +168,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
-
-    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingServer()
     var index = 0
     runBlockingCancellable {
       completionService.suggestCompletions(request)
@@ -207,6 +207,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     version: String,
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
+
     filterResultsFromOtherContributors(result, parameters)
 
     val dummyText = parameters.position.parent.text
@@ -244,9 +247,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
-
-    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingServer()
     var index = 0
     runBlockingCancellable {
       itemFlow.collect { item ->
