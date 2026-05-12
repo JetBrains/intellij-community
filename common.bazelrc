@@ -68,7 +68,7 @@ common --javacopt=-Xlint:-options
 
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
-common --java_language_version=21
+common --java_language_version=25
 common --java_runtime_version=remotejbr_25
 
 # see https://bazel.build/external/lockfile
@@ -104,7 +104,7 @@ common --@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps=True
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
-common --tool_java_language_version=21
+common --tool_java_language_version=25
 # Java runtime the tools should use
 common --tool_java_runtime_version=remotejbr_25
 
