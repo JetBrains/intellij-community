@@ -643,7 +643,9 @@ object UniversalFileChooser {
           topToolbar.updateActionsAsync()
         }
 
-        val loadingLabel = JBLabel(IdeBundle.message("universal.file.chooser.label.loading"), SwingConstants.CENTER)
+        val loadingLabel = JBLabel(
+          contributor.getCustomLoadingText() ?: IdeBundle.message("universal.file.chooser.label.loading"),
+          SwingConstants.CENTER)
         contentPanel.add(loadingLabel, LOADING_CARD)
         contentPanel.add(scrollPane, TREE_CARD)
 

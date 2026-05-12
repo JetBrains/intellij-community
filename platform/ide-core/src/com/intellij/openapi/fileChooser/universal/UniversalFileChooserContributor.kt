@@ -66,6 +66,8 @@ interface UniversalFileChooserContributor {
   fun getFileName(path: Path): String? = path.fileName?.toString()
 
   fun getDesktopPath(): Path? = null
+
+  fun getCustomLoadingText(): @Nls String? = null
 }
 
 
