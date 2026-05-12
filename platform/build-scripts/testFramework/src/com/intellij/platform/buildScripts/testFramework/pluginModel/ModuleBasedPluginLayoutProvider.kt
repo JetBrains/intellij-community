@@ -42,8 +42,6 @@ class ModuleBasedPluginLayoutProvider(
     productModules = ProductModulesSerialization.loadProductModules(
       productModulesPath.inputStream(),
       productModulesPath.pathString,
-      productMode,
-      runtimeModuleRepository,
       resourceFileResolver,
     )
     mainModulesOfBundledPlugins = productModules.bundledPluginDescriptorModules.mapTo(HashSet()) { it.name }

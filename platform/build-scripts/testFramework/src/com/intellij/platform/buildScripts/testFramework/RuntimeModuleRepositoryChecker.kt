@@ -2,7 +2,6 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
@@ -337,7 +336,7 @@ private fun loadProductModules(productModulesModule: String, outputProvider: Mod
     outputProvider.readFileContentFromModuleOutput(outputProvider.findRequiredModule(productModulesModule), relativePath)
   } ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
   try {
-    return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
+    return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, repository)
   }
   catch (e: IOException) {
     throw MalformedRepositoryException("Failed to load module group from $debugName", e)

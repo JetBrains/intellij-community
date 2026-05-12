@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization;
 
-import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.product.ProductModules;
-import com.intellij.platform.runtime.product.impl.MainRuntimeModuleGroup;
 import com.intellij.platform.runtime.product.impl.ProductModulesImpl;
 import com.intellij.platform.runtime.product.serialization.impl.ProductModulesXmlSerializer;
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLStreamException;
@@ -26,10 +23,10 @@ import java.util.Set;
 public final class ProductModulesSerialization {
   private ProductModulesSerialization() { }
 
-  public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile, @NotNull ProductMode currentMode,
+  public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile,
                                                            @NotNull RuntimeModuleRepository repository) {
     try {
-      return loadProductModules(Files.newInputStream(xmlFile), xmlFile.toString(), currentMode, repository);
+      return loadProductModules(Files.newInputStream(xmlFile), xmlFile.toString(), repository);
     }
     catch (IOException e) {
       throw new MalformedRepositoryException("Failed to load module group from " + xmlFile, e);
@@ -37,18 +34,15 @@ public final class ProductModulesSerialization {
   }
 
   public static @NotNull ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath,
-                                                           @NotNull ProductMode currentMode,
                                                            @NotNull RuntimeModuleRepository repository) {
-    return loadProductModules(inputStream, filePath, currentMode, repository, ResourceFileResolver.createDefault(repository));
+    return loadProductModules(inputStream, filePath, ResourceFileResolver.createDefault(repository));
   }
 
   public static @NotNull ProductModules loadProductModules(@NotNull InputStream inputStream,
                                                            @NotNull String filePath,
-                                                           @NotNull ProductMode currentMode,
-                                                           @NotNull RuntimeModuleRepository repository,
                                                            @NotNull ResourceFileResolver resourceFileResolver) {
     RawProductModules rawProductModules = readProductModulesAndMergeIncluded(inputStream, filePath, resourceFileResolver);
-    return loadProductModules(rawProductModules, filePath, currentMode, repository);
+    return loadProductModules(rawProductModules, filePath);
   }
 
   public static @NotNull RawProductModules readProductModulesAndMergeIncluded(@NotNull InputStream inputStream, @NotNull String filePath,
@@ -59,11 +53,9 @@ public final class ProductModulesSerialization {
         return rawProductModules;
       }
       
-      Set<RawIncludedRuntimeModule> allMainGroupModules = new LinkedHashSet<>(rawProductModules.getMainGroupModules());
       Set<RuntimeModuleId> allBundledPluginMainModules = new LinkedHashSet<>(rawProductModules.getBundledPluginMainModules());
-      mergeIncludedFiles(rawProductModules, filePath, resolver, allMainGroupModules, allBundledPluginMainModules, Collections.emptySet());
-      return new RawProductModules(new ArrayList<>(allMainGroupModules), new ArrayList<>(allBundledPluginMainModules), 
-                                   Collections.emptyList());
+      mergeIncludedFiles(rawProductModules, filePath, resolver, allBundledPluginMainModules, Collections.emptySet());
+      return new RawProductModules(new ArrayList<>(allBundledPluginMainModules), Collections.emptyList());
     }
     catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load module group from " + filePath, e);
@@ -71,18 +63,13 @@ public final class ProductModulesSerialization {
   }
 
   private static @NotNull ProductModulesImpl loadProductModules(@NotNull RawProductModules rawProductModules,
-                                                                @NotNull String debugName,
-                                                                @NotNull ProductMode currentMode,
-                                                                @NotNull RuntimeModuleRepository repository) {
-
-    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rawProductModules.getMainGroupModules(), currentMode, repository);
-    return new ProductModulesImpl(debugName, mainGroup, rawProductModules.getBundledPluginMainModules());
+                                                                @NotNull String debugName) {
+    return new ProductModulesImpl(debugName, rawProductModules.getBundledPluginMainModules());
   }
 
   private static void mergeIncludedFiles(@NotNull RawProductModules rawProductModules,
                                          @NotNull String debugName,
                                          @NotNull ResourceFileResolver resolver,
-                                         @NotNull Set<RawIncludedRuntimeModule> mainGroupModules,
                                          @NotNull Set<RuntimeModuleId> bundledPluginMainModules,
                                          @NotNull Set<RuntimeModuleId> withoutModules) throws IOException, XMLStreamException {
     for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
@@ -100,12 +87,7 @@ public final class ProductModulesSerialization {
           withoutIncluding.add(RuntimeModuleId.contentModule(module.getName(), RuntimeModuleId.DEFAULT_NAMESPACE));
         }
       }
-      mergeIncludedFiles(includedModules, debugName, resolver, mainGroupModules, bundledPluginMainModules, withoutIncluding);
-      for (RawIncludedRuntimeModule mainGroupModule : includedModules.getMainGroupModules()) {
-        if (!withoutIncluding.contains(mainGroupModule.getModuleId())) {
-          mainGroupModules.add(mainGroupModule);
-        }
-      }
+      mergeIncludedFiles(includedModules, debugName, resolver, bundledPluginMainModules, withoutIncluding);
       for (RuntimeModuleId pluginMainModule : includedModules.getBundledPluginMainModules()) {
         if (!withoutIncluding.contains(pluginMainModule)) {
           bundledPluginMainModules.add(pluginMainModule);

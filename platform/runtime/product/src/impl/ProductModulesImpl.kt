@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls
 
 class ProductModulesImpl(
   private val debugName: @NonNls String,
-  override val mainModuleGroup: MainRuntimeModuleGroup,
   override val bundledPluginDescriptorModules: List<RuntimeModuleId>,
 ) : ProductModules {
   override fun toString(): String {

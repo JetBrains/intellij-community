@@ -8,10 +8,6 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
  * [com.intellij.platform.runtime.product.serialization.ProductModulesSerialization.loadProductModules] method.
  */
 interface ProductModules {
-  /**
-   * Returns a description of the main module group. Modules from this group are always enabled.
-   */
-  val mainModuleGroup: RuntimeModuleGroup
 
   /**
    * Returns IDs of modules containing `META-INF/plugin.xml` files of the bundled plugins.

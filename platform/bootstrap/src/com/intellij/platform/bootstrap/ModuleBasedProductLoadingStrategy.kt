@@ -59,7 +59,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     if (moduleGroupStream == null) {
       error("$productModulesPath is not found in '$rootModuleId' module")
     }
-    ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
+    ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, moduleRepository)
   }
 
   override val currentModeId: String
