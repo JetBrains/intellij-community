@@ -177,7 +177,7 @@ private fun httpHelper(): HttpApiHelper {
 private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
 
 private class GitLabHeadersConfigurer : HttpRequestConfigurer {
-  override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
+  override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder =
     builder.apply {
       header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)
       header(HttpClientUtil.USER_AGENT_HEADER, HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))

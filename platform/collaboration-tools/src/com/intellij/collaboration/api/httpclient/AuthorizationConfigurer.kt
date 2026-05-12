@@ -11,6 +11,6 @@ abstract class AuthorizationConfigurer : HttpRequestConfigurer {
 
   protected abstract val authorizationHeaderValue: String
 
-  final override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder = builder
+  final override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder = builder
     .header(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, authorizationHeaderValue)
 }

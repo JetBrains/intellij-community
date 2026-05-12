@@ -9,6 +9,6 @@ open class CommonHeadersConfigurer : HttpRequestConfigurer {
     mapOf(HttpClientUtil.ACCEPT_ENCODING_HEADER to HttpClientUtil.CONTENT_ENCODING_GZIP,
           HttpClientUtil.USER_AGENT_HEADER to "JetBrains IDE")
 
-  final override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder = builder
+  final override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder = builder
     .apply { commonHeaders.forEach(::header) }
 }

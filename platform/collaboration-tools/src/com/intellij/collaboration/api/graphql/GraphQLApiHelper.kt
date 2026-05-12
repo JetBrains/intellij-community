@@ -18,7 +18,7 @@ import java.net.http.HttpResponse
 
 @ApiStatus.Experimental
 interface GraphQLApiHelper {
-  fun query(uri: URI, loadQuery: () -> String, variablesObject: Any? = null): HttpRequest
+  suspend fun query(uri: URI, loadQuery: () -> String, variablesObject: Any? = null): HttpRequest
 
   suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
 }
@@ -41,7 +41,7 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
                                    private val deserializer: GraphQLDataDeserializer)
   : GraphQLApiHelper, HttpApiHelper by httpHelper {
 
-  override fun query(uri: URI, loadQuery: () -> String, variablesObject: Any?): HttpRequest {
+  override suspend fun query(uri: URI, loadQuery: () -> String, variablesObject: Any?): HttpRequest {
     val publisher = ByteArrayProducingBodyPublisher {
       logger.debug("GraphQL request $uri")
       val query = loadQuery()

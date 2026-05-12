@@ -7,8 +7,8 @@ class CompoundRequestConfigurer(private val configurers: List<HttpRequestConfigu
 
   constructor(vararg configurers: HttpRequestConfigurer) : this(configurers.asList())
 
-  override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder {
-    configurers.forEach { it.configure(builder) }
+  override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder {
+    configurers.forEach { it.configureSuspend(builder) }
     return builder
   }
 }

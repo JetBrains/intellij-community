@@ -86,7 +86,7 @@ com.intellij.collaboration.api.graphql.GraphQLQueryLoader
 a:com.intellij.collaboration.api.httpclient.AuthorizationConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
-- f:configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 - pa:getAuthorizationHeaderValue():java.lang.String
 f:com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 - java.net.http.HttpRequest$BodyPublisher
@@ -96,13 +96,13 @@ f:com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 c:com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
-- f:configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 - p:getCommonHeaders():java.util.Map
 f:com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>(java.util.List):V
 - <init>(com.intellij.collaboration.api.httpclient.HttpRequestConfigurer[]):V
-- configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.collaboration.api.httpclient.HttpClientFactory
 - a:createClient():java.net.http.HttpClient
 c:com.intellij.collaboration.api.httpclient.HttpClientFactoryBase
@@ -123,7 +123,8 @@ f:com.intellij.collaboration.api.httpclient.HttpClientUtil
 - f:getUserAgentValue(java.lang.String):java.lang.String
 - f:inflateAndReadWithErrorHandlingAndLogging(com.intellij.openapi.diagnostic.Logger,java.net.http.HttpRequest,kotlin.jvm.functions.Function2):java.net.http.HttpResponse$BodyHandler
 com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
-- a:configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
 - java.net.http.HttpResponse$BodyHandler
 - <init>(kotlin.jvm.functions.Function2):V
@@ -131,7 +132,7 @@ f:com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
 c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
-- f:configure(java.net.http.HttpRequest$Builder):java.net.http.HttpRequest$Builder
+- f:configureSuspend(java.net.http.HttpRequest$Builder,kotlin.coroutines.Continuation):java.lang.Object
 - p:getReadTimeoutMillis():J
 f:com.intellij.collaboration.api.json.HttpJsonDeserializationException
 - java.lang.RuntimeException
