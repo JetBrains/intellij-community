@@ -44,7 +44,16 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.override.application.version.majorReleaseDate=20000101"
 )
 
-"$PROG_DIR/build/run_build_target.sh" "$PROG_DIR" //build:i_build_target_studio "${BUILD_PROPERTIES[@]}"
+BAZEL_STARTUP_FLAGS=()
+if [[ -n "$BUILD_NUMBER" ]]; then
+  # In CI we want Bazel outputs to go under $PWD/out so they can be reused across builds. For details see:
+  # https://g3doc.corp.google.com/wireless/android/build_tools/g3doc/public/buildbot.md#local-directory-structure-and-files
+  BAZEL_STARTUP_FLAGS+=(--output_user_root="$PWD/out/bazel_user_root")
+fi
+
+pushd "$PROG_DIR"
+./bazel.cmd "${BAZEL_STARTUP_FLAGS[@]}" run --config=ci //build:i_build_target_studio -- "${BUILD_PROPERTIES[@]/#/--jvm_flag=}"
+popd
 
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
