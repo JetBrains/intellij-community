@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.buildTool
 
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.process.findAndKillProcessesBySubstring
+import com.intellij.ide.starter.process.findAndKillProcessesByName
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.util.io.findOrCreateDirectory
@@ -33,7 +33,7 @@ open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType
 
     private const val MAVEN_DAEMON_NAME = "MavenServerIndexerMain"
     private suspend fun destroyMavenIndexerProcessIfExists() {
-      findAndKillProcessesBySubstring(MAVEN_DAEMON_NAME)
+      findAndKillProcessesByName(MAVEN_DAEMON_NAME)
     }
   }
 

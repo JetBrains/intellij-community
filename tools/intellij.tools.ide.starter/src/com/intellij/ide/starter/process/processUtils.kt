@@ -115,6 +115,12 @@ suspend fun findAndKillProcessesBySubPathInArguments(pathToSearch: String, onFou
                               onFoundProcesses = onFoundProcesses)
 }
 
+suspend fun findAndKillProcessesByName(nameToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+  return findAndKillProcesses(message = "Killing process with name '$nameToSearch'",
+                              filter = { p -> p.name == nameToSearch },
+                              onFoundProcesses = onFoundProcesses)
+}
+
 suspend fun findAndKillProcesses(
   message: String? = null,
   filter: Predicate<ProcessInfo>,
