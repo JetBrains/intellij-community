@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.chains.DiffRequestChain
@@ -35,8 +35,8 @@ object GoToChangePopupBuilder {
   abstract class BaseGoToChangePopupAction : ActionGroup(), DumbAware {
     init {
       copyFrom(this, "GotoChangedFile")
-      setPopup(true)
-      getTemplatePresentation().setPerformGroup(true)
+      isPopup = true
+      getTemplatePresentation().isPerformGroup = true
     }
 
     final override fun getChildren(e: AnActionEvent?): Array<AnAction> = EMPTY_ARRAY
@@ -44,7 +44,7 @@ object GoToChangePopupBuilder {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
-      e.presentation.setEnabledAndVisible(canNavigate() && e.getData(DiffDataKeys.DIFF_CONTEXT) != null)
+      e.presentation.isEnabledAndVisible = canNavigate() && e.getData(DiffDataKeys.DIFF_CONTEXT) != null
     }
 
     protected abstract fun canNavigate(): Boolean
@@ -69,7 +69,7 @@ object GoToChangePopupBuilder {
     private val onSelected: Consumer<in Int>,
     private val defaultSelection: Int,
   ) : BaseGoToChangePopupAction() {
-    override fun canNavigate(): Boolean = chain.getRequests().size > 1
+    override fun canNavigate(): Boolean = chain.requests.size > 1
 
     override fun createPopup(e: AnActionEvent): JBPopup = JBPopupFactory.getInstance().createListPopup(MyListPopupStep())
 
@@ -87,10 +87,10 @@ object GoToChangePopupBuilder {
       override fun isSpeedSearchEnabled(): Boolean = true
 
       override fun onChosen(selectedValue: DiffRequestProducer?, finalChoice: Boolean): PopupStep<*>? {
-        return doFinalStep(Runnable {
+        return doFinalStep {
           val index = chain.getRequests().indexOf(selectedValue)
           onSelected.consume(index)
-        })
+        }
       }
     }
   }
