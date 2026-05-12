@@ -3,7 +3,6 @@ package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.EidGen
 import fleet.fastutil.ints.IntOpenHashSet
-import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.builtins.serializer
 import kotlin.reflect.KClass
 import com.jetbrains.rhizomedb.new as new_cs

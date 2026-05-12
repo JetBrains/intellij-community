@@ -2,7 +2,6 @@
 package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.entity
-import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlin.jvm.JvmName
@@ -362,3 +361,16 @@ fun <V : Any> EntityAttribute<*, V>.toIndexValue(value: V): Any =
       false -> value
     }
   }
+
+inline fun <T> Iterable<T>.singleOrNullOrThrow(): T? {
+  var single: T? = null
+  var found = false
+  for (element in this) {
+    if (found) {
+      throw IllegalArgumentException("Collection contains more than one matching element: $single, $element")
+    }
+    single = element
+    found = true
+  }
+  return single
+}
