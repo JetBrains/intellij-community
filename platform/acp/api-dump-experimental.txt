@@ -1,0 +1,119 @@
+*:com.intellij.platform.acp.api.AcpAgentId
+- *sf:Companion:com.intellij.platform.acp.api.AcpAgentId$Companion
+- a:getFullId():java.lang.String
+- a:getRawId():java.lang.String
+*f:com.intellij.platform.acp.api.AcpAgentId$Companion
+- f:isAcpAgent(java.lang.String):Z
+- f:parse(java.lang.String):com.intellij.platform.acp.api.AcpAgentId
+- f:sanitize(java.lang.String):java.lang.String
+- f:serializer():kotlinx.serialization.KSerializer
+- f:tryToParse(java.lang.String):com.intellij.platform.acp.api.AcpAgentId
+*e:com.intellij.platform.acp.api.AcpAgentOrigin
+- java.lang.Enum
+- sf:EXTERNAL_REGISTRY:com.intellij.platform.acp.api.AcpAgentOrigin
+- sf:LOCAL:com.intellij.platform.acp.api.AcpAgentOrigin
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.acp.api.AcpAgentOrigin
+- s:values():com.intellij.platform.acp.api.AcpAgentOrigin[]
+*f:com.intellij.platform.acp.api.AcpAgentStartConfig
+- <init>(java.lang.String,java.util.List,java.util.List,java.util.Map):V
+- b:<init>(java.lang.String,java.util.List,java.util.List,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component4():java.util.Map
+- f:copy(java.lang.String,java.util.List,java.util.List,java.util.Map):com.intellij.platform.acp.api.AcpAgentStartConfig
+- bs:copy$default(com.intellij.platform.acp.api.AcpAgentStartConfig,java.lang.String,java.util.List,java.util.List,java.util.Map,I,java.lang.Object):com.intellij.platform.acp.api.AcpAgentStartConfig
+- equals(java.lang.Object):Z
+- f:getArgs():java.util.List
+- f:getBaseArgs():java.util.List
+- f:getCommand():java.lang.String
+- f:getEnv():java.util.Map
+- hashCode():I
+*:com.intellij.platform.acp.api.AcpAgentsCatalog
+- *sf:Companion:com.intellij.platform.acp.api.AcpAgentsCatalog$Companion
+- a:get(com.intellij.platform.acp.api.AcpAgentId):com.intellij.platform.acp.api.AcpCatalogEntry
+- a:getAgentsFlow():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.platform.acp.api.AcpAgentsCatalog$Companion
+- f:getInstance():com.intellij.platform.acp.api.AcpAgentsCatalog
+*:com.intellij.platform.acp.api.AcpCatalogEntry
+- a:getDisplayName():java.lang.String
+- a:getId():com.intellij.platform.acp.api.AcpAgentId
+- a:getOrigin():com.intellij.platform.acp.api.AcpAgentOrigin
+- a:resolveStartConfig(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.acp.api.AcpCustomAgentId
+- com.intellij.platform.acp.api.AcpAgentId
+- *sf:Companion:com.intellij.platform.acp.api.AcpCustomAgentId$Companion
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.acp.api.AcpCustomAgentId
+- bs:copy$default(com.intellij.platform.acp.api.AcpCustomAgentId,java.lang.String,I,java.lang.Object):com.intellij.platform.acp.api.AcpCustomAgentId
+- equals(java.lang.Object):Z
+- getFullId():java.lang.String
+- getRawId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpCustomAgentId$Companion
+- f:fromName(java.lang.String):com.intellij.platform.acp.api.AcpCustomAgentId
+*f:com.intellij.platform.acp.api.AcpPredefinedAgentId
+- com.intellij.platform.acp.api.AcpAgentId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.acp.api.AcpPredefinedAgentId
+- bs:copy$default(com.intellij.platform.acp.api.AcpPredefinedAgentId,java.lang.String,I,java.lang.Object):com.intellij.platform.acp.api.AcpPredefinedAgentId
+- equals(java.lang.Object):Z
+- getFullId():java.lang.String
+- getRawId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpProcessLaunchException
+- java.lang.RuntimeException
+- <init>(java.lang.String,java.lang.Throwable):V
+- b:<init>(java.lang.String,java.lang.Throwable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+*:com.intellij.platform.acp.api.AcpProcessLauncher
+- *sf:Companion:com.intellij.platform.acp.api.AcpProcessLauncher$Companion
+- a:startProcess(java.lang.String,com.intellij.platform.acp.api.AcpAgentStartConfig,java.nio.file.Path,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.acp.api.AcpProcessLauncher$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.acp.api.AcpProcessLauncher
+*:com.intellij.platform.acp.api.AcpProcessTermination
+*f:com.intellij.platform.acp.api.AcpProcessTermination$Exited
+- com.intellij.platform.acp.api.AcpProcessTermination
+- <init>(I,java.lang.String):V
+- f:component1():I
+- f:component2():java.lang.String
+- f:copy(I,java.lang.String):com.intellij.platform.acp.api.AcpProcessTermination$Exited
+- bs:copy$default(com.intellij.platform.acp.api.AcpProcessTermination$Exited,I,java.lang.String,I,java.lang.Object):com.intellij.platform.acp.api.AcpProcessTermination$Exited
+- equals(java.lang.Object):Z
+- f:getExitCode():I
+- f:getStderr():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpProcessTermination$StoppedExplicitly
+- com.intellij.platform.acp.api.AcpProcessTermination
+- sf:INSTANCE:com.intellij.platform.acp.api.AcpProcessTermination$StoppedExplicitly
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpRegistryAgentId
+- com.intellij.platform.acp.api.AcpAgentId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.acp.api.AcpRegistryAgentId
+- bs:copy$default(com.intellij.platform.acp.api.AcpRegistryAgentId,java.lang.String,I,java.lang.Object):com.intellij.platform.acp.api.AcpRegistryAgentId
+- equals(java.lang.Object):Z
+- getFullId():java.lang.String
+- getRawId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpRemoteAgentId
+- com.intellij.platform.acp.api.AcpAgentId
+- *sf:Companion:com.intellij.platform.acp.api.AcpRemoteAgentId$Companion
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.acp.api.AcpRemoteAgentId
+- bs:copy$default(com.intellij.platform.acp.api.AcpRemoteAgentId,java.lang.String,I,java.lang.Object):com.intellij.platform.acp.api.AcpRemoteAgentId
+- equals(java.lang.Object):Z
+- getFullId():java.lang.String
+- getRawId():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.acp.api.AcpRemoteAgentId$Companion
+- f:fromName(java.lang.String):com.intellij.platform.acp.api.AcpRemoteAgentId
+*:com.intellij.platform.acp.api.AcpServerProcessHandler
+- a:getEelProcess():com.intellij.platform.eel.EelProcess
+- a:getTermination():kotlinx.coroutines.Deferred
+- a:isRunning():Z
+- a:stopServer():V

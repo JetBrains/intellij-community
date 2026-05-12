@@ -1,0 +1,33 @@
+### auto-generated section `iml intellij.platform.acp` start
+exports_files([
+  "intellij.platform.acp.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.acp` end
+
+### auto-generated section `build intellij.platform.acp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "acp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "acp",
+  module_name = "intellij.platform.acp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":acp_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl/rpc",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-frontend:frontend",
+    "//platform/eel",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//libraries/kotlinx/serialization/core",
+  ]
+)
+### auto-generated section `build intellij.platform.acp` end
