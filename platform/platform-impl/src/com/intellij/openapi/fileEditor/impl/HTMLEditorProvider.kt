@@ -2,24 +2,20 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
@@ -63,16 +59,10 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     @ApiStatus.Experimental
     suspend fun openEditorAsync(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
       val file = HTMLVirtualFile.createFile(project, title, request, WebPreviewFileType.INSTANCE, ignoreJcef = false)
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      val fileEditors = if (fileEditorManager is FileEditorManagerEx) {
-        fileEditorManager.openFile(file, FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
-          .allEditorsWithProviders
-          .map { it.fileEditor }
-      } else {
-        withContext(Dispatchers.EDT) {
-          FileEditorManager.getInstance(project).openFile(file, true).toList()
-        }
-      }
+      val fileEditors = FileEditorManagerEx.getInstanceEx(project)
+        .openFile(file, FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
+        .allEditorsWithProviders
+        .map { it.fileEditor }
       return fileEditors.find { it is HTMLFileEditor }
     }
 
