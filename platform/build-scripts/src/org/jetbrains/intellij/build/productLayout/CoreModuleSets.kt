@@ -249,6 +249,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.core")
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
+    embeddedModule("intellij.platform.acp")
     embeddedModule("intellij.platform.projectFrame")
     embeddedModule("intellij.platform.welcomeScreen")
     embeddedModule("intellij.platform.welcomeScreen.impl")
@@ -395,13 +396,13 @@ object CoreModuleSets {
 
   /**
    * Provides RPC backend/frontend split and topics support.
-   * 
+   *
    * **Assumes base RPC already available:** This module set extends `rpcMinimal()` which is included
    * in `corePlatform()`. It only adds the backend/frontend/topics modules on top of the base.
-   * 
+   *
    * **Use when:** Building products that need full RPC functionality with backend separation.
    * Products using `essentialMinimal()` get both `rpcMinimal()` (via corePlatform) and this module set.
-   * 
+   *
    * @see rpcMinimal for base RPC and kernel modules (included in corePlatform)
    */
   fun rpcBackend(): ModuleSet = moduleSet("rpc.backend.extended") {
