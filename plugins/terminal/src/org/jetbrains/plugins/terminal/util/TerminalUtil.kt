@@ -135,8 +135,8 @@ private fun getKeymapToModify(): Keymap? {
   else keymapToModify
 }
 
-internal fun toExistentNioDirectory(directory: String?, labelToLogOnFailure: String? = null): Path? {
-  directory ?: return null
+internal fun String?.toExistentNioDirectory(labelToLogOnFailure: String? = null): Path? {
+  val directory = this ?: return null
   if (directory.isBlank()) {
     if (labelToLogOnFailure != null) {
       val type = if (directory.isEmpty()) "empty" else "blank"
