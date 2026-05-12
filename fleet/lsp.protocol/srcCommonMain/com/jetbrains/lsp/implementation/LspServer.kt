@@ -43,6 +43,8 @@ suspend fun serveLsp(
                                             def.complete(server.initializeResult)
                                             exitSignal.await()
                                         }
+                                    }.invokeOnCompletion { cause ->
+                                        if (cause != null) def.completeExceptionally(cause)
                                     }
                                     def.await()
                                 }
