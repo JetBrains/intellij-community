@@ -14,6 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <content namespace="jetbrains">
+    <module name="intellij.libraries.groovy" loading="embedded"/>
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>

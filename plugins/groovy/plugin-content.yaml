@@ -22,6 +22,12 @@
 - name: lib/groovy-spock-rt.jar
   modules:
   - name: intellij.groovy.spock.rt
+- name: lib/intellij.libraries.groovy.jar
+  contentModules:
+  - name: intellij.libraries.groovy
+    libraries:
+      groovy:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/groovy/groovy/3/groovy-3.jar
 - name: lib/modules/intellij.groovy.ant.jar
   contentModules:
   - name: intellij.groovy.ant

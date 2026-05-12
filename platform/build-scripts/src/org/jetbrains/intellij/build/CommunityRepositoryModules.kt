@@ -179,9 +179,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto("intellij.groovy.live.templates") { spec ->
-      spec.withModule("intellij.libraries.groovy", "groovy.jar")
-    },
+    pluginAuto(listOf("intellij.groovy.live.templates")),
     pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")
@@ -735,15 +733,13 @@ object CommunityRepositoryModules {
   }
 
   fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return plugin("intellij.groovy") { spec ->
+    return pluginAutoWithCustomDirName("intellij.groovy") { spec ->
       spec.directoryName = "Groovy"
       spec.mainJarName = "Groovy.jar"
-      spec.withModule("intellij.libraries.groovy", "groovy-core.jar")
       spec.withModules(
         listOf(
           "intellij.groovy.psi",
           "intellij.groovy.structuralSearch",
-          "intellij.groovy.git",
         )
       )
       spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
