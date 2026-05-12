@@ -9,7 +9,6 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +64,6 @@ import java.util.function.Function;
  *
  * @param <T> type of underlying element
  */
-@Experimental
 public interface Pointer<T> {
 
   /**

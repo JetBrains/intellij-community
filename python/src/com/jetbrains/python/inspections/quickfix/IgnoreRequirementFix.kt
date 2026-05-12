@@ -26,7 +26,7 @@ internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) :
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
 
-    SideEffectGuard.Companion.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
 
     val inspection = PyPackageRequirementsInspection.Helper.getInstance(element) ?: return
     inspection.ignoredPackages = (inspection.ignoredPackages + packagesToIgnore).distinct().toMutableList()

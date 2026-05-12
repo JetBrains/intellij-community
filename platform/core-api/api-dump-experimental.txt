@@ -87,25 +87,12 @@ com.intellij.lexer.RestartableLexer
 - hasType(I,com.intellij.psi.tree.IElementType):Z
 - hasType(I,com.intellij.psi.tree.TokenSet):Z
 - hasType(I,com.intellij.psi.tree.IElementType[]):Z
-*:com.intellij.model.Pointer
-- s:delegatingPointer(com.intellij.model.Pointer,java.util.function.Function):com.intellij.model.Pointer
-- a:dereference():java.lang.Object
-- s:fileRangePointer(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,java.util.function.BiFunction):com.intellij.model.Pointer
-- s:hardPointer(java.lang.Object):com.intellij.model.Pointer
-- s:uroborosPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
-*f:com.intellij.model.PsiElementUsageInfo
-- com.intellij.usageView.UsageInfo
-- <init>(com.intellij.psi.PsiElement):V
-*:com.intellij.model.SideEffectGuard
-- *sf:Companion:com.intellij.model.SideEffectGuard$Companion
-- s:checkSideEffectAllowed(com.intellij.model.SideEffectGuard$EffectType):V
-- s:computeWithAllowedSideEffectsBlocking(java.util.EnumSet,kotlin.jvm.functions.Function0):java.lang.Object
-- s:computeWithoutSideEffects(kotlin.jvm.functions.Function0):java.lang.Object
-*f:com.intellij.model.SideEffectGuard$Companion
-- f:checkSideEffectAllowed(com.intellij.model.SideEffectGuard$EffectType):V
+*f:com.intellij.model.SideEffectGuard
+- sf:INSTANCE:com.intellij.model.SideEffectGuard
+- sf:checkSideEffectAllowed(com.intellij.model.SideEffectGuard$EffectType):V
 - f:computeWithAllowedSideEffects(java.util.EnumSet,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- f:computeWithAllowedSideEffectsBlocking(java.util.EnumSet,kotlin.jvm.functions.Function0):java.lang.Object
-- f:computeWithoutSideEffects(kotlin.jvm.functions.Function0):java.lang.Object
+- sf:computeWithAllowedSideEffectsBlocking(java.util.EnumSet,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:computeWithoutSideEffects(kotlin.jvm.functions.Function0):java.lang.Object
 *e:com.intellij.model.SideEffectGuard$EffectType
 - java.lang.Enum
 - sf:EXEC:com.intellij.model.SideEffectGuard$EffectType
@@ -119,10 +106,6 @@ com.intellij.lexer.RestartableLexer
 - java.lang.IllegalStateException
 - com.intellij.openapi.diagnostic.ControlFlowException
 - <init>(com.intellij.model.SideEffectGuard$EffectType):V
-*a:com.intellij.model.SingleTargetReference
-- <init>():V
-- f:resolveReference():java.util.Collection
-- pa:resolveSingleTarget():com.intellij.model.Symbol
 *:com.intellij.model.Symbol
 - a:createPointer():com.intellij.model.Pointer
 - a:equals(java.lang.Object):Z
@@ -397,11 +380,6 @@ a:com.intellij.psi.PsiDocumentManager
 - *a:getCachedPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *:hasEventSystemEnabledUncommittedDocuments():Z
-com.intellij.psi.PsiElement
-- com.intellij.openapi.util.Iconable
-- com.intellij.openapi.util.UserDataHolder
-- *:getOwnDeclarations():java.util.Collection
-- *:getOwnReferences():java.util.Collection
 a:com.intellij.psi.PsiManager
 - com.intellij.openapi.util.UserDataHolderBase
 - *a:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V

@@ -7,45 +7,40 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.ControlFlowException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.EnumSet
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Experimental
+object SideEffectGuard {
+  private val NO_EFFECTS: EnumSet<EffectType> = EnumSet.noneOf(EffectType::class.java)
 
-interface SideEffectGuard {
-  companion object {
-    private val NO_EFFECTS: EnumSet<EffectType> = EnumSet.noneOf(EffectType::class.java)
-    
-    @JvmStatic
-    fun checkSideEffectAllowed(effectType: EffectType) {
-      if (!isAllowed(effectType)) {
-        throw SideEffectNotAllowedException(effectType)
-      }
+  @JvmStatic
+  fun checkSideEffectAllowed(effectType: EffectType) {
+    if (!isAllowed(effectType)) {
+      throw SideEffectNotAllowedException(effectType)
     }
-    
-    @JvmStatic
-    fun <T> computeWithoutSideEffects(action: () -> T): T {
-      return computeWithAllowedSideEffectsBlocking(NO_EFFECTS, action)
-    }
-    
-//    suspend fun <T> computeWithoutSideEffects(action: suspend CoroutineScope.() -> T): T {
-//      return computeWithAllowedSideEffects(NO_EFFECTS, action)
-//    }
+  }
 
-    suspend fun <T> computeWithAllowedSideEffects(effects: EnumSet<EffectType>, action: suspend CoroutineScope.() -> T): T {
-      return withContext(AllowedSideEffectsElement(effects), action)
-    }
+  @JvmStatic
+  fun <T> computeWithoutSideEffects(action: () -> T): T {
+    return computeWithAllowedSideEffectsBlocking(NO_EFFECTS, action)
+  }
 
-    @JvmStatic
-    fun <T> computeWithAllowedSideEffectsBlocking(effects: EnumSet<EffectType>, action: () -> T): T {
-      val context = currentThreadContext()
-      return installThreadContext(context + AllowedSideEffectsElement(effects), replace = true) {
-        action()
-      }
-    }
+  suspend fun <T> computeWithAllowedSideEffects(effects: EnumSet<EffectType>, action: suspend CoroutineScope.() -> T): T {
+    return withContext(AllowedSideEffectsElement(effects), action)
+  }
 
-    private fun isAllowed(effectType: EffectType): Boolean {
-      return currentThreadContext()[AllowedSideEffectsElement]?.sideEffects?.contains(effectType) ?: true
+  @JvmStatic
+  fun <T> computeWithAllowedSideEffectsBlocking(effects: EnumSet<EffectType>, action: () -> T): T {
+    val context = currentThreadContext()
+    return installThreadContext(context + AllowedSideEffectsElement(effects), replace = true) {
+      action()
     }
+  }
+
+  private fun isAllowed(effectType: EffectType): Boolean {
+    return currentThreadContext()[AllowedSideEffectsElement]?.sideEffects?.contains(effectType) ?: true
   }
 
   class SideEffectNotAllowedException(effectType: EffectType) : IllegalStateException("Side effect not allowed: " + effectType.name),
@@ -63,12 +58,12 @@ interface SideEffectGuard {
     SETTINGS,
 
     /**
-     * Execute external process
+     * Execute an external process
      */
     EXEC,
 
     /**
-     * Spawn an action in UI thread
+     * Spawn an action in a UI thread
      */
     INVOKE_LATER,
   }
@@ -81,5 +76,3 @@ internal class AllowedSideEffectsElement(val sideEffects: EnumSet<SideEffectGuar
 
   override val key: CoroutineContext.Key<*> = AllowedSideEffectsElement
 }
-
-

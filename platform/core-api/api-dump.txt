@@ -358,6 +358,19 @@ com.intellij.lexer.MergeFunction
 - a:merge(com.intellij.psi.tree.IElementType,com.intellij.lexer.Lexer):com.intellij.psi.tree.IElementType
 com.intellij.lexer.RestartableLexer
 - a:getStartState():I
+com.intellij.model.Pointer
+- s:delegatingPointer(com.intellij.model.Pointer,java.util.function.Function):com.intellij.model.Pointer
+- a:dereference():java.lang.Object
+- s:fileRangePointer(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,java.util.function.BiFunction):com.intellij.model.Pointer
+- s:hardPointer(java.lang.Object):com.intellij.model.Pointer
+- s:uroborosPointer(com.intellij.model.Pointer,java.util.function.BiFunction):com.intellij.model.Pointer
+f:com.intellij.model.PsiElementUsageInfo
+- com.intellij.usageView.UsageInfo
+- <init>(com.intellij.psi.PsiElement):V
+a:com.intellij.model.SingleTargetReference
+- <init>():V
+- f:resolveReference():java.util.Collection
+- pa:resolveSingleTarget():com.intellij.model.Symbol
 com.intellij.model.search.SearchRequest
 - s:of(java.lang.String):com.intellij.model.search.SearchRequest
 - s:of(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchRequest
@@ -1395,6 +1408,8 @@ com.intellij.psi.PsiElement
 - a:getNextSibling():com.intellij.psi.PsiElement
 - a:getNode():com.intellij.lang.ASTNode
 - a:getOriginalElement():com.intellij.psi.PsiElement
+- getOwnDeclarations():java.util.Collection
+- getOwnReferences():java.util.Collection
 - a:getParent():com.intellij.psi.PsiElement
 - a:getPrevSibling():com.intellij.psi.PsiElement
 - a:getProject():com.intellij.openapi.project.Project

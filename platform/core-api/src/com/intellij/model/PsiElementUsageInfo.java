@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Simple PsiElement-based UsageInfo that supports branching
+ *
+ * @deprecated Use {@link UsageInfo} directly
  */
+@Deprecated
 public final class PsiElementUsageInfo extends UsageInfo {
   public PsiElementUsageInfo(@NotNull PsiElement element) {
     super(element);
