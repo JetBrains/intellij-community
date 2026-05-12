@@ -39,6 +39,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.PsiElement
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
@@ -195,20 +196,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             .withPresentableText(lookupString)
             .withIcon(item.icon)
             .withInsertHandler(insertHandler)
-          lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
-          lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
-          lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
-          lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
-          lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
-          // Store FUS metadata
-          lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-          lookupElement.putUserData(
-            GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY,
-            invokePosition
-          )
-
-          resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
+          val decoratedLookupElement = lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, invokePosition)
+          resultSet.addElement(decoratedLookupElement)
         }
     }
     loadingAdvertiser.onComplete()
@@ -272,17 +262,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           .withPresentableText(item.result)
           .withIcon(item.icon)
           .withInsertHandler(FullStringInsertHandler)
-        lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
-        lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
-        lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(item.source, index++))
-        lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
-        lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
-        // Store FUS metadata
-        lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-        lookupElement.putUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY, invokePosition)
-
-        resultSet.addElement(MLRankingIgnorable.wrap(lookupElement))
+        val decoratedLookupElement = lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, invokePosition)
+        resultSet.addElement(decoratedLookupElement)
       }
     }
     loadingAdvertiser.onComplete()
@@ -293,6 +275,25 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
   private fun isFreeMode(): Boolean {
     return isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+  }
+
+  private fun LookupElementBuilder.decorateLookupItem(
+    index: Int,
+    isAutoPopup: Boolean,
+    source: DependencyCompletionContributionSource,
+    invokePosition: GradleScriptDependencyCompletionPosition,
+  ): LookupElement {
+    this.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+    this.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+    this.putUserData(StrictOrderWeigher.ORDER_KEY, StrictOrderWeigherData(source, index))
+    this.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+    this.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
+
+    // Store FUS metadata
+    this.putUserData(BT_COMPLETION_IS_AUTO_POPUP, isAutoPopup)
+    this.putUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY, invokePosition)
+
+    return MLRankingIgnorable.wrap(this)
   }
 }
 
