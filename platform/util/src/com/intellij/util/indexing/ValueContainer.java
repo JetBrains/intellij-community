@@ -14,15 +14,10 @@ import java.util.function.IntPredicate;
  *
  * <p> This class provides a <b>read-only view</b>, subclasses may provide mutators.</p>
  *
- * <p> Used in inverted indexes: inverted index has structure {@code [value -> (key, keySourceId)*]}, so it is implemented
- * as {@code Map[value -> ValueContainer(keySourceId, key) ]}.<br/>
+ * <p> Used in inverted indexes: inverted index has structure {@code [key -> (value, valueSourceId)*]}, so it is implemented
+ * as {@code Map[key -> ValueContainer(valueSourceId, value) ]}.<br/>
  * (This is there constraint 'single value per valueOriginId' comes from)</p>
  * <p>
- * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
- * with values: that is called 'Value' in ValueContainer definition is 'Key' when ValueContainer is utilized in
- * the inverted index -- which is its primary role)
- * </p>
- *
  * @author Eugene Zhuravlev
  */
 public abstract class ValueContainer<Value> {

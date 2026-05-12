@@ -118,9 +118,9 @@ class ValueContainersPropertyTest {
 
     IdealValueContainer<String> etalon = new IdealValueContainer<>();
 
-    //RC: There was a but in ChangeTrackingValueContainer then pair of changes (add X) followed by (remove X)
+    //RC: There was a bug in ChangeTrackingValueContainer: a pair of changes (add X) followed by (remove X)
     //    was coalesced to (nothing).
-    //    It is incorrect if <snapshot> contains X -- correct coalescing is (remove X).
+    //    It is incorrect: if a <snapshot> already contains X -- the correct coalescing is (remove X).
 
     List<Command<String>> commandsToSnapshot = List.of(
       new Command<>(new Entry<>(1, "1"), /* add: */ true)
@@ -209,7 +209,7 @@ class ValueContainersPropertyTest {
       }
     }
 
-    ValueContainer<String> deserializedContainer = serializeAndDeserializeWithDiff(snapshot, changeTrackingContainer);
+    ValueContainer<String> deserializedContainer = serializeWithDiffAndDeserialize(snapshot, changeTrackingContainer);
 
     assertContainerStatesMatch(
       deserializedContainer,
@@ -249,7 +249,7 @@ class ValueContainersPropertyTest {
       }
       totalCommands.addAll(commands);
 
-      snapshot = serializeAndDeserializeWithDiff(snapshot, changeTrackingContainer);
+      snapshot = serializeWithDiffAndDeserialize(snapshot, changeTrackingContainer);
     }
 
     assertContainerStatesMatch(
@@ -289,7 +289,8 @@ class ValueContainersPropertyTest {
     return container;
   }
 
-  private static @NotNull ValueContainerImpl<String> serializeAndDeserializeWithDiff(
+  /** serialize(snapshot + diff) -> deserialize */
+  private static @NotNull ValueContainerImpl<String> serializeWithDiffAndDeserialize(
     @NotNull ValueContainerImpl<String> snapshot,
     @NotNull ChangeTrackingValueContainer<String> changeTrackingContainer) throws IOException {
 

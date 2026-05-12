@@ -144,11 +144,13 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   public void clearCaches() {
     try {
-      //TODO RC: it seems useless to clearCaches() before flush() -- clearCaches() basically trims
-      //         mergedSnapshot from all the cached ChangeTrackingValueContainers, while flush() in
-      //         its current implementation persists all the changes in those containers, AND
-      //         invalidates the cache entirely, i.e. remove all the cached content. So flush()
-      //         strongly tops .clearCaches() in its effect on occupied heap space.
+      //It seems useless to clearCaches() before flush() -- clearCaches() basically trims
+      //   mergedSnapshot from all the cached ChangeTrackingValueContainers, while flush()
+      //   in its current implementation persists all the changes in those containers, AND
+      //   invalidates the cache entirely, i.e. remove all the cached content.
+      //   So flush() strongly tops .clearCaches() in its effect on occupied heap space.
+      //   My guess: probably we're trying to first free a bit of heap so following flush
+      //   has less chance to trigger an OoM?
       myStorage.clearCaches();
       flush();
     }

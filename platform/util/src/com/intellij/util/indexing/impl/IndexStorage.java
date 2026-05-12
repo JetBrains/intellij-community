@@ -82,6 +82,7 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
 
   /**
    * Drops (some of) cached data, without touching data that is modified and needs to be persisted.
+   * The method doesn't persist anything -- this is {@linkplain #flush()} is for -- it just makes cache use less memory.
    * TODO RC: clearCaches() is an ambiguous name, this method is better called 'trimCaches()'
    */
   void clearCaches();

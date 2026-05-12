@@ -15,17 +15,38 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Container balances between keeping the changes as changes, and merging (applying) them.
- * I.e. if (inputId, value) tuple is removed, the container could either remove the tuple from mergedSnapshot
- * immediately, or keep the remove in invalidatedIds(+inputId), and apply it later. Same for add (inputId, value):
- * it could be either applied to mergedSnapshot immediately, or kept in 'added' container and applied later on,
+ * Container keeps the changes as changes (diff) and merges (applies) them lazily.
+ * <p/>
+ * I.e., if `(inputId, value)` tuple is removed, the container keeps the remove as `invalidatedIds += inputId` and applies it
+ * to the 'merged snapshot' lazily.
+ * Same for the add `(inputId, value)` operation: the container keeps it in the 'added' container and applies to the 'merged
+ * snapshot' lazily.
+ * <p/>
+ * Beware: the changes (diff) are the main data content of this class -- while 'merged snapshot' is just a cached value that
+ * could be dropped anytime ({@linkplain #dropMergedData()}).
+ * The accumulated changes are never 'reset' though: the assumed lifecycle is to keep instances of this container in cache,
+ * accumulating changes until the cache is flushed -- then changes are stored, and containers are dropped, to be later
+ * re-created empty, with all previous changes already 'embedded' into the (new) snapshot.
  *
  * @author Eugene Zhuravlev
  */
 @Internal
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value> {
   // there is no volatile as we modify under write lock and read under read lock
+
+  /**
+   * All the added `(inputId, value)` mappings are stored here.
+   * They may be merged with {@linkplain #myInitializer}-provided snapshot, into {@linkplain #myMergedSnapshot} later,
+   * lazily -- but the changes never cleared from this collection (because {@linkplain #myMergedSnapshot} is just a transient
+   * cache, and could be {@linkplain #dropMergedData()} anytime).
+   */
   protected ValueContainerImpl<Value> myAdded;
+  /**
+   * The removed `(inputId, value)` mappings are stored here.
+   * They may be merged with {@linkplain #myInitializer}-provided snapshot, into {@linkplain #myMergedSnapshot} later,
+   * lazily -- but the changes never cleared from this collection (because {@linkplain #myMergedSnapshot} is just a transient
+   * cache, and could be {@linkplain #dropMergedData()} anytime).
+   */
   protected IntSet myInvalidated;
 
 
@@ -43,6 +64,10 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
 
+  /**
+   * The returned value must be stable: i.e., the same snapshot once returned -- must be returned each next call.
+   * (equals by of content, not == instance itself)
+   */
   //TODO RC: the only reason to use UpdatableValueContainer instead of plain ValueContainer (unmodifiable) is to access
   //         .needsCompaction() method -- which is strictly speaking should be in a ValueContainer
   private final @NotNull Computable<? extends UpdatableValueContainer<Value>> myInitializer;
@@ -204,7 +229,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       }
     }
 
-    final UpdatableValueContainer<Value> toAppend = myAdded;
+    UpdatableValueContainer<Value> toAppend = myAdded;
     if (toAppend != null && toAppend.size() > 0) {
       toAppend.saveTo(out, externalizer);
     }
