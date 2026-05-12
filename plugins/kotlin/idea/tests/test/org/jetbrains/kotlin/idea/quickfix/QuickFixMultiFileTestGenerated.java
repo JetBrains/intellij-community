@@ -456,9 +456,9 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
                 runTest("testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
             }
 
-            @TestMetadata("assignmentOperator.before.Main.kt")
-            public void testAssignmentOperator() throws Exception {
-                runTest("testData/quickfix/autoImports/invisible/assignmentOperator.before.Main.kt");
+            @TestMetadata("assignmentOperatorK1.before.Main.kt")
+            public void testAssignmentOperatorK1() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/assignmentOperatorK1.before.Main.kt");
             }
 
             @TestMetadata("class.before.Main.kt")

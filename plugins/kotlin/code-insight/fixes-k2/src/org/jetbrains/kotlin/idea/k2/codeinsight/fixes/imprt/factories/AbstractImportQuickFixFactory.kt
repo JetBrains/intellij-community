@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -15,16 +16,17 @@ import org.jetbrains.kotlin.name.Name
 /**
  * Note: Do not confuse with [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KotlinAddImportActionFactory].
  */
-internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
+@Internal
+abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
 
     /**
      * Returns the detected [ImportPositionTypeAndReceiver] for the given diagnostic.
      */
-    protected abstract fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
+    internal abstract fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
 
-    protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
+    internal abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
 
-    protected abstract fun KaSession.provideImportCandidates(
+    internal abstract fun KaSession.provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,

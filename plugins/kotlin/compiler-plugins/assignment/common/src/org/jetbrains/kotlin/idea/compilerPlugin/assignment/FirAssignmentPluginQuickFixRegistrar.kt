@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.AssignmentPluginImportQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
@@ -31,7 +31,7 @@ private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDi
     val project = element.project
 
     if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ && isAssignmentPluginEnabled(project, element)) {
-        ImportQuickFixProvider.run { createQuickFixes(diagnostic) }
+        AssignmentPluginImportQuickFixFactory.run { createQuickFixes(diagnostic) }
     } else {
         emptyList()
     }

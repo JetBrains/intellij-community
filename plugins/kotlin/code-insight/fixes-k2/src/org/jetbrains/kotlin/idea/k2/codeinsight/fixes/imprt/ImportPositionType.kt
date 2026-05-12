@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver.Companion.detect
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -28,7 +29,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
  * N.B. This class is heavily copied from [org.jetbrains.kotlin.idea.util.CallType].
  * It is currently used only in an auto-import subsystem, so it has a very narrow name.
  */
-internal sealed interface ImportPositionType {
+@ApiStatus.Internal
+sealed interface ImportPositionType {
     object Unknown : ImportPositionType
     object DefaultCall : ImportPositionType
     object DotCall : ImportPositionType

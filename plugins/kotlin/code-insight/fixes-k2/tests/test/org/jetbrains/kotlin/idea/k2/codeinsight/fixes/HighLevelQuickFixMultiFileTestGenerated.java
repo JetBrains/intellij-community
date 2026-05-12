@@ -325,9 +325,19 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
             }
 
-            @TestMetadata("assignmentOperator.before.Main.kt")
-            public void testAssignmentOperator() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invisible/assignmentOperator.before.Main.kt");
+            @TestMetadata("assignmentOperatorK1.before.Main.kt")
+            public void testAssignmentOperatorK1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invisible/assignmentOperatorK1.before.Main.kt");
+            }
+
+            @TestMetadata("assignmentOperatorK2.before.Main.kt")
+            public void testAssignmentOperatorK2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invisible/assignmentOperatorK2.before.Main.kt");
+            }
+
+            @TestMetadata("assignmentOperatorK2PluginDisabled.before.Main.kt")
+            public void testAssignmentOperatorK2PluginDisabled() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invisible/assignmentOperatorK2PluginDisabled.before.Main.kt");
             }
 
             @TestMetadata("class.before.Main.kt")
