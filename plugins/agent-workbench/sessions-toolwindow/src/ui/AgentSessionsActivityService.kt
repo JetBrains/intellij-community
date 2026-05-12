@@ -20,13 +20,18 @@ internal class AgentSessionsActivityService(
   scope: CoroutineScope,
 ) {
   private val _summary = MutableStateFlow(AgentSessionsActivitySummary.EMPTY)
+  private val systemNotificationTracker = AgentSessionsSystemNotificationTracker()
 
   val summary: StateFlow<AgentSessionsActivitySummary> = _summary.asStateFlow()
 
   init {
     scope.launch(Dispatchers.Default) {
       service<AgentSessionReadService>().stateFlow().collect { state ->
-        _summary.value = buildAgentSessionsActivitySummary(state)
+        val nextSummary = buildAgentSessionsActivitySummary(state)
+        _summary.value = nextSummary
+        systemNotificationTracker
+          .collectNotifications(nextSummary, isLoadedState = state.lastUpdatedAt != null)
+          .forEach(::showAgentSessionsSystemNotification)
         project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
       }
     }

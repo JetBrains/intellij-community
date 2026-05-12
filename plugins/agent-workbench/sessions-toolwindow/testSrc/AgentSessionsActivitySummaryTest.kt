@@ -11,7 +11,9 @@ import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterComponent
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityCounterTone
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsStripeBadge
+import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNotificationTracker
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
 import com.intellij.openapi.actionSystem.AnAction
@@ -216,6 +218,85 @@ class AgentSessionsActivitySummaryTest {
   }
 
   @Test
+  fun systemNotificationTrackerWaitsForLoadedBaseline() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+
+    assertThat(tracker.collectNotifications(AgentSessionsActivitySummary.EMPTY, isLoadedState = false)).isEmpty()
+    assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 500)), isLoadedState = true)).isEmpty()
+    assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 600)), isLoadedState = true)).isEmpty()
+  }
+
+  @Test
+  fun systemNotificationTrackerReportsDoneAndAttentionTransitionsAfterLoadedBaseline() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    assertThat(
+      tracker.collectNotifications(
+        summary(
+          thread("done", AgentThreadActivity.PROCESSING, 300),
+          thread("needs-input", AgentThreadActivity.PROCESSING, 200),
+          thread("reviewing", AgentThreadActivity.PROCESSING, 100),
+        ),
+        isLoadedState = true,
+      )
+    ).isEmpty()
+
+    val notifications = tracker.collectNotifications(
+      summary(
+        thread("done", AgentThreadActivity.UNREAD, 300),
+        thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200),
+        thread("reviewing", AgentThreadActivity.REVIEWING, 100),
+      ),
+      isLoadedState = true,
+    )
+
+    assertThat(notifications.map { it.bucket }).containsExactly(
+      AgentSessionsActivityBucket.ATTENTION,
+      AgentSessionsActivityBucket.ATTENTION,
+      AgentSessionsActivityBucket.DONE,
+    )
+  }
+
+  @Test
+  fun systemNotificationTrackerDoesNotDuplicateSameBucket() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(summary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+
+    assertThat(
+      tracker.collectNotifications(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200)), isLoadedState = true)
+    ).hasSize(1)
+    assertThat(
+      tracker.collectNotifications(summary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 300)), isLoadedState = true)
+    ).isEmpty()
+    assertThat(
+      tracker.collectNotifications(summary(thread("needs-input", AgentThreadActivity.REVIEWING, 400)), isLoadedState = true)
+    ).isEmpty()
+  }
+
+  @Test
+  fun systemNotificationTrackerNotifiesAgainAfterLeavingBucket() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(summary(thread("done", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+
+    assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 200)), isLoadedState = true)).hasSize(1)
+    assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.PROCESSING, 300)), isLoadedState = true)).isEmpty()
+    assertThat(tracker.collectNotifications(summary(thread("done", AgentThreadActivity.UNREAD, 400)), isLoadedState = true)).hasSize(1)
+  }
+
+  @Test
+  fun systemNotificationTextIncludesThreadTitleAndLocation() {
+    val tracker = AgentSessionsSystemNotificationTracker()
+    tracker.collectNotifications(worktreeSummary(thread("needs-input", AgentThreadActivity.PROCESSING, 100)), isLoadedState = true)
+
+    val notification = tracker.collectNotifications(
+      worktreeSummary(thread("needs-input", AgentThreadActivity.NEEDS_INPUT, 200, title = "Confirm tool call")),
+      isLoadedState = true,
+    ).single()
+
+    assertThat(notification.title).isEqualTo("Agent Task Needs Attention")
+    assertThat(notification.text).isEqualTo("\"Confirm tool call\" in Project A / feature needs attention.")
+  }
+
+  @Test
   fun counterClickProvidesInputEventComponentForPopupAnchor() {
     var performedEvent: AnActionEvent? = null
     val action = object : AnAction() {
@@ -241,6 +322,46 @@ class AgentSessionsActivitySummaryTest {
       assertThat(performedEvent?.inputEvent).isSameAs(clickEvent)
       assertThat(performedEvent?.inputEvent?.component).isSameAs(counter)
     }
+  }
+
+  private fun summary(vararg threads: AgentSessionThread): AgentSessionsActivitySummary {
+    return buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            threads = threads.toList(),
+          )
+        ),
+      )
+    )
+  }
+
+  private fun worktreeSummary(vararg threads: AgentSessionThread): AgentSessionsActivitySummary {
+    return buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            hasLoaded = true,
+            worktrees = listOf(
+              AgentWorktree(
+                path = "/work/project-a-feature",
+                name = "feature",
+                branch = "feature",
+                isOpen = false,
+                threads = threads.toList(),
+              )
+            ),
+          )
+        ),
+      )
+    )
   }
 
   private fun thread(
