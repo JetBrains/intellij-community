@@ -21,6 +21,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +33,9 @@ final class IntroduceConstantHelper implements FieldHelper {
       return FieldExtractor.isStaticFinalInitializer(expr, true) == null;
     }
     final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    if (localVariable == null) return false;
     final PsiExpression initializer = localVariable.getInitializer();
     boolean isValidInitializer = initializer != null && FieldExtractor.isStaticFinalInitializer(initializer, true) == null;
-    if (!isValidInitializer) {
-      return false;
-    }
     return isValidInitializer;
   }
 
@@ -55,8 +54,23 @@ final class IntroduceConstantHelper implements FieldHelper {
   }
 
   @Override
-  public @Nullable String checkLocalVariables(@NotNull PsiLocalVariable variable) {
+  public @Nullable String checkOccurrences(@NotNull PsiLocalVariable variable) {
     PsiExpression[] occurrences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(variable), variable);
+    for (PsiExpression occurrence : occurrences) {
+      if (RefactoringUtil.isAssignmentLHS(occurrence)) {
+        String message =
+          RefactoringBundle.getCannotRefactorMessage(
+            JavaRefactoringBundle.message("variable.is.accessed.for.writing", occurrence.getText()));
+        return message;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable @Nls String checkOccurrences(@NotNull PsiExpression expr, @NotNull PsiClass aClass) {
+    OccurrenceManager manager = createOccurrenceManager(expr, aClass);
+    PsiExpression[] occurrences = manager.getOccurrences();
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =

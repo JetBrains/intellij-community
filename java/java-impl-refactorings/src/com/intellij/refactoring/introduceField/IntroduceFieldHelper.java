@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,12 @@ final class IntroduceFieldHelper implements FieldHelper {
 
   @Override
   @NlsSafe
-  public @Nullable String checkLocalVariables(@NotNull PsiLocalVariable variable) {
+  public @Nullable String checkOccurrences(@NotNull PsiLocalVariable variable) {
+    return null;
+  }
+
+  @Override
+  public @Nullable @Nls String checkOccurrences(@NotNull PsiExpression expr, @NotNull PsiClass aClass) {
     return null;
   }
 

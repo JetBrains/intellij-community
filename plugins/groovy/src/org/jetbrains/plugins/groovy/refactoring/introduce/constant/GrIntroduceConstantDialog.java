@@ -501,7 +501,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
-                                      IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
+                                      new IntroduceConstantHandler().getRefactoringName(), Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module,

@@ -205,7 +205,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
-  protected @NotNull String getRefactoringName() {
+  @NotNull
+  public String getRefactoringName() {
     return myHelper.getRefactoringName();
   }
 

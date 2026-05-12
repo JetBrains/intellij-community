@@ -221,7 +221,7 @@ final class FieldExtractor {
       return new ToFieldContext.Error(message);
     }
 
-    String validationMessage = helper.checkLocalVariables(psiLocalVariable);
+    String validationMessage = helper.checkOccurrences(psiLocalVariable);
     if (validationMessage != null) {
       return new ToFieldContext.Error(validationMessage);
     }
@@ -285,6 +285,8 @@ final class FieldExtractor {
     if (message != null) {
       return new ToFieldContext.Error(message);
     }
+
+
     if (parentClass == null) {
       return new ToFieldContext.Error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
     }
@@ -305,20 +307,26 @@ final class FieldExtractor {
       return new ToFieldContext.Error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
     }
 
+    String validationMessage = helper.checkOccurrences(selectedExpr, parentClass);
+    if (validationMessage != null) {
+      return new ToFieldContext.Error(validationMessage);
+    }
+
+
     return new ToFieldContext.ExpressionContext(selectedExpr, element, file, tempType, parentClass,
                                                 proposedClasses);
   }
 
 
   @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiExpression selectedExpr) {
-    if (psiFile == null || !psiFile.isPhysical()) {
+    if (psiFile == null) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
     return getContext(myHelper, selectedExpr);
   }
 
   @NotNull ToFieldContext getContext(@Nullable PsiFile psiFile, @NotNull PsiLocalVariable selectedVariable) {
-    if (psiFile == null || !psiFile.isPhysical()) {
+    if (psiFile == null) {
       return new ToFieldContext.Error(RefactoringBundle.message("refactoring.cannot.be.performed"));
     }
     return getContext(myHelper, selectedVariable);

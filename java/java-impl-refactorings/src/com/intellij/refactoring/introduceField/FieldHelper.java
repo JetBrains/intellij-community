@@ -58,15 +58,24 @@ interface FieldHelper {
   @NotNull String getRefactoringName();
 
   /**
-   * Validates a local variable selected as the refactoring target.
-   * Implementations check refactoring-specific preconditions.
+   * Checks the occurrences of a given local variable in the code.
    *
-   * @param variable the local variable being converted to a field/constant
-   * @return {@code null} if the variable is acceptable, otherwise a localized
-   *         error message describing why the refactoring cannot proceed
+   * @param variable the local variable to be checked; must not be null.
+   * @return a localized message describing the occurrences of the variable, or null if no issues are found.
    */
   @Nullable @Nls
-  String checkLocalVariables(@NotNull PsiLocalVariable variable);
+  String checkOccurrences(@NotNull PsiLocalVariable variable);
+
+  /**
+   * Checks the occurrences of the specified expression within the given class.
+   *
+   * @param expr   the expression to be analyzed; must not be null.
+   * @param aClass the class within which to analyze occurrences of the expression; must not be null.
+   * @return a localized message describing the occurrences of the expression within the class,
+   *         or null if no issues are found.
+   */
+  @Nullable @Nls
+  String checkOccurrences(@NotNull PsiExpression expr, @NotNull PsiClass aClass);
 
   /**
    * Resolves the class in which the new field/constant must be declared.

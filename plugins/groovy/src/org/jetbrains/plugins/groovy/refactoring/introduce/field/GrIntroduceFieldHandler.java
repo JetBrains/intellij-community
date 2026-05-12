@@ -33,9 +33,10 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
  */
 public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntroduceFieldSettings> {
 
+
   @Override
   protected @Nls(capitalization = Title) @NotNull String getRefactoringName() {
-    return IntroduceFieldHandler.getRefactoringNameText();
+    return new IntroduceFieldHandler().getRefactoringName();
   }
 
   @Override

@@ -143,6 +143,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                            Project project,
                                            PsiType tempType,
                                            @NotNull PsiClass parentClass) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, parentClass)) return true;
 
     final OccurrenceManager occurrenceManager = createOccurrenceManager(selectedExpr, parentClass);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
@@ -420,7 +421,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   @NlsContexts.DialogTitle
-  protected @NotNull String getRefactoringName() {
+  @NotNull
+  public String getRefactoringName() {
     return myHelper.getRefactoringName();
   }
 
