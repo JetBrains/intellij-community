@@ -7,11 +7,11 @@ import com.intellij.python.community.execService.ProcessEvent
 import com.intellij.python.community.execService.ProcessEvent.OutputType
 import com.intellij.python.community.execService.ProcessEvent.OutputType.STDERR
 import com.intellij.python.community.execService.ProcessEvent.OutputType.STDOUT
-import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -24,7 +24,15 @@ suspend fun Process.awaitWithReporting(progressListener: FlowCollector<ProcessEv
   coroutineScope {
     val stdout = async { report(STDOUT, progressListener) }
     val stderr = async { report(STDERR, progressListener) }
-    EelProcessExecutionResult(awaitExit(), stdout = stdout.await(), stderr = stderr.await())
+    // PY-89717: platform `awaitExit()` falls back to an unbounded
+    // blocking dispatcher and parks a Dispatchers.IO worker in native
+    // ProcessImpl.waitFor(), which ThreadLeakTracker reports as a leak when
+    // the OS process is slow to exit (e.g. Docker target cleanup). Suspend on
+    // ProcessHandle.onExit() instead — the wait is handled by the JDK's
+    // "process reaper" daemon which is whitelisted by `ThreadLeakTracker`.
+    @Suppress("UsePlatformProcessAwaitExit")
+    val exitCode = onExit().await().exitValue()
+    EelProcessExecutionResult(exitCode, stdout = stdout.await(), stderr = stderr.await())
   }
 
 private suspend fun Process.report(outputType: OutputType, to: FlowCollector<ProcessEvent.ProcessOutput>?): ByteArray = withContext(Dispatchers.IO) {

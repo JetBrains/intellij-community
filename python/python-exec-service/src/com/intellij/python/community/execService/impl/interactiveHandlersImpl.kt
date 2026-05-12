@@ -9,11 +9,11 @@ import com.intellij.python.community.execService.ProcessEvent
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.ProcessSemiInteractiveFun
 import com.intellij.python.community.execService.PyProcessListener
-import com.intellij.util.io.awaitExit
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapError
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 
 internal class ProcessSemiInteractiveHandlerImpl<T>(
   private val pyProcessListener: PyProcessListener?,
@@ -24,7 +24,12 @@ internal class ProcessSemiInteractiveHandlerImpl<T>(
       pyProcessListener?.emit(ProcessEvent.ProcessStarted(binary, args))
       val processOutput = async { process.awaitWithReporting(pyProcessListener) }
       val result = code(process.outputStream.asEelChannel(), processOutput)
-      pyProcessListener?.emit(ProcessEvent.ProcessEnded(process.awaitExit()))
+      // PY-89717: see processAwaiter.kt - and LoggingProcess.onExit() override
+      // makes this resolve to ProcessHandleImpl.completion (the "process reaper"
+      // path) rather than the FJP fallback in java.lang.Process.onExit().
+      @Suppress("UsePlatformProcessAwaitExit")
+      val exitCode = process.onExit().await().exitValue()
+      pyProcessListener?.emit(ProcessEvent.ProcessEnded(exitCode))
       return@coroutineScope result.mapError { customErrorMessage ->
         Pair(processOutput.await(), customErrorMessage)
       }
