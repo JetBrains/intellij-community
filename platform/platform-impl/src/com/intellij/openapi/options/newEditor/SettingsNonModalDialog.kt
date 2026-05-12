@@ -356,8 +356,14 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       val wrappedApply = object : AbstractAction() {
         init {
           putValue(Action.NAME, rawApplyAction.getValue(Action.NAME))
+          isEnabled = rawApplyAction.isEnabled
           rawApplyAction.addPropertyChangeListener { evt ->
-            putValue(evt.propertyName, rawApplyAction.getValue(evt.propertyName))
+            if (evt.propertyName == "enabled") {
+              isEnabled = rawApplyAction.isEnabled
+            }
+            else {
+              putValue(evt.propertyName, rawApplyAction.getValue(evt.propertyName))
+            }
           }
         }
         override fun actionPerformed(e: ActionEvent) {

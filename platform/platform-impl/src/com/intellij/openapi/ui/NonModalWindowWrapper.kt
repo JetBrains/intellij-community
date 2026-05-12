@@ -249,6 +249,7 @@ abstract class NonModalWindowWrapper(
   private fun switchWindowMode(toFloat: Boolean) {
     val bounds = activeWindow.bounds
     val wasVisible = activeWindow.isVisible
+    val savedDefaultButton = (activeWindow as RootPaneContainer).rootPane.defaultButton
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
     content.parent?.remove(content)
@@ -257,6 +258,7 @@ abstract class NonModalWindowWrapper(
     windowDisposable = null
     activeWindow = createAwtWindow(toFloat, content, minWindowSize, bounds.size)
     installWindowListeners()
+    savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = bounds
     if (wasVisible) {
       activeWindow.isVisible = true
