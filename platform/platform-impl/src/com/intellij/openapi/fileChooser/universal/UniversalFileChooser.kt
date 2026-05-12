@@ -915,15 +915,19 @@ object UniversalFileChooser {
               }
             }
             fileToSelect = root
-          }
-          finally {
-            topComponent.cursor = Cursor.getDefaultCursor()
             isMountActionInProgress = false
             startCacheUpdates()
             loadRoots()
             runOnEdt {
               fileTree.updateTree()
             }
+          }
+          catch (e: Exception) {
+            isMountActionInProgress = false
+            fileTree.setRootError(root, e.localizedMessage ?: e.message ?: e.javaClass.simpleName)
+          }
+          finally {
+            topComponent.cursor = Cursor.getDefaultCursor()
           }
         }
       }

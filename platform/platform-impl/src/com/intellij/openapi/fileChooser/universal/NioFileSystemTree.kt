@@ -4,6 +4,9 @@ package com.intellij.openapi.fileChooser.universal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileSystemTree
@@ -14,6 +17,10 @@ import com.intellij.openapi.util.IconLoader.getTransparentIcon
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.PopupHandler
@@ -27,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -150,6 +158,42 @@ class NioFileSystemTree(
 
   fun setRoots(roots: List<UniversalFileChooserContributor.Root>) {
     fileTreeModel.setContributorRoots(roots)
+  }
+
+  fun setRootError(path: Path, message: String? = null) {
+    fileTreeModel.setRootError(path)
+    if (!message.isNullOrBlank()) {
+      showErrorBalloon(path, message)
+    }
+  }
+
+  private fun showErrorBalloon(path: Path, @Nls message: String) {
+    if (!myTree.isShowing) return
+    var anchorRow = 0
+    for (i in 0 until myTree.rowCount) {
+      val p = myTree.getPathForRow(i) ?: continue
+      val last = p.lastPathComponent
+      if (last is NioFileNode && last.path == path) {
+        anchorRow = i
+        break
+      }
+    }
+    ApplicationManager.getApplication().invokeLater(
+      {
+        val bounds = myTree.getRowBounds(anchorRow) ?: return@invokeLater
+        val point = RelativePoint(myTree,
+                                  java.awt.Point(bounds.x + bounds.width / 2,
+                                                 bounds.y + bounds.height))
+        JBPopupFactory.getInstance()
+          .createHtmlTextBalloonBuilder(StringUtil.escapeXmlEntities(message),
+                                        MessageType.ERROR,
+                                        null)
+          .setFadeoutTime(5000)
+          .setHideOnClickOutside(true)
+          .setHideOnKeyOutside(true)
+          .createBalloon()
+          .show(point, Balloon.Position.below)
+      }, ModalityState.any())
   }
 
   fun matchRoot(path: Path): Path? {

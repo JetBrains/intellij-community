@@ -1,19 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.icons.PredefinedIconOverlayService
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.ui.tree.MapBasedTree
 import com.intellij.ui.tree.MapBasedTree.Entry
 import com.intellij.util.PlatformIcons
 import com.intellij.util.concurrency.Invoker
 import com.intellij.util.concurrency.InvokerSupplier
 import com.intellij.util.io.PlatformNioHelper
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.tree.AbstractTreeModel
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -145,6 +146,17 @@ class NioFileTreeModel(
 
   fun getVirtualRoot(node: NioFileNode): UniversalFileChooserContributor.Root? =
     (node as? VirtualRoot)?.contributorRoot
+
+  fun setRootError(path: Path) {
+    invoker.invoke {
+      val r = roots ?: return@invoke
+      val target = r.firstOrNull { it.path?.invariantSeparatorsPathString == path.invariantSeparatorsPathString }
+                   ?: return@invoke
+      if (target.updateIcon(AllIcons.General.Error)) {
+        treeNodesChanged(TreePath(target), null, null)
+      }
+    }
+  }
 
 
   private data class ChildEntry(
