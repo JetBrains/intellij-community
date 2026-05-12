@@ -90,6 +90,7 @@ internal class AnalyzePersistentSyntaxTreeOverheadAction : DumbAwareAction() {
       appendLine()
       appendLine("Heap dump: $hprofPath")
       appendLine("VersionedPayloadMap instances: ${extraction.allInstances.size}")
+      appendLine("  VersionedPayloadMap1: ${extraction.map1Instances.size}")
       appendLine("  VersionedPayloadMap2: ${extraction.map2Instances.size}")
       appendLine("  ArrayVersionedPayloadMap: ${extraction.arrayMapInstances.size}")
       appendLine()

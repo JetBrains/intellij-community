@@ -39,6 +39,7 @@ import java.nio.file.StandardOpenOption
 
 @ApiStatus.Internal
 object PersistentSyntaxTreeHprofProcessor {
+  const val VERSIONED_PAYLOAD_MAP1_CLASS_NAME: String = "com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap1"
   const val VERSIONED_PAYLOAD_MAP2_CLASS_NAME: String = "com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap2"
   const val ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME: String = "com.intellij.psi.impl.source.tree.mvcc.ArrayVersionedPayloadMap"
 
@@ -194,6 +195,7 @@ object PersistentSyntaxTreeHprofProcessor {
 
     val heapGraph: HeapGraph? = objectSizeLayout?.let { HeapGraph() }
 
+    private val map1Instances = ArrayList<Map1Instance>()
     private val map2Instances = ArrayList<Map2Instance>()
     private val arrayMapInstances = ArrayList<ArrayMapInstance>()
 
@@ -281,6 +283,7 @@ object PersistentSyntaxTreeHprofProcessor {
       )
 
       when (className) {
+        VERSIONED_PAYLOAD_MAP1_CLASS_NAME -> map1Instances += readMap1(objectId, classObjectId, bytes)
         VERSIONED_PAYLOAD_MAP2_CLASS_NAME -> map2Instances += readMap2(objectId, classObjectId, bytes)
         ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME -> readArrayMap(objectId, classObjectId, bytes).also {
           arrayMapInstances += it
@@ -293,6 +296,7 @@ object PersistentSyntaxTreeHprofProcessor {
 
     fun buildExtraction(versionArrays: Long2ObjectMap<LongArray>, payloadArrays: Long2ObjectMap<LongArray>): VersionedPayloadMapExtraction {
       return VersionedPayloadMapExtraction(
+        map1Instances = map1Instances.map(::toExtractedMap1),
         map2Instances = map2Instances.map(::toExtractedMap2),
         arrayMapInstances = arrayMapInstances.map { toExtractedArrayMap(it, versionArrays, payloadArrays) },
       )
@@ -302,9 +306,10 @@ object PersistentSyntaxTreeHprofProcessor {
       versionArrays: Long2ObjectMap<LongArray>,
       payloadArrays: Long2ObjectMap<LongArray>,
     ): Pair<VersionedPayloadMapExtraction, Map<Long, VersionedPayloadMapGraphNode>> = coroutineScope {
+      val map1 = async(Dispatchers.Default) { buildMap1ExtractionAndGraphNodes() }
       val map2 = async(Dispatchers.Default) { buildMap2ExtractionAndGraphNodes() }
       val arrayMap = async(Dispatchers.Default) { buildArrayMapExtractionAndGraphNodes(versionArrays, payloadArrays) }
-      combineExtractionAndGraphNodes(map2.await(), arrayMap.await())
+      combineExtractionAndGraphNodes(map1.await(), map2.await(), arrayMap.await())
     }
 
     fun buildExtractionAndGraphNodes(
@@ -312,9 +317,25 @@ object PersistentSyntaxTreeHprofProcessor {
       payloadArrays: Long2ObjectMap<LongArray>,
     ): Pair<VersionedPayloadMapExtraction, Map<Long, VersionedPayloadMapGraphNode>> {
       return combineExtractionAndGraphNodes(
+        buildMap1ExtractionAndGraphNodes(),
         buildMap2ExtractionAndGraphNodes(),
         buildArrayMapExtractionAndGraphNodes(versionArrays, payloadArrays),
       )
+    }
+
+    private fun buildMap1ExtractionAndGraphNodes(): ExtractedGraphNodes {
+      val instances = ArrayList<VersionedPayloadMapInstance>(map1Instances.size)
+      val nodes = HashMap<Long, VersionedPayloadMapGraphNode>(map1Instances.size)
+      for (instance in map1Instances) {
+        val extracted = toExtractedMap1(instance)
+        instances += extracted
+        nodes[instance.objectId] = VersionedPayloadMapGraphNode(
+          objectId = instance.objectId,
+          entries = extracted.entries,
+          structuralObjectIds = EMPTY_LONG_ARRAY,
+        )
+      }
+      return ExtractedGraphNodes(instances, nodes)
     }
 
     private fun buildMap2ExtractionAndGraphNodes(): ExtractedGraphNodes {
@@ -351,13 +372,28 @@ object PersistentSyntaxTreeHprofProcessor {
     }
 
     private fun combineExtractionAndGraphNodes(
+      map1: ExtractedGraphNodes,
       map2: ExtractedGraphNodes,
       arrayMap: ExtractedGraphNodes,
     ): Pair<VersionedPayloadMapExtraction, Map<Long, VersionedPayloadMapGraphNode>> {
-      val graphNodes = HashMap<Long, VersionedPayloadMapGraphNode>(map2.graphNodes.size + arrayMap.graphNodes.size)
+      val graphNodes = HashMap<Long, VersionedPayloadMapGraphNode>(map1.graphNodes.size + map2.graphNodes.size + arrayMap.graphNodes.size)
+      graphNodes.putAll(map1.graphNodes)
       graphNodes.putAll(map2.graphNodes)
       graphNodes.putAll(arrayMap.graphNodes)
-      return VersionedPayloadMapExtraction(map2.instances, arrayMap.instances) to graphNodes
+      return VersionedPayloadMapExtraction(
+        map1Instances = map1.instances,
+        map2Instances = map2.instances,
+        arrayMapInstances = arrayMap.instances,
+      ) to graphNodes
+    }
+
+    private fun readMap1(objectId: Long, classObjectId: Long, bytes: HProfReadBufferSlidingWindow): Map1Instance {
+      val fields = readFields(classObjectId, bytes)
+      return Map1Instance(
+        objectId,
+        fields.longField("version"),
+        fields.objectField("payload"),
+      )
     }
 
     private fun readMap2(objectId: Long, classObjectId: Long, bytes: HProfReadBufferSlidingWindow): Map2Instance {
@@ -493,6 +529,15 @@ object PersistentSyntaxTreeHprofProcessor {
       objectTypeNames?.put(objectId, className)
     }
 
+    private fun toExtractedMap1(instance: Map1Instance): VersionedPayloadMapInstance {
+      return VersionedPayloadMapInstance(
+        objectId = instance.objectId,
+        layout = VersionedPayloadMapLayout.MAP1,
+        className = VERSIONED_PAYLOAD_MAP1_CLASS_NAME,
+        entries = listOf(entry(instance.version, instance.payloadObjectId)),
+      )
+    }
+
     private fun toExtractedMap2(instance: Map2Instance): VersionedPayloadMapInstance {
       return VersionedPayloadMapInstance(
         objectId = instance.objectId,
@@ -582,6 +627,12 @@ object PersistentSyntaxTreeHprofProcessor {
   )
 
   private data class FieldValue(val type: Type, val value: Long)
+
+  private data class Map1Instance(
+    val objectId: Long,
+    val version: Long,
+    val payloadObjectId: Long,
+  )
 
   private data class Map2Instance(
     val objectId: Long,
@@ -955,11 +1006,12 @@ object PersistentSyntaxTreeHprofProcessor {
 
 @ApiStatus.Internal
 data class VersionedPayloadMapExtraction(
+  val map1Instances: List<VersionedPayloadMapInstance>,
   val map2Instances: List<VersionedPayloadMapInstance>,
   val arrayMapInstances: List<VersionedPayloadMapInstance>,
 ) {
   val allInstances: List<VersionedPayloadMapInstance>
-    get() = map2Instances + arrayMapInstances
+    get() = map1Instances + map2Instances + arrayMapInstances
 }
 
 @ApiStatus.Internal
@@ -972,6 +1024,7 @@ data class VersionedPayloadMapInstance(
 
 @ApiStatus.Internal
 enum class VersionedPayloadMapLayout {
+  MAP1,
   MAP2,
   ARRAY,
 }
