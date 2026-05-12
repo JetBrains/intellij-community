@@ -11,10 +11,9 @@ import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.callNewConfigurationCreated
-import com.intellij.execution.services.ServiceViewManager
+import com.intellij.execution.services.ServiceViewAddActionContributor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -33,25 +32,17 @@ private val IGNORE_CASE_DISPLAY_NAME_COMPARATOR = Comparator<ConfigurationType> 
   t1.displayName.compareTo(t2.displayName, ignoreCase = true)
 }
 
-class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.BackendOnly {
+class AddRunConfigurationAction :
+  DumbAwareAction(),
+  ActionRemoteBehaviorSpecification.BackendOnly,
+  ServiceViewAddActionContributor {
+
+  override fun getContributorClass(): Class<*> = RunDashboardServiceViewContributor::class.java
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    if (project == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
-    if (toolWindow == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    val servicesToolWindowId =
-      ServiceViewManager.getInstance(project).getToolWindowId(RunDashboardServiceViewContributor::class.java)
-    e.presentation.isEnabledAndVisible = toolWindow.id == servicesToolWindowId
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

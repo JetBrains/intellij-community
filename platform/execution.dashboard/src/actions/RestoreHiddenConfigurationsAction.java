@@ -8,12 +8,11 @@ import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.services.ServiceViewActionUtils;
-import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.execution.services.ServiceViewAddActionContributor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -33,7 +32,12 @@ import java.util.Set;
 
 final class RestoreHiddenConfigurationsAction
   extends DumbAwareAction
-  implements ActionRemoteBehaviorSpecification.Frontend {
+  implements ActionRemoteBehaviorSpecification.Frontend, ServiceViewAddActionContributor {
+
+  @Override
+  public @NotNull Class<?> getContributorClass() {
+    return RunDashboardServiceViewContributor.class;
+  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -45,18 +49,6 @@ final class RestoreHiddenConfigurationsAction
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     if (project == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-
-    var toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
-    if (toolWindow == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-    var servicesToolWindowId =
-      ServiceViewManager.getInstance(project).getToolWindowId(RunDashboardServiceViewContributor.class);
-    if (!toolWindow.getId().equals(servicesToolWindowId)) {
       presentation.setEnabledAndVisible(false);
       return;
     }
