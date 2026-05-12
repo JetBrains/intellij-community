@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
@@ -82,8 +84,8 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @ParameterizedTest
     @BaseGradleVersionSource(
         """
-            dependencies { cla<caret> } : class,
-            dependencies { i<caret> } : iter
+            dependencies { dependencie<caret> } : dependencies,
+            dependencies { inn<caret> } : inn
         """
     )
     fun `test second completion invocation shows unfiltered input`(
@@ -96,9 +98,8 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             val file = writeTextAndCommit("build.gradle.kts", expression)
             runInEdtAndWait {
                 codeInsightFixture.configureFromExistingVirtualFile(file)
-                repeat(times = 2) {
-                    codeInsightFixture.completeBasic()
-                }
+                val invocationCount = 2
+                codeInsightFixture.complete(CompletionType.BASIC, invocationCount)
                 val lookupStrings = codeInsightFixture.lookupElementStrings
                 assertNotNull(lookupStrings) {
                     "Autocompletion was not expected (codeInsightFixture.lookupElementStrings returned null)"
