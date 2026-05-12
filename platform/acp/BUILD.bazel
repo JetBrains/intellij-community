@@ -10,9 +10,6 @@ jvm_library(
   resource_strip_prefix = "resources",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/platform-impl/rpc",
-    "//platform/kernel/shared:kernel",
-    "//platform/platform-frontend:frontend",
     "//platform/eel",
     "//platform/core-api:core",
     "//platform/util",
@@ -28,9 +25,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":acp",
-    "//platform/platform-impl/rpc:rpc_test_lib",
-    "//platform/kernel/shared:kernel_test_lib",
-    "//platform/platform-frontend:frontend_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",

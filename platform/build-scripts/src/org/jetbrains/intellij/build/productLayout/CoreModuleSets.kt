@@ -293,6 +293,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.core")
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
+    embeddedModule("intellij.platform.acp")
     embeddedModule("intellij.platform.indexing")
     embeddedModule("intellij.platform.projectFrame")
     embeddedModule("intellij.platform.welcomeScreen")
