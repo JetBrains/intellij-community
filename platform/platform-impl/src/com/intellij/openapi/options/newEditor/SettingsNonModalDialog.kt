@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.newEditor
 
 import com.intellij.CommonBundle
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.newui.EventHandler
@@ -30,6 +31,7 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.ui.DialogUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
@@ -256,7 +258,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
         Messages.getWarningIcon(),
       )
       if (choice == Messages.CANCEL) return
-      if (choice == Messages.YES && !editor.apply()) return
+      if (choice == Messages.YES) {
+        if (!editor.apply()) return
+        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
+      }
       // Messages.NO → discard, fall through
     }
     // Clear the singleton now so dispose() doesn't race with the invokeLater below.
@@ -401,6 +406,9 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     lrPanel.add(DialogWrapper.layoutButtonsPanel(rightButtons), bag.next())
 
     panel.add(lrPanel, BorderLayout.CENTER)
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && ApplicationManager.getApplication() != null) {
+      Touchbar.setButtonActions(panel, leftButtons, rightButtons, null)
+    }
     return panel
   }
 }

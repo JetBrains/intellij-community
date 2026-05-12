@@ -418,6 +418,7 @@ open class SettingsFrame @ApiStatus.Internal constructor(
           projectWidget?.let { refreshProjectWidget(project) }
           return // validation failed – stay on current project
         }
+        SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
       }
       // Messages.NO → discard, fall through
     }
@@ -609,6 +610,9 @@ open class SettingsFrame @ApiStatus.Internal constructor(
     if (applyAction != null) {
       applyButton = DialogWrapper.createJButtonForAction(applyAction, null).also {
         DialogUtil.registerMnemonic(it)
+        it.addActionListener {
+          SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
+        }
       }
     }
 
