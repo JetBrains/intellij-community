@@ -1,9 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+
+data class IjentCallerContext(
+  val isRead: Boolean,
+  val isWrite: Boolean,
+  val isDispatchThread: Boolean,
+) {
+  companion object {
+    suspend fun getSaved(): IjentCallerContext? {
+      return currentCoroutineContext()[IjentCalledContextElement.Key]?.callerContext
+    }
+  }
+}
+
+fun IjentCallerContext.allowCancellableNio(): Boolean {
+  return when {
+    isRead && !isWrite -> Registry.`is`("ijent.nio.cancellable.read")
+    else -> false
+  }
+}
+
+class IjentCalledContextElement(val callerContext: IjentCallerContext) : AbstractCoroutineContextElement(Key) {
+  object Key : CoroutineContext.Key<IjentCalledContextElement>
+}
 
 // TODO It is a copy-paste from Fleet, and it's better be generalized and put into some generic place.
 fun CoroutineScope.coroutineNameAppended(name: String, separator: String = " > "): CoroutineContext =

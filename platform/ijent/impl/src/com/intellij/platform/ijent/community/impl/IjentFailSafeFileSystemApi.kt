@@ -20,13 +20,14 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentWindowsApi
+import com.intellij.platform.ijent.community.impl.nio.computeCallerContext
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -130,7 +131,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
     }
 }
 
-private fun checkEarlyAccess() {
+private suspend fun checkEarlyAccess() {
   val application = ApplicationManagerEx.getApplicationEx()
   if (application?.isUnitTestMode != false) {
     return
@@ -141,7 +142,8 @@ private fun checkEarlyAccess() {
     return
   }
 
-  if (!EDT.isCurrentThreadEdt()) {
+  val callerContext = IjentCallerContext.getSaved() ?: IjentCallerContext.computeCallerContext()
+  if (!callerContext.isDispatchThread) {
     return
   }
 

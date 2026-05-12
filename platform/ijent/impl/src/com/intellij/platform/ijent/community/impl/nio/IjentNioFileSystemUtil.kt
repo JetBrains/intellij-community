@@ -3,7 +3,12 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.ijent.IjentCalledContextElement
+import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.allowCancellableNio
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -18,12 +23,26 @@ internal fun Path.toEelPath(): EelPath =
   }
 
 /**
- * We need to use a plain `runBlocking` here.
- * The IO call is supposed to be fast (several milliseconds in the worst case),
- * so the cost of spawning and destroying an additional thread in Dispatchers.Default would be too big.
- * Also, IJent does not require any outer lock in its implementation, so a deadlock is not possible.
+ * Bridges synchronous NIO into IJent coroutines using [runBlocking].
  *
- * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
+ * Has the following features.
+ * - The coroutine is processed in-place in a caller thread.
+ * - Creates a fresh isolated event loop instead of reusing the caller's thread-local one
+ *    (avoids stealing tasks from an outer event loop in case of nested runBlocking).
+ * - Is ready for being called in all reasonable contexts:
+ *   - blocking context or coroutine context,
+ *   - read actions, write actions,
+ *   - background or event dispatch thread,
+ *   - inside runBlocking or runBlockingCancellable
+ * - But fsBlocking itself should never form nested calls (only ijent calls inside or ijent deployment, nothing else).
+ *
+ * Should be used only when adapting EEL operations into nio-style api.
+ *
+ * [runAndCompensateParallelism] is a last-resort safety net against [Dispatchers.Default] starvation:
+ * if all pool threads block here simultaneously while body() dispatches work to [Dispatchers.Default]
+ * internally, no thread remains to run it — extra workers are spawned after 500 ms.
+ * If without the compensation there are still deadlocks, that indicates a bug:
+ * body() should never dispatch to [Dispatchers.Default] or await coroutines from there.
  */
 @ApiStatus.Internal
 fun <T> fsBlocking(body: suspend () -> T): T {
@@ -34,10 +53,27 @@ fun <T> fsBlocking(body: suspend () -> T): T {
   }
 }
 
+fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
+  val application = ApplicationManager.getApplication()
+  return IjentCallerContext(
+    isRead = application.isReadAccessAllowed,
+    isWrite = application.isWriteAccessAllowed,
+    isDispatchThread = application.isDispatchThread
+  )
+}
+
 @Suppress("SSBasedInspection")
 @VisibleForTesting
 fun <T> fsBlockingWithoutParallelismCompensation(body: suspend () -> T): T {
-  return runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
+  val callerContext = IjentCallerContext.computeCallerContext()
+  if (callerContext.allowCancellableNio()) {
+    return prepareThreadContext { ctx ->
+      runBlocking(ctx + IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
+        body()
+      }
+    }
+  }
+  return runBlocking(IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
     body()
   }
 }

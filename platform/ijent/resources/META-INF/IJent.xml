@@ -13,5 +13,7 @@
       serviceInterface="com.intellij.platform.ijent.IjentExecFileProvider" open="true"
       serviceImplementation="com.intellij.platform.ijent.DefaultIjentExecFileProvider"/>
 
+    <registryKey defaultValue="true" description="Make ijent nio operations cancellable" key="ijent.nio.cancellable.read"/>
+
   </extensions>
 </idea-plugin>
