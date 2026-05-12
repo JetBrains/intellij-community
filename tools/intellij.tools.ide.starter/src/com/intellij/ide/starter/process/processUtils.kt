@@ -130,7 +130,7 @@ suspend fun findAndKillProcesses(
 
   if (processInfosToKill.isNotEmpty()) {
     onFoundProcesses.invoke(processInfosToKill)
-    logOutput("$prefix: [${processInfosToKill.joinToString(", ")}] will be killed")
+    logOutput("$prefix: These processes will be killed: ${processInfosToKill.joinToString("\n") { it.description }}")
     killProcesses(processInfosToKill)
   }
   else {
