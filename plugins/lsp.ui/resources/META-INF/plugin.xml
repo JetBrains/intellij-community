@@ -1,0 +1,25 @@
+<idea-plugin package="com.intellij.lsp.ui" allow-bundled-update="true">
+  <name>LSP Servers</name>
+  <id>com.intellij.lsp.ui</id>
+  <category>Other Tools</category>
+  <description><![CDATA[
+    This plugin provides a UI for managing LSP servers.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable id="lsp.servers"
+                         bundle="messages.LspUiBundle"
+                         key="lsp.settings.display.name"
+                         instance="com.intellij.lsp.ui.settings.LspServersConfigurable"
+                         parentId="tools"/>
+    <platform.lsp.serverSupportProvider implementation="com.intellij.lsp.ui.ConfigurableLspServerSupportProvider"/>
+
+    <!-- Statistics -->
+    <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
+    <projectSettings service="com.intellij.lsp.ui.settings.LspServerSettings"/>
+  </extensions>
+  <resource-bundle>messages.LspUiBundle</resource-bundle>
+</idea-plugin>

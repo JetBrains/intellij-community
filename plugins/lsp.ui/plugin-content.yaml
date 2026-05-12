@@ -1,0 +1,3 @@
+- name: lib/lsp-ui.jar
+  modules:
+  - name: intellij.lsp.ui

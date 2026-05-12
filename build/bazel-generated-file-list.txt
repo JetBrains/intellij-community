@@ -1449,6 +1449,7 @@ plugins/laf/macos
 plugins/laf/win10
 plugins/lombok
 plugins/lombok/generated
+plugins/lsp.ui
 plugins/markdown/compose
 plugins/markdown/core
 plugins/markdown/core/backend
