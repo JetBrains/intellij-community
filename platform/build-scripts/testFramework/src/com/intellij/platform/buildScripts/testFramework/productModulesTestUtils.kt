@@ -29,7 +29,7 @@ internal fun loadRawProductModulesFromOutput(productModulesModule: String, outpu
   }
 }
 
-private fun createModuleOutputResourceFileResolver(outputProvider: ModuleOutputProvider): ResourceFileResolver {
+internal fun createModuleOutputResourceFileResolver(outputProvider: ModuleOutputProvider): ResourceFileResolver {
   return object : ResourceFileResolver {
     override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
       return readFileContentFromModuleOutput(outputProvider = outputProvider, moduleName = moduleId.name, relativePath = relativePath)?.inputStream()
