@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ITNProxy;
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.KeyboardAwareFocusOwner;
 import com.intellij.ide.logsUploader.LogUploader;
 import com.intellij.ide.plugins.EssentialPluginMissingException;
 import com.intellij.ide.plugins.PluginConflictReporter;
@@ -52,6 +53,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -313,7 +315,7 @@ public final class StartupErrorReporter {
 
   @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
   private static JScrollPane prepareMessage(String message) {
-    var textPane = new JTextPane();
+    var textPane = new SafeActionTextPane();
     textPane.setEditable(false);
     textPane.setText(message.replace("\t", "    "));
     textPane.setBackground(UIManager.getColor("Panel.background"));
@@ -397,5 +399,15 @@ public final class StartupErrorReporter {
       t = t.getCause();
     }
     return null;
+  }
+
+  private static class SafeActionTextPane extends JTextPane implements KeyboardAwareFocusOwner {
+    @Override
+    public boolean skipKeyEventDispatcher(KeyEvent event) {
+      // The error message is shown when something is badly broken.
+      // Trying to execute actions in this state might throw errors, and most actions are either useless or even dangerous.
+      // And they can steal shortcuts (IJPL-34968), breaking important functionality such as the ability to copy the error text.
+      return true;
+    }
   }
 }
