@@ -218,6 +218,7 @@ fun runTestBuild(
       writeTelemetry = true,
       checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
       checkThatBundledPluginInFrontendArePresent = checkIntegrityOfEmbeddedFrontend,
+      checkPrivatePluginModulesAreNotPublic = checkPrivatePluginModulesAreNotPublic,
       traceSpanName = testInfo.spanName,
       build = { context ->
         build(context)
