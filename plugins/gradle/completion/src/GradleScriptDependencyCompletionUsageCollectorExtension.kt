@@ -99,6 +99,22 @@ enum class GradleScriptDependencyCompletionPosition {
   EXCLUDE_MODULE,
 
   /**
+   * Kotlin shortcut module argument: `implementation(kotlin("std<caret>"))`
+   * or `implementation(kotlin("std<caret>", "1.9.0"))`.
+   */
+  KOTLIN_MODULE,
+
+  /**
+   * Kotlin shortcut version argument: `implementation(kotlin("stdlib", "1.9<caret>"))`.
+   */
+  KOTLIN_VERSION,
+
+  /**
+   * Embedded Kotlin shortcut module argument: `implementation(embeddedKotlin("std<caret>"))`.
+   */
+  EMBEDDED_KOTLIN_MODULE,
+
+  /**
    * Other argument position
    */
   OTHER

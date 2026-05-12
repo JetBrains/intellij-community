@@ -45,3 +45,5 @@ private fun PsiElement.isValidDependencyArgument() =
   isSingleDependencyArgumentInsideQuotes()
   || isExcludeArgument()
   || isPositionalOrNamedDependencyArgument()
+  || isKotlinShortcutModuleArgument()
+  || (isKotlinShortcutVersionArgument() && !kotlinShortcutModuleHasVersion())

@@ -14,6 +14,7 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.replaceService
@@ -677,6 +678,138 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
         val lookup = codeInsightFixture.completeBasic()?.map { it.lookupString }
         assertTrue(lookup?.any { it == "Reformat code" } == true) {
           "The command completion was expected outside the dependencies block, but it wasn't suggested. Actual lookup: $lookup"
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("""
+    implementation(kotlin("std<caret>")),
+    implementation(kotlin("<caret>")),
+    implementation(kotlin(module="std<caret>")),
+    implementation(kotlin(module="<caret>"))
+  """, "false,true")
+  fun `test kotlin shortcut module completion`(gradleVersion: GradleVersion, completionEscaped: String, runInDumbMode: Boolean) {
+    val completion = completionEscaped.unescape()
+    val completionResult = completion.replace(Regex("\"[^\"]*<caret>\""), "\"stdlib:2.0.21\"")
+    application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
+      override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> {
+        return flowOf(
+          DependencyCompletionEvent.Item(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.0.21", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-reflect", "2.0.21", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyCompletionResult("org.example", "unrelated", "1.0", source = LOCAL)),
+        )
+      }
+    }, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.completeBasic()
+        codeInsightFixture.assertPreferredCompletionItems(0, "stdlib:2.0.21", "reflect:2.0.21")
+        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+        codeInsightFixture.checkResult("dependencies { $completionResult }")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("""
+    implementation(embeddedKotlin("std<caret>")),
+    implementation(embeddedKotlin("<caret>")),
+    implementation(embeddedKotlin(module="std<caret>")),
+    implementation(embeddedKotlin(module="<caret>"))
+  """, "false,true")
+  fun `test embeddedKotlin shortcut module completion`(
+    gradleVersion: GradleVersion,
+    completionEscaped: String,
+    runInDumbMode: Boolean,
+  ) {
+    val completion = completionEscaped.unescape()
+    // `embeddedKotlin` accepts no version argument, so completion must produce only the module name.
+    val completionResult = completion.replace(Regex("\"[^\"]*<caret>\""), "\"stdlib\"")
+    application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
+      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
+        return flowOf(
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("kotlin-stdlib", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("kotlin-reflect", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("unrelated", source = LOCAL)),
+        )
+      }
+    }, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.completeBasic()
+        codeInsightFixture.assertPreferredCompletionItems(0, "stdlib", "reflect")
+        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+        codeInsightFixture.checkResult("dependencies { $completionResult }")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("""
+    implementation(kotlin("stdlib"<comma> "1.0<caret>")),
+    implementation(kotlin("stdlib"<comma> "<caret>")),
+    implementation(kotlin(module="stdlib"<comma> version="<caret>")),
+    implementation(kotlin(version="<caret>"<comma> module="stdlib"))
+  """, "false,true")
+  fun `test kotlin shortcut version completion`(gradleVersion: GradleVersion, completionEscaped: String, runInDumbMode: Boolean) {
+    val completion = completionEscaped.unescape()
+    val completionResult = completion.replace(Regex("\"[^\"]*<caret>\""), "\"2.0.21\"")
+    application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
+      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
+        return flowOf(
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("2.0.21", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.9.24", source = LOCAL)),
+        )
+      }
+    }, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.completeBasic()
+        codeInsightFixture.assertPreferredCompletionItems(0, "2.0.21", "1.9.24")
+        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+        codeInsightFixture.checkResult("dependencies { $completionResult }")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("""
+    implementation(embeddedKotlin("stdlib"<comma> "1.0<caret>")),
+    implementation(embeddedKotlin("stdlib"<comma> "<caret>")),
+    implementation(embeddedKotlin(module="stdlib"<comma> version="<caret>")),
+    implementation(embeddedKotlin(version="<caret>"<comma> module="stdlib"))
+  """, "false,true")
+  fun `test embeddedKotlin does not offer version completion`(
+    gradleVersion: GradleVersion,
+    completionEscaped: String,
+    runInDumbMode: Boolean,
+  ) {
+    val completion = completionEscaped.unescape()
+    application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
+      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> {
+        return flowOf(
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("2.0.21", source = LOCAL)),
+          DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.9.24", source = LOCAL)),
+        )
+      }
+    }, testRootDisposable)
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { $completion }")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.completeBasic()
+        // `embeddedKotlin` accepts no version argument, so no version suggestions should be produced.
+        val lookupStrings = codeInsightFixture.lookupElementStrings.orEmpty()
+        assertTrue(lookupStrings.none { it == "2.0.21" || it == "1.9.24" }) {
+          "Expected no version completions for embeddedKotlin's second argument, but got: $lookupStrings"
         }
       }
     }

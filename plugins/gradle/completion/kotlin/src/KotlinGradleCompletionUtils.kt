@@ -43,6 +43,10 @@ private fun CompletionParameters.isAndroidProject(): Boolean {
 
 internal const val PLUGINS = "plugins"
 internal const val DEPENDENCIES = "dependencies"
+internal const val KOTLIN_SHORTCUT_GROUP = "org.jetbrains.kotlin"
+internal const val KOTLIN_SHORTCUT_ARTIFACT_PREFIX = "kotlin-"
+private const val KOTLIN_SHORTCUT_MODULE_ARGUMENT = "module"
+private const val KOTLIN_SHORTCUT_VERSION_ARGUMENT = "version"
 
 internal val BUILD_GRADLE_KTS_FILE_PATTERN = psiFile().withName(KOTLIN_DSL_SCRIPT_NAME)
 
@@ -138,18 +142,89 @@ internal fun PsiElement.isPositionalOrNamedDependencyArgument(): Boolean {
   return argumentName in namedArgumentNamesOfCoordinates || (argumentName.isEmpty() && this.argumentIndex in 0..2)
 }
 
-internal fun PsiElement.isExcludeArgument(): Boolean {
-  val leaf = this.asSafely<LeafPsiElement>() ?: return false
-  val stringTemplateExpr =
-    // exclude("leaf<caret>) - open quote only
-    leaf.parent.asSafely<KtStringTemplateExpression>() ?:
-    // exclude("leaf<caret>") - both quotes
-    leaf.parent.asSafely<KtLiteralStringTemplateEntry>()
-      ?.parent.asSafely<KtStringTemplateExpression>() ?: return false
+/**
+ * Checks whether the current [PsiElement] is a string literal used as the module argument
+ * of a Kotlin shortcut dependency call (e.g., `kotlin("std<caret>")`, `embeddedKotlin(module = "std<caret>")`).
+ */
+internal fun PsiElement.isKotlinShortcutModuleArgument(): Boolean {
+  val callType = this.getKotlinShortcutCall() ?: return false
 
-  val callExpression = stringTemplateExpr.parent.asSafely<KtValueArgument>()
-                         ?.parent.asSafely<KtValueArgumentList>()
-                         ?.parent.asSafely<KtCallExpression>() ?: return false
+  val argumentsSize = this.surroundingArgumentsSize
+  val maxArguments = if (callType == KotlinShortcutCall.KOTLIN) 2 else 1
+  if (argumentsSize !in 1..maxArguments) return false
+
+  val argumentName = this.argumentName
+  if (argumentName == KOTLIN_SHORTCUT_MODULE_ARGUMENT) return true
+  if (argumentName == KOTLIN_SHORTCUT_VERSION_ARGUMENT) return false
+  return argumentName.isEmpty() && this.argumentIndex == 0
+}
+
+/**
+ * Checks whether the current [PsiElement] is a string literal used as the version argument
+ * of a Kotlin shortcut dependency call (e.g., `kotlin("stdlib", "1.9<caret>")`,
+ * `kotlin(module = "stdlib", version = "1.9<caret>")`).
+ *
+ * Note: `embeddedKotlin` does not accept a version argument, so this function returns `false` for it.
+ */
+internal fun PsiElement.isKotlinShortcutVersionArgument(): Boolean {
+  if (this.getKotlinShortcutCall() != KotlinShortcutCall.KOTLIN) return false
+
+  val argumentsSize = this.surroundingArgumentsSize
+  if (argumentsSize !in 1..2) return false
+
+  val argumentName = this.argumentName
+  if (argumentName == KOTLIN_SHORTCUT_VERSION_ARGUMENT) return true
+  if (argumentName == KOTLIN_SHORTCUT_MODULE_ARGUMENT) return false
+  return argumentName.isEmpty() && this.argumentIndex == 1
+}
+
+/**
+ * Returns the module text of the first (module) argument of the enclosing Kotlin shortcut call,
+ * e.g., `"stdlib"` for `kotlin("stdlib", "1.9.0")` or `"stdlib:1.9.0"` for `kotlin("stdlib:1.9.0")`.
+ * Returns an empty string when not inside a Kotlin shortcut call or when the argument is missing.
+ */
+internal fun PsiElement.getKotlinShortcutModuleText(): String = getCoordinatePrefix(KOTLIN_SHORTCUT_MODULE_ARGUMENT, 0)
+
+/**
+ * Returns `true` when the module argument of the enclosing Kotlin shortcut call already encodes a version,
+ * e.g., `kotlin("stdlib:1.9.0", ...)`.
+ */
+internal fun PsiElement.kotlinShortcutModuleHasVersion(): Boolean = ":" in getKotlinShortcutModuleText()
+
+private fun PsiElement.getEnclosingCallExpressionOfStringArgument(): KtCallExpression? {
+  val leaf = this.asSafely<LeafPsiElement>() ?: return null
+  val stringTemplateExpr =
+    // callExpression("leaf<caret>) - open quote only
+    leaf.parent.asSafely<KtStringTemplateExpression>() ?:
+    // callExpression("leaf<caret>") - both quotes
+    leaf.parent.asSafely<KtLiteralStringTemplateEntry>()
+      ?.parent.asSafely<KtStringTemplateExpression>() ?: return null
+
+  return stringTemplateExpr.parent.asSafely<KtValueArgument>()
+    ?.parent.asSafely<KtValueArgumentList>()
+    ?.parent.asSafely<KtCallExpression>()
+}
+
+internal enum class KotlinShortcutCall { KOTLIN, EMBEDDED_KOTLIN }
+
+private val DEPENDENCY_HANDLER_SCOPE_FQN = FqName("org.gradle.kotlin.dsl.DependencyHandlerScope")
+
+/**
+ * Returns the kind of the enclosing Kotlin shortcut call (`kotlin(...)` or `embeddedKotlin(...)`), or `null` if the argument
+ * is not inside a Kotlin shortcut call.
+ */
+internal fun PsiElement.getKotlinShortcutCall(): KotlinShortcutCall? {
+  val callExpression = this.getEnclosingCallExpressionOfStringArgument() ?: return null
+  return when {
+    callExpression.isCallWithReceiverSubtypeDumbAware(DEPENDENCY_HANDLER_SCOPE_FQN, setOf("kotlin")) -> KotlinShortcutCall.KOTLIN
+    callExpression.isCallWithReceiverSubtypeDumbAware(DEPENDENCY_HANDLER_SCOPE_FQN, setOf("embeddedKotlin")) ->
+      KotlinShortcutCall.EMBEDDED_KOTLIN
+    else -> null
+  }
+}
+
+internal fun PsiElement.isExcludeArgument(): Boolean {
+  val callExpression = this.getEnclosingCallExpressionOfStringArgument() ?: return false
   return callExpression.isCallWithReceiverSubtypeDumbAware(
     FqName("org.gradle.api.artifacts.Dependency"),
     setOf("exclude")
@@ -157,19 +232,8 @@ internal fun PsiElement.isExcludeArgument(): Boolean {
 }
 
 internal fun PsiElement.isDependencyArgumentInsideQuotes(): Boolean {
-  val leaf = this.asSafely<LeafPsiElement>() ?: return false
-  val stringTemplateExpr =
-    // exclude("leaf<caret>) - open quote only
-    leaf.parent.asSafely<KtStringTemplateExpression>() ?:
-    // exclude("leaf<caret>") - both quotes
-    leaf.parent.asSafely<KtLiteralStringTemplateEntry>()
-      ?.parent.asSafely<KtStringTemplateExpression>() ?: return false
-
-  val callExpr = stringTemplateExpr.parent.asSafely<KtValueArgument>()
-                   ?.parent.asSafely<KtValueArgumentList>()
-                   ?.parent.asSafely<KtCallExpression>() ?: return false
-  return callExpr.isDependencyConfiguration()
-         || callExpr.acceptsStringCoordinatesArgument()
+  val callExpression = this.getEnclosingCallExpressionOfStringArgument() ?: return false
+  return callExpression.isDependencyConfiguration() || callExpression.acceptsStringCoordinatesArgument()
 }
 
 // Matches: implementation(<caret>), implementation(platf<caret>)

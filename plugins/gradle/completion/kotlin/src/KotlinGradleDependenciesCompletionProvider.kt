@@ -21,10 +21,13 @@ import com.intellij.gradle.completion.GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITI
 import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.ARTIFACT
+import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.EMBEDDED_KOTLIN_MODULE
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.EXCLUDE_GROUP
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.EXCLUDE_MODULE
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.GAV
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.GROUP
+import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.KOTLIN_MODULE
+import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.KOTLIN_VERSION
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.OTHER
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.TOP_LEVEL
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
@@ -87,6 +90,22 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           "",
           positionElement.getExcludeInvokePosition()
         )
+      }
+
+      // dependencies { implementation(kotlin("std<caret>")) }
+      positionElement.isKotlinShortcutModuleArgument() -> {
+        val callType = positionElement.getKotlinShortcutCall() ?: return
+        when (callType) {
+          KotlinShortcutCall.KOTLIN -> suggestKotlinShortcutModuleCompletions(result, parameters)
+          KotlinShortcutCall.EMBEDDED_KOTLIN -> suggestEmbeddedKotlinShortcutModuleCompletions(result, parameters)
+        }
+      }
+
+      // dependencies { implementation(kotlin("stdlib", "1.9<caret>")) }
+      positionElement.isKotlinShortcutVersionArgument() -> {
+        if (!positionElement.kotlinShortcutModuleHasVersion()) {
+          suggestKotlinShortcutVersionCompletions(result, parameters, positionElement.getKotlinShortcutModuleText())
+        }
       }
 
       // dependencies { implementation("juni<caret>", "juni", "") }
@@ -266,6 +285,126 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val decoratedLookupElement = lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, invokePosition)
         resultSet.addElement(decoratedLookupElement)
       }
+    }
+    loadingAdvertiser.onComplete()
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)
+  }
+
+  private fun suggestKotlinShortcutModuleCompletions(
+    result: CompletionResultSet,
+    parameters: CompletionParameters,
+  ) {
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingStatus()
+
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+    val completionService = service<DependencyCompletionService>()
+    val request = DependencyCompletionRequest(
+      "$KOTLIN_SHORTCUT_GROUP:$KOTLIN_SHORTCUT_ARTIFACT_PREFIX$text",
+      parameters.getCompletionContext()
+    )
+
+    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+    var index = 0
+    runBlockingCancellable {
+      completionService.suggestCompletions(request)
+        .collect { event ->
+          loadingAdvertiser.onEvent(event)
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
+          if (item.groupId != KOTLIN_SHORTCUT_GROUP || !item.artifactId.startsWith(KOTLIN_SHORTCUT_ARTIFACT_PREFIX)) return@collect
+          val lookupString = "${item.artifactId.removePrefix(KOTLIN_SHORTCUT_ARTIFACT_PREFIX)}:${item.version}"
+          val lookupElement = LookupElementBuilder.create(item, lookupString)
+            .withPresentableText(lookupString)
+            .withIcon(item.icon)
+            .withInsertHandler(FullStringInsertHandler)
+
+          val decoratedLookupElement = lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, KOTLIN_MODULE)
+          resultSet.addElement(decoratedLookupElement)
+        }
+    }
+    loadingAdvertiser.onComplete()
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)
+  }
+
+  private fun suggestKotlinShortcutVersionCompletions(
+    result: CompletionResultSet,
+    parameters: CompletionParameters,
+    moduleName: String,
+  ) {
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingStatus()
+
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+    val completionService = service<DependencyCompletionService>()
+    val request = DependencyVersionCompletionRequest(
+      KOTLIN_SHORTCUT_GROUP,
+      "$KOTLIN_SHORTCUT_ARTIFACT_PREFIX$moduleName",
+      text,
+      parameters.getCompletionContext()
+    )
+
+    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+    var index = 0
+    runBlockingCancellable {
+      completionService.suggestVersionCompletions(request)
+        .collect { event ->
+          loadingAdvertiser.onEvent(event)
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
+          val lookupElement = LookupElementBuilder.create(item, item.result)
+            .withPresentableText(item.result)
+            .withIcon(item.icon)
+            .withInsertHandler(FullStringInsertHandler)
+
+          val decoratedLookupElement = lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, KOTLIN_VERSION)
+          resultSet.addElement(decoratedLookupElement)
+        }
+    }
+    loadingAdvertiser.onComplete()
+    loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)
+  }
+
+  private fun suggestEmbeddedKotlinShortcutModuleCompletions(
+    result: CompletionResultSet,
+    parameters: CompletionParameters,
+  ) {
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingStatus()
+
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+    val completionService = service<DependencyCompletionService>()
+    val request = DependencyArtifactCompletionRequest(
+      KOTLIN_SHORTCUT_GROUP,
+      "$KOTLIN_SHORTCUT_ARTIFACT_PREFIX$text",
+      parameters.getCompletionContext(),
+    )
+
+    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
+    var index = 0
+    runBlockingCancellable {
+      completionService.suggestArtifactCompletions(request)
+        .collect { event ->
+          loadingAdvertiser.onEvent(event)
+          if (event !is DependencyCompletionEvent.Item) return@collect
+          val item = event.result
+          if (!item.result.startsWith(KOTLIN_SHORTCUT_ARTIFACT_PREFIX)) return@collect
+          val lookupString = item.result.removePrefix(KOTLIN_SHORTCUT_ARTIFACT_PREFIX)
+          val lookupElement = LookupElementBuilder.create(item, lookupString)
+            .withPresentableText(lookupString)
+            .withIcon(item.icon)
+            .withInsertHandler(FullStringInsertHandler)
+
+          val decoratedLookupElement =
+            lookupElement.decorateLookupItem(index++, parameters.isAutoPopup, item.source, EMBEDDED_KOTLIN_MODULE)
+          resultSet.addElement(decoratedLookupElement)
+        }
     }
     loadingAdvertiser.onComplete()
     loadingAdvertiser.addServerErrorPlaceholderIfNeeded(resultSet, parameters.isAutoPopup, hadResults = index > 0)

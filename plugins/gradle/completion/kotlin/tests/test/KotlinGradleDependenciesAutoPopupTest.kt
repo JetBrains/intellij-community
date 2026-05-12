@@ -35,13 +35,19 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   private val testCompletionService = object : DependencyCompletionService {
     override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionEvent<DependencyCompletionResult>> =
-      flowOf(DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup", "myArtifact", "1.0", source = LOCAL)))
+      flowOf(
+        DependencyCompletionEvent.Item(DependencyCompletionResult("myGroup", "myArtifact", "1.0", source = LOCAL)),
+        DependencyCompletionEvent.Item(DependencyCompletionResult("org.jetbrains.kotlin", "kotlin-stdlib", "2.0.21", source = LOCAL)),
+      )
 
     override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
       flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("myGroup", LOCAL)))
 
     override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
-      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("myArtifact", LOCAL)))
+      flowOf(
+        DependencyCompletionEvent.Item(DependencyPartCompletionResult("myArtifact", LOCAL)),
+        DependencyCompletionEvent.Item(DependencyPartCompletionResult("kotlin-stdlib", LOCAL)),
+      )
 
     override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
       flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0", LOCAL)))
@@ -88,6 +94,15 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
     }
     autoPopupTester.joinAutopopup()
     assertion()
+  }
+
+  /**
+   * [typeWithPauses] does not test completion confidence
+   */
+  private fun CompletionAutoPopupTester.typeFast(text: String) {
+    codeInsightFixture.type(text)
+    this.joinAutopopup()
+    this.joinCompletion()
   }
 
   companion object {
@@ -320,15 +335,6 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
-  /**
-   * [typeWithPauses] does not test completion confidence
-   */
-  private fun CompletionAutoPopupTester.typeFast(text: String) {
-    codeInsightFixture.type(text)
-    this.joinAutopopup()
-    this.joinCompletion()
-  }
-
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testAutoPopupAfterCompletingDependencyConfiguration(gradleVersion: GradleVersion) =
@@ -398,4 +404,178 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
         "Auto popup should not be triggered after completing a Dependency-returning method without arguments"
       }
     }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in kotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin(<caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin() module argument" }
+    assertEquals("stdlib:2.0.21", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in kotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin(module = <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin(module = ...) argument" }
+    assertEquals("stdlib:2.0.21", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in kotlin shortcut version positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin("stdlib", <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin() version argument" }
+    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in kotlin shortcut version named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin(module = "stdlib", version = <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin(version = ...) argument" }
+    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test no auto popup on quote in kotlin shortcut version when module has version`(gradleVersion: GradleVersion) =
+    runTest(gradleVersion) {
+      val file = writeTextAndCommit("build.gradle.kts", """
+        dependencies {
+            implementation(kotlin("stdlib:1.0", <caret>))
+        }
+      """.trimIndent())
+      codeInsightFixture.configureFromExistingVirtualFile(file)
+      autoPopupTester.typeWithPauses("\"")
+      assertNull(autoPopupTester.lookup) {
+        "Auto popup should not be triggered for kotlin() version argument when module already has version"
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in embeddedKotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(embeddedKotlin(<caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside embeddedKotlin() module argument" }
+    // `embeddedKotlin` accepts no version argument, so the lookup string must contain only the module name.
+    assertEquals("stdlib", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup on quote in embeddedKotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(embeddedKotlin(module = <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside embeddedKotlin(module = ...) argument" }
+    assertEquals("stdlib", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test no auto popup on quote in embeddedKotlin shortcut second positional argument`(gradleVersion: GradleVersion) =
+    runTest(gradleVersion) {
+      val file = writeTextAndCommit("build.gradle.kts", """
+        dependencies {
+            implementation(embeddedKotlin("stdlib", <caret>))
+        }
+      """.trimIndent())
+      codeInsightFixture.configureFromExistingVirtualFile(file)
+      autoPopupTester.typeWithPauses("\"")
+      assertNull(autoPopupTester.lookup) {
+        "Auto popup should not be triggered for embeddedKotlin() second positional argument because it does not accept a version"
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test no auto popup on quote in embedded kotlin shortcut named version`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(embeddedKotlin(module = "stdlib", version = <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeWithPauses("\"")
+    assertNull(autoPopupTester.lookup) {
+      "Auto popup should not be triggered for embeddedKotlin() version argument because it does not accept a version"
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup stays in kotlin shortcut module`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin(<caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("\"std")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of kotlin's module argument" }
+    assertEquals("stdlib:2.0.21", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup stays in kotlin shortcut version`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(kotlin("stdlib", <caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("\"1")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of kotlin's version argument" }
+    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test auto popup stays in embeddedKotlin shortcut module`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    val file = writeTextAndCommit("build.gradle.kts", """
+      dependencies {
+          implementation(embeddedKotlin(<caret>))
+      }
+    """.trimIndent())
+    codeInsightFixture.configureFromExistingVirtualFile(file)
+    autoPopupTester.typeFast("\"std")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of embeddedKotlin's module argument" }
+    assertEquals("stdlib", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
 }
