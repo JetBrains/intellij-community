@@ -5,10 +5,8 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.tailOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.PyDataclassFieldParameters
 import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
@@ -28,7 +26,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -64,19 +61,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    val result = when (referenceTarget) {
-      // MyDataclass() call
-      is PyClass if anchor is PyCallExpression -> Helper.getDataclassTypeForClass(context.getType(referenceTarget), context)
-      // cls() call
-      is PyParameter if referenceTarget.isSelf && anchor is PyCallExpression -> {
-        PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
-          ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
-          ?.let { Helper.getDataclassTypeForClass(context.getType(it), context) }
-      }
-      else -> null
+    // MyDataclass() call
+    if (referenceTarget is PyClass && anchor is PyCallExpression) {
+      return getDataclassTypeForClass(context.getType(referenceTarget), context).notNullToRef()
     }
 
-    return result.notNullToRef()
+    return null
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
