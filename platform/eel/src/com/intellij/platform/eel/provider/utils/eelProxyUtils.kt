@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 fun EelProxy.acceptOnTcpPort(eel: EelTunnelsApi, host: String = "localhost", port: UShort): EelProxy =
   _acceptorInfo(eel to ("TCP" to (host to port))).acceptorFactory {
     // TODO These EelTunnelsApi.HostAddress.Builder are ugly.
-    eel.getAcceptorForRemotePort().hostAddress(EelTunnelsApi.HostAddress.Builder(port).build()).eelIt()
+    eel.getAcceptorForRemotePort().hostAddress(EelTunnelsApi.HostAddress.Builder(port).hostname(host).build()).eelIt()
   }
 
 /**
@@ -38,6 +38,6 @@ fun EelProxy.acceptOnTcpPort(eel: EelTunnelsApi, host: String = "localhost", por
 fun EelProxy.connectToTcpPort(eel: EelTunnelsApi, host: String = "localhost", port: UShort): EelProxy {
   require(port > 0u) { "Port 0 is not allowed" }
   return _connectorInfo(eel to ("TCP" to (host to port))).connectionFactory {
-    eel.getConnectionToRemotePort().hostAddress(EelTunnelsApi.HostAddress.Builder(port).build()).eelIt()
+    eel.getConnectionToRemotePort().hostAddress(EelTunnelsApi.HostAddress.Builder(port).hostname(host).build()).eelIt()
   }
 }
