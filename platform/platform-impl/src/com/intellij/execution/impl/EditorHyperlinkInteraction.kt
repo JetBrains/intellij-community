@@ -103,7 +103,7 @@ internal class EditorHyperlinkInteraction(
 
   @RequiresEdt(generateAssertion = false)
   private fun linkHovered(link: RangeHighlighter?, ctrlPressed: Boolean) {
-    editor.setCustomCursor(EditorHyperlinkEffectSupport::class.java, null)
+    editor.setCustomCursor(EditorHyperlinkInteraction::class.java, null)
     if (link == null || link !is RangeHighlighterEx) {
       hoveredLinkWrapper?.restoreOriginalAttrs()
       hoveredLinkWrapper = null
@@ -111,7 +111,7 @@ internal class EditorHyperlinkInteraction(
     }
     val invisibleLink = effectSupplier.isInvisibleLink(link)
     if (!invisibleLink || ctrlPressed) {
-      editor.setCustomCursor(EditorHyperlinkEffectSupport::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      editor.setCustomCursor(EditorHyperlinkInteraction::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
     if (hoveredLinkWrapper?.isSame(link, ctrlPressed) == true) {
       return  // the link is already shown as hovered
