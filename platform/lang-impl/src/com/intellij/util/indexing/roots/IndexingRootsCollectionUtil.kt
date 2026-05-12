@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -47,9 +46,6 @@ internal data class EntityGenericContentRootsDescription<E : WorkspaceEntity>(va
 
 internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val entityPointer: EntityPointer<E>,
                                                                         val urlRoots: IndexingUrlSourceRootHolder) : IndexingRootsDescription
-
-internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val entityPointer: EntityPointer<E>,
-                                                                          val roots: IndexingUrlRootHolder) : IndexingRootsDescription
 
 internal fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
@@ -88,7 +84,6 @@ private fun isIncluded(existingFiles: NavigableMap<String, *>, path: String): Bo
 internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Boolean) {
   private val moduleRoots: MutableMap<Module, MutableIndexingUrlRootHolder> = mutableMapOf()
   private val descriptions: MutableCollection<IndexingRootsDescription> = mutableListOf()
-  private val reincludedRoots: MutableCollection<VirtualFile> = HashSet()
   private val nonIndexableRoots: MutableCollection<VirtualFile> = HashSet()
 
   fun <E : WorkspaceEntity> registerAddedEntity(entity: E,
@@ -119,11 +114,6 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     for ((entityReference, roots) in rootData.externalRoots.entries) {
       descriptions.add(EntityExternalRootsDescription(entityReference, roots))
     }
-
-    for ((entityReference, roots) in rootData.customKindRoots.entries) {
-      descriptions.add(EntityCustomKindRootsDescription(entityReference, roots))
-    }
-    reincludedRoots.addAll(rootData.excludedRoots)
     nonIndexableRoots.addAll(rootData.nonIndexableRoots)
   }
 
@@ -195,13 +185,10 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
   }
 }
 
-private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexContributor<E>,
-                                            val ignoreModuleRoots: Boolean) {
+private class RootData<E : WorkspaceEntity> {
   val moduleContents = mutableMapOf<Module, MutableIndexingUrlRootHolder>()
-  val customizedModuleContentRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlRootHolder>()
   val contentRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlRootHolder>()
   val externalRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlSourceRootHolder>()
-  val customKindRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlRootHolder>()
   val excludedRoots = mutableListOf<VirtualFile>()
   val nonIndexableRoots = mutableListOf<VirtualFile>()
 
@@ -233,24 +220,16 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     }
 
     if (customData is ModuleRelatedRootData) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning") && !ignoreModuleRoots) {
-        addRoot(moduleContents, customData.module)
-      }
+      addRoot(moduleContents, customData.module)
     }
     else if (kind.isContent) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
-        addRoot(contentRoots, entityReference)
-      }
+      addRoot(contentRoots, entityReference)
     }
     else if (kind == WorkspaceFileKind.CUSTOM) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
-        addRoot(customKindRoots, entityReference)
-      }
+      // skip
     }
     else {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
-        addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
-      }
+      addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
   }
 
@@ -315,10 +294,7 @@ private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, works
 }
 
 private fun hasRecursiveRootFromModuleContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
-  if (!fileSet.recursive) {
-    return false
-  }
-  return isInContent(fileSet, module)
+  return fileSet.recursive && isInContent(fileSet, module)
 }
 
 private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
@@ -328,7 +304,7 @@ private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Modu
 
 private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,
                                                                ignoreModuleRoots: Boolean) : WorkspaceFileSetRegistrar {
-  val rootData: RootData<E> = RootData(contributor, ignoreModuleRoots)
+  val rootData: RootData<E> = RootData()
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     @Suppress("UNCHECKED_CAST")
