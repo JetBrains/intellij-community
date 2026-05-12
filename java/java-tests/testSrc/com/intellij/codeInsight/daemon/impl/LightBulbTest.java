@@ -172,7 +172,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
                                                                              int flags,
                                                                              @NotNull HintHint hintInfo) {
                                                          shown.add(hint);
-                                                         hint.addHintListener(event -> shown.remove(hint));
+                                                         hint.addHintListener(_ -> shown.remove(hint));
                                                        }
                                                      });
 
@@ -198,7 +198,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
     assertNotNull(hintComponentAfter);
     assertFalse(hintComponentAfter.isDisposed());
     assertNotNull(hintComponentAfter.getComponentHint());
-    assertTrue(shown.contains(hintComponentAfter.getComponentHint()));
+    assertTrue("Shown:"+shown+"; hint:"+hintComponentAfter.getComponentHint(), shown.contains(hintComponentAfter.getComponentHint()));
     assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
   }
 
