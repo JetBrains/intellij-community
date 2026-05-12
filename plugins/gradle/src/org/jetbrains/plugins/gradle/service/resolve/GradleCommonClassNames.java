@@ -89,6 +89,8 @@ public final class GradleCommonClassNames {
   public static final @NonNls String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";
   public static final @NonNls String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
   public static final @NonNls String GRADLE_API_PROVIDER_PROPERTY = "org.gradle.api.provider.Property";
+  public static final @NonNls String GRADLE_API_PROVIDER_LIST_PROPERTY = "org.gradle.api.provider.ListProperty";
+  public static final @NonNls String GRADLE_API_PROVIDER_SET_PROPERTY = "org.gradle.api.provider.SetProperty";
   public static final @NonNls String GRADLE_API_PROVIDER_MAP_PROPERTY = "org.gradle.api.provider.MapProperty";
   public static final @NonNls String GRADLE_API_PROVIDER_HAS_MULTIPLE_VALUES = "org.gradle.api.provider.HasMultipleValues";
   public static final @NonNls String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";

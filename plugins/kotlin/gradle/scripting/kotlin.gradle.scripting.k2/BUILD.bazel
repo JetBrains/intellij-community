@@ -71,6 +71,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/kotlin/code-insight/api",
         "@lib//:kotlinc-analysis-api",
+        "@lib//:kotlinc-analysis-api-k2",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
