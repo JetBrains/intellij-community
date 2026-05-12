@@ -82,6 +82,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -1091,15 +1092,50 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   }
 
   public void testCancelsItSelfOnTypingInAlienProject() throws Throwable {
+    final AtomicReference<CountDownLatch> started = new AtomicReference<>(new CountDownLatch(1));
+    final AtomicReference<CountDownLatch> continued = new AtomicReference<>(new CountDownLatch(1));
+    final AtomicBoolean isCanceledWhenContinued = new AtomicBoolean();
+    class MyPass extends EditorBoundHighlightingPass {
+      MyPass(@NotNull Editor editor, @NotNull PsiFile psiFile) { super(editor, psiFile, false); }
+
+      @Override
+      public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        try {
+          started.get().countDown();
+          while (!continued.get().await(10, TimeUnit.MILLISECONDS)) {
+            ProgressManager.checkCanceled();
+          }
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        finally {
+          isCanceledWhenContinued.compareAndSet(false, progress.isCanceled());
+        }
+      }
+
+      @Override
+      public void doApplyInformationToEditor() {
+      }
+    }
+    class Fac implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        return new MyPass(getEditor(), getFile());
+      }
+    }
+    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    continued.get().countDown(); // allow to continue
+    Fac fac = new Fac();
+    registrar.registerTextEditorHighlightingPass(fac, null, null, false, -1);
     String body = StringUtil.repeat("{String field = null;}\n", 10);
     @Language("JAVA")
     String text = "class X{ void f() {" + body + "<caret>\n} }";
     configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
 
     Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
 
-    AtomicBoolean checked = new AtomicBoolean();
+    AtomicBoolean typed = new AtomicBoolean();
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
       VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
@@ -1114,23 +1150,36 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
       Editor alienEditor = Objects.requireNonNull(FileEditorManager.getInstance(alienProject).openTextEditor(alienDescriptor, false));
       ((EditorImpl)alienEditor).setCaretActive();
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
       myTestDaemonCodeAnalyzer.waitForTermination();
+
+      continued.set(new CountDownLatch(1));// do not allow to continue yet
+      started.set(new CountDownLatch(1));
+      isCanceledWhenContinued.set(false);
+      // restart daemon in the main project. should check for its cancel when typing in alien
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+
       Runnable callbackWhileWaiting = () -> {
-        LOG.debug("callback called: checked="+checked);
-        if (!checked.getAndSet(true)) {
+        LOG.debug("callback called: typed="+typed+"; started:"+started+"; continued:"+continued+"; isCanceledWhenContinued:"+isCanceledWhenContinued);
+        if (started.get().getCount() != 0) {
+          return;  // wait until the pass is started
+        }
+        // and then type a character
+        if (!typed.getAndSet(true)) {
           typeInAlienEditor(alienEditor, 'x');
+          continued.get().countDown(); // allow to continue but check we should be canceled first
         }
       };
       // start daemon in the main project. should check for its cancel when typing in alien
       myDaemonCodeAnalyzer.restart(getTestName(false));
       myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), callbackWhileWaiting);
-      assertTrue(checked.get());
     }
-    catch (ProcessCanceledException ignored) {
-      assertTrue(checked.get());
-      return;
+    catch (ProcessCanceledException _) {
     }
-    fail("must throw PCE");
+    assertTrue(typed.get());
+
+    assertEquals(0, continued.get().getCount());
+    assertTrue(isCanceledWhenContinued.get());
   }
 
   public void testPasteInAnonymousCodeBlock() {
@@ -1174,7 +1223,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     HighlightInfo info = ContainerUtil.find(xInfos, xInfo -> xInfo.getDescription().equals("Method 'ffffffffffffff()' is never used"));
     assertNull(xInfos.toString(), info);
 
-    Editor useEditor = myEditor;
     myDaemonCodeAnalyzer.restart(getTestName(false));
     List<HighlightInfo> useInfos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(useInfos);
@@ -2476,7 +2524,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         }
       """;
     configureByText(JavaFileType.INSTANCE, text);
-    Document document = getDocument(getFile());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     // warmup highlighting first, calibrating before that would make little sense
     for (int i = 0; i < 10; i++) {
@@ -2534,7 +2581,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         }
       """;
     configureByText(JavaFileType.INSTANCE, text);
-    Document document = getDocument(getFile());
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     List<Pair<DEvent,String>> eventLog = Collections.synchronizedList(new ArrayList<>());
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -2695,4 +2741,5 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       return h1 == null || h2 == null ? Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2) : HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(h1, h2);
     });
   }
+
 }
