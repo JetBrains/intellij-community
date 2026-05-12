@@ -620,12 +620,7 @@ internal class PluginDependenciesTest {
     }.buildDir(pluginDirPath.resolve("intellij.java.frontend"))
 
     val pluginSet = buildPluginSet()
-    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") != "false") {
-      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
-    } else {
-      // content module id conflict
-      assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    }
+    assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
   }
 
   @Test
