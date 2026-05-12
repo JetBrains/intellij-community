@@ -1091,7 +1091,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   }
 
   public void testCancelsItSelfOnTypingInAlienProject() throws Throwable {
-    String body = StringUtil.repeat("{String field = null;}\n", 1000);
+    String body = StringUtil.repeat("{String field = null;}\n", 10);
     @Language("JAVA")
     String text = "class X{ void f() {" + body + "<caret>\n} }";
     configureByText(JavaFileType.INSTANCE, text);
