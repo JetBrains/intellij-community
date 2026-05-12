@@ -10,7 +10,6 @@ com.intellij.openapi.observable.operation.core.MutableOperationTrace
 - a:traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
 - bs:traceStart$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
-- com.intellij.openapi.observable.properties.ObservableMutableProperty
 Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
 f:com.intellij.openapi.observable.properties.AtomicProperty
