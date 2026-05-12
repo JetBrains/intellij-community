@@ -258,14 +258,6 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     super.doCancelAction(source);
   }
 
-
-
-  @Override
-  protected void init() {
-    super.init();
-    // Note: Non-modal settings now use SettingsFrame (JFrame) instead of SettingsDialog (JDialog)
-  }
-
   static @Nullable ShortcutSet getFindActionShortcutSet() {
     return EventHandler.getShortcuts(ACTION_FIND);
   }

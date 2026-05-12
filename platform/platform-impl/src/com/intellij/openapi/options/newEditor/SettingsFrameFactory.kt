@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 // extended externally
+@ApiStatus.Internal
 open class SettingsFrameFactory {
   companion object {
     @JvmStatic

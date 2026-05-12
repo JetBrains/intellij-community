@@ -983,14 +983,6 @@ f:com.intellij.openapi.observable.util.BindUtilKt
 - sf:bindSelected(com.intellij.ui.CardLayoutPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.CardLayoutPanel
 a:com.intellij.openapi.options.BeanConfigurable
 c:com.intellij.openapi.options.newEditor.SettingsDialog
-- p:init():V
-c:com.intellij.openapi.options.newEditor.SettingsFrameFactory
-- sf:Companion:com.intellij.openapi.options.newEditor.SettingsFrameFactory$Companion
-- <init>():V
-- sf:getInstance():com.intellij.openapi.options.newEditor.SettingsFrameFactory
-- show(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable,java.lang.String):V
-f:com.intellij.openapi.options.newEditor.SettingsFrameFactory$Companion
-- f:getInstance():com.intellij.openapi.options.newEditor.SettingsFrameFactory
 com.intellij.openapi.progress.util.ProgressIndicatorListener
 - cancelled():V
 - installToProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx):V
