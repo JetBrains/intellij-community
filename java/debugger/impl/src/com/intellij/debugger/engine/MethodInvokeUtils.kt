@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.MethodInvokeUtils.getHelperExceptionStackTra
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.BoxingEvaluator
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsEx.isVoid
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
+import com.intellij.rt.debugger.JvmThreadHelper
 import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
@@ -24,18 +26,35 @@ import com.jetbrains.jdi.ArrayReferenceImpl
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ArrayType
 import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.IntegerValue
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
 import com.sun.jdi.ReferenceType
+import com.sun.jdi.ThreadReference
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import java.util.EnumSet
+import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 object MethodInvokeUtils {
   @JvmStatic
   internal val INVOKE_WITH_HELPER_KEY: Key<Boolean> = Key<Boolean>("invoke.with.helper")
+
+  enum class MethodStackScanStatus {
+    FOUND,
+    NOT_FOUND,
+    INCOMPLETE_STACKS,
+    TOO_MANY_INCOMPLETE_STACKS,
+    TIMED_OUT,
+  }
+
+  data class MethodStackScanResult(
+    val status: MethodStackScanStatus,
+    val threadsToCheck: List<ThreadReference>,
+    val elapsedMillis: Long,
+  )
 
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
     if (e !is EvaluateException) return null
@@ -90,6 +109,83 @@ object MethodInvokeUtils {
     return theClass.getValue(theField) as? ObjectReference ?: run {
       logger<MethodInvokeUtils>().error("Failed to get MethodHandles.Lookup.IMPL_LOOKUP field value, java version: " + evaluationContext.virtualMachineProxy.version())
       return null
+    }
+  }
+
+  fun findAnyOfSpecifiedMethodsInAnyThreadStack(
+    evaluationContext: EvaluationContextImpl,
+    methods: Collection<Method>,
+    maxStackTraceFramesToScan: Int = JvmThreadHelper.METHOD_STACK_SCAN_UNLIMITED_DEPTH,
+    threadToSkip: ThreadReference? = null,
+    timeoutMillis: Int = JvmThreadHelper.METHOD_STACK_SCAN_DEFAULT_TIMEOUT_MILLIS,
+  ): MethodStackScanResult {
+    val methodKeys = methods.asSequence()
+      .map { it.declaringType().name() to it.name() }
+      .distinct()
+      .flatMap { sequenceOf(it.first, it.second) }
+      .map { DebuggerUtilsEx.mirrorOfString(it, evaluationContext) }
+      .toList()
+    if (methodKeys.isEmpty()) {
+      return MethodStackScanResult(MethodStackScanStatus.NOT_FOUND, emptyList(), 0)
+    }
+
+    val debugProcess = evaluationContext.debugProcess
+    val stringArrayClass = debugProcess.findClass(
+      evaluationContext,
+      CommonClassNames.JAVA_LANG_STRING + "[]",
+      evaluationContext.getClassLoader(),
+    ) as ArrayType
+    val targetMethods = DebuggerUtilsEx.mirrorOfArray(stringArrayClass, methodKeys, evaluationContext)
+    val lookup = if (hasVirtualThreadSupport(evaluationContext)) {
+      getMethodHandlesImplLookup(evaluationContext) ?: throw EvaluateException("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
+    }
+    else {
+      null
+    }
+    val startedAtNanos = System.nanoTime()
+    val result = DebuggerUtilsImpl.invokeHelperMethod(
+      evaluationContext,
+      JvmThreadHelper::class.java,
+      "findSpecifiedMethodsInAnyThreadStack",
+      listOf(
+        lookup,
+        targetMethods,
+        evaluationContext.virtualMachineProxy.mirrorOf(maxStackTraceFramesToScan),
+        threadToSkip,
+        evaluationContext.virtualMachineProxy.mirrorOf(timeoutMillis),
+      ),
+      false,
+    )
+    val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAtNanos)
+    val values = (result as? ArrayReference)?.values ?: throw EvaluateException("Unexpected method stack check helper result: $result")
+    if (values.isEmpty()) {
+      throw EvaluateException("Method stack check helper returned an empty result")
+    }
+    val statusValue = readMethodStackScanStatus(evaluationContext, values[0])
+    val threadsToCheck = values.asSequence().drop(1).map {
+      it as? ThreadReference ?: throw EvaluateException("Unexpected thread to recheck from method stack check helper: $it")
+    }.toList()
+    return MethodStackScanResult(methodStackScanStatus(statusValue), threadsToCheck, elapsedMillis)
+  }
+
+  private fun hasVirtualThreadSupport(evaluationContext: EvaluationContextImpl): Boolean {
+    return evaluationContext.virtualMachineProxy.classesByName("java.lang.VirtualThread").isNotEmpty()
+  }
+
+  private fun readMethodStackScanStatus(evaluationContext: EvaluationContextImpl, value: Value?): Int {
+    val unboxedValue = UnBoxingEvaluator.unbox(value, evaluationContext)
+    if (unboxedValue is IntegerValue) return unboxedValue.intValue()
+    throw EvaluateException("Unexpected method stack check helper status: $value")
+  }
+
+  private fun methodStackScanStatus(status: Int): MethodStackScanStatus {
+    return when (status) {
+      JvmThreadHelper.METHOD_STACK_STATUS_FOUND -> MethodStackScanStatus.FOUND
+      JvmThreadHelper.METHOD_STACK_STATUS_NOT_FOUND -> MethodStackScanStatus.NOT_FOUND
+      JvmThreadHelper.METHOD_STACK_STATUS_INCOMPLETE_STACKS -> MethodStackScanStatus.INCOMPLETE_STACKS
+      JvmThreadHelper.METHOD_STACK_STATUS_TOO_MANY_INCOMPLETE_STACKS -> MethodStackScanStatus.TOO_MANY_INCOMPLETE_STACKS
+      JvmThreadHelper.METHOD_STACK_STATUS_TIMED_OUT -> MethodStackScanStatus.TIMED_OUT
+      else -> throw EvaluateException("Unexpected method stack check helper status: $status")
     }
   }
 }
@@ -210,4 +306,3 @@ private fun isHelperFrame(frame: String): Boolean = HELPER_FRAMES.any { frame.co
 internal data class InvocationResult(@get:JvmName("isSuccess") val success: Boolean, val value: Value?)
 
 private val INVOCATION_FAILED = InvocationResult(false, null)
-
