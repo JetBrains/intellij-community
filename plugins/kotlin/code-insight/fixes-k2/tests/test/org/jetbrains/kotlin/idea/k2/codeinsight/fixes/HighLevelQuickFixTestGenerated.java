@@ -8542,6 +8542,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambda.kt");
         }
 
+        @TestMetadata("fullFormLambdaNameMismatch.kt")
+        public void testFullFormLambdaNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambdaNameMismatch.kt");
+        }
+
         @TestMetadata("genericDataClassFullForm.kt")
         public void testGenericDataClassFullForm() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/genericDataClassFullForm.kt");
