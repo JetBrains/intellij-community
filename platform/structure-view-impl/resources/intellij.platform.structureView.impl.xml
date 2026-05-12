@@ -54,6 +54,7 @@
     <structurePopupProvider implementation="com.intellij.ide.util.OldStructurePopupProviderImpl"/>
 
     <registryKey key="frontend.structure.popup" defaultValue="false" description="Enables frontend side file structure popup" restartRequired="true" />
+    <registryKey key="remoteDev.frontend.structure.popup" defaultValue="true" description="Enables frontend side file structure popup in Remote Development" restartRequired="true" />
     <projectSettings service="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
     <projectSettings service="com.intellij.ide.structureView.impl.StructureViewState"/>
   </extensions>
