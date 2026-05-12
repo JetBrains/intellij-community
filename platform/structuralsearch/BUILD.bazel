@@ -92,6 +92,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//platform/structuralsearch:structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
     "//xml/impl",
   ]
 )
@@ -119,6 +120,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/structuralsearch:structuralSearch",
     "//platform/structuralsearch:structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//xml/impl",
     "//xml/impl:impl_test_lib",
     "//platform/util/jdom",

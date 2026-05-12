@@ -90,6 +90,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/structuralsearch:structuralSearch",
     "//platform/structuralsearch:structuralSearch_test_lib",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch",
+    "//module-set-plugins/generated/intellij.moduleSet.plugin.structuralSearch:moduleSet-plugin-structuralSearch_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
     "//plugins/groovy",
