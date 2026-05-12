@@ -4,8 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.ui.awt.ComposePanel
+import com.intellij.diagnostic.PluginException
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.AWTEvent
 import java.awt.Component
@@ -193,6 +197,17 @@ private fun createJewelComposePanel(
     focusOnClickInside: Boolean,
     config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
 ): JewelComposePanelWrapper {
+    if (IdeProductMode.isBackend) {
+        val causePluginId = PluginUtil.getInstance().findPluginId(Throwable("Detecting Guilty Plugin"))
+        Logger.getInstance(JewelComposePanelWrapper::class.java)
+            .error(
+                "Backend IDE mode does not support Compose UI and Jewel Components. " +
+                    "Split the plugin to .frontend and .backend modules. " +
+                    "See https://plugins.jetbrains.com/docs/intellij/split-mode-and-remote-development.html",
+                PluginException("Plugin uses Compose UI on backend", causePluginId),
+            )
+    }
+
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
