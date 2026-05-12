@@ -22,6 +22,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -77,6 +78,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -90,6 +92,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
+    private val btaWatcherInstalled = AtomicBoolean(false)
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE)
     private val currentBuilderId by lazy { KotlinCompilerReferenceIndexStorage.getBuilderId(project) }
@@ -162,11 +165,23 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         })
 
         // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
-        if (BtaFileWatcher.isApplicable(project)) {
-            BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
-                executeOnBuildThread {
-                    onExternalCompilationDetected(updatedModules)
-                }
+        // eager attempt covers reopened projects
+        installBtaFileWatcherIfApplicable()
+        // for first-time project `GradleSettings.linkedProjectsSettings` is still empty,
+        // so we retry once Gradle import registers linked projects
+        connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+            override fun onImportFinished(projectPath: String?) {
+                installBtaFileWatcherIfApplicable()
+            }
+        })
+    }
+
+    private fun installBtaFileWatcherIfApplicable() {
+        if (!BtaFileWatcher.isApplicable(project)) return
+        if (!btaWatcherInstalled.compareAndSet(false, true)) return
+        BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
+            executeOnBuildThread {
+                onExternalCompilationDetected(updatedModules)
             }
         }
     }
