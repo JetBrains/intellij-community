@@ -186,8 +186,11 @@ internal class IterativeMergeFlowDelegate(
       cell(JPanel()).resizableColumn()
       val closeAction = object : AbstractAction(CommonBundle.getCloseButtonText()) {
         override fun actionPerformed(e: ActionEvent) {
-          val hasChanges = files.any { iterativeDataHolder.getMergeConflictModel(it)?.getResolvedChanges()?.isNotEmpty() == true }
-          if (!hasChanges || MessageDialogBuilder.yesNo(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.title"),
+          val hasPartiallyResolvedFiles = files.any {
+            val model = iterativeDataHolder.getMergeConflictModel(it) ?: return@any false
+            model.getResolvedChanges().isNotEmpty() && model.getUnresolvedChanges().isNotEmpty()
+          }
+          if (!hasPartiallyResolvedFiles || MessageDialogBuilder.yesNo(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.title"),
                                                         VcsBundle.message("multiple.file.iterative.merge.close.confirmation.message"))
               .yesText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.yes"))
               .noText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.no"))
