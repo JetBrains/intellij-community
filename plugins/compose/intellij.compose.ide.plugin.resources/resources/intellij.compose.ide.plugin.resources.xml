@@ -32,6 +32,9 @@
     <customLiveTemplate
       implementation="com.intellij.compose.ide.plugin.resources.emmetLikeTemplates.ComposeResourcesEmmetLikeCustomLiveTemplate"
       order="before emmet"/>
+    <completion.contributor language="kotlin"
+                            implementationClass="com.intellij.compose.ide.plugin.resources.completion.ComposeResourcesCompletionContributor"
+                            order="first, before KotlinCompletionContributor"/>
     <gotoDeclarationHandler implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGotoDeclarationHandler"/>
     <renamePsiElementProcessor id="ComposeResources"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesRenameProcessor"
