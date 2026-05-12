@@ -36,7 +36,6 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitExecutableManager
-import git4idea.config.GitIncomingRemoteCheckStrategy
 import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
@@ -59,7 +58,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 24)
+  private val GROUP = EventLogGroup("git.configuration", 26)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -133,7 +132,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
       }
       set.add(repositoryMetric)
 
-      for (configDirName in ALL_IDE_CONFIG_NAMES) {
+      for (configDirName in ALL_STORED_CONFIG_NAMES) {
         getConfigFileStatus(repository, configDirName)?.let { status ->
           set.add(SHARED_IDE_CONFIG.metric(
             IDE_CONFIG_NAME.with(configDirName),
@@ -312,15 +311,20 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val FILTER_BY_ACTION_IN_POPUP = GROUP.registerVarargEvent("filterByActionInPopup", EventFields.Enabled)
   private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
-  private val ALL_IDE_CONFIG_NAMES = listOf(
+  private val ALL_STORED_CONFIG_NAMES = listOf(
     ".air",
+    ".claude",
+    ".codex",
+    ".cursor",
     ".fleet",
     ".idea",
+    ".junie",
+    ".opencode",
     ".project",
     ".settings",
     ".vscode",
   )
-  private val IDE_CONFIG_NAME = EventFields.String("name", ALL_IDE_CONFIG_NAMES)
+  private val IDE_CONFIG_NAME = EventFields.String("name", ALL_STORED_CONFIG_NAMES)
   private val IDE_CONFIG_STATUS = EventFields.Enum("status", ConfigStatus::class.java)
   private val SHARED_IDE_CONFIG = GROUP.registerVarargEvent("ide.config", IDE_CONFIG_NAME, IDE_CONFIG_STATUS)
 
@@ -344,9 +348,9 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 /**
  * Checks that worktree is used in [GitRepository]
  *
- * worktree usage will be detected when:
- * repo_root/.git is a file
- * or repo_root/.git/worktrees is not empty
+ * Worktree usage will be detected when:
+ * - Path "repo_root/.git" is a file
+ * - Path "repo_root/.git/worktrees" is not empty
  */
 private fun GitRepository.isWorkTreeUsed(): Boolean {
   return try {
