@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -597,12 +599,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                              @NotNull ScopeOwner scopeOwner) {
     final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
     final PyElement element = augAssignment != null ? augAssignment : anchor;
+    final Instruction[] flow = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
+    final int thisInstructionIdx = ControlFlowUtil.findInstructionNumberByElement(flow, element);
+    final int thisInstructionNum = thisInstructionIdx == -1 ? Integer.MAX_VALUE : flow[thisInstructionIdx].num();
     final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
     // null means empty set of possible types, Ref(null) means Any
     final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
       .map(instr -> {
         if (instr.getElement() == anchor) {
           // exclude recursive definition (example: type of 'i++' inside a loop)
+          return null;
+        }
+        if (instr.num() >= thisInstructionNum) {
+          // exclude back-edge definitions reached through a loop (PY-89245)
           return null;
         }
         if (instr instanceof ReadWriteInstruction readWriteInstruction) {
