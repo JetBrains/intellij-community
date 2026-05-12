@@ -14,6 +14,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -68,7 +69,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   protected open val defaultDirName: String
     get() = testName
 
-  val testName: String get() = getTestName(true)
+  open val testName: String get() = getTestName(true)
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -171,21 +172,11 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
       val testConfiguration = TestConfiguration(
         adjustedConfigurators
       )
-      if (!useProjectCodeStyle && configureCodeStyleSettings != null) {
-        testWithTempCodeStyleSettings {
+      testWithTempCodeStyleSettings {
+        if (!useProjectCodeStyle && configureCodeStyleSettings != null) {
           it.configureCodeStyleSettings()
-          beforeConfiguredTest(testConfiguration)
-          ensureIndexesReady()
-          try {
-            test()
-          }
-          finally {
-            afterConfiguredTest(testConfiguration)
-          }
         }
-      }
-      else {
-        if (useProjectCodeStyle) {
+        else if (useProjectCodeStyle) {
           CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()
         }
         beforeConfiguredTest(testConfiguration)
@@ -380,6 +371,13 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                                          ?: throw RuntimeException("Item '$item' not found")
                   }
                 }
+              }
+
+              override val editor: Editor
+                get() = myFixture.editor
+
+              override fun performEditorAction(actionId: String) {
+                myFixture.performEditorAction(actionId)
               }
 
             }.test()
@@ -879,6 +877,10 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
     fun assertLookupDoesntContain(vararg items: String)
 
     fun selectLookupItem(item: String)
+
+    fun performEditorAction(actionId: String)
+
+    val editor: Editor
   }
 
   protected data class TestConfiguration(
